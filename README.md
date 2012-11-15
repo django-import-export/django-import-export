@@ -1,2 +1,0 @@
-django-import-export
-====================
