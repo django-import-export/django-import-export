@@ -1,0 +1,93 @@
+{% extends "admin/import_export/base.html" %}
+{% load i18n %}
+{% load import_export_tags %}
+
+{% block breadcrumbs_last %}
+{% trans "Import" %}
+{% endblock %}
+
+{% block content %}
+<h1>{% trans "Import" %}</h1>
+
+{% if not result or result.has_errors %}
+<form action="{{ form_url }}" method="post" id="{{ opts.module_name }}_form" enctype="multipart/form-data">
+  {% csrf_token %}
+
+  <p>
+    {% trans "This importer excpect and will import following fields: " %}
+    {{ fields|join:", " }}.
+  </p>
+
+  <fieldset class="module aligned">
+    {% for field in form %}
+      <div class="form-row">
+        {{ field.errors }}
+
+        {{ field.label_tag }}
+
+        {{ field }}
+
+        {% if field.field.help_text %}
+        <p class="help">{{ field.field.help_text|safe }}</p>
+        {% endif %}
+      </div>
+    {% endfor %}
+  </fieldset>
+
+  <div class="submit-row">
+    <input type="submit" class="default" value="{% trans "Submit" %}">
+  </div>
+</form>
+{% endif %}
+
+{% if result %}
+{% if result.has_errors %}
+  <h2>{% trans "Errors" %}</h2>
+  <ul>
+    {% for error in result.base_errors  %}
+    <li>{{ error }}</li>
+    {% endfor %}
+    {% for line, error in result.row_errors %}
+    <li>{% trans "Line number" %}: {{ line }} - {{ error }}</li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <form action="" method="POST">
+    {% csrf_token %}
+    <fieldset class="module aligned">
+      <input type="hidden" name="tmp_file" value="{{ tmp_file }}">
+      <input type="hidden" name="input_format" value="{{ input_format }}">
+      <p>
+        {% trans "Bellow is a preview of applied import data. If you are satisfied with a result click Confirm import" %}
+      </p>
+      <div class="submit-row">
+        <input type="submit" class="default" name="confirm" value="{% trans "Confirm import" %}">
+      </div>
+    </fieldset>
+  </form>
+{% endif %}
+
+<h2>
+  {% trans "Preview" %}
+</h2>
+<table>
+  <thead>
+    <tr>
+      {% for field in fields %}
+        <th>{{ field }}</th>
+      {% endfor %}
+    </tr>
+  </thead>
+  {% for row in result %}
+  <tr>
+    {% for f in row.combined_fields %}
+    <td>
+      {% compare_values f.0 f.1 %}
+    </td>
+    {% endfor %}
+  </tr>
+  {% endfor %}
+</table>
+{% endif %}
+
+{% endblock %}

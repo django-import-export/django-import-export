@@ -12,6 +12,9 @@ class RowResult(object):
         self.orig_fields = []
         self.fields = []
 
+    def combined_fields(self):
+        return zip(self.orig_fields, self.fields)
+
 
 class Result(list):
 
@@ -20,7 +23,8 @@ class Result(list):
         self.base_errors = []
 
     def row_errors(self):
-        return [(i, row.errors) for i, row in enumerate(self) if row.errors]
+        return [(i + 1, row.errors)
+                for i, row in enumerate(self) if row.errors]
 
     def has_errors(self):
         return self.base_errors or self.row_errors()
@@ -30,14 +34,18 @@ class Importer(object):
     model = None
     format = None
     import_code = "ID"
-    raise_errors = True
+    raise_errors = False
     dry_run = True
     mapping = None
+    from_encoding = None
 
-    def __init__(self, f, **kwargs):
+    def __init__(self, f=None, **kwargs):
         self.f = f
         for key, value in kwargs.iteritems():
             setattr(self, key, value)
+
+    def set_stream(self, f):
+        self.f = f
 
     def get_mapping(self):
         if self.mapping:
@@ -46,7 +54,10 @@ class Importer(object):
         return OrderedDict(mapping)
 
     def load_dataset(self):
-        text = unicode(self.f.read(), 'cp1250').encode('utf-8')
+        if self.from_encoding:
+            text = unicode(self.f.read(), self.from_encoding).encode('utf-8')
+        else:
+            text = self.f.read()
         if not self.format:
             self.data = tablib.import_set(text)
         else:
@@ -85,7 +96,7 @@ class Importer(object):
             self.load_dataset()
         except Exception, e:
             result.base_errors.append(_('Loading error') +
-                    u': %s' % unicode(e))
+                    u': %s' % repr(e))
             if self.raise_errors:
                 raise
             return result
@@ -100,7 +111,7 @@ class Importer(object):
                 self.save_instance(instance)
                 row_result.fields = self.get_representation(instance)
             except Exception, e:
-                row_result.errors.append(unicode(e))
+                row_result.errors.append(repr(e))
                 if self.raise_errors:
                     raise
             result.append(row_result)
