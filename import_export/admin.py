@@ -40,13 +40,21 @@ class ImportMixin(object):
     def get_format(self, format_name):
         return getattr(tablib.formats, format_name)
 
+    def get_mode_for_format(self, format):
+        """
+        Return mode for opening files.
+        """
+        return 'rU'
+
     def import_action(self, request, *args, **kwargs):
         importer_class = self.get_importer_class()
         if request.POST and request.POST.get('tmp_file'):
-            import_file = open(request.POST.get('tmp_file'))
+            input_format = self.get_format(request.POST.get('input_format'))
+            import_mode = self.get_mode_for_format(input_format)
+            import_file = open(request.POST.get('tmp_file'), import_mode)
             result = self.importer_class(import_file,
                     model=self.model,
-                    format=self.get_format(request.POST.get('input_format')),
+                    format=input_format,
                     dry_run=False,
                     raise_errors=True).run()
             success_message = _('Import finished')
@@ -62,8 +70,10 @@ class ImportMixin(object):
         input_format = None
         if request.POST:
             if form.is_valid():
-                import_file = request.FILES['import_file']
                 input_format = form.cleaned_data['input_format']
+                import_mode = self.get_mode_for_format(input_format)
+                import_file = form.cleaned_data['import_file']
+                import_file.open(import_mode)
                 result = importer_class(import_file,
                         model=self.model,
                         raise_errors=False,
@@ -75,7 +85,7 @@ class ImportMixin(object):
                         tmp_file.write(chunk)
                     tmp_file.close()
                     tmp_file_name = tmp_file.name
-        fields = importer_class(model=self.model).get_mapping().keys()
+        fields = importer_class(model=self.model).get_representation_fields()
         context = {
                 'form': form,
                 'result': result,
