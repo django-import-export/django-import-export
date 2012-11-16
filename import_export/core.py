@@ -1,3 +1,5 @@
+import sys
+import traceback
 from collections import OrderedDict
 
 import tablib
@@ -87,17 +89,30 @@ class Importer(object):
         if not self.dry_run:
             instance.save()
 
-    def get_representation(self, instance):
+    def after_save_instance(self, instance):
+        """
+        Override to add additional logic.
+        """
+        pass
+
+    def get_representation(self, instance, orig):
         return [unicode(getattr(instance, f))
                 for f in self.get_mapping().values()]
+
+    def get_representation_fields(self):
+        """
+        Fields to show in preview.
+        """
+        return self.get_mapping().keys()
 
     def run(self):
         result = Result()
         try:
             self.load_dataset()
         except Exception, e:
+            tb_info = traceback.format_exc(sys.exc_info()[2])
             result.base_errors.append(_('Loading error') +
-                    u': %s' % repr(e))
+                    u': %s (%s)' % (repr(e), tb_info))
             if self.raise_errors:
                 raise
             return result
@@ -106,11 +121,13 @@ class Importer(object):
             try:
                 row_result = RowResult()
                 instance = self.get_or_init_instance(row)
-                row_result.orig_fields = self.get_representation(instance)
+                row_result.orig_fields = self.get_representation(instance,
+                        True)
                 for field in self.get_mapping().keys():
                     self.set_instance_attr(instance, row, field)
                 self.save_instance(instance)
-                row_result.fields = self.get_representation(instance)
+                self.after_save_instance(instance)
+                row_result.fields = self.get_representation(instance, False)
             except Exception, e:
                 row_result.errors.append(repr(e))
                 if self.raise_errors:
