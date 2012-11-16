@@ -16,15 +16,16 @@ class RowResult(object):
         return zip(self.orig_fields, self.fields)
 
 
-class Result(list):
+class Result(object):
 
     def __init__(self, *args, **kwargs):
         super(Result, self).__init__(*args, **kwargs)
         self.base_errors = []
+        self.rows = []
 
     def row_errors(self):
         return [(i + 1, row.errors)
-                for i, row in enumerate(self) if row.errors]
+                for i, row in enumerate(self.rows) if row.errors]
 
     def has_errors(self):
         return self.base_errors or self.row_errors()
@@ -114,5 +115,5 @@ class Importer(object):
                 row_result.errors.append(repr(e))
                 if self.raise_errors:
                     raise
-            result.append(row_result)
+            result.rows.append(row_result)
         return result
