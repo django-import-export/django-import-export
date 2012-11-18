@@ -68,19 +68,18 @@ class Importer(object):
             self.format.import_set(self.data, text)
 
     def get_instance(self, row):
-        return self.model.objects.get(**{
-            self.get_mapping()[self.import_code]: row[self.import_code]
-            })
+        try:
+            return self.model.objects.get(**{
+                self.get_mapping()[self.import_code]: row[self.import_code]
+                })
+        except self.model.DoesNotExist:
+            return None
 
     def init_instance(self, row):
         return self.model()
 
     def get_or_init_instance(self, row):
-        try:
-            instance = self.get_instance(row)
-        except self.model.DoesNotExist:
-            instance = self.init_instance(row)
-        return instance
+        return self.get_instance(row) or self.init_instance(row)
 
     def set_instance_attr(self, instance, row, field):
         setattr(instance, self.get_mapping()[field], row[field])
@@ -129,7 +128,8 @@ class Importer(object):
                 self.after_save_instance(instance)
                 row_result.fields = self.get_representation(instance, False)
             except Exception, e:
-                row_result.errors.append(repr(e))
+                tb_info = traceback.format_exc(sys.exc_info()[2])
+                row_result.errors.append('%s: %s' % (repr(e), tb_info))
                 if self.raise_errors:
                     raise
             result.rows.append(row_result)
