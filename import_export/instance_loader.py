@@ -25,10 +25,13 @@ class CachedInstanceLoader(BaseInstanceLoader):
     ``get_instance`` call.
     """
 
+    def get_queryset(self):
+        return self.importer.model.objects.all()
+
     def cache_instances(self):
         key = self.importer.get_mapping()[self.importer.import_code]
         self.all_instances = dict([(getattr(instance, key), instance)
-                for instance in self.importer.model.objects.all()])
+                for instance in self.get_queryset()])
 
     def get_instance(self, row):
         if not hasattr(self, 'all_instances'):
