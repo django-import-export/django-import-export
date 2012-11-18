@@ -29,4 +29,5 @@ class ImporterTest(TestCase):
         self.assertFalse(result.has_errors())
         self.assertEqual(Book.objects.count(), 1)
         self.assertEqual(Book.objects.all()[0].name, "Some book")
-        self.assertNotEqual(result[0].orig_fields[1], result[0].fields[1])
+        self.assertNotEqual(result.rows[0].orig_fields[1],
+                            result.rows[0].fields[1])
