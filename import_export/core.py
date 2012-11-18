@@ -6,6 +6,10 @@ import tablib
 
 from django.utils.translation import ugettext_lazy as _
 
+from .instance_loader import (
+        ModelInstanceLoader,
+        )
+
 
 class RowResult(object):
 
@@ -41,11 +45,13 @@ class Importer(object):
     dry_run = True
     mapping = None
     from_encoding = None
+    instance_loader_class = ModelInstanceLoader
 
     def __init__(self, f=None, **kwargs):
         self.f = f
         for key, value in kwargs.iteritems():
             setattr(self, key, value)
+        self.instance_loader = self.instance_loader_class(self)
 
     def set_stream(self, f):
         self.f = f
@@ -67,19 +73,15 @@ class Importer(object):
             self.data = tablib.Dataset()
             self.format.import_set(self.data, text)
 
-    def get_instance(self, row):
-        try:
-            return self.model.objects.get(**{
-                self.get_mapping()[self.import_code]: row[self.import_code]
-                })
-        except self.model.DoesNotExist:
-            return None
-
     def init_instance(self, row):
         return self.model()
 
+    def get_instance(self, row):
+        return self.instance_loader.get_instance(row)
+
     def get_or_init_instance(self, row):
-        return self.get_instance(row) or self.init_instance(row)
+        return (self.get_instance(row) or
+                self.init_instance(row))
 
     def set_instance_attr(self, instance, row, field):
         setattr(instance, self.get_mapping()[field], row[field])
