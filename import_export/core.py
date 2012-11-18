@@ -80,8 +80,11 @@ class Importer(object):
         return self.instance_loader.get_instance(row)
 
     def get_or_init_instance(self, row):
-        return (self.get_instance(row) or
-                self.init_instance(row))
+        instance = self.get_instance(row)
+        if instance:
+            return (instance, False)
+        else:
+            return (self.init_instance(row), True)
 
     def set_instance_attr(self, instance, row, field):
         setattr(instance, self.get_mapping()[field], row[field])
@@ -90,7 +93,7 @@ class Importer(object):
         if not self.dry_run:
             instance.save()
 
-    def after_save_instance(self, instance):
+    def after_save_instance(self, instance, new):
         """
         Override to add additional logic.
         """
@@ -121,13 +124,13 @@ class Importer(object):
         for row in self.data.dict:
             try:
                 row_result = RowResult()
-                instance = self.get_or_init_instance(row)
+                instance, new = self.get_or_init_instance(row)
                 row_result.orig_fields = self.get_representation(instance,
                         True)
                 for field in self.get_mapping().keys():
                     self.set_instance_attr(instance, row, field)
                 self.save_instance(instance)
-                self.after_save_instance(instance)
+                self.after_save_instance(instance, new)
                 row_result.fields = self.get_representation(instance, False)
             except Exception, e:
                 tb_info = traceback.format_exc(sys.exc_info()[2])
