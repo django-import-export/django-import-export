@@ -1,13 +1,12 @@
 import tempfile
-import tablib
 
 from django.contrib import admin
-
 from django.utils.translation import ugettext_lazy as _
 from django.conf.urls.defaults import patterns, url
 from django.template.response import TemplateResponse
 from django.contrib import messages
 from django.http import HttpResponseRedirect
+from django.utils.importlib import import_module
 
 from .forms import ImportForm
 from .core import Importer
@@ -20,8 +19,8 @@ class ImportMixin(object):
     importer_class = Importer
     format_choices = (
             ('', '---'),
-            ('csv', 'CSV'),
-            ('xls', 'Excel XLS'),
+            ('tablib.formats.csv', 'CSV'),
+            ('tablib.formats.xls', 'Excel XLS'),
             )
 
     def get_urls(self):
@@ -37,8 +36,10 @@ class ImportMixin(object):
     def get_importer_class(self):
         return self.importer_class
 
-    def get_format(self, format_name):
-        return getattr(tablib.formats, format_name)
+    def get_format(self, format_class):
+        if format_class:
+            return import_module(format_class)
+        return None
 
     def get_mode_for_format(self, format):
         """
