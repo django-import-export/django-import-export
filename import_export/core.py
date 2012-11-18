@@ -4,6 +4,7 @@ from collections import OrderedDict
 
 import tablib
 
+from django.core.exceptions import ObjectDoesNotExist
 from django.utils.translation import ugettext_lazy as _
 
 from .instance_loader import (
@@ -100,8 +101,13 @@ class Importer(object):
         pass
 
     def get_representation(self, instance, orig):
-        return [unicode(getattr(instance, f))
-                for f in self.get_mapping().values()]
+        values = []
+        for f in self.get_mapping().values():
+            try:
+                values.append(unicode(getattr(instance, f)))
+            except ObjectDoesNotExist:
+                values.append("")
+        return values
 
     def get_representation_fields(self):
         """
