@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 import os
 
 
-VERSION = __import__("send_instance").__version__
+VERSION = __import__("import_export").__version__
 
 CLASSIFIERS = [
     'Framework :: Django',
