@@ -94,6 +94,12 @@ class Importer(object):
         if not self.dry_run:
             instance.save()
 
+    def before_save_instance(self, instance, new):
+        """
+        Override to add additional logic.
+        """
+        pass
+
     def after_save_instance(self, instance, new):
         """
         Override to add additional logic.
