@@ -135,6 +135,7 @@ class Importer(object):
                         True)
                 for field in self.get_mapping().keys():
                     self.set_instance_attr(instance, row, field)
+                self.before_save_instance(instance, new)
                 self.save_instance(instance)
                 self.after_save_instance(instance, new)
                 row_result.fields = self.get_representation(instance, False)
