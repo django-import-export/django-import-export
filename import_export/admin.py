@@ -1,11 +1,12 @@
 import tempfile
+from datetime import datetime
 
 from django.contrib import admin
 from django.utils.translation import ugettext_lazy as _
 from django.conf.urls.defaults import patterns, url
 from django.template.response import TemplateResponse
 from django.contrib import messages
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponse
 from django.utils.importlib import import_module
 
 from .forms import ImportForm
@@ -97,3 +98,41 @@ class ImportMixin(object):
                 }
         return TemplateResponse(request, [self.import_template_name],
                 context, current_app=self.admin_site.name)
+
+
+class ExportMixin(object):
+    importer_class = Importer
+    change_list_template = 'admin/import_export/change_list_export.html'
+    export_template_name = 'admin/import_export/export.html'
+    export_format = 'csv'
+
+    def get_urls(self):
+        urls = super(ExportMixin, self).get_urls()
+        info = self.model._meta.app_label, self.model._meta.module_name
+        my_urls = patterns('',
+            url(r'^export/$',
+                self.admin_site.admin_view(self.export_action),
+                name='%s_%s_export' % info),
+        )
+        return my_urls + urls
+
+    def get_importer_class(self):
+        return self.importer_class
+
+    def get_export_filename(self):
+        date_str = datetime.now().strftime('%Y-%m-%d')
+        filename = "%s-%s.%s" % (self.model.__name__,
+                date_str, self.export_format)
+        return filename
+
+    def export_action(self, request, *args, **kwargs):
+        importer_class = self.get_importer_class()
+        queryset = self.queryset(request)
+        data = importer_class(model=self.model).export(queryset)
+        filename = self.get_export_filename()
+        response = HttpResponse(
+                getattr(data, self.export_format),
+                mimetype='application/octet-stream',
+                )
+        response['Content-Disposition'] = 'attachment; filename=%s' % filename
+        return response

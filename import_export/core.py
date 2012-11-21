@@ -152,3 +152,10 @@ class Importer(object):
                     raise
             result.rows.append(row_result)
         return result
+
+    def export(self, queryset):
+        headers = [unicode(k) for k in self.get_mapping().keys()]
+        data = tablib.Dataset(headers)
+        for obj in queryset:
+            data.append(self.get_representation(obj, True))
+        return data
