@@ -125,9 +125,26 @@ class ExportMixin(object):
                 date_str, self.export_format)
         return filename
 
+    def get_export_queryset(self, request):
+        """
+        Returns queryset with applied search and filters.
+        """
+        # this is copied from django/contrib/admin/options.py
+        list_display = self.get_list_display(request)
+        list_display_links = self.get_list_display_links(request, list_display)
+
+        ChangeList = self.get_changelist(request)
+        cl = ChangeList(request, self.model, list_display,
+            list_display_links, self.list_filter, self.date_hierarchy,
+            self.search_fields, self.list_select_related,
+            self.list_per_page, self.list_max_show_all, self.list_editable,
+            self)
+
+        return cl.query_set
+
     def export_action(self, request, *args, **kwargs):
         importer_class = self.get_importer_class()
-        queryset = self.queryset(request)
+        queryset = self.get_export_queryset(request)
         data = importer_class(model=self.model).export(queryset)
         filename = self.get_export_filename()
         response = HttpResponse(

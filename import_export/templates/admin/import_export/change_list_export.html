@@ -2,7 +2,7 @@
 {% load i18n %}
 
 {% block object-tools-items %}
-  <li><a href="export/" class="export_link">{% trans "Export" %}</a></li>
+  <li><a href="export/{{ cl.get_query_string }}" class="export_link">{% trans "Export" %}</a></li>
   {{ block.super }}
 {% endblock %}
 
