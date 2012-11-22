@@ -1,0 +1,16 @@
+django_import_export.egg-info/PKG-INFO
+django_import_export.egg-info/SOURCES.txt
+django_import_export.egg-info/dependency_links.txt
+django_import_export.egg-info/top_level.txt
+import_export/__init__.py
+import_export/admin.py
+import_export/core.py
+import_export/forms.py
+import_export/instance_loader.py
+import_export/models.py
+import_export/templatetags/__init__.py
+import_export/templatetags/import_export_tags.py
+tests/core/__init__.py
+tests/core/admin.py
+tests/core/models.py
+tests/core/tests.py
