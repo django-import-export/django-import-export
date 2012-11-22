@@ -153,9 +153,16 @@ class Importer(object):
             result.rows.append(row_result)
         return result
 
-    def export(self, queryset):
+    def get_export_representation(self, obj):
+        return self.get_representation(obj, True)
+
+    def get_export_headers(self):
         headers = [unicode(k) for k in self.get_mapping().keys()]
+        return headers
+
+    def export(self, queryset):
+        headers = self.get_export_headers()
         data = tablib.Dataset(headers)
         for obj in queryset:
-            data.append(self.get_representation(obj, True))
+            data.append(self.get_export_representation(obj))
         return data
