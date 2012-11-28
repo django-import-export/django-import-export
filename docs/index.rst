@@ -10,7 +10,9 @@ Features:
 * support multiple formats (Excel, CSV, JSON, ...
   and everything else that `tablib` support)
 
-* admin integration for importing data with preview of import changes
+* admin integration for importing
+
+* preview import changes
 
 * admin intrgration for exporting data respecting admin filters
 
