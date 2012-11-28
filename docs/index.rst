@@ -14,7 +14,9 @@ Features:
 
 * preview import changes
 
-* admin intrgration for exporting data respecting admin filters
+* admin integration for exporting
+
+* export data respecting admin filters
 
 User Guide
 ----------
