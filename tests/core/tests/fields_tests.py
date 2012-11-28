@@ -33,3 +33,9 @@ class FieldTest(TestCase):
         self.row['name'] = 'foo'
         self.field.save(self.obj, self.row)
         self.assertEqual(self.obj.name, 'foo')
+
+    def test_following_attribute(self):
+        field = fields.Field(attribute='other_obj__name')
+        obj2 = Obj(name="bar")
+        self.obj.other_obj = obj2
+        self.assertEqual(field.export(self.obj), "bar")

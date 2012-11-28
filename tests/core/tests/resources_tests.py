@@ -7,7 +7,7 @@ from import_export import fields
 from import_export import results
 from import_export.instance_loaders import ModelInstanceLoader
 
-from ..models import Book
+from ..models import Book, Author
 
 
 class MyResource(resources.Resource):
@@ -123,6 +123,19 @@ class ModelResourceTest(TestCase):
         self.assertTrue(result.rows[0].errors)
         msg = 'ValueError("invalid literal for int() with base 10: \'foo\'",)'
         self.assertTrue(result.rows[0].errors[0].error, msg)
+
+    def test_relationships_fields(self):
+
+        class B(resources.ModelResource):
+            class Meta:
+                model = Book
+                fields = ('author__name',)
+
+        author = Author.objects.create(name="Author")
+        self.book.author = author
+        resource = B()
+        result = resource.fields['author__name'].export(self.book)
+        self.assertEqual(result, author.name)
 
 
 class ModelResourceFactoryTest(TestCase):

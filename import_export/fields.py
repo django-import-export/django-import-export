@@ -1,4 +1,5 @@
-import widgets
+from . import exceptions
+from . import widgets
 
 
 class Field(object):
@@ -49,11 +50,21 @@ class Field(object):
 
     def get_value(self, obj):
         """
-        Returns value for this field from object.
+        Returns value for this field from object attribute.
         """
         if self.attribute is None:
             return None
-        value = getattr(obj, self.attribute)
+
+        attrs = self.attribute.split('__')
+        value = obj
+
+        for attr in attrs:
+            if not hasattr(value, attr):
+                msg = "The object '%s' does not have a attribute '%s'." % (
+                        repr(value), attr)
+                raise exceptions.FieldError(msg)
+            value = getattr(value, attr)
+
         if callable(value):
             value = value()
         return value

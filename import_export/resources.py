@@ -240,6 +240,29 @@ class ModelDeclarativeMetaclass(DeclarativeMetaclass):
 
             new_class.fields.update(OrderedDict(field_list))
 
+            #add fields that follow relationships
+            if opts.fields is not None:
+                field_list = []
+                for field_name in opts.fields:
+                    if field_name in declared_fields:
+                        continue
+                    if field_name.find('__') == -1:
+                        continue
+
+                    model = opts.model
+                    attrs = field_name.split('__')
+                    for attr in attrs[0:-1]:
+                        f = model._meta.get_field_by_name(attr)[0]
+                        model = f.rel.to
+                    f = model._meta.get_field_by_name(attrs[-1])[0]
+
+                    FieldWidget = new_class.widget_from_django_field(f)
+                    field = Field(attribute=field_name, column_name=field_name,
+                            widget=FieldWidget(), readonly=True)
+                    field_list.append((field_name, field, ))
+
+                new_class.fields.update(OrderedDict(field_list))
+
         return new_class
 
 
