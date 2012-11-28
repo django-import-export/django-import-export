@@ -9,13 +9,36 @@ from diff_match_patch import diff_match_patch
 from django.utils.safestring import mark_safe
 
 from .results import Error, Result, RowResult
-from import_export import fields
+from .fields import Field
+from import_export import widgets
 from .instance_loaders import (
         ModelInstanceLoader,
         )
 
 
 class ResourceOptions(object):
+    """
+    The inner Meta class allows for class-level configuration of how the
+    Resource should behave. The following options are available:
+
+    * ``fields`` - Controls what introspected fields the Resource
+      should include. A whitelist of fields.
+
+    * ``exclude`` - Controls what introspected fields the Resource should
+      NOT include. A blacklist of fields.
+
+    * ``model`` - Django Model class. It is used to introspect available
+      fields.
+
+    * ``instance_loader_class`` - Controls which class instance will take
+      care of loading existing objects.
+
+    * ``import_id_fields`` - Controls which object fields will be used to
+      identify existing instances.
+
+    * ``export_order`` - Controls export order for columns.
+
+    """
     fields = None
     model = None
     exclude = None
@@ -40,7 +63,7 @@ class DeclarativeMetaclass(type):
         declared_fields = []
 
         for field_name, obj in attrs.items():
-            if isinstance(obj, fields.Field):
+            if isinstance(obj, Field):
                 field = attrs.pop(field_name)
                 if not field.column_name:
                     field.column_name = field_name
@@ -56,6 +79,10 @@ class DeclarativeMetaclass(type):
 
 
 class Resource(object):
+    """
+    Resource defines how objects are mapped to their import and export
+    representations and handle importing and exporting data.
+    """
     __metaclass__ = DeclarativeMetaclass
 
     def get_fields(self):
@@ -63,23 +90,6 @@ class Resource(object):
         Returns fields in ``export_order`` order.
         """
         return [self.fields[f] for f in self.get_export_order()]
-
-    @classmethod
-    def field_from_django_field(cls, f, default=fields.Field):
-        """
-        Returns the field type that would likely be associated with each
-        Django type.
-        """
-        result = default
-        internal_type = f.get_internal_type()
-        if internal_type in ('DateField', ):
-            result = fields.DateField
-        elif internal_type in ('IntegerField', 'PositiveIntegerField',
-                'PositiveSmallIntegerField', 'SmallIntegerField', 'AutoField'):
-            result = fields.IntegerField
-        elif internal_type in ('BooleanField', 'NullBooleanField'):
-                result = fields.BooleanField
-        return result
 
     def init_instance(self, row=None):
         raise NotImplementedError()
@@ -223,8 +233,9 @@ class ModelDeclarativeMetaclass(DeclarativeMetaclass):
                 if f.name in declared_fields:
                     continue
 
-                FieldClass = new_class.field_from_django_field(f)
-                field = FieldClass(attribute=f.name, column_name=f.name)
+                FieldWidget = new_class.widget_from_django_field(f)
+                field = Field(attribute=f.name, column_name=f.name,
+                        widget=FieldWidget())
                 field_list.append((f.name, field, ))
 
             new_class.fields.update(OrderedDict(field_list))
@@ -233,7 +244,27 @@ class ModelDeclarativeMetaclass(DeclarativeMetaclass):
 
 
 class ModelResource(Resource):
+    """
+    ModelResource is Resource subclass for handling Django models.
+    """
     __metaclass__ = ModelDeclarativeMetaclass
+
+    @classmethod
+    def widget_from_django_field(cls, f, default=widgets.Widget):
+        """
+        Returns the widget that would likely be associated with each
+        Django type.
+        """
+        result = default
+        internal_type = f.get_internal_type()
+        if internal_type in ('DateField', ):
+            result = widgets.DateWidget
+        elif internal_type in ('IntegerField', 'PositiveIntegerField',
+                'PositiveSmallIntegerField', 'SmallIntegerField', 'AutoField'):
+            result = widgets.IntegerWidget
+        elif internal_type in ('BooleanField', 'NullBooleanField'):
+                result = widgets.BooleanWidget
+        return result
 
     def get_import_id_fields(self):
         return self._meta.import_id_fields
@@ -246,6 +277,9 @@ class ModelResource(Resource):
 
 
 def modelresource_factory(model, resource_class=ModelResource):
+    """
+    Factory for creating ``ModelResource`` class for given Django model.
+    """
     attrs = {'model': model}
     Meta = type('Meta', (object,), attrs)
 

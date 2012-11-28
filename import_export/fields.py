@@ -3,25 +3,30 @@ import widgets
 
 class Field(object):
     """
-    The base implementation of a field.
+    Field represent mapping between `object` field and representation of
+    this field.
+
+    ``attribute`` string of either an instance attribute or callable
+    off the object.
+
+    ``column_name`` let you provide how this field is named
+    in datasource.
+
+    ``widget`` defines widget that will be used to represent field data
+    in export.
+
+    ``readonly`` boolean value defines that if this field will be assigned
+    to object during import.
     """
 
-    def __init__(self, attribute=None, column_name=None, widget=None):
-        """
-        ``attribute`` string of either an instance attribute or callable
-        off the object.
-
-        ``column_name`` let you provide how this field is named
-        in datasource.
-
-        ``widget`` defines widget that will be used to represent field data
-        in export.
-        """
+    def __init__(self, attribute=None, column_name=None, widget=None,
+            readonly=False):
         self.attribute = attribute
         self.column_name = column_name
         if not widget:
             widget = widgets.Widget()
         self.widget = widget
+        self.readonly = readonly
 
     def __repr__(self):
         """
@@ -44,7 +49,7 @@ class Field(object):
 
     def get_value(self, obj):
         """
-        Return value of field of object.
+        Returns value for this field from object.
         """
         if self.attribute is None:
             return None
@@ -55,39 +60,17 @@ class Field(object):
 
     def save(self, obj, data):
         """
-        Clean value and assign it to ``obj``.
+        Cleans this field value and assign it to provided object.
         """
-        setattr(self.attribute, self.clean(data))
+        if not self.readonly:
+            setattr(obj, self.attribute, self.clean(data))
 
     def export(self, obj):
         """
-        Takes data from the provided object and prepares it for export.
+        Returns value from the provided object converted to export
+        representation.
         """
         value = self.get_value(obj)
         if value is None:
             return ""
         return self.widget.render(value)
-
-
-class DateField(Field):
-
-    def __init__(self, *args, **kwargs):
-        widget = kwargs.get('widget') or widgets.DateWidget()
-        kwargs['widget'] = widget
-        super(DateField, self).__init__(*args, **kwargs)
-
-
-class IntegerField(Field):
-
-    def __init__(self, *args, **kwargs):
-        widget = kwargs.get('widget') or widgets.IntegerWidget()
-        kwargs['widget'] = widget
-        super(IntegerField, self).__init__(*args, **kwargs)
-
-
-class BooleanField(Field):
-
-    def __init__(self, *args, **kwargs):
-        widget = kwargs.get('widget') or widgets.BooleanWidget()
-        kwargs['widget'] = widget
-        super(BooleanField, self).__init__(*args, **kwargs)

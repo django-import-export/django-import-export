@@ -1,4 +1,7 @@
 class BaseInstanceLoader(object):
+    """
+    Base abstract implementation of instance loader.
+    """
 
     def __init__(self, resource, dataset=None):
         self.resource = resource
@@ -9,6 +12,11 @@ class BaseInstanceLoader(object):
 
 
 class ModelInstanceLoader(BaseInstanceLoader):
+    """
+    Instance loader for Django model.
+
+    Lookup for model instance by ``import_id_fields``.
+    """
 
     def get_queryset(self):
         return self.resource._meta.model.objects.all()
@@ -26,8 +34,11 @@ class ModelInstanceLoader(BaseInstanceLoader):
 
 class CachedInstanceLoader(ModelInstanceLoader):
     """
-    Loads all model instances in memory to avoid hitting database on every
-    ``get_instance`` call.
+    Loads all possible model instances in dataset avoid hitting database for
+    every ``get_instance`` call.
+
+    This instance loader work only when there is one ``import_id_fields``
+    field.
     """
 
     def __init__(self, *args, **kwargs):

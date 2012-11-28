@@ -43,11 +43,3 @@ Example app
 
 Username and password for admin are 'admin', 'password'.
 
-TODO
-----
-
-* deleting object
-
-* readonly fields
-
-* transactions support for importing data

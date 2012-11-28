@@ -3,21 +3,32 @@ from datetime import datetime
 
 class Widget(object):
     """
+    Widget takes care of converting between import and export representations.
+
+    Widget objects have two functions:
+
+    * converts object field value to export representation
+
+    * converts import value and converts it to appropriate python
+      representation
     """
     def clean(self, value):
         """
-        Returns appropriate python objects for value.
+        Returns appropriate python objects for import value.
         """
         return value
 
     def render(self, value):
         """
-        Returns render representation of python value.
+        Returns export representation of python value.
         """
         return unicode(value)
 
 
 class IntegerWidget(Widget):
+    """
+    Widget for converting integer fields.
+    """
 
     def clean(self, value):
         if not value:
@@ -26,12 +37,18 @@ class IntegerWidget(Widget):
 
 
 class CharWidget(Widget):
+    """
+    Widget for converting text fields.
+    """
 
     def render(self, value):
         return unicode(value)
 
 
 class BooleanWidget(Widget):
+    """
+    Widget for converting boolean fields.
+    """
     TRUE_VALUE = "1"
     FALSE_VALUE = "0"
 
@@ -43,6 +60,11 @@ class BooleanWidget(Widget):
 
 
 class DateWidget(Widget):
+    """
+    Widget for converting date fields.
+
+    Takes optional ``format`` parameter.
+    """
 
     def __init__(self, format=None):
         if format is None:

@@ -1,0 +1,166 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Widgets &mdash; django-import-export 0.0.4dev documentation</title>
+    
+    <link rel="stylesheet" href="_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.0.4dev',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="django-import-export 0.0.4dev documentation" href="index.html" />
+    <link rel="next" title="Instance loaders" href="api_instance_loaders.html" />
+    <link rel="prev" title="Fields" href="api_fields.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="api_instance_loaders.html" title="Instance loaders"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="api_fields.html" title="Fields"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">django-import-export 0.0.4dev documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="widgets">
+<h1>Widgets<a class="headerlink" href="#widgets" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="import_export.widgets.Widget">
+<em class="property">class </em><tt class="descclassname">import_export.widgets.</tt><tt class="descname">Widget</tt><a class="headerlink" href="#import_export.widgets.Widget" title="Permalink to this definition">¶</a></dt>
+<dd><p>Widget takes care of converting between import and export representations.</p>
+<p>Widget objects have two functions:</p>
+<ul class="simple">
+<li>converts object field value to export representation</li>
+<li>converts import value and converts it to appropriate python
+representation</li>
+</ul>
+<dl class="method">
+<dt id="import_export.widgets.Widget.clean">
+<tt class="descname">clean</tt><big>(</big><em>value</em><big>)</big><a class="headerlink" href="#import_export.widgets.Widget.clean" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns appropriate python objects for import value.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="import_export.widgets.Widget.render">
+<tt class="descname">render</tt><big>(</big><em>value</em><big>)</big><a class="headerlink" href="#import_export.widgets.Widget.render" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns export representation of python value.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="import_export.widgets.IntegerWidget">
+<em class="property">class </em><tt class="descclassname">import_export.widgets.</tt><tt class="descname">IntegerWidget</tt><a class="headerlink" href="#import_export.widgets.IntegerWidget" title="Permalink to this definition">¶</a></dt>
+<dd><p>Widget for converting integer fields.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="import_export.widgets.CharWidget">
+<em class="property">class </em><tt class="descclassname">import_export.widgets.</tt><tt class="descname">CharWidget</tt><a class="headerlink" href="#import_export.widgets.CharWidget" title="Permalink to this definition">¶</a></dt>
+<dd><p>Widget for converting text fields.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="import_export.widgets.BooleanWidget">
+<em class="property">class </em><tt class="descclassname">import_export.widgets.</tt><tt class="descname">BooleanWidget</tt><a class="headerlink" href="#import_export.widgets.BooleanWidget" title="Permalink to this definition">¶</a></dt>
+<dd><p>Widget for converting boolean fields.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="import_export.widgets.DateWidget">
+<em class="property">class </em><tt class="descclassname">import_export.widgets.</tt><tt class="descname">DateWidget</tt><big>(</big><em>format=None</em><big>)</big><a class="headerlink" href="#import_export.widgets.DateWidget" title="Permalink to this definition">¶</a></dt>
+<dd><p>Widget for converting date fields.</p>
+<p>Takes optional <tt class="docutils literal"><span class="pre">format</span></tt> parameter.</p>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="api_fields.html"
+                        title="previous chapter">Fields</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="api_instance_loaders.html"
+                        title="next chapter">Instance loaders</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/api_widgets.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="api_instance_loaders.html" title="Instance loaders"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="api_fields.html" title="Fields"
+             >previous</a> |</li>
+        <li><a href="index.html">django-import-export 0.0.4dev documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Bojan Mihelac.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

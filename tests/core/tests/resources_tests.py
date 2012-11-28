@@ -114,7 +114,7 @@ class ModelResourceTest(TestCase):
 
     def test_import_data_error_saving_model(self):
         row = list(self.dataset.pop())
-        # set pk to something that wold yield error
+        # set pk to something that would yield error
         row[0] = 'foo'
         self.dataset.append(row)
         result = self.resource.import_data(self.dataset, raise_errors=False)

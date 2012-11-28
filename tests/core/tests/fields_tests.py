@@ -33,17 +33,3 @@ class FieldTest(TestCase):
         self.row['name'] = 'foo'
         self.field.save(self.obj, self.row)
         self.assertEqual(self.obj.name, 'foo')
-
-
-class IntegerFieldTest(TestCase):
-
-    def setUp(self):
-        self.field = fields.IntegerField(column_name='name', attribute='name')
-
-    def test_clean(self):
-        row = {'name': ""}
-        self.assertEqual(self.field.clean(row), None)
-
-    def test_export(self):
-        obj = Obj(name=None)
-        self.assertEqual(self.field.export(obj), "")

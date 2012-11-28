@@ -1,0 +1,139 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Instance loaders &mdash; django-import-export 0.0.4dev documentation</title>
+    
+    <link rel="stylesheet" href="_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.0.4dev',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="django-import-export 0.0.4dev documentation" href="index.html" />
+    <link rel="next" title="Admin" href="api_admin.html" />
+    <link rel="prev" title="Widgets" href="api_widgets.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="api_admin.html" title="Admin"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="api_widgets.html" title="Widgets"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">django-import-export 0.0.4dev documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-import_export.instance_loaders">
+<span id="instance-loaders"></span><h1>Instance loaders<a class="headerlink" href="#module-import_export.instance_loaders" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="import_export.instance_loaders.BaseInstanceLoader">
+<em class="property">class </em><tt class="descclassname">import_export.instance_loaders.</tt><tt class="descname">BaseInstanceLoader</tt><big>(</big><em>resource</em>, <em>dataset=None</em><big>)</big><a class="headerlink" href="#import_export.instance_loaders.BaseInstanceLoader" title="Permalink to this definition">¶</a></dt>
+<dd><p>Base abstract implementation of instance loader.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="import_export.instance_loaders.CachedInstanceLoader">
+<em class="property">class </em><tt class="descclassname">import_export.instance_loaders.</tt><tt class="descname">CachedInstanceLoader</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#import_export.instance_loaders.CachedInstanceLoader" title="Permalink to this definition">¶</a></dt>
+<dd><p>Loads all possible model instances in dataset avoid hitting database for
+every <tt class="docutils literal"><span class="pre">get_instance</span></tt> call.</p>
+<p>This instance loader work only when there is one <tt class="docutils literal"><span class="pre">import_id_fields</span></tt>
+field.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="import_export.instance_loaders.ModelInstanceLoader">
+<em class="property">class </em><tt class="descclassname">import_export.instance_loaders.</tt><tt class="descname">ModelInstanceLoader</tt><big>(</big><em>resource</em>, <em>dataset=None</em><big>)</big><a class="headerlink" href="#import_export.instance_loaders.ModelInstanceLoader" title="Permalink to this definition">¶</a></dt>
+<dd><p>Instance loader for Django model.</p>
+<p>Lookup for model instance by <tt class="docutils literal"><span class="pre">import_id_fields</span></tt>.</p>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="api_widgets.html"
+                        title="previous chapter">Widgets</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="api_admin.html"
+                        title="next chapter">Admin</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/api_instance_loaders.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="api_admin.html" title="Admin"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="api_widgets.html" title="Widgets"
+             >previous</a> |</li>
+        <li><a href="index.html">django-import-export 0.0.4dev documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Bojan Mihelac.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>
