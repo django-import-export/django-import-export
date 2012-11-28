@@ -1,3 +1,5 @@
+from datetime import date
+
 from django.test import TestCase
 
 import tablib
@@ -136,6 +138,22 @@ class ModelResourceTest(TestCase):
         resource = B()
         result = resource.fields['author__name'].export(self.book)
         self.assertEqual(result, author.name)
+
+    def test_widget_kwargs_for_field(self):
+
+        class B(resources.ModelResource):
+
+            class Meta:
+                model = Book
+                fields = ('published',)
+                widgets = {
+                        'published': {'format': '%d.%m.%Y'},
+                        }
+
+        resource = B()
+        self.book.published = date(2012, 8, 13)
+        result = resource.fields['published'].export(self.book)
+        self.assertEqual(result, "13.08.2012")
 
 
 class ModelResourceFactoryTest(TestCase):

@@ -38,6 +38,8 @@ class ResourceOptions(object):
 
     * ``export_order`` - Controls export order for columns.
 
+    * ``widgets`` - dictionary defines widget kwargs for fields.
+
     """
     fields = None
     model = None
@@ -45,6 +47,7 @@ class ResourceOptions(object):
     instance_loader_class = None
     import_id_fields = ['id']
     export_order = None
+    widgets = None
 
     def __new__(cls, meta=None):
         overrides = {}
@@ -234,8 +237,9 @@ class ModelDeclarativeMetaclass(DeclarativeMetaclass):
                     continue
 
                 FieldWidget = new_class.widget_from_django_field(f)
+                widget_kwargs = new_class.widget_kwargs_for_field(f.name)
                 field = Field(attribute=f.name, column_name=f.name,
-                        widget=FieldWidget())
+                        widget=FieldWidget(**widget_kwargs))
                 field_list.append((f.name, field, ))
 
             new_class.fields.update(OrderedDict(field_list))
@@ -257,8 +261,9 @@ class ModelDeclarativeMetaclass(DeclarativeMetaclass):
                     f = model._meta.get_field_by_name(attrs[-1])[0]
 
                     FieldWidget = new_class.widget_from_django_field(f)
+                    widget_kwargs = new_class.widget_kwargs_for_field(f.name)
                     field = Field(attribute=field_name, column_name=field_name,
-                            widget=FieldWidget(), readonly=True)
+                            widget=FieldWidget(**widget_kwargs), readonly=True)
                     field_list.append((field_name, field, ))
 
                 new_class.fields.update(OrderedDict(field_list))
@@ -290,6 +295,15 @@ class ModelResource(Resource):
         elif internal_type in ('BooleanField', 'NullBooleanField'):
                 result = widgets.BooleanWidget
         return result
+
+    @classmethod
+    def widget_kwargs_for_field(self, field_name):
+        """
+        Returns widget kwargs for given field_name.
+        """
+        if self._meta.widgets:
+            return self._meta.widgets.get(field_name, {})
+        return {}
 
     def get_import_id_fields(self):
         return self._meta.import_id_fields
