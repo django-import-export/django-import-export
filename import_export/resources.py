@@ -128,18 +128,15 @@ class Resource(object):
         """
         pass
 
-    def clean(self, data):
-        return data
+    def import_field(self, field, obj, data):
+        if field.attribute:
+            setattr(obj, field.attribute, field.clean(data))
 
-    def full_clean(self, data):
+    def import_obj(self, obj, data):
         """
         """
-        cleaned_data = {}
         for field in self.get_fields():
-            if field.attribute:
-                cleaned_data[field.attribute] = field.clean(data)
-        cleaned_data = self.clean(cleaned_data)
-        return cleaned_data
+            self.import_field(field, obj, data)
 
     def get_diff(self, original, current, dry_run=False):
         """
@@ -179,9 +176,7 @@ class Resource(object):
                     row_result.import_type = RowResult.IMPORT_TYPE_UPDATE
                 row_result.new_record = new
                 original = deepcopy(instance)
-                cleaned_data = self.full_clean(row)
-                for key, value in cleaned_data.items():
-                    setattr(instance, key, value)
+                self.import_obj(instance, row)
                 self.save_instance(instance, dry_run)
                 row_result.diff = self.get_diff(original, instance, dry_run)
             except Exception, e:
@@ -195,8 +190,11 @@ class Resource(object):
     def get_export_order(self):
         return self._meta.export_order or self.fields.keys()
 
+    def export_field(self, field, obj):
+        return field.export(obj)
+
     def export_resource(self, obj):
-        return [field.export(obj) for field in self.get_fields()]
+        return [self.export_field(field, obj) for field in self.get_fields()]
 
     def get_export_headers(self):
         headers = [field.column_name for field in self.get_fields()]
