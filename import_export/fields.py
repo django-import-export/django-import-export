@@ -64,6 +64,8 @@ class Field(object):
                         repr(value), attr)
                 raise exceptions.FieldError(msg)
             value = getattr(value, attr)
+            if value is None:
+                return None
 
         if callable(value):
             value = value()
