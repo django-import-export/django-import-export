@@ -1,3 +1,0 @@
-Django>=1.4
-tablib
-diff-match-patch
