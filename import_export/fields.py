@@ -33,18 +33,9 @@ class Field(object):
             return '<%s: %s>' % (path, column_name)
         return '<%s>' % path
 
-    def convert(self, value):
-        """
-        Handles conversion between the data found and the type of the field.
-
-        Extending classes should override this method and provide correct
-        data coercion.
-        """
-        return self.widget.render(value)
-
     def clean(self, data):
         """
-        Takes data stored in the data for the field and returns it as
+        Takes value stored in the data for the field and returns it as
         appropriate python object.
         """
         value = data[self.column_name]
@@ -53,7 +44,7 @@ class Field(object):
 
     def get_value(self, obj):
         """
-        Return value of object.
+        Return value of field of object.
         """
         if self.attribute is None:
             return None
@@ -62,6 +53,12 @@ class Field(object):
             value = value()
         return value
 
+    def save(self, obj, data):
+        """
+        Clean value and assign it to ``obj``.
+        """
+        setattr(self.attribute, self.clean(data))
+
     def export(self, obj):
         """
         Takes data from the provided object and prepares it for export.
@@ -69,7 +66,7 @@ class Field(object):
         value = self.get_value(obj)
         if value is None:
             return ""
-        return self.convert(value)
+        return self.widget.render(value)
 
 
 class DateField(Field):

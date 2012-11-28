@@ -29,6 +29,11 @@ class FieldTest(TestCase):
         self.assertEqual(self.field.export(self.obj),
                 self.row['name'])
 
+    def test_save(self):
+        self.row['name'] = 'foo'
+        self.field.save(self.obj, self.row)
+        self.assertEqual(self.obj.name, 'foo')
+
 
 class IntegerFieldTest(TestCase):
 
