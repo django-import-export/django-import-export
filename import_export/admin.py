@@ -31,7 +31,7 @@ class ImportMixin(object):
             ('tablib.formats._csv', 'CSV'),
             ('tablib.formats._xls', 'Excel XLS'),
             )
-    from_encoding = "cp1250"
+    from_encoding = "utf-8"
 
     def get_urls(self):
         urls = super(ImportMixin, self).get_urls()
@@ -154,6 +154,7 @@ class ExportMixin(object):
     resource_class = None
     change_list_template = 'admin/import_export/change_list_export.html'
     export_format = 'csv'
+    to_encoding = "utf-8"
 
     def get_urls(self):
         urls = super(ExportMixin, self).get_urls()
