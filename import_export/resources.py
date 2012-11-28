@@ -149,7 +149,8 @@ class Resource(object):
         data = []
         dmp = diff_match_patch()
         for field in self.get_fields():
-            v1, v2 = field.export(original), field.export(current)
+            v1 = self.export_field(field, original)
+            v2 = self.export_field(field, current)
             diff = dmp.diff_main(unicode(v1), unicode(v2))
             dmp.diff_cleanupSemantic(diff)
             html = dmp.diff_prettyHtml(diff)
