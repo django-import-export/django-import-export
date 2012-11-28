@@ -78,3 +78,24 @@ class DateWidget(Widget):
 
     def render(self, value):
         return value.strftime(self.format)
+
+
+class DateTimeWidget(Widget):
+    """
+    Widget for converting date fields.
+
+    Takes optional ``format`` parameter.
+    """
+
+    def __init__(self, format=None):
+        if format is None:
+            format = "%Y-%m-%d %H:%M:%S"
+        self.format = format
+
+    def clean(self, value):
+        if not value:
+            return None
+        return datetime.strptime(value, self.format)
+
+    def render(self, value):
+        return value.strftime(self.format)

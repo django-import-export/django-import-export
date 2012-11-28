@@ -280,7 +280,9 @@ class ModelResource(Resource):
         """
         result = default
         internal_type = f.get_internal_type()
-        if internal_type in ('DateField', ):
+        if internal_type in ('DateTimeField', ):
+            result = widgets.DateTimeWidget
+        elif internal_type in ('DateField', ):
             result = widgets.DateWidget
         elif internal_type in ('IntegerField', 'PositiveIntegerField',
                 'PositiveSmallIntegerField', 'SmallIntegerField', 'AutoField'):
