@@ -105,10 +105,11 @@ class ModelResourceTest(TestCase):
     def test_get_diff(self):
         book2 = Book(name="Some other book")
         diff = self.resource.get_diff(self.book, book2)
-        self.assertEqual(diff[1],
+        headers = self.resource.get_export_headers()
+        self.assertEqual(diff[headers.index('name')],
                 u'<span>Some </span><ins style="background:#e6ffe6;">'
                 u'other </ins><span>book</span>')
-        self.assertFalse(diff[2])
+        self.assertFalse(diff[headers.index('author_email')])
 
     def test_import_data(self):
         result = self.resource.import_data(self.dataset, raise_errors=True)
@@ -171,9 +172,10 @@ class ModelResourceTest(TestCase):
         dataset = self.resource.export(Book.objects.all())
         self.assertEqual(dataset.dict[0]['author'], author1.pk)
 
+        headers = self.resource.get_export_headers()
         row = list(dataset.pop())
         author2 = Author.objects.create(name='Bar')
-        row[2] = author2.pk
+        row[headers.index('author')] = author2.pk
         dataset.append(row)
         self.resource.import_data(dataset, raise_errors=True)
 
