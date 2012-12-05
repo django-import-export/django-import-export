@@ -129,7 +129,7 @@ class Resource(object):
         pass
 
     def import_field(self, field, obj, data):
-        if field.attribute:
+        if field.attribute and field.column_name in data:
             setattr(obj, field.attribute, field.clean(data))
 
     def import_obj(self, obj, data):
