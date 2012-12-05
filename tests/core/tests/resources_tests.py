@@ -11,7 +11,7 @@ from import_export import widgets
 from import_export import results
 from import_export.instance_loaders import ModelInstanceLoader
 
-from ..models import Book, Author
+from ..models import Book, Author, Category
 
 
 class MyResource(resources.Resource):
@@ -81,6 +81,10 @@ class ModelResourceTest(TestCase):
         self.assertIsInstance(widget, widgets.ForeignKeyWidget)
         self.assertEqual(widget.model, Author)
 
+    def test_fields_m2m(self):
+        fields = self.resource.fields
+        self.assertIn('categories', fields)
+
     def test_excluded_fields(self):
         self.assertNotIn('imported', self.resource.fields)
 
@@ -98,7 +102,7 @@ class ModelResourceTest(TestCase):
     def test_get_export_headers(self):
         headers = self.resource.get_export_headers()
         self.assertEqual(headers, ['published_date',
-            'id', 'name', 'author', 'author_email', 'price',
+            'id', 'name', 'author', 'author_email', 'price', 'categories',
             ])
 
     def test_export(self):
@@ -185,6 +189,26 @@ class ModelResourceTest(TestCase):
 
         book = Book.objects.get(pk=self.book.pk)
         self.assertEqual(book.author, author2)
+
+    def test_m2m_import_export(self):
+        cat1 = Category.objects.create(name='Cat 1')
+        cat2 = Category.objects.create(name='Cat 2')
+        self.book.categories.add(cat1)
+        self.book.categories.add(cat2)
+
+        dataset = self.resource.export(Book.objects.all())
+        self.assertEqual(dataset.dict[0]['categories'],
+                '%d,%d' % (cat1.pk, cat2.pk))
+
+        headers = self.resource.get_export_headers()
+        row = list(dataset.pop())
+        row[headers.index('categories')] = "%d" % cat1.pk
+        dataset.append(row)
+        self.resource.import_data(dataset, raise_errors=True)
+
+        book = Book.objects.get(pk=self.book.pk)
+        self.assertIn(cat1, book.categories.all())
+        self.assertNotIn(cat2, book.categories.all())
 
 
 class ModelResourceFactoryTest(TestCase):

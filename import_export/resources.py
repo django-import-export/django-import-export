@@ -285,6 +285,9 @@ class ModelResource(Resource):
         """
         result = default
         internal_type = f.get_internal_type()
+        if internal_type in ('ManyToManyField', ):
+            result = functools.partial(widgets.ManyToManyWidget,
+                    model=f.rel.to)
         if internal_type in ('ForeignKey', ):
             result = functools.partial(widgets.ForeignKeyWidget,
                     model=f.rel.to)

@@ -22,3 +22,6 @@ Widgets
 
 .. autoclass:: import_export.widgets.ForeignKeyWidget
    :members:
+
+.. autoclass:: import_export.widgets.ManyToManyWidget
+   :members:

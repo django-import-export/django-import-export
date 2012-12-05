@@ -133,3 +133,24 @@ class ForeignKeyWidget(Widget):
         if value is None:
             return ""
         return value.pk
+
+
+class ManyToManyWidget(Widget):
+    """
+    Widget for ``ManyToManyField`` model field that represent m2m field
+    as comma separated pk values.
+    """
+
+    def __init__(self, model, *args, **kwargs):
+        self.model = model
+        super(ManyToManyWidget, self).__init__(*args, **kwargs)
+
+    def clean(self, value):
+        if not value:
+            return self.model.objects.none()
+        ids = value.split(",")
+        return self.model.objects.filter(pk__in=ids)
+
+    def render(self, value):
+        ids = [str(obj.pk) for obj in value.all()]
+        return ",".join(ids)

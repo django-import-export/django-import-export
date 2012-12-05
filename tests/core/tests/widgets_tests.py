@@ -7,6 +7,7 @@ from import_export import widgets
 
 from ..models import (
         Author,
+        Category,
         )
 
 
@@ -47,3 +48,22 @@ class ForeignKeyWidgetTest(TestCase):
 
     def test_render_empty(self):
         self.assertEqual(self.widget.render(None), "")
+
+
+class ManyToManyWidget(TestCase):
+
+    def setUp(self):
+        self.widget = widgets.ManyToManyWidget(Category)
+        self.cat1 = Category.objects.create(name='Cat 1')
+        self.cat2 = Category.objects.create(name='Cat 2')
+
+    def test_clean(self):
+        value = "%s,%s" % (self.cat1.pk, self.cat2.pk)
+        cleaned_data = self.widget.clean(value)
+        self.assertEqual(len(cleaned_data), 2)
+        self.assertIn(self.cat1, cleaned_data)
+        self.assertIn(self.cat2, cleaned_data)
+
+    def test_render(self):
+        self.assertEqual(self.widget.render(Category.objects),
+                "%s,%s" % (self.cat1.pk, self.cat2.pk))
