@@ -103,7 +103,8 @@ class DateTimeWidget(Widget):
 
 class ForeignKeyWidget(Widget):
     """
-    Widget for ``ForeignKey`` model field.
+    Widget for ``ForeignKey`` model field that represent ForeignKey as
+    integer value.
 
     Requires a positional argument: the class to which the field is related.
     """

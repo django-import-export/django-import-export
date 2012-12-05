@@ -16,3 +16,6 @@ Widgets
 
 .. autoclass:: import_export.widgets.DateWidget
    :members:
+
+.. autoclass:: import_export.widgets.ForeignKeyWidget
+   :members:
