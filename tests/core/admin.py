@@ -2,7 +2,7 @@ from django.contrib import admin
 
 from import_export.admin import ImportExportMixin
 
-from .models import Book
+from .models import Book, Category, Author
 
 
 class BookAdmin(ImportExportMixin, admin.ModelAdmin):
@@ -10,3 +10,5 @@ class BookAdmin(ImportExportMixin, admin.ModelAdmin):
 
 
 admin.site.register(Book, BookAdmin)
+admin.site.register(Category)
+admin.site.register(Author)
