@@ -6,6 +6,7 @@ import tablib
 
 from import_export import resources
 from import_export import fields
+from import_export import widgets
 from import_export import results
 from import_export.instance_loaders import ModelInstanceLoader
 
@@ -48,7 +49,7 @@ class BookResource(resources.ModelResource):
     class Meta:
         model = Book
         exclude = ('imported', )
-        export_order = ('id', 'name', 'author_email', 'published')
+        export_order = ('id', 'name', 'author', 'author_email', 'published')
 
 
 class ModelResourceTest(TestCase):
@@ -71,6 +72,13 @@ class ModelResourceTest(TestCase):
         self.assertIn('name', fields)
         self.assertIn('author_email', fields)
 
+    def test_fields_foreign_key(self):
+        fields = self.resource.fields
+        self.assertIn('author', fields)
+        widget = fields['author'].widget
+        self.assertIsInstance(widget, widgets.ForeignKeyWidget)
+        self.assertEqual(widget.model, Author)
+
     def test_excluded_fields(self):
         self.assertNotIn('imported', self.resource.fields)
 
@@ -87,7 +95,7 @@ class ModelResourceTest(TestCase):
 
     def test_get_export_headers(self):
         headers = self.resource.get_export_headers()
-        self.assertEqual(headers, ['id', 'name', 'author_email',
+        self.assertEqual(headers, ['id', 'name', 'author', 'author_email',
             'published_date'])
 
     def test_export(self):
@@ -154,6 +162,23 @@ class ModelResourceTest(TestCase):
         self.book.published = date(2012, 8, 13)
         result = resource.fields['published'].export(self.book)
         self.assertEqual(result, "13.08.2012")
+
+    def test_foreign_keys_import_export(self):
+        author1 = Author.objects.create(name='Foo')
+        self.book.author = author1
+        self.book.save()
+
+        dataset = self.resource.export(Book.objects.all())
+        self.assertEqual(dataset.dict[0]['author'], author1.pk)
+
+        row = list(dataset.pop())
+        author2 = Author.objects.create(name='Bar')
+        row[2] = author2.pk
+        dataset.append(row)
+        self.resource.import_data(dataset, raise_errors=True)
+
+        book = Book.objects.get(pk=self.book.pk)
+        self.assertEqual(book.author, author2)
 
 
 class ModelResourceFactoryTest(TestCase):

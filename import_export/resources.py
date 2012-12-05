@@ -1,3 +1,4 @@
+import functools
 from collections import OrderedDict
 from copy import deepcopy
 import sys
@@ -284,6 +285,9 @@ class ModelResource(Resource):
         """
         result = default
         internal_type = f.get_internal_type()
+        if internal_type in ('ForeignKey', ):
+            result = functools.partial(widgets.ForeignKeyWidget,
+                    model=f.rel.to)
         if internal_type in ('DateTimeField', ):
             result = widgets.DateTimeWidget
         elif internal_type in ('DateField', ):

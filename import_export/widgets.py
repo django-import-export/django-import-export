@@ -99,3 +99,24 @@ class DateTimeWidget(Widget):
 
     def render(self, value):
         return value.strftime(self.format)
+
+
+class ForeignKeyWidget(Widget):
+    """
+    Widget for ``ForeignKey`` model field.
+
+    Requires a positional argument: the class to which the field is related.
+    """
+
+    def __init__(self, model, *args, **kwargs):
+        self.model = model
+        super(ForeignKeyWidget, self).__init__(*args, **kwargs)
+
+    def clean(self, value):
+        pk = super(ForeignKeyWidget, self).clean(value)
+        return self.model.objects.get(pk=pk) if pk else None
+
+    def render(self, value):
+        if value is None:
+            return ""
+        return value.pk
