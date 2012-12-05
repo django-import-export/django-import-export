@@ -8,6 +8,9 @@ Widgets
 .. autoclass:: import_export.widgets.IntegerWidget
    :members:
 
+.. autoclass:: import_export.widgets.DecimalWidget
+   :members:
+
 .. autoclass:: import_export.widgets.CharWidget
    :members:
 

@@ -1,3 +1,4 @@
+from decimal import Decimal
 from datetime import datetime
 
 
@@ -34,6 +35,17 @@ class IntegerWidget(Widget):
         if not value:
             return None
         return int(value)
+
+
+class DecimalWidget(Widget):
+    """
+    Widget for converting decimal fields.
+    """
+
+    def clean(self, value):
+        if not value:
+            return None
+        return Decimal(value)
 
 
 class CharWidget(Widget):

@@ -1,3 +1,4 @@
+from decimal import Decimal
 from datetime import date
 
 from django.test import TestCase
@@ -20,6 +21,13 @@ class DateWidgetTest(TestCase):
 
     def test_clean(self):
         self.assertEqual(self.widget.clean("13.08.2012"), self.date)
+
+
+class DecimalWidgetTest(TestCase):
+
+    def test_clean(self):
+        widget = widgets.DecimalWidget()
+        self.assertEqual(widget.clean("11.111"), Decimal("11.111"))
 
 
 class ForeignKeyWidgetTest(TestCase):

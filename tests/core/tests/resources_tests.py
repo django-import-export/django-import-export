@@ -1,3 +1,4 @@
+from decimal import Decimal
 from datetime import date
 
 from django.test import TestCase
@@ -49,7 +50,6 @@ class BookResource(resources.ModelResource):
     class Meta:
         model = Book
         exclude = ('imported', )
-        export_order = ('id', 'name', 'author', 'author_email', 'published')
 
 
 class ModelResourceTest(TestCase):
@@ -58,8 +58,9 @@ class ModelResourceTest(TestCase):
         self.resource = BookResource()
 
         self.book = Book.objects.create(name="Some book")
-        self.dataset = tablib.Dataset(headers=['id', 'name', 'author_email'])
-        row = [self.book.pk, 'Some book', 'test@example.com']
+        self.dataset = tablib.Dataset(headers=['id', 'name', 'author_email',
+            'price'])
+        row = [self.book.pk, 'Some book', 'test@example.com', "10.25"]
         self.dataset.append(row)
 
     def test_default_instance_loader_class(self):
@@ -71,6 +72,7 @@ class ModelResourceTest(TestCase):
         self.assertIn('id', fields)
         self.assertIn('name', fields)
         self.assertIn('author_email', fields)
+        self.assertIn('price', fields)
 
     def test_fields_foreign_key(self):
         fields = self.resource.fields
@@ -95,8 +97,9 @@ class ModelResourceTest(TestCase):
 
     def test_get_export_headers(self):
         headers = self.resource.get_export_headers()
-        self.assertEqual(headers, ['id', 'name', 'author', 'author_email',
-            'published_date'])
+        self.assertEqual(headers, ['published_date',
+            'id', 'name', 'author', 'author_email', 'price',
+            ])
 
     def test_export(self):
         dataset = self.resource.export(Book.objects.all())
@@ -122,6 +125,7 @@ class ModelResourceTest(TestCase):
 
         instance = Book.objects.get(pk=self.book.pk)
         self.assertEqual(instance.author_email, 'test@example.com')
+        self.assertEqual(instance.price, Decimal("10.25"))
 
     def test_import_data_error_saving_model(self):
         row = list(self.dataset.pop())

@@ -288,6 +288,8 @@ class ModelResource(Resource):
         if internal_type in ('ForeignKey', ):
             result = functools.partial(widgets.ForeignKeyWidget,
                     model=f.rel.to)
+        if internal_type in ('DecimalField', ):
+            result = widgets.DecimalWidget
         if internal_type in ('DateTimeField', ):
             result = widgets.DateTimeWidget
         elif internal_type in ('DateField', ):
