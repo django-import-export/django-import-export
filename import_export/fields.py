@@ -1,4 +1,3 @@
-from . import exceptions
 from . import widgets
 
 
@@ -59,11 +58,12 @@ class Field(object):
         value = obj
 
         for attr in attrs:
-            if not hasattr(value, attr):
-                msg = "The object '%s' does not have a attribute '%s'." % (
-                        repr(value), attr)
-                raise exceptions.FieldError(msg)
-            value = getattr(value, attr)
+            try:
+                value = getattr(value, attr)
+            except ValueError:
+                # needs to have a primary key value before a many-to-many
+                # relationship can be used.
+                return None
             if value is None:
                 return None
 
