@@ -1,5 +1,4 @@
 import functools
-from collections import OrderedDict
 from copy import deepcopy
 import sys
 import traceback
@@ -8,6 +7,7 @@ import tablib
 from diff_match_patch import diff_match_patch
 
 from django.utils.safestring import mark_safe
+from django.utils.datastructures import SortedDict
 
 from .results import Error, Result, RowResult
 from .fields import Field
@@ -73,7 +73,7 @@ class DeclarativeMetaclass(type):
                     field.column_name = field_name
                 declared_fields.append((field_name, field))
 
-        attrs['fields'] = OrderedDict(declared_fields)
+        attrs['fields'] = SortedDict(declared_fields)
         new_class = super(DeclarativeMetaclass, cls).__new__(cls, name,
                 bases, attrs)
         opts = getattr(new_class, 'Meta', None)
@@ -242,7 +242,7 @@ class ModelDeclarativeMetaclass(DeclarativeMetaclass):
                         widget=FieldWidget(**widget_kwargs))
                 field_list.append((f.name, field, ))
 
-            new_class.fields.update(OrderedDict(field_list))
+            new_class.fields.update(SortedDict(field_list))
 
             #add fields that follow relationships
             if opts.fields is not None:
@@ -266,7 +266,7 @@ class ModelDeclarativeMetaclass(DeclarativeMetaclass):
                             widget=FieldWidget(**widget_kwargs), readonly=True)
                     field_list.append((field_name, field, ))
 
-                new_class.fields.update(OrderedDict(field_list))
+                new_class.fields.update(SortedDict(field_list))
 
         return new_class
 
