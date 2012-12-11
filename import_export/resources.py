@@ -301,7 +301,7 @@ class ModelResource(Resource):
                 'PositiveSmallIntegerField', 'SmallIntegerField', 'AutoField'):
             result = widgets.IntegerWidget
         elif internal_type in ('BooleanField', 'NullBooleanField'):
-                result = widgets.BooleanWidget
+            result = widgets.BooleanWidget
         return result
 
     @classmethod
