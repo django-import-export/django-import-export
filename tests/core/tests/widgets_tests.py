@@ -11,6 +11,16 @@ from ..models import (
         )
 
 
+class BooleanWidgetTest(TestCase):
+
+    def setUp(self):
+        self.widget = widgets.BooleanWidget()
+
+    def test_clean(self):
+        self.assertTrue(self.widget.clean("1"))
+        self.assertTrue(self.widget.clean(1))
+
+
 class DateWidgetTest(TestCase):
 
     def setUp(self):
