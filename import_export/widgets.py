@@ -61,14 +61,14 @@ class BooleanWidget(Widget):
     """
     Widget for converting boolean fields.
     """
-    TRUE_VALUE = "1"
+    TRUE_VALUES = ["1", 1]
     FALSE_VALUE = "0"
 
     def render(self, value):
-        return self.TRUE_VALUE if value else self.FALSE_VALUE
+        return self.TRUE_VALUES[0] if value else self.FALSE_VALUE
 
     def clean(self, value):
-        return True if value == self.TRUE_VALUE else False
+        return True if value in self.TRUE_VALUES else False
 
 
 class DateWidget(Widget):
