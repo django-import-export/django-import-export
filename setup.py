@@ -19,7 +19,8 @@ install_requires = [
 
 setup(
     name="django-import-export",
-    description="django-import-export",
+    description="Django application and library for importing and exporting"
+            "data with included admin integration.",
     version=VERSION,
     author="Informatika Mihelac",
     author_email="bmihelac@mihelac.org",
