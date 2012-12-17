@@ -1,5 +1,4 @@
 from setuptools import setup, find_packages
-import os
 
 
 VERSION = __import__("import_export").__version__
@@ -21,8 +20,6 @@ install_requires = [
 setup(
     name="django-import-export",
     description="django-import-export",
-    long_description=open(os.path.join(os.path.dirname(__file__),
-        'README.rst')).read(),
     version=VERSION,
     author="Informatika Mihelac",
     author_email="bmihelac@mihelac.org",
