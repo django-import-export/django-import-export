@@ -131,13 +131,28 @@ class Resource(object):
 
     def import_field(self, field, obj, data):
         if field.attribute and field.column_name in data:
-            setattr(obj, field.attribute, field.clean(data))
+            field.save(obj, data)
 
     def import_obj(self, obj, data):
         """
         """
         for field in self.get_fields():
+            if isinstance(field.widget, widgets.ManyToManyWidget):
+                continue
             self.import_field(field, obj, data)
+
+    def save_m2m(self, obj, data, dry_run):
+        """
+        Saves m2m fields.
+
+        Model instance need to have a primary key value before
+        a many-to-many relationship can be used.
+        """
+        if not dry_run:
+            for field in self.get_fields():
+                if not isinstance(field.widget, widgets.ManyToManyWidget):
+                    continue
+                self.import_field(field, obj, data)
 
     def get_diff(self, original, current, dry_run=False):
         """
@@ -180,6 +195,7 @@ class Resource(object):
                 original = deepcopy(instance)
                 self.import_obj(instance, row)
                 self.save_instance(instance, dry_run)
+                self.save_m2m(instance, row, dry_run)
                 row_result.diff = self.get_diff(original, instance, dry_run)
             except Exception, e:
                 tb_info = traceback.format_exc(sys.exc_info()[2])

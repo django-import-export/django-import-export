@@ -172,7 +172,7 @@ class ModelResourceTest(TestCase):
         result = resource.fields['published'].export(self.book)
         self.assertEqual(result, "13.08.2012")
 
-    def test_foreign_keys_import_export(self):
+    def test_foreign_keys_export(self):
         author1 = Author.objects.create(name='Foo')
         self.book.author = author1
         self.book.save()
@@ -180,17 +180,17 @@ class ModelResourceTest(TestCase):
         dataset = self.resource.export(Book.objects.all())
         self.assertEqual(dataset.dict[0]['author'], author1.pk)
 
-        headers = self.resource.get_export_headers()
-        row = list(dataset.pop())
+    def test_foreign_keys_import(self):
         author2 = Author.objects.create(name='Bar')
-        row[headers.index('author')] = author2.pk
-        dataset.append(row)
+        headers = ['id', 'name', 'author']
+        row = [None, 'FooBook', author2.pk]
+        dataset = tablib.Dataset(row, headers=headers)
         self.resource.import_data(dataset, raise_errors=True)
 
-        book = Book.objects.get(pk=self.book.pk)
+        book = Book.objects.get(name='FooBook')
         self.assertEqual(book.author, author2)
 
-    def test_m2m_import_export(self):
+    def test_m2m_export(self):
         cat1 = Category.objects.create(name='Cat 1')
         cat2 = Category.objects.create(name='Cat 2')
         self.book.categories.add(cat1)
@@ -200,15 +200,15 @@ class ModelResourceTest(TestCase):
         self.assertEqual(dataset.dict[0]['categories'],
                 '%d,%d' % (cat1.pk, cat2.pk))
 
-        headers = self.resource.get_export_headers()
-        row = list(dataset.pop())
-        row[headers.index('categories')] = "%d" % cat1.pk
-        dataset.append(row)
+    def test_m2m_import(self):
+        cat1 = Category.objects.create(name='Cat 1')
+        headers = ['id', 'name', 'categories']
+        row = [None, 'FooBook', "%s" % cat1.pk]
+        dataset = tablib.Dataset(row, headers=headers)
         self.resource.import_data(dataset, raise_errors=True)
 
-        book = Book.objects.get(pk=self.book.pk)
+        book = Book.objects.get(name='FooBook')
         self.assertIn(cat1, book.categories.all())
-        self.assertNotIn(cat2, book.categories.all())
 
 
 class ModelResourceFactoryTest(TestCase):
