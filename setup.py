@@ -26,4 +26,5 @@ setup(
     author_email="bmihelac@mihelac.org",
     url="https://github.com/bmihelac/django-import-export",
     packages=find_packages(exclude=["tests"]),
+    install_requires=install_requires,
 )
