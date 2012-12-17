@@ -139,6 +139,8 @@ class ManyToManyWidget(Widget):
     """
     Widget for ``ManyToManyField`` model field that represent m2m field
     as comma separated pk values.
+
+    Requires a positional argument: the class to which the field is related.
     """
 
     def __init__(self, model, *args, **kwargs):

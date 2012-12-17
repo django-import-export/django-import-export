@@ -22,6 +22,9 @@ from .resources import (
 
 
 class ImportMixin(object):
+    """
+    Import mixin.
+    """
 
     change_list_template = 'admin/import_export/change_list_import.html'
     import_template_name = 'admin/import_export/import.html'
@@ -29,7 +32,6 @@ class ImportMixin(object):
     format_choices = (
             ('', '---'),
             ('tablib.formats._csv', 'CSV'),
-            ('tablib.formats._xls', 'Excel XLS'),
             )
     from_encoding = "utf-8"
 
@@ -151,6 +153,9 @@ class ImportMixin(object):
 
 
 class ExportMixin(object):
+    """
+    Export mixin.
+    """
     resource_class = None
     change_list_template = 'admin/import_export/change_list_export.html'
     export_format = 'csv'
