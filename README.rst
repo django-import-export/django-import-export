@@ -18,6 +18,11 @@ Features:
 
 * export data respecting admin filters
 
+Documentation
+-------------
+
+https://django-import-export.readthedocs.org/en/latest/
+
 Example app
 -----------
 
