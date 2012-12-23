@@ -26,5 +26,6 @@ setup(
     author_email="bmihelac@mihelac.org",
     url="https://github.com/bmihelac/django-import-export",
     packages=find_packages(exclude=["tests"]),
+    package_data={'import_export': ['templates/admin/import_export/*.html']},
     install_requires=install_requires,
 )
