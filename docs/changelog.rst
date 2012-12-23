@@ -12,6 +12,8 @@ Change Log
 
 * include all avialable formats in Admin integration
 
+* bugfixes
+
 0.1.0
 =====
 
