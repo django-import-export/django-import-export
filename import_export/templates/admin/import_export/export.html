@@ -1,0 +1,37 @@
+{% extends "admin/import_export/base.html" %}
+{% load url from future %}
+{% load i18n %}
+{% load admin_urls %}
+{% load import_export_tags %}
+
+{% block breadcrumbs_last %}
+{% trans "Export" %}
+{% endblock %}
+
+{% block content %}
+<h1>{% trans "Export" %}</h1>
+
+<form action="{% url opts|admin_urlname:"export" %}" method="POST">
+  {% csrf_token %}
+
+    <fieldset class="module aligned">
+      {% for field in form %}
+        <div class="form-row">
+          {{ field.errors }}
+
+          {{ field.label_tag }}
+
+          {{ field }}
+
+          {% if field.field.help_text %}
+          <p class="help">{{ field.field.help_text|safe }}</p>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </fieldset>
+
+    <div class="submit-row">
+      <input type="submit" class="default" value="{% trans "Submit" %}">
+    </div>
+</form>
+{% endblock %}

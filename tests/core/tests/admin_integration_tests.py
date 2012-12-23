@@ -24,7 +24,7 @@ class ImportExportAdminIntegrationTest(TestCase):
         self.assertContains(response, _('Export'))
 
     def test_import(self):
-        input_format = 'tablib.formats._csv'
+        input_format = '0'
         filename = os.path.join(
                 os.path.dirname(__file__),
                 os.path.pardir,
@@ -49,5 +49,11 @@ class ImportExportAdminIntegrationTest(TestCase):
 
     def test_export(self):
         response = self.client.get('/admin/core/book/export/')
+        self.assertEqual(response.status_code, 200)
+
+        data = {
+                'file_format': '0',
+                }
+        response = self.client.post('/admin/core/book/export/', data)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.has_header("Content-Disposition"))

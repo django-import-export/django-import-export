@@ -2,6 +2,15 @@
 Change Log
 ===========
 
+0.1.1dev
+========
+
+* added ExportForm to admin integration for choosing export file format
+
+* refactor admin integration to allow better handling of specific formats
+  supported features and better handling of reading text files
+
+* include all avialable formats in Admin integration
 
 0.1.0
 =====

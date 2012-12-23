@@ -1,24 +1,34 @@
 import tempfile
 from datetime import datetime
 
-import tablib
-
 from django.contrib import admin
 from django.utils.translation import ugettext_lazy as _
 from django.conf.urls.defaults import patterns, url
 from django.template.response import TemplateResponse
 from django.contrib import messages
 from django.http import HttpResponseRedirect, HttpResponse
-from django.utils.importlib import import_module
 from django.core.urlresolvers import reverse
 
 from .forms import (
         ImportForm,
         ConfirmImportForm,
+        ExportForm,
         )
 from .resources import (
         modelresource_factory,
         )
+from .formats import base_formats
+
+
+DEFAULT_FORMATS = (
+            base_formats.CSV,
+            base_formats.XLS,
+            base_formats.TSV,
+            base_formats.ODS,
+            base_formats.JSON,
+            base_formats.YAML,
+            base_formats.HTML,
+            )
 
 
 class ImportMixin(object):
@@ -29,10 +39,7 @@ class ImportMixin(object):
     change_list_template = 'admin/import_export/change_list_import.html'
     import_template_name = 'admin/import_export/import.html'
     resource_class = None
-    format_choices = (
-            ('', '---'),
-            ('tablib.formats._csv', 'CSV'),
-            )
+    formats = DEFAULT_FORMATS
     from_encoding = "utf-8"
 
     def get_urls(self):
@@ -54,35 +61,11 @@ class ImportMixin(object):
         else:
             return self.resource_class
 
-    def get_format(self, format_class):
-        if format_class:
-            return import_module(format_class)
-        return None
-
-    def get_mode_for_format(self, format):
+    def get_import_formats(self):
         """
-        Returns mode for opening files.
+        Returns available import formats.
         """
-        return 'rU'
-
-    def load_dataset(self, stream, input_format=None, from_encoding=None):
-        """
-        Loads data from ``stream`` given valid tablib ``input_format``
-        and returns tablib dataset
-
-        If ``from_encoding`` is specified, data will be converted to `utf-8`
-        characterset.
-        """
-        if from_encoding:
-            text = unicode(stream.read(), from_encoding).encode('utf-8')
-        else:
-            text = stream.read()
-        if not input_format:
-            data = tablib.import_set(text)
-        else:
-            data = tablib.Dataset()
-            input_format.import_set(data, text)
-        return data
+        return [f for f in self.formats if f().can_import()]
 
     def process_import(self, request, *args, **kwargs):
         opts = self.model._meta
@@ -90,14 +73,17 @@ class ImportMixin(object):
 
         confirm_form = ConfirmImportForm(request.POST)
         if confirm_form.is_valid():
-            input_format = self.get_format(
-                    confirm_form.cleaned_data['input_format'])
-            import_mode = self.get_mode_for_format(input_format)
+            import_formats = self.get_import_formats()
+            input_format = import_formats[
+                    int(confirm_form.cleaned_data['input_format'])
+                    ]()
             import_file = open(confirm_form.cleaned_data['import_file_name'],
-                    import_mode)
+                    input_format.get_read_mode())
+            data = import_file.read()
+            if not input_format.is_binary() and self.from_encoding:
+                data = unicode(data, self.from_encoding).encode('utf-8')
+            dataset = input_format.create_dataset(data)
 
-            dataset = self.load_dataset(import_file, input_format,
-                    self.from_encoding)
             resource.import_data(dataset, dry_run=False,
                     raise_errors=True)
 
@@ -115,34 +101,34 @@ class ImportMixin(object):
 
         context = {}
 
-        form = ImportForm(self.format_choices,
+        import_formats = self.get_import_formats()
+        form = ImportForm(import_formats,
                 request.POST or None,
                 request.FILES or None)
 
-        if request.POST:
-            if form.is_valid():
-                input_format = self.get_format(
-                        form.cleaned_data['input_format'])
-                import_mode = self.get_mode_for_format(input_format)
-                import_file = form.cleaned_data['import_file']
-                import_file.open(import_mode)
+        if request.POST and form.is_valid():
+            input_format = import_formats[
+                    int(form.cleaned_data['input_format'])
+                    ]()
+            import_file = form.cleaned_data['import_file']
+            import_file.open(input_format.get_read_mode())
+            data = import_file.read()
+            if not input_format.is_binary() and self.from_encoding:
+                data = unicode(data, self.from_encoding).encode('utf-8')
+            dataset = input_format.create_dataset(data)
+            result = resource.import_data(dataset, dry_run=True,
+                    raise_errors=False)
 
-                dataset = self.load_dataset(import_file, input_format,
-                        self.from_encoding)
-                result = resource.import_data(dataset, dry_run=True,
-                        raise_errors=False)
+            context['result'] = result
 
-                context['result'] = result
-
-                if not result.has_errors():
-                    tmp_file = tempfile.NamedTemporaryFile(delete=False)
-                    for chunk in import_file.chunks():
-                        tmp_file.write(chunk)
-                    tmp_file.close()
-                    context['confirm_form'] = ConfirmImportForm(initial={
-                        'import_file_name': tmp_file.name,
-                        'input_format': form.cleaned_data['input_format'],
-                        })
+            if not result.has_errors():
+                tmp_file = tempfile.NamedTemporaryFile(delete=False)
+                tmp_file.write(data)
+                tmp_file.close()
+                context['confirm_form'] = ConfirmImportForm(initial={
+                    'import_file_name': tmp_file.name,
+                    'input_format': form.cleaned_data['input_format'],
+                    })
 
         context['form'] = form
         context['opts'] = self.model._meta
@@ -158,7 +144,8 @@ class ExportMixin(object):
     """
     resource_class = None
     change_list_template = 'admin/import_export/change_list_export.html'
-    export_format = 'csv'
+    export_template_name = 'admin/import_export/export.html'
+    formats = DEFAULT_FORMATS
     to_encoding = "utf-8"
 
     def get_urls(self):
@@ -177,10 +164,17 @@ class ExportMixin(object):
         else:
             return self.resource_class
 
-    def get_export_filename(self):
+    def get_export_formats(self):
+        """
+        Returns available import formats.
+        """
+        return [f for f in self.formats if f().can_export()]
+
+    def get_export_filename(self, file_format):
         date_str = datetime.now().strftime('%Y-%m-%d')
         filename = "%s-%s.%s" % (self.model.__name__,
-                date_str, self.export_format)
+                date_str,
+                file_format.get_extension())
         return filename
 
     def get_export_queryset(self, request):
@@ -203,16 +197,30 @@ class ExportMixin(object):
         return cl.query_set
 
     def export_action(self, request, *args, **kwargs):
-        resource_class = self.get_resource_class()
-        queryset = self.get_export_queryset(request)
-        data = resource_class().export(queryset)
-        filename = self.get_export_filename()
-        response = HttpResponse(
-                getattr(data, self.export_format),
-                mimetype='application/octet-stream',
-                )
-        response['Content-Disposition'] = 'attachment; filename=%s' % filename
-        return response
+        formats = self.get_export_formats()
+        form = ExportForm(formats, request.POST or None)
+        if form.is_valid():
+            file_format = formats[
+                    int(form.cleaned_data['file_format'])
+                    ]()
+
+            resource_class = self.get_resource_class()
+            queryset = self.get_export_queryset(request)
+            data = resource_class().export(queryset)
+            response = HttpResponse(
+                    file_format.export_data(data),
+                    mimetype='application/octet-stream',
+                    )
+            response['Content-Disposition'] = 'attachment; filename=%s' % (
+                   self.get_export_filename(file_format),
+                   )
+            return response
+
+        context = {}
+        context['form'] = form
+        context['opts'] = self.model._meta
+        return TemplateResponse(request, [self.export_template_name],
+                context, current_app=self.admin_site.name)
 
 
 class ImportExportMixin(ImportMixin, ExportMixin):

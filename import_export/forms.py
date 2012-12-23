@@ -11,11 +11,34 @@ class ImportForm(forms.Form):
             choices=(),
             )
 
-    def __init__(self, format_choices, *args, **kwargs):
+    def __init__(self, import_formats, *args, **kwargs):
         super(ImportForm, self).__init__(*args, **kwargs)
-        self.fields['input_format'].choices = format_choices
+        choices = []
+        for i, f in enumerate(import_formats):
+            choices.append((str(i), f().get_title(),))
+        if len(import_formats) > 1:
+            choices.insert(0, ('', '---'))
+
+        self.fields['input_format'].choices = choices
 
 
 class ConfirmImportForm(forms.Form):
     import_file_name = forms.CharField(widget=forms.HiddenInput())
     input_format = forms.CharField(widget=forms.HiddenInput())
+
+
+class ExportForm(forms.Form):
+    file_format = forms.ChoiceField(
+            label=_('Format'),
+            choices=(),
+            )
+
+    def __init__(self, formats, *args, **kwargs):
+        super(ExportForm, self).__init__(*args, **kwargs)
+        choices = []
+        for i, f in enumerate(formats):
+            choices.append((str(i), f().get_title(),))
+        if len(formats) > 1:
+            choices.insert(0, ('', '---'))
+
+        self.fields['file_format'].choices = choices
