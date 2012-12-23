@@ -2,8 +2,8 @@
 Change Log
 ===========
 
-0.1.1dev
-========
+0.1.1
+=====
 
 * added ExportForm to admin integration for choosing export file format
 
