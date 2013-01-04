@@ -27,6 +27,7 @@ User Guide
    installation
    configuration
    getting_started
+   import_workflow
    example_app
    todo
    contributing
@@ -43,6 +44,7 @@ API documentation
    api_widgets
    api_instance_loaders
    api_admin
+   api_results
 
 
 .. _`tablib`: https://github.com/kennethreitz/tablib

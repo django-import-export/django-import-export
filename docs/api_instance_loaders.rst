@@ -2,5 +2,10 @@
 Instance loaders
 ================
 
-.. automodule:: import_export.instance_loaders
-   :members:
+.. module:: import_export.instance_loaders
+
+.. autoclass:: BaseInstanceLoader
+
+.. autoclass:: ModelInstanceLoader
+
+.. autoclass:: CachedInstanceLoader

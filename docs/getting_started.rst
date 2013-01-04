@@ -178,6 +178,11 @@ In 5th line ``Dataset`` with subset of ``Book`` fields is created.
 In rest of code we first pretend to import data with ``dry_run`` set, then
 check for any errors and import data.
 
+.. seealso::
+
+    :doc:`/import_workflow`
+        for detailed import workflow descripton and customization options.
+
 Admin integration
 -----------------
 
