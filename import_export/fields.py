@@ -1,5 +1,6 @@
 from . import widgets
 
+from django.core.exceptions import ObjectDoesNotExist
 
 class Field(object):
     """
@@ -60,7 +61,7 @@ class Field(object):
         for attr in attrs:
             try:
                 value = getattr(value, attr)
-            except ValueError:
+            except (ValueError, ObjectDoesNotExist):
                 # needs to have a primary key value before a many-to-many
                 # relationship can be used.
                 return None
