@@ -196,8 +196,7 @@ class Resource(object):
                 self.import_obj(instance, row)
                 self.save_instance(instance, dry_run)
                 self.save_m2m(instance, row, dry_run)
-                if not new:
-                    row_result.diff = self.get_diff(original, instance, dry_run)
+                row_result.diff = self.get_diff(original, instance, dry_run)
             except Exception, e:
                 tb_info = traceback.format_exc(sys.exc_info()[2])
                 row_result.errors.append(Error(repr(e), tb_info))
