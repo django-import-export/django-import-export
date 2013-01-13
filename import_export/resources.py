@@ -209,6 +209,9 @@ class Resource(object):
         return self._meta.export_order or self.fields.keys()
 
     def export_field(self, field, obj):
+        method = getattr(self, 'dehydrate_%s' % field, None)
+        if method is not None:
+            return method(obj)
         return field.export(obj)
 
     def export_resource(self, obj):
