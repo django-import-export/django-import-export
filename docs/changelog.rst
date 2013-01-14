@@ -5,6 +5,8 @@ Change Log
 0.1.2 (not released)
 ====================
 
+* Allowing a field to be 'dehydrated' with a custom method
+
 * added documentation
 
 0.1.1
