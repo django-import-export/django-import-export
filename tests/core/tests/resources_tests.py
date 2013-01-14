@@ -146,15 +146,37 @@ class ModelResourceTest(TestCase):
     def test_relationships_fields(self):
 
         class B(resources.ModelResource):
+            full_title = fields.Field()
+
             class Meta:
                 model = Book
-                fields = ('author__name',)
+                fields = ('author__name', 'full_title')
+
+            def dehydrate_full_title(self, obj):
+                return '%s by %s' % (obj.name, obj.author.name)
 
         author = Author.objects.create(name="Author")
         self.book.author = author
         resource = B()
-        result = resource.fields['author__name'].export(self.book)
-        self.assertEqual(result, author.name)
+        author_name = resource.fields['author__name'].export(self.book)
+        self.assertEqual(author_name, author.name)
+
+    def test_dehydrating_fields(self):
+        class B(resources.ModelResource):
+            full_title = fields.Field()
+
+            class Meta:
+                model = Book
+                fields = ('author__name', 'full_title')
+
+            def dehydrate_full_title(self, obj):
+                return '%s by %s' % (obj.name, obj.author.name)
+
+        author = Author.objects.create(name="Author")
+        self.book.author = author
+        resource = B()
+        full_title = resource.export_field(resource.get_fields()[0], self.book)
+        self.assertEqual(full_title, '%s by %s' % (self.book.name, self.book.author.name))
 
     def test_widget_kwargs_for_field(self):
 
