@@ -148,13 +148,13 @@ class ModelResourceTest(TestCase):
         class B(resources.ModelResource):
             class Meta:
                 model = Book
-                fields = ('author__name')
+                fields = ('author__name',)
 
         author = Author.objects.create(name="Author")
         self.book.author = author
         resource = B()
-        author_name = resource.fields['author__name'].export(self.book)
-        self.assertEqual(author_name, author.name)
+        result = resource.fields['author__name'].export(self.book)
+        self.assertEqual(result, author.name)
 
     def test_dehydrating_fields(self):
 
