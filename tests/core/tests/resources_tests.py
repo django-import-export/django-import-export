@@ -146,14 +146,9 @@ class ModelResourceTest(TestCase):
     def test_relationships_fields(self):
 
         class B(resources.ModelResource):
-            full_title = fields.Field()
-
             class Meta:
                 model = Book
-                fields = ('author__name', 'full_title')
-
-            def dehydrate_full_title(self, obj):
-                return '%s by %s' % (obj.name, obj.author.name)
+                fields = ('author__name')
 
         author = Author.objects.create(name="Author")
         self.book.author = author
@@ -162,6 +157,7 @@ class ModelResourceTest(TestCase):
         self.assertEqual(author_name, author.name)
 
     def test_dehydrating_fields(self):
+
         class B(resources.ModelResource):
             full_title = fields.Field()
 
