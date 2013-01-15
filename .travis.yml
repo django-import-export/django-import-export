@@ -1,0 +1,11 @@
+language: python
+python:
+  - "2.6"
+  - "2.7"
+env:
+  - DJANGO=1.4
+install:
+  - pip install -q Django==$DJANGO --use-mirrors
+  - pip install -r requirements/base.txt --use-mirrors
+script:
+  - python tests/manage.py test core --settings=settings
