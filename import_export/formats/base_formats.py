@@ -76,6 +76,11 @@ class TablibFormat(Format):
         return self.get_format().export_set(dataset)
 
     def get_extension(self):
+        # we support both 'extentions' and 'extensions' because currently tablib's master
+        # branch uses 'extentions' (which is a typo) but it's dev branch already uses 'extension'.
+        # TODO - remove this once the typo is fixxed in tablib's master branch
+        if hasattr(self.get_format(), 'extentions'):
+            return self.get_format().extentions[0]
         return self.get_format().extensions[0]
 
     def can_import(self):
