@@ -2,8 +2,8 @@
 django-import-export
 ====================
 
-.. image:: https://travis-ci.org/geeknam/django-import-export.png?branch=master
-        :target: https://travis-ci.org/geeknam/django-import-export
+.. image:: https://travis-ci.org/bmihelac/django-import-export.png?branch=master
+        :target: https://travis-ci.org/bmihelac/django-import-export
 
 django-import-export is a Django application and library for importing
 and exporting data with included admin integration.
