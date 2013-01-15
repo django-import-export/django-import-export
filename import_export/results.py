@@ -9,6 +9,7 @@ class RowResult(object):
     IMPORT_TYPE_UPDATE = 'update'
     IMPORT_TYPE_NEW = 'new'
     IMPORT_TYPE_DELETE = 'delete'
+    IMPORT_TYPE_SKIP = 'skip'
 
     def __init__(self):
         self.errors = []

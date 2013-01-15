@@ -203,6 +203,26 @@ check for any errors and import data.
     :doc:`/import_workflow`
         for detailed import workflow descripton and customization options.
 
+Deleting data
+^^^^^^^^^^^^^
+
+To delete objects during import, implement ``for_delete`` method on resource
+class.
+
+Example resource with ``delete`` field::
+
+    class BookResource(resources.ModelResource):
+        delete = fields.Field(widget=widgets.BooleanWidget())
+
+        def for_delete(self, row, instance):
+            return self.fields['delete'].clean(row)
+        
+        class Meta:
+            model = Book
+
+Import of this resource will delete model instances for rows
+that have column ``delete`` set to ``1``.
+
 Admin integration
 -----------------
 
