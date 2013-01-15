@@ -128,6 +128,26 @@ Other fields, that are not existing in target model may be added::
     :doc:`/api_fields`
         Available field types and options.
 
+
+Advanced data manipulation
+--------------------------
+
+Not all data can be easily pull off an object/model attribute.
+In order to turn complicated data model into a (generally simpler) processed
+data structure, ``dehydrate_<fieldname>`` method should be defined::
+
+    from import_export import fields
+
+    class BookResource(resources.ModelResource):
+        full_title = fields.Field()
+        
+        class Meta:
+            model = Book
+
+        def dehydrate_full_title(self, book):
+            return '%s by %s' % (book.name, book.name.author)
+
+
 Customize widgets
 -----------------
 
