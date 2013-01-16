@@ -1,4 +1,7 @@
-* bmihelac
+The django-import-export was original created by Bojan Mihelac (bmihelac).
+
+The following is a list of much appreciated contributors:
+
 * Titusz
 * jmaupetit (Julien Maupetit)
 * geeknam (Nam Ngo)
