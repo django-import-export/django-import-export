@@ -129,6 +129,24 @@ class Resource(object):
         """
         pass
 
+    def delete_instance(self, instance, dry_run=False):
+        self.before_delete_instance(instance, dry_run)
+        if not dry_run:
+            instance.delete()
+        self.after_delete_instance(instance, dry_run)
+
+    def before_delete_instance(self, instance, dry_run):
+        """
+        Override to add additional logic.
+        """
+        pass
+
+    def after_delete_instance(self, instance, dry_run):
+        """
+        Override to add additional logic.
+        """
+        pass
+
     def import_field(self, field, obj, data):
         if field.attribute and field.column_name in data:
             field.save(obj, data)
@@ -154,6 +172,15 @@ class Resource(object):
                     continue
                 self.import_field(field, obj, data)
 
+    def for_delete(self, row, instance):
+        """
+        Returns ``True`` if ``row`` importing should delete instance.
+
+        Default implementation returns ``False``.
+        Override this method to handle deletion.
+        """
+        return False
+
     def get_diff(self, original, current, dry_run=False):
         """
         Get diff between original and current object when ``import_data``
@@ -165,8 +192,8 @@ class Resource(object):
         data = []
         dmp = diff_match_patch()
         for field in self.get_fields():
-            v1 = self.export_field(field, original)
-            v2 = self.export_field(field, current)
+            v1 = self.export_field(field, original) if original else ""
+            v2 = self.export_field(field, current) if current else ""
             diff = dmp.diff_main(unicode(v1), unicode(v2))
             dmp.diff_cleanupSemantic(diff)
             html = dmp.diff_prettyHtml(diff)
@@ -193,10 +220,21 @@ class Resource(object):
                     row_result.import_type = RowResult.IMPORT_TYPE_UPDATE
                 row_result.new_record = new
                 original = deepcopy(instance)
-                self.import_obj(instance, row)
-                self.save_instance(instance, dry_run)
-                self.save_m2m(instance, row, dry_run)
-                row_result.diff = self.get_diff(original, instance, dry_run)
+                if self.for_delete(row, instance):
+                    if new:
+                        row_result.import_type = RowResult.IMPORT_TYPE_SKIP
+                        row_result.diff = self.get_diff(None, None, dry_run)
+                    else:
+                        row_result.import_type = RowResult.IMPORT_TYPE_DELETE
+                        self.delete_instance(instance, dry_run)
+                        row_result.diff = self.get_diff(original, None,
+                                dry_run)
+                else:
+                    self.import_obj(instance, row)
+                    self.save_instance(instance, dry_run)
+                    self.save_m2m(instance, row, dry_run)
+                    row_result.diff = self.get_diff(original, instance,
+                            dry_run)
             except Exception, e:
                 tb_info = traceback.format_exc(sys.exc_info()[2])
                 row_result.errors.append(Error(repr(e), tb_info))

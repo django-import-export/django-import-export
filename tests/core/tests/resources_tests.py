@@ -143,6 +143,22 @@ class ModelResourceTest(TestCase):
         msg = 'ValueError("invalid literal for int() with base 10: \'foo\'",)'
         self.assertTrue(result.rows[0].errors[0].error, msg)
 
+    def test_import_data_delete(self):
+
+        class B(BookResource):
+            delete = fields.Field(widget=widgets.BooleanWidget())
+
+            def for_delete(self, row, instance):
+                return self.fields['delete'].clean(row)
+
+        row = [self.book.pk, self.book.name, '1']
+        dataset = tablib.Dataset(*[row], headers=['id', 'name', 'delete'])
+        result = B().import_data(dataset, raise_errors=True)
+        self.assertFalse(result.has_errors())
+        self.assertEqual(result.rows[0].import_type,
+                results.RowResult.IMPORT_TYPE_DELETE)
+        self.assertFalse(Book.objects.filter(pk=self.book.pk))
+
     def test_relationships_fields(self):
 
         class B(resources.ModelResource):

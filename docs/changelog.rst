@@ -5,6 +5,8 @@ Change Log
 0.1.2 (not released)
 ====================
 
+* support for deleting objects during import
+
 * bug fixes
 
 * Allowing a field to be 'dehydrated' with a custom method

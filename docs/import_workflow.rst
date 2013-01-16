@@ -57,38 +57,45 @@ responsible for import data from given `dataset`.
       arguments. You can override ``init_instance`` method to manipulate how
       new objects are initialized (ie: to set default values).
 
-   #. ``import_obj`` method is called with current object `instance` and
-      current `row`.
+   #. ``for_delete`` method is called to determine if current `instance`
+      should be deleted:
 
-      ``import_obj`` loop through all `Resource` `fields`, skipping
-      many to many fields and calls ``import_field`` for each. (Many to many
-      fields require that instance have a primary key, this is why assigning
-      them is postponed, after object is saved).
-
-      ``import_field`` calls ``field.save`` method, if ``field`` has
-      both `attribute` and field `column_name` exists in given row.
-
-   #. ``save_instance`` method is called.
-
-      ``save_instance`` receives ``dry_run`` argument and actually saves
-      instance only when ``dry_run`` is False.
-
-      ``save_instance`` calls two hooks methods that by default does not
-      do anything but can be overriden to customize import process:
-
-      * ``before_save_instance``
-
-      * ``after_save_instance``
-
-      Both methods receive ``instance`` and ``dry_run`` arguments.
-
-   #. ``save_m2m`` method is called to save many to many fields.
-
+      #. current `instance` is deleted
+ 
+      OR
+ 
+      #. ``import_obj`` method is called with current object `instance` and
+         current `row`.
+ 
+         ``import_obj`` loop through all `Resource` `fields`, skipping
+         many to many fields and calls ``import_field`` for each. (Many to many
+         fields require that instance have a primary key, this is why assigning
+         them is postponed, after object is saved).
+ 
+         ``import_field`` calls ``field.save`` method, if ``field`` has
+         both `attribute` and field `column_name` exists in given row.
+ 
+      #. ``save_instance`` method is called.
+ 
+         ``save_instance`` receives ``dry_run`` argument and actually saves
+         instance only when ``dry_run`` is False.
+ 
+         ``save_instance`` calls two hooks methods that by default does not
+         do anything but can be overriden to customize import process:
+ 
+         * ``before_save_instance``
+ 
+         * ``after_save_instance``
+ 
+         Both methods receive ``instance`` and ``dry_run`` arguments.
+ 
+      #. ``save_m2m`` method is called to save many to many fields.
+ 
    #. ``RowResult`` is assigned with diff between original and imported
-      object fields as well as import type(new, updated).
-
-      If exception is raised inside row processing, and ``raise_errors`` is
-      ``False`` (default), traceback is appended to ``RowResult``.
+       object fields as well as import type(new, updated).
+ 
+       If exception is raised inside row processing, and ``raise_errors`` is
+       ``False`` (default), traceback is appended to ``RowResult``.
 
 #. ``result`` is returned.
 
