@@ -95,6 +95,8 @@
       <td>
         {% if row.import_type == 'new' %}
           {% trans "New" %}
+        {% elif row.import_type == 'skip' %}
+          {% trans "Skipped" %}
         {% elif row.import_type == 'delete' %}
           {% trans "Delete" %}
         {% elif row.import_type == 'update' %}
