@@ -68,6 +68,9 @@ class ImportMixin(object):
         return [f for f in self.formats if f().can_import()]
 
     def process_import(self, request, *args, **kwargs):
+        '''
+        Perform the actuall import action (after the user has confirmed he wishes to import)
+        '''
         opts = self.model._meta
         resource = self.get_resource_class()()
 
@@ -97,6 +100,11 @@ class ImportMixin(object):
             return HttpResponseRedirect(url)
 
     def import_action(self, request, *args, **kwargs):
+        '''
+        Perform a dry_run of the import to make sure the import will not result in errors.
+        If there where no error, save the the user uploaded file to a local temp file that 
+        will be used by 'process_import' for the actual import.
+        '''
         resource = self.get_resource_class()()
 
         context = {}
