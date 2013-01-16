@@ -2,13 +2,17 @@ import warnings
 import tablib
 
 try:
-    import xlrd
+    from tablib.compat import xlrd
     XLS_IMPORT = True
 except ImportError:
-    xls_warning = "Installed `tablib` library does not include"
-    "import support for 'xls' format."
-    warnings.warn(xls_warning, ImportWarning)
-    XLS_IMPORT = False
+    try:
+        import xlrd # NOQA
+        XLS_IMPORT = True
+    except ImportError:
+        xls_warning = "Installed `tablib` library does not include"
+        "import support for 'xls' format and xlrd module is not found."
+        warnings.warn(xls_warning, ImportWarning)
+        XLS_IMPORT = False
 
 from django.utils.importlib import import_module
 
