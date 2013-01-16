@@ -5,10 +5,14 @@ try:
     from tablib.compat import xlrd
     XLS_IMPORT = True
 except ImportError:
-    xls_warning = "Installed `tablib` library does not include"
-    "import support for 'xls' format."
-    warnings.warn(xls_warning, ImportWarning)
-    XLS_IMPORT = False
+    try:
+        import xlrd # NOQA
+        XLS_IMPORT = True
+    except ImportError:
+        xls_warning = "Installed `tablib` library does not include"
+        "import support for 'xls' format and xlrd module is not found."
+        warnings.warn(xls_warning, ImportWarning)
+        XLS_IMPORT = False
 
 from django.utils.importlib import import_module
 
@@ -40,7 +44,7 @@ class Format(object):
         """
         Returns mode for opening files.
         """
-        return 'r'
+        return 'rb'
 
     def get_extension(self):
         """
@@ -127,7 +131,7 @@ class HTML(TextFormat):
     TABLIB_MODULE = 'tablib.formats._html'
 
 
-class XLS(TextFormat):
+class XLS(TablibFormat):
     TABLIB_MODULE = 'tablib.formats._xls'
 
     def can_import(self):
