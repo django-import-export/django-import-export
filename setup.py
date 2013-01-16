@@ -28,4 +28,5 @@ setup(
     packages=find_packages(exclude=["tests"]),
     package_data={'import_export': ['templates/admin/import_export/*.html']},
     install_requires=install_requires,
+    classifiers = CLASSIFIERS,
 )
