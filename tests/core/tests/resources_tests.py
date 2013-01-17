@@ -190,6 +190,22 @@ class ModelResourceTest(TestCase):
         full_title = resource.export_field(resource.get_fields()[0], self.book)
         self.assertEqual(full_title, '%s by %s' % (self.book.name, self.book.author.name))
 
+    def test_widget_fomat_in_fk_field(self):
+        class B(resources.ModelResource):
+
+            class Meta:
+                model = Book
+                fields = ('author__birthday',)
+                widgets = {
+                    'author__birthday': {'format': '%Y-%m-%d'},
+                }
+
+        author = Author.objects.create(name="Author")
+        self.book.author = author
+        resource = B()
+        result = resource.fields['author__birthday'].export(self.book)
+        self.assertEqual(result, str(date.today()))
+
     def test_widget_kwargs_for_field(self):
 
         class B(resources.ModelResource):
