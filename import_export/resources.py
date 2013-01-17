@@ -318,7 +318,7 @@ class ModelDeclarativeMetaclass(DeclarativeMetaclass):
                     f = model._meta.get_field_by_name(attrs[-1])[0]
 
                     FieldWidget = new_class.widget_from_django_field(f)
-                    widget_kwargs = new_class.widget_kwargs_for_field(f.name)
+                    widget_kwargs = new_class.widget_kwargs_for_field(field_name)
                     field = Field(attribute=field_name, column_name=field_name,
                             widget=FieldWidget(**widget_kwargs), readonly=True)
                     field_list.append((field_name, field, ))
