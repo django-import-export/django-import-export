@@ -29,6 +29,7 @@ User Guide
    getting_started
    import_workflow
    example_app
+   settings
    todo
    contributing
    changelog

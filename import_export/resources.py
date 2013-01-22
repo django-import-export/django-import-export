@@ -8,6 +8,8 @@ from diff_match_patch import diff_match_patch
 
 from django.utils.safestring import mark_safe
 from django.utils.datastructures import SortedDict
+from django.db import transaction
+from django.conf import settings
 
 from .results import Error, Result, RowResult
 from .fields import Field
@@ -15,6 +17,9 @@ from import_export import widgets
 from .instance_loaders import (
         ModelInstanceLoader,
         )
+
+
+USE_TRANSACTIONS = getattr(settings, 'IMPORT_EXPORT_USE_TRANSACTIONS', False)
 
 
 class ResourceOptions(object):
@@ -41,6 +46,10 @@ class ResourceOptions(object):
 
     * ``widgets`` - dictionary defines widget kwargs for fields.
 
+    * ``use_transactions`` - Controls if import should use database
+      transactions. Default value is ``None`` meaning
+      ``settings.IMPORT_EXPORT_USE_TRANSACTIONS`` will be evaluated.
+
     """
     fields = None
     model = None
@@ -49,6 +58,7 @@ class ResourceOptions(object):
     import_id_fields = ['id']
     export_order = None
     widgets = None
+    use_transactions = None
 
     def __new__(cls, meta=None):
         overrides = {}
@@ -88,6 +98,12 @@ class Resource(object):
     representations and handle importing and exporting data.
     """
     __metaclass__ = DeclarativeMetaclass
+
+    def get_use_transactions(self):
+        if self._meta.use_transactions is None:
+            return USE_TRANSACTIONS
+        else:
+            return self._meta.use_transactions
 
     def get_fields(self):
         """
@@ -207,9 +223,32 @@ class Resource(object):
         """
         return self.get_export_headers()
 
-    def import_data(self, dataset, dry_run=False, raise_errors=False):
+    def import_data(self, dataset, dry_run=False, raise_errors=False,
+            use_transactions=None):
+        """
+        Imports data from ``dataset``.
+
+        ``use_transactions``
+            If ``True`` import process will be processed inside transaction.
+            If ``dry_run`` is set, or error occurs, transaction will be rolled
+            back.
+        """
         result = Result()
+
+        if use_transactions is None:
+            use_transactions = self.get_use_transactions()
+
+        if use_transactions is True:
+            # when transactions are used we want to create/update/delete object
+            # as transaction will be rolled back if dry_run is set
+            real_dry_run = False
+            transaction.enter_transaction_management()
+            transaction.managed(True)
+        else:
+            real_dry_run = dry_run
+
         instance_loader = self._meta.instance_loader_class(self, dataset)
+
         for row in dataset.dict:
             try:
                 row_result = RowResult()
@@ -223,24 +262,36 @@ class Resource(object):
                 if self.for_delete(row, instance):
                     if new:
                         row_result.import_type = RowResult.IMPORT_TYPE_SKIP
-                        row_result.diff = self.get_diff(None, None, dry_run)
+                        row_result.diff = self.get_diff(None, None,
+                                real_dry_run)
                     else:
                         row_result.import_type = RowResult.IMPORT_TYPE_DELETE
-                        self.delete_instance(instance, dry_run)
+                        self.delete_instance(instance, real_dry_run)
                         row_result.diff = self.get_diff(original, None,
-                                dry_run)
+                                real_dry_run)
                 else:
                     self.import_obj(instance, row)
-                    self.save_instance(instance, dry_run)
-                    self.save_m2m(instance, row, dry_run)
+                    self.save_instance(instance, real_dry_run)
+                    self.save_m2m(instance, row, real_dry_run)
                     row_result.diff = self.get_diff(original, instance,
-                            dry_run)
+                            real_dry_run)
             except Exception, e:
                 tb_info = traceback.format_exc(sys.exc_info()[2])
                 row_result.errors.append(Error(repr(e), tb_info))
                 if raise_errors:
+                    if use_transactions:
+                        transaction.rollback()
+                        transaction.leave_transaction_management()
                     raise
             result.rows.append(row_result)
+
+        if use_transactions:
+            if dry_run or result.has_errors():
+                transaction.rollback()
+            else:
+                transaction.commit()
+            transaction.leave_transaction_management()
+
         return result
 
     def get_export_order(self):
