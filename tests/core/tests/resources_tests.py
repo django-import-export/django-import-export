@@ -1,7 +1,12 @@
 from decimal import Decimal
 from datetime import date
 
-from django.test import TestCase
+from django.test import (
+        TestCase,
+        TransactionTestCase,
+        skipUnlessDBFeature,
+        )
+from django.utils.html import strip_tags
 
 import tablib
 
@@ -259,6 +264,38 @@ class ModelResourceTest(TestCase):
 
         book = Book.objects.get(name='FooBook')
         self.assertIn(cat1, book.categories.all())
+
+
+class ModelResourceTransactionTest(TransactionTestCase):
+
+    def setUp(self):
+        self.resource = BookResource()
+
+    @skipUnlessDBFeature('supports_transactions')
+    def test_m2m_import_with_transactions(self):
+        cat1 = Category.objects.create(name='Cat 1')
+        headers = ['id', 'name', 'categories']
+        row = [None, 'FooBook', "%s" % cat1.pk]
+        dataset = tablib.Dataset(row, headers=headers)
+
+        result = self.resource.import_data(dataset, dry_run=True,
+                use_transactions=True)
+
+        row_diff = result.rows[0].diff
+        fields = self.resource.get_fields()
+
+        id_field = self.resource.fields['id']
+        id_diff = row_diff[fields.index(id_field)]
+        #id diff should exists because in rollbacked transaction
+        #FooBook has been saved
+        self.assertTrue(id_diff)
+
+        category_field = self.resource.fields['categories']
+        categories_diff = row_diff[fields.index(category_field)]
+        self.assertEqual(strip_tags(categories_diff), unicode(cat1.pk))
+
+        #check that it is really rollbacked
+        self.assertFalse(Book.objects.filter(name='FooBook'))
 
 
 class ModelResourceFactoryTest(TestCase):

@@ -5,6 +5,8 @@ Change Log
 0.1.3 (not released)
 ====================
 
+* DB transactions support for importing data
+
 0.1.2
 =====
 

@@ -99,4 +99,12 @@ responsible for import data from given `dataset`.
 
 #. ``result`` is returned.
 
+Transaction support
+-------------------
+
+If transaction support is enabled, whole import process is wrapped inside
+transaction and rollbacked or committed respectively.
+All methods called from inside of ``import_data`` (create / delete / update)
+receive ``False`` for ``dry_run`` argument.
+
 .. _Dataset: http://docs.python-tablib.org/en/latest/api/#dataset-object
