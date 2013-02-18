@@ -1,4 +1,5 @@
-from setuptools import setup, find_packages
+from distutils.core import setup
+from setuptools import find_packages
 
 
 VERSION = __import__("import_export").__version__
@@ -26,7 +27,7 @@ setup(
     author_email="bmihelac@mihelac.org",
     url="https://github.com/bmihelac/django-import-export",
     packages=find_packages(exclude=["tests"]),
-    package_data={'import_export': ['templates/admin/import_export/*.html']},
+    include_package_data=True,
     install_requires=install_requires,
-    classifiers = CLASSIFIERS,
+    classifiers=CLASSIFIERS,
 )
