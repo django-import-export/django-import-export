@@ -2,8 +2,10 @@
 Change Log
 ===========
 
-0.1.3 (not released)
-====================
+0.1.3
+=====
+
+* Fix packaging
 
 * DB transactions support for importing data
 
