@@ -9,6 +9,7 @@ from diff_match_patch import diff_match_patch
 from django.utils.safestring import mark_safe
 from django.utils.datastructures import SortedDict
 from django.db import transaction
+from django.db.models.related import RelatedObject
 from django.conf import settings
 
 from .results import Error, Result, RowResult
@@ -367,6 +368,8 @@ class ModelDeclarativeMetaclass(DeclarativeMetaclass):
                         f = model._meta.get_field_by_name(attr)[0]
                         model = f.rel.to
                     f = model._meta.get_field_by_name(attrs[-1])[0]
+                    if isinstance(f, RelatedObject):
+                        f = f.field
 
                     FieldWidget = new_class.widget_from_django_field(f)
                     widget_kwargs = new_class.widget_kwargs_for_field(field_name)
@@ -396,7 +399,7 @@ class ModelResource(Resource):
         if internal_type in ('ManyToManyField', ):
             result = functools.partial(widgets.ManyToManyWidget,
                     model=f.rel.to)
-        if internal_type in ('ForeignKey', ):
+        if internal_type in ('ForeignKey', 'OneToOneField', ):
             result = functools.partial(widgets.ForeignKeyWidget,
                     model=f.rel.to)
         if internal_type in ('DecimalField', ):
