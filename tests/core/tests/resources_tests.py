@@ -7,6 +7,7 @@ from django.test import (
         skipUnlessDBFeature,
         )
 from django.utils.html import strip_tags
+from django.contrib.auth.models import User
 
 import tablib
 
@@ -16,7 +17,7 @@ from import_export import widgets
 from import_export import results
 from import_export.instance_loaders import ModelInstanceLoader
 
-from ..models import Book, Author, Category
+from ..models import Book, Author, Category, Entry, Profile
 
 
 class MyResource(resources.Resource):
@@ -264,6 +265,25 @@ class ModelResourceTest(TestCase):
 
         book = Book.objects.get(name='FooBook')
         self.assertIn(cat1, book.categories.all())
+
+    def test_related_one_to_one(self):
+        # issue #17 - Exception when attempting access something on the
+        # related_name
+
+        user = User.objects.create(username='foo')
+        profile = Profile.objects.create(user=user)
+        Entry.objects.create(user=user)
+        Entry.objects.create(user=User.objects.create(username='bar'))
+
+        class EntryResource(resources.ModelResource):
+            class Meta:
+                model = Entry
+                fields = ('user__profile',)
+
+        resource = EntryResource()
+        dataset = resource.export(Entry.objects.all())
+        self.assertEqual(dataset.dict[0]['user__profile'], profile.pk)
+        self.assertEqual(dataset.dict[1]['user__profile'], '')
 
 
 class ModelResourceTransactionTest(TransactionTestCase):
