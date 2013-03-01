@@ -2,6 +2,12 @@
 Change Log
 ===========
 
+0.1.4 (non released)
+====================
+
+* Handle OneToOneField,  FIX #17 - Exception when attempting access something
+  on the related_name.
+
 0.1.3
 =====
 
