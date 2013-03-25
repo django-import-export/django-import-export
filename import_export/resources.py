@@ -296,7 +296,12 @@ class Resource(object):
         return result
 
     def get_export_order(self):
-        return self._meta.export_order or self.fields.keys()
+        '''
+        Return the export order if set, the fields order if set or the ordering of
+        the internal resource field dict.
+        '''
+        return self._meta.export_order or self._meta.fields or self.fields.keys()
+        
 
     def export_field(self, field, obj):
         method = getattr(self, 'dehydrate_%s' % field.column_name, None)
