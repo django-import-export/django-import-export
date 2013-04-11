@@ -6,7 +6,7 @@ from .models import Book, Category, Author
 
 
 class BookAdmin(ImportExportMixin, admin.ModelAdmin):
-    pass
+    list_filter = ['categories', 'author']
 
 
 admin.site.register(Book, BookAdmin)
