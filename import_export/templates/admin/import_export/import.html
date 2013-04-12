@@ -16,7 +16,7 @@
     {% csrf_token %}
     {{ confirm_form.as_p }}
     <p>
-      {% trans "Bellow is a preview of applied import data. If you are satisfied with a result click Confirm import" %}
+      {% trans "Below is a preview of data to be imported. If you are satisfied with the results, click 'Confirm import'" %}
     </p>
     <div class="submit-row">
       <input type="submit" class="default" name="confirm" value="{% trans "Confirm import" %}">
@@ -28,7 +28,7 @@
     {% csrf_token %}
 
     <p>
-      {% trans "This importer excpect and will import following fields: " %}
+      {% trans "This importer will import the following fields: " %}
       {% for f in fields  %}
         {% if forloop.counter0 %}
         , 
