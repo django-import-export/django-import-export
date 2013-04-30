@@ -1,3 +1,6 @@
+from __future__ import with_statement
+
+import os
 import tempfile
 from datetime import datetime
 
@@ -119,22 +122,27 @@ class ImportMixin(object):
                     int(form.cleaned_data['input_format'])
                     ]()
             import_file = form.cleaned_data['import_file']
-            import_file.open(input_format.get_read_mode())
-            data = import_file.read()
-            if not input_format.is_binary() and self.from_encoding:
-                data = unicode(data, self.from_encoding).encode('utf-8')
-            dataset = input_format.create_dataset(data)
-            result = resource.import_data(dataset, dry_run=True,
-                    raise_errors=False)
+            # first always write the uploaded file to disk as it may be a 
+            # memory file or else based on settings upload handlers
+            with tempfile.NamedTemporaryFile(delete=False) as uploaded_file:
+                 for chunk in import_file.chunks():
+                     uploaded_file.write(chunk)
+
+            # then read the file, using the proper format-specific mode
+            with open(uploaded_file.name, input_format.get_read_mode()) as uploaded_import_file:
+                # warning, big files may exceed memory
+                data = uploaded_import_file.read()
+                if not input_format.is_binary() and self.from_encoding:
+                    data = unicode(data, self.from_encoding).encode('utf-8')
+                dataset = input_format.create_dataset(data)
+                result = resource.import_data(dataset, dry_run=True,
+                        raise_errors=False)
 
             context['result'] = result
 
             if not result.has_errors():
-                tmp_file = tempfile.NamedTemporaryFile(delete=False)
-                tmp_file.write(data)
-                tmp_file.close()
                 context['confirm_form'] = ConfirmImportForm(initial={
-                    'import_file_name': tmp_file.name,
+                    'import_file_name': uploaded_file.name,
                     'input_format': form.cleaned_data['input_format'],
                     })
 
