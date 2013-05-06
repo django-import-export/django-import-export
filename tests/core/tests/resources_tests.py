@@ -285,6 +285,12 @@ class ModelResourceTest(TestCase):
         self.assertEqual(dataset.dict[0]['user__profile'], profile.pk)
         self.assertEqual(dataset.dict[1]['user__profile'], '')
 
+    def test_empty_get_queryset(self):
+        # issue #25 - Overriding queryset on export() fails when passed
+        # queryset has zero elements
+        dataset = self.resource.export(Book.objects.none())
+        self.assertEqual(len(dataset), 0)
+
 
 class ModelResourceTransactionTest(TransactionTestCase):
 

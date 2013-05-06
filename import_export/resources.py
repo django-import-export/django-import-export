@@ -312,7 +312,7 @@ class Resource(object):
         return headers
 
     def export(self, queryset=None):
-        if not queryset:
+        if queryset is None:
             queryset = self.get_queryset()
         headers = self.get_export_headers()
         data = tablib.Dataset(headers=headers)
