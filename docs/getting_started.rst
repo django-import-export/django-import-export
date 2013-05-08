@@ -58,7 +58,8 @@ Exporting data
 
 Now that we have defined resource class, we can export books::
 
-    >>> dataset = BookResource().export()
+    >>> book_resource = BookResource()
+    >>> dataset = book_resource.export()
     >>> print dataset.csv
     id,name,author,author_email,imported,published,price,categories
     2,Some book,1,,0,2012-12-05,8.85,1
