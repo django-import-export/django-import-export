@@ -125,9 +125,6 @@ class Resource(object):
         else:
             return (self.init_instance(row), True)
 
-    def set_instance_attr(self, instance, row, field):
-        setattr(instance, self.get_mapping()[field], row[field])
-
     def save_instance(self, instance, dry_run=False):
         self.before_save_instance(instance, dry_run)
         if not dry_run:
