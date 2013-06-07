@@ -24,7 +24,7 @@ should take to help get it added/fixed in django-import-export:
 
 * First, check to see if there's an existing issue/pull request for the
   bug/feature. All issues are at https://github.com/bmihelac/django-import-export/issues
-  and pull reqs are at https://github.com/toastdriven/django-import-export/pulls.
+  and pull reqs are at https://github.com/bmihelac/django-import-export/pulls.
 * If there isn't one there, please file an issue. The ideal report includes:
     * A description of the problem/suggestion.
     * How to recreate the bug.
