@@ -233,6 +233,7 @@ Admin integration is achived by subclassing
 
 
     class BookAdmin(ImportExportModelAdmin):
+        # resouce_class = BookResource
         pass
 
 .. seealso::
