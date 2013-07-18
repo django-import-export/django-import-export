@@ -112,6 +112,17 @@ class Resource(object):
         """
         return [self.fields[f] for f in self.get_export_order()]
 
+    @classmethod
+    def get_field_name(cls, field):
+        """
+        Returns field name for given field.
+        """
+        for field_name, f in cls.fields.items():
+            if f == field:
+                return field_name
+        raise AttributeError("Field %s does not exists in %s resource" % (
+            field, cls))
+
     def init_instance(self, row=None):
         raise NotImplementedError()
 
@@ -296,7 +307,8 @@ class Resource(object):
         return self._meta.export_order or self.fields.keys()
 
     def export_field(self, field, obj):
-        method = getattr(self, 'dehydrate_%s' % field.column_name, None)
+        field_name = self.get_field_name(field)
+        method = getattr(self, 'dehydrate_%s' % field_name, None)
         if method is not None:
             return method(obj)
         return field.export(obj)
