@@ -1,6 +1,5 @@
 from __future__ import with_statement
 
-import os
 import tempfile
 from datetime import datetime
 
