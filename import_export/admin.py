@@ -23,15 +23,16 @@ from .resources import (
 from .formats import base_formats
 
 
+#: import / export formats
 DEFAULT_FORMATS = (
-            base_formats.CSV,
-            base_formats.XLS,
-            base_formats.TSV,
-            base_formats.ODS,
-            base_formats.JSON,
-            base_formats.YAML,
-            base_formats.HTML,
-            )
+    base_formats.CSV,
+    base_formats.XLS,
+    base_formats.TSV,
+    base_formats.ODS,
+    base_formats.JSON,
+    base_formats.YAML,
+    base_formats.HTML,
+)
 
 
 class ImportMixin(object):
@@ -39,10 +40,15 @@ class ImportMixin(object):
     Import mixin.
     """
 
+    #: template for change_list view
     change_list_template = 'admin/import_export/change_list_import.html'
+    #: template for import view
     import_template_name = 'admin/import_export/import.html'
+    #: resource class
     resource_class = None
+    #: available import formats
     formats = DEFAULT_FORMATS
+    #: import data encoding
     from_encoding = "utf-8"
 
     def get_urls(self):
@@ -105,7 +111,7 @@ class ImportMixin(object):
     def import_action(self, request, *args, **kwargs):
         '''
         Perform a dry_run of the import to make sure the import will not result in errors.
-        If there where no error, save the the user uploaded file to a local temp file that 
+        If there where no error, save the the user uploaded file to a local temp file that
         will be used by 'process_import' for the actual import.
         '''
         resource = self.get_resource_class()()
@@ -122,7 +128,7 @@ class ImportMixin(object):
                     int(form.cleaned_data['input_format'])
                     ]()
             import_file = form.cleaned_data['import_file']
-            # first always write the uploaded file to disk as it may be a 
+            # first always write the uploaded file to disk as it may be a
             # memory file or else based on settings upload handlers
             with tempfile.NamedTemporaryFile(delete=False) as uploaded_file:
                  for chunk in import_file.chunks():
@@ -158,10 +164,15 @@ class ExportMixin(object):
     """
     Export mixin.
     """
+    #: resource class
     resource_class = None
+    #: template for change_list view
     change_list_template = 'admin/import_export/change_list_export.html'
+    #: template for export view
     export_template_name = 'admin/import_export/export.html'
+    #: available import formats
     formats = DEFAULT_FORMATS
+    #: export data encoding
     to_encoding = "utf-8"
 
     def get_urls(self):
@@ -243,6 +254,7 @@ class ImportExportMixin(ImportMixin, ExportMixin):
     """
     Import and export mixin.
     """
+    #: template for change_list view
     change_list_template = 'admin/import_export/change_list_import_export.html'
 
 
