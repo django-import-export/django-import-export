@@ -309,6 +309,9 @@ class Resource(object):
         return headers
 
     def export(self, queryset=None):
+        """
+        Exports a resource.
+        """
         if queryset is None:
             queryset = self.get_queryset()
         headers = self.get_export_headers()
