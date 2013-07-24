@@ -4,6 +4,8 @@ from django.test.testcases import TestCase
 from django.contrib.auth.models import User
 from django.utils.translation import ugettext_lazy as _
 
+from core.admin import BookAdmin
+
 
 class ImportExportAdminIntegrationTest(TestCase):
 
@@ -57,3 +59,13 @@ class ImportExportAdminIntegrationTest(TestCase):
         response = self.client.post('/admin/core/book/export/', data)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.has_header("Content-Disposition"))
+
+    def test_import_export_buttons_visible_without_add_permission(self):
+        # issue 38 - Export button not visible when no add permission
+        original = BookAdmin.has_add_permission
+        BookAdmin.has_add_permission = lambda self, request: False
+        response = self.client.get('/admin/core/book/')
+        BookAdmin.has_add_permission = original
+
+        self.assertContains(response, _('Export'))
+        self.assertContains(response, _('Import'))
