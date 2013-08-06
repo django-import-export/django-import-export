@@ -10,6 +10,8 @@ Change Log
 * Handle OneToOneField,  FIX #17 - Exception when attempting access something
   on the related_name.
 
+* FIX #23 - export filter not working
+
 0.1.3
 =====
 
