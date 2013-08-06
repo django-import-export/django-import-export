@@ -2,8 +2,8 @@
 Change Log
 ===========
 
-0.1.4 (non released)
-====================
+0.1.4
+=====
 
 * Use `field_name` instead of `column_name` for field dehydration, FIX #36
 
