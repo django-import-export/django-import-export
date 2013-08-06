@@ -5,6 +5,8 @@ Change Log
 0.1.4 (non released)
 ====================
 
+* Use `field_name` instead of `column_name` for field dehydration, FIX #36
+
 * Handle OneToOneField,  FIX #17 - Exception when attempting access something
   on the related_name.
 

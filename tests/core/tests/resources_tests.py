@@ -181,7 +181,7 @@ class ModelResourceTest(TestCase):
     def test_dehydrating_fields(self):
 
         class B(resources.ModelResource):
-            full_title = fields.Field()
+            full_title = fields.Field(column_name="Full title")
 
             class Meta:
                 model = Book
