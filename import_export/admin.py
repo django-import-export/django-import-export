@@ -78,7 +78,7 @@ class ImportMixin(object):
 
     def process_import(self, request, *args, **kwargs):
         '''
-        Perform the actuall import action (after the user has confirmed he
+        Perform the actual import action (after the user has confirmed he
         wishes to import)
         '''
         opts = self.model._meta
@@ -112,7 +112,7 @@ class ImportMixin(object):
     def import_action(self, request, *args, **kwargs):
         '''
         Perform a dry_run of the import to make sure the import will not
-        result in errors.  If there where no error, save the the user
+        result in errors.  If there where no error, save the user
         uploaded file to a local temp file that will be used by
         'process_import' for the actual import.
         '''
