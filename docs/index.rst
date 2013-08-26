@@ -18,6 +18,10 @@ Features:
 
 * export data respecting admin filters
 
+.. figure:: _static/images/django-import-export-change.png
+
+   A screenshot of the change view with Import and Export buttons.
+
 User Guide
 ----------
 

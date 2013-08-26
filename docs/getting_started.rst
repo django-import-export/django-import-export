@@ -236,6 +236,18 @@ Admin integration is achived by subclassing
         # resouce_class = BookResource
         pass
 
+.. figure:: _static/images/django-import-export-change.png
+
+   A screenshot of the change view with Import and Export buttons.
+
+.. figure:: _static/images/django-import-export-import.png
+
+   A screenshot of the import view.
+
+.. figure:: _static/images/django-import-export-import-confirm.png
+
+   A screenshot of the confirm import view.
+
 .. seealso::
 
     :doc:`/api_admin`
