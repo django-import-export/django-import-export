@@ -25,6 +25,8 @@ Features:
 
 * export data respecting admin filters
 
+.. image:: https://raw.github.com/bmihelac/django-import-export/master/docs/_static/images/django-import-export-change.png
+
 Documentation
 -------------
 
