@@ -50,6 +50,12 @@ class ResourceOptions(object):
     * ``use_transactions`` - Controls if import should use database
       transactions. Default value is ``None`` meaning
       ``settings.IMPORT_EXPORT_USE_TRANSACTIONS`` will be evaluated.
+      
+    * ``skip_unchanged`` - Controls if the import should skip unchanged records.
+      Default value is False
+
+    * ``report_skipped`` - Controls if the result reports skipped rows
+      Default value is True
 
     """
     fields = None
@@ -60,6 +66,8 @@ class ResourceOptions(object):
     export_order = None
     widgets = None
     use_transactions = None
+    skip_unchanged = False
+    report_skipped = True
 
     def __new__(cls, meta=None):
         overrides = {}
@@ -206,6 +214,26 @@ class Resource(object):
         """
         return False
 
+    def skip_row(self, instance, original):
+        """
+        Returns ``True`` if ``row`` importing should be skipped.
+
+        Default implementation returns ``False`` unless skip_unchanged == True.
+        Override this method to handle skipping rows meeting certain conditions.
+        """
+        if not self._meta.skip_unchanged:
+            return False
+        for field in self.get_fields():
+            try:
+                # For fields that are models.fields.related.ManyRelatedManager
+                # we need to compare the results
+                if list(field.get_value(instance).all()) != list(field.get_value(original).all()):
+                    return False
+            except AttributeError:
+                if field.get_value(instance) != field.get_value(original):
+                    return False
+        return True
+
     def get_diff(self, original, current, dry_run=False):
         """
         Get diff between original and current object when ``import_data``
@@ -280,8 +308,11 @@ class Resource(object):
                                 real_dry_run)
                 else:
                     self.import_obj(instance, row)
-                    self.save_instance(instance, real_dry_run)
-                    self.save_m2m(instance, row, real_dry_run)
+                    if self.skip_row(instance, original):
+                        row_result.import_type = RowResult.IMPORT_TYPE_SKIP
+                    else:
+                        self.save_instance(instance, real_dry_run)
+                        self.save_m2m(instance, row, real_dry_run)
                     row_result.diff = self.get_diff(original, instance,
                             real_dry_run)
             except Exception, e:
@@ -292,7 +323,9 @@ class Resource(object):
                         transaction.rollback()
                         transaction.leave_transaction_management()
                     raise
-            result.rows.append(row_result)
+            if (row_result.import_type != RowResult.IMPORT_TYPE_SKIP or 
+                        self._meta.report_skipped): 
+                result.rows.append(row_result)
 
         if use_transactions:
             if dry_run or result.has_errors():
