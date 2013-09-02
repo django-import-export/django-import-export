@@ -75,27 +75,37 @@ responsible for import data from given `dataset`.
          ``import_field`` calls ``field.save`` method, if ``field`` has
          both `attribute` and field `column_name` exists in given row.
  
-      #. ``save_instance`` method is called.
+      #. ``skip_row`` method is called with current object ``instance`` and
+         original object ``original to determine if the row should be skipped
  
-         ``save_instance`` receives ``dry_run`` argument and actually saves
-         instance only when ``dry_run`` is False.
- 
-         ``save_instance`` calls two hooks methods that by default does not
-         do anything but can be overriden to customize import process:
- 
-         * ``before_save_instance``
- 
-         * ``after_save_instance``
- 
-         Both methods receive ``instance`` and ``dry_run`` arguments.
- 
-      #. ``save_m2m`` method is called to save many to many fields.
+         #. ``row_result.import_type`` is set to ``IMPORT_TYPE_SKIP``
+         
+         OR
+     
+         #. ``save_instance`` method is called.
+     
+            ``save_instance`` receives ``dry_run`` argument and actually saves
+             instance only when ``dry_run`` is False.
+     
+             ``save_instance`` calls two hooks methods that by default does not
+             do anything but can be overriden to customize import process:
+     
+             * ``before_save_instance``
+     
+             * ``after_save_instance``
+     
+             Both methods receive ``instance`` and ``dry_run`` arguments.
+     
+          #. ``save_m2m`` method is called to save many to many fields.
  
    #. ``RowResult`` is assigned with diff between original and imported
-       object fields as well as import type(new, updated).
+       object fields as well as import type(new, updated, skipped).
  
        If exception is raised inside row processing, and ``raise_errors`` is
        ``False`` (default), traceback is appended to ``RowResult``.
+       
+       If the row was not skipped or the `Resource` is configured to report
+       skipped rows the ``RowResult`` is appended to the ``result``
 
 #. ``result`` is returned.
 
