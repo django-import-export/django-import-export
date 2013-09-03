@@ -225,7 +225,7 @@ class Resource(object):
             return False
         for field in self.get_fields():
             if field.get_value(instance) != field.get_value(original):
-                return false
+                return False
         return True
 
     def get_diff(self, original, current, dry_run=False):
