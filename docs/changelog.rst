@@ -5,6 +5,8 @@ Change Log
 0.1.5 (unreleased)
 ==================
 
+* Prevent queryset caching when exporting (#44)
+
 0.1.4
 =====
 
