@@ -224,8 +224,14 @@ class Resource(object):
         if not self._meta.skip_unchanged:
             return False
         for field in self.get_fields():
-            if field.get_value(instance) != field.get_value(original):
-                return False
+            try:
+                # For fields that are models.fields.related.ManyRelatedManager
+                # we need to compare the results
+                if list(field.get_value(instance).all()) != list(field.get_value(original).all()):
+                    return False
+            except AttributeError:
+                if field.get_value(instance) != field.get_value(original):
+                    return False
         return True
 
     def get_diff(self, original, current, dry_run=False):
@@ -317,7 +323,8 @@ class Resource(object):
                         transaction.rollback()
                         transaction.leave_transaction_management()
                     raise
-            if row_result.import_type != RowResult.IMPORT_TYPE_SKIP or self._meta.report_skipped: 
+            if (row_result.import_type != RowResult.IMPORT_TYPE_SKIP or 
+                        self._meta.report_skipped): 
                 result.rows.append(row_result)
 
         if use_transactions:
