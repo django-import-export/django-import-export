@@ -76,7 +76,7 @@ responsible for import data from given `dataset`.
          both `attribute` and field `column_name` exists in given row.
  
       #. ``skip_row`` method is called with current object ``instance`` and
-         original object ``original to determine if the row should be skipped
+         original object ``original`` to determine if the row should be skipped
  
          #. ``row_result.import_type`` is set to ``IMPORT_TYPE_SKIP``
          
