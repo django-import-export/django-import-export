@@ -1,5 +1,6 @@
 from decimal import Decimal
 from datetime import date
+from copy import deepcopy
 
 from django.test import (
         TestCase,
@@ -28,7 +29,7 @@ class MyResource(resources.Resource):
         export_order = ('email', 'name')
 
 
-class ResourceTest(TestCase):
+class ResourceTestCase(TestCase):
 
     def setUp(self):
         self.my_resource = MyResource()
@@ -291,6 +292,35 @@ class ModelResourceTest(TestCase):
         dataset = self.resource.export(Book.objects.none())
         self.assertEqual(len(dataset), 0)
 
+    def test_import_data_skip_unchanged(self):
+        def attempted_save(instance, real_dry_run): 
+            self.fail('Resource attempted to save instead of skipping')
+
+        # Make sure we test with ManyToMany related objects
+        cat1 = Category.objects.create(name='Cat 1')
+        cat2 = Category.objects.create(name='Cat 2')
+        self.book.categories.add(cat1)
+        self.book.categories.add(cat2)
+        dataset = self.resource.export()
+
+        # Create a new resource that attempts to reimport the data currently
+        # in the database while skipping unchanged rows (i.e. all of them)
+        resource = deepcopy(self.resource)
+        resource._meta.skip_unchanged = True
+        # Fail the test if the resource attempts to save the row
+        resource.save_instance = attempted_save 
+        result = resource.import_data(dataset, raise_errors=True)
+        self.assertFalse(result.has_errors())
+        self.assertEqual(len(result.rows), len(dataset))
+        self.assertTrue(result.rows[0].diff)
+        self.assertEqual(result.rows[0].import_type, 
+                results.RowResult.IMPORT_TYPE_SKIP)
+
+        # Test that we can suppress reporting of skipped rows
+        resource._meta.report_skipped = False
+        result = resource.import_data(dataset, raise_errors=True)
+        self.assertFalse(result.has_errors())
+        self.assertEqual(len(result.rows), 0)
 
 class ModelResourceTransactionTest(TransactionTestCase):
 
