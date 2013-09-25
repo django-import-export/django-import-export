@@ -354,7 +354,9 @@ class Resource(object):
             queryset = self.get_queryset()
         headers = self.get_export_headers()
         data = tablib.Dataset(headers=headers)
-        for obj in queryset:
+        # Iterate without the queryset cache, to avoid wasting memory when
+        # exporting large datasets.
+        for obj in queryset.iterator():
             data.append(self.export_resource(obj))
         return data
 
