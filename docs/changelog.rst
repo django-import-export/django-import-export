@@ -1,11 +1,12 @@
-===========
+==========
 Change Log
-===========
+==========
 
 0.1.5 (unreleased)
 ==================
 
 * Prevent queryset caching when exporting (#44)
+* Allow unchanged rows to be skipped when importing (#30)
 
 0.1.4
 =====
