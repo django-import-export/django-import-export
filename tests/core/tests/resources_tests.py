@@ -311,15 +311,16 @@ class ModelResourceTest(TestCase):
         resource.save_instance = attempted_save 
         result = resource.import_data(dataset, raise_errors=True)
         self.assertFalse(result.has_errors())
-
-        # Import the data again, skipping unchanged rows and reporting them
-        resource._meta.report_skipped = True
-        result = resource.import_data(dataset, raise_errors=True)
         self.assertEqual(len(result.rows), len(dataset))
         self.assertTrue(result.rows[0].diff)
         self.assertEqual(result.rows[0].import_type, 
                 results.RowResult.IMPORT_TYPE_SKIP)
 
+        # Test that we can suppress reporting of skipped rows
+        resource._meta.report_skipped = False
+        result = resource.import_data(dataset, raise_errors=True)
+        self.assertFalse(result.has_errors())
+        self.assertEqual(len(result.rows), 0)
 
 class ModelResourceTransactionTest(TransactionTestCase):
 
