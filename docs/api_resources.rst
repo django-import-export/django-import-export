@@ -20,3 +20,8 @@ ResourceOptions (Meta)
 
 .. autoclass:: import_export.resources.ResourceOptions
    :members:
+
+modelresource_factory
+---------------------
+
+.. automethod:: import_export.resources.modelresource_factory
