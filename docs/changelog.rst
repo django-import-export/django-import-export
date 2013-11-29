@@ -7,6 +7,7 @@ Change Log
 
 * Prevent queryset caching when exporting (#44)
 * Allow unchanged rows to be skipped when importing (#30)
+* Update tests for Django 1.6 (#57)
 
 0.1.4
 =====
