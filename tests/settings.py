@@ -27,7 +27,7 @@ if os.environ.get('IMPORT_EXPORT_TEST_TYPE') == 'mysql-innodb':
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.mysql',
-            'NAME': 'import_export_test',
+            'TEST_NAME': 'import_export_test',
             'USER': os.environ.get('IMPORT_EXPORT_MYSQL_USER', 'root'),
             'OPTIONS': {
                'init_command': 'SET storage_engine=INNODB',
