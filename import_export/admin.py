@@ -70,6 +70,12 @@ class ImportMixin(object):
         else:
             return self.resource_class
 
+    def get_import_resource_class(self):
+        """
+        Returns ResourceClass to use for import.
+        """
+        return self.get_resource_class()
+
     def get_import_formats(self):
         """
         Returns available import formats.
@@ -82,7 +88,7 @@ class ImportMixin(object):
         wishes to import)
         '''
         opts = self.model._meta
-        resource = self.get_resource_class()()
+        resource = self.get_import_resource_class()()
 
         confirm_form = ConfirmImportForm(request.POST)
         if confirm_form.is_valid():
@@ -116,7 +122,7 @@ class ImportMixin(object):
         uploaded file to a local temp file that will be used by
         'process_import' for the actual import.
         '''
-        resource = self.get_resource_class()()
+        resource = self.get_import_resource_class()()
 
         context = {}
 
@@ -195,6 +201,12 @@ class ExportMixin(object):
         else:
             return self.resource_class
 
+    def get_export_resource_class(self):
+        """
+        Returns ResourceClass to use for export.
+        """
+        return self.get_resource_class()
+
     def get_export_formats(self):
         """
         Returns available import formats.
@@ -236,7 +248,7 @@ class ExportMixin(object):
                 int(form.cleaned_data['file_format'])
             ]()
 
-            resource_class = self.get_resource_class()
+            resource_class = self.get_export_resource_class()
             queryset = self.get_export_queryset(request)
             data = resource_class().export(queryset)
             response = HttpResponse(
