@@ -233,7 +233,7 @@ Admin integration is achived by subclassing
 
 
     class BookAdmin(ImportExportModelAdmin):
-        # resouce_class = BookResource
+        resource_class = BookResource
         pass
 
 .. figure:: _static/images/django-import-export-change.png
