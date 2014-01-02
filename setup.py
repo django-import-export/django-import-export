@@ -24,6 +24,8 @@ setup(
     version=VERSION,
     author="Informatika Mihelac",
     author_email="bmihelac@mihelac.org",
+    license='BSD License',
+    platforms=['OS Independent'],
     url="https://github.com/bmihelac/django-import-export",
     packages=find_packages(exclude=["tests"]),
     include_package_data=True,
