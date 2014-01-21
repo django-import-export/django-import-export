@@ -4,8 +4,7 @@ Changelog for django-import-export
 0.1.6 (unreleased)
 ------------------
 
-- Nothing changed yet.
-
+* Additional hooks for customizing the workflow (#61)
 
 0.1.5 (2013-11-29)
 ------------------

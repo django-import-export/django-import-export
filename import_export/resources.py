@@ -184,7 +184,7 @@ class Resource(object):
         if field.attribute and field.column_name in data:
             field.save(obj, data)
 
-    def import_obj(self, obj, data):
+    def import_obj(self, obj, data, dry_run):
         """
         """
         for field in self.get_fields():
@@ -260,6 +260,12 @@ class Resource(object):
         """
         return self.get_export_headers()
 
+    def before_import(self, dataset, dry_run):
+        """
+        Override to add additional logic.
+        """
+        pass
+
     def import_data(self, dataset, dry_run=False, raise_errors=False,
             use_transactions=None):
         """
@@ -286,6 +292,17 @@ class Resource(object):
 
         instance_loader = self._meta.instance_loader_class(self, dataset)
 
+        try:
+            self.before_import(dataset, real_dry_run)
+        except Exception, e:
+            tb_info = traceback.format_exc(sys.exc_info()[2])
+            result.base_errors.append(Error(repr(e), tb_info))
+            if raise_errors:
+                if use_transactions:
+                    transaction.rollback()
+                    transaction.leave_transaction_management()
+                raise
+
         for row in dataset.dict:
             try:
                 row_result = RowResult()
@@ -307,7 +324,7 @@ class Resource(object):
                         row_result.diff = self.get_diff(original, None,
                                 real_dry_run)
                 else:
-                    self.import_obj(instance, row)
+                    self.import_obj(instance, row, real_dry_run)
                     if self.skip_row(instance, original):
                         row_result.import_type = RowResult.IMPORT_TYPE_SKIP
                     else:
