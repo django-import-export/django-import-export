@@ -44,6 +44,10 @@ responsible for import data from given `dataset`.
 
    See :mod:`import_export.instance_loaders` for available implementations.
 
+#. ``import_data`` calls the ``before_import`` hook method which by default does 
+   not do anything but can be overriden to customize the import process. The 
+   method receives the ``dataset`` and ``dry_run`` arguments.
+
 #. Process each `row` in ``dataset``
 
    #. ``get_or_init_instance`` method is called with current ``InstanceLoader``
@@ -64,8 +68,8 @@ responsible for import data from given `dataset`.
  
       OR
  
-      #. ``import_obj`` method is called with current object `instance` and
-         current `row`.
+      #. ``import_obj`` method is called with the current object ``instance`` and
+         current ``row`` and ``dry run`` arguments.
  
          ``import_obj`` loop through all `Resource` `fields`, skipping
          many to many fields and calls ``import_field`` for each. (Many to many
