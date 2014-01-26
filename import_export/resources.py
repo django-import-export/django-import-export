@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 import functools
 from copy import deepcopy
 import sys
@@ -8,6 +10,7 @@ from diff_match_patch import diff_match_patch
 
 from django.utils.safestring import mark_safe
 from django.utils.datastructures import SortedDict
+from django.utils import six
 from django.db import transaction
 from django.db.models.related import RelatedObject
 from django.conf import settings
@@ -77,7 +80,10 @@ class ResourceOptions(object):
                 if not override_name.startswith('_'):
                     overrides[override_name] = getattr(meta, override_name)
 
-        return object.__new__(type('ResourceOptions', (cls,), overrides))
+        if six.PY3:
+            return object.__new__(type('ResourceOptions', (cls,), overrides))
+        else:
+            return object.__new__(type(b'ResourceOptions', (cls,), overrides))
 
 
 class DeclarativeMetaclass(type):
@@ -85,7 +91,7 @@ class DeclarativeMetaclass(type):
     def __new__(cls, name, bases, attrs):
         declared_fields = []
 
-        for field_name, obj in attrs.items():
+        for field_name, obj in attrs.copy().items():
             if isinstance(obj, Field):
                 field = attrs.pop(field_name)
                 if not field.column_name:
@@ -101,12 +107,11 @@ class DeclarativeMetaclass(type):
         return new_class
 
 
-class Resource(object):
+class Resource(six.with_metaclass(DeclarativeMetaclass)):
     """
     Resource defines how objects are mapped to their import and export
     representations and handle importing and exporting data.
     """
-    __metaclass__ = DeclarativeMetaclass
 
     def get_use_transactions(self):
         if self._meta.use_transactions is None:

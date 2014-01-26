@@ -10,6 +10,7 @@ from django.template.response import TemplateResponse
 from django.contrib import messages
 from django.http import HttpResponseRedirect, HttpResponse
 from django.core.urlresolvers import reverse
+from django.utils.encoding import force_text
 
 from .forms import (
     ImportForm,
@@ -100,7 +101,7 @@ class ImportMixin(object):
                                input_format.get_read_mode())
             data = import_file.read()
             if not input_format.is_binary() and self.from_encoding:
-                data = unicode(data, self.from_encoding).encode('utf-8')
+                data = force_text(data, self.from_encoding)
             dataset = input_format.create_dataset(data)
 
             resource.import_data(dataset, dry_run=False,
@@ -148,7 +149,7 @@ class ImportMixin(object):
                 # warning, big files may exceed memory
                 data = uploaded_import_file.read()
                 if not input_format.is_binary() and self.from_encoding:
-                    data = unicode(data, self.from_encoding).encode('utf-8')
+                    data = force_text(data, self.from_encoding)
                 dataset = input_format.create_dataset(data)
                 result = resource.import_data(dataset, dry_run=True,
                                               raise_errors=False)

@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 from decimal import Decimal
 from datetime import date
 from copy import deepcopy
@@ -293,7 +295,7 @@ class ModelResourceTest(TestCase):
         self.assertEqual(len(dataset), 0)
 
     def test_import_data_skip_unchanged(self):
-        def attempted_save(instance, real_dry_run): 
+        def attempted_save(instance, real_dry_run):
             self.fail('Resource attempted to save instead of skipping')
 
         # Make sure we test with ManyToMany related objects
@@ -308,12 +310,12 @@ class ModelResourceTest(TestCase):
         resource = deepcopy(self.resource)
         resource._meta.skip_unchanged = True
         # Fail the test if the resource attempts to save the row
-        resource.save_instance = attempted_save 
+        resource.save_instance = attempted_save
         result = resource.import_data(dataset, raise_errors=True)
         self.assertFalse(result.has_errors())
         self.assertEqual(len(result.rows), len(dataset))
         self.assertTrue(result.rows[0].diff)
-        self.assertEqual(result.rows[0].import_type, 
+        self.assertEqual(result.rows[0].import_type,
                 results.RowResult.IMPORT_TYPE_SKIP)
 
         # Test that we can suppress reporting of skipped rows

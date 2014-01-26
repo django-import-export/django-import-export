@@ -1,3 +1,6 @@
+from __future__ import unicode_literals
+
+
 class Error(object):
 
     def __init__(self, error, traceback=None):

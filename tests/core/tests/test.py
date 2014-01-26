@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 from .fields_tests import *
 from .widgets_tests import *
 from .resources_tests import *

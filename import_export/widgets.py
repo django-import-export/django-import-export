@@ -1,3 +1,6 @@
+from __future__ import unicode_literals
+
+from django.utils.encoding import force_text
 from decimal import Decimal
 from datetime import datetime
 
@@ -23,7 +26,7 @@ class Widget(object):
         """
         Returns export representation of python value.
         """
-        return unicode(value)
+        return force_text(value)
 
 
 class IntegerWidget(Widget):
@@ -54,7 +57,7 @@ class CharWidget(Widget):
     """
 
     def render(self, value):
-        return unicode(value)
+        return force_text(value)
 
 
 class BooleanWidget(Widget):
