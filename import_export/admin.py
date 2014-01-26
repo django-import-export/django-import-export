@@ -21,6 +21,11 @@ from .resources import (
 )
 from .formats import base_formats
 
+try:
+    from django.utils.encoding import force_text
+except ImportError:
+    from django.utils.encoding import force_unicode as force_text
+
 
 #: import / export formats
 DEFAULT_FORMATS = (
@@ -100,7 +105,7 @@ class ImportMixin(object):
                                input_format.get_read_mode())
             data = import_file.read()
             if not input_format.is_binary() and self.from_encoding:
-                data = unicode(data, self.from_encoding).encode('utf-8')
+                data = force_text(data, self.from_encoding)
             dataset = input_format.create_dataset(data)
 
             resource.import_data(dataset, dry_run=False,
@@ -148,7 +153,7 @@ class ImportMixin(object):
                 # warning, big files may exceed memory
                 data = uploaded_import_file.read()
                 if not input_format.is_binary() and self.from_encoding:
-                    data = unicode(data, self.from_encoding).encode('utf-8')
+                    data = force_text(data, self.from_encoding)
                 dataset = input_format.create_dataset(data)
                 result = resource.import_data(dataset, dry_run=True,
                                               raise_errors=False)

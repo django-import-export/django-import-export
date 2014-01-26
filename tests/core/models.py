@@ -1,21 +1,27 @@
+from __future__ import unicode_literals
+
 from django.db import models
+from django.utils.encoding import python_2_unicode_compatible
 
 
+@python_2_unicode_compatible
 class Author(models.Model):
     name = models.CharField(max_length=100)
     birthday = models.DateTimeField(auto_now_add=True)
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name
 
 
+@python_2_unicode_compatible
 class Category(models.Model):
     name = models.CharField(max_length=100)
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name
 
 
+@python_2_unicode_compatible
 class Book(models.Model):
     name = models.CharField('Book name', max_length=100)
     author = models.ForeignKey(Author, blank=True, null=True)
@@ -26,7 +32,7 @@ class Book(models.Model):
             blank=True)
     categories = models.ManyToManyField(Category, blank=True)
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name
 
 

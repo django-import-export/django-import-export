@@ -1,6 +1,9 @@
+from __future__ import unicode_literals
+
 from . import widgets
 
 from django.core.exceptions import ObjectDoesNotExist
+
 
 class Field(object):
     """

@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 import os.path
 
 from django.test.testcases import TestCase
@@ -28,15 +30,16 @@ class ImportExportAdminIntegrationTest(TestCase):
     def test_import(self):
         input_format = '0'
         filename = os.path.join(
-                os.path.dirname(__file__),
-                os.path.pardir,
-                'exports',
-                'books.csv')
-        data = {
+            os.path.dirname(__file__),
+            os.path.pardir,
+            'exports',
+            'books.csv')
+        with open(filename, "rb") as f:
+            data = {
                 'input_format': input_format,
-                'import_file': open(filename),
-                }
-        response = self.client.post('/admin/core/book/import/', data)
+                'import_file': f,
+            }
+            response = self.client.post('/admin/core/book/import/', data)
         self.assertEqual(response.status_code, 200)
         self.assertIn('result', response.context)
         self.assertFalse(response.context['result'].has_errors())
