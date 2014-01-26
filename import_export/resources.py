@@ -50,7 +50,7 @@ class ResourceOptions(object):
     * ``use_transactions`` - Controls if import should use database
       transactions. Default value is ``None`` meaning
       ``settings.IMPORT_EXPORT_USE_TRANSACTIONS`` will be evaluated.
-      
+
     * ``skip_unchanged`` - Controls if the import should skip unchanged records.
       Default value is False
 
@@ -294,7 +294,7 @@ class Resource(object):
 
         try:
             self.before_import(dataset, real_dry_run)
-        except Exception, e:
+        except Exception as e:
             tb_info = traceback.format_exc(sys.exc_info()[2])
             result.base_errors.append(Error(repr(e), tb_info))
             if raise_errors:
@@ -332,7 +332,7 @@ class Resource(object):
                         self.save_m2m(instance, row, real_dry_run)
                     row_result.diff = self.get_diff(original, instance,
                             real_dry_run)
-            except Exception, e:
+            except Exception as e:
                 tb_info = traceback.format_exc(sys.exc_info()[2])
                 row_result.errors.append(Error(repr(e), tb_info))
                 if raise_errors:
@@ -340,8 +340,8 @@ class Resource(object):
                         transaction.rollback()
                         transaction.leave_transaction_management()
                     raise
-            if (row_result.import_type != RowResult.IMPORT_TYPE_SKIP or 
-                        self._meta.report_skipped): 
+            if (row_result.import_type != RowResult.IMPORT_TYPE_SKIP or
+                        self._meta.report_skipped):
                 result.rows.append(row_result)
 
         if use_transactions:
