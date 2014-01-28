@@ -3,7 +3,6 @@ python:
   - "2.7"
   - "3.3"
 env:
-  - DJANGO=1.4.10
   - DJANGO=1.5.5
   - DJANGO=1.6.1
 install:
