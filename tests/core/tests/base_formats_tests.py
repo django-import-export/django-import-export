@@ -1,4 +1,7 @@
+from __future__ import unicode_literals
+
 from django.test import TestCase
+from django.utils import six
 
 from import_export.formats import base_formats
 
@@ -12,4 +15,4 @@ class XLSTest(TestCase):
 class CSVTest(TestCase):
 
     def test_binary_format(self):
-        self.assertFalse(base_formats.CSV().is_binary())
+        self.assertEqual(base_formats.CSV().is_binary(), not six.PY3)
