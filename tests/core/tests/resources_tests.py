@@ -20,7 +20,7 @@ from import_export import widgets
 from import_export import results
 from import_export.instance_loaders import ModelInstanceLoader
 
-from ..models import Book, Author, Category, Entry, Profile
+from core.models import Book, Author, Category, Entry, Profile
 
 try:
     from django.utils.encoding import force_text

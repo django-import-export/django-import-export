@@ -7,7 +7,7 @@ from django.test import TestCase
 from import_export import instance_loaders
 from import_export import resources
 
-from ..models import Book
+from core.models import Book
 
 
 class CachedInstanceLoaderTest(TestCase):
