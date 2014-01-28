@@ -22,6 +22,11 @@ from import_export.instance_loaders import ModelInstanceLoader
 
 from ..models import Book, Author, Category, Entry, Profile
 
+try:
+    from django.utils.encoding import force_text
+except ImportError:
+    from django.utils.encoding import force_unicode as force_text
+
 
 class MyResource(resources.Resource):
     name = fields.Field()
@@ -350,7 +355,7 @@ class ModelResourceTransactionTest(TransactionTestCase):
 
         category_field = self.resource.fields['categories']
         categories_diff = row_diff[fields.index(category_field)]
-        self.assertEqual(strip_tags(categories_diff), unicode(cat1.pk))
+        self.assertEqual(strip_tags(categories_diff), force_text(cat1.pk))
 
         #check that it is really rollbacked
         self.assertFalse(Book.objects.filter(name='FooBook'))
