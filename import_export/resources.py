@@ -86,10 +86,7 @@ class ResourceOptions(object):
                 if not override_name.startswith('_'):
                     overrides[override_name] = getattr(meta, override_name)
 
-        if six.PY3:
-            return object.__new__(type('ResourceOptions', (cls,), overrides))
-        else:
-            return object.__new__(type(b'ResourceOptions', (cls,), overrides))
+        return object.__new__(type(str('ResourceOptions'), (cls,), overrides))
 
 
 class DeclarativeMetaclass(type):
