@@ -513,9 +513,9 @@ def modelresource_factory(model, resource_class=ModelResource):
     Factory for creating ``ModelResource`` class for given Django model.
     """
     attrs = {'model': model}
-    Meta = type('Meta', (object,), attrs)
+    Meta = type(b'Meta', (object,), attrs)
 
-    class_name = model.__name__ + 'Resource'
+    class_name = model.__name__ + b'Resource'
 
     class_attrs = {
         'Meta': Meta,
