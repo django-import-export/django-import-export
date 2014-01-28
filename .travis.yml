@@ -8,6 +8,7 @@ env:
   - DJANGO=1.6.1
 install:
   - pip install -q Django==$DJANGO --use-mirrors
+  - pip install -e git+https://github.com/kennethreitz/tablib.git#egg=tablib
   - pip install -r requirements/base.txt --use-mirrors
 script:
   - python tests/manage.py test core --settings=settings
