@@ -17,6 +17,7 @@ except ImportError:
         XLS_IMPORT = False
 
 from django.utils.importlib import import_module
+from django.utils import six
 
 
 class Format(object):
@@ -105,8 +106,17 @@ class TextFormat(TablibFormat):
         return False
 
 
-class CSV(TextFormat):
+class CSV(TablibFormat):
+    """
+    CSV is treated as binary in Python 2.
+    """
     TABLIB_MODULE = 'tablib.formats._csv'
+
+    def get_read_mode(self):
+        return 'rU' if six.PY3 else 'rb'
+
+    def is_binary(self):
+        return False if six.PY3 else True
 
 
 class JSON(TextFormat):
