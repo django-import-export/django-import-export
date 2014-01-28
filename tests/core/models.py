@@ -36,11 +36,9 @@ class Book(models.Model):
         return self.name
 
 
-@python_2_unicode_compatible
 class Profile(models.Model):
     user = models.OneToOneField('auth.User')
 
 
-@python_2_unicode_compatible
 class Entry(models.Model):
     user = models.ForeignKey('auth.User')
