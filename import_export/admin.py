@@ -10,7 +10,6 @@ from django.template.response import TemplateResponse
 from django.contrib import messages
 from django.http import HttpResponseRedirect, HttpResponse
 from django.core.urlresolvers import reverse
-from django.utils.encoding import force_text
 
 from .forms import (
     ImportForm,
@@ -21,6 +20,11 @@ from .resources import (
     modelresource_factory,
 )
 from .formats import base_formats
+
+try:
+    from django.utils.encoding import force_text
+except ImportError:
+    from django.utils.encoding import force_unicode as force_text
 
 
 #: import / export formats
