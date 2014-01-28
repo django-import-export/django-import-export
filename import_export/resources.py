@@ -19,8 +19,14 @@ from .results import Error, Result, RowResult
 from .fields import Field
 from import_export import widgets
 from .instance_loaders import (
-        ModelInstanceLoader,
-        )
+    ModelInstanceLoader,
+)
+
+
+try:
+    from django.utils.encoding import force_text
+except ImportError:
+    from django.utils.encoding import force_unicode as force_text
 
 
 USE_TRANSACTIONS = getattr(settings, 'IMPORT_EXPORT_USE_TRANSACTIONS', False)
@@ -252,7 +258,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         for field in self.get_fields():
             v1 = self.export_field(field, original) if original else ""
             v2 = self.export_field(field, current) if current else ""
-            diff = dmp.diff_main(unicode(v1), unicode(v2))
+            diff = dmp.diff_main(force_text(v1), force_text(v2))
             dmp.diff_cleanupSemantic(diff)
             html = dmp.diff_prettyHtml(diff)
             html = mark_safe(html)
@@ -338,13 +344,13 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
                     row_result.diff = self.get_diff(original, instance,
                             real_dry_run)
             except Exception as e:
-                tb_info = traceback.format_exc(sys.exc_info()[2])
+                tb_info = traceback.format_exc(2)
                 row_result.errors.append(Error(repr(e), tb_info))
                 if raise_errors:
                     if use_transactions:
                         transaction.rollback()
                         transaction.leave_transaction_management()
-                    raise
+                    six.reraise(*sys.exc_info())
             if (row_result.import_type != RowResult.IMPORT_TYPE_SKIP or
                         self._meta.report_skipped):
                 result.rows.append(row_result)
@@ -451,11 +457,10 @@ class ModelDeclarativeMetaclass(DeclarativeMetaclass):
         return new_class
 
 
-class ModelResource(Resource):
+class ModelResource(six.with_metaclass(ModelDeclarativeMetaclass, Resource)):
     """
     ModelResource is Resource subclass for handling Django models.
     """
-    __metaclass__ = ModelDeclarativeMetaclass
 
     @classmethod
     def widget_from_django_field(cls, f, default=widgets.Widget):
