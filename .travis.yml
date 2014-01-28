@@ -5,7 +5,7 @@ python:
 env:
   - DJANGO=1.4.10
   - DJANGO=1.5.5
-  - DJANGO=1.6.2
+  - DJANGO=1.6.1
 install:
   - pip install -q Django==$DJANGO --use-mirrors
   - pip install -r requirements/base.txt --use-mirrors
