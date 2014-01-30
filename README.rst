@@ -27,10 +27,11 @@ Features:
 
 .. image:: https://raw.github.com/bmihelac/django-import-export/master/docs/_static/images/django-import-export-change.png
 
-Documentation
--------------
 
-https://django-import-export.readthedocs.org/en/latest/
+* Documentation: https://django-import-export.readthedocs.org/en/latest/
+* GitHub: https://github.com/bmihelac/django-import-export/
+* Free software: BSD license
+* PyPI: https://pypi.python.org/pypi/django-import-export/
 
 Example app
 -----------
@@ -41,6 +42,12 @@ Example app
 
 Username and password for admin are 'admin', 'password'.
 
+Contribute
+----------
+
+If you'd like to contribute, simply fork `the repository`_, commit your
+changes to the **develop** branch (or branch off of it), and send a pull
+request. Make sure you add yourself to AUTHORS_.
 
 .. _`tablib`: https://github.com/kennethreitz/tablib
 
@@ -50,3 +57,6 @@ Requirements
 * Python 2.7+ or Python 3.3+
 * Django 1.4.2+
 * tablib (dev or 0.9.11)
+
+.. _`the repository`: https://github.com/bmihelac/django-import-export/
+.. _AUTHORS: https://github.com/bmihelac/django-import-export/blob/master/AUTHORS
