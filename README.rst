@@ -43,3 +43,10 @@ Username and password for admin are 'admin', 'password'.
 
 
 .. _`tablib`: https://github.com/kennethreitz/tablib
+
+Requirements
+============
+
+* Python 2.7+ or Python 3.3+
+* Django 1.4.2+
+* tablib (dev or 0.9.11)
