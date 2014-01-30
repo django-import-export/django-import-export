@@ -33,6 +33,13 @@ Features:
 * Free software: BSD license
 * PyPI: https://pypi.python.org/pypi/django-import-export/
 
+Requirements
+-----------
+
+* Python 2.7+ or Python 3.3+
+* Django 1.4.2+
+* tablib (dev or 0.9.11)
+
 Example app
 -----------
 
@@ -50,13 +57,5 @@ changes to the **develop** branch (or branch off of it), and send a pull
 request. Make sure you add yourself to AUTHORS_.
 
 .. _`tablib`: https://github.com/kennethreitz/tablib
-
-Requirements
-============
-
-* Python 2.7+ or Python 3.3+
-* Django 1.4.2+
-* tablib (dev or 0.9.11)
-
 .. _`the repository`: https://github.com/bmihelac/django-import-export/
 .. _AUTHORS: https://github.com/bmihelac/django-import-export/blob/master/AUTHORS
