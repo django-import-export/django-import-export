@@ -1,10 +1,10 @@
 Changelog for django-import-export
 ==================================
 
-0.1.7 (unreleased)
+0.2.0 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Python 3 support
 
 
 0.1.6 (2014-01-21)
