@@ -8,25 +8,11 @@ class ImportForm(forms.Form):
     import_file = forms.FileField(
             label=_('File to import')
             )
-    input_format = forms.ChoiceField(
-            label=_('Format'),
-            choices=(),
-            )
-
-    def __init__(self, import_formats, *args, **kwargs):
-        super(ImportForm, self).__init__(*args, **kwargs)
-        choices = []
-        for i, f in enumerate(import_formats):
-            choices.append((str(i), f().get_title(),))
-        if len(import_formats) > 1:
-            choices.insert(0, ('', '---'))
-
-        self.fields['input_format'].choices = choices
 
 
 class ConfirmImportForm(forms.Form):
     import_file_name = forms.CharField(widget=forms.HiddenInput())
-    input_format = forms.CharField(widget=forms.HiddenInput())
+    import_file_mimetype = forms.CharField(widget=forms.HiddenInput())
 
 
 class ExportForm(forms.Form):
