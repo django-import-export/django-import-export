@@ -59,59 +59,40 @@
   </form>
 {% endif %}
 
-{% if result %}
-
-  {% if result.has_errors %}
-    <h2>{% trans "Errors" %}</h2>
-    <ul>
-      {% for error in result.base_errors  %}
-      <li>{{ error.error }}</li>
+{% if row_errors %}
+  <h2>{% trans "Errors" %}</h2>
+  <ul>
+    {% for line, errors in row_errors %}
+      {% for field, error in errors.items %}
+        <li>
+          {% trans "Line number" %}: {{ line|add:1 }} - {{ field }} : {{ error|join:", " }}
+        </li>
       {% endfor %}
-      {% for line, errors in result.row_errors %}
-        {% for error in errors %}
-          <li>
-            {% trans "Line number" %}: {{ line }} - {{ error.error }}
-            <div class="traceback">{{ error.traceback|linebreaks }}</div>
-          </li>
-        {% endfor %}
-      {% endfor %}
-    </ul>
-  {% else %}
-
-  <h2>
-    {% trans "Preview" %}
-  </h2>
-  <table>
-    <thead>
-      <tr>
-        <th></th>
-        {% for field in fields %}
-          <th>{{ field }}</th>
-        {% endfor %}
-      </tr>
-    </thead>
-    {% for row in result.rows %}
-    <tr>
-      <td>
-        {% if row.import_type == 'new' %}
-          {% trans "New" %}
-        {% elif row.import_type == 'skip' %}
-          {% trans "Skipped" %}
-        {% elif row.import_type == 'delete' %}
-          {% trans "Delete" %}
-        {% elif row.import_type == 'update' %}
-          {% trans "Update" %}
-        {% endif %}
-      </td>
-      {% for field in row.diff %}
-      <td>
-        {{ field }}
-      </td>
-      {% endfor %}
-    </etr>
     {% endfor %}
-  </table>
-  {% endif %}
+  </ul>
+{% endif %}
 
-  {% endif %}
+{% if results %}
+<h2>
+  {% trans "Preview" %}
+</h2>
+<table>
+  <thead>
+    <tr>
+      {% for field in fields %}
+        <th>{{ field }}</th>
+      {% endfor %}
+    </tr>
+  </thead>
+  {% for row in results %}
+  <tr>
+    {% for col in row.values %}
+    <td>
+      {{ col }}
+    </td>
+    {% endfor %}
+  </tr>
+  {% endfor %}
+</table>
+{% endif %}
 {% endblock %}

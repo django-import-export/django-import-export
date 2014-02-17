@@ -11,8 +11,19 @@
 {% block content %}
 <h1>{% trans "Export" %}</h1>
 
-<form action="" method="POST">
+<form action="" method="GET">
   {% csrf_token %}
+
+  <p>
+    <label for="id_{{ format_query_param }}">{% trans "Format" %}:</label>
+    <select id="id_{{ format_query_param }}" name="{{ format_query_param }}">
+  {% for format in formats %}
+        <option value="{{ format }}">{{ format }}</option>
+  {% endfor %}
+    </select>
+  </p>
+
+  {{ filter.form.as_p }}
 
     <fieldset class="module aligned">
       {% for field in form %}
