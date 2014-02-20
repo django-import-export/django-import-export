@@ -4,7 +4,7 @@ Changelog for django-import-export
 0.2.1 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- FIX import_file_name form field can be use to access the filesystem (#65)
 
 
 0.2.0 (2014-01-30)
