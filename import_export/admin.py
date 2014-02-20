@@ -2,6 +2,7 @@ from __future__ import with_statement
 
 import tempfile
 from datetime import datetime
+import os.path
 
 from django.contrib import admin
 from django.utils.translation import ugettext_lazy as _
@@ -101,8 +102,11 @@ class ImportMixin(object):
             input_format = import_formats[
                 int(confirm_form.cleaned_data['input_format'])
             ]()
-            import_file = open(confirm_form.cleaned_data['import_file_name'],
-                               input_format.get_read_mode())
+            import_file_name = os.path.join(
+                tempfile.gettempdir(),
+                confirm_form.cleaned_data['import_file_name']
+            )
+            import_file = open(import_file_name, input_format.get_read_mode())
             data = import_file.read()
             if not input_format.is_binary() and self.from_encoding:
                 data = force_text(data, self.from_encoding)
@@ -162,7 +166,7 @@ class ImportMixin(object):
 
             if not result.has_errors():
                 context['confirm_form'] = ConfirmImportForm(initial={
-                    'import_file_name': uploaded_file.name,
+                    'import_file_name': os.path.basename(uploaded_file.name),
                     'input_format': form.cleaned_data['input_format'],
                 })
 

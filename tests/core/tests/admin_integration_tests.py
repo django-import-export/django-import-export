@@ -72,3 +72,17 @@ class ImportExportAdminIntegrationTest(TestCase):
 
         self.assertContains(response, _('Export'))
         self.assertContains(response, _('Import'))
+
+    def test_import_file_name_in_tempdir(self):
+        # 65 - import_file_name form field can be use to access the filesystem
+        import_file_name = os.path.join(
+            os.path.dirname(__file__),
+            os.path.pardir,
+            'exports',
+            'books.csv')
+        data = {
+            'input_format': "0",
+            'import_file_name': import_file_name,
+        }
+        with self.assertRaises(IOError):
+            self.client.post('/admin/core/book/process_import/', data)
