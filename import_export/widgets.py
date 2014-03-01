@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 
 from decimal import Decimal
-from datetime import datetime
+from datetime import datetime, timedelta
 
 try:
     from django.utils.encoding import force_text
@@ -93,10 +93,15 @@ class DateWidget(Widget):
     def clean(self, value):
         if not value:
             return None
-        return datetime.strptime(value, self.format).date()
+        return self.__xldate_as_datetime(value)
 
     def render(self, value):
         return value.strftime(self.format)
+
+    def __xldate_as_datetime(self, xldate, datemode=0):
+        # datemode: 0 for 1900-based, 1 for 1904-based
+        return (datetime(1899, 12, 30) +
+                timedelta(days=xldate + 1462 * datemode))
 
 
 class DateTimeWidget(Widget):
