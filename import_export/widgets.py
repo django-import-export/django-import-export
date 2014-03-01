@@ -87,7 +87,7 @@ class DateWidget(Widget):
 
     def __init__(self, format=None):
         if format is None:
-            format = "%Y-%m-%d"
+            format = "%d-%b-%Y"
         self.format = format
 
     def clean(self, value):
@@ -101,7 +101,7 @@ class DateWidget(Widget):
     def __xldate_as_datetime(self, xldate, datemode=0):
         # datemode: 0 for 1900-based, 1 for 1904-based
         return (datetime(1899, 12, 30) +
-                timedelta(days=xldate + 1462 * datemode))
+                timedelta(days=xldate + 1462 * datemode)).date()
 
 
 class DateTimeWidget(Widget):
