@@ -33,3 +33,6 @@ class Result(object):
 
     def has_errors(self):
         return bool(self.base_errors or self.row_errors())
+
+    def __iter__(self):
+        return iter(self.rows)

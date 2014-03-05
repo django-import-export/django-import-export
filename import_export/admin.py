@@ -9,6 +9,8 @@ from django.utils.translation import ugettext_lazy as _
 from django.conf.urls import patterns, url
 from django.template.response import TemplateResponse
 from django.contrib import messages
+from django.contrib.admin.models import LogEntry, ADDITION, CHANGE, DELETION
+from django.contrib.contenttypes.models import ContentType
 from django.http import HttpResponseRedirect, HttpResponse
 from django.core.urlresolvers import reverse
 
@@ -21,6 +23,7 @@ from .resources import (
     modelresource_factory,
 )
 from .formats import base_formats
+from .results import RowResult
 
 try:
     from django.utils.encoding import force_text
@@ -112,8 +115,25 @@ class ImportMixin(object):
                 data = force_text(data, self.from_encoding)
             dataset = input_format.create_dataset(data)
 
-            resource.import_data(dataset, dry_run=False,
+            result = resource.import_data(dataset, dry_run=False,
                                  raise_errors=True)
+
+            # Add imported objects to LogEntry
+            logentry_map = {
+                RowResult.IMPORT_TYPE_NEW: ADDITION,
+                RowResult.IMPORT_TYPE_UPDATE: CHANGE,
+                RowResult.IMPORT_TYPE_DELETE: DELETION,
+            }
+            content_type_id=ContentType.objects.get_for_model(self.model).pk
+            for row in result:
+                LogEntry.objects.log_action(
+                    user_id=request.user.pk,
+                    content_type_id=content_type_id,
+                    object_id=row.object_id,
+                    object_repr=row.object_repr,
+                    action_flag=logentry_map[row.import_type],
+                    change_message="%s through import_export" % row.import_type,
+                )
 
             success_message = _('Import finished')
             messages.success(request, success_message)
