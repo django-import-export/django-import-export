@@ -39,7 +39,7 @@ Creating import-export resource
 -------------------------------
 
 To integrate `django-import-export` with ``Book`` model, we will create
-resource class that will describe  how this resource can be imported or
+a resource class that will describe how this resource can be imported or
 exported.
 
 ::
@@ -56,7 +56,7 @@ exported.
 Exporting data
 --------------
 
-Now that we have defined resource class, we can export books::
+Now that we have defined a resource class, we can export books::
 
     >>> dataset = BookResource().export()
     >>> print dataset.csv
@@ -67,12 +67,12 @@ Customize resource options
 --------------------------
 
 By default ``ModelResource`` introspects model fields and creates
-``import_export.fields.Field`` attribute with appopriate widget for each
-field.
+``import_export.fields.Field`` attributes with an appopriate widget
+for each field.
 
-To affect which model fields will be included in import-export resource,
-use ``fields`` option to whitelist fields or ``exclude`` option for
-to blacklist fields::
+To affect which model fields will be included in an import-export
+resource, use the ``fields`` option to whitelist fields or ``exclude``
+option to blacklist fields::
 
     class BookResource(resources.ModelResource):
 
@@ -102,7 +102,7 @@ model relationships::
 Declaring fields
 ----------------
 
-It is possible to override resource fields to change some of it's
+It is possible to override a resource field to change some of it's
 options::
 
     from import_export import fields
@@ -113,7 +113,7 @@ options::
         class Meta:
             model = Book
 
-Other fields, that are not existing in target model may be added::
+Other fields that are not existing in the target model may be added::
 
     from import_export import fields
     
@@ -132,7 +132,7 @@ Other fields, that are not existing in target model may be added::
 Advanced data manipulation
 --------------------------
 
-Not all data can be easily pull off an object/model attribute.
+Not all data can be easily extracted from an object/model attribute.
 In order to turn complicated data model into a (generally simpler) processed
 data structure, ``dehydrate_<fieldname>`` method should be defined::
 
@@ -151,12 +151,12 @@ data structure, ``dehydrate_<fieldname>`` method should be defined::
 Customize widgets
 -----------------
 
-``ModelResource`` creates field with default widget for given field type.
-If widget should be initialized with different arguments, set ``widgets``
-dict.
+``ModelResource`` creates a field with a default widget for a given field
+type. If the widget should be initialized with different arguments, set the
+``widgets`` dict.
 
-In this example widget for ``published`` field is overriden to
-use different date format. This format will be used both for importing
+In this example widget, the ``published`` field is overriden to use a
+different date format. This format will be used both for importing
 and exporting resource.
 
 ::
@@ -189,11 +189,11 @@ Let's import data::
     False
     >>> result = book_resource.import_data(dataset, dry_run=False)
 
-In 4th line we use ``modelresource_factory`` to create default
+In 4th line we use ``modelresource_factory`` to create a default
 ``ModelResource``. ModelResource class created this way is equal
 as in :ref:`base-modelresource`.
 
-In 5th line ``Dataset`` with subset of ``Book`` fields is created.
+In 5th line a ``Dataset`` with subset of ``Book`` fields is created.
 
 In rest of code we first pretend to import data with ``dry_run`` set, then
 check for any errors and import data.
@@ -227,7 +227,8 @@ Admin integration
 -----------------
 
 Admin integration is achived by subclassing 
-``ImportExportModelAdmin`` or one of mixins::
+``ImportExportModelAdmin`` or one of the available mixins (``ImportMixin``, 
+``ExportMixin``, or ``ImportExportMixin``)::
 
     from import_export.admin import ImportExportModelAdmin
 
