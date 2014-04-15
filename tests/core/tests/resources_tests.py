@@ -154,8 +154,11 @@ class ModelResourceTest(TestCase):
 
         self.assertTrue(result.has_errors())
         self.assertTrue(result.rows[0].errors)
-        msg = 'ValueError("invalid literal for int() with base 10: \'foo\'",)'
-        self.assertTrue(result.rows[0].errors[0].error, msg)
+        msg = "invalid literal for int() with base 10: 'foo'"
+        actual = result.rows[0].errors[0].error
+        self.assertIsInstance(actual, ValueError)
+        self.assertEqual("invalid literal for int() with base 10: 'foo'",
+            str(actual))
 
     def test_import_data_delete(self):
 

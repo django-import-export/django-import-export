@@ -345,7 +345,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
                             real_dry_run)
             except Exception as e:
                 tb_info = traceback.format_exc(2)
-                row_result.errors.append(Error(repr(e), tb_info))
+                row_result.errors.append(Error(e, tb_info))
                 if raise_errors:
                     if use_transactions:
                         transaction.rollback()
