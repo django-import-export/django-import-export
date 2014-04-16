@@ -4,7 +4,9 @@ Changelog for django-import-export
 0.2.2 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- RowResult now stores exception object rather than it's repr
+
+- Admin integration - add EntryLog object for each added/updated/deleted instance
 
 
 0.2.1 (2014-02-20)
