@@ -1,7 +1,7 @@
 Changelog for django-import-export
 ==================================
 
-0.2.2 (unreleased)
+0.2.2 (2014-04-18)
 ------------------
 
 - RowResult now stores exception object rather than it's repr
