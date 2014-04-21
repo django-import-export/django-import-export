@@ -49,6 +49,8 @@ class ExportForm(forms.Form):
 
         for f in formats:
             instance = f()
+            # https://github.com/bmihelac/django-import-export/pull/77#discussion_r11808019
+            assert instance.id is not in self.formats
             choices.append((instance.id, instance.get_title(),))
             self.formats[instance.id] = f
 
