@@ -273,10 +273,7 @@ class ExportMixin(object):
         formats = self.get_export_formats()
         form = ExportForm(formats, request.POST or None)
         if form.is_valid():
-            file_format = formats[
-                int(form.cleaned_data['file_format'])
-            ]()
-
+            file_format = form.formats[form.cleaned_data['file_format']]()
             resource_class = self.get_export_resource_class()
             queryset = self.get_export_queryset(request)
             data = resource_class().export(queryset)

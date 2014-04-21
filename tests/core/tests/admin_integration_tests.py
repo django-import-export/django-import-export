@@ -56,9 +56,15 @@ class ImportExportAdminIntegrationTest(TestCase):
     def test_export(self):
         response = self.client.get('/admin/core/book/export/')
         self.assertEqual(response.status_code, 200)
+        self.assertIn('form', response.context)
+        form = response.context['form']
+        from import_export.forms import ExportForm
+        self.assertIsInstance(form, ExportForm)
+        choices_dict = dict(form['file_format'].field.choices)
+        self.assertIn('CSV', choices_dict)
 
         data = {
-                'file_format': '0',
+                'file_format': 'CSV',
                 }
         response = self.client.post('/admin/core/book/export/', data)
         self.assertEqual(response.status_code, 200)

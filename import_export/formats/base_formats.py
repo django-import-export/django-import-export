@@ -22,6 +22,10 @@ from django.utils import six
 
 class Format(object):
 
+    @property
+    def id(self):
+        return type(self).__name__
+
     def get_title(self):
         return type(self)
 
@@ -85,7 +89,7 @@ class TablibFormat(Format):
     def get_extension(self):
         # we support both 'extentions' and 'extensions' because currently tablib's master
         # branch uses 'extentions' (which is a typo) but it's dev branch already uses 'extension'.
-        # TODO - remove this once the typo is fixxed in tablib's master branch
+        # TODO - remove this once the typo is fixed in tablib's master branch
         if hasattr(self.get_format(), 'extentions'):
             return self.get_format().extentions[0]
         return self.get_format().extensions[0]

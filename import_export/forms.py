@@ -45,8 +45,13 @@ class ExportForm(forms.Form):
     def __init__(self, formats, *args, **kwargs):
         super(ExportForm, self).__init__(*args, **kwargs)
         choices = []
-        for i, f in enumerate(formats):
-            choices.append((str(i), f().get_title(),))
+        self.formats = {}
+
+        for f in formats:
+            instance = f()
+            choices.append((instance.id, instance.get_title(),))
+            self.formats[instance.id] = f
+
         if len(formats) > 1:
             choices.insert(0, ('', '---'))
 
