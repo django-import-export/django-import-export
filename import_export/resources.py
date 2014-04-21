@@ -116,6 +116,19 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
     representations and handle importing and exporting data.
     """
 
+    def __init__(self, *args, **kwargs):
+        super(Resource, self).__init__(*args, **kwargs)
+        self.dynamic_fields = self.get_dynamic_fields()
+        self.fields = SortedDict(self.fields)
+        self.fields.update(self.dynamic_fields)
+
+    def get_dynamic_fields(self):
+        """
+        Override this method to return a SortedDict of fields that should
+        be added to the list of statically declared fields.
+        """
+        return SortedDict()
+
     def get_use_transactions(self):
         if self._meta.use_transactions is None:
             return USE_TRANSACTIONS
@@ -128,16 +141,15 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         """
         return [self.fields[f] for f in self.get_export_order()]
 
-    @classmethod
-    def get_field_name(cls, field):
+    def get_field_name(self, field):
         """
         Returns field name for given field.
         """
-        for field_name, f in cls.fields.items():
+        for field_name, f in self.fields.items():
             if f == field:
                 return field_name
         raise AttributeError("Field %s does not exists in %s resource" % (
-            field, cls))
+            field, self))
 
     def init_instance(self, row=None):
         raise NotImplementedError()
@@ -365,7 +377,8 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         return result
 
     def get_export_order(self):
-        return self._meta.export_order or self.fields.keys()
+        declared_fields = self._meta.export_order or self.fields.keys()
+        return list(declared_fields) + self.dynamic_fields.keys()
 
     def export_field(self, field, obj):
         field_name = self.get_field_name(field)

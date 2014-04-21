@@ -9,6 +9,7 @@ from django.test import (
         TransactionTestCase,
         skipUnlessDBFeature,
         )
+from django.utils.datastructures import SortedDict
 from django.utils.html import strip_tags
 from django.contrib.auth.models import User
 
@@ -370,3 +371,102 @@ class ModelResourceFactoryTest(TestCase):
         BookResource = resources.modelresource_factory(Book)
         self.assertIn('id', BookResource.fields)
         self.assertEqual(BookResource._meta.model, Book)
+
+
+class TranslationField(fields.Field):
+    def get_value(self, obj):
+        """
+        Returns value for this field from object attribute.
+        """
+        return getattr(obj, 'title_%s' % self.attribute)
+
+    def save(self, obj, data):
+        if not self.readonly:
+            setattr(obj, 'title_%s' % self.attribute, self.clean(data))
+
+
+class MyDynamicResource(resources.Resource):
+    id = fields.Field(attribute='id')
+    author = fields.Field(attribute='author_email')
+
+    class Meta:
+        export_order = ('author', 'id')
+        instance_loader_class = ModelInstanceLoader
+        model = Book
+
+    def __init__(self, *args, **kwargs):
+        super(MyDynamicResource, self).__init__(*args, **kwargs)
+        self.saved_instances = []
+        
+    def get_dynamic_fields(self):
+        extra_fields = SortedDict()
+        extra_fields['title_en'] = TranslationField(attribute='en',
+            column_name="Title (English)")
+        extra_fields['title_fr'] = TranslationField(attribute='fr',
+            column_name="Title (French)")
+        return extra_fields
+
+    def get_import_id_fields(self):
+        return ['id']
+
+    def init_instance(self, row=None):
+        book = Book()
+        book.title_en = None
+        book.title_fr = None
+        return book
+
+    def save_instance(self, instance, dry_run=False):
+        # fake saving of non-object instances for test purposes
+        self.before_save_instance(instance, dry_run)
+        if not dry_run:
+            self.saved_instances.append(instance)
+        self.after_save_instance(instance, dry_run)
+
+
+class DynamicResourceTest(TestCase):
+
+    def setUp(self):
+        self.resource = MyDynamicResource()
+        self.headers = self.resource.get_export_headers()
+        self.dataset = tablib.Dataset(headers=self.headers)
+        row = ['Albert Camus', '4', "The Stranger", "L'Etranger"]
+        self.dataset.append(row)
+
+    def test_fields(self):
+        fields = self.resource.fields
+        self.assertEqual(['author', 'id', 'title_en', 'title_fr'],
+            sorted(fields.keys()))
+
+    def test_field_column_names(self):
+        # Also tests that the export order for fixed columns is respected.
+        self.assertEqual(['author', 'id', 'Title (English)', 'Title (French)'],
+            self.headers)
+
+    def test_export(self):
+        class FakeQueryset(list):
+            def iterator(self):
+                return self
+        book = Book(id=5, author_email="Albert Camus")
+        book.title_en = "The Stranger"
+        book.title_fr = "L'Etranger"
+        queryset = FakeQueryset([book])
+        dataset = self.resource.export(queryset)
+        self.assertEqual(len(dataset), 1)
+        self.assertEqual(('Albert Camus', '5', "The Stranger", "L'Etranger"),
+            dataset[0])
+
+    def test_import(self):
+        result = self.resource.import_data(self.dataset, raise_errors=True)
+
+        self.assertFalse(result.has_errors())
+        self.assertEqual(len(result.rows), 1)
+        self.assertTrue(result.rows[0].diff)
+        self.assertEqual(result.rows[0].import_type,
+                results.RowResult.IMPORT_TYPE_NEW)
+
+        self.assertEqual(len(self.resource.saved_instances), 1)
+        instance = self.resource.saved_instances[0]
+        self.assertEqual(instance.id, '4')
+        self.assertEqual(instance.author_email, 'Albert Camus')
+        self.assertEqual(instance.title_en, "The Stranger")
+        self.assertEqual(instance.title_fr, "L'Etranger")
