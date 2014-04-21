@@ -1,1 +1,2 @@
-PYTHONPATH=".:tests:$PYTHONPATH" django-admin.py test core --settings=settings
+tests=${@:-core}
+PYTHONPATH=".:tests:$PYTHONPATH" django-admin.py test --settings=settings $tests
