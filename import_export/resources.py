@@ -377,8 +377,10 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         return result
 
     def get_export_order(self):
-        declared_fields = self._meta.export_order or self.fields.keys()
-        return list(declared_fields) + self.dynamic_fields.keys()
+        if self._meta.export_order:
+            return list(self._meta.export_order) + self.dynamic_fields.keys()
+        else:
+            return self.fields.keys()
 
     def export_field(self, field, obj):
         field_name = self.get_field_name(field)

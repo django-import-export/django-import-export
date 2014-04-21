@@ -42,3 +42,14 @@ class Profile(models.Model):
 
 class Entry(models.Model):
     user = models.ForeignKey('auth.User')
+
+
+@python_2_unicode_compatible
+class Reader(models.Model):
+    book = models.ForeignKey(Book)
+    user = models.ForeignKey('auth.User')
+    when = models.DateField()
+
+    def __str__(self):
+        return "%s read %s on %s" % (self.user.last_name, self.book.name,
+            self.when)

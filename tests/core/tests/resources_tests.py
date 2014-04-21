@@ -21,7 +21,7 @@ from import_export import widgets
 from import_export import results
 from import_export.instance_loaders import ModelInstanceLoader
 
-from core.models import Book, Author, Category, Entry, Profile
+from core.models import Book, Author, Category, Entry, Profile, Reader
 
 try:
     from django.utils.encoding import force_text
@@ -391,14 +391,23 @@ class MyDynamicResource(resources.Resource):
 
     class Meta:
         export_order = ('author', 'id')
+        # We only need instance_loader_class because we're using Resource
+        # instead of ModelResource, and we're only doing that to prove that
+        # it works just as well with Resource as with ModelResource.
         instance_loader_class = ModelInstanceLoader
+        # We only need to define model because ModelInstanceLoader needs it.
         model = Book
 
     def __init__(self, *args, **kwargs):
+        # We only need to override __init__ to create a list of saved
+        # instances, because we have no intention of writing them to the
+        # database.
         super(MyDynamicResource, self).__init__(*args, **kwargs)
         self.saved_instances = []
         
     def get_dynamic_fields(self):
+        # This is all you really need to do in the resource to support
+        # dynamic fields.
         extra_fields = SortedDict()
         extra_fields['title_en'] = TranslationField(attribute='en',
             column_name="Title (English)")
@@ -407,15 +416,23 @@ class MyDynamicResource(resources.Resource):
         return extra_fields
 
     def get_import_id_fields(self):
+        # We only need to implement this because ModelInstanceLoader needs it,
+        # and we're not based on ModelResource that would provide it.
         return ['id']
 
     def init_instance(self, row=None):
+        # We only need to implement this because we're not based on
+        # ModelResource that would provide it.
         book = Book()
         book.title_en = None
         book.title_fr = None
         return book
 
     def save_instance(self, instance, dry_run=False):
+        # We only need to implement this because we're not saving instances
+        # to the database, because it has nowhere to store our extra fields
+        # which are purely for demonstration purposes. Normally you would be
+        # saving them in a different table, and the default 
         # fake saving of non-object instances for test purposes
         self.before_save_instance(instance, dry_run)
         if not dry_run:
@@ -470,3 +487,146 @@ class DynamicResourceTest(TestCase):
         self.assertEqual(instance.author_email, 'Albert Camus')
         self.assertEqual(instance.title_en, "The Stranger")
         self.assertEqual(instance.title_fr, "L'Etranger")
+
+
+class DateReadField(fields.Field):
+    def get_value(self, obj):
+        """
+        Returns value for this field from object attribute. Finds the
+        appropriate value from the related set, using the field's attribute
+        as the key (matching against User.username)
+        """
+        reader = obj.readers_cache.get(self.attribute, None)
+        if reader:
+            return reader.when
+        else:
+            return None
+
+    def save(self, obj, data):
+        if not self.readonly:
+            try:
+                d = data[self.column_name]
+            except KeyError:
+                raise KeyError("No column to extract %s value from "
+                    "in %s" % (self.column_name, data))
+
+            reader = obj.readers_cache.get(self.attribute, None)
+
+            if reader:
+                reader.when = d
+            else:
+                # no match, so create a new one
+                user=User.objects.get(username=self.attribute)
+                reader = Reader(user=user, book=obj, when=d)
+                obj.readers_cache[self.attribute] = reader
+
+            if reader is not None:
+                obj.readers_dirty.append(reader)
+
+
+class ExampleDynamicModelResource(resources.ModelResource):
+    class Meta:
+        fields = ('id', 'name')
+        model = Book
+
+    def get_dynamic_fields(self):
+        # This is all you really need to do in the resource to support
+        # dynamic fields.
+        extra_fields = SortedDict()
+        for user in User.objects.all():
+            extra_fields[user.username] = DateReadField(attribute=user.username,
+                column_name=user.last_name)
+        return extra_fields
+
+    def get_or_init_instance(self, instance_loader, row):
+        # But we may need to hold associated Reader instances somewhere on
+        # the object, until we're ready to save the object.
+
+        instance, new = super(ExampleDynamicModelResource,
+            self).get_or_init_instance(instance_loader, row)
+        instance.readers_cache = {}
+        instance.readers_dirty = []
+        for reader in instance.reader_set.all():
+            instance.readers_cache[reader.user.username] = reader
+        return instance, new
+
+    def export_resource(self, obj):
+        if not hasattr(obj, 'readers_cache'):
+            obj.readers_cache = {}
+            for reader in obj.reader_set.all():
+                obj.readers_cache[reader.user.username] = reader
+
+        return [self.export_field(field, obj) for field in self.get_fields()]
+
+    def save_instance(self, instance, dry_run=False):
+        # And having cached the Reader objects, we need to write them to
+        # the database, after the instance has been saved, and we've
+        # updated the foreign key column.
+
+        super(ExampleDynamicModelResource, self).save_instance(instance,
+            dry_run)
+
+        if not dry_run:
+            for reader in instance.readers_dirty:
+                from django.core.exceptions import ValidationError
+                try:
+                    reader.full_clean()
+                    reader.save()
+                except ValidationError as e:
+                    # Model validation is optional, but catching the exception
+                    # allows us to change the message to indicate which column
+                    # caused it.
+                    raise ValidationError("Reader %s: %s" %
+                        (reader.user.username, e))
+
+
+class ExampleDynamicModelResourceTest(TestCase):
+
+    def setUp(self):
+        self.narnia = Book.objects.create(name="Chronicles of Narnia")
+        self.warand = Book.objects.create(name="War and Peace")
+        self.cslewis = User.objects.create(username="lewis", last_name="Lewis")
+        self.tolstoy = User.objects.create(username="tolstoy", last_name="Tolstoy")
+        Reader.objects.create(user=self.cslewis, book=self.warand,
+            when=date(1923,4,5))
+        Reader.objects.create(user=self.tolstoy, book=self.narnia,
+            when=date(1912,3,4))
+        self.resource = ExampleDynamicModelResource()
+
+    def test_fields(self):
+        fields = self.resource.fields
+        self.assertEqual(['id', 'lewis', 'name', 'tolstoy'],
+            sorted(fields.keys()))
+
+    def test_field_column_names(self):
+        # Also tests that the export order for fixed columns is respected.
+        headers = self.resource.get_export_headers()
+        self.assertEqual(['id', 'name', 'Lewis', 'Tolstoy'], headers)
+
+    def test_export(self):
+        dataset = self.resource.export()
+        self.assertEqual(len(dataset), 2)
+        self.assertEqual((str(self.narnia.id), self.narnia.name, '', '1912-03-04'),
+            dataset[0])
+        self.assertEqual((str(self.warand.id), self.warand.name, '1923-04-05', ''),
+            dataset[1])
+
+    def test_import(self):
+        self.headers = self.resource.get_export_headers()
+        self.dataset = tablib.Dataset(headers=self.headers)
+        row = [self.narnia.id, self.narnia.name, '1936-04-01', '1912-03-07']
+        self.dataset.append(row)
+        result = self.resource.import_data(self.dataset, raise_errors=True)
+
+        self.assertFalse(result.has_errors())
+        self.assertEqual(len(result.rows), 1)
+        self.assertTrue(result.rows[0].diff)
+        self.assertEqual(result.rows[0].import_type,
+                results.RowResult.IMPORT_TYPE_UPDATE)
+
+        readers = Reader.objects.all()
+        self.assertEqual(sorted(str(r) for r in [
+            Reader(user=self.cslewis, book=self.warand, when=date(1923,4,5)),
+            Reader(user=self.tolstoy, book=self.narnia, when=date(1912,3,7)),
+            Reader(user=self.cslewis, book=self.narnia, when=date(1936,4,1)),
+            ]), sorted(str(r) for r in readers))
