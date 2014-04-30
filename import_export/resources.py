@@ -378,7 +378,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         return [self.export_field(field, obj) for field in self.get_fields()]
 
     def get_export_headers(self):
-        headers = [field.column_name for field in self.get_fields()]
+        headers = [force_text(field.column_name) for field in self.get_fields()]
         return headers
 
     def export(self, queryset=None):
