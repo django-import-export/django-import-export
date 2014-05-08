@@ -20,6 +20,7 @@ from import_export import resources
 from import_export import fields
 from import_export import widgets
 from import_export import results
+from import_export import admin
 from import_export.instance_loaders import ModelInstanceLoader
 
 from core.models import Book, Author, Category, Entry, Profile
@@ -477,3 +478,32 @@ class ModelResourceFactoryTest(TestCase):
         BookResource = resources.modelresource_factory(Book)
         self.assertIn('id', BookResource.fields)
         self.assertEqual(BookResource._meta.model, Book)
+
+
+class BookImportableAdmin(admin.RelatedModelImportableAdmin):
+    origin_model = Author
+    model = Book
+
+
+class RelatedModelImportableTest(TestCase):
+
+    def setUp(self):
+        self.bia = BookImportableAdmin(admin_site=None)
+        self.author = Author.objects.create(name='Homer Simpson')
+        self.bia.args = (self.author.pk,)
+
+    def test_sluggy_verbose_name(self):
+        self.assertEquals(self.bia.get_sluggy_verbose_name(), 'books')
+
+    def test_finalize_dataset(self):
+        dataset = data = tablib.Dataset(*[('My Favorite Book!',), ('My Least Favorite Book :(',)], headers=['name'])
+        dataset = self.bia.finalize_dataset(dataset)
+
+        self.assertEquals(len(dataset.headers), 2)
+        self.assertIn('author', dataset.headers)
+
+        for row in dataset.dict:
+            self.assertEquals(row['author'], self.author.pk)
+
+    def test_relation_field_name(self):
+        self.assertEquals(self.bia.get_relation_field_name(), 'author')

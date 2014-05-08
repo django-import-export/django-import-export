@@ -12,7 +12,7 @@
 <h1>{% trans "Import" %}</h1>
 
 {% if confirm_form %}
-  <form action="{% url opts|admin_urlname:"process_import" %}" method="POST">
+  <form action="{{ confirmation_action_url }}" method="POST">
     {% csrf_token %}
     {{ confirm_form.as_p }}
     <p>

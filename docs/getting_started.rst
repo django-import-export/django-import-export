@@ -249,7 +249,6 @@ Admin integration is achived by subclassing
 
    A screenshot of the confirm import view.
 
-|
 
 Another approach to exporting data is by subclassing
 ``ImportExportActionModelAdmin`` which implements export as an admin action.
@@ -268,7 +267,24 @@ list page::
 
    A screenshot of the change view with Import and Export as an admin action.
 
-|
+
+
+You can also import a set of models related to a single record::
+
+
+    from import_export.admin import ImportExportModelAdmin, RelatedModelImportableAdmin
+
+
+    class BookImportable(RelatedModelImportableAdmin):
+        origin_model = Author
+        model = Book
+
+
+    class AuthorAdmin(ImportExportModelAdmin):
+        related_importables = [BookImportable]
+
+
+.. figure:: _static/images/django-import-export-related-model-importable.png
 
 .. seealso::
 

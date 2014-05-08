@@ -1,0 +1,6 @@
+{% extends 'admin/change_form.html' %}
+
+{% block object-tools-items %}
+    {% include 'admin/import_export/related_importable_links.html' %}
+    {{ block.super }}
+{% endblock %}

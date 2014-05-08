@@ -1,0 +1,7 @@
+{% for related_importable_link in related_importable_links %}
+    <li>
+        <a href="{{ related_importable_link.url }}" style="text-decoration:none;">
+            Import {{ related_importable_link.display_name }}
+        </a>
+    </li>
+{% endfor %}

@@ -9,7 +9,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.contrib.admin.models import LogEntry
 
 from core.admin import BookAdmin
-from core.models import Category
+from core.models import Category, Author, Book
 
 
 class ImportExportAdminIntegrationTest(TestCase):
@@ -154,3 +154,54 @@ class ExportActionAdminIntegrationTest(TestCase):
         }
         response = self.client.post('/admin/core/category/', data)
         self.assertEqual(response.status_code, 302)
+
+
+class RelatedModelImportableAdminTest(TestCase):
+    def setUp(self):
+        user = User.objects.create_user('admin', 'admin@example.com',
+                'password')
+        user.is_staff = True
+        user.is_superuser = True
+        user.save()
+        self.client.login(username='admin', password='password')
+
+        # Make an author from which to import books
+        self.author = Author.objects.create(name='Marco Polo')
+
+    def test_related_model_importable_template(self):
+        response = self.client.get('/admin/core/author/1/')
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response,
+                'admin/import_export/change_form_import_related.html')
+
+        self.assertContains(response, _('Import books'))
+
+    def test_related_import(self):
+        input_format = '0'
+        filename = os.path.join(
+            os.path.dirname(__file__),
+            os.path.pardir,
+            'imports',
+            'books_for_author.csv')
+        with open(filename, "rb") as f:
+            data = {
+                'input_format': input_format,
+                'import_file': f,
+            }
+            response = self.client.post('/admin/core/author/1/import_books/', data)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('result', response.context)
+        self.assertFalse(response.context['result'].has_errors())
+        self.assertIn('confirm_form', response.context)
+        confirm_form = response.context['confirm_form']
+
+        process_url = '/admin/core/author/1/process_books_import/'
+        self.assertContains(response, process_url)
+
+        data = confirm_form.initial
+        response = self.client.post(process_url, data,
+                follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, _('Import finished'))
+
+        self.assertEquals(Book.objects.filter(author=self.author).count(), 2)

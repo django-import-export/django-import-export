@@ -5,6 +5,7 @@ from datetime import datetime
 import os.path
 
 from django.contrib import admin
+from django.db.models import fields
 from django.utils.translation import ugettext_lazy as _
 from django.conf.urls import patterns, url
 from django.template.response import TemplateResponse
@@ -22,6 +23,8 @@ from .forms import (
 )
 from .resources import (
     modelresource_factory,
+    ModelResource,
+    ModelDeclarativeMetaclass
 )
 from .formats import base_formats
 from .results import RowResult
@@ -44,6 +47,70 @@ DEFAULT_FORMATS = (
 )
 
 
+class RelatedModelImporterMixin(object):
+    """
+    Teaches an AdminModel how to read and use a class-level attr `related_importables`,
+    populated with RelatedModelImportableAdmin-extending classes.
+    """
+    related_importables = []
+    change_form_template = 'admin/import_export/change_form_import_related.html'
+
+    def change_view(self, request, object_id, form_url='', extra_context=None):
+        extra_context = extra_context or {}
+        extra_context['related_importable_links'] = self.get_related_import_links(object_id)
+        return super(RelatedModelImporterMixin, self).change_view(request, object_id, form_url, extra_context)
+
+    def get_related_import_links(self, object_id):
+        links = []
+        for related_importable in self.related_importables:
+            # Make an instance of the dealio
+            related_importable = related_importable(admin_site=self.admin_site)
+
+            info = self.get_related_importable_admin_urlname_info(related_importable)
+            links.append({
+                'display_name': related_importable.model._meta.verbose_name_plural,
+                'url': reverse('admin:%s_%s_import_%s_action' % (info), args=(object_id,))
+            })
+        return links
+
+    def get_related_importable_admin_urlname_info(self, related_importable):
+        # Prepare a generic name for the admin URL
+        try:
+            # >= 1.6
+            model_name = self.model._meta.model_name
+        except AttributeError:
+            # <= 1.5
+            model_name = self.model._meta.object_name.lower()
+
+        info = self.model._meta.app_label, model_name, related_importable.get_sluggy_verbose_name()
+        return info
+
+    def get_urls(self):
+        """
+        Extends ``get_urls()`` to add Views for each ``related_importable``
+        """
+        urls = super(RelatedModelImporterMixin, self).get_urls()
+        my_urls = patterns('',)
+
+        for related_importable in self.related_importables:
+            # Make an instance of the dealio
+            related_importable = related_importable(admin_site=self.admin_site)
+            assert isinstance(related_importable, RelatedModelImportableAdmin), "All ``related_importables`` must subclass ``RelatedModelImporterMixin``"
+
+            info = self.get_related_importable_admin_urlname_info(related_importable)
+
+            my_urls += patterns('',
+                url(r'^(.+)/import_%s/$' % (related_importable.get_sluggy_verbose_name(),),
+                    self.admin_site.admin_view(related_importable.import_action),
+                    name='%s_%s_import_%s_action' % info),
+                url(r'^(.+)/process_%s_import/$' % (related_importable.get_sluggy_verbose_name(),),
+                    self.admin_site.admin_view(related_importable.process_import),
+                    name='%s_%s_process_%s_import' % info),
+            )
+
+        return my_urls + urls
+
+
 class ImportExportMixinBase(object):
     def get_model_info(self):
         # module_name is renamed to model_name in Django 1.8
@@ -54,7 +121,7 @@ class ImportExportMixinBase(object):
             return (app_label, self.model._meta.module_name,)
 
 
-class ImportMixin(ImportExportMixinBase):
+class ImportMixin(ImportExportMixinBase, RelatedModelImporterMixin):
     """
     Import mixin.
     """
@@ -102,6 +169,17 @@ class ImportMixin(ImportExportMixinBase):
         """
         return [f for f in self.formats if f().can_import()]
 
+    def get_confirm_form(self):
+        return ConfirmImportForm
+
+    def get_import_form(self):
+        return ImportForm
+
+    def get_process_redirect_url(self):
+        return reverse('admin:%s_%s_changelist' %
+                       (self.model._meta.app_label, self.model._meta.module_name),
+                       current_app=self.admin_site.name)
+
     def process_import(self, request, *args, **kwargs):
         '''
         Perform the actual import action (after the user has confirmed he
@@ -110,7 +188,7 @@ class ImportMixin(ImportExportMixinBase):
         opts = self.model._meta
         resource = self.get_import_resource_class()()
 
-        confirm_form = ConfirmImportForm(request.POST)
+        confirm_form = self.get_confirm_form()(request.POST)
         if confirm_form.is_valid():
             import_formats = self.get_import_formats()
             input_format = import_formats[
@@ -124,7 +202,10 @@ class ImportMixin(ImportExportMixinBase):
             data = import_file.read()
             if not input_format.is_binary() and self.from_encoding:
                 data = force_text(data, self.from_encoding)
+            data = self.finalize_data(data)
+
             dataset = input_format.create_dataset(data)
+            dataset = self.finalize_dataset(dataset)
 
             result = resource.import_data(dataset, dry_run=False,
                                  raise_errors=True)
@@ -155,7 +236,37 @@ class ImportMixin(ImportExportMixinBase):
                           current_app=self.admin_site.name)
             return HttpResponseRedirect(url)
 
-    def import_action(self, request, *args, **kwargs):
+    def finalize_data(self, data):
+        return data
+
+    def finalize_dataset(self, dataset):
+        return dataset
+
+    def get_field_names(self, resource):
+        return [f.column_name for f in resource.get_fields()]
+
+    def get_confirmation_action_urlname_trailing_component(self):
+        return 'process_import'
+
+    def get_confirmation_action_urlname(self, arg=None):
+        arg = arg or self.get_confirmation_action_urlname_trailing_component()
+
+        try:
+            # 1.6+
+            model_name = self.get_opts().model_name
+        except AttributeError:
+            # <= 1.5
+            model_name = self.get_opts().object_name.lower()
+
+        return 'admin:%s_%s_%s' % (self.get_opts().app_label, model_name, arg)
+
+    def get_confirmation_action_url(self):
+        return reverse(self.get_confirmation_action_urlname())
+
+    def get_opts(self):
+        return self.model._meta
+
+    def _import_action(self, request, *args, **kwargs):
         '''
         Perform a dry_run of the import to make sure the import will not
         result in errors.  If there where no error, save the user
@@ -167,9 +278,9 @@ class ImportMixin(ImportExportMixinBase):
         context = {}
 
         import_formats = self.get_import_formats()
-        form = ImportForm(import_formats,
-                          request.POST or None,
-                          request.FILES or None)
+        form = self.get_import_form()(import_formats,
+                                      request.POST or None,
+                                      request.FILES or None)
 
         if request.POST and form.is_valid():
             input_format = import_formats[
@@ -187,9 +298,11 @@ class ImportMixin(ImportExportMixinBase):
                       input_format.get_read_mode()) as uploaded_import_file:
                 # warning, big files may exceed memory
                 data = uploaded_import_file.read()
+                data = self.finalize_data(data)
                 if not input_format.is_binary() and self.from_encoding:
                     data = force_text(data, self.from_encoding)
                 dataset = input_format.create_dataset(data)
+                dataset = self.finalize_dataset(dataset)
                 result = resource.import_data(dataset, dry_run=True,
                                               raise_errors=False)
 
@@ -200,11 +313,20 @@ class ImportMixin(ImportExportMixinBase):
                     'import_file_name': os.path.basename(uploaded_file.name),
                     'input_format': form.cleaned_data['input_format'],
                 })
+                context['confirmation_action_url'] = self.get_confirmation_action_url()
 
         context['form'] = form
-        context['opts'] = self.model._meta
-        context['fields'] = [f.column_name for f in resource.get_fields()]
+        context['opts'] = self.get_opts()
+        context['fields'] = self.get_field_names(resource)
+        return context
 
+    def import_action(self, request, *args, **kwargs):
+        # In line with some CBV standards
+        self.request = request
+        self.args = args
+        self.kwargs = kwargs
+
+        context = self._import_action(request, *args, **kwargs)
         return TemplateResponse(request, [self.import_template_name],
                                 context, current_app=self.admin_site.name)
 
@@ -316,8 +438,102 @@ class ExportMixin(ImportExportMixinBase):
         context = {}
         context['form'] = form
         context['opts'] = self.model._meta
+
         return TemplateResponse(request, [self.export_template_name],
                                 context, current_app=self.admin_site.name)
+
+
+class RelatedModelImportableAdmin(ImportMixin):
+    """
+    The parent class for related importables. Inheriting classes will get
+    declared on their host ModelAdmin in a fashion similar to Inlines.
+    """
+    resource_exclude = ()
+
+    def __init__(self, *args, **kwargs):
+        self.admin_site = kwargs.pop('admin_site')
+        super(RelatedModelImportableAdmin, self).__init__(*args, **kwargs)
+
+    def get_sluggy_verbose_name(self):
+        return self.model._meta.verbose_name_plural.lower().replace(' ', '_')
+
+    def get_implied_origin_model(self):
+        return self.origin_model._default_manager.get(pk=self.args[0])
+
+    @property
+    def origin_model_name(self):
+        try:
+            # >= 1.6
+            return self.origin_model._meta.model_name
+        except AttributeError:
+            # <= 1.5
+            return self.origin_model._meta.object_name.lower()
+
+    def finalize_dataset(self, dataset):
+        # Make a list of appropriate length, containing only our implied origin model's PK
+        origin_model_instance = self.get_implied_origin_model()
+        importer_id_list = [origin_model_instance.pk] * len(dataset)
+
+        # Update the dataset to include that column
+        dataset.append_col(importer_id_list, header=self.get_relation_field_name())
+
+        return dataset
+
+    def get_process_redirect_url(self):
+        url_name = 'admin:%s_%s_change' % (self.origin_model._meta.app_label, self.origin_model_name,)
+        return reverse(url_name, args=self.args)
+
+    def get_resource_class(self):
+        # Must use this function instead of defining ``resource_class``
+        # to avoid circular imports
+        resource = self.get_original_resource_class()
+        self.finalize_related_resource(resource)
+        return resource
+
+    def get_original_resource_class(self):
+        """
+        Override hook if you've already customized a Resource for the related model.
+        """
+        attrs = {'model': self.model, 'exclude': self.get_excludes()}
+        Meta = type(str('Meta'), (object,), attrs)
+
+        class_name = str('Related') + self.model.__name__ + str('Resource')
+        class_attrs = {'Meta': Meta}
+
+        metaclass = ModelDeclarativeMetaclass
+        return metaclass(class_name, (ModelResource,), class_attrs)
+
+    def get_excludes(self):
+        return self.resource_exclude
+
+    def finalize_related_resource(self, resource):
+        """
+        Customization hook.
+        """
+        return resource
+
+    def get_opts(self):
+        return self.origin_model._meta
+
+    def get_confirmation_action_urlname_trailing_component(self):
+        return 'process_%s_import' % (self.model._meta.verbose_name_plural.lower().replace(' ', '_'))
+
+    def get_confirmation_action_url(self):
+        """
+        Override the normal URL builder to supply the necessary positional
+        argument for successful reversal.
+        """
+        return reverse(self.get_confirmation_action_urlname(), args=(self.args[0],))
+
+    def get_relation_field_name(self):
+        for field in self.model._meta.fields:
+            # The relationship obviously must be a related field
+            if isinstance(field, fields.related.RelatedField):
+                # ``issubclass`` returns True for parental relationships and when
+                # simply passing the same class twice
+                if issubclass(self.origin_model, field.related.parent_model):
+                    return field.name
+        raise Exception("Could not find pointer from %s to %s" % (self.model.__name__, self.origin_model.__name__,))
 
 
 class ImportExportMixin(ImportMixin, ExportMixin):
