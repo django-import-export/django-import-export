@@ -526,8 +526,10 @@ class ModelResource(six.with_metaclass(ModelDeclarativeMetaclass, Resource)):
 
         FieldWidget = self.widget_from_django_field(django_field)
         widget_kwargs = self.widget_kwargs_for_field(field_name)
+        model_field = opts.model._meta.get_field_by_name(f.name)[0]
         field = Field(attribute=field_name, column_name=field_name,
-                widget=FieldWidget(**widget_kwargs), readonly=readonly)
+                widget=FieldWidget(**widget_kwargs), readonly=readonly,
+                is_primary_key=model_field.primary_key)
         return field
 
     def get_import_id_fields(self):

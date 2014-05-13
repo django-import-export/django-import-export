@@ -21,16 +21,20 @@ class Field(object):
 
     ``readonly`` boolean value defines that if this field will be assigned
     to object during import.
+
+    ``is_primary_key`` Used to keep updates actually updates if
+    `model_id_fields` is more than just `id`.
     """
 
     def __init__(self, attribute=None, column_name=None, widget=None,
-            readonly=False):
+            readonly=False, is_primary_key=False):
         self.attribute = attribute
         self.column_name = column_name
         if not widget:
             widget = widgets.Widget()
         self.widget = widget
         self.readonly = readonly
+        self.is_primary_key = is_primary_key
 
     def __repr__(self):
         """
@@ -90,8 +94,14 @@ class Field(object):
         """
         Cleans this field value and assign it to provided object.
         """
+        cleaned_data = self.clean(data)
+
+        # Don't overwrite PKs with Falsy datat
+        if self.is_primary_key and not bool(cleaned_data):
+            return
+
         if not self.readonly:
-            setattr(obj, self.attribute, self.clean(data))
+            setattr(obj, self.attribute, cleaned_data)
 
     def export(self, obj):
         """

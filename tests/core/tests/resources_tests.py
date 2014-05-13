@@ -83,6 +83,37 @@ class ModelResourceTest(TestCase):
         self.assertIs(self.resource._meta.instance_loader_class,
                 ModelInstanceLoader)
 
+    def test_primary_key_not_overwritten(self):
+        """
+        Tests that when `import_id_fields` are something other than `id`,
+        the original PK is preserved and a new record is not written.
+        """
+        class B(BookResource):
+            class Meta(BookResource.Meta):
+                # This line is what makes this test. Having a non
+                # model PK (a unique column, for example) be what
+                # the importer key's on must not lead to should-be
+                # updates getting turned into inserts
+                import_id_fields = ('name',)
+
+        # Dataset doesn't support updates (to my knowedge)
+        self.dataset = tablib.Dataset(headers=['id', 'name', 'author_email',
+            'price'])
+        row = [None, 'Some book', 'new@email.com', "10.25"]
+        self.dataset.append(row)
+
+        b = B()
+        result = b.import_data(self.dataset, raise_errors=True)
+        self.assertFalse(result.has_errors())
+
+        # There should only be one record with the unique name
+        self.assertEquals(Book.objects.filter(name=self.book.name).count(), 1)
+
+        # `author_email` was different in this import and should have been
+        # updated
+        b = Book.objects.get(pk=self.book.pk)
+        self.assertEquals(b.author_email, 'new@email.com')
+
     def test_fields(self):
         fields = self.resource.fields
         self.assertIn('id', fields)
