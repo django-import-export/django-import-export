@@ -11,4 +11,4 @@ install:
   - pip install -e git+https://github.com/kennethreitz/tablib.git#egg=tablib
   - pip install -r requirements/base.txt --use-mirrors
 script:
-  - if [[ $TRAVIS_PYTHON_VERSION != '3.3' && $DJANGO != "1.4.10" ]]; then python tests/manage.py test core --settings=settings; fi
+  - if [[ $TRAVIS_PYTHON_VERSION != '3.3' || $DJANGO != "1.4.10" ]]; then python tests/manage.py test core --settings=settings; fi
