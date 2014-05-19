@@ -50,9 +50,7 @@ class DecimalWidget(Widget):
     """
 
     def clean(self, value):
-        if not value:
-            return None
-        return Decimal(value)
+        return value or None
 
 
 class CharWidget(Widget):
@@ -128,18 +126,19 @@ class ForeignKeyWidget(Widget):
     Requires a positional argument: the class to which the field is related.
     """
 
-    def __init__(self, model, *args, **kwargs):
+    def __init__(self, model, to_field='pk', *args, **kwargs):
         self.model = model
+        self.to_field = to_field
         super(ForeignKeyWidget, self).__init__(*args, **kwargs)
 
     def clean(self, value):
-        pk = super(ForeignKeyWidget, self).clean(value)
-        return self.model.objects.get(pk=pk) if pk else None
+        value = super(ForeignKeyWidget, self).clean(value)
+        return value or None
 
     def render(self, value):
         if value is None:
             return ""
-        return value.pk
+        return getattr(value, self.to_field, value)
 
 
 class ManyToManyWidget(Widget):
