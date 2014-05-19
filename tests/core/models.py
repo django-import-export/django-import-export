@@ -22,6 +22,14 @@ class Category(models.Model):
 
 
 @python_2_unicode_compatible
+class Publisher(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+
+    def __str__(self):
+        return self.name
+
+
+@python_2_unicode_compatible
 class Book(models.Model):
     name = models.CharField('Book name', max_length=100)
     author = models.ForeignKey(Author, blank=True, null=True)
@@ -31,6 +39,8 @@ class Book(models.Model):
     price = models.DecimalField(max_digits=10, decimal_places=2, null=True,
             blank=True)
     categories = models.ManyToManyField(Category, blank=True)
+    publisher = models.ForeignKey(Publisher, to_field='name', null=True,
+                                  blank=True)
 
     def __str__(self):
         return self.name

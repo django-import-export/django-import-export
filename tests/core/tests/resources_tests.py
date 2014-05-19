@@ -4,6 +4,7 @@ from decimal import Decimal
 from datetime import date
 from copy import deepcopy
 
+from django.core.validators import ValidationError
 from django.test import (
         TestCase,
         TransactionTestCase,
@@ -20,7 +21,7 @@ from import_export import widgets
 from import_export import results
 from import_export.instance_loaders import ModelInstanceLoader
 
-from core.models import Book, Author, Category, Entry, Profile
+from core.models import Book, Author, Category, Entry, Profile, Publisher
 
 try:
     from django.utils.encoding import force_text
@@ -73,8 +74,8 @@ class ModelResourceTest(TestCase):
 
         self.book = Book.objects.create(name="Some book")
         self.dataset = tablib.Dataset(headers=['id', 'name', 'author_email',
-            'price'])
-        row = [self.book.pk, 'Some book', 'test@example.com', "10.25"]
+            'price', 'publisher'])
+        row = [self.book.pk, 'Some book', 'test@example.com', "10.25", "ABPBC"]
         self.dataset.append(row)
 
     def test_default_instance_loader_class(self):
@@ -87,6 +88,7 @@ class ModelResourceTest(TestCase):
         self.assertIn('name', fields)
         self.assertIn('author_email', fields)
         self.assertIn('price', fields)
+        self.assertIn('publisher', fields)
 
     def test_fields_foreign_key(self):
         fields = self.resource.fields
@@ -117,7 +119,7 @@ class ModelResourceTest(TestCase):
         headers = self.resource.get_export_headers()
         self.assertEqual(headers, ['published_date',
             'id', 'name', 'author', 'author_email', 'price', 'categories',
-            ])
+            'publisher'])
 
     def test_export(self):
         dataset = self.resource.export(Book.objects.all())
@@ -132,7 +134,14 @@ class ModelResourceTest(TestCase):
                 u'other </ins><span>book</span>')
         self.assertFalse(diff[headers.index('author_email')])
 
+    def test_import_data_validates_row(self):
+        row = [99, 'to long' * 15, 'not an email', 'no price', 'not existing']
+        with self.assertRaises(ValidationError) as e:
+            self.dataset.insert(0, row)
+            result = self.resource.import_data(self.dataset, raise_errors=True)
+
     def test_import_data(self):
+        publisher = Publisher.objects.create(name='ABPBC')
         result = self.resource.import_data(self.dataset, raise_errors=True)
 
         self.assertFalse(result.has_errors())
@@ -144,6 +153,7 @@ class ModelResourceTest(TestCase):
         instance = Book.objects.get(pk=self.book.pk)
         self.assertEqual(instance.author_email, 'test@example.com')
         self.assertEqual(instance.price, Decimal("10.25"))
+        self.assertEqual(instance.publisher, publisher)
 
     def test_import_data_error_saving_model(self):
         row = list(self.dataset.pop())
@@ -256,6 +266,24 @@ class ModelResourceTest(TestCase):
 
         book = Book.objects.get(name='FooBook')
         self.assertEqual(book.author, author2)
+
+    def test_foreign_keys_to_field_export(self):
+        publisher1 = Publisher.objects.create(name='Foo')
+        self.book.publisher = publisher1
+        self.book.save()
+
+        dataset = self.resource.export(Book.objects.all())
+        self.assertEqual(dataset.dict[0]['publisher'], publisher1.name)
+
+    def test_foreign_keys_to_field_import(self):
+        publisher2 = Publisher.objects.create(name='Bar')
+        headers = ['id', 'name', 'publisher']
+        row = [None, 'FooBook', publisher2.name]
+        dataset = tablib.Dataset(row, headers=headers)
+        self.resource.import_data(dataset, raise_errors=True)
+
+        book = Book.objects.get(name='FooBook')
+        self.assertEqual(book.publisher, publisher2)
 
     def test_m2m_export(self):
         cat1 = Category.objects.create(name='Cat 1')

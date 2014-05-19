@@ -4,7 +4,8 @@ Changelog for django-import-export
 0.2.3 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Export/Import foreign key fields with their ``to_field`` attribute
+- On importing call ``clean`` of model field to invoke validators
 
 
 0.2.2 (2014-04-18)
