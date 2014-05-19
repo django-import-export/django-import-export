@@ -43,7 +43,17 @@ DEFAULT_FORMATS = (
 )
 
 
-class ImportMixin(object):
+class ImportExportMixinBase(object):
+    def get_model_info(self):
+        # module_name is renamed to model_name in Django 1.8
+        app_label = self.model._meta.app_label
+        try:
+            return (app_label, self.model._meta.model_name,)
+        except AttributeError:
+            return (app_label, self.model._meta.module_name,)
+
+
+class ImportMixin(ImportExportMixinBase):
     """
     Import mixin.
     """
@@ -61,7 +71,7 @@ class ImportMixin(object):
 
     def get_urls(self):
         urls = super(ImportMixin, self).get_urls()
-        info = self.model._meta.app_label, self.model._meta.module_name
+        info = self.get_model_info()
         my_urls = patterns(
             '',
             url(r'^process_import/$',
@@ -139,8 +149,7 @@ class ImportMixin(object):
             messages.success(request, success_message)
             import_file.close()
 
-            url = reverse('admin:%s_%s_changelist' %
-                          (opts.app_label, opts.module_name),
+            url = reverse('admin:%s_%s_changelist' % self.get_model_info(),
                           current_app=self.admin_site.name)
             return HttpResponseRedirect(url)
 
@@ -198,7 +207,7 @@ class ImportMixin(object):
                                 context, current_app=self.admin_site.name)
 
 
-class ExportMixin(object):
+class ExportMixin(ImportExportMixinBase):
     """
     Export mixin.
     """
@@ -215,12 +224,11 @@ class ExportMixin(object):
 
     def get_urls(self):
         urls = super(ExportMixin, self).get_urls()
-        info = self.model._meta.app_label, self.model._meta.module_name
         my_urls = patterns(
             '',
             url(r'^export/$',
                 self.admin_site.admin_view(self.export_action),
-                name='%s_%s_export' % info),
+                name='%s_%s_export' % self.get_model_info()),
         )
         return my_urls + urls
 
@@ -267,7 +275,11 @@ class ExportMixin(object):
                         self.list_max_show_all, self.list_editable,
                         self)
 
-        return cl.query_set
+        # query_set has been renamed to queryset in Django 1.8
+        try:
+            return cl.queryset
+        except AttributeError:
+            return cl.query_set
 
     def export_action(self, request, *args, **kwargs):
         formats = self.get_export_formats()
@@ -279,11 +291,14 @@ class ExportMixin(object):
 
             resource_class = self.get_export_resource_class()
             queryset = self.get_export_queryset(request)
+            content_type = 'application/octet-stream'
             data = resource_class().export(queryset)
-            response = HttpResponse(
-                file_format.export_data(data),
-                mimetype='application/octet-stream',
-            )
+            export_data = file_format.export_data(data)
+            # Django 1.7 uses the content_type kwarg instead of mimetype
+            try:
+                response = HttpResponse(export_data, content_type=content_type)
+            except TypeError:
+                response = HttpResponse(export_data, mimetype=content_type)
             response['Content-Disposition'] = 'attachment; filename=%s' % (
                 self.get_export_filename(file_format),
             )

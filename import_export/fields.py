@@ -71,7 +71,9 @@ class Field(object):
             if value is None:
                 return None
 
-        if callable(value):
+        # Manyrelatedmanagers are callable in Django >= 1.7 but we don't want
+        # to call them
+        if callable(value) and not value.through:
             value = value()
         return value
 
