@@ -422,8 +422,11 @@ class ModelDeclarativeMetaclass(DeclarativeMetaclass):
 
                 FieldWidget = new_class.widget_from_django_field(f)
                 widget_kwargs = new_class.widget_kwargs_for_field(f.name)
-                field = Field(attribute=f.name, column_name=f.name,
-                        widget=FieldWidget(**widget_kwargs))
+                attribute, db_column = f.get_attname_column()
+                field = Field(attribute=f.name,
+                              column_name=f.name,
+                              db_column=db_column,
+                              widget=FieldWidget(**widget_kwargs))
                 field_list.append((f.name, field, ))
 
             new_class.fields.update(SortedDict(field_list))
@@ -475,7 +478,7 @@ class ModelResource(six.with_metaclass(ModelDeclarativeMetaclass, Resource)):
                     model=f.rel.to)
         if internal_type in ('ForeignKey', 'OneToOneField', ):
             result = functools.partial(widgets.ForeignKeyWidget,
-                    model=f.rel.to)
+                    model=f.rel.to, to_field=f.rel.field_name)
         if internal_type in ('DecimalField', ):
             result = widgets.DecimalWidget
         if internal_type in ('DateTimeField', ):

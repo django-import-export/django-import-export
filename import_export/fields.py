@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from . import widgets
 
 from django.core.exceptions import ObjectDoesNotExist
+from django.db.models.fields import FieldDoesNotExist
 
 
 class Field(object):
@@ -16,6 +17,9 @@ class Field(object):
     ``column_name`` let you provide how this field is named
     in datasource.
 
+    ``db_column`` string of column name in DB backend. Used to get value of
+    foreign key fields without loading related instance.
+
     ``widget`` defines widget that will be used to represent field data
     in export.
 
@@ -23,10 +27,11 @@ class Field(object):
     to object during import.
     """
 
-    def __init__(self, attribute=None, column_name=None, widget=None,
-            readonly=False):
+    def __init__(self, attribute=None, column_name=None, db_column=None,
+                 widget=None, readonly=False):
         self.attribute = attribute
         self.column_name = column_name
+        self.db_column = db_column
         if not widget:
             widget = widgets.Widget()
         self.widget = widget
@@ -42,14 +47,31 @@ class Field(object):
             return '<%s: %s>' % (path, column_name)
         return '<%s>' % path
 
-    def clean(self, data):
+    def clean(self, data, obj):
         """
         Takes value stored in the data for the field and returns it as
         appropriate python object.
         """
         value = data[self.column_name]
         value = self.widget.clean(value)
+
+        try:
+            field = obj._meta.get_field(self.attribute)
+            value = field.clean(value, obj)
+        except (TypeError, AttributeError, FieldDoesNotExist), e:
+            # dealing with something not a model field of model instance
+            pass
+
         return value
+
+    def _get_attrs(self):
+        # Use DB column name if possible to avoid expensive
+        # DB lookups on FK fields
+        if '__' in self.attribute:  # highest priority
+            return self.attribute.split('__')
+        if self.db_column:  # important for FKs
+            return [self.db_column]
+        return [self.attribute]  # default behaviour
 
     def get_value(self, obj):
         """
@@ -58,7 +80,7 @@ class Field(object):
         if self.attribute is None:
             return None
 
-        attrs = self.attribute.split('__')
+        attrs = self._get_attrs()
         value = obj
 
         for attr in attrs:
@@ -80,7 +102,8 @@ class Field(object):
         Cleans this field value and assign it to provided object.
         """
         if not self.readonly:
-            setattr(obj, self.attribute, self.clean(data))
+            setattr(obj, self.db_column or self.attribute,
+                    self.clean(data, obj))
 
     def export(self, obj):
         """

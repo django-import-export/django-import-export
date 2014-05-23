@@ -28,8 +28,8 @@ class ModelInstanceLoader(BaseInstanceLoader):
         try:
             params = {}
             for key in self.resource.get_import_id_fields():
-                field = self.resource.fields[key]
-                params[field.attribute] = field.clean(row)
+                field = self.resource._meta.model._meta.get_field(key)
+                params[field.name] = field.to_python(row[key])
             return self.get_queryset().get(**params)
         except self.resource._meta.model.DoesNotExist:
             return None
@@ -49,8 +49,9 @@ class CachedInstanceLoader(ModelInstanceLoader):
 
         pk_field_name = self.resource.get_import_id_fields()[0]
         self.pk_field = self.resource.fields[pk_field_name]
+        obj = self.resource._meta.model()
 
-        ids = [self.pk_field.clean(row) for row in self.dataset.dict]
+        ids = [self.pk_field.clean(row, obj) for row in self.dataset.dict]
         qs = self.get_queryset().filter(**{
             "%s__in" % self.pk_field.attribute: ids
             })
@@ -60,4 +61,5 @@ class CachedInstanceLoader(ModelInstanceLoader):
             for instance in qs])
 
     def get_instance(self, row):
-        return self.all_instances.get(self.pk_field.clean(row))
+        obj = self.resource._meta.model()
+        return self.all_instances.get(self.pk_field.clean(row, obj))

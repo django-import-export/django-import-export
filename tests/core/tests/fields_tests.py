@@ -24,7 +24,7 @@ class FieldTest(TestCase):
         self.obj = Obj(name='Foo', date=date(2012, 8, 13))
 
     def test_clean(self):
-        self.assertEqual(self.field.clean(self.row),
+        self.assertEqual(self.field.clean(self.row, self.obj),
                 self.row['name'])
 
     def test_export(self):

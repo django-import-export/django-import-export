@@ -41,6 +41,7 @@ class DecimalWidgetTest(TestCase):
     def test_clean(self):
         widget = widgets.DecimalWidget()
         self.assertEqual(widget.clean("11.111"), Decimal("11.111"))
+        self.assertEqual(widget.clean(""), None)
 
 
 class ForeignKeyWidgetTest(TestCase):
@@ -50,7 +51,7 @@ class ForeignKeyWidgetTest(TestCase):
         self.author = Author.objects.create(name='Foo')
 
     def test_clean(self):
-        self.assertEqual(self.widget.clean(1), self.author)
+        self.assertEqual(self.widget.clean(1), self.author.pk)
 
     def test_clean_empty(self):
         self.assertEqual(self.widget.clean(""), None)
