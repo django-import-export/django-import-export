@@ -25,11 +25,16 @@ class ModelInstanceLoader(BaseInstanceLoader):
         return self.resource._meta.model.objects.all()
 
     def get_instance(self, row):
+        params = {}
+        for key in self.resource.get_import_id_fields():
+            value = row[key]
+            if not value:
+                # adding instance
+                return None
+            field = self.resource._meta.model._meta.get_field(key)
+            params[field.name] = field.to_python(value)
         try:
-            params = {}
-            for key in self.resource.get_import_id_fields():
-                field = self.resource._meta.model._meta.get_field(key)
-                params[field.name] = field.to_python(row[key])
+
             return self.get_queryset().get(**params)
         except self.resource._meta.model.DoesNotExist:
             return None
