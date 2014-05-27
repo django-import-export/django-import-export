@@ -96,7 +96,7 @@ class Field(object):
         """
         cleaned_data = self.clean(data)
 
-        # Don't overwrite PKs with Falsy datat
+        # Don't overwrite PKs with Falsy data
         if self.is_primary_key and not bool(cleaned_data):
             return
 

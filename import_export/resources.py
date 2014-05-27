@@ -157,19 +157,19 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         else:
             return (self.init_instance(row), True)
 
-    def save_instance(self, instance, dry_run=False):
-        self.before_save_instance(instance, dry_run)
+    def save_instance(self, instance, row, dry_run=False):
+        self.before_save_instance(instance, row, dry_run)
         if not dry_run:
             instance.save()
-        self.after_save_instance(instance, dry_run)
+        self.after_save_instance(instance, row, dry_run)
 
-    def before_save_instance(self, instance, dry_run):
+    def before_save_instance(self, instance, row, dry_run):
         """
         Override to add additional logic.
         """
         pass
 
-    def after_save_instance(self, instance, dry_run):
+    def after_save_instance(self, instance, row, dry_run):
         """
         Override to add additional logic.
         """
@@ -342,7 +342,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
                     if self.skip_row(instance, original):
                         row_result.import_type = RowResult.IMPORT_TYPE_SKIP
                     else:
-                        self.save_instance(instance, real_dry_run)
+                        self.save_instance(instance, row, real_dry_run)
                         self.save_m2m(instance, row, real_dry_run)
                         # Add object info to RowResult for LogEntry
                         row_result.object_repr = force_text(instance)
@@ -523,13 +523,11 @@ class ModelResource(six.with_metaclass(ModelDeclarativeMetaclass, Resource)):
         """
         Returns a Resource Field instance for the given Django model field.
         """
-
         FieldWidget = self.widget_from_django_field(django_field)
         widget_kwargs = self.widget_kwargs_for_field(field_name)
-        model_field = opts.model._meta.get_field_by_name(f.name)[0]
         field = Field(attribute=field_name, column_name=field_name,
-                widget=FieldWidget(**widget_kwargs), readonly=readonly,
-                is_primary_key=model_field.primary_key)
+                widget=FieldWidget(**widget_kwargs), is_primary_key=django_field.primary_key,
+                readonly=readonly)
         return field
 
     def get_import_id_fields(self):
@@ -542,18 +540,17 @@ class ModelResource(six.with_metaclass(ModelDeclarativeMetaclass, Resource)):
         return self._meta.model()
 
 
-def modelresource_factory(model, resource_class=ModelResource):
+def modelresource_factory(model, meta_attrs={}, class_attrs={}, resource_class=ModelResource):
     """
     Factory for creating ``ModelResource`` class for given Django model.
     """
-    attrs = {'model': model}
-    Meta = type(str('Meta'), (object,), attrs)
+    # Prepare the Meta class
+    meta_attrs['model'] = model
+    Meta = type(str('Meta'), (object,), meta_attrs)
 
+    # Prepare the Resource
     class_name = model.__name__ + str('Resource')
-
-    class_attrs = {
-        'Meta': Meta,
-        }
+    class_attrs['Meta'] = Meta
 
     metaclass = ModelDeclarativeMetaclass
     return metaclass(class_name, (resource_class,), class_attrs)
