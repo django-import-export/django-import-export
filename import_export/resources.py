@@ -13,9 +13,10 @@ from django.utils.datastructures import SortedDict
 from django.utils import six
 from django.db import transaction
 from django.db.models.related import RelatedObject
+from django.core.exceptions import ValidationError
 from django.conf import settings
 
-from .results import Error, Result, RowResult
+from .results import Error, FieldValidationError, Result, RowResult
 from .fields import Field
 from import_export import widgets
 from .instance_loaders import (
@@ -198,7 +199,10 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         for field in self.get_fields():
             if isinstance(field.widget, widgets.ManyToManyWidget):
                 continue
-            self.import_field(field, obj, data)
+            try:
+                self.import_field(field, obj, data)
+            except ValidationError as e:
+                raise FieldValidationError(field, e.messages)
 
     def save_m2m(self, obj, data, dry_run):
         """
@@ -312,27 +316,37 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
                 raise
 
         for row in dataset.dict:
-            try:
-                row_result = RowResult()
-                instance, new = self.get_or_init_instance(instance_loader, row)
+
+            row_result = RowResult()
+            instance, new = self.get_or_init_instance(instance_loader, row)
+            if new:
+                row_result.import_type = RowResult.IMPORT_TYPE_NEW
+            else:
+                row_result.import_type = RowResult.IMPORT_TYPE_UPDATE
+            row_result.new_record = new
+            original = deepcopy(instance)
+            if self.for_delete(row, instance):
                 if new:
-                    row_result.import_type = RowResult.IMPORT_TYPE_NEW
+                    row_result.import_type = RowResult.IMPORT_TYPE_SKIP
+                    row_result.diff = self.get_diff(None, None,
+                            real_dry_run)
                 else:
-                    row_result.import_type = RowResult.IMPORT_TYPE_UPDATE
-                row_result.new_record = new
-                original = deepcopy(instance)
-                if self.for_delete(row, instance):
-                    if new:
-                        row_result.import_type = RowResult.IMPORT_TYPE_SKIP
-                        row_result.diff = self.get_diff(None, None,
-                                real_dry_run)
-                    else:
-                        row_result.import_type = RowResult.IMPORT_TYPE_DELETE
-                        self.delete_instance(instance, real_dry_run)
-                        row_result.diff = self.get_diff(original, None,
-                                real_dry_run)
-                else:
+                    row_result.import_type = RowResult.IMPORT_TYPE_DELETE
+                    self.delete_instance(instance, real_dry_run)
+                    row_result.diff = self.get_diff(original, None,
+                            real_dry_run)
+            else:
+                try:
                     self.import_obj(instance, row, real_dry_run)
+                except Exception as e:
+                    tb_info = traceback.format_exc(2)
+                    row_result.errors.append(Error(e, tb_info))
+                    if raise_errors:
+                        if use_transactions:
+                            transaction.rollback()
+                            transaction.leave_transaction_management()
+                        six.reraise(*sys.exc_info())
+                else:
                     if self.skip_row(instance, original):
                         row_result.import_type = RowResult.IMPORT_TYPE_SKIP
                     else:
@@ -341,16 +355,8 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
                         # Add object info to RowResult for LogEntry
                         row_result.object_repr = str(instance)
                         row_result.object_id = instance.pk
-                    row_result.diff = self.get_diff(original, instance,
-                            real_dry_run)
-            except Exception as e:
-                tb_info = traceback.format_exc(2)
-                row_result.errors.append(Error(e, tb_info))
-                if raise_errors:
-                    if use_transactions:
-                        transaction.rollback()
-                        transaction.leave_transaction_management()
-                    six.reraise(*sys.exc_info())
+                row_result.diff = self.get_diff(original, instance,
+                        real_dry_run)
             if (row_result.import_type != RowResult.IMPORT_TYPE_SKIP or
                         self._meta.report_skipped):
                 result.rows.append(row_result)

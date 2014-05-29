@@ -1,4 +1,5 @@
 from __future__ import unicode_literals
+from django.core.exceptions import ValidationError
 
 
 class Error(object):
@@ -6,6 +7,13 @@ class Error(object):
     def __init__(self, error, traceback=None):
         self.error = error
         self.traceback = traceback
+
+
+class FieldValidationError(ValidationError):
+    """Extended ValidationError that tracks the offending field"""
+    def __init__(self, field, *args, **kwargs):
+        super(FieldValidationError, self).__init__(*args, **kwargs)
+        self.field = field
 
 
 class RowResult(object):
