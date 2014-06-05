@@ -67,7 +67,7 @@ Customize resource options
 --------------------------
 
 By default ``ModelResource`` introspects model fields and creates
-``import_export.fields.Field`` attributes with an appopriate widget
+``import_export.fields.Field`` attributes with an appropriate widget
 for each field.
 
 To affect which model fields will be included in an import-export
