@@ -4,7 +4,7 @@ Changelog for django-import-export
 0.2.3 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- FIX: No support for dates before 1900 (#93)
 
 
 0.2.2 (2014-04-18)
