@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 
 from decimal import Decimal
 from datetime import datetime
+from django.utils import datetime_safe
 
 try:
     from django.utils.encoding import force_text
@@ -96,7 +97,10 @@ class DateWidget(Widget):
         return datetime.strptime(value, self.format).date()
 
     def render(self, value):
-        return value.strftime(self.format)
+        try:
+            return value.strftime(self.format)
+        except:
+            return datetime_safe.new_date(value).strftime(self.format)
 
 
 class DateTimeWidget(Widget):

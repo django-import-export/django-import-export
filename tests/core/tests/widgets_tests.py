@@ -35,6 +35,17 @@ class DateWidgetTest(TestCase):
     def test_clean(self):
         self.assertEqual(self.widget.clean("13.08.2012"), self.date)
 
+class DateWidgetBefore1900Test(TestCase):
+
+    def setUp(self):
+        self.date = date(1868, 8, 13)
+        self.widget = widgets.DateWidget('%d.%m.%Y')
+
+    def test_render(self):
+        self.assertEqual(self.widget.render(self.date), "13.08.1868")
+
+    def test_clean(self):
+        self.assertEqual(self.widget.clean("13.08.1868"), self.date)
 
 class DecimalWidgetTest(TestCase):
 
