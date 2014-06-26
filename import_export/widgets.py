@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 
 from decimal import Decimal
 from datetime import datetime
+from datetime import timedelta
 
 try:
     from django.utils.encoding import force_text
@@ -78,11 +79,18 @@ class BooleanWidget(Widget):
         return True if value in self.TRUE_VALUES else False
 
 
+# start one day before 1900-0-0 to handle excels added leap year 1990
+epoch = datetime(1899, 12, 30, 0, 0, 0)
+
+
 class DateWidget(Widget):
     """
     Widget for converting date fields.
 
     Takes optional ``format`` parameter.
+
+    If value is a float will assume an excel date.
+    http://www.cpearson.com/excel/datetime.htm
     """
 
     def __init__(self, format=None):
@@ -93,6 +101,9 @@ class DateWidget(Widget):
     def clean(self, value):
         if not value:
             return None
+        elif isinstance(value, float):
+            dt = epoch + timedelta(seconds=60 * 60 * 24 * value)
+            return dt.date()
         return datetime.strptime(value, self.format).date()
 
     def render(self, value):
@@ -104,6 +115,9 @@ class DateTimeWidget(Widget):
     Widget for converting date fields.
 
     Takes optional ``format`` parameter.
+
+    If value is a float will assume an excel date.
+    http://www.cpearson.com/excel/datetime.htm
     """
 
     def __init__(self, format=None):
@@ -114,6 +128,8 @@ class DateTimeWidget(Widget):
     def clean(self, value):
         if not value:
             return None
+        elif isinstance(value, float):
+            return epoch + timedelta(seconds=60 * 60 * 24 * value)
         return datetime.strptime(value, self.format)
 
     def render(self, value):
