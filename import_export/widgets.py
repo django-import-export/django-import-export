@@ -149,21 +149,35 @@ class ForeignKeyWidget(Widget):
 class ManyToManyWidget(Widget):
     """
     Widget for ``ManyToManyField`` model field that represent m2m field
-    as comma separated pk values.
+    as values that identify many-to-many relationship.
 
     Requires a positional argument: the class to which the field is related.
+
+    Optional keyword arguments are:
+
+        separator - default ","
+
+        field - field of related model, default ``pk``
     """
 
-    def __init__(self, model, *args, **kwargs):
+    def __init__(self, model, separator=None, field=None, *args, **kwargs):
+        if separator is None:
+            separator = ','
+        if field is None:
+            field = 'pk'
         self.model = model
+        self.separator = separator
+        self.field = field
         super(ManyToManyWidget, self).__init__(*args, **kwargs)
 
     def clean(self, value):
         if not value:
             return self.model.objects.none()
-        ids = value.split(",")
-        return self.model.objects.filter(pk__in=ids)
+        ids = value.split(self.separator)
+        return self.model.objects.filter(**{
+            '%s__in' % self.field: ids
+        })
 
     def render(self, value):
-        ids = [str(obj.pk) for obj in value.all()]
-        return ",".join(ids)
+        ids = [str(getattr(obj, self.field)) for obj in value.all()]
+        return self.separator.join(ids)
