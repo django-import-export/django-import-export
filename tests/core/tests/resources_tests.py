@@ -277,6 +277,29 @@ class ModelResourceTest(TestCase):
         book = Book.objects.get(name='FooBook')
         self.assertIn(cat1, book.categories.all())
 
+    def test_m2m_options_import(self):
+        cat1 = Category.objects.create(name='Cat 1')
+        cat2 = Category.objects.create(name='Cat 2')
+        headers = ['id', 'name', 'categories']
+        row = [None, 'FooBook', "Cat 1|Cat 2"]
+        dataset = tablib.Dataset(row, headers=headers)
+
+        class BookM2MResource(resources.ModelResource):
+            categories = fields.Field(
+                attribute='categories',
+                widget=widgets.ManyToManyWidget(Category, field='name',
+                                                separator='|')
+            )
+
+            class Meta:
+                model = Book
+
+        resource = BookM2MResource()
+        resource.import_data(dataset, raise_errors=True)
+        book = Book.objects.get(name='FooBook')
+        self.assertIn(cat1, book.categories.all())
+        self.assertIn(cat2, book.categories.all())
+
     def test_related_one_to_one(self):
         # issue #17 - Exception when attempting access something on the
         # related_name

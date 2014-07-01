@@ -4,6 +4,8 @@ Changelog for django-import-export
 0.2.3 (unreleased)
 ------------------
 
+- Add separator and field keyword arguments to ManyToManyWidget
+
 - FIX: No support for dates before 1900 (#93)
 
 
