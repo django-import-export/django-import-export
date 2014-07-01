@@ -339,7 +339,7 @@ class ModelResourceTest(TestCase):
                     model = Book
                     fields = ('published__invalid',)
         self.assertEqual("Book.published is not a relation",
-            cm.exception.message)
+            cm.exception.args[0])
 
 
 class ModelResourceTransactionTest(TransactionTestCase):
