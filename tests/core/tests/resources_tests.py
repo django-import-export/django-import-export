@@ -332,6 +332,16 @@ class ModelResourceTest(TestCase):
         self.assertFalse(result.has_errors())
         self.assertEqual(len(result.rows), 0)
 
+    def test_link_to_nonrelation_field(self):
+        with self.assertRaises(KeyError) as cm:
+            class BrokenBook(resources.ModelResource):
+                class Meta:
+                    model = Book
+                    fields = ('published__invalid',)
+        self.assertEqual("Book.published is not a relation",
+            cm.exception.message)
+
+
 class ModelResourceTransactionTest(TransactionTestCase):
 
     def setUp(self):
