@@ -439,8 +439,11 @@ class ModelDeclarativeMetaclass(DeclarativeMetaclass):
 
                     model = opts.model
                     attrs = field_name.split('__')
-                    for attr in attrs[0:-1]:
+                    for i, attr in enumerate(attrs[0:-1]):
                         f = model._meta.get_field_by_name(attr)[0]
+                        if f.rel is None:
+                            raise KeyError('%s is not a relation' %
+                                ".".join([model.__name__] + attrs[0:i+1]))
                         model = f.rel.to
                     f = model._meta.get_field_by_name(attrs[-1])[0]
                     if isinstance(f, RelatedObject):
