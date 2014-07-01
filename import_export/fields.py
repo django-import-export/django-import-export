@@ -47,7 +47,11 @@ class Field(object):
         Takes value stored in the data for the field and returns it as
         appropriate python object.
         """
-        value = data[self.column_name]
+        try:
+            value = data[self.column_name]
+        except KeyError:
+            raise KeyError("Column '%s' not found in dataset. Available "
+                "columns are: %s" % (self.column_name, data.keys()))
         value = self.widget.clean(value)
         return value
 

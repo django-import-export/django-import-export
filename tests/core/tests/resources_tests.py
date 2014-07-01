@@ -67,7 +67,6 @@ class BookResource(resources.ModelResource):
 
 
 class ModelResourceTest(TestCase):
-
     def setUp(self):
         self.resource = BookResource()
 
@@ -112,6 +111,18 @@ class ModelResourceTest(TestCase):
         instance = self.resource.get_instance(instance_loader,
                 self.dataset.dict[0])
         self.assertEqual(instance, self.book)
+
+    def test_get_instance_with_missing_field_data(self):
+        instance_loader = self.resource._meta.instance_loader_class(
+                self.resource)
+        # construct a dataset with a missing "id" column
+        dataset = tablib.Dataset(headers=['name', 'author_email', 'price'])
+        dataset.append(['Some book', 'test@example.com', "10.25"])
+        with self.assertRaises(KeyError) as cm:
+            instance = self.resource.get_instance(instance_loader,
+                dataset.dict[0])
+        self.assertEqual(u"Column 'id' not found in dataset. Available columns "
+            "are: [u'name', u'author_email', u'price']", cm.exception.args[0])
 
     def test_get_export_headers(self):
         headers = self.resource.get_export_headers()
