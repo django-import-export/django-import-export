@@ -51,7 +51,7 @@ class Field(object):
             value = data[self.column_name]
         except KeyError:
             raise KeyError("Column '%s' not found in dataset. Available "
-                "columns are: %s" % (self.column_name, data.keys()))
+                "columns are: %s" % (self.column_name, list(data.keys())))
         value = self.widget.clean(value)
         return value
 
