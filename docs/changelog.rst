@@ -1,7 +1,7 @@
 Changelog for django-import-export
 ==================================
 
-0.2.3 (unreleased)
+0.2.3 (2014-07-01)
 ------------------
 
 - Add separator and field keyword arguments to ManyToManyWidget
