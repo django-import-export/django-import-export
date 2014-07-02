@@ -12,6 +12,7 @@ from django.utils.safestring import mark_safe
 from django.utils.datastructures import SortedDict
 from django.utils import six
 from django.db import transaction
+from django.db.models.fields import FieldDoesNotExist
 from django.db.models.related import RelatedObject
 from django.conf import settings
 
@@ -437,13 +438,23 @@ class ModelDeclarativeMetaclass(DeclarativeMetaclass):
 
                     model = opts.model
                     attrs = field_name.split('__')
-                    for i, attr in enumerate(attrs[0:-1]):
-                        f = model._meta.get_field_by_name(attr)[0]
-                        if f.rel is None:
-                            raise KeyError('%s is not a relation' %
-                                ".".join([model.__name__] + attrs[0:i+1]))
-                        model = f.rel.to
-                    f = model._meta.get_field_by_name(attrs[-1])[0]
+                    for i, attr in enumerate(attrs):
+                        verbose_path = ".".join([opts.model.__name__] + attrs[0:i+1])
+
+                        try:
+                            f = model._meta.get_field_by_name(attr)[0]
+                        except FieldDoesNotExist as e:
+                            raise FieldDoesNotExist("%s: %s has no field named '%s'" %
+                                (verbose_path, model.__name__, attr))
+
+                        if i < len(attrs) - 1:
+                            # We're not at the last attribute yet, so check that
+                            # we're looking at a relation, and move on to the
+                            # next model.
+                            if f.rel is None:
+                                raise KeyError('%s is not a relation' % verbose_path)
+                            model = f.rel.to
+
                     if isinstance(f, RelatedObject):
                         f = f.field
 
