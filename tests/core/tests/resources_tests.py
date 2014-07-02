@@ -4,6 +4,7 @@ from decimal import Decimal
 from datetime import date
 from copy import deepcopy
 
+from django.db import models
 from django.db.models.fields import FieldDoesNotExist
 from django.test import (
         TestCase,
@@ -157,6 +158,25 @@ class ModelResourceTest(TestCase):
         self.assertEqual(instance.author_email, 'test@example.com')
         self.assertEqual(instance.price, Decimal("10.25"))
 
+    def test_import_data_value_error_includes_field_name(self):
+        class AuthorResource(resources.ModelResource):
+            class Meta:
+                model = Author
+
+        resource = AuthorResource()
+        dataset = tablib.Dataset(headers=['id', 'name', 'birthday'])
+        dataset.append(['', 'A.A.Milne', '1882-01-18'])
+
+        result = resource.import_data(dataset, raise_errors=False)
+
+        self.assertTrue(result.has_errors())
+        self.assertTrue(result.rows[0].errors)
+        msg = ("Column 'birthday': time data '1882-01-18' does not match "
+            "format '%Y-%m-%d %H:%M:%S'")
+        actual = result.rows[0].errors[0].error
+        self.assertIsInstance(actual, ValueError)
+        self.assertEqual(msg, str(actual))
+
     def test_import_data_error_saving_model(self):
         row = list(self.dataset.pop())
         # set pk to something that would yield error
@@ -169,8 +189,8 @@ class ModelResourceTest(TestCase):
         msg = "invalid literal for int() with base 10: 'foo'"
         actual = result.rows[0].errors[0].error
         self.assertIsInstance(actual, ValueError)
-        self.assertEqual("invalid literal for int() with base 10: 'foo'",
-            str(actual))
+        self.assertEqual("Column 'id': invalid literal for int() with "
+            "base 10: 'foo'", str(actual))
 
     def test_import_data_delete(self):
 

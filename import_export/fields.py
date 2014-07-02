@@ -52,7 +52,12 @@ class Field(object):
         except KeyError:
             raise KeyError("Column '%s' not found in dataset. Available "
                 "columns are: %s" % (self.column_name, list(data.keys())))
-        value = self.widget.clean(value)
+
+        try:
+            value = self.widget.clean(value)
+        except ValueError as e:
+            raise ValueError("Column '%s': %s" % (self.column_name, e))
+
         return value
 
     def get_value(self, obj):
