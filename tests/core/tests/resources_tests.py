@@ -362,7 +362,7 @@ class ModelResourceTest(TestCase):
                 class Meta:
                     model = Book
                     fields = ('nonexistent__invalid',)
-        self.assertEqual(b"Book.nonexistent: Book has no field named 'nonexistent'",
+        self.assertEqual("Book.nonexistent: Book has no field named 'nonexistent'",
             cm.exception.args[0])
 
         with self.assertRaises(FieldDoesNotExist) as cm:
@@ -370,7 +370,7 @@ class ModelResourceTest(TestCase):
                 class Meta:
                     model = Book
                     fields = ('author__nonexistent',)
-        self.assertEqual(b"Book.author.nonexistent: Author has no field named "
+        self.assertEqual("Book.author.nonexistent: Author has no field named "
             "'nonexistent'", cm.exception.args[0])
 
     def test_link_to_nonrelation_field(self):
