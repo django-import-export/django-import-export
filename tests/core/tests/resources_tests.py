@@ -122,7 +122,7 @@ class ModelResourceTest(TestCase):
             instance = self.resource.get_instance(instance_loader,
                 dataset.dict[0])
         self.assertEqual(u"Column 'id' not found in dataset. Available columns "
-            "are: [u'name', u'author_email', u'price']", cm.exception.args[0])
+            "are: %s" % [u'name', u'author_email', u'price'], cm.exception.args[0])
 
     def test_get_export_headers(self):
         headers = self.resource.get_export_headers()
