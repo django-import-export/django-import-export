@@ -413,6 +413,14 @@ class ModelResourceTest(TestCase):
         self.assertEqual("Book.published is not a relation",
             cm.exception.args[0])
 
+        with self.assertRaises(KeyError) as cm:
+            class BrokenBook(resources.ModelResource):
+                class Meta:
+                    model = Book
+                    fields = ('author__name__invalid',)
+        self.assertEqual("Book.author.name is not a relation",
+            cm.exception.args[0])
+
     def test_override_field_construction_in_resource(self):
         class B(resources.ModelResource):
             class Meta:
