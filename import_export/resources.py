@@ -420,10 +420,8 @@ class ModelDeclarativeMetaclass(DeclarativeMetaclass):
                 if f.name in declared_fields:
                     continue
 
-                FieldWidget = new_class.widget_from_django_field(f)
-                widget_kwargs = new_class.widget_kwargs_for_field(f.name)
-                field = Field(attribute=f.name, column_name=f.name,
-                        widget=FieldWidget(**widget_kwargs))
+                field = new_class.field_from_django_field(f.name, f,
+                    readonly=False)
                 field_list.append((f.name, field, ))
 
             new_class.fields.update(SortedDict(field_list))
@@ -449,11 +447,9 @@ class ModelDeclarativeMetaclass(DeclarativeMetaclass):
                     if isinstance(f, RelatedObject):
                         f = f.field
 
-                    FieldWidget = new_class.widget_from_django_field(f)
-                    widget_kwargs = new_class.widget_kwargs_for_field(field_name)
-                    field = Field(attribute=field_name, column_name=field_name,
-                            widget=FieldWidget(**widget_kwargs), readonly=True)
-                    field_list.append((field_name, field, ))
+                    field = new_class.field_from_django_field(field_name, f,
+                        readonly=True)
+                    field_list.append((field_name, field))
 
                 new_class.fields.update(SortedDict(field_list))
 
@@ -500,6 +496,18 @@ class ModelResource(six.with_metaclass(ModelDeclarativeMetaclass, Resource)):
         if self._meta.widgets:
             return self._meta.widgets.get(field_name, {})
         return {}
+
+    @classmethod
+    def field_from_django_field(self, field_name, django_field, readonly):
+        """
+        Returns a Resource Field instance for the given Django model field.
+        """
+
+        FieldWidget = self.widget_from_django_field(django_field)
+        widget_kwargs = self.widget_kwargs_for_field(field_name)
+        field = Field(attribute=field_name, column_name=field_name,
+                widget=FieldWidget(**widget_kwargs), readonly=readonly)
+        return field
 
     def get_import_id_fields(self):
         return self._meta.import_id_fields
