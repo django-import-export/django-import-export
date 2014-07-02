@@ -4,6 +4,7 @@ from decimal import Decimal
 from datetime import date
 from copy import deepcopy
 
+from django.db.models.fields import FieldDoesNotExist
 from django.test import (
         TestCase,
         TransactionTestCase,
@@ -354,6 +355,23 @@ class ModelResourceTest(TestCase):
         result = resource.import_data(dataset, raise_errors=True)
         self.assertFalse(result.has_errors())
         self.assertEqual(len(result.rows), 0)
+
+    def test_link_to_nonexistent_field(self):
+        with self.assertRaises(FieldDoesNotExist) as cm:
+            class BrokenBook(resources.ModelResource):
+                class Meta:
+                    model = Book
+                    fields = ('nonexistent__invalid',)
+        self.assertEqual("Book.nonexistent: Book has no field named 'nonexistent'",
+            cm.exception.args[0])
+
+        with self.assertRaises(FieldDoesNotExist) as cm:
+            class BrokenBook(resources.ModelResource):
+                class Meta:
+                    model = Book
+                    fields = ('author__nonexistent',)
+        self.assertEqual("Book.author.nonexistent: Author has no field named "
+            "'nonexistent'", cm.exception.args[0])
 
     def test_link_to_nonrelation_field(self):
         with self.assertRaises(KeyError) as cm:
