@@ -364,6 +364,20 @@ class ModelResourceTest(TestCase):
         self.assertEqual("Book.published is not a relation",
             cm.exception.args[0])
 
+    def test_override_field_construction_in_resource(self):
+        class B(resources.ModelResource):
+            class Meta:
+                model = Book
+                fields = ('published',)
+
+            @classmethod
+            def field_from_django_field(self, field_name, django_field, readonly):
+                if field_name == 'published':
+                    return {'sound': 'quack'}
+
+        resource = B()
+        self.assertEqual({'sound': 'quack'}, B.fields['published'])
+
 
 class ModelResourceTransactionTest(TransactionTestCase):
 
