@@ -21,6 +21,10 @@ class BooleanWidgetTest(TestCase):
     def test_clean(self):
         self.assertTrue(self.widget.clean("1"))
         self.assertTrue(self.widget.clean(1))
+        self.assertEqual(self.widget.clean(""), None)
+
+    def test_render(self):
+      self.assertEqual(self.widget.render(None), "")
 
 
 class DateWidgetTest(TestCase):
