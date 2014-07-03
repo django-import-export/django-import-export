@@ -73,9 +73,13 @@ class BooleanWidget(Widget):
     FALSE_VALUE = "0"
 
     def render(self, value):
+        if value is None:
+          return ""
         return self.TRUE_VALUES[0] if value else self.FALSE_VALUE
 
     def clean(self, value):
+        if value == "":
+          return None
         return True if value in self.TRUE_VALUES else False
 
 
