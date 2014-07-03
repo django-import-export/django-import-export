@@ -4,7 +4,8 @@ Changelog for django-import-export
 0.2.4 (unreleased)
 ------------------
 
-- FIX: Properly handle NullBoleanField (#115)
+- FIX: Properly handle NullBoleanField (#115) - Backward Incompatible Change
+  previously None values were handled as false  
 
 
 0.2.3 (2014-07-01)
