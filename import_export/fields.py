@@ -82,7 +82,7 @@ class Field(object):
 
         # Manyrelatedmanagers are callable in Django >= 1.7 but we don't want
         # to call them
-        if callable(value) and not value.through:
+        if callable(value) and not hasattr(value, 'through'):
             value = value()
         return value
 
