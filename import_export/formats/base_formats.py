@@ -1,4 +1,5 @@
 from __future__ import unicode_literals
+from django.utils.six import moves
 
 import warnings
 import tablib
@@ -159,10 +160,6 @@ class XLS(TablibFormat):
         sheet = xls_book.sheets()[0]
 
         dataset.headers = sheet.row_values(0)
-        if six.PY2:
-            for i in xrange(1, sheet.nrows):
-                dataset.append(sheet.row_values(i))
-        else:
-            for i in range(1, sheet.nrows):
-                dataset.append(sheet.row_values(i))
+        for i in moves.range(1, sheet.nrows):
+            dataset.append(sheet.row_values(i))
         return dataset
