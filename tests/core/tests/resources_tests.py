@@ -186,14 +186,28 @@ class ModelResourceTest(TestCase):
 
         self.assertTrue(result.has_errors())
         self.assertTrue(result.rows[0].errors)
-        msg = "invalid literal for int() with base 10: 'foo'"
-        actual = result.rows[0].errors[0].error
-        self.assertIsInstance(actual, ValueError)
-        self.assertEqual("Column 'id': invalid literal for int() with "
-            "base 10: 'foo'", str(actual))
+        message = result.rows[0].errors[0].error
+        self.assertIsInstance(message, ValueError)
+
+        self.assertEqual(
+            ["Column 'id': invalid literal for int() with base 10: 'foo'"],
+            [str(error.error) for error in result.rows[0].errors])
+
+    def test_import_data_error_saving_model_decimal(self):
+        row = list(self.dataset.pop())
+        row[3] = '-'
+        self.dataset.append(row)
+        result = self.resource.import_data(self.dataset, raise_errors=False)
+
+        self.assertTrue(result.has_errors())
+        self.assertTrue(result.rows[0].errors)
+        message = result.rows[0].errors[0].error
+        self.assertIsInstance(message, ValueError)
+
+        self.assertEqual("Column 'price': invalid literal for Decimal: '-'",
+            str(message))
 
     def test_import_data_delete(self):
-
         class B(BookResource):
             delete = fields.Field(widget=widgets.BooleanWidget())
 

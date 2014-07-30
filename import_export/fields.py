@@ -1,5 +1,7 @@
 from __future__ import unicode_literals
 
+import decimal
+
 from . import widgets
 
 from django.core.exceptions import ObjectDoesNotExist
@@ -55,7 +57,10 @@ class Field(object):
 
         try:
             value = self.widget.clean(value)
-        except ValueError as e:
+        except Exception as e:
+            if str(e).startswith('Invalid literal for Decimal: u'):
+                raise ValueError("Column '%s': invalid literal for Decimal: '%s'" %
+                    (self.column_name, value))
             raise ValueError("Column '%s': %s" % (self.column_name, e))
 
         return value
