@@ -18,6 +18,7 @@ except ImportError:
 
 from django.utils.importlib import import_module
 from django.utils import six
+from django.utils.six.moves import xrange
 
 
 class Format(object):
