@@ -30,8 +30,11 @@ except ImportError:
     from django.utils.encoding import force_unicode as force_text
 
 
-class MyResource(resources.Resource):
+class NameMixin(object):
     name = fields.Field()
+
+
+class MyResource(NameMixin, resources.Resource):
     email = fields.Field()
 
     class Meta:
