@@ -4,6 +4,7 @@ import functools
 from copy import deepcopy
 import sys
 import traceback
+from collections import OrderedDict
 
 import tablib
 from diff_match_patch import diff_match_patch
@@ -93,18 +94,40 @@ class ResourceOptions(object):
 class DeclarativeMetaclass(type):
 
     def __new__(cls, name, bases, attrs):
-        declared_fields = []
 
-        for field_name, obj in attrs.copy().items():
-            if isinstance(obj, Field):
-                field = attrs.pop(field_name)
+        # Collect fields from current class.
+        current_fields = []
+        for key, value in list(attrs.items()):
+            if isinstance(value, Field):
+                field = attrs.pop(key)
                 if not field.column_name:
-                    field.column_name = field_name
-                declared_fields.append((field_name, field))
+                    field.column_name = key
+                current_fields.append((key, field))
+        attrs['declared_fields'] = OrderedDict(current_fields)
 
-        attrs['fields'] = SortedDict(declared_fields)
-        new_class = super(DeclarativeMetaclass, cls).__new__(cls, name,
-                bases, attrs)
+        new_class = (
+            super(DeclarativeMetaclass, cls).__new__(cls, name, bases, attrs))
+
+        # Walk through the MRO: from django.forms
+        declared_fields = OrderedDict()
+        for base in reversed(new_class.__mro__):
+            # Collect fields from base class.
+            if hasattr(base, 'declared_fields'):
+                declared_fields.update(base.declared_fields)
+
+            # Field shadowing.
+            for key, value in base.__dict__.items():
+                if isinstance(value, Field):
+                    field = value
+                    if not field.column_name:
+                        field.column_name = key
+                    declared_fields.update({key: field})
+                elif value is None and key in declared_fields:
+                    declared_fields.pop(key)
+
+        new_class.fields = declared_fields
+        new_class.declared_fields = declared_fields
+
         opts = getattr(new_class, 'Meta', None)
         new_class._meta = ResourceOptions(opts)
 
