@@ -1,14 +1,17 @@
 from __future__ import unicode_literals
+from django.utils.six import moves
 
 import warnings
 import tablib
 
 try:
     from tablib.compat import xlrd
+
     XLS_IMPORT = True
 except ImportError:
     try:
-        import xlrd # NOQA
+        import xlrd  # NOQA
+
         XLS_IMPORT = True
     except ImportError:
         xls_warning = "Installed `tablib` library does not include"
@@ -21,7 +24,6 @@ from django.utils import six
 
 
 class Format(object):
-
     def get_title(self):
         return type(self)
 
@@ -98,7 +100,6 @@ class TablibFormat(Format):
 
 
 class TextFormat(TablibFormat):
-
     def get_read_mode(self):
         return 'rU'
 
@@ -157,9 +158,8 @@ class XLS(TablibFormat):
         xls_book = xlrd.open_workbook(file_contents=in_stream)
         dataset = tablib.Dataset()
         sheet = xls_book.sheets()[0]
-        for i in xrange(sheet.nrows):
-            if i == 0:
-                dataset.headers = sheet.row_values(0)
-            else:
-                dataset.append(sheet.row_values(i))
+
+        dataset.headers = sheet.row_values(0)
+        for i in moves.range(1, sheet.nrows):
+            dataset.append(sheet.row_values(i))
         return dataset
