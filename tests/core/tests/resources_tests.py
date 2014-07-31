@@ -39,6 +39,7 @@ class MyResource(NameMixin, resources.Resource):
 
     class Meta:
         export_order = ('email', 'name')
+        title = 'My Title'
 
 
 class ResourceTestCase(TestCase):
@@ -62,12 +63,17 @@ class ResourceTestCase(TestCase):
         self.assertEqual(self.my_resource.get_export_headers(),
                 ['email', 'name'])
 
+    def test_get_title(self):
+        self.assertEqual(self.my_resource.get_title(),
+                'My Title')
+
 
 class BookResource(resources.ModelResource):
     published = fields.Field(column_name='published_date')
 
     class Meta:
         model = Book
+        title = 'My Book'
         exclude = ('imported', )
 
 
@@ -138,6 +144,11 @@ class ModelResourceTest(TestCase):
     def test_export(self):
         dataset = self.resource.export(Book.objects.all())
         self.assertEqual(len(dataset), 1)
+
+    def test_title(self):
+        dataset = self.resource.export(Book.objects.all())
+        self.assertEqual(dataset.title, self.resource.get_title())
+        self.assertEqual(dataset.title, 'My Book')
 
     def test_get_diff(self):
         book2 = Book(name="Some other book")

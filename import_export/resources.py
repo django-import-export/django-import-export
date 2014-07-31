@@ -39,6 +39,8 @@ class ResourceOptions(object):
     The inner Meta class allows for class-level configuration of how the
     Resource should behave. The following options are available:
 
+    * ``title`` - The exported document will use title if defined.
+
     * ``fields`` - Controls what introspected fields the Resource
       should include. A whitelist of fields.
 
@@ -72,6 +74,7 @@ class ResourceOptions(object):
     fields = None
     model = None
     exclude = None
+    title = None
     instance_loader_class = None
     import_id_fields = ['id']
     export_order = None
@@ -145,6 +148,12 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
             return USE_TRANSACTIONS
         else:
             return self._meta.use_transactions
+
+    def get_title(self):
+        """
+        Returns title.
+        """
+        return self._meta.title
 
     def get_fields(self):
         """
@@ -412,7 +421,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         if queryset is None:
             queryset = self.get_queryset()
         headers = self.get_export_headers()
-        data = tablib.Dataset(headers=headers)
+        data = tablib.Dataset(headers=headers, title=self.get_title())
         # Iterate without the queryset cache, to avoid wasting memory when
         # exporting large datasets.
         for obj in queryset.iterator():
