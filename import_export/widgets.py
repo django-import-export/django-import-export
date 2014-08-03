@@ -61,6 +61,9 @@ class CharWidget(Widget):
     Widget for converting text fields.
     """
 
+    def clean(self, value):
+        return value.strip()
+
     def render(self, value):
         return force_text(value)
 
