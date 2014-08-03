@@ -25,7 +25,7 @@ class Widget(object):
         """
         Returns appropriate python objects for import value.
         """
-        return value
+        return value.strip()
 
     def render(self, value):
         """
@@ -65,6 +65,7 @@ class CharWidget(Widget):
         return value.strip()
 
     def render(self, value):
+        value.strip()
         return force_text(value)
 
 
