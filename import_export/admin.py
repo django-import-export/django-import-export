@@ -290,7 +290,10 @@ class ExportMixin(ImportExportMixinBase):
             ]()
 
             resource_class = self.get_export_resource_class()
-            queryset = self.get_export_queryset(request)
+            if form.cleaned_data['skeleton_only']:
+                queryset = self.model.objects.none()
+            else:
+                queryset = self.get_export_queryset(request)
             content_type = 'application/octet-stream'
             data = resource_class().export(queryset)
             export_data = file_format.export_data(data)

@@ -41,6 +41,9 @@ class ExportForm(forms.Form):
             label=_('Format'),
             choices=(),
             )
+    skeleton_only = forms.BooleanField(
+            label=_('Download skeleton only'),
+            )
 
     def __init__(self, formats, *args, **kwargs):
         super(ExportForm, self).__init__(*args, **kwargs)
