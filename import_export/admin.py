@@ -136,14 +136,15 @@ class ImportMixin(ImportExportMixinBase):
             }
             content_type_id=ContentType.objects.get_for_model(self.model).pk
             for row in result:
-                LogEntry.objects.log_action(
-                    user_id=request.user.pk,
-                    content_type_id=content_type_id,
-                    object_id=row.object_id,
-                    object_repr=row.object_repr,
-                    action_flag=logentry_map[row.import_type],
-                    change_message="%s through import_export" % row.import_type,
-                )
+                if row.import_type != row.IMPORT_TYPE_SKIP:
+                    LogEntry.objects.log_action(
+                        user_id=request.user.pk,
+                        content_type_id=content_type_id,
+                        object_id=row.object_id,
+                        object_repr=row.object_repr,
+                        action_flag=logentry_map[row.import_type],
+                        change_message="%s through import_export" % row.import_type,
+                    )
 
             success_message = _('Import finished')
             messages.success(request, success_message)
