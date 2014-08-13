@@ -331,7 +331,16 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         else:
             real_dry_run = dry_run
 
-        instance_loader = self._meta.instance_loader_class(self, dataset)
+        try:
+            instance_loader = self._meta.instance_loader_class(self, dataset)
+        except Exception as e:
+            tb_info = traceback.format_exc(1)
+            result.base_errors.append(Error(repr(e), tb_info))
+            if raise_errors:
+                if use_transactions:
+                    transaction.rollback()
+                    transaction.leave_transaction_management()
+            return result
 
         try:
             self.before_import(dataset, real_dry_run)
