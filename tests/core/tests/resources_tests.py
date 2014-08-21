@@ -136,6 +136,10 @@ class ModelResourceTest(TestCase):
         dataset = self.resource.export(Book.objects.all())
         self.assertEqual(len(dataset), 1)
 
+    def test_export_iterable(self):
+        dataset = self.resource.export(list(Book.objects.all()))
+        self.assertEqual(len(dataset), 1)
+
     def test_get_diff(self):
         book2 = Book(name="Some other book")
         diff = self.resource.get_diff(self.book, book2)
