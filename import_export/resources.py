@@ -305,7 +305,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         try:
             self.before_import(dataset, real_dry_run)
         except Exception as e:
-            tb_info = traceback.format_exc(sys.exc_info()[2])
+            tb_info = traceback.format_exc(2)
             result.base_errors.append(Error(repr(e), tb_info))
             if raise_errors:
                 if use_transactions:
