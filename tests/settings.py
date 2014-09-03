@@ -24,6 +24,15 @@ STATIC_URL = '/static/'
 
 SECRET_KEY = '2n6)=vnp8@bu0om9d05vwf7@=5vpn%)97-!d*t4zq1mku%0-@j'
 
+MIDDLEWARE_CLASSES = (
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+)
+
 if os.environ.get('IMPORT_EXPORT_TEST_TYPE') == 'mysql-innodb':
     IMPORT_EXPORT_USE_TRANSACTIONS = True
     DATABASES = {
