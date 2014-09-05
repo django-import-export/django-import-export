@@ -169,14 +169,13 @@ class ModelResourceTest(TestCase):
 
         resource = AuthorResource()
         dataset = tablib.Dataset(headers=['id', 'name', 'birthday'])
-        dataset.append(['', 'A.A.Milne', '1882-01-18'])
+        dataset.append(['', 'A.A.Milne', '1882test-01-18'])
 
         result = resource.import_data(dataset, raise_errors=False)
 
         self.assertTrue(result.has_errors())
         self.assertTrue(result.rows[0].errors)
-        msg = ("Column 'birthday': time data '1882-01-18' does not match "
-            "format '%Y-%m-%d %H:%M:%S'")
+        msg = ("Column 'birthday': Enter a valid date/time.")
         actual = result.rows[0].errors[0].error
         self.assertIsInstance(actual, ValueError)
         self.assertEqual(msg, str(actual))
