@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from decimal import Decimal
 from datetime import datetime
 from django.utils import datetime_safe
+from django.utils.encoding import smart_text
 from django.conf import settings
 
 try:
@@ -204,5 +205,5 @@ class ManyToManyWidget(Widget):
         })
 
     def render(self, value):
-        ids = [str(getattr(obj, self.field)) for obj in value.all()]
+        ids = [smart_text(getattr(obj, self.field)) for obj in value.all()]
         return self.separator.join(ids)
