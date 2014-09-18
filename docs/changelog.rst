@@ -4,6 +4,15 @@ Changelog for django-import-export
 0.2.4 (unreleased)
 ------------------
 
+- fix: get_value raised attribute error on model method call
+
+- Fixed XLS import on python 3. Optimized loop
+
+- Fixed properly skipping row marked as skipped when importing data from 
+  the admin interface.
+  
+- Allow Resource.export to accept iterables as well as querysets
+
 - Improve error messages
 
 - FIX: Properly handle NullBoleanField (#115) - Backward Incompatible Change
