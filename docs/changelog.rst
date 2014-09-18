@@ -1,7 +1,7 @@
 Changelog for django-import-export
 ==================================
 
-0.2.4 (unreleased)
+0.2.4 (2014-09-18)
 ------------------
 
 - fix: get_value raised attribute error on model method call
