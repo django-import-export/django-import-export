@@ -9,9 +9,9 @@ from django.test import TestCase
 from import_export import widgets
 
 from core.models import (
-        Author,
-        Category,
-        )
+    Author,
+    Category,
+)
 
 
 class BooleanWidgetTest(TestCase):
@@ -25,7 +25,7 @@ class BooleanWidgetTest(TestCase):
         self.assertEqual(self.widget.clean(""), None)
 
     def test_render(self):
-      self.assertEqual(self.widget.render(None), "")
+        self.assertEqual(self.widget.render(None), "")
 
 
 class DateWidgetTest(TestCase):
@@ -40,6 +40,7 @@ class DateWidgetTest(TestCase):
     def test_clean(self):
         self.assertEqual(self.widget.clean("13.08.2012"), self.date)
 
+
 class DateWidgetBefore1900Test(TestCase):
 
     def setUp(self):
@@ -51,6 +52,7 @@ class DateWidgetBefore1900Test(TestCase):
 
     def test_clean(self):
         self.assertEqual(self.widget.clean("13.08.1868"), self.date)
+
 
 class DecimalWidgetTest(TestCase):
 
