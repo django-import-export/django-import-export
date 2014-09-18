@@ -113,6 +113,8 @@ class DateWidget(Widget):
         raise ValueError("Enter a valid date.")
 
     def render(self, value):
+        if not value:
+            return ""
         try:
             return value.strftime(self.formats[0])
         except:
@@ -147,6 +149,8 @@ class DateTimeWidget(Widget):
         raise ValueError("Enter a valid date/time.")
 
     def render(self, value):
+        if not value:
+            return ""
         return value.strftime(self.formats[0])
 
 

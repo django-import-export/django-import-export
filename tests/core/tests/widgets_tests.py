@@ -2,7 +2,7 @@
 from __future__ import unicode_literals
 
 from decimal import Decimal
-from datetime import date
+from datetime import date, datetime
 
 from django.test import TestCase
 
@@ -37,8 +37,29 @@ class DateWidgetTest(TestCase):
     def test_render(self):
         self.assertEqual(self.widget.render(self.date), "13.08.2012")
 
+    def test_render_none(self):
+        self.assertEqual(self.widget.render(None), "")
+
     def test_clean(self):
         self.assertEqual(self.widget.clean("13.08.2012"), self.date)
+
+
+class DateTimeWidgetTest(TestCase):
+
+    def setUp(self):
+        self.datetime = datetime(2012, 8, 13, 18, 0, 0)
+        self.widget = widgets.DateTimeWidget('%d.%m.%Y %H:%M:%S')
+
+    def test_render(self):
+        self.assertEqual(self.widget.render(self.datetime),
+                         "13.08.2012 18:00:00")
+
+    def test_render_none(self):
+        self.assertEqual(self.widget.render(None), "")
+
+    def test_clean(self):
+        self.assertEqual(self.widget.clean("13.08.2012 18:00:00"),
+                         self.datetime)
 
 
 class DateWidgetBefore1900Test(TestCase):
