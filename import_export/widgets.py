@@ -156,24 +156,39 @@ class DateTimeWidget(Widget):
 
 class ForeignKeyWidget(Widget):
     """
-    Widget for ``ForeignKey`` model field that represent ForeignKey as
-    integer value.
+    Widget for ``ForeignKey`` which looks up a related model.
+    
+    The lookup field defaults to using the primary key (``pk``), but
+    can be customised to use any field on the related model.
 
-    Requires a positional argument: the class to which the field is related.
+    e.g. To use a lookup field other than ``pk``, rather than specifying a
+    field in your Resource as ``class Meta: fields = ('author__name', ...)``,
+    you would specify it in your Resource like so:
+
+        class BookResource(resources.ModelResource):
+            author = fields.Field(column_name='author', attribute='author', \
+                widget=ForeignKeyWidget(Author, 'name'))
+            class Meta: fields = ('author', ...)
+
+    This will allow you to use "natural keys" for both import and export.
+
+    Parameters:
+        ``model`` should be the Model instance for this ForeignKey (required).
+        ``field`` should be the lookup field on the related model.
     """
-
-    def __init__(self, model, *args, **kwargs):
+    def __init__(self, model, field='pk', *args, **kwargs):
         self.model = model
+        self.field = field
         super(ForeignKeyWidget, self).__init__(*args, **kwargs)
 
     def clean(self, value):
-        pk = super(ForeignKeyWidget, self).clean(value)
-        return self.model.objects.get(pk=pk) if pk else None
+        val = super(ForeignKeyWidget, self).clean(value)
+        return self.model.objects.get(**{self.field: val}) if val else None
 
     def render(self, value):
         if value is None:
             return ""
-        return value.pk
+        return getattr(value, self.field)
 
 
 class ManyToManyWidget(Widget):
