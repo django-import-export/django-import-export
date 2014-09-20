@@ -176,7 +176,7 @@ class ForeignKeyWidget(Widget):
         return value.pk
 
 
-class ForeignNaturalKeyWidget(widgets.Widget):
+class ForeignNaturalKeyWidget(Widget):
     """
     Widget for ``ForeignKey`` which allows specifying a field on
     the relationships model, rather than the primary key.
