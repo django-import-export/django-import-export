@@ -176,6 +176,40 @@ class ForeignKeyWidget(Widget):
         return value.pk
 
 
+class ForeignNaturalKeyWidget(widgets.Widget):
+    """
+    Widget for ``ForeignKey`` which allows specifying a field on
+    the relationships model, rather than the primary key.
+    
+    For example, rather than specifying a field in your Resource as:
+        class Meta: fields = ('client__name', ...)
+        
+    You would specify it in your Resource as:
+        client = fields.Field(column_name='client', attribute='client', \
+            widget=ForeignLookupKeyWidget(Client, 'name'))
+        class Meta: fields = ('client', ...)
+        
+    This will allow you to use "natural keys" for both import and export.
+
+    Parameters:
+        ``model`` should be the Model instance for this ForeignKey
+        ``field`` should be the field to act as a key for import/export.
+    """
+    def __init__(self, model, field, *args, **kwargs):
+        self.model = model
+        self.field = field
+        super(ForeignLookupKeyWidget, self).__init__(*args, **kwargs)
+
+    def clean(self, value):
+        val = super(ForeignLookupKeyWidget, self).clean(value)
+        return self.model.objects.get(**{self.field: val}) if val else None
+
+    def render(self, value):
+        if value is None:
+            return ""
+        return getattr(value, self.field)
+
+
 class ManyToManyWidget(Widget):
     """
     Widget for ``ManyToManyField`` model field that represent m2m field
