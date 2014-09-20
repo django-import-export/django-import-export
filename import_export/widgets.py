@@ -156,52 +156,33 @@ class DateTimeWidget(Widget):
 
 class ForeignKeyWidget(Widget):
     """
-    Widget for ``ForeignKey`` model field that represent ForeignKey as
-    integer value.
-
-    Requires a positional argument: the class to which the field is related.
-    """
-
-    def __init__(self, model, *args, **kwargs):
-        self.model = model
-        super(ForeignKeyWidget, self).__init__(*args, **kwargs)
-
-    def clean(self, value):
-        pk = super(ForeignKeyWidget, self).clean(value)
-        return self.model.objects.get(pk=pk) if pk else None
-
-    def render(self, value):
-        if value is None:
-            return ""
-        return value.pk
-
-
-class ForeignNaturalKeyWidget(Widget):
-    """
-    Widget for ``ForeignKey`` which allows specifying a field on
-    the relationships model, rather than the primary key.
+    Widget for ``ForeignKey`` which looks up a related model.
     
-    For example, rather than specifying a field in your Resource as:
-        class Meta: fields = ('client__name', ...)
-        
-    You would specify it in your Resource as:
-        client = fields.Field(column_name='client', attribute='client', \
-            widget=ForeignLookupKeyWidget(Client, 'name'))
-        class Meta: fields = ('client', ...)
-        
+    The lookup field defaults to using the primary key (``pk``), but
+    can be customised to use any field on the related model.
+
+    e.g. To use a lookup field other than ``pk``, rather than specifying a
+    field in your Resource as ``class Meta: fields = ('author__name', ...)``,
+    you would specify it in your Resource like so:
+
+        class BookResource(resources.ModelResource):
+            author = fields.Field(column_name='author', attribute='author', \
+                widget=ForeignKeyWidget(Author, 'name'))
+            class Meta: fields = ('author', ...)
+
     This will allow you to use "natural keys" for both import and export.
 
     Parameters:
-        ``model`` should be the Model instance for this ForeignKey
-        ``field`` should be the field to act as a key for import/export.
+        ``model`` should be the Model instance for this ForeignKey (required).
+        ``field`` should be the lookup field on the related model.
     """
-    def __init__(self, model, field, *args, **kwargs):
+    def __init__(self, model, field='pk', *args, **kwargs):
         self.model = model
         self.field = field
-        super(ForeignLookupKeyWidget, self).__init__(*args, **kwargs)
+        super(ForeignKeyWidget, self).__init__(*args, **kwargs)
 
     def clean(self, value):
-        val = super(ForeignLookupKeyWidget, self).clean(value)
+        val = super(ForeignKeyWidget, self).clean(value)
         return self.model.objects.get(**{self.field: val}) if val else None
 
     def render(self, value):
