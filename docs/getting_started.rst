@@ -249,6 +249,27 @@ Admin integration is achived by subclassing
 
    A screenshot of the confirm import view.
 
+|
+
+Another approach to exporting data is by subclassing
+``ImportExportActionModelAdmin`` which implements export as an admin action.
+As a result it's possible to export a list of objects selected on the change
+list page::
+
+    from import_export.admin import ImportExportActionModelAdmin
+
+
+    class BookAdmin(ImportExportActionModelAdmin):
+        resource_class = BookResource
+        pass
+
+
+.. figure:: _static/images/django-import-export-action.png
+
+   A screenshot of the change view with Import and Export as an admin action.
+
+|
+
 .. seealso::
 
     :doc:`/api_admin`
