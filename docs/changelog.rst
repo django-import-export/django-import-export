@@ -4,6 +4,8 @@ Changelog for django-import-export
 0.2.5 (unreleased)
 ------------------
 
+- Do not convert numeric types to string (#149)
+
 - implement export as an admin action (#124)
 
 
