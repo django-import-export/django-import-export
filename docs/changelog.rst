@@ -1,6 +1,12 @@
 Changelog for django-import-export
 ==================================
 
+0.2.6 (unreleased)
+------------------
+
+- Nothing changed yet.
+
+
 0.2.5 (2014-10-04)
 ------------------
 
