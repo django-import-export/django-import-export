@@ -1,7 +1,7 @@
 Changelog for django-import-export
 ==================================
 
-0.2.5 (unreleased)
+0.2.5 (2014-10-04)
 ------------------
 
 - implement export as an admin action (#124)
