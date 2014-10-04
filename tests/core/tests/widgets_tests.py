@@ -77,9 +77,15 @@ class DateWidgetBefore1900Test(TestCase):
 
 class DecimalWidgetTest(TestCase):
 
+    def setUp(self):
+        self.value = Decimal("11.111")
+        self.widget = widgets.DecimalWidget()
+
     def test_clean(self):
-        widget = widgets.DecimalWidget()
-        self.assertEqual(widget.clean("11.111"), Decimal("11.111"))
+        self.assertEqual(self.widget.clean("11.111"), self.value)
+
+    def test_render(self):
+        self.assertEqual(self.widget.render(self.value), self.value)
 
 
 class ForeignKeyWidgetTest(TestCase):

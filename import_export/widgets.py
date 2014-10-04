@@ -36,7 +36,13 @@ class Widget(object):
         return force_text(value)
 
 
-class IntegerWidget(Widget):
+class NumberWidget(Widget):
+
+    def render(self, value):
+        return value
+
+
+class IntegerWidget(NumberWidget):
     """
     Widget for converting integer fields.
     """
@@ -47,7 +53,7 @@ class IntegerWidget(Widget):
         return int(value)
 
 
-class DecimalWidget(Widget):
+class DecimalWidget(NumberWidget):
     """
     Widget for converting decimal fields.
     """
@@ -76,12 +82,12 @@ class BooleanWidget(Widget):
 
     def render(self, value):
         if value is None:
-          return ""
+            return ""
         return self.TRUE_VALUES[0] if value else self.FALSE_VALUE
 
     def clean(self, value):
         if value == "":
-          return None
+            return None
         return True if value in self.TRUE_VALUES else False
 
 
@@ -157,7 +163,7 @@ class DateTimeWidget(Widget):
 class ForeignKeyWidget(Widget):
     """
     Widget for ``ForeignKey`` which looks up a related model.
-    
+
     The lookup field defaults to using the primary key (``pk``), but
     can be customised to use any field on the related model.
 
