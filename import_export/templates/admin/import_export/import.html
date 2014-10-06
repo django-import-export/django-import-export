@@ -24,14 +24,14 @@
   </form>
 
 {% else %}
-  <form action="{{ form_url }}" method="post" id="{{ opts.module_name }}_form" enctype="multipart/form-data">
+  <form action="" method="post" id="{{ opts.module_name }}_form" enctype="multipart/form-data">
     {% csrf_token %}
 
     <p>
       {% trans "This importer will import the following fields: " %}
       {% for f in fields  %}
         {% if forloop.counter0 %}
-        , 
+        ,
         {% endif %}
         <tt>{{ f }}</tt>
       {% endfor %}
