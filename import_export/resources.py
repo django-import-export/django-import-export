@@ -341,7 +341,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
                         self.save_instance(instance, real_dry_run)
                         self.save_m2m(instance, row, real_dry_run)
                         # Add object info to RowResult for LogEntry
-                        row_result.object_repr = str(instance)
+                        row_result.object_repr = force_text(instance)
                         row_result.object_id = instance.pk
                     row_result.diff = self.get_diff(original, instance,
                             real_dry_run)
