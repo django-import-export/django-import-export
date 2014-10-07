@@ -9,7 +9,6 @@ import tablib
 from diff_match_patch import diff_match_patch
 
 from django.utils.safestring import mark_safe
-from django.utils.datastructures import SortedDict
 from django.utils import six
 from django.db import transaction
 from django.db.models.fields import FieldDoesNotExist
@@ -30,6 +29,10 @@ try:
 except ImportError:
     from django.utils.encoding import force_unicode as force_text
 
+try:
+    from collections import OrderedDict
+except ImportError:
+    from django.utils.datastructures import SortedDict as OrderedDict
 
 USE_TRANSACTIONS = getattr(settings, 'IMPORT_EXPORT_USE_TRANSACTIONS', False)
 
@@ -103,7 +106,7 @@ class DeclarativeMetaclass(type):
                     field.column_name = field_name
                 declared_fields.append((field_name, field))
 
-        attrs['fields'] = SortedDict(declared_fields)
+        attrs['fields'] = OrderedDict(declared_fields)
         new_class = super(DeclarativeMetaclass, cls).__new__(cls, name,
                 bases, attrs)
         opts = getattr(new_class, 'Meta', None)
@@ -431,7 +434,7 @@ class ModelDeclarativeMetaclass(DeclarativeMetaclass):
                     readonly=False)
                 field_list.append((f.name, field, ))
 
-            new_class.fields.update(SortedDict(field_list))
+            new_class.fields.update(OrderedDict(field_list))
 
             #add fields that follow relationships
             if opts.fields is not None:
@@ -468,7 +471,7 @@ class ModelDeclarativeMetaclass(DeclarativeMetaclass):
                         readonly=True)
                     field_list.append((field_name, field))
 
-                new_class.fields.update(SortedDict(field_list))
+                new_class.fields.update(OrderedDict(field_list))
 
         return new_class
 
@@ -551,3 +554,4 @@ def modelresource_factory(model, resource_class=ModelResource):
 
     metaclass = ModelDeclarativeMetaclass
     return metaclass(class_name, (resource_class,), class_attrs)
+
