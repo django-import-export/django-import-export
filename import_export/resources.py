@@ -290,6 +290,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
             back.
         """
         result = Result()
+        result.diff_headers = self.get_diff_headers()
 
         if use_transactions is None:
             use_transactions = self.get_use_transactions()
