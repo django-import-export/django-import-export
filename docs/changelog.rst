@@ -1,7 +1,7 @@
 Changelog for django-import-export
 ==================================
 
-0.2.6 (unreleased)
+0.2.6 (2014-10-09)
 ------------------
 
 - added use of get_diff_headers method into import.html template (#158)
