@@ -4,7 +4,14 @@ Changelog for django-import-export
 0.2.6 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- added use of get_diff_headers method into import.html template (#158)
+
+- Try to use OrderedDict instead of SortedDict, which is deprecated in 1
+  django 1.7 (#157)
+
+- fixed #105 unicode import
+
+- remove invalid form action "form_url" #154
 
 
 0.2.5 (2014-10-04)
