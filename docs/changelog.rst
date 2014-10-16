@@ -12,8 +12,8 @@ Changelog for django-import-export
 
 - added use of get_diff_headers method into import.html template (#158)
 
-- Try to use OrderedDict instead of SortedDict, which is deprecated in 1
-  django 1.7 (#157)
+- Try to use OrderedDict instead of SortedDict, which is deprecated in 
+  Django 1.7 (#157)
 
 - fixed #105 unicode import
 
