@@ -94,8 +94,11 @@ class IntegerWidgetTest(TestCase):
         self.value = 0
         self.widget = widgets.IntegerWidget()
 
-    def test_clean(self):
+    def test_clean_integer_zero(self):
         self.assertEqual(self.widget.clean(0), self.value)
+
+    def test_clean_string_zero(self):
+        self.assertEqual(self.widget.clean("0"), self.value)
 
 
 class ForeignKeyWidgetTest(TestCase):
