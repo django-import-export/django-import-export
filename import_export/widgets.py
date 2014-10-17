@@ -48,7 +48,7 @@ class IntegerWidget(NumberWidget):
     """
 
     def clean(self, value):
-        if not value:
+        if not value and value is not 0:
             return None
         return int(value)
 

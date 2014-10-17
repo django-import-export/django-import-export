@@ -88,6 +88,19 @@ class DecimalWidgetTest(TestCase):
         self.assertEqual(self.widget.render(self.value), self.value)
 
 
+class IntegerWidgetTest(TestCase):
+
+    def setUp(self):
+        self.value = 0
+        self.widget = widgets.IntegerWidget()
+
+    def test_clean_integer_zero(self):
+        self.assertEqual(self.widget.clean(0), self.value)
+
+    def test_clean_string_zero(self):
+        self.assertEqual(self.widget.clean("0"), self.value)
+
+
 class ForeignKeyWidgetTest(TestCase):
 
     def setUp(self):
