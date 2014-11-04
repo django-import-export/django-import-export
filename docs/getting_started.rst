@@ -237,6 +237,10 @@ Admin integration is achived by subclassing (in ``admin.py``)
         resource_class = BookResource
         pass
 
+When you register your Book to the Admin, don't forget to also register your BookAdmin::
+    
+    admin.site.register(Book, BookAdmin)
+
 .. figure:: _static/images/django-import-export-change.png
 
    A screenshot of the change view with Import and Export buttons.
