@@ -224,7 +224,17 @@ class ManyToManyWidget(Widget):
     def clean(self, value):
         if not value:
             return self.model.objects.none()
-        ids = value.split(self.separator)
+            
+        # Custom edit by me
+        # If the m2m value passed is single, then it would be a float
+        # Hence can not splitted and throw an 
+        # AttributeError: 'float' object has no attribute 'split'
+        try:
+            ids = value.split(self.separator)
+        except AttributeError:
+            # Converting from float to str so that split can work 
+            value = str(int(value))
+            ids = value.split(self.separator)
         return self.model.objects.filter(**{
             '%s__in' % self.field: ids
         })
