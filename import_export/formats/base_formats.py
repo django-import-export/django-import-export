@@ -57,6 +57,10 @@ class Format(object):
         """
         return ""
 
+    def get_content_type(self):
+        # For content types see http://www.iana.org/assignments/media-types/media-types.xhtml
+        return 'application/octet-stream'
+
     def can_import(self):
         return False
 
@@ -66,6 +70,7 @@ class Format(object):
 
 class TablibFormat(Format):
     TABLIB_MODULE = None
+    CONTENT_TYPE = 'application/octet-stream'
 
     def get_format(self):
         """
@@ -92,6 +97,9 @@ class TablibFormat(Format):
             return self.get_format().extentions[0]
         return self.get_format().extensions[0]
 
+    def get_content_type(self):
+        return self.CONTENT_TYPE
+
     def can_import(self):
         return hasattr(self.get_format(), 'import_set')
 
@@ -112,6 +120,7 @@ class CSV(TablibFormat):
     CSV is treated as binary in Python 2.
     """
     TABLIB_MODULE = 'tablib.formats._csv'
+    CONTENT_TYPE = 'text/csv'
 
     def get_read_mode(self):
         return 'rU' if six.PY3 else 'rb'
@@ -122,30 +131,37 @@ class CSV(TablibFormat):
 
 class JSON(TextFormat):
     TABLIB_MODULE = 'tablib.formats._json'
+    CONTENT_TYPE = 'application/json'
 
 
 class YAML(TextFormat):
     TABLIB_MODULE = 'tablib.formats._yaml'
+    CONTENT_TYPE = 'text/yaml' # See http://stackoverflow.com/questions/332129/yaml-mime-type
 
 
 class TSV(TextFormat):
     TABLIB_MODULE = 'tablib.formats._tsv'
+    CONTENT_TYPE = 'text/tab-separated-values'
 
 
 class ODS(TextFormat):
     TABLIB_MODULE = 'tablib.formats._ods'
+    CONTENT_TYPE = 'application/vnd.oasis.opendocument.spreadsheet'
 
 
 class XLSX(TextFormat):
     TABLIB_MODULE = 'tablib.formats._xlsx'
+    CONTENT_TYPE = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 
 
 class HTML(TextFormat):
     TABLIB_MODULE = 'tablib.formats._html'
+    CONTENT_TYPE = 'text/html'
 
 
 class XLS(TablibFormat):
     TABLIB_MODULE = 'tablib.formats._xls'
+    CONTENT_TYPE = 'application/vnd.ms-excel'
 
     def can_import(self):
         return XLS_IMPORT
