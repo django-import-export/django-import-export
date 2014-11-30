@@ -38,6 +38,7 @@ class Book(models.Model):
 
 class Profile(models.Model):
     user = models.OneToOneField('auth.User')
+    is_private = models.BooleanField(default=True)
 
 
 class Entry(models.Model):

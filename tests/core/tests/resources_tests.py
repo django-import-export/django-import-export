@@ -347,12 +347,14 @@ class ModelResourceTest(TestCase):
         class EntryResource(resources.ModelResource):
             class Meta:
                 model = Entry
-                fields = ('user__profile',)
+                fields = ('user__profile', 'user__profile__is_private')
 
         resource = EntryResource()
         dataset = resource.export(Entry.objects.all())
         self.assertEqual(dataset.dict[0]['user__profile'], profile.pk)
+        self.assertEqual(dataset.dict[0]['user__profile__is_private'], '1')
         self.assertEqual(dataset.dict[1]['user__profile'], '')
+        self.assertEqual(dataset.dict[1]['user__profile__is_private'], '')
 
     def test_empty_get_queryset(self):
         # issue #25 - Overriding queryset on export() fails when passed

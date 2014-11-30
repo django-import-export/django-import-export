@@ -461,9 +461,12 @@ class ModelDeclarativeMetaclass(DeclarativeMetaclass):
                             # We're not at the last attribute yet, so check that
                             # we're looking at a relation, and move on to the
                             # next model.
-                            if f.rel is None:
-                                raise KeyError('%s is not a relation' % verbose_path)
-                            model = f.rel.to
+                            if isinstance(f, RelatedObject):
+                                model = f.model
+                            else:
+                                if f.rel is None:
+                                    raise KeyError('%s is not a relation' % verbose_path)
+                                model = f.rel.to
 
                     if isinstance(f, RelatedObject):
                         f = f.field
