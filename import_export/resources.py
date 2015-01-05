@@ -71,6 +71,9 @@ class ResourceOptions(object):
     * ``report_skipped`` - Controls if the result reports skipped rows
       Default value is True
 
+    * ``value_overrides`` - Controls which values the user can override during
+      import.
+
     """
     fields = None
     model = None
@@ -82,6 +85,7 @@ class ResourceOptions(object):
     use_transactions = None
     skip_unchanged = False
     report_skipped = True
+    value_overrides = ()
 
     def __new__(cls, meta=None):
         overrides = {}
@@ -535,6 +539,9 @@ class ModelResource(six.with_metaclass(ModelDeclarativeMetaclass, Resource)):
 
     def get_import_id_fields(self):
         return self._meta.import_id_fields
+
+    def get_value_overrides(self):
+        return self._meta.value_overrides
 
     def get_queryset(self):
         return self._meta.model.objects.all()
