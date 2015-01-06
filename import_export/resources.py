@@ -382,7 +382,10 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         method = getattr(self, 'dehydrate_%s' % field_name, None)
         if method is not None:
             return method(obj)
-        return field.export(obj)
+        ret = field.export(obj)
+        if isinstance(field.widget, widgets.ForeignKeyWidget):
+            return str(getattr(obj, field_name)) if ret else ""
+        return ret
 
     def export_resource(self, obj):
         return [self.export_field(field, obj) for field in self.get_fields()]
