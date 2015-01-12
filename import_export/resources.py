@@ -304,8 +304,6 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         else:
             real_dry_run = dry_run
 
-        instance_loader = self._meta.instance_loader_class(self, dataset)
-
         try:
             self.before_import(dataset, real_dry_run)
         except Exception as e:
@@ -316,6 +314,8 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
                     transaction.rollback()
                     transaction.leave_transaction_management()
                 raise
+
+        instance_loader = self._meta.instance_loader_class(self, dataset)
 
         for row in dataset.dict:
             try:
