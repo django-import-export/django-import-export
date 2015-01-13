@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 
 import os.path
 
+from .exceptions import ImportExportError
 from .widgets import ForeignKeyWidget
 
 from django import forms
@@ -21,6 +22,9 @@ class ValueOverrideMixin(object):
                     formfield.choices = [("", "---")] + [(obj.pk, str(obj)) for obj in objects]
                 else:
                     formfield = forms.CharField(required=False)
+            else:
+                choices = ", ".join(resource.fields.keys())
+                raise ImportExportError("Field %r does not exist (choices: %s)" % (name, choices))
             self.fields["override_{name}".format(name=name)] = formfield
 
 
