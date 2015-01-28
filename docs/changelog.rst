@@ -4,7 +4,7 @@ Changelog for django-import-export
 0.2.7 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Call before_import before creating the instance_loader - fixes #193
 
 
 0.2.6 (2014-10-09)
