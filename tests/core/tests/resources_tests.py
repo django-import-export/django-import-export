@@ -33,6 +33,7 @@ except ImportError:
 class MyResource(resources.Resource):
     name = fields.Field()
     email = fields.Field()
+    extra = fields.Field()
 
     class Meta:
         export_order = ('email', 'name')
@@ -57,7 +58,7 @@ class ResourceTestCase(TestCase):
 
     def test_get_export_order(self):
         self.assertEqual(self.my_resource.get_export_headers(),
-                ['email', 'name'])
+                ['email', 'name', 'extra'])
 
 
 class BookResource(resources.ModelResource):
