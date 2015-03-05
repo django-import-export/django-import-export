@@ -337,6 +337,9 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
                         self.delete_instance(instance, real_dry_run)
                         row_result.diff = self.get_diff(original, None,
                                 real_dry_run)
+                        # Add object info to RowResult for LogEntry
+                        row_result.object_repr = force_text(instance)
+                        row_result.object_id = instance.pk
                 else:
                     self.import_obj(instance, row, real_dry_run)
                     if self.skip_row(instance, original):
