@@ -13,6 +13,7 @@ from django.contrib.admin.models import LogEntry, ADDITION, CHANGE, DELETION
 from django.contrib.contenttypes.models import ContentType
 from django.http import HttpResponseRedirect, HttpResponse
 from django.core.urlresolvers import reverse
+from django.conf import settings
 
 from .forms import (
     ImportForm,
@@ -31,6 +32,7 @@ try:
 except ImportError:
     from django.utils.encoding import force_unicode as force_text
 
+SKIP_ADMIN_LOG = getattr(settings, 'IMPORT_EXPORT_SKIP_ADMIN_LOG', False)
 
 #: import / export formats
 DEFAULT_FORMATS = (
@@ -69,6 +71,13 @@ class ImportMixin(ImportExportMixinBase):
     formats = DEFAULT_FORMATS
     #: import data encoding
     from_encoding = "utf-8"
+    skip_admin_log = None
+
+    def get_skip_admin_log(self):
+        if self.skip_admin_log is None:
+            return SKIP_ADMIN_LOG
+        else:
+            return self.skip_admin_log
 
     def get_urls(self):
         urls = super(ImportMixin, self).get_urls()
@@ -129,23 +138,24 @@ class ImportMixin(ImportExportMixinBase):
             result = resource.import_data(dataset, dry_run=False,
                                  raise_errors=True)
 
-            # Add imported objects to LogEntry
-            logentry_map = {
-                RowResult.IMPORT_TYPE_NEW: ADDITION,
-                RowResult.IMPORT_TYPE_UPDATE: CHANGE,
-                RowResult.IMPORT_TYPE_DELETE: DELETION,
-            }
-            content_type_id=ContentType.objects.get_for_model(self.model).pk
-            for row in result:
-                if row.import_type != row.IMPORT_TYPE_SKIP:
-                    LogEntry.objects.log_action(
-                        user_id=request.user.pk,
-                        content_type_id=content_type_id,
-                        object_id=row.object_id,
-                        object_repr=row.object_repr,
-                        action_flag=logentry_map[row.import_type],
-                        change_message="%s through import_export" % row.import_type,
-                    )
+            if not self.get_skip_admin_log():
+                # Add imported objects to LogEntry
+                logentry_map = {
+                    RowResult.IMPORT_TYPE_NEW: ADDITION,
+                    RowResult.IMPORT_TYPE_UPDATE: CHANGE,
+                    RowResult.IMPORT_TYPE_DELETE: DELETION,
+                }
+                content_type_id = ContentType.objects.get_for_model(self.model).pk
+                for row in result:
+                    if row.import_type != row.IMPORT_TYPE_SKIP:
+                        LogEntry.objects.log_action(
+                            user_id=request.user.pk,
+                            content_type_id=content_type_id,
+                            object_id=row.object_id,
+                            object_repr=row.object_repr,
+                            action_flag=logentry_map[row.import_type],
+                            change_message="%s through import_export" % row.import_type,
+                        )
 
             success_message = _('Import finished')
             messages.success(request, success_message)
