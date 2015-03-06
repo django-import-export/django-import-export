@@ -5,6 +5,7 @@ Changelog for django-import-export
 ------------------
 
 - Call before_import before creating the instance_loader - fixes #193
+- Add object info into RowResult for log entry when IMPORT_TYPE_DELETE. (#215)
 
 
 0.2.6 (2014-10-09)
