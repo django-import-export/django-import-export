@@ -24,12 +24,12 @@ msgstr "导入完成"
 
 #: admin.py:378
 msgid "You must select an export format."
-msgstr "您必须选择一个导入格式。"
+msgstr "您必须选择一个导出格式。"
 
 #: admin.py:395
 #, python-format
 msgid "Export selected %(verbose_name_plural)s"
-msgstr "选择导入 %(verbose_name_plural)s"
+msgstr "导出选中的 %(verbose_name_plural)s"
 
 #: forms.py:12
 msgid "File to import"
