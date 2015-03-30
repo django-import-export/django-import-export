@@ -108,7 +108,7 @@ class DeclarativeMetaclass(type):
 
         attrs['fields'] = OrderedDict(declared_fields)
         new_class = super(DeclarativeMetaclass, cls).__new__(cls, name,
-                bases, attrs)
+                                                             bases, attrs)
         opts = getattr(new_class, 'Meta', None)
         new_class._meta = ResourceOptions(opts)
 

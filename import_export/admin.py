@@ -1,5 +1,6 @@
 from __future__ import with_statement
 
+import json
 import tempfile
 from datetime import datetime
 import os.path
@@ -120,23 +121,15 @@ class ImportMixin(ImportExportMixinBase):
         resource = self.get_import_resource_class()()
 
         confirm_form = ConfirmImportForm(request.POST)
+
         if confirm_form.is_valid():
-            import_formats = self.get_import_formats()
-            input_format = import_formats[
-                int(confirm_form.cleaned_data['input_format'])
-            ]()
-            import_file_name = os.path.join(
-                tempfile.gettempdir(),
-                confirm_form.cleaned_data['import_file_name']
-            )
-            import_file = open(import_file_name, input_format.get_read_mode())
-            data = import_file.read()
-            if not input_format.is_binary() and self.from_encoding:
-                data = force_text(data, self.from_encoding)
+            input_format = base_formats.JSON()
+            data = confirm_form.cleaned_data['data']
+
             dataset = input_format.create_dataset(data)
 
             result = resource.import_data(dataset, dry_run=False,
-                                 raise_errors=True)
+                                          raise_errors=True)
 
             if not self.get_skip_admin_log():
                 # Add imported objects to LogEntry
@@ -159,7 +152,6 @@ class ImportMixin(ImportExportMixinBase):
 
             success_message = _('Import finished')
             messages.success(request, success_message)
-            import_file.close()
 
             url = reverse('admin:%s_%s_changelist' % self.get_model_info(),
                           current_app=self.admin_site.name)
@@ -204,11 +196,10 @@ class ImportMixin(ImportExportMixinBase):
                                               raise_errors=False)
 
             context['result'] = result
-
+            json_data = json.dumps(dataset.dict)
             if not result.has_errors():
                 context['confirm_form'] = ConfirmImportForm(initial={
-                    'import_file_name': os.path.basename(uploaded_file.name),
-                    'input_format': form.cleaned_data['input_format'],
+                    'data': json_data,
                 })
 
         context['form'] = form
