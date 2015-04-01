@@ -11,7 +11,7 @@ from diff_match_patch import diff_match_patch
 from django.utils.safestring import mark_safe
 from django.utils import six
 from django.db import transaction
-from django.db.models.fields import FieldDoesNotExist
+from django.db.models.fields import FieldDoesNotExist, IntegerField
 from django.db.models.query import QuerySet
 from django.db.models.related import RelatedObject
 from django.conf import settings
@@ -71,6 +71,9 @@ class ResourceOptions(object):
     * ``report_skipped`` - Controls if the result reports skipped rows
       Default value is True
 
+    * ``value_overrides`` - Controls which values the user can override during
+      import.
+
     """
     fields = None
     model = None
@@ -82,6 +85,7 @@ class ResourceOptions(object):
     use_transactions = None
     skip_unchanged = False
     report_skipped = True
+    value_overrides = ()
 
     def __new__(cls, meta=None):
         overrides = {}
@@ -379,7 +383,10 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         method = getattr(self, 'dehydrate_%s' % field_name, None)
         if method is not None:
             return method(obj)
-        return field.export(obj)
+        ret = field.export(obj)
+        if isinstance(field.widget, widgets.ForeignKeyWidget):
+            return str(getattr(obj, field_name)) if ret else ""
+        return ret
 
     def export_resource(self, obj):
         return [self.export_field(field, obj) for field in self.get_fields()]
@@ -435,6 +442,13 @@ class ModelDeclarativeMetaclass(DeclarativeMetaclass):
                 field = new_class.field_from_django_field(f.name, f,
                     readonly=False)
                 field_list.append((f.name, field, ))
+
+                if isinstance(field.widget, widgets.ForeignKeyWidget):
+                   # field is a foreignkey, register its _id field as well
+                   name = f.get_attname()
+                   f = IntegerField(name)
+                   field = new_class.field_from_django_field(name, f, readonly=False)
+                   field_list.append((name, field))
 
             new_class.fields.update(OrderedDict(field_list))
 
@@ -536,6 +550,9 @@ class ModelResource(six.with_metaclass(ModelDeclarativeMetaclass, Resource)):
 
     def get_import_id_fields(self):
         return self._meta.import_id_fields
+
+    def get_value_overrides(self):
+        return self._meta.value_overrides
 
     def get_queryset(self):
         return self._meta.model.objects.all()

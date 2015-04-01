@@ -1,5 +1,6 @@
 from __future__ import with_statement
 
+import tablib
 import tempfile
 from datetime import datetime
 import os.path
@@ -44,6 +45,21 @@ DEFAULT_FORMATS = (
     base_formats.YAML,
     base_formats.HTML,
 )
+
+
+def update_dataset(dataset, values):
+    """
+    Helper to update a tablib.Dataset with a dict of values
+    """
+    ret = tablib.Dataset()
+    ret.headers = dataset.headers
+    for row in dataset:
+        row = list(row)
+        for k, v in values.items():
+            if v:
+                row[dataset.headers.index(k)] = v
+        ret.append(row)
+    return ret
 
 
 class ImportExportMixinBase(object):
@@ -120,6 +136,7 @@ class ImportMixin(ImportExportMixinBase):
         resource = self.get_import_resource_class()()
 
         confirm_form = ConfirmImportForm(request.POST)
+        confirm_form.initialize_override_fields(resource)
         if confirm_form.is_valid():
             import_formats = self.get_import_formats()
             input_format = import_formats[
@@ -133,7 +150,11 @@ class ImportMixin(ImportExportMixinBase):
             data = import_file.read()
             if not input_format.is_binary() and self.from_encoding:
                 data = force_text(data, self.from_encoding)
+            value_overrides = resource.get_value_overrides()
             dataset = input_format.create_dataset(data)
+            values = dict((k, confirm_form.cleaned_data["override_" + k])
+                          for k in value_overrides)
+            dataset = update_dataset(dataset, values)
 
             result = resource.import_data(dataset, dry_run=False,
                                  raise_errors=True)
@@ -178,6 +199,7 @@ class ImportMixin(ImportExportMixinBase):
 
         import_formats = self.get_import_formats()
         form = ImportForm(import_formats,
+                          resource,
                           request.POST or None,
                           request.FILES or None)
 
@@ -200,16 +222,21 @@ class ImportMixin(ImportExportMixinBase):
                 if not input_format.is_binary() and self.from_encoding:
                     data = force_text(data, self.from_encoding)
                 dataset = input_format.create_dataset(data)
+                value_overrides = resource.get_value_overrides()
+                values = dict((k, form.cleaned_data["override_" + k]) for k in value_overrides)
+                dataset = update_dataset(dataset, values)
                 result = resource.import_data(dataset, dry_run=True,
                                               raise_errors=False)
 
             context['result'] = result
 
             if not result.has_errors():
-                context['confirm_form'] = ConfirmImportForm(initial={
-                    'import_file_name': os.path.basename(uploaded_file.name),
-                    'input_format': form.cleaned_data['input_format'],
-                })
+                initial = {
+                    "import_file_name": os.path.basename(uploaded_file.name),
+                }
+                initial.update(form.cleaned_data)
+                context['confirm_form'] = ConfirmImportForm(initial=initial)
+                context["confirm_form"].initialize_override_fields(resource)
 
         context['form'] = form
         context['opts'] = self.model._meta
