@@ -13,7 +13,7 @@ from django.utils import six
 from django.db import transaction
 from django.db.models.fields import FieldDoesNotExist
 from django.db.models.query import QuerySet
-from django.db.models.related import RelatedObject
+from django.db.models.fields.related import ForeignObjectRel
 from django.conf import settings
 
 from .results import Error, Result, RowResult
@@ -462,14 +462,14 @@ class ModelDeclarativeMetaclass(DeclarativeMetaclass):
                             # We're not at the last attribute yet, so check that
                             # we're looking at a relation, and move on to the
                             # next model.
-                            if isinstance(f, RelatedObject):
+                            if isinstance(f, ForeignObjectRel):
                                 model = f.model
                             else:
                                 if f.rel is None:
                                     raise KeyError('%s is not a relation' % verbose_path)
                                 model = f.rel.to
 
-                    if isinstance(f, RelatedObject):
+                    if isinstance(f, ForeignObjectRel):
                         f = f.field
 
                     field = new_class.field_from_django_field(field_name, f,
