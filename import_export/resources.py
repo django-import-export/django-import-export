@@ -10,7 +10,6 @@ from diff_match_patch import diff_match_patch
 
 from django.utils.safestring import mark_safe
 from django.utils import six
-from django.db import transaction
 from django.db.models.fields import FieldDoesNotExist
 from django.db.models.query import QuerySet
 from django.db.models.related import RelatedObject
@@ -22,6 +21,11 @@ from import_export import widgets
 from .instance_loaders import (
     ModelInstanceLoader,
 )
+
+try:
+    from django.db.transaction import atomic, savepoint, savepoint_rollback, savepoint_commit  # noqa
+except ImportError:
+    from .django_compat import atomic, savepoint, savepoint_rollback, savepoint_commit  # noqa
 
 
 try:
@@ -279,6 +283,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         """
         pass
 
+    @atomic()
     def import_data(self, dataset, dry_run=False, raise_errors=False,
             use_transactions=None):
         """
@@ -299,8 +304,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
             # when transactions are used we want to create/update/delete object
             # as transaction will be rolled back if dry_run is set
             real_dry_run = False
-            transaction.enter_transaction_management()
-            transaction.managed(True)
+            sp1 = savepoint()
         else:
             real_dry_run = dry_run
 
@@ -311,8 +315,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
             result.base_errors.append(Error(repr(e), tb_info))
             if raise_errors:
                 if use_transactions:
-                    transaction.rollback()
-                    transaction.leave_transaction_management()
+                    savepoint_rollback(sp1)
                 raise
 
         instance_loader = self._meta.instance_loader_class(self, dataset)
@@ -354,8 +357,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
                 row_result.errors.append(Error(e, tb_info))
                 if raise_errors:
                     if use_transactions:
-                        transaction.rollback()
-                        transaction.leave_transaction_management()
+                        savepoint_rollback(sp1)
                     six.reraise(*sys.exc_info())
             if (row_result.import_type != RowResult.IMPORT_TYPE_SKIP or
                         self._meta.report_skipped):
@@ -363,10 +365,9 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
 
         if use_transactions:
             if dry_run or result.has_errors():
-                transaction.rollback()
+                savepoint_rollback(sp1)
             else:
-                transaction.commit()
-            transaction.leave_transaction_management()
+                savepoint_commit(sp1)
 
         return result
 
