@@ -145,7 +145,7 @@ data structure, ``dehydrate_<fieldname>`` method should be defined::
             model = Book
 
         def dehydrate_full_title(self, book):
-            return '%s by %s' % (book.name, book.name.author)
+            return '%s by %s' % (book.name, book.author.name)
 
 
 Customize widgets
