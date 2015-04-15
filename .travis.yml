@@ -2,14 +2,16 @@ language: python
 python:
   - "2.7"
   - "3.3"
+  - "3.4"
 env:
   - DJANGO=1.4.10
   - DJANGO=1.5.5
   - DJANGO=1.6.1
   - DJANGO=1.7.0
+  - DJANGO=1.8
 install:
   - pip install -q Django==$DJANGO --use-mirrors
   - pip install -e git+https://github.com/kennethreitz/tablib.git#egg=tablib
   - pip install -r requirements/base.txt --use-mirrors
 script:
-  - if [[ $TRAVIS_PYTHON_VERSION != '3.3' || $DJANGO != "1.4.10" ]]; then python tests/manage.py test core --settings=settings; fi
+  - if [[ ($TRAVIS_PYTHON_VERSION != '3.3' && $TRAVIS_PYTHON_VERSION != '3.4') || $DJANGO != "1.4.10" ]]; then python tests/manage.py test core --settings=settings; fi

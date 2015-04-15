@@ -4,6 +4,8 @@ Changelog for django-import-export
 0.2.7 (unreleased)
 ------------------
 
+- Django 1.8 compatibility
+
 - Call before_import before creating the instance_loader - fixes #193
 
 
