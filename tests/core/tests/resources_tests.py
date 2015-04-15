@@ -60,6 +60,27 @@ class ResourceTestCase(TestCase):
         self.assertEqual(self.my_resource.get_export_headers(),
                 ['email', 'name', 'extra'])
 
+    # Issue 140 Attributes aren't inherited by subclasses
+    def test_inheritance(self):
+        class A(MyResource):
+            inherited = fields.Field()
+
+            class Meta:
+                import_id_fields = ('email',)
+
+        class B(A):
+            local = fields.Field()
+
+            class Meta:
+                export_order = ('email', 'extra')
+
+        resource = B()
+        self.assertIn('name', resource.fields)
+        self.assertIn('inherited', resource.fields)
+        self.assertIn('local', resource.fields)
+        self.assertEqual(resource.get_export_headers(),
+                ['email', 'extra', 'name', 'inherited', 'local'])
+        self.assertEqual(resource._meta.import_id_fields, ('email',))
 
 class BookResource(resources.ModelResource):
     published = fields.Field(column_name='published_date')
