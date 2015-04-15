@@ -4,6 +4,7 @@ import tempfile
 from datetime import datetime
 import os.path
 
+import django
 from django.contrib import admin
 from django.utils.translation import ugettext_lazy as _
 from django.conf.urls import patterns, url
@@ -214,6 +215,11 @@ class ImportMixin(ImportExportMixinBase):
         context['form'] = form
         context['opts'] = self.model._meta
         context['fields'] = [f.column_name for f in resource.get_fields()]
+
+        if django.VERSION >= (1, 8, 0):
+            context.update(self.admin_site.each_context(request))
+        else:
+            context.update(self.admin_site.each_context())
 
         return TemplateResponse(request, [self.import_template_name],
                                 context, current_app=self.admin_site.name)
