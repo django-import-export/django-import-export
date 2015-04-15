@@ -80,6 +80,15 @@ option to blacklist fields::
             model = Book
             exclude = ('imported', )
 
+An explicit order for exporting fields can be set using the ``export_order`` option::
+
+    class BookResource(resources.ModelResource):
+
+        class Meta:
+            model = Book
+            fields = ('id', 'name', 'author', 'price',)
+            export_order = ('id', 'price', 'author', 'name')
+
 When defining ``ModelResource`` fields it is possible to follow
 model relationships::
 
