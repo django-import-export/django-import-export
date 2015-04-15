@@ -284,7 +284,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         """
         return self.get_export_headers()
 
-    def before_import(self, dataset, dry_run):
+    def before_import(self, dataset, dry_run, **kwargs):
         """
         Override to add additional logic.
         """
@@ -292,7 +292,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
 
     @atomic()
     def import_data(self, dataset, dry_run=False, raise_errors=False,
-            use_transactions=None):
+            use_transactions=None, **kwargs):
         """
         Imports data from ``dataset``.
 
@@ -316,7 +316,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
             real_dry_run = dry_run
 
         try:
-            self.before_import(dataset, real_dry_run)
+            self.before_import(dataset, real_dry_run, **kwargs)
         except Exception as e:
             tb_info = traceback.format_exc(2)
             result.base_errors.append(Error(repr(e), tb_info))

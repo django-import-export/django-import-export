@@ -393,6 +393,23 @@ class ModelResourceTest(TestCase):
         self.assertFalse(result.has_errors())
         self.assertEqual(len(result.rows), 0)
 
+    def test_before_import_access_to_kwargs(self):
+        class B(BookResource):
+            def before_import(self, dataset, dry_run, **kwargs):
+                if 'extra_arg' in kwargs:
+                    dataset.headers[dataset.headers.index('author_email')] = 'old_email'
+                    dataset.insert_col(0,
+                                       lambda row: kwargs['extra_arg'],
+                                       header='author_email')
+
+        resource = B()
+        result = resource.import_data(self.dataset, raise_errors=True,
+                                      extra_arg='extra@example.com')
+        self.assertFalse(result.has_errors())
+        self.assertEqual(len(result.rows), 1)
+        instance = Book.objects.get(pk=self.book.pk)
+        self.assertEqual(instance.author_email, 'extra@example.com')
+
     def test_link_to_nonexistent_field(self):
         with self.assertRaises(FieldDoesNotExist) as cm:
             class BrokenBook(resources.ModelResource):
