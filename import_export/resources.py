@@ -371,7 +371,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         return result
 
     def get_export_order(self):
-        order = tuple (self._meta.export_order or ())
+        order = tuple (self._meta.export_order or self._meta.fields or ())
         return order + tuple (k for k in self.fields.keys() if k not in order)
 
     def export_field(self, field, obj):
