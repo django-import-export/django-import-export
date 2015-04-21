@@ -306,7 +306,7 @@ class ExportMixin(ImportExportMixinBase):
         resource_class = self.get_export_resource_class()
         data = resource_class().export(queryset)
         export_data = file_format.export_data(data)
-        return export_data
+        return export_data.encode(self.to_encoding)
 
     def export_action(self, request, *args, **kwargs):
         formats = self.get_export_formats()
