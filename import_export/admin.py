@@ -318,6 +318,8 @@ class ExportMixin(ImportExportMixinBase):
 
             queryset = self.get_export_queryset(request)
             export_data = self.get_export_data(file_format, queryset)
+            if not file_format.is_binary() and self.to_encoding:
+                export_data = export_data.encode(self.to_encoding)
             content_type = file_format.get_content_type()
             # Django 1.7 uses the content_type kwarg instead of mimetype
             try:
