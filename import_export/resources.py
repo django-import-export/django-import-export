@@ -94,16 +94,6 @@ class ResourceOptions(object):
     skip_unchanged = False
     report_skipped = True
 
-    def __new__(cls, meta=None):
-        overrides = {}
-
-        if meta:
-            for override_name in dir(meta):
-                if not override_name.startswith('_'):
-                    overrides[override_name] = getattr(meta, override_name)
-
-        return object.__new__(type(str('ResourceOptions'), (cls,), overrides))
-
 
 class DeclarativeMetaclass(type):
 
