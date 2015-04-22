@@ -71,14 +71,30 @@ By default ``ModelResource`` introspects model fields and creates
 for each field.
 
 To affect which model fields will be included in an import-export
-resource, use the ``fields`` option to whitelist fields or ``exclude``
-option to blacklist fields::
+resource, use the ``fields`` option to whitelist fields::
+
+    class BookResource(resources.ModelResource):
+
+        class Meta:
+            model = Book
+            fields = ('id', 'name', 'price',)
+
+Or the ``exclude`` option to blacklist fields::
 
     class BookResource(resources.ModelResource):
 
         class Meta:
             model = Book
             exclude = ('imported', )
+
+An explicit order for exporting fields can be set using the ``export_order`` option::
+
+    class BookResource(resources.ModelResource):
+
+        class Meta:
+            model = Book
+            fields = ('id', 'name', 'author', 'price',)
+            export_order = ('id', 'price', 'author', 'name')
 
 When defining ``ModelResource`` fields it is possible to follow
 model relationships::
