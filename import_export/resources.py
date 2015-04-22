@@ -94,22 +94,26 @@ class ResourceOptions(object):
     skip_unchanged = False
     report_skipped = True
 
-    def __new__(cls, meta=None):
-        overrides = {}
-
-        if meta:
-            for override_name in dir(meta):
-                if not override_name.startswith('_'):
-                    overrides[override_name] = getattr(meta, override_name)
-
-        return object.__new__(type(str('ResourceOptions'), (cls,), overrides))
-
 
 class DeclarativeMetaclass(type):
 
     def __new__(cls, name, bases, attrs):
         declared_fields = []
+        meta = ResourceOptions()
 
+        # If this class is subclassing another Resource, add that Resource's fields.
+        # Note that we loop over the bases in *reverse*. This is necessary in
+        # order to preserve the correct order of fields.
+        for base in bases[::-1]:
+            if hasattr(base, 'fields'):
+                declared_fields = list(six.iteritems(base.fields)) + declared_fields
+                # Collect the Meta options
+                options = getattr(base, 'Meta', None)
+                for option in [option for option in dir(options)
+                               if not option.startswith('_')]:
+                    setattr(meta, option, getattr(options, option))
+
+        # Add direct fields
         for field_name, obj in attrs.copy().items():
             if isinstance(obj, Field):
                 field = attrs.pop(field_name)
@@ -120,8 +124,13 @@ class DeclarativeMetaclass(type):
         attrs['fields'] = OrderedDict(declared_fields)
         new_class = super(DeclarativeMetaclass, cls).__new__(cls, name,
                 bases, attrs)
-        opts = getattr(new_class, 'Meta', None)
-        new_class._meta = ResourceOptions(opts)
+
+        # Add direct options
+        options = getattr(new_class, 'Meta', None)
+        for option in [option for option in dir(options) 
+                       if not option.startswith('_')]:
+            setattr(meta, option, getattr(options, option))
+        new_class._meta = meta
 
         return new_class
 
