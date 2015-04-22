@@ -4,6 +4,7 @@ import tempfile
 from datetime import datetime
 import os.path
 
+import django
 from django.contrib import admin
 from django.utils.translation import ugettext_lazy as _
 from django.conf.urls import patterns, url
@@ -213,6 +214,11 @@ class ImportMixin(ImportExportMixinBase):
                     'input_format': form.cleaned_data['input_format'],
                 })
 
+        if django.VERSION >= (1, 8, 0):
+            context.update(self.admin_site.each_context(request))
+        elif django.VERSION >= (1, 7, 0):
+            context.update(self.admin_site.each_context())
+
         context['form'] = form
         context['opts'] = self.model._meta
         context['fields'] = [f.column_name for f in resource.get_fields()]
@@ -314,6 +320,8 @@ class ExportMixin(ImportExportMixinBase):
 
             queryset = self.get_export_queryset(request)
             export_data = self.get_export_data(file_format, queryset)
+            if not file_format.is_binary() and self.to_encoding:
+                export_data = export_data.encode(self.to_encoding)
             content_type = file_format.get_content_type()
             # Django 1.7 uses the content_type kwarg instead of mimetype
             try:
@@ -326,6 +334,12 @@ class ExportMixin(ImportExportMixinBase):
             return response
 
         context = {}
+
+        if django.VERSION >= (1, 8, 0):
+            context.update(self.admin_site.each_context(request))
+        elif django.VERSION >= (1, 7, 0):
+            context.update(self.admin_site.each_context())
+
         context['form'] = form
         context['opts'] = self.model._meta
         return TemplateResponse(request, [self.export_template_name],

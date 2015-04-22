@@ -6,6 +6,8 @@ Changelog for django-import-export
 
 - Django 1.8 compatibility
 
+- Add to_encoding functionality (#244)
+
 - Call before_import before creating the instance_loader - fixes #193
 
 
