@@ -120,7 +120,7 @@ class DeclarativeMetaclass(type):
                 # Collect the Meta options
                 options = getattr(base, 'Meta', None)
                 for option in [option for option in dir(options)
-                               if option in dir(meta) and not option.startswith('_')]:
+                               if not option.startswith('_')]:
                     setattr(meta, option, getattr(options, option))
 
         # Add direct fields
@@ -138,7 +138,7 @@ class DeclarativeMetaclass(type):
         # Add direct options
         options = getattr(new_class, 'Meta', None)
         for option in [option for option in dir(options) 
-                       if option in dir(meta) and not option.startswith('_')]:
+                       if not option.startswith('_')]:
             setattr(meta, option, getattr(options, option))
         new_class._meta = meta
 

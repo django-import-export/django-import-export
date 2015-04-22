@@ -82,6 +82,20 @@ class ResourceTestCase(TestCase):
                 ['email', 'extra', 'name', 'inherited', 'local'])
         self.assertEqual(resource._meta.import_id_fields, ('email',))
 
+    def test_inheritance_with_custom_attributes(self):
+        class A(MyResource):
+            inherited = fields.Field()
+
+            class Meta:
+                import_id_fields = ('email',)
+                custom_attribute = True
+
+        class B(A):
+            local = fields.Field()
+
+        resource = B()
+        self.assertEqual(resource._meta.custom_attribute, True)
+
 class BookResource(resources.ModelResource):
     published = fields.Field(column_name='published_date')
 
