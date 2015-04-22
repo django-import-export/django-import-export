@@ -46,7 +46,8 @@ responsible for import data from given `dataset`.
 
 #. ``import_data`` calls the ``before_import`` hook method which by default does 
    not do anything but can be overriden to customize the import process. The 
-   method receives the ``dataset`` and ``dry_run`` arguments.
+   method receives the ``dataset`` and ``dry_run`` arguments as well as any
+   additional keyword arguments passed to ``import_data`` in a ``kwargs`` dict.
 
 #. Process each `row` in ``dataset``
 

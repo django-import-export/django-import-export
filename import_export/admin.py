@@ -137,7 +137,9 @@ class ImportMixin(ImportExportMixinBase):
             dataset = input_format.create_dataset(data)
 
             result = resource.import_data(dataset, dry_run=False,
-                                 raise_errors=True)
+                                          raise_errors=True,
+                                          file_name=import_file_name,
+                                          user=request.user)
 
             if not self.get_skip_admin_log():
                 # Add imported objects to LogEntry
@@ -202,7 +204,9 @@ class ImportMixin(ImportExportMixinBase):
                     data = force_text(data, self.from_encoding)
                 dataset = input_format.create_dataset(data)
                 result = resource.import_data(dataset, dry_run=True,
-                                              raise_errors=False)
+                                              raise_errors=False,
+                                              file_name=uploaded_file.name,
+                                              user=request.user)
 
             context['result'] = result
 
