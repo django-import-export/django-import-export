@@ -7,4 +7,4 @@ so it can be installed with standard Python tools like pip or easy_install:
 
 ::
 
-    $pip install django-import-export
+    $ pip install django-import-export

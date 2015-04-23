@@ -4,6 +4,7 @@ import tempfile
 from datetime import datetime
 import os.path
 
+import django
 from django.contrib import admin
 from django.utils.translation import ugettext_lazy as _
 from django.conf.urls import patterns, url
@@ -13,6 +14,7 @@ from django.contrib.admin.models import LogEntry, ADDITION, CHANGE, DELETION
 from django.contrib.contenttypes.models import ContentType
 from django.http import HttpResponseRedirect, HttpResponse
 from django.core.urlresolvers import reverse
+from django.conf import settings
 
 from .forms import (
     ImportForm,
@@ -31,6 +33,7 @@ try:
 except ImportError:
     from django.utils.encoding import force_unicode as force_text
 
+SKIP_ADMIN_LOG = getattr(settings, 'IMPORT_EXPORT_SKIP_ADMIN_LOG', False)
 
 #: import / export formats
 DEFAULT_FORMATS = (
@@ -69,6 +72,13 @@ class ImportMixin(ImportExportMixinBase):
     formats = DEFAULT_FORMATS
     #: import data encoding
     from_encoding = "utf-8"
+    skip_admin_log = None
+
+    def get_skip_admin_log(self):
+        if self.skip_admin_log is None:
+            return SKIP_ADMIN_LOG
+        else:
+            return self.skip_admin_log
 
     def get_urls(self):
         urls = super(ImportMixin, self).get_urls()
@@ -127,25 +137,28 @@ class ImportMixin(ImportExportMixinBase):
             dataset = input_format.create_dataset(data)
 
             result = resource.import_data(dataset, dry_run=False,
-                                 raise_errors=True)
+                                          raise_errors=True,
+                                          file_name=import_file_name,
+                                          user=request.user)
 
-            # Add imported objects to LogEntry
-            logentry_map = {
-                RowResult.IMPORT_TYPE_NEW: ADDITION,
-                RowResult.IMPORT_TYPE_UPDATE: CHANGE,
-                RowResult.IMPORT_TYPE_DELETE: DELETION,
-            }
-            content_type_id=ContentType.objects.get_for_model(self.model).pk
-            for row in result:
-                if row.import_type != row.IMPORT_TYPE_SKIP:
-                    LogEntry.objects.log_action(
-                        user_id=request.user.pk,
-                        content_type_id=content_type_id,
-                        object_id=row.object_id,
-                        object_repr=row.object_repr,
-                        action_flag=logentry_map[row.import_type],
-                        change_message="%s through import_export" % row.import_type,
-                    )
+            if not self.get_skip_admin_log():
+                # Add imported objects to LogEntry
+                logentry_map = {
+                    RowResult.IMPORT_TYPE_NEW: ADDITION,
+                    RowResult.IMPORT_TYPE_UPDATE: CHANGE,
+                    RowResult.IMPORT_TYPE_DELETE: DELETION,
+                }
+                content_type_id = ContentType.objects.get_for_model(self.model).pk
+                for row in result:
+                    if row.import_type != row.IMPORT_TYPE_SKIP:
+                        LogEntry.objects.log_action(
+                            user_id=request.user.pk,
+                            content_type_id=content_type_id,
+                            object_id=row.object_id,
+                            object_repr=row.object_repr,
+                            action_flag=logentry_map[row.import_type],
+                            change_message="%s through import_export" % row.import_type,
+                        )
 
             success_message = _('Import finished')
             messages.success(request, success_message)
@@ -191,7 +204,9 @@ class ImportMixin(ImportExportMixinBase):
                     data = force_text(data, self.from_encoding)
                 dataset = input_format.create_dataset(data)
                 result = resource.import_data(dataset, dry_run=True,
-                                              raise_errors=False)
+                                              raise_errors=False,
+                                              file_name=uploaded_file.name,
+                                              user=request.user)
 
             context['result'] = result
 
@@ -200,6 +215,11 @@ class ImportMixin(ImportExportMixinBase):
                     'import_file_name': os.path.basename(uploaded_file.name),
                     'input_format': form.cleaned_data['input_format'],
                 })
+
+        if django.VERSION >= (1, 8, 0):
+            context.update(self.admin_site.each_context(request))
+        elif django.VERSION >= (1, 7, 0):
+            context.update(self.admin_site.each_context())
 
         context['form'] = form
         context['opts'] = self.model._meta
@@ -314,6 +334,12 @@ class ExportMixin(ImportExportMixinBase):
             return response
 
         context = {}
+
+        if django.VERSION >= (1, 8, 0):
+            context.update(self.admin_site.each_context(request))
+        elif django.VERSION >= (1, 7, 0):
+            context.update(self.admin_site.each_context())
+
         context['form'] = form
         context['opts'] = self.model._meta
         return TemplateResponse(request, [self.export_template_name],

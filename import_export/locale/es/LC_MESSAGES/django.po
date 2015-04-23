@@ -1,0 +1,107 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# David Díaz <d.diazp@gmail.com>, 2015.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2015-02-21 12:07+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: admin.py:150
+msgid "Import finished"
+msgstr "Importación finalizada"
+
+#: admin.py:368
+msgid "You must select an export format."
+msgstr "Debes selecciona un formato de exportación."
+
+#: admin.py:385
+#, python-format
+msgid "Export selected %(verbose_name_plural)s"
+msgstr "Exportación seleccionada %(verbose_name_plural)s"
+
+#: forms.py:12
+msgid "File to import"
+msgstr "Fichero a importar"
+
+#: forms.py:15 forms.py:42 forms.py:67
+msgid "Format"
+msgstr "Formato"
+
+#: templates/admin/import_export/base.html:11
+msgid "Home"
+msgstr "Inicio"
+
+#: templates/admin/import_export/change_list_export.html:5
+#: templates/admin/import_export/change_list_import_export.html:6
+#: templates/admin/import_export/export.html:8
+#: templates/admin/import_export/export.html:12
+msgid "Export"
+msgstr "Exportar"
+
+#: templates/admin/import_export/change_list_import.html:5
+#: templates/admin/import_export/change_list_import_export.html:5
+#: templates/admin/import_export/import.html:8
+#: templates/admin/import_export/import.html:12
+msgid "Import"
+msgstr "Importar"
+
+#: templates/admin/import_export/export.html:34
+#: templates/admin/import_export/import.html:57
+msgid "Submit"
+msgstr ""
+
+#: templates/admin/import_export/import.html:19
+msgid ""
+"Below is a preview of data to be imported. If you are satisfied with the "
+"results, click 'Confirm import'"
+msgstr ""
+"A continuación se muestra una vista previa de los datos a importar. Si estás "
+"satisfecho con los resultados, haz clic en 'Confirmar importación'"
+
+#: templates/admin/import_export/import.html:22
+msgid "Confirm import"
+msgstr "Confirmar importación"
+
+#: templates/admin/import_export/import.html:31
+msgid "This importer will import the following fields: "
+msgstr "Este importador importará los siguientes campos:"
+
+#: templates/admin/import_export/import.html:65
+msgid "Errors"
+msgstr "Errores"
+
+#: templates/admin/import_export/import.html:73
+msgid "Line number"
+msgstr "Número de línea"
+
+#: templates/admin/import_export/import.html:82
+msgid "Preview"
+msgstr "Vista previa"
+
+#: templates/admin/import_export/import.html:97
+msgid "New"
+msgstr "Nuevo"
+
+#: templates/admin/import_export/import.html:99
+msgid "Skipped"
+msgstr "Omitido"
+
+#: templates/admin/import_export/import.html:101
+msgid "Delete"
+msgstr "Borrado"
+
+#: templates/admin/import_export/import.html:103
+msgid "Update"
+msgstr "Actualizado"
