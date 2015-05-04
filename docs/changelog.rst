@@ -1,7 +1,7 @@
 Changelog for django-import-export
 ==================================
 
-0.2.7 (unreleased)
+0.2.7 (2015-05-04)
 ------------------
 
 - Django 1.8 compatibility
