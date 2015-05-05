@@ -19,7 +19,11 @@ except ImportError:
         warnings.warn(xls_warning, ImportWarning)
         XLS_IMPORT = False
 
-from django.utils.importlib import import_module
+try:
+    from importlib import import_module
+except ImportError:
+    from django.utils.importlib import import_module
+
 from django.utils import six
 
 
