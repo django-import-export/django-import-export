@@ -64,7 +64,7 @@ class DecimalWidget(NumberWidget):
     def clean(self, value):
         if value is None:
             return None
-        elif value == 0:
+        elif value == "0":
             return Decimal(value)
         else:
             return Decimal(value)
