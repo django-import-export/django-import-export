@@ -29,6 +29,7 @@ class ImportForm(forms.Form):
 
 class ConfirmImportForm(forms.Form):
     import_file_name = forms.CharField(widget=forms.HiddenInput())
+    original_file_name = forms.CharField(widget=forms.HiddenInput())
     input_format = forms.CharField(widget=forms.HiddenInput())
 
     def clean_import_file_name(self):

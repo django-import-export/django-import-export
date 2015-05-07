@@ -138,7 +138,7 @@ class ImportMixin(ImportExportMixinBase):
 
             result = resource.import_data(dataset, dry_run=False,
                                           raise_errors=True,
-                                          file_name=import_file_name,
+                                          file_name=confirm_form.cleaned_data['original_file_name'],
                                           user=request.user)
 
             if not self.get_skip_admin_log():
@@ -205,7 +205,7 @@ class ImportMixin(ImportExportMixinBase):
                 dataset = input_format.create_dataset(data)
                 result = resource.import_data(dataset, dry_run=True,
                                               raise_errors=False,
-                                              file_name=uploaded_file.name,
+                                              file_name=import_file.name,
                                               user=request.user)
 
             context['result'] = result
@@ -213,6 +213,7 @@ class ImportMixin(ImportExportMixinBase):
             if not result.has_errors():
                 context['confirm_form'] = ConfirmImportForm(initial={
                     'import_file_name': os.path.basename(uploaded_file.name),
+                    'original_file_name': import_file.name,
                     'input_format': form.cleaned_data['input_format'],
                 })
 
