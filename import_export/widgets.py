@@ -48,7 +48,7 @@ class IntegerWidget(NumberWidget):
     """
 
     def clean(self, value):
-        if value is None:
+        if value is False:
             return None
         elif value == 0:
             return int(value)
@@ -62,7 +62,7 @@ class DecimalWidget(NumberWidget):
     """
 
     def clean(self, value):
-        if value is None:
+        if value is False:
             return None
         elif value == "0":
             return Decimal(value)
