@@ -27,6 +27,7 @@ from .resources import (
 )
 from .formats import base_formats
 from .results import RowResult
+from .tmp_storages import TempFolderStorage
 
 try:
     from django.utils.encoding import force_text
@@ -73,6 +74,7 @@ class ImportMixin(ImportExportMixinBase):
     #: import data encoding
     from_encoding = "utf-8"
     skip_admin_log = None
+    tmp_storage_class = TempFolderStorage
 
     def get_skip_admin_log(self):
         if self.skip_admin_log is None:
@@ -126,19 +128,15 @@ class ImportMixin(ImportExportMixinBase):
             input_format = import_formats[
                 int(confirm_form.cleaned_data['input_format'])
             ]()
-            import_file_name = os.path.join(
-                tempfile.gettempdir(),
-                confirm_form.cleaned_data['import_file_name']
-            )
-            import_file = open(import_file_name, input_format.get_read_mode())
-            data = import_file.read()
+            tmp_storage = self.tmp_storage_class(name=confirm_form.cleaned_data['import_file_name'])
+            data = tmp_storage.read(input_format.get_read_mode())
             if not input_format.is_binary() and self.from_encoding:
                 data = force_text(data, self.from_encoding)
             dataset = input_format.create_dataset(data)
 
             result = resource.import_data(dataset, dry_run=False,
                                           raise_errors=True,
-                                          file_name=import_file_name,
+                                          file_name=tmp_storage.name,
                                           user=request.user)
 
             if not self.get_skip_admin_log():
@@ -162,7 +160,7 @@ class ImportMixin(ImportExportMixinBase):
 
             success_message = _('Import finished')
             messages.success(request, success_message)
-            import_file.close()
+            tmp_storage.remove()
 
             url = reverse('admin:%s_%s_changelist' % self.get_model_info(),
                           current_app=self.admin_site.name)
@@ -191,28 +189,29 @@ class ImportMixin(ImportExportMixinBase):
             import_file = form.cleaned_data['import_file']
             # first always write the uploaded file to disk as it may be a
             # memory file or else based on settings upload handlers
-            with tempfile.NamedTemporaryFile(delete=False) as uploaded_file:
-                for chunk in import_file.chunks():
-                    uploaded_file.write(chunk)
+            tmp_storage = self.tmp_storage_class()
+            data = bytes()
+            for chunk in import_file.chunks():
+                data += chunk
+
+            tmp_storage.save(data, input_format.get_read_mode())
 
             # then read the file, using the proper format-specific mode
-            with open(uploaded_file.name,
-                      input_format.get_read_mode()) as uploaded_import_file:
-                # warning, big files may exceed memory
-                data = uploaded_import_file.read()
-                if not input_format.is_binary() and self.from_encoding:
-                    data = force_text(data, self.from_encoding)
-                dataset = input_format.create_dataset(data)
-                result = resource.import_data(dataset, dry_run=True,
-                                              raise_errors=False,
-                                              file_name=uploaded_file.name,
-                                              user=request.user)
+            # warning, big files may exceed memory
+            data = tmp_storage.read(input_format.get_read_mode())
+            if not input_format.is_binary() and self.from_encoding:
+                data = force_text(data, self.from_encoding)
+            dataset = input_format.create_dataset(data)
+            result = resource.import_data(dataset, dry_run=True,
+                                          raise_errors=False,
+                                          file_name=tmp_storage.name,
+                                          user=request.user)
 
             context['result'] = result
 
             if not result.has_errors():
                 context['confirm_form'] = ConfirmImportForm(initial={
-                    'import_file_name': os.path.basename(uploaded_file.name),
+                    'import_file_name': tmp_storage.name,
                     'input_format': form.cleaned_data['input_format'],
                 })
 
