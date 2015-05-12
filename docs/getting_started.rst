@@ -96,6 +96,15 @@ An explicit order for exporting fields can be set using the ``export_order`` opt
             fields = ('id', 'name', 'author', 'price',)
             export_order = ('id', 'price', 'author', 'name')
 
+The default field for object identification is ``id``, you can optionally set which fields are used as the ``id`` when importing::
+
+    class BookResource(resources.ModelResource):
+
+        class Meta:
+            model = Book
+            import_id_fields = ('isbn',)
+            fields = ('isbn', 'name', 'author', 'price',)
+
 When defining ``ModelResource`` fields it is possible to follow
 model relationships::
 
