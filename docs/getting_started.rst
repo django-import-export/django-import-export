@@ -119,6 +119,19 @@ model relationships::
     Following relationship fields sets ``field`` as readonly, meaning
     this field will be skipped when importing data.
 
+By default all records will be imported, even if no changes are detected.
+This can be changed setting the ``skip_unchanged`` option. Also, the ``report_skipped`` option
+controls whether skipped records appear in the import ``Result`` object, and if using the admin
+whether skipped records will show in the import preview page::
+
+    class BookResource(resources.ModelResource):
+
+        class Meta:
+            model = Book
+            skip_unchanged = True
+            report_skipped = False
+            fields = ('id', 'name', 'price',)
+
 .. seealso::
 
     :doc:`/api_resources`
