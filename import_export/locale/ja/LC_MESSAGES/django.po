@@ -1,0 +1,105 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2015-05-16 15:31+0900\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: admin.py:163
+msgid "Import finished"
+msgstr "インポートが完了しました。"
+
+#: admin.py:394
+msgid "You must select an export format."
+msgstr "エクスポートフォーマットを選択してください。"
+
+#: admin.py:411
+#, python-format
+msgid "Export selected %(verbose_name_plural)s"
+msgstr "選択した %(verbose_name_plural)s をエクスポート"
+
+#: forms.py:12
+msgid "File to import"
+msgstr "インポートするファイル"
+
+#: forms.py:15 forms.py:42 forms.py:67
+msgid "Format"
+msgstr "フォーマット"
+
+#: templates/admin/import_export/base.html:11
+msgid "Home"
+msgstr "ホーム"
+
+#: templates/admin/import_export/change_list_export.html:5
+#: templates/admin/import_export/change_list_import_export.html:6
+#: templates/admin/import_export/export.html:8
+#: templates/admin/import_export/export.html:12
+msgid "Export"
+msgstr "エクスポート"
+
+#: templates/admin/import_export/change_list_import.html:5
+#: templates/admin/import_export/change_list_import_export.html:5
+#: templates/admin/import_export/import.html:8
+#: templates/admin/import_export/import.html:12
+msgid "Import"
+msgstr "インポート"
+
+#: templates/admin/import_export/export.html:34
+#: templates/admin/import_export/import.html:57
+msgid "Submit"
+msgstr "確定"
+
+#: templates/admin/import_export/import.html:19
+msgid ""
+"Below is a preview of data to be imported. If you are satisfied with the "
+"results, click 'Confirm import'"
+msgstr "インポートされるデータのプレビューを表示しています。この内容で問題なければ「インポート実行」をクリックしてください。"
+
+#: templates/admin/import_export/import.html:22
+msgid "Confirm import"
+msgstr "インポート実行"
+
+#: templates/admin/import_export/import.html:31
+msgid "This importer will import the following fields: "
+msgstr "以下の列をインポートします。"
+
+#: templates/admin/import_export/import.html:65
+msgid "Errors"
+msgstr "エラー"
+
+#: templates/admin/import_export/import.html:73
+msgid "Line number"
+msgstr "行番号"
+
+#: templates/admin/import_export/import.html:82
+msgid "Preview"
+msgstr "プレビュー"
+
+#: templates/admin/import_export/import.html:97
+msgid "New"
+msgstr "新規"
+
+#: templates/admin/import_export/import.html:99
+msgid "Skipped"
+msgstr "スキップ"
+
+#: templates/admin/import_export/import.html:101
+msgid "Delete"
+msgstr "削除"
+
+#: templates/admin/import_export/import.html:103
+msgid "Update"
+msgstr "更新"
