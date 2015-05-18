@@ -24,12 +24,12 @@ msgstr "Importación finalizada"
 
 #: admin.py:368
 msgid "You must select an export format."
-msgstr "Debes selecciona un formato de exportación."
+msgstr "Debes seleccionar un formato de exportación."
 
 #: admin.py:385
 #, python-format
 msgid "Export selected %(verbose_name_plural)s"
-msgstr "Exportación seleccionada %(verbose_name_plural)s"
+msgstr "Exportar %(verbose_name_plural)s seleccionados"
 
 #: forms.py:12
 msgid "File to import"
@@ -60,7 +60,7 @@ msgstr "Importar"
 #: templates/admin/import_export/export.html:34
 #: templates/admin/import_export/import.html:57
 msgid "Submit"
-msgstr ""
+msgstr "Enviar"
 
 #: templates/admin/import_export/import.html:19
 msgid ""
