@@ -3,9 +3,10 @@ from __future__ import unicode_literals
 
 class Error(object):
 
-    def __init__(self, error, traceback=None):
+    def __init__(self, error, traceback=None, row=None):
         self.error = error
         self.traceback = traceback
+        self.row = row
 
 
 class RowResult(object):

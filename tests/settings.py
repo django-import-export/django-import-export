@@ -52,3 +52,15 @@ else:
             'NAME': os.path.join(os.path.dirname(__file__), 'database.db'),
         }
     }
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': True,
+    'handlers': {
+        'console': {
+            'class': 'logging.NullHandler'
+        }
+    },
+    'root': {
+        'handlers': ['console'],
+    }}
