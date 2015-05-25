@@ -1,8 +1,6 @@
 from __future__ import with_statement
 
-import tempfile
 from datetime import datetime
-import os.path
 
 import django
 from django.contrib import admin
@@ -212,6 +210,7 @@ class ImportMixin(ImportExportMixinBase):
             if not result.has_errors():
                 context['confirm_form'] = ConfirmImportForm(initial={
                     'import_file_name': tmp_storage.name,
+                    'original_file_name': import_file.name,
                     'input_format': form.cleaned_data['input_format'],
                 })
 

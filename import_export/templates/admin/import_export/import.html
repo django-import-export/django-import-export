@@ -65,12 +65,16 @@
     <h2>{% trans "Errors" %}</h2>
     <ul>
       {% for error in result.base_errors  %}
-      <li>{{ error.error }}</li>
+      <li>
+        {{ error.error }}
+        <div class="traceback">{{ error.traceback|linebreaks }}</div>
+      </li>
       {% endfor %}
       {% for line, errors in result.row_errors %}
         {% for error in errors %}
           <li>
             {% trans "Line number" %}: {{ line }} - {{ error.error }}
+            <div>{{ error.row }}</div>
             <div class="traceback">{{ error.traceback|linebreaks }}</div>
           </li>
         {% endfor %}

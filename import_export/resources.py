@@ -13,6 +13,7 @@ from django.utils.safestring import mark_safe
 from django.utils import six
 from django.db.models.fields import FieldDoesNotExist
 from django.db.models.query import QuerySet
+from django.db.transaction import TransactionManagementError
 from django.conf import settings
 
 from .results import Error, Result, RowResult
@@ -44,6 +45,17 @@ try:
     from collections import OrderedDict
 except ImportError:
     from django.utils.datastructures import SortedDict as OrderedDict
+
+# Set default logging handler to avoid "No handler found" warnings.
+import logging
+try:  # Python 2.7+
+    from logging import NullHandler
+except ImportError:
+    class NullHandler(logging.Handler):
+        def emit(self, record):
+            pass
+
+logging.getLogger(__name__).addHandler(NullHandler())
 
 USE_TRANSACTIONS = getattr(settings, 'IMPORT_EXPORT_USE_TRANSACTIONS', False)
 
@@ -327,6 +339,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         try:
             self.before_import(dataset, real_dry_run, **kwargs)
         except Exception as e:
+            logging.exception(e)
             tb_info = traceback.format_exc(2)
             result.base_errors.append(Error(repr(e), tb_info))
             if raise_errors:
@@ -369,8 +382,12 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
                     row_result.diff = self.get_diff(original, instance,
                             real_dry_run)
             except Exception as e:
+                # There is no point logging a transaction error for each row
+                # when only the original error is likely to be relevant
+                if not isinstance(e, TransactionManagementError):
+                    logging.exception(e)
                 tb_info = traceback.format_exc(2)
-                row_result.errors.append(Error(e, tb_info))
+                row_result.errors.append(Error(e, tb_info, row))
                 if raise_errors:
                     if use_transactions:
                         savepoint_rollback(sp1)
@@ -472,6 +489,7 @@ class ModelDeclarativeMetaclass(DeclarativeMetaclass):
                         try:
                             f = model._meta.get_field_by_name(attr)[0]
                         except FieldDoesNotExist as e:
+                            logging.exception(e)
                             raise FieldDoesNotExist("%s: %s has no field named '%s'" %
                                 (verbose_path, model.__name__, attr))
 
