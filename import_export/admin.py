@@ -134,7 +134,7 @@ class ImportMixin(ImportExportMixinBase):
 
             result = resource.import_data(dataset, dry_run=False,
                                           raise_errors=True,
-                                          file_name=tmp_storage.name,
+                                          file_name=confirm_form.cleaned_data['original_file_name'],
                                           user=request.user)
 
             if not self.get_skip_admin_log():
@@ -202,7 +202,7 @@ class ImportMixin(ImportExportMixinBase):
             dataset = input_format.create_dataset(data)
             result = resource.import_data(dataset, dry_run=True,
                                           raise_errors=False,
-                                          file_name=tmp_storage.name,
+                                          file_name=import_file.name,
                                           user=request.user)
 
             context['result'] = result
