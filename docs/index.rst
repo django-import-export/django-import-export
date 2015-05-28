@@ -50,6 +50,7 @@ API documentation
    api_instance_loaders
    api_admin
    api_results
+   api_tmp_storages
 
 
 .. _`tablib`: https://github.com/kennethreitz/tablib
