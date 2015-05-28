@@ -72,6 +72,7 @@ class ImportMixin(ImportExportMixinBase):
     #: import data encoding
     from_encoding = "utf-8"
     skip_admin_log = None
+    # storage class for saving temporary files
     tmp_storage_class = TempFolderStorage
 
     def get_skip_admin_log(self):
