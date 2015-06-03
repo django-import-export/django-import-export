@@ -38,6 +38,10 @@ class Widget(object):
 
 class NumberWidget(Widget):
 
+    def is_empty(self, value):
+        # 0 is not empty
+        return value is None or value == ""
+
     def render(self, value):
         return value
 
@@ -48,9 +52,9 @@ class IntegerWidget(NumberWidget):
     """
 
     def clean(self, value):
-        if not value and value is not 0:
+        if self.is_empty(value):
             return None
-        return int(value)
+        return int(float(value))
 
 
 class DecimalWidget(NumberWidget):
@@ -59,7 +63,7 @@ class DecimalWidget(NumberWidget):
     """
 
     def clean(self, value):
-        if not value:
+        if self.is_empty(value):
             return None
         return Decimal(value)
 

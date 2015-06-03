@@ -225,11 +225,10 @@ class ModelResourceTest(TestCase):
 
         self.assertTrue(result.has_errors())
         self.assertTrue(result.rows[0].errors)
-        msg = "invalid literal for int() with base 10: 'foo'"
         actual = result.rows[0].errors[0].error
         self.assertIsInstance(actual, ValueError)
-        self.assertEqual("Column 'id': invalid literal for int() with "
-            "base 10: 'foo'", str(actual))
+        self.assertEqual("Column 'id': could not convert string to float: foo",
+                         str(actual))
 
     def test_import_data_delete(self):
 

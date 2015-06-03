@@ -4,6 +4,8 @@ Changelog for django-import-export
 0.2.8 (unreleased)
 ------------------
 
+- Fix 0 is interpreted as None in number widgets (#274)
+
 - add possibility to override tmp storage class (#133, #251)
 
 
