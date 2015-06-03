@@ -48,9 +48,9 @@ class IntegerWidget(NumberWidget):
     """
 
     def clean(self, value):
-        if not value and value is not 0:
-            return None
-        return int(value)
+        if value or value == 0:
+            return int(value)
+        return None
 
 
 class DecimalWidget(NumberWidget):
@@ -59,9 +59,9 @@ class DecimalWidget(NumberWidget):
     """
 
     def clean(self, value):
-        if not value:
-            return None
-        return Decimal(value)
+        if value or value == 0:
+            return Decimal(value)
+        return None
 
 
 class CharWidget(Widget):
