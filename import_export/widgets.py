@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 
 from decimal import Decimal
-from datetime import datetime
+from datetime import datetime, timedelta
 from django.utils import datetime_safe
 from django.utils.encoding import smart_text
 from django.conf import settings
@@ -48,6 +48,8 @@ class IntegerWidget(NumberWidget):
     """
 
     def clean(self, value):
+        if isinstance(value, float):
+            value = int(value)
         if not value and value is not 0:
             return None
         return int(value)
@@ -111,6 +113,11 @@ class DateWidget(Widget):
     def clean(self, value):
         if not value:
             return None
+        if isinstance(value, float) or isinstance(value, int):
+            # Excel stores dates as floats representing the number of
+            # days since 1900-Jan-0
+            return datetime(1900, 1, 1) + \
+                timedelta(days=int(value) - 2)
         for format in self.formats:
             try:
                 return datetime.strptime(value, format).date()
