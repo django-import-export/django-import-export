@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 from decimal import Decimal
 from datetime import date, datetime
 
+from django.test.utils import override_settings
 from django.test import TestCase
 
 from import_export import widgets
@@ -43,6 +44,11 @@ class DateWidgetTest(TestCase):
     def test_clean(self):
         self.assertEqual(self.widget.clean("13.08.2012"), self.date)
 
+    @override_settings(USE_TZ=True)
+    def test_use_tz(self):
+        self.assertEqual(self.widget.render(self.date), "13.08.2012")
+        self.assertEqual(self.widget.clean("13.08.2012"), self.date)
+
 
 class DateTimeWidgetTest(TestCase):
 
@@ -58,6 +64,13 @@ class DateTimeWidgetTest(TestCase):
         self.assertEqual(self.widget.render(None), "")
 
     def test_clean(self):
+        self.assertEqual(self.widget.clean("13.08.2012 18:00:00"),
+                         self.datetime)
+
+    @override_settings(USE_TZ=True)
+    def test_use_tz(self):
+        self.assertEqual(self.widget.render(self.datetime),
+                         "13.08.2012 18:00:00")
         self.assertEqual(self.widget.clean("13.08.2012 18:00:00"),
                          self.datetime)
 
