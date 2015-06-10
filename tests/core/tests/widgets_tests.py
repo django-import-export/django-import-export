@@ -6,6 +6,7 @@ from datetime import date, datetime
 
 from django.test.utils import override_settings
 from django.test import TestCase
+from django.utils import timezone
 
 from import_export import widgets
 
@@ -71,8 +72,10 @@ class DateTimeWidgetTest(TestCase):
     def test_use_tz(self):
         self.assertEqual(self.widget.render(self.datetime),
                          "13.08.2012 18:00:00")
+        aware_dt = timezone.make_aware(self.datetime,
+                                       timezone.get_default_timezone())
         self.assertEqual(self.widget.clean("13.08.2012 18:00:00"),
-                         self.datetime)
+                         aware_dt)
 
 
 class DateWidgetBefore1900Test(TestCase):
