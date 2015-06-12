@@ -103,6 +103,10 @@ class DecimalWidgetTest(TestCase):
     def test_render(self):
         self.assertEqual(self.widget.render(self.value), self.value)
 
+    def test_clean_string_zero(self):
+        self.assertEqual(self.widget.clean("0"), Decimal("0"))
+        self.assertEqual(self.widget.clean("0.0"), Decimal("0"))
+
 
 class IntegerWidgetTest(TestCase):
 
@@ -115,6 +119,7 @@ class IntegerWidgetTest(TestCase):
 
     def test_clean_string_zero(self):
         self.assertEqual(self.widget.clean("0"), self.value)
+        self.assertEqual(self.widget.clean("0.0"), self.value)
 
 
 class ForeignKeyWidgetTest(TestCase):
