@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 
 from decimal import Decimal
 from datetime import datetime
-from django.utils import datetime_safe
+from django.utils import datetime_safe, timezone
 from django.utils.encoding import smart_text
 from django.conf import settings
 
@@ -149,7 +149,13 @@ class DateTimeWidget(Widget):
             return None
         for format in self.formats:
             try:
-                return datetime.strptime(value, format)
+                dt = datetime.strptime(value, format)
+                if settings.USE_TZ:
+                    # make datetime timezone aware so we don't compare
+                    # naive datetime to an aware one
+                    dt = timezone.make_aware(dt,
+                                             timezone.get_default_timezone())
+                return dt
             except (ValueError, TypeError):
                 continue
         raise ValueError("Enter a valid date/time.")
