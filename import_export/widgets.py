@@ -72,16 +72,16 @@ class CharWidget(Widget):
     """
     Widget for converting text fields.
     
-    Optional parameter as Int tries to render string as int (and again as string)
+    Optional parameter format handles string content as int
     """
-    asInt = False
-    def __init__(self, asInt=False):
-        self.asInt = asInt
-
+    format=None
+    def __init__(self, format=None):
+        self.format = format
+    
     def render(self, value):
-        if self.asInt:
+        if self.format:
             try:
-                return force_text(int(float(value)))
+                return self.format(int(float(value)))
             except:
                 pass
         return force_text(value)
