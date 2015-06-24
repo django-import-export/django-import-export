@@ -79,6 +79,14 @@ class CharWidget(Widget):
     def __init__(self, format=None):
         self.str_format = format
 
+    def clean(self, value):
+        if self.str_format:
+           try:
+               return self.str_format.format(int(float(value)))
+           except:
+               pass
+        return value
+
     def render(self, value):
         if self.str_format:
             try:
