@@ -71,11 +71,20 @@ class DecimalWidget(NumberWidget):
 class CharWidget(Widget):
     """
     Widget for converting text fields.
+    
+    Optional parameter as Int tries to render string as int (and again as string)
     """
+    asInt = False
+    def __init__(self, asInt=False):
+        self.asInt = asInt
 
     def render(self, value):
+        if self.asInt:
+            try:
+                return force_text(int(float(value)))
+            except:
+                pass
         return force_text(value)
-
 
 class BooleanWidget(Widget):
     """
