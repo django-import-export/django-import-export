@@ -72,16 +72,17 @@ class CharWidget(Widget):
     """
     Widget for converting text fields.
     
-    Optional parameter format handles string content as int
+    Optional parameter format handles string content as int:
+    example: {'field_name': {'format': '{0:05d}'}}
     """
-    format=None
+    str_format=None
     def __init__(self, format=None):
-        self.format = format
-    
+        self.str_format = format
+
     def render(self, value):
-        if self.format:
+        if self.str_format:
             try:
-                return self.format(int(float(value)))
+                return self.str_format.format(int(float(value)))
             except:
                 pass
         return force_text(value)
