@@ -2,8 +2,10 @@ from __future__ import with_statement
 
 from datetime import datetime
 
+import importlib
 import django
 from django.contrib import admin
+from django.utils import six
 from django.utils.translation import ugettext_lazy as _
 from django.conf.urls import patterns, url
 from django.template.response import TemplateResponse
@@ -33,6 +35,17 @@ except ImportError:
     from django.utils.encoding import force_unicode as force_text
 
 SKIP_ADMIN_LOG = getattr(settings, 'IMPORT_EXPORT_SKIP_ADMIN_LOG', False)
+TMP_STORAGE_CLASS = getattr(settings, 'IMPORT_EXPORT_TMP_STORAGE_CLASS', TempFolderStorage)
+if isinstance(TMP_STORAGE_CLASS, six.string_types):
+    try:
+        # Nod to tastypie's use of importlib.
+        parts = TMP_STORAGE_CLASS.split('.')
+        module_path, class_name = '.'.join(parts[:-1]), parts[-1]
+        module = importlib.import_module(module_path)
+        TMP_STORAGE_CLASS = getattr(module, class_name)
+    except ImportError as e:
+        msg = "Could not import '%s' for import_export setting 'IMPORT_EXPORT_TMP_STORAGE_CLASS'" % TMP_STORAGE_CLASS
+        raise ImportError(msg)
 
 #: import / export formats
 DEFAULT_FORMATS = (
@@ -73,13 +86,19 @@ class ImportMixin(ImportExportMixinBase):
     from_encoding = "utf-8"
     skip_admin_log = None
     # storage class for saving temporary files
-    tmp_storage_class = TempFolderStorage
+    tmp_storage_class = None
 
     def get_skip_admin_log(self):
         if self.skip_admin_log is None:
             return SKIP_ADMIN_LOG
         else:
             return self.skip_admin_log
+
+    def get_tmp_storage_class(self):
+        if self.tmp_storage_class is None:
+            return TMP_STORAGE_CLASS
+        else:
+            return self.tmp_storage_class
 
     def get_urls(self):
         urls = super(ImportMixin, self).get_urls()
@@ -127,7 +146,7 @@ class ImportMixin(ImportExportMixinBase):
             input_format = import_formats[
                 int(confirm_form.cleaned_data['input_format'])
             ]()
-            tmp_storage = self.tmp_storage_class(name=confirm_form.cleaned_data['import_file_name'])
+            tmp_storage = self.get_tmp_storage_class()(name=confirm_form.cleaned_data['import_file_name'])
             data = tmp_storage.read(input_format.get_read_mode())
             if not input_format.is_binary() and self.from_encoding:
                 data = force_text(data, self.from_encoding)
@@ -188,7 +207,7 @@ class ImportMixin(ImportExportMixinBase):
             import_file = form.cleaned_data['import_file']
             # first always write the uploaded file to disk as it may be a
             # memory file or else based on settings upload handlers
-            tmp_storage = self.tmp_storage_class()
+            tmp_storage = self.get_tmp_storage_class()()
             data = bytes()
             for chunk in import_file.chunks():
                 data += chunk
