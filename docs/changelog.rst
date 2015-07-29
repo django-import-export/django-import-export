@@ -4,9 +4,15 @@ Changelog for django-import-export
 0.2.8 (unreleased)
 ------------------
 
+- use the IntegerWidget for database-fields of type BigIntegerField (#302)
+
+- make datetime timezone aware if USE_TZ is True (#283).
+
 - Fix 0 is interpreted as None in number widgets (#274)
 
 - add possibility to override tmp storage class (#133, #251)
+
+- better error reporting (#259)
 
 
 0.2.7 (2015-05-04)
