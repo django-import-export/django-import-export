@@ -1,7 +1,7 @@
 Changelog for django-import-export
 ==================================
 
-0.2.8 (unreleased)
+0.2.8 (2015-07-29)
 ------------------
 
 - use the IntegerWidget for database-fields of type BigIntegerField (#302)
