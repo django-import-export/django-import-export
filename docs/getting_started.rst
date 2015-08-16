@@ -264,7 +264,7 @@ that have column ``delete`` set to ``1``.
 Admin integration
 -----------------
 
-Admin integration is achived by subclassing (in ``admin.py``)
+Admin integration is achieved by subclassing (in ``admin.py``)
 ``ImportExportModelAdmin`` or one of the available mixins (``ImportMixin``, 
 ``ExportMixin``, or ``ImportExportMixin``)::
 
