@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from . import widgets
 
 from django.core.exceptions import ObjectDoesNotExist
+from django.db.models.manager import Manager
 
 
 class Field(object):
@@ -80,9 +81,9 @@ class Field(object):
             if value is None:
                 return None
 
-        # Manyrelatedmanagers are callable in Django >= 1.7 but we don't want
-        # to call them
-        if callable(value) and not hasattr(value, 'through'):
+        # RelatedManager and ManyRelatedManager classes are callable in
+        # Django >= 1.7 but we don't want to call them
+        if callable(value) and not isinstance(value, Manager):
             value = value()
         return value
 
