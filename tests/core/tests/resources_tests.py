@@ -96,6 +96,16 @@ class ResourceTestCase(TestCase):
         resource = B()
         self.assertEqual(resource._meta.custom_attribute, True)
 
+
+class AuthorResource(resources.ModelResource):
+
+    books = fields.Field(column_name='books', attribute='book_set', readonly=True)
+
+    class Meta:
+        model = Author
+        export_order = ('name', 'books')
+
+
 class BookResource(resources.ModelResource):
     published = fields.Field(column_name='published_date')
 
@@ -184,6 +194,18 @@ class ModelResourceTest(TestCase):
                 u'<span>Some </span><ins style="background:#e6ffe6;">'
                 u'other </ins><span>book</span>')
         self.assertFalse(diff[headers.index('author_email')])
+
+    def test_get_diff_with_callable_related_manager(self):
+        resource = AuthorResource()
+        author = Author(name="Some author")
+        author.save()
+        author2 = Author(name="Some author")
+        self.book.author = author
+        self.book.save()
+        diff = resource.get_diff(author2, author)
+        headers = resource.get_export_headers()
+        self.assertEqual(diff[headers.index('books')],
+                '<span>core.Book.None</span>')
 
     def test_import_data(self):
         result = self.resource.import_data(self.dataset, raise_errors=True)
