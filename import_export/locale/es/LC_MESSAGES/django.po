@@ -100,8 +100,8 @@ msgstr "Omitido"
 
 #: templates/admin/import_export/import.html:101
 msgid "Delete"
-msgstr "Borrado"
+msgstr "Borrar"
 
 #: templates/admin/import_export/import.html:103
 msgid "Update"
-msgstr "Actualizado"
+msgstr "Actualizar"
