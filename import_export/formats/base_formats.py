@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 from django.utils.six import moves
+from django.conf import settings
 
 import warnings
 import tablib
