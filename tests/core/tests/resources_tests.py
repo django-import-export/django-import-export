@@ -5,6 +5,7 @@ from datetime import date
 from copy import deepcopy
 
 from django.db import models
+from django.db.models import Count
 from django.db.models.fields import FieldDoesNotExist
 from django.test import (
         TestCase,
@@ -513,6 +514,32 @@ class ModelResourceTest(TestCase):
 
         resource = B()
         self.assertEqual({'sound': 'quack'}, B.fields['published'])
+
+    def test_readonly_annotated_field_import_and_export(self):
+        class B(BookResource):
+            total_categories = fields.Field('total_categories', readonly=True)
+
+            class Meta:
+                model = Book
+                skip_unchanged = True
+
+        cat1 = Category.objects.create(name='Cat 1')
+        self.book.categories.add(cat1)
+
+        resource = B()
+
+        # Verify that the annotated field is correctly exported
+        dataset = resource.export(
+            Book.objects.annotate(total_categories=Count('categories')))
+        self.assertEqual(int(dataset.dict[0]['total_categories']), 1)
+
+        # Verify that importing the annotated field raises no errors and that
+        # the rows are skipped
+        result = resource.import_data(dataset, raise_errors=True)
+        self.assertFalse(result.has_errors())
+        self.assertEqual(len(result.rows), len(dataset))
+        self.assertEqual(
+            result.rows[0].import_type, results.RowResult.IMPORT_TYPE_SKIP)
 
 
 class ModelResourceTransactionTest(TransactionTestCase):
