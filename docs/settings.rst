@@ -20,3 +20,6 @@ Settings
     `ImportMixin`.  The `tmp_storage_class` attribute of `ImportMixin`
     is checked first, which defaults to ``None``. If not found, this
     global option is used. Default is ``TempFolderStorage``.
+
+``IMPORT_EXPORT_UNIVERSAL``
+    Global setting that forces CSV files to be opened in universal mode (rU).
