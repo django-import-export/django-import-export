@@ -127,6 +127,8 @@ class CSV(TablibFormat):
     CONTENT_TYPE = 'text/csv'
 
     def get_read_mode(self):
+        if getattr(settings, 'IMPORT_EXPORT_UNIVERSAL', False):
+            return 'rU'
         return 'rU' if six.PY3 else 'rb'
 
     def is_binary(self):
