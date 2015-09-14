@@ -4,7 +4,7 @@ Changelog for django-import-export
 0.2.9 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Open csv files as text and not binary (#127)
 
 
 0.2.8 (2015-07-29)
