@@ -119,18 +119,9 @@ class TextFormat(TablibFormat):
         return False
 
 
-class CSV(TablibFormat):
-    """
-    CSV is treated as binary in Python 2.
-    """
+class CSV(TextFormat):
     TABLIB_MODULE = 'tablib.formats._csv'
     CONTENT_TYPE = 'text/csv'
-
-    def get_read_mode(self):
-        return 'rU' if six.PY3 else 'rb'
-
-    def is_binary(self):
-        return False if six.PY3 else True
 
 
 class JSON(TextFormat):
