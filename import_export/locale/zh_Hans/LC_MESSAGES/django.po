@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-03-06 14:44+0800\n"
+"POT-Creation-Date: 2015-10-27 11:13+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,15 +18,15 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: admin.py:160
+#: admin.py:179
 msgid "Import finished"
 msgstr "导入完成"
 
-#: admin.py:378
+#: admin.py:412
 msgid "You must select an export format."
 msgstr "您必须选择一个导出格式。"
 
-#: admin.py:395
+#: admin.py:429
 #, python-format
 msgid "Export selected %(verbose_name_plural)s"
 msgstr "导出选中的 %(verbose_name_plural)s"
@@ -35,7 +35,7 @@ msgstr "导出选中的 %(verbose_name_plural)s"
 msgid "File to import"
 msgstr "导入文件"
 
-#: forms.py:15 forms.py:42 forms.py:67
+#: forms.py:15 forms.py:43 forms.py:68
 msgid "Format"
 msgstr "格式"
 
@@ -80,26 +80,26 @@ msgstr "此次将导入以下字段："
 msgid "Errors"
 msgstr "错误"
 
-#: templates/admin/import_export/import.html:73
+#: templates/admin/import_export/import.html:76
 msgid "Line number"
 msgstr "行号"
 
-#: templates/admin/import_export/import.html:82
+#: templates/admin/import_export/import.html:86
 msgid "Preview"
 msgstr "预览"
 
-#: templates/admin/import_export/import.html:97
+#: templates/admin/import_export/import.html:101
 msgid "New"
 msgstr "新增"
 
-#: templates/admin/import_export/import.html:99
+#: templates/admin/import_export/import.html:103
 msgid "Skipped"
 msgstr "忽略"
 
-#: templates/admin/import_export/import.html:101
+#: templates/admin/import_export/import.html:105
 msgid "Delete"
 msgstr "删除"
 
-#: templates/admin/import_export/import.html:103
+#: templates/admin/import_export/import.html:107
 msgid "Update"
-msgstr "跟新"
+msgstr "更新"
