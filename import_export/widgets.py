@@ -71,11 +71,29 @@ class DecimalWidget(NumberWidget):
 class CharWidget(Widget):
     """
     Widget for converting text fields.
+    
+    Optional parameter format handles string content as int:
+    example: {'field_name': {'format': '{0:05d}'}}
     """
+    str_format=None
+    def __init__(self, format=None):
+        self.str_format = format
+
+    def clean(self, value):
+        if self.str_format:
+           try:
+               return self.str_format.format(int(float(value)))
+           except:
+               pass
+        return value
 
     def render(self, value):
+        if self.str_format:
+            try:
+                return self.str_format.format(int(float(value)))
+            except:
+                pass
         return force_text(value)
-
 
 class BooleanWidget(Widget):
     """
@@ -234,7 +252,10 @@ class ManyToManyWidget(Widget):
     def clean(self, value):
         if not value:
             return self.model.objects.none()
-        ids = value.split(self.separator)
+        if isinstance(value, float):
+            ids = [int(value)]
+        else:
+            ids = value.split(self.separator)
         return self.model.objects.filter(**{
             '%s__in' % self.field: ids
         })

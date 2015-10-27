@@ -550,6 +550,8 @@ class ModelResource(six.with_metaclass(ModelDeclarativeMetaclass, Resource)):
             result = widgets.IntegerWidget
         elif internal_type in ('BooleanField', 'NullBooleanField'):
             result = widgets.BooleanWidget
+        elif internal_type in ('CharField', ):
+            result = widgets.CharWidget
         return result
 
     @classmethod
