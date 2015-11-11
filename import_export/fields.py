@@ -92,7 +92,10 @@ class Field(object):
         Cleans this field value and assign it to provided object.
         """
         if not self.readonly:
-            setattr(obj, self.attribute, self.clean(data))
+            attrs = self.attribute.split('__')
+            for attr in attrs[:-1]:
+                obj = getattr(obj, attr, None)
+            setattr(obj, attrs[-1], self.clean(data))
 
     def export(self, obj):
         """
