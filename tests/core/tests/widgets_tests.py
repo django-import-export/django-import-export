@@ -156,9 +156,14 @@ class ManyToManyWidget(TestCase):
         self.assertIn(self.cat1, cleaned_data)
         self.assertIn(self.cat2, cleaned_data)
 
+    def test_clean_typo(self):
+        value = "%s," % self.cat1.pk
+        cleaned_data = self.widget.clean(value)
+        self.assertEqual(len(cleaned_data), 1)
+        self.assertIn(self.cat1, cleaned_data)
+
     def test_render(self):
         self.assertEqual(self.widget.render(Category.objects),
                 "%s,%s" % (self.cat1.pk, self.cat2.pk))
         self.assertEqual(self.widget_name.render(Category.objects),
                 u"%s,%s" % (self.cat1.name, self.cat2.name))
-

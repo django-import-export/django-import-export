@@ -234,7 +234,7 @@ class ManyToManyWidget(Widget):
     def clean(self, value):
         if not value:
             return self.model.objects.none()
-        ids = value.split(self.separator)
+        ids = filter(None, value.split(self.separator))
         return self.model.objects.filter(**{
             '%s__in' % self.field: ids
         })
