@@ -43,3 +43,7 @@ class Profile(models.Model):
 
 class Entry(models.Model):
     user = models.ForeignKey('auth.User')
+
+
+class WithDefault(models.Model):
+    name = models.CharField('Default', max_length=75, blank=True, default=lambda: 'foo_bar')

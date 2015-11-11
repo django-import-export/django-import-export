@@ -4,6 +4,7 @@ from . import widgets
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models.manager import Manager
+from django.db.models.fields import NOT_PROVIDED
 
 
 class Field(object):
@@ -22,11 +23,14 @@ class Field(object):
 
     ``readonly`` boolean value defines that if this field will be assigned
     to object during import.
+
+    ``default`` value returned by :meth`clean` if returned value evaluates to False
     """
 
     def __init__(self, attribute=None, column_name=None, widget=None,
-            readonly=False):
+                 default=None, readonly=False):
         self.attribute = attribute
+        self.default = default
         self.column_name = column_name
         if not widget:
             widget = widgets.Widget()
@@ -58,6 +62,11 @@ class Field(object):
             value = self.widget.clean(value)
         except ValueError as e:
             raise ValueError("Column '%s': %s" % (self.column_name, e))
+
+        if not value and self.default != NOT_PROVIDED:
+            if callable(self.default):
+                self.default = self.default()
+            return self.default
 
         return value
 

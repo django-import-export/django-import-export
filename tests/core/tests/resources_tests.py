@@ -23,7 +23,7 @@ from import_export import widgets
 from import_export import results
 from import_export.instance_loaders import ModelInstanceLoader
 
-from core.models import Book, Author, Category, Entry, Profile
+from core.models import Book, Author, Category, Entry, Profile, WithDefault
 
 try:
     from django.utils.encoding import force_text
@@ -115,6 +115,12 @@ class BookResource(resources.ModelResource):
         exclude = ('imported', )
 
 
+class WithDefaultResource(resources.ModelResource):
+    class Meta:
+        model = WithDefault
+        fields = ('name',)
+
+
 class ModelResourceTest(TestCase):
     def setUp(self):
         self.resource = BookResource()
@@ -153,6 +159,10 @@ class ModelResourceTest(TestCase):
     def test_init_instance(self):
         instance = self.resource.init_instance()
         self.assertIsInstance(instance, Book)
+
+    def test_default(self):
+        self.assertTrue(callable(WithDefaultResource.fields['name'].default))
+        self.assertEquals(WithDefaultResource.fields['name'].clean({'name': ''}), 'foo_bar')
 
     def test_get_instance(self):
         instance_loader = self.resource._meta.instance_loader_class(
