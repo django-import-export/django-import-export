@@ -3,6 +3,9 @@ from __future__ import unicode_literals
 from decimal import Decimal
 from datetime import date
 from copy import deepcopy
+from unittest import (
+    skip,
+)
 
 from django.db import models
 from django.db.models import Count
@@ -100,7 +103,11 @@ class ResourceTestCase(TestCase):
 
 class AuthorResource(resources.ModelResource):
 
-    books = fields.Field(column_name='books', attribute='book_set', readonly=True)
+    books = fields.Field(
+        column_name='books',
+        attribute='book_set',
+        readonly=True,
+    )
 
     class Meta:
         model = Author
@@ -206,6 +213,7 @@ class ModelResourceTest(TestCase):
                 u'other </ins><span>book</span>')
         self.assertFalse(diff[headers.index('author_email')])
 
+    @skip("See: https://github.com/django-import-export/django-import-export/issues/311")
     def test_get_diff_with_callable_related_manager(self):
         resource = AuthorResource()
         author = Author(name="Some author")
