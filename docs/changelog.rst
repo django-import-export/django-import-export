@@ -4,6 +4,12 @@ Changelog for django-import-export
 0.2.9 (unreleased)
 ------------------
 
+- Allow Field.save() relation following (#344)
+
+- Support default values on fields (and models) (#345)
+
+- m2m widget: allow trailing comma (#343)
+
 - Open csv files as text and not binary (#127)
 
 

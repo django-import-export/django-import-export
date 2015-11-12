@@ -551,6 +551,32 @@ class ModelResourceTest(TestCase):
         self.assertEqual(
             result.rows[0].import_type, results.RowResult.IMPORT_TYPE_SKIP)
 
+    def test_follow_relationship_for_modelresource(self):
+
+        class EntryResource(resources.ModelResource):
+            username = fields.Field(attribute='user__username', readonly=False)
+
+            class Meta:
+                model = Entry
+                fields = ('id', )
+
+            def after_save_instance(self, instance, dry_run):
+                if not dry_run:
+                    instance.user.save()
+
+        user = User.objects.create(username='foo')
+        entry = Entry.objects.create(user=user)
+        row = [
+            entry.pk,
+            'bar',
+        ]
+        self.dataset = tablib.Dataset(headers=['id', 'username'])
+        self.dataset.append(row)
+        result = EntryResource().import_data(
+            self.dataset, raise_errors=True, dry_run=False)
+        self.assertFalse(result.has_errors())
+        self.assertEquals(User.objects.get(pk=user.pk).username, 'bar')
+
 
 class ModelResourceTransactionTest(TransactionTestCase):
 
