@@ -36,6 +36,17 @@ class FieldTest(TestCase):
         self.field.save(self.obj, self.row)
         self.assertEqual(self.obj.name, 'foo')
 
+    def test_save_follow(self):
+        class Test:
+            class name:
+                class follow:
+                    me = 'bar'
+        test = Test()
+        field = fields.Field(column_name='name', attribute='name__follow__me')
+        row = {'name': 'foo'}
+        field.save(test, row)
+        self.assertEqual(test.name.follow.me, 'foo')
+
     def test_following_attribute(self):
         field = fields.Field(attribute='other_obj__name')
         obj2 = Obj(name="bar")
