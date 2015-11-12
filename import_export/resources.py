@@ -139,7 +139,7 @@ class DeclarativeMetaclass(type):
 
         # Add direct options
         options = getattr(new_class, 'Meta', None)
-        for option in [option for option in dir(options) 
+        for option in [option for option in dir(options)
                        if not option.startswith('_')]:
             setattr(meta, option, getattr(options, option))
         new_class._meta = meta
@@ -569,8 +569,13 @@ class ModelResource(six.with_metaclass(ModelDeclarativeMetaclass, Resource)):
 
         FieldWidget = self.widget_from_django_field(django_field)
         widget_kwargs = self.widget_kwargs_for_field(field_name)
-        field = Field(attribute=field_name, column_name=field_name,
-                widget=FieldWidget(**widget_kwargs), readonly=readonly)
+        field = Field(
+            attribute=field_name,
+            column_name=field_name,
+            widget=FieldWidget(**widget_kwargs),
+            readonly=readonly,
+            default=django_field.default,
+        )
         return field
 
     def get_import_id_fields(self):
@@ -598,4 +603,3 @@ def modelresource_factory(model, resource_class=ModelResource):
 
     metaclass = ModelDeclarativeMetaclass
     return metaclass(class_name, (resource_class,), class_attrs)
-
