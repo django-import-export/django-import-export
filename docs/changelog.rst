@@ -1,7 +1,7 @@
 Changelog for django-import-export
 ==================================
 
-0.2.9 (unreleased)
+0.2.9 (2015-11-12)
 ------------------
 
 - Allow Field.save() relation following (#344)
