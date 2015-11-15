@@ -14,6 +14,7 @@ class RowResult(object):
     IMPORT_TYPE_NEW = 'new'
     IMPORT_TYPE_DELETE = 'delete'
     IMPORT_TYPE_SKIP = 'skip'
+    IMPORT_TYPE_ERROR = 'error'
 
     def __init__(self):
         self.errors = []

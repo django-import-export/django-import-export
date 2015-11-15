@@ -324,6 +324,11 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         """
         result = Result()
         result.diff_headers = self.get_diff_headers()
+        result.totals = OrderedDict({RowResult.IMPORT_TYPE_NEW: 0,
+                                     RowResult.IMPORT_TYPE_UPDATE: 0,
+                                     RowResult.IMPORT_TYPE_DELETE: 0,
+                                     RowResult.IMPORT_TYPE_SKIP: 0,
+                                     RowResult.IMPORT_TYPE_ERROR: 0})
 
         if use_transactions is None:
             use_transactions = self.get_use_transactions()
@@ -381,7 +386,9 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
                         row_result.object_id = instance.pk
                     row_result.diff = self.get_diff(original, instance,
                             real_dry_run)
+                result.totals[row_result.import_type] += 1
             except Exception as e:
+                result.totals[row_result.IMPORT_TYPE_ERROR] += 1
                 # There is no point logging a transaction error for each row
                 # when only the original error is likely to be relevant
                 if not isinstance(e, TransactionManagementError):
@@ -402,6 +409,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
             else:
                 savepoint_commit(sp1)
 
+        result.totals['total'] = len(dataset)
         return result
 
     def get_export_order(self):
