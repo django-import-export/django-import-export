@@ -123,6 +123,10 @@ class CSV(TextFormat):
     TABLIB_MODULE = 'tablib.formats._csv'
     CONTENT_TYPE = 'text/csv'
 
+    def create_dataset(self, in_stream):
+        # python 2.7 csv does not do unicode
+        return super(CSV, self).create_dataset(in_stream.encode('utf-8'))
+
 
 class JSON(TextFormat):
     TABLIB_MODULE = 'tablib.formats._json'

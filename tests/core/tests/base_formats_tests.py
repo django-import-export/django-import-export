@@ -1,8 +1,10 @@
+# -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
 import os
 
 from django.test import TestCase
+from django.utils.text import force_text
 
 from import_export.formats import base_formats
 
@@ -27,3 +29,14 @@ class CSVTest(TestCase):
         in_stream = open(filename, self.format.get_read_mode()).read()
         expected = 'id,name,author_email\n1,Some book,test@example.com\n'
         self.assertEqual(in_stream, expected)
+
+    def test_import_unicode(self):
+        # importing csv UnicodeEncodeError 347
+        filename = os.path.join(
+            os.path.dirname(__file__),
+            os.path.pardir,
+            'exports',
+            'books-unicode.csv')
+        in_stream = open(filename, self.format.get_read_mode())
+        data = force_text(in_stream.read())
+        base_formats.CSV().create_dataset(data)
