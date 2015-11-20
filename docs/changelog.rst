@@ -1,7 +1,7 @@
 Changelog for django-import-export
 ==================================
 
-0.3.1 (unreleased)
+0.3.1 (2015-11-20)
 ------------------
 
 - FIX: importing csv in python 3
