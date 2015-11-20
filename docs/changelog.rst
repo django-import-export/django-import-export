@@ -4,7 +4,7 @@ Changelog for django-import-export
 0.3 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- FIX: importing csv UnicodeEncodeError introduced in 0.2.9 (#347)
 
 
 0.2.9 (2015-11-12)
