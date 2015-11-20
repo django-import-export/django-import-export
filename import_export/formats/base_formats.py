@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 from django.utils.six import moves
 
+import sys
 import warnings
 import tablib
 
@@ -124,8 +125,10 @@ class CSV(TextFormat):
     CONTENT_TYPE = 'text/csv'
 
     def create_dataset(self, in_stream):
-        # python 2.7 csv does not do unicode
-        return super(CSV, self).create_dataset(in_stream.encode('utf-8'))
+        if sys.version_info[0] < 3:
+            # python 2.7 csv does not do unicode
+            return super(CSV, self).create_dataset(in_stream.encode('utf-8'))
+        return super(CSV, self).create_dataset(in_stream)
 
 
 class JSON(TextFormat):
