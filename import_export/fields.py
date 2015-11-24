@@ -24,7 +24,8 @@ class Field(object):
     ``readonly`` boolean value defines that if this field will be assigned
     to object during import.
 
-    ``default`` value returned by :meth`clean` if returned value evaluates to False
+    ``default`` value returned by :meth`clean` if returned value evaluates to
+    False
     """
 
     def __init__(self, attribute=None, column_name=None, widget=None,
@@ -56,7 +57,8 @@ class Field(object):
             value = data[self.column_name]
         except KeyError:
             raise KeyError("Column '%s' not found in dataset. Available "
-                "columns are: %s" % (self.column_name, list(data.keys())))
+                           "columns are: %s" % (self.column_name,
+                                                list(data.keys())))
 
         try:
             value = self.widget.clean(value)
