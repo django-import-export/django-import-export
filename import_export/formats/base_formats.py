@@ -63,7 +63,8 @@ class Format(object):
         return ""
 
     def get_content_type(self):
-        # For content types see http://www.iana.org/assignments/media-types/media-types.xhtml
+        # For content types see
+        # http://www.iana.org/assignments/media-types/media-types.xhtml
         return 'application/octet-stream'
 
     def can_import(self):
@@ -95,8 +96,9 @@ class TablibFormat(Format):
         return self.get_format().export_set(dataset)
 
     def get_extension(self):
-        # we support both 'extentions' and 'extensions' because currently tablib's master
-        # branch uses 'extentions' (which is a typo) but it's dev branch already uses 'extension'.
+        # we support both 'extentions' and 'extensions' because currently
+        # tablib's master branch uses 'extentions' (which is a typo) but it's
+        # dev branch already uses 'extension'.
         # TODO - remove this once the typo is fixxed in tablib's master branch
         if hasattr(self.get_format(), 'extentions'):
             return self.get_format().extentions[0]
@@ -138,7 +140,8 @@ class JSON(TextFormat):
 
 class YAML(TextFormat):
     TABLIB_MODULE = 'tablib.formats._yaml'
-    CONTENT_TYPE = 'text/yaml' # See http://stackoverflow.com/questions/332129/yaml-mime-type
+    # See http://stackoverflow.com/questions/332129/yaml-mime-type
+    CONTENT_TYPE = 'text/yaml'
 
 
 class TSV(TextFormat):

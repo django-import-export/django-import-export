@@ -88,8 +88,8 @@ class ResourceOptions(object):
       transactions. Default value is ``None`` meaning
       ``settings.IMPORT_EXPORT_USE_TRANSACTIONS`` will be evaluated.
 
-    * ``skip_unchanged`` - Controls if the import should skip unchanged records.
-      Default value is False
+    * ``skip_unchanged`` - Controls if the import should skip unchanged
+      records. Default value is False
 
     * ``report_skipped`` - Controls if the result reports skipped rows
       Default value is True
@@ -113,9 +113,9 @@ class DeclarativeMetaclass(type):
         declared_fields = []
         meta = ResourceOptions()
 
-        # If this class is subclassing another Resource, add that Resource's fields.
-        # Note that we loop over the bases in *reverse*. This is necessary in
-        # order to preserve the correct order of fields.
+        # If this class is subclassing another Resource, add that Resource's
+        # fields. Note that we loop over the bases in *reverse*. This is
+        # necessary in order to preserve the correct order of fields.
         for base in bases[::-1]:
             if hasattr(base, 'fields'):
                 declared_fields = list(six.iteritems(base.fields)) + declared_fields
@@ -135,7 +135,7 @@ class DeclarativeMetaclass(type):
 
         attrs['fields'] = OrderedDict(declared_fields)
         new_class = super(DeclarativeMetaclass, cls).__new__(cls, name,
-                bases, attrs)
+                                                             bases, attrs)
 
         # Add direct options
         options = getattr(new_class, 'Meta', None)
@@ -264,7 +264,8 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         Returns ``True`` if ``row`` importing should be skipped.
 
         Default implementation returns ``False`` unless skip_unchanged == True.
-        Override this method to handle skipping rows meeting certain conditions.
+        Override this method to handle skipping rows meeting certain
+        conditions.
         """
         if not self._meta.skip_unchanged:
             return False
@@ -313,7 +314,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
 
     @atomic()
     def import_data(self, dataset, dry_run=False, raise_errors=False,
-            use_transactions=None, **kwargs):
+                    use_transactions=None, **kwargs):
         """
         Imports data from ``dataset``.
 
@@ -363,12 +364,12 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
                     if new:
                         row_result.import_type = RowResult.IMPORT_TYPE_SKIP
                         row_result.diff = self.get_diff(None, None,
-                                real_dry_run)
+                                                        real_dry_run)
                     else:
                         row_result.import_type = RowResult.IMPORT_TYPE_DELETE
                         self.delete_instance(instance, real_dry_run)
                         row_result.diff = self.get_diff(original, None,
-                                real_dry_run)
+                                                        real_dry_run)
                 else:
                     self.import_obj(instance, row, real_dry_run)
                     if self.skip_row(instance, original):
@@ -380,7 +381,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
                         row_result.object_repr = force_text(instance)
                         row_result.object_id = instance.pk
                     row_result.diff = self.get_diff(original, instance,
-                            real_dry_run)
+                                                    real_dry_run)
             except Exception as e:
                 # There is no point logging a transaction error for each row
                 # when only the original error is likely to be relevant
@@ -393,7 +394,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
                         savepoint_rollback(sp1)
                     six.reraise(*sys.exc_info())
             if (row_result.import_type != RowResult.IMPORT_TYPE_SKIP or
-                        self._meta.report_skipped):
+                    self._meta.report_skipped):
                 result.rows.append(row_result)
 
         if use_transactions:
@@ -405,8 +406,8 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         return result
 
     def get_export_order(self):
-        order = tuple (self._meta.export_order or ())
-        return order + tuple (k for k in self.fields.keys() if k not in order)
+        order = tuple(self._meta.export_order or ())
+        return order + tuple(k for k in self.fields.keys() if k not in order)
 
     def export_field(self, field, obj):
         field_name = self.get_field_name(field)
@@ -419,7 +420,8 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         return [self.export_field(field, obj) for field in self.get_fields()]
 
     def get_export_headers(self):
-        headers = [force_text(field.column_name) for field in self.get_fields()]
+        headers = [
+            force_text(field.column_name) for field in self.get_fields()]
         return headers
 
     def export(self, queryset=None):
@@ -446,7 +448,7 @@ class ModelDeclarativeMetaclass(DeclarativeMetaclass):
 
     def __new__(cls, name, bases, attrs):
         new_class = super(ModelDeclarativeMetaclass,
-                cls).__new__(cls, name, bases, attrs)
+                          cls).__new__(cls, name, bases, attrs)
 
         opts = new_class._meta
 
@@ -467,12 +469,12 @@ class ModelDeclarativeMetaclass(DeclarativeMetaclass):
                     continue
 
                 field = new_class.field_from_django_field(f.name, f,
-                    readonly=False)
+                                                          readonly=False)
                 field_list.append((f.name, field, ))
 
             new_class.fields.update(OrderedDict(field_list))
 
-            #add fields that follow relationships
+            # add fields that follow relationships
             if opts.fields is not None:
                 field_list = []
                 for field_name in opts.fields:
@@ -490,13 +492,14 @@ class ModelDeclarativeMetaclass(DeclarativeMetaclass):
                             f = model._meta.get_field_by_name(attr)[0]
                         except FieldDoesNotExist as e:
                             logging.exception(e)
-                            raise FieldDoesNotExist("%s: %s has no field named '%s'" %
+                            raise FieldDoesNotExist(
+                                "%s: %s has no field named '%s'" %
                                 (verbose_path, model.__name__, attr))
 
                         if i < len(attrs) - 1:
-                            # We're not at the last attribute yet, so check that
-                            # we're looking at a relation, and move on to the
-                            # next model.
+                            # We're not at the last attribute yet, so check
+                            # that we're looking at a relation, and move on to
+                            # the next model.
                             if isinstance(f, ForeignObjectRel):
                                 if RelatedObject is None:
                                     model = f.related_model
@@ -505,14 +508,15 @@ class ModelDeclarativeMetaclass(DeclarativeMetaclass):
                                     model = f.model
                             else:
                                 if f.rel is None:
-                                    raise KeyError('%s is not a relation' % verbose_path)
+                                    raise KeyError(
+                                        '%s is not a relation' % verbose_path)
                                 model = f.rel.to
 
                     if isinstance(f, ForeignObjectRel):
                         f = f.field
 
                     field = new_class.field_from_django_field(field_name, f,
-                        readonly=True)
+                                                              readonly=True)
                     field_list.append((field_name, field))
 
                 new_class.fields.update(OrderedDict(field_list))
@@ -535,18 +539,19 @@ class ModelResource(six.with_metaclass(ModelDeclarativeMetaclass, Resource)):
         internal_type = f.get_internal_type()
         if internal_type in ('ManyToManyField', ):
             result = functools.partial(widgets.ManyToManyWidget,
-                    model=f.rel.to)
+                                       model=f.rel.to)
         if internal_type in ('ForeignKey', 'OneToOneField', ):
             result = functools.partial(widgets.ForeignKeyWidget,
-                    model=f.rel.to)
+                                       model=f.rel.to)
         if internal_type in ('DecimalField', ):
             result = widgets.DecimalWidget
         if internal_type in ('DateTimeField', ):
             result = widgets.DateTimeWidget
         elif internal_type in ('DateField', ):
             result = widgets.DateWidget
-        elif internal_type in ('IntegerField', 'PositiveIntegerField', 'BigIntegerField',
-                'PositiveSmallIntegerField', 'SmallIntegerField', 'AutoField'):
+        elif internal_type in ('IntegerField', 'PositiveIntegerField',
+                               'BigIntegerField', 'PositiveSmallIntegerField',
+                               'SmallIntegerField', 'AutoField'):
             result = widgets.IntegerWidget
         elif internal_type in ('BooleanField', 'NullBooleanField'):
             result = widgets.BooleanWidget
