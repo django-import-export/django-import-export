@@ -164,6 +164,6 @@ class ManyToManyWidget(TestCase):
 
     def test_render(self):
         self.assertEqual(self.widget.render(Category.objects),
-                "%s,%s" % (self.cat1.pk, self.cat2.pk))
+                         "%s,%s" % (self.cat1.pk, self.cat2.pk))
         self.assertEqual(self.widget_name.render(Category.objects),
-                u"%s,%s" % (self.cat1.name, self.cat2.name))
+                         u"%s,%s" % (self.cat1.name, self.cat2.name))

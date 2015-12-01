@@ -29,7 +29,7 @@ class Book(models.Model):
     imported = models.BooleanField(default=False)
     published = models.DateField('Published', blank=True, null=True)
     price = models.DecimalField(max_digits=10, decimal_places=2, null=True,
-            blank=True)
+                                blank=True)
     categories = models.ManyToManyField(Category, blank=True)
 
     def __str__(self):
@@ -46,4 +46,5 @@ class Entry(models.Model):
 
 
 class WithDefault(models.Model):
-    name = models.CharField('Default', max_length=75, blank=True, default=lambda: 'foo_bar')
+    name = models.CharField('Default', max_length=75, blank=True,
+                            default=lambda: 'foo_bar')

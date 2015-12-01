@@ -16,7 +16,7 @@ class ImportExportAdminIntegrationTest(TestCase):
 
     def setUp(self):
         user = User.objects.create_user('admin', 'admin@example.com',
-                'password')
+                                        'password')
         user.is_staff = True
         user.is_superuser = True
         user.save()
@@ -60,7 +60,7 @@ class ImportExportAdminIntegrationTest(TestCase):
         data = confirm_form.initial
         self.assertEqual(data['original_file_name'], 'books.csv')
         response = self.client.post('/admin/core/book/process_import/', data,
-                follow=True)
+                                    follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, _('Import finished'))
 
@@ -69,8 +69,8 @@ class ImportExportAdminIntegrationTest(TestCase):
         self.assertEqual(response.status_code, 200)
 
         data = {
-                'file_format': '0',
-                }
+            'file_format': '0',
+            }
         response = self.client.post('/admin/core/book/export/', data)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.has_header("Content-Disposition"))
@@ -118,7 +118,7 @@ class ImportExportAdminIntegrationTest(TestCase):
         confirm_form = response.context['confirm_form']
         data = confirm_form.initial
         response = self.client.post('/admin/core/book/process_import/', data,
-                follow=True)
+                                    follow=True)
         self.assertEqual(response.status_code, 200)
         book = LogEntry.objects.latest('id')
         self.assertEqual(book.object_repr, "Some book")
