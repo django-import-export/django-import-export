@@ -4,7 +4,11 @@ import os
 from django.test import TestCase
 from django.core.cache import cache
 from django.core.files.storage import default_storage
-from import_export.tmp_storages import TempFolderStorage, CacheStorage, MediaStorage
+from import_export.tmp_storages import (
+    CacheStorage,
+    MediaStorage,
+    TempFolderStorage
+    )
 
 
 class TempStoragesTest(TestCase):
@@ -36,7 +40,8 @@ id,name,author,author_email,imported,published,price,categories
         tmp_storage = CacheStorage(name=name)
         self.assertEqual(self.test_string, tmp_storage.read())
 
-        self.assertNotEqual(cache.get(tmp_storage.CACHE_PREFIX, tmp_storage.name), None)
+        self.assertNotEqual(cache.get(tmp_storage.CACHE_PREFIX,
+                                      tmp_storage.name), None)
         tmp_storage.remove()
         self.assertEqual(cache.get(tmp_storage.name), None)
 

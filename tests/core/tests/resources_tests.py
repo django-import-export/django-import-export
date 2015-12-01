@@ -11,10 +11,10 @@ from django.db import models
 from django.db.models import Count
 from django.db.models.fields import FieldDoesNotExist
 from django.test import (
-        TestCase,
-        TransactionTestCase,
-        skipUnlessDBFeature,
-        )
+    skipUnlessDBFeature,
+    TestCase,
+    TransactionTestCase,
+    )
 from django.utils.html import strip_tags
 from django.contrib.auth.models import User
 
@@ -58,11 +58,11 @@ class ResourceTestCase(TestCase):
 
     def test_meta(self):
         self.assertIsInstance(self.my_resource._meta,
-                resources.ResourceOptions)
+                              resources.ResourceOptions)
 
     def test_get_export_order(self):
         self.assertEqual(self.my_resource.get_export_headers(),
-                ['email', 'name', 'extra'])
+                         ['email', 'name', 'extra'])
 
     # Issue 140 Attributes aren't inherited by subclasses
     def test_inheritance(self):
@@ -83,7 +83,7 @@ class ResourceTestCase(TestCase):
         self.assertIn('inherited', resource.fields)
         self.assertIn('local', resource.fields)
         self.assertEqual(resource.get_export_headers(),
-                ['email', 'extra', 'name', 'inherited', 'local'])
+                         ['email', 'extra', 'name', 'inherited', 'local'])
         self.assertEqual(resource._meta.import_id_fields, ('email',))
 
     def test_inheritance_with_custom_attributes(self):
@@ -134,13 +134,13 @@ class ModelResourceTest(TestCase):
 
         self.book = Book.objects.create(name="Some book")
         self.dataset = tablib.Dataset(headers=['id', 'name', 'author_email',
-            'price'])
+                                               'price'])
         row = [self.book.pk, 'Some book', 'test@example.com', "10.25"]
         self.dataset.append(row)
 
     def test_default_instance_loader_class(self):
         self.assertIs(self.resource._meta.instance_loader_class,
-                ModelInstanceLoader)
+                      ModelInstanceLoader)
 
     def test_fields(self):
         fields = self.resource.fields
@@ -173,28 +173,28 @@ class ModelResourceTest(TestCase):
 
     def test_get_instance(self):
         instance_loader = self.resource._meta.instance_loader_class(
-                self.resource)
+            self.resource)
         instance = self.resource.get_instance(instance_loader,
-                self.dataset.dict[0])
+                                              self.dataset.dict[0])
         self.assertEqual(instance, self.book)
 
     def test_get_instance_with_missing_field_data(self):
         instance_loader = self.resource._meta.instance_loader_class(
-                self.resource)
+            self.resource)
         # construct a dataset with a missing "id" column
         dataset = tablib.Dataset(headers=['name', 'author_email', 'price'])
         dataset.append(['Some book', 'test@example.com', "10.25"])
         with self.assertRaises(KeyError) as cm:
             instance = self.resource.get_instance(instance_loader,
-                dataset.dict[0])
+                                                  dataset.dict[0])
         self.assertEqual(u"Column 'id' not found in dataset. Available columns "
-            "are: %s" % [u'name', u'author_email', u'price'], cm.exception.args[0])
+                         "are: %s" % [u'name', u'author_email', u'price'],
+                         cm.exception.args[0])
 
     def test_get_export_headers(self):
         headers = self.resource.get_export_headers()
-        self.assertEqual(headers, ['published_date',
-            'id', 'name', 'author', 'author_email', 'price', 'categories',
-            ])
+        self.assertEqual(headers, ['published_date', 'id', 'name', 'author',
+                                   'author_email', 'price', 'categories', ])
 
     def test_export(self):
         dataset = self.resource.export(Book.objects.all())
@@ -209,8 +209,8 @@ class ModelResourceTest(TestCase):
         diff = self.resource.get_diff(self.book, book2)
         headers = self.resource.get_export_headers()
         self.assertEqual(diff[headers.index('name')],
-                u'<span>Some </span><ins style="background:#e6ffe6;">'
-                u'other </ins><span>book</span>')
+                         u'<span>Some </span><ins style="background:#e6ffe6;">'
+                         u'other </ins><span>book</span>')
         self.assertFalse(diff[headers.index('author_email')])
 
     @skip("See: https://github.com/django-import-export/django-import-export/issues/311")
@@ -224,7 +224,7 @@ class ModelResourceTest(TestCase):
         diff = resource.get_diff(author2, author)
         headers = resource.get_export_headers()
         self.assertEqual(diff[headers.index('books')],
-                '<span>core.Book.None</span>')
+                         '<span>core.Book.None</span>')
 
     def test_import_data(self):
         result = self.resource.import_data(self.dataset, raise_errors=True)
@@ -233,7 +233,7 @@ class ModelResourceTest(TestCase):
         self.assertEqual(len(result.rows), 1)
         self.assertTrue(result.rows[0].diff)
         self.assertEqual(result.rows[0].import_type,
-                results.RowResult.IMPORT_TYPE_UPDATE)
+                         results.RowResult.IMPORT_TYPE_UPDATE)
 
         instance = Book.objects.get(pk=self.book.pk)
         self.assertEqual(instance.author_email, 'test@example.com')
@@ -284,7 +284,7 @@ class ModelResourceTest(TestCase):
         result = B().import_data(dataset, raise_errors=True)
         self.assertFalse(result.has_errors())
         self.assertEqual(result.rows[0].import_type,
-                results.RowResult.IMPORT_TYPE_DELETE)
+                         results.RowResult.IMPORT_TYPE_DELETE)
         self.assertFalse(Book.objects.filter(pk=self.book.pk))
 
     def test_relationships_fields(self):
@@ -316,7 +316,8 @@ class ModelResourceTest(TestCase):
         self.book.author = author
         resource = B()
         full_title = resource.export_field(resource.get_fields()[0], self.book)
-        self.assertEqual(full_title, '%s by %s' % (self.book.name, self.book.author.name))
+        self.assertEqual(full_title, '%s by %s' % (self.book.name,
+                                                   self.book.author.name))
 
     def test_widget_fomat_in_fk_field(self):
         class B(resources.ModelResource):
@@ -342,8 +343,8 @@ class ModelResourceTest(TestCase):
                 model = Book
                 fields = ('published',)
                 widgets = {
-                        'published': {'format': '%d.%m.%Y'},
-                        }
+                    'published': {'format': '%d.%m.%Y'},
+                    }
 
         resource = B()
         self.book.published = date(2012, 8, 13)
@@ -376,7 +377,7 @@ class ModelResourceTest(TestCase):
 
         dataset = self.resource.export(Book.objects.all())
         self.assertEqual(dataset.dict[0]['categories'],
-                '%d,%d' % (cat1.pk, cat2.pk))
+                         '%d,%d' % (cat1.pk, cat2.pk))
 
     def test_m2m_import(self):
         cat1 = Category.objects.create(name='Cat 1')
@@ -460,7 +461,7 @@ class ModelResourceTest(TestCase):
         self.assertEqual(len(result.rows), len(dataset))
         self.assertTrue(result.rows[0].diff)
         self.assertEqual(result.rows[0].import_type,
-                results.RowResult.IMPORT_TYPE_SKIP)
+                         results.RowResult.IMPORT_TYPE_SKIP)
 
         # Test that we can suppress reporting of skipped rows
         resource._meta.report_skipped = False
@@ -492,7 +493,7 @@ class ModelResourceTest(TestCase):
                     model = Book
                     fields = ('nonexistent__invalid',)
         self.assertEqual("Book.nonexistent: Book has no field named 'nonexistent'",
-            cm.exception.args[0])
+                         cm.exception.args[0])
 
         with self.assertRaises(FieldDoesNotExist) as cm:
             class BrokenBook(resources.ModelResource):
@@ -500,7 +501,7 @@ class ModelResourceTest(TestCase):
                     model = Book
                     fields = ('author__nonexistent',)
         self.assertEqual("Book.author.nonexistent: Author has no field named "
-            "'nonexistent'", cm.exception.args[0])
+                         "'nonexistent'", cm.exception.args[0])
 
     def test_link_to_nonrelation_field(self):
         with self.assertRaises(KeyError) as cm:
@@ -509,7 +510,7 @@ class ModelResourceTest(TestCase):
                     model = Book
                     fields = ('published__invalid',)
         self.assertEqual("Book.published is not a relation",
-            cm.exception.args[0])
+                         cm.exception.args[0])
 
         with self.assertRaises(KeyError) as cm:
             class BrokenBook(resources.ModelResource):
@@ -517,7 +518,7 @@ class ModelResourceTest(TestCase):
                     model = Book
                     fields = ('author__name__invalid',)
         self.assertEqual("Book.author.name is not a relation",
-            cm.exception.args[0])
+                         cm.exception.args[0])
 
     def test_override_field_construction_in_resource(self):
         class B(resources.ModelResource):
@@ -526,7 +527,8 @@ class ModelResourceTest(TestCase):
                 fields = ('published',)
 
             @classmethod
-            def field_from_django_field(self, field_name, django_field, readonly):
+            def field_from_django_field(self, field_name, django_field,
+                                        readonly):
                 if field_name == 'published':
                     return {'sound': 'quack'}
 
@@ -599,22 +601,22 @@ class ModelResourceTransactionTest(TransactionTestCase):
         dataset = tablib.Dataset(row, headers=headers)
 
         result = self.resource.import_data(dataset, dry_run=True,
-                use_transactions=True)
+                                           use_transactions=True)
 
         row_diff = result.rows[0].diff
         fields = self.resource.get_fields()
 
         id_field = self.resource.fields['id']
         id_diff = row_diff[fields.index(id_field)]
-        #id diff should exists because in rollbacked transaction
-        #FooBook has been saved
+        # id diff should exists because in rollbacked transaction
+        # FooBook has been saved
         self.assertTrue(id_diff)
 
         category_field = self.resource.fields['categories']
         categories_diff = row_diff[fields.index(category_field)]
         self.assertEqual(strip_tags(categories_diff), force_text(cat1.pk))
 
-        #check that it is really rollbacked
+        # check that it is really rollbacked
         self.assertFalse(Book.objects.filter(name='FooBook'))
 
 

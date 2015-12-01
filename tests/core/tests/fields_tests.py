@@ -19,17 +19,17 @@ class FieldTest(TestCase):
     def setUp(self):
         self.field = fields.Field(column_name='name', attribute='name')
         self.row = {
-                'name': 'Foo',
-                }
+            'name': 'Foo',
+            }
         self.obj = Obj(name='Foo', date=date(2012, 8, 13))
 
     def test_clean(self):
         self.assertEqual(self.field.clean(self.row),
-                self.row['name'])
+                         self.row['name'])
 
     def test_export(self):
         self.assertEqual(self.field.export(self.obj),
-                self.row['name'])
+                         self.row['name'])
 
     def test_save(self):
         self.row['name'] = 'foo'
