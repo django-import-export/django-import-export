@@ -1,7 +1,7 @@
 Changelog for django-import-export
 ==================================
 
-0.4.0 (unreleased)
+0.4.0 (2015-12-02)
 ------------------
 
 - Add Django 1.9 support
