@@ -8,6 +8,7 @@ env:
   - DJANGO=1.6.1
   - DJANGO=1.7.0
   - DJANGO=1.8
+  - DJANGO=1.9
 install:
   - pip install -q Django==$DJANGO --use-mirrors
   - pip install -e git+https://github.com/kennethreitz/tablib.git#egg=tablib
