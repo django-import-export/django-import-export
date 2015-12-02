@@ -4,6 +4,8 @@ Changelog for django-import-export
 0.3.2 (unreleased)
 ------------------
 
+- Add Django 1.9 support
+
 - Django 1.4 is not supported (#348)
 
 
