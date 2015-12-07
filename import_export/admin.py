@@ -7,7 +7,7 @@ import django
 from django.contrib import admin
 from django.utils import six
 from django.utils.translation import ugettext_lazy as _
-from django.conf.urls import patterns, url
+from django.conf.urls import url
 from django.template.response import TemplateResponse
 from django.contrib import messages
 from django.contrib.admin.models import LogEntry, ADDITION, CHANGE, DELETION
@@ -104,15 +104,14 @@ class ImportMixin(ImportExportMixinBase):
     def get_urls(self):
         urls = super(ImportMixin, self).get_urls()
         info = self.get_model_info()
-        my_urls = patterns(
-            '',
+        my_urls = [
             url(r'^process_import/$',
                 self.admin_site.admin_view(self.process_import),
                 name='%s_%s_process_import' % info),
             url(r'^import/$',
                 self.admin_site.admin_view(self.import_action),
                 name='%s_%s_import' % info),
-        )
+        ]
         return my_urls + urls
 
     def get_resource_class(self):
@@ -265,12 +264,11 @@ class ExportMixin(ImportExportMixinBase):
 
     def get_urls(self):
         urls = super(ExportMixin, self).get_urls()
-        my_urls = patterns(
-            '',
+        my_urls = [
             url(r'^export/$',
                 self.admin_site.admin_view(self.export_action),
                 name='%s_%s_export' % self.get_model_info()),
-        )
+        ]
         return my_urls + urls
 
     def get_resource_class(self):
