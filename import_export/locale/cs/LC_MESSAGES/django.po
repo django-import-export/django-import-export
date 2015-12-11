@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-09-17 14:42+0200\n"
+"POT-Creation-Date: 2015-12-17 00:20+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,79 +17,100 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
 
-#: admin.py:149
+#: admin.py:179
 msgid "Import finished"
 msgstr "Import dokončen"
 
-#: forms.py:11
+#: admin.py:225
+#, python-format
+msgid "<h1>Imported file is not in unicode: %s</h1>"
+msgstr "<h1>Importovaný soubor není kódován v unicode: %s</h1>"
+
+#: admin.py:227
+#, python-format, python-brace-format
+msgid "<h1>%s encountred while trying to read file: %s</h1>"
+msgstr "<h1>Nastala výjimka během zpracování souboru %s: %s</h1>"
+
+#: admin.py:416
+msgid "You must select an export format."
+msgstr "Musíte vybrat formát pro export"
+
+#: admin.py:433
+#, python-format
+msgid "Export selected %(verbose_name_plural)s"
+msgstr "Vybrán export %(verbose_name_plural)s"
+
+#: forms.py:12
 msgid "File to import"
 msgstr "Soubor k importu"
 
-#: forms.py:14 forms.py:41
+#: forms.py:15 forms.py:43 forms.py:68
 msgid "Format"
 msgstr "Formát"
 
-#: templates/admin/import_export/base.html:11
+#: templates/admin/import_export/base.html:10
 msgid "Home"
 msgstr ""
 
 #: templates/admin/import_export/change_list_export.html:5
 #: templates/admin/import_export/change_list_import_export.html:6
-#: templates/admin/import_export/export.html:8
-#: templates/admin/import_export/export.html:12
+#: templates/admin/import_export/export.html:7
+#: templates/admin/import_export/export.html:11
 msgid "Export"
 msgstr "Export"
 
 #: templates/admin/import_export/change_list_import.html:5
 #: templates/admin/import_export/change_list_import_export.html:5
-#: templates/admin/import_export/import.html:8
-#: templates/admin/import_export/import.html:12
+#: templates/admin/import_export/import.html:7
+#: templates/admin/import_export/import.html:11
 msgid "Import"
 msgstr "Import"
 
-#: templates/admin/import_export/export.html:34
-#: templates/admin/import_export/import.html:57
+#: templates/admin/import_export/export.html:33
+#: templates/admin/import_export/import.html:56
 msgid "Submit"
 msgstr ""
 
-#: templates/admin/import_export/import.html:19
+#: templates/admin/import_export/import.html:18
 msgid ""
 "Below is a preview of data to be imported. If you are satisfied with the "
 "results, click 'Confirm import'"
-msgstr "Níže je zobrazen náhled importovaných dat. Pokud je vše v pořádku, stiskněte tlačítko 'Provést import'"
+msgstr ""
+"Níže je zobrazen náhled importovaných dat. Pokud je vše v pořádku, stiskněte "
+"tlačítko 'Provést import'"
 
-#: templates/admin/import_export/import.html:22
+#: templates/admin/import_export/import.html:21
 msgid "Confirm import"
 msgstr "Provést import"
 
-#: templates/admin/import_export/import.html:31
+#: templates/admin/import_export/import.html:30
 msgid "This importer will import the following fields: "
 msgstr "Budou importováný následující pole"
 
-#: templates/admin/import_export/import.html:65
+#: templates/admin/import_export/import.html:64
 msgid "Errors"
 msgstr "Chyby"
 
-#: templates/admin/import_export/import.html:73
+#: templates/admin/import_export/import.html:75
 msgid "Line number"
 msgstr "Číslo řádku"
 
-#: templates/admin/import_export/import.html:82
+#: templates/admin/import_export/import.html:85
 msgid "Preview"
 msgstr "Náhled"
 
-#: templates/admin/import_export/import.html:97
+#: templates/admin/import_export/import.html:100
 msgid "New"
 msgstr "Nový"
 
-#: templates/admin/import_export/import.html:99
+#: templates/admin/import_export/import.html:102
 msgid "Skipped"
 msgstr "Přeskočený"
 
-#: templates/admin/import_export/import.html:101
+#: templates/admin/import_export/import.html:104
 msgid "Delete"
 msgstr "Smazaný"
 
-#: templates/admin/import_export/import.html:103
+#: templates/admin/import_export/import.html:106
 msgid "Update"
 msgstr "Aktualizovaný"
