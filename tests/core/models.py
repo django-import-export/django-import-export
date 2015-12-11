@@ -1,4 +1,6 @@
 from __future__ import unicode_literals
+import random
+import string
 
 from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
@@ -48,3 +50,12 @@ class Entry(models.Model):
 class WithDefault(models.Model):
     name = models.CharField('Default', max_length=75, blank=True,
                             default=lambda: 'foo_bar')
+
+
+class WithDynamicDefault(models.Model):
+    def random_name():
+        chars = string.ascii_lowercase
+        return ''.join(random.SystemRandom().choice(chars) for _ in range(100))
+
+    name = models.CharField('Dyn Default', max_length=100,
+            default=random_name)
