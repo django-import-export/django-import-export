@@ -1,7 +1,7 @@
 Changelog for django-import-export
 ==================================
 
-0.4.1 (unreleased)
+0.4.1 (2015-12-11)
 ------------------
 
 - fix for fields with a dyanmic default callable (#360)
