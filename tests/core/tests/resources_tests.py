@@ -26,7 +26,7 @@ from import_export import widgets
 from import_export import results
 from import_export.instance_loaders import ModelInstanceLoader
 
-from core.models import Book, Author, Category, Entry, Profile, WithDefault
+from core.models import Book, Author, Category, Entry, Profile, WithDefault, WithDynamicDefault
 
 try:
     from django.utils.encoding import force_text
@@ -586,6 +586,20 @@ class ModelResourceTest(TestCase):
             self.dataset, raise_errors=True, dry_run=False)
         self.assertFalse(result.has_errors())
         self.assertEquals(User.objects.get(pk=user.pk).username, 'bar')
+
+    def test_import_data_dynamic_default_callable(self):
+        class DynamicDefaultResource(resources.ModelResource):
+            class Meta:
+                model = WithDynamicDefault
+                fields = ('id', 'name',)
+
+        resource = DynamicDefaultResource()
+        dataset = tablib.Dataset(headers=['id', 'name',])
+        dataset.append([1, None])
+        dataset.append([2, None])
+        resource.import_data(dataset, raise_errors=False)
+        objs = WithDynamicDefault.objects.all()
+        self.assertNotEqual(objs[0].name, objs[1].name)
 
 
 class ModelResourceTransactionTest(TransactionTestCase):
