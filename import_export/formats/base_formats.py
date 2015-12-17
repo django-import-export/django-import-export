@@ -219,9 +219,10 @@ class XLSX(TablibFormat):
         import zipfile
         from openpyxl import load_workbook
         with tempfile.SpooledTemporaryFile() as tmp:
-            with zipfile.ZipFile(tmp, 'w', zipfile.ZIP_DEFLATED) as archive:
+            with zipfile.ZipFile(tmp, 'wr', zipfile.ZIP_DEFLATED) as archive:
                 archive.writestr('import.xlsx', in_stream)
-                xlsx_book = load_workbook(archive)
+            tmp.seek(0)
+            xlsx_book = load_workbook(tmp)
 
         dataset = tablib.Dataset()
         sheet = xlsx_book.sheets()[0]
