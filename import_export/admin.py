@@ -216,10 +216,15 @@ class ImportMixin(ImportExportMixinBase):
 
             # then read the file, using the proper format-specific mode
             # warning, big files may exceed memory
-            data = tmp_storage.read(input_format.get_read_mode())
-            if not input_format.is_binary() and self.from_encoding:
-                data = force_text(data, self.from_encoding)
-            dataset = input_format.create_dataset(data)
+            try:
+                data = tmp_storage.read(input_format.get_read_mode())
+                if not input_format.is_binary() and self.from_encoding:
+                    data = force_text(data, self.from_encoding)
+                dataset = input_format.create_dataset(data)
+            except UnicodeDecodeError as e:
+                return HttpResponse(_(u"<h1>Imported file is not in unicode: %s</h1>" % e))
+            except Exception as e:
+                return HttpResponse(_(u"<h1>%s encountred while trying to read file: %s</h1>" % (type(e).__name__, e)))
             result = resource.import_data(dataset, dry_run=True,
                                           raise_errors=False,
                                           file_name=import_file.name,
