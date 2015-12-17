@@ -222,7 +222,7 @@ class XLSX(TablibFormat):
         dataset = tablib.Dataset()
         sheet = xlsx_book.active
 
-        dataset.headers = sheet.rows[0]
+        dataset.headers = [cell.value for cell in sheets.rows[0]]
         for i in moves.range(1, len(sheet.rows)):
             row_values = [cell.value for cell in sheet.rows(i)]
             dataset.append(row_values)
