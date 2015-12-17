@@ -52,6 +52,7 @@ if isinstance(TMP_STORAGE_CLASS, six.string_types):
 DEFAULT_FORMATS = (
     base_formats.CSV,
     base_formats.XLS,
+    base_formats.XLSX,
     base_formats.TSV,
     base_formats.ODS,
     base_formats.JSON,
