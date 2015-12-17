@@ -19,6 +19,12 @@ class XLSTest(TestCase):
         self.assertTrue(base_formats.XLS().is_binary())
 
 
+class XLSXTest(TestCase):
+
+    def test_binary_format(self):
+        self.assertTrue(base_formats.XLSX().is_binary())
+
+
 class CSVTest(TestCase):
 
     def setUp(self):

@@ -20,6 +20,23 @@ except ImportError:
         warnings.warn(xls_warning, ImportWarning)
         XLS_IMPORT = False
 
+
+try:
+    from tablib.compat import openpyxl
+
+    XLSX_IMPORT = True
+except ImportError:
+    try:
+        import openpyxl # NOQA
+
+        XLSX_IMPORT = True
+    except ImportError:
+        xlsx_warning = "Installed `tablib` library does not include"
+        "import support for 'xlsx' format and openpyxl module is not found."
+        warnings.warn(xlsx_warning, ImportWarning)
+        XLSX_IMPORT = False
+
+
 try:
     from importlib import import_module
 except ImportError:
@@ -183,4 +200,30 @@ class XLS(TablibFormat):
         dataset.headers = sheet.row_values(0)
         for i in moves.range(1, sheet.nrows):
             dataset.append(sheet.row_values(i))
+        return dataset
+
+
+class XLSX(TablibFormat):
+    TABLIB_MODULE = 'tablib.formats._xlsx'
+    CONTENT_TYPE = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+
+    def can_import(self):
+        return XLSX_IMPORT
+
+    def create_dataset(self, in_stream):
+        """
+        Create dataset from first sheet.
+        """
+        assert XLSX_IMPORT
+        from io import BytesIO
+        from openpyxl import load_workbook
+        xlsx_book = load_workbook(BytesIO(in_stream))
+
+        dataset = tablib.Dataset()
+        sheet = xlsx_book.active
+
+        dataset.headers = [cell.value for cell in sheet.rows[0]]
+        for i in moves.range(1, len(sheet.rows)):
+            row_values = [cell.value for cell in sheet.rows[i]]
+            dataset.append(row_values)
         return dataset
