@@ -216,11 +216,13 @@ class XLSX(TablibFormat):
         """
         assert XLSX_IMPORT
         import tempfile
+        import zipfile
         from openpyxl import load_workbook
-        fp = tempfile.TemporaryFile()
-        fp.write(in_stream)
-        xlsx_book = load_workbook(fp)
-        fp.close()
+        with tempfile.SpooledTemporaryFile() as tmp:
+            with zipfile.ZipFile(tmp, 'w', zipfile.ZIP_DEFLATED) as archive:
+                archive.writestr('import.xlsx', in_stream)
+                xlsx_book = load_workbook(archive)
+
         dataset = tablib.Dataset()
         sheet = xlsx_book.sheets()[0]
 
