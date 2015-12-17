@@ -215,7 +215,7 @@ class XLSX(TablibFormat):
         Create dataset from first sheet.
         """
         assert XLSX_IMPORT
-        from openpyxl import load_workbook
+        from openpyxl import open_workbook
         xlsx_book = open_workbook(file_contents=in_stream)
         dataset = tablib.Dataset()
         sheet = xlsx_book.sheets()[0]
