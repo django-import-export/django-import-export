@@ -215,17 +215,12 @@ class XLSX(TablibFormat):
         Create dataset from first sheet.
         """
         assert XLSX_IMPORT
-        import tempfile
-        import zipfile
+        from io import BytesIO
         from openpyxl import load_workbook
-        with tempfile.SpooledTemporaryFile() as tmp:
-            with zipfile.ZipFile(tmp, 'wr', zipfile.ZIP_DEFLATED) as archive:
-                archive.writestr('import.xlsx', in_stream)
-            tmp.seek(0)
-            xlsx_book = load_workbook(tmp)
+        xlsx_book = load_workbook(BytesIO(in_stream))
 
         dataset = tablib.Dataset()
-        sheet = xlsx_book.sheets()[0]
+        sheet = xlsx_book.active
 
         dataset.headers = sheet.row_values(0)
         for i in moves.range(1, sheet.nrows):
