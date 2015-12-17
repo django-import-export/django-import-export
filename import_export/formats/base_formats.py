@@ -27,7 +27,7 @@ try:
     XLSX_IMPORT = True
 except ImportError:
     try:
-        import openpyxll # NOQA
+        import openpyxl # NOQA
 
         XLSX_IMPORT = True
     except ImportError:
@@ -215,7 +215,7 @@ class XLSX(TablibFormat):
         Create dataset from first sheet.
         """
         assert XLSX_IMPORT
-        xlsx_book = pyopenxl.open_workbook(file_contents=in_stream)
+        xlsx_book = openpyxl.open_workbook(file_contents=in_stream)
         dataset = tablib.Dataset()
         sheet = xlsx_book.sheets()[0]
 
