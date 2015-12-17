@@ -216,7 +216,7 @@ class XLSX(TablibFormat):
         """
         assert XLSX_IMPORT
         from openpyxl import load_workbook
-        xlsx_book = load_workbook(file_contents=in_stream)
+        xlsx_book = load_workbook(in_stream)
         dataset = tablib.Dataset()
         sheet = xlsx_book.sheets()[0]
 
