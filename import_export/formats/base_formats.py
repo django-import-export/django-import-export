@@ -215,8 +215,12 @@ class XLSX(TablibFormat):
         Create dataset from first sheet.
         """
         assert XLSX_IMPORT
+        import tempfile
         from openpyxl import load_workbook
-        xlsx_book = load_workbook(in_stream)
+        fp = tempfile.TemporaryFile()
+        fp.write(in_stream)
+        xlsx_book = load_workbook(fp)
+        fp.close()
         dataset = tablib.Dataset()
         sheet = xlsx_book.sheets()[0]
 
