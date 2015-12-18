@@ -56,3 +56,7 @@ class FieldTest(TestCase):
     def test_default(self):
         field = fields.Field(default=1, column_name='name')
         self.assertEqual(field.clean({'name': None}), 1)
+
+    def test_default_falsy_values(self):
+        field = fields.Field(default=1, column_name='name')
+        self.assertEqual(field.clean({'name': 0}), 0)
