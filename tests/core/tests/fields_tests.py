@@ -52,3 +52,7 @@ class FieldTest(TestCase):
         obj2 = Obj(name="bar")
         self.obj.other_obj = obj2
         self.assertEqual(field.export(self.obj), "bar")
+
+    def test_default(self):
+        field = fields.Field(default=1, column_name='name')
+        self.assertEqual(field.clean({'name': None}), 1)
