@@ -1,7 +1,7 @@
 Changelog for django-import-export
 ==================================
 
-0.4.2 (unreleased)
+0.4.2 (2015-12-18)
 ------------------
 
 - add xlsx import support
