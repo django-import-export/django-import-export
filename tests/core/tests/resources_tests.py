@@ -174,8 +174,23 @@ class ModelResourceTest(TestCase):
     def test_get_instance(self):
         instance_loader = self.resource._meta.instance_loader_class(
             self.resource)
+        self.resource._meta.import_id_fields = ['id']
         instance = self.resource.get_instance(instance_loader,
                                               self.dataset.dict[0])
+        self.assertEqual(instance, self.book)
+
+    def test_get_instance_import_id_fields(self):
+
+        class BookResource(resources.ModelResource):
+            name = fields.Field(attribute='name', widget=widgets.CharWidget())
+
+            class Meta:
+                model = Book
+                import_id_fields = ['name']
+
+        resource = BookResource()
+        instance_loader = resource._meta.instance_loader_class(resource)
+        instance = resource.get_instance(instance_loader, self.dataset.dict[0])
         self.assertEqual(instance, self.book)
 
     def test_get_instance_with_missing_field_data(self):
