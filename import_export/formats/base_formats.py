@@ -22,14 +22,12 @@ except ImportError:
 
 
 try:
-    from tablib.compat import openpyxl
-
+    import openpyxl
     XLSX_IMPORT = True
 except ImportError:
     try:
-        import openpyxl # NOQA
-
-        XLSX_IMPORT = True
+        from tablib.compat import openpyxl
+        XLSX_IMPORT = hasattr(openpyxl, 'load_workbook')
     except ImportError:
         xlsx_warning = "Installed `tablib` library does not include"
         "import support for 'xlsx' format and openpyxl module is not found."
@@ -211,8 +209,7 @@ class XLSX(TablibFormat):
         """
         assert XLSX_IMPORT
         from io import BytesIO
-        from openpyxl import load_workbook
-        xlsx_book = load_workbook(BytesIO(in_stream))
+        xlsx_book = openpyxl.load_workbook(BytesIO(in_stream))
 
         dataset = tablib.Dataset()
         sheet = xlsx_book.active
