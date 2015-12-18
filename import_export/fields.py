@@ -68,6 +68,7 @@ class Field(object):
         if not value and self.default != NOT_PROVIDED:
             if callable(self.default):
                 return self.default()
+            return self.default
 
         return value
 
