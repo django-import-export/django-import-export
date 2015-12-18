@@ -171,11 +171,6 @@ class ODS(TextFormat):
     CONTENT_TYPE = 'application/vnd.oasis.opendocument.spreadsheet'
 
 
-class XLSX(TextFormat):
-    TABLIB_MODULE = 'tablib.formats._xlsx'
-    CONTENT_TYPE = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-
-
 class HTML(TextFormat):
     TABLIB_MODULE = 'tablib.formats._html'
     CONTENT_TYPE = 'text/html'
