@@ -19,6 +19,24 @@ class XLSTest(TestCase):
         self.assertTrue(base_formats.XLS().is_binary())
 
 
+class XLSXTest(TestCase):
+
+    def setUp(self):
+        self.format = base_formats.XLSX()
+
+    def test_binary_format(self):
+        self.assertTrue(self.format.is_binary())
+
+    def test_import(self):
+        filename = os.path.join(
+            os.path.dirname(__file__),
+            os.path.pardir,
+            'exports',
+            'books.xlsx')
+        in_stream = open(filename, self.format.get_read_mode())
+        self.format.create_dataset(in_stream.read())
+
+
 class CSVTest(TestCase):
 
     def setUp(self):
