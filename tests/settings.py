@@ -33,6 +33,17 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
 
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': {'django.contrib.messages.context_processors.messages',},
+        },
+    },
+]
+
 if os.environ.get('IMPORT_EXPORT_TEST_TYPE') == 'mysql-innodb':
     IMPORT_EXPORT_USE_TRANSACTIONS = True
     DATABASES = {

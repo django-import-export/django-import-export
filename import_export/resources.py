@@ -489,7 +489,10 @@ class ModelDeclarativeMetaclass(DeclarativeMetaclass):
                         verbose_path = ".".join([opts.model.__name__] + attrs[0:i+1])
 
                         try:
-                            f = model._meta.get_field_by_name(attr)[0]
+                            try:
+                                f = model._meta.get_field_by_name(attr)[0]
+                            except AttributeError:  # Django > 1.10
+                                f = model._meta.get_field(attr)
                         except FieldDoesNotExist as e:
                             logging.exception(e)
                             raise FieldDoesNotExist(
