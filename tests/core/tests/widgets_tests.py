@@ -2,7 +2,7 @@
 from __future__ import unicode_literals
 
 from decimal import Decimal
-from datetime import date, datetime
+from datetime import date, datetime, time
 
 from django.test.utils import override_settings
 from django.test import TestCase
@@ -89,6 +89,22 @@ class DateWidgetBefore1900Test(TestCase):
 
     def test_clean(self):
         self.assertEqual(self.widget.clean("13.08.1868"), self.date)
+
+
+class TimeWidgetTest(TestCase):
+
+    def setUp(self):
+        self.time = time(20, 15, 0)
+        self.widget = widgets.TimeWidget('%H:%M:%S')
+
+    def test_render(self):
+        self.assertEqual(self.widget.render(self.time), "20:15:00")
+
+    def test_render_none(self):
+        self.assertEqual(self.widget.render(None), "")
+
+    def test_clean(self):
+        self.assertEqual(self.widget.clean("20:15:00"), self.time)
 
 
 class DecimalWidgetTest(TestCase):

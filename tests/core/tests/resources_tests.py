@@ -208,7 +208,8 @@ class ModelResourceTest(TestCase):
     def test_get_export_headers(self):
         headers = self.resource.get_export_headers()
         self.assertEqual(headers, ['published_date', 'id', 'name', 'author',
-                                   'author_email', 'price', 'categories', ])
+                                   'author_email', 'published_time', 'price',
+                                   'categories', ])
 
     def test_export(self):
         dataset = self.resource.export(Book.objects.all())
