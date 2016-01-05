@@ -49,13 +49,13 @@ class Entry(models.Model):
 
 class WithDefault(models.Model):
     name = models.CharField('Default', max_length=75, blank=True,
-                            default=lambda: 'foo_bar')
+                            default='foo_bar')
 
+def random_name():
+    chars = string.ascii_lowercase
+    return ''.join(random.SystemRandom().choice(chars) for _ in range(100))
 
 class WithDynamicDefault(models.Model):
-    def random_name():
-        chars = string.ascii_lowercase
-        return ''.join(random.SystemRandom().choice(chars) for _ in range(100))
 
     name = models.CharField('Dyn Default', max_length=100,
             default=random_name)

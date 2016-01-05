@@ -168,7 +168,6 @@ class ModelResourceTest(TestCase):
         self.assertIsInstance(instance, Book)
 
     def test_default(self):
-        self.assertTrue(callable(WithDefaultResource.fields['name'].default))
         self.assertEquals(WithDefaultResource.fields['name'].clean({'name': ''}), 'foo_bar')
 
     def test_get_instance(self):
@@ -603,10 +602,13 @@ class ModelResourceTest(TestCase):
         self.assertEquals(User.objects.get(pk=user.pk).username, 'bar')
 
     def test_import_data_dynamic_default_callable(self):
+
         class DynamicDefaultResource(resources.ModelResource):
             class Meta:
                 model = WithDynamicDefault
                 fields = ('id', 'name',)
+
+        self.assertTrue(callable(DynamicDefaultResource.fields['name'].default))
 
         resource = DynamicDefaultResource()
         dataset = tablib.Dataset(headers=['id', 'name',])
