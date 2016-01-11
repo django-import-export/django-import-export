@@ -1,32 +1,21 @@
 from __future__ import unicode_literals
 
-from decimal import Decimal
-from datetime import date
+import tablib
 from copy import deepcopy
-from unittest import (
-    skip,
-)
+from datetime import date
+from decimal import Decimal
+from unittest import skip
 
-from django.db import models
+from django.contrib.auth.models import User
 from django.db.models import Count
 from django.db.models.fields import FieldDoesNotExist
-from django.test import (
-    skipUnlessDBFeature,
-    TestCase,
-    TransactionTestCase,
-    )
+from django.test import TestCase, TransactionTestCase, skipUnlessDBFeature
 from django.utils.html import strip_tags
-from django.contrib.auth.models import User
 
-import tablib
-
-from import_export import resources
-from import_export import fields
-from import_export import widgets
-from import_export import results
+from import_export import fields, resources, results, widgets
 from import_export.instance_loaders import ModelInstanceLoader
 
-from core.models import Book, Author, Category, Entry, Profile, WithDefault, WithDynamicDefault
+from ..models import Author, Book, Category, Entry, Profile, WithDefault, WithDynamicDefault
 
 try:
     from django.utils.encoding import force_text
@@ -122,6 +111,12 @@ class BookResource(resources.ModelResource):
         exclude = ('imported', )
 
 
+class ProfileResource(resources.ModelResource):
+    class Meta:
+        model = Profile
+        exclude = ('user', )
+
+
 class WithDefaultResource(resources.ModelResource):
     class Meta:
         model = WithDefault
@@ -199,8 +194,7 @@ class ModelResourceTest(TestCase):
         dataset = tablib.Dataset(headers=['name', 'author_email', 'price'])
         dataset.append(['Some book', 'test@example.com', "10.25"])
         with self.assertRaises(KeyError) as cm:
-            instance = self.resource.get_instance(instance_loader,
-                                                  dataset.dict[0])
+            self.resource.get_instance(instance_loader, dataset.dict[0])
         self.assertEqual(u"Column 'id' not found in dataset. Available columns "
                          "are: %s" % [u'name', u'author_email', u'price'],
                          cm.exception.args[0])
@@ -359,7 +353,7 @@ class ModelResourceTest(TestCase):
                 fields = ('published',)
                 widgets = {
                     'published': {'format': '%d.%m.%Y'},
-                    }
+                }
 
         resource = B()
         self.book.published = date(2012, 8, 13)
@@ -503,7 +497,7 @@ class ModelResourceTest(TestCase):
 
     def test_link_to_nonexistent_field(self):
         with self.assertRaises(FieldDoesNotExist) as cm:
-            class BrokenBook(resources.ModelResource):
+            class BrokenBook1(resources.ModelResource):
                 class Meta:
                     model = Book
                     fields = ('nonexistent__invalid',)
@@ -511,7 +505,7 @@ class ModelResourceTest(TestCase):
                          cm.exception.args[0])
 
         with self.assertRaises(FieldDoesNotExist) as cm:
-            class BrokenBook(resources.ModelResource):
+            class BrokenBook2(resources.ModelResource):
                 class Meta:
                     model = Book
                     fields = ('author__nonexistent',)
@@ -520,7 +514,7 @@ class ModelResourceTest(TestCase):
 
     def test_link_to_nonrelation_field(self):
         with self.assertRaises(KeyError) as cm:
-            class BrokenBook(resources.ModelResource):
+            class BrokenBook1(resources.ModelResource):
                 class Meta:
                     model = Book
                     fields = ('published__invalid',)
@@ -528,7 +522,7 @@ class ModelResourceTest(TestCase):
                          cm.exception.args[0])
 
         with self.assertRaises(KeyError) as cm:
-            class BrokenBook(resources.ModelResource):
+            class BrokenBook2(resources.ModelResource):
                 class Meta:
                     model = Book
                     fields = ('author__name__invalid',)
@@ -547,7 +541,7 @@ class ModelResourceTest(TestCase):
                 if field_name == 'published':
                     return {'sound': 'quack'}
 
-        resource = B()
+        B()
         self.assertEqual({'sound': 'quack'}, B.fields['published'])
 
     def test_readonly_annotated_field_import_and_export(self):
@@ -612,7 +606,7 @@ class ModelResourceTest(TestCase):
         self.assertTrue(callable(DynamicDefaultResource.fields['name'].default))
 
         resource = DynamicDefaultResource()
-        dataset = tablib.Dataset(headers=['id', 'name',])
+        dataset = tablib.Dataset(headers=['id', 'name', ])
         dataset.append([1, None])
         dataset.append([2, None])
         resource.import_data(dataset, raise_errors=False)
@@ -621,35 +615,51 @@ class ModelResourceTest(TestCase):
 
 
 class ModelResourceTransactionTest(TransactionTestCase):
-
-    def setUp(self):
-        self.resource = BookResource()
-
     @skipUnlessDBFeature('supports_transactions')
     def test_m2m_import_with_transactions(self):
+        resource = BookResource()
         cat1 = Category.objects.create(name='Cat 1')
         headers = ['id', 'name', 'categories']
         row = [None, 'FooBook', "%s" % cat1.pk]
         dataset = tablib.Dataset(row, headers=headers)
 
-        result = self.resource.import_data(dataset, dry_run=True,
-                                           use_transactions=True)
+        result = resource.import_data(
+            dataset, dry_run=True, use_transactions=True
+        )
 
         row_diff = result.rows[0].diff
-        fields = self.resource.get_fields()
+        fields = resource.get_fields()
 
-        id_field = self.resource.fields['id']
+        id_field = resource.fields['id']
         id_diff = row_diff[fields.index(id_field)]
         # id diff should exists because in rollbacked transaction
         # FooBook has been saved
         self.assertTrue(id_diff)
 
-        category_field = self.resource.fields['categories']
+        category_field = resource.fields['categories']
         categories_diff = row_diff[fields.index(category_field)]
         self.assertEqual(strip_tags(categories_diff), force_text(cat1.pk))
 
         # check that it is really rollbacked
         self.assertFalse(Book.objects.filter(name='FooBook'))
+
+    @skipUnlessDBFeature('supports_transactions')
+    def test_m2m_import_with_transactions_error(self):
+        resource = ProfileResource()
+        headers = ['id', 'user']
+        # 'user' is a required field, the database will raise an error.
+        row = [None, None]
+        dataset = tablib.Dataset(row, headers=headers)
+
+        result = resource.import_data(
+            dataset, dry_run=True, use_transactions=True
+        )
+
+        # Ensure the error raised by the database has been saved.
+        self.assertTrue(result.has_errors())
+
+        # Ensure the rollback has worked properly.
+        self.assertEqual(Profile.objects.count(), 0)
 
 
 class ModelResourceFactoryTest(TestCase):

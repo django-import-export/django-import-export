@@ -3,6 +3,7 @@ python:
   - "2.7"
   - "3.3"
   - "3.4"
+  - "3.5"
 env:
   - DJANGO="Django>=1.5,<1.6"
   - DJANGO="Django>=1.6,<1.7"
