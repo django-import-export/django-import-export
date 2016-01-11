@@ -249,8 +249,9 @@ class ImportMixin(ImportExportMixinBase):
         context['opts'] = self.model._meta
         context['fields'] = [f.column_name for f in resource.get_fields()]
 
+        request.current_app = self.admin_site.name
         return TemplateResponse(request, [self.import_template_name],
-                                context, current_app=self.admin_site.name)
+                                context)
 
 
 class ExportMixin(ImportExportMixinBase):
@@ -365,8 +366,9 @@ class ExportMixin(ImportExportMixinBase):
 
         context['form'] = form
         context['opts'] = self.model._meta
+        request.current_app = self.admin_site.name
         return TemplateResponse(request, [self.export_template_name],
-                                context, current_app=self.admin_site.name)
+                                context)
 
 
 class ImportExportMixin(ImportMixin, ExportMixin):
