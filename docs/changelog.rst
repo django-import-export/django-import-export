@@ -4,6 +4,8 @@ Changelog for django-import-export
 0.4.3 (unreleased)
 ------------------
 
+- Fixes error when a single value is stored in m2m relation field (#177)
+
 - Add support for django.db.models.TimeField (#381)
 
 0.4.2 (2015-12-18)
