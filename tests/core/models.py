@@ -30,6 +30,7 @@ class Book(models.Model):
     author_email = models.EmailField('Author email', max_length=75, blank=True)
     imported = models.BooleanField(default=False)
     published = models.DateField('Published', blank=True, null=True)
+    published_time = models.TimeField('Time published', blank=True, null=True)
     price = models.DecimalField(max_digits=10, decimal_places=2, null=True,
                                 blank=True)
     categories = models.ManyToManyField(Category, blank=True)
@@ -49,13 +50,13 @@ class Entry(models.Model):
 
 class WithDefault(models.Model):
     name = models.CharField('Default', max_length=75, blank=True,
-                            default=lambda: 'foo_bar')
+                            default='foo_bar')
 
+def random_name():
+    chars = string.ascii_lowercase
+    return ''.join(random.SystemRandom().choice(chars) for _ in range(100))
 
 class WithDynamicDefault(models.Model):
-    def random_name():
-        chars = string.ascii_lowercase
-        return ''.join(random.SystemRandom().choice(chars) for _ in range(100))
 
     name = models.CharField('Dyn Default', max_length=100,
             default=random_name)

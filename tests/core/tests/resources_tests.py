@@ -168,7 +168,6 @@ class ModelResourceTest(TestCase):
         self.assertIsInstance(instance, Book)
 
     def test_default(self):
-        self.assertTrue(callable(WithDefaultResource.fields['name'].default))
         self.assertEquals(WithDefaultResource.fields['name'].clean({'name': ''}), 'foo_bar')
 
     def test_get_instance(self):
@@ -209,7 +208,8 @@ class ModelResourceTest(TestCase):
     def test_get_export_headers(self):
         headers = self.resource.get_export_headers()
         self.assertEqual(headers, ['published_date', 'id', 'name', 'author',
-                                   'author_email', 'price', 'categories', ])
+                                   'author_email', 'published_time', 'price',
+                                   'categories', ])
 
     def test_export(self):
         dataset = self.resource.export(Book.objects.all())
@@ -603,10 +603,13 @@ class ModelResourceTest(TestCase):
         self.assertEquals(User.objects.get(pk=user.pk).username, 'bar')
 
     def test_import_data_dynamic_default_callable(self):
+
         class DynamicDefaultResource(resources.ModelResource):
             class Meta:
                 model = WithDynamicDefault
                 fields = ('id', 'name',)
+
+        self.assertTrue(callable(DynamicDefaultResource.fields['name'].default))
 
         resource = DynamicDefaultResource()
         dataset = tablib.Dataset(headers=['id', 'name',])

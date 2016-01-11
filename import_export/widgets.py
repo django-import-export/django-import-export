@@ -170,6 +170,39 @@ class DateTimeWidget(Widget):
         return value.strftime(self.formats[0])
 
 
+class TimeWidget(Widget):
+    """
+    Widget for converting time fields.
+
+    Takes optional ``format`` parameter.
+    """
+
+    def __init__(self, format=None):
+        if format is None:
+            if not settings.TIME_INPUT_FORMATS:
+                formats = ("%H:%M:%S",)
+            else:
+                formats = settings.TIME_INPUT_FORMATS
+        else:
+            formats = (format,)
+        self.formats = formats
+
+    def clean(self, value):
+        if not value:
+            return None
+        for format in self.formats:
+            try:
+                return datetime.strptime(value, format).time()
+            except (ValueError, TypeError):
+                continue
+        raise ValueError("Enter a valid time.")
+
+    def render(self, value):
+        if not value:
+            return ""
+        return value.strftime(self.formats[0])
+
+
 class ForeignKeyWidget(Widget):
     """
     Widget for ``ForeignKey`` which looks up a related model.
