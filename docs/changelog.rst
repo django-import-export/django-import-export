@@ -1,6 +1,11 @@
 Changelog for django-import-export
 ==================================
 
+0.4.3 (unreleased)
+------------------
+
+- Add support for django.db.models.TimeField (#381)
+
 0.4.2 (2015-12-18)
 ------------------
 
