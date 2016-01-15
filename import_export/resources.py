@@ -1,27 +1,26 @@
 from __future__ import unicode_literals
 
 import functools
-from copy import deepcopy
 import sys
-import traceback
-
 import tablib
+import traceback
+from copy import deepcopy
+
 from diff_match_patch import diff_match_patch
 
 from django import VERSION
-from django.utils.safestring import mark_safe
-from django.utils import six
+from django.conf import settings
+from django.db import transaction
 from django.db.models.fields import FieldDoesNotExist
 from django.db.models.query import QuerySet
 from django.db.transaction import TransactionManagementError
-from django.conf import settings
+from django.utils import six
+from django.utils.safestring import mark_safe
 
-from .results import Error, Result, RowResult
+from . import widgets
 from .fields import Field
-from import_export import widgets
-from .instance_loaders import (
-    ModelInstanceLoader,
-)
+from .instance_loaders import ModelInstanceLoader
+from .results import Error, Result, RowResult
 
 try:
     from django.db.transaction import atomic, savepoint, savepoint_rollback, savepoint_commit  # noqa
@@ -47,7 +46,7 @@ except ImportError:
     from django.utils.datastructures import SortedDict as OrderedDict
 
 # Set default logging handler to avoid "No handler found" warnings.
-import logging
+import logging # isort:skip
 try:  # Python 2.7+
     from logging import NullHandler
 except ImportError:
@@ -375,7 +374,8 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
                     if self.skip_row(instance, original):
                         row_result.import_type = RowResult.IMPORT_TYPE_SKIP
                     else:
-                        self.save_instance(instance, real_dry_run)
+                        with transaction.atomic():
+                            self.save_instance(instance, real_dry_run)
                         self.save_m2m(instance, row, real_dry_run)
                         # Add object info to RowResult for LogEntry
                         row_result.object_repr = force_text(instance)
