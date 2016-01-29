@@ -340,7 +340,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
             self.before_import(dataset, real_dry_run, **kwargs)
         except Exception as e:
             logging.exception(e)
-            tb_info = traceback.format_exc(2)
+            tb_info = traceback.format_exc()
             result.base_errors.append(Error(repr(e), tb_info))
             if raise_errors:
                 if use_transactions:
@@ -387,7 +387,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
                 # when only the original error is likely to be relevant
                 if not isinstance(e, TransactionManagementError):
                     logging.exception(e)
-                tb_info = traceback.format_exc(2)
+                tb_info = traceback.format_exc()
                 row_result.errors.append(Error(e, tb_info, row))
                 if raise_errors:
                     if use_transactions:
