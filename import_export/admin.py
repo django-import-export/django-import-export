@@ -223,7 +223,7 @@ class ImportMixin(ImportExportMixinBase):
                     data = force_text(data, self.from_encoding)
                 dataset = input_format.create_dataset(data)
             except UnicodeDecodeError as e:
-                return HttpResponse(_(u"<h1>Imported file is not in unicode: %s</h1>" % e))
+                return HttpResponse(_(u"<h1>Imported file has a wrong encoding: %s</h1>" % e))
             except Exception as e:
                 return HttpResponse(_(u"<h1>%s encountred while trying to read file: %s</h1>" % (type(e).__name__, e)))
             result = resource.import_data(dataset, dry_run=True,
