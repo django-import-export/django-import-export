@@ -10,7 +10,8 @@ from diff_match_patch import diff_match_patch
 
 from django import VERSION
 from django.conf import settings
-from django.db import transaction
+from django.core.management.color import no_style
+from django.db import connections, transaction, DEFAULT_DB_ALIAS
 from django.db.models.fields import FieldDoesNotExist
 from django.db.models.query import QuerySet
 from django.db.transaction import TransactionManagementError
@@ -396,6 +397,16 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
             if (row_result.import_type != RowResult.IMPORT_TYPE_SKIP or
                     self._meta.report_skipped):
                 result.rows.append(row_result)
+
+        # Reset the SQL sequences when new objects are imported
+        # Adapted from django's loaddata
+        if not dry_run and any(r.import_type == RowResult.IMPORT_TYPE_NEW for r in result.rows):
+            connection = connections[DEFAULT_DB_ALIAS]
+            sequence_sql = connection.ops.sequence_reset_sql(no_style(), [self.Meta.model])
+            if sequence_sql:
+                with connection.cursor() as cursor:
+                    for line in sequence_sql:
+                        cursor.execute(line)
 
         if use_transactions:
             if dry_run or result.has_errors():
