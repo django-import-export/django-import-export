@@ -26,6 +26,15 @@ class ImportForm(forms.Form):
 
         self.fields['input_format'].choices = choices
 
+    def clean(self):
+        import_file_name = str(self.cleaned_data.get('import_file'))
+        input_format_value = int(self.cleaned_data.get('input_format')) + 1
+        file_extension = '.' + self.fields[
+            'input_format'].choices[input_format_value][1]
+        if not import_file_name.endswith(file_extension):
+            self.add_error('input_format', 'It is not the same extension')
+        return self.cleaned_data
+
 
 class ConfirmImportForm(forms.Form):
     import_file_name = forms.CharField(widget=forms.HiddenInput())
