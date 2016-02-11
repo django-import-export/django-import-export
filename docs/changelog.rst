@@ -4,6 +4,8 @@ Changelog for django-import-export
 0.4.3 (unreleased)
 ------------------
 
+- Reset SQL sequences when new objects are imported (#59)
+
 - Let Resource rollback if import throws exception (#377)
 
 - Fixes error when a single value is stored in m2m relation field (#177)
