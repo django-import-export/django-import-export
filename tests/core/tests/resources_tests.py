@@ -4,9 +4,11 @@ import tablib
 from copy import deepcopy
 from datetime import date
 from decimal import Decimal
-from unittest import skip
+from unittest import skip, skipUnless
 
+from django.conf import settings
 from django.contrib.auth.models import User
+from django.db import IntegrityError
 from django.db.models import Count
 from django.db.models.fields import FieldDoesNotExist
 from django.test import TestCase, TransactionTestCase, skipUnlessDBFeature
@@ -668,3 +670,22 @@ class ModelResourceFactoryTest(TestCase):
         BookResource = resources.modelresource_factory(Book)
         self.assertIn('id', BookResource.fields)
         self.assertEqual(BookResource._meta.model, Book)
+
+
+@skipUnless(
+    'postgresql' in settings.DATABASES['default']['ENGINE'],
+    'Run only against Postgres')
+class PostgresTests(TransactionTestCase):
+    # Make sure to start the sequences back at 1
+    reset_sequences = True
+
+    def test_create_object_after_importing_dataset_with_id(self):
+        dataset = tablib.Dataset(headers=['id', 'name'])
+        dataset.append([1, 'Some book'])
+        resource = BookResource()
+        result = resource.import_data(dataset)
+        self.assertFalse(result.has_errors())
+        try:
+            Book.objects.create(name='Some other book')
+        except IntegrityError:
+            self.fail('IntegrityError was raised.')

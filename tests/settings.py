@@ -56,6 +56,18 @@ if os.environ.get('IMPORT_EXPORT_TEST_TYPE') == 'mysql-innodb':
             }
         }
     }
+elif os.environ.get('IMPORT_EXPORT_TEST_TYPE') == 'postgres':
+    IMPORT_EXPORT_USE_TRANSACTIONS = True
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': 'import_export',
+            'USER': 'postgres',
+            'PASSWORD': 'postgres',
+            'HOST': 'localhost',
+            'PORT': 5432
+        }
+    }
 else:
     DATABASES = {
         'default': {
