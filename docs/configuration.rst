@@ -7,6 +7,7 @@ Add ``import_export`` to your ``INSTALLED_APPS``:
 
     INSTALLED_APPS = [
         # ...
+
         'import_export',
     ]
 
