@@ -437,6 +437,9 @@ class ExportActionModelAdmin(ExportMixin, admin.ModelAdmin):
 
     actions = [export_admin_action]
 
+    class Media:
+        js = ['import_export/action_formats.js']
+
 
 class ImportExportActionModelAdmin(ImportMixin, ExportActionModelAdmin):
     """
