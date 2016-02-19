@@ -264,7 +264,7 @@ class ExportMixin(ImportExportMixinBase):
     change_list_template = 'admin/import_export/change_list_export.html'
     #: template for export view
     export_template_name = 'admin/import_export/export.html'
-    #: available import formats
+    #: available export formats
     formats = DEFAULT_FORMATS
     #: export data encoding
     to_encoding = "utf-8"
@@ -292,7 +292,7 @@ class ExportMixin(ImportExportMixinBase):
 
     def get_export_formats(self):
         """
-        Returns available import formats.
+        Returns available export formats.
         """
         return [f for f in self.formats if f().can_export()]
 
