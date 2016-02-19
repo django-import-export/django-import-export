@@ -1,0 +1,117 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# Manel Clos <manelclos@gmail.com>, 2016.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2016-02-19 10:16+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: admin.py:180
+msgid "Import finished"
+msgstr "Importació finalitzada"
+
+#: admin.py:226
+#, python-format
+msgid "<h1>Imported file has a wrong encoding: %s</h1>"
+msgstr "<h1>L'arxiu importat té una codificació incorrecta: %s</h1>"
+
+#: admin.py:228
+#, python-format
+msgid "<h1>%s encountered while trying to read file: %s</h1>"
+msgstr "<h1>S'ha trobat: %s mentre es llegia l'arxiu: %s</h1>"
+
+#: admin.py:419
+msgid "You must select an export format."
+msgstr "Heu de seleccionar un format d'exportació"
+
+#: admin.py:436
+#, python-format
+msgid "Export selected %(verbose_name_plural)s"
+msgstr "Exportar %(verbose_name_plural)s seleccionats"
+
+#: forms.py:12
+msgid "File to import"
+msgstr "Arxiu a importar"
+
+#: forms.py:15 forms.py:43 forms.py:68
+msgid "Format"
+msgstr "Format"
+
+#: templates/admin/import_export/base.html:10
+msgid "Home"
+msgstr "Inici"
+
+#: templates/admin/import_export/change_list_export.html:5
+#: templates/admin/import_export/change_list_import_export.html:6
+#: templates/admin/import_export/export.html:7
+#: templates/admin/import_export/export.html:11
+msgid "Export"
+msgstr "Exportar"
+
+#: templates/admin/import_export/change_list_import.html:5
+#: templates/admin/import_export/change_list_import_export.html:5
+#: templates/admin/import_export/import.html:7
+#: templates/admin/import_export/import.html:11
+msgid "Import"
+msgstr "Importar"
+
+#: templates/admin/import_export/export.html:33
+#: templates/admin/import_export/import.html:56
+msgid "Submit"
+msgstr "Enviar"
+
+#: templates/admin/import_export/import.html:18
+msgid ""
+"Below is a preview of data to be imported. If you are satisfied with the "
+"results, click 'Confirm import'"
+msgstr ""
+"A continuació podeu veure una vista prèvia de les dades que s'importaran. Si "
+"esteu satisfets amb els resultats, premeu 'Confirmar importació'"
+
+#: templates/admin/import_export/import.html:21
+msgid "Confirm import"
+msgstr "Confirmar importació"
+
+#: templates/admin/import_export/import.html:30
+msgid "This importer will import the following fields: "
+msgstr "Aquest importador importarà els següents camps: "
+
+#: templates/admin/import_export/import.html:64
+msgid "Errors"
+msgstr "Errors"
+
+#: templates/admin/import_export/import.html:75
+msgid "Line number"
+msgstr "Número de línia"
+
+#: templates/admin/import_export/import.html:85
+msgid "Preview"
+msgstr "Vista prèvia"
+
+#: templates/admin/import_export/import.html:100
+msgid "New"
+msgstr "Nou"
+
+#: templates/admin/import_export/import.html:102
+msgid "Skipped"
+msgstr "Omès"
+
+#: templates/admin/import_export/import.html:104
+msgid "Delete"
+msgstr "Esborrar"
+
+#: templates/admin/import_export/import.html:106
+msgid "Update"
+msgstr "Actualitzar"
