@@ -8,7 +8,7 @@ and exporting data with included admin integration.
 Features:
 
 * support multiple formats (Excel, CSV, JSON, ...
-  and everything else that `tablib`_ support)
+  and everything else that `tablib`_ supports)
 
 * admin integration for importing
 
