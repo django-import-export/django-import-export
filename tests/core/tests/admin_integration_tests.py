@@ -8,8 +8,8 @@ from django.contrib.auth.models import User
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.admin.models import LogEntry
 
-from core.admin import BookAdmin
-from core.models import Category
+from core.admin import BookAdmin, AuthorAdmin
+from core.models import Category, Author
 
 
 class ImportExportAdminIntegrationTest(TestCase):
@@ -85,6 +85,18 @@ class ImportExportAdminIntegrationTest(TestCase):
 
         self.assertContains(response, _('Export'))
         self.assertContains(response, _('Import'))
+
+    def test_import_buttons_visible_without_add_permission(self):
+        # When using ImportMixin, users should be able to see the import button
+        # without add permission (to be consistent with ImportExportMixin)
+
+        original = AuthorAdmin.has_add_permission
+        AuthorAdmin.has_add_permission = lambda self, request: False
+        response = self.client.get('/admin/core/author/')
+        AuthorAdmin.has_add_permission = original
+
+        self.assertContains(response, _('Import'))
+        self.assertTemplateUsed(response, 'admin/import_export/change_list.html')
 
     def test_import_file_name_in_tempdir(self):
         # 65 - import_file_name form field can be use to access the filesystem
