@@ -47,7 +47,7 @@ msgstr "Home"
 #: templates/admin/import_export/export.html:8
 #: templates/admin/import_export/export.html:12
 msgid "Export"
-msgstr "Esporatre"
+msgstr "Esportare"
 
 #: templates/admin/import_export/change_list_import.html:5
 #: templates/admin/import_export/change_list_import_export.html:5
