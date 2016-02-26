@@ -244,11 +244,10 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         Model instance need to have a primary key value before
         a many-to-many relationship can be used.
         """
-        if not dry_run:
-            for field in self.get_fields():
-                if not isinstance(field.widget, widgets.ManyToManyWidget):
-                    continue
-                self.import_field(field, obj, data)
+        for field in self.get_fields():
+            if not isinstance(field.widget, widgets.ManyToManyWidget):
+                continue
+            self.import_field(field, obj, data)
 
     def for_delete(self, row, instance):
         """
