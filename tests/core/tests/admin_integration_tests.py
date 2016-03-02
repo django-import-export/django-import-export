@@ -64,6 +64,40 @@ class ImportExportAdminIntegrationTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, _('Import finished'))
 
+    @override_settings(TEMPLATE_STRING_IF_INVALID='INVALID_VARIABLE')
+    def test_import_mac(self):
+        # GET the import form
+        response = self.client.get('/admin/core/book/import/')
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'admin/import_export/import.html')
+        self.assertContains(response, 'form action=""')
+
+        # POST the import form
+        input_format = '0'
+        filename = os.path.join(
+            os.path.dirname(__file__),
+            os.path.pardir,
+            'exports',
+            'books-mac.csv')
+        with open(filename, "rb") as f:
+            data = {
+                'input_format': input_format,
+                'import_file': f,
+            }
+            response = self.client.post('/admin/core/book/import/', data)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('result', response.context)
+        self.assertFalse(response.context['result'].has_errors())
+        self.assertIn('confirm_form', response.context)
+        confirm_form = response.context['confirm_form']
+
+        data = confirm_form.initial
+        self.assertEqual(data['original_file_name'], 'books-mac.csv')
+        response = self.client.post('/admin/core/book/process_import/', data,
+                                    follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, _('Import finished'))
+
     def test_export(self):
         response = self.client.get('/admin/core/book/export/')
         self.assertEqual(response.status_code, 200)
