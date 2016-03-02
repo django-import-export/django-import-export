@@ -342,7 +342,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         except Exception as e:
             logging.exception(e)
             tb_info = traceback.format_exc()
-            result.base_errors.append(Error(repr(e), tb_info))
+            result.base_errors.append(Error(e, tb_info))
             if raise_errors:
                 if use_transactions:
                     savepoint_rollback(sp1)
