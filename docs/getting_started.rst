@@ -3,7 +3,9 @@ Getting started
 ===============
 
 For example purposes, we'll use a simplified book app. Here is our
-``core.models.py``::
+``models.py``::
+
+    # app/models.py
 
     class Author(models.Model):
         name = models.CharField(max_length=100)
@@ -25,8 +27,7 @@ For example purposes, we'll use a simplified book app. Here is our
         author_email = models.EmailField('Author email', max_length=75, blank=True)
         imported = models.BooleanField(default=False)
         published = models.DateField('Published', blank=True, null=True)
-        price = models.DecimalField(max_digits=10, decimal_places=2, null=True,
-                blank=True)
+        price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
         categories = models.ManyToManyField(Category, blank=True)
 
         def __unicode__(self):
@@ -36,17 +37,16 @@ For example purposes, we'll use a simplified book app. Here is our
 .. _base-modelresource:
 
 Creating import-export resource
--------------------------------
+===============================
 
-To integrate `django-import-export` with ``Book`` model, we will create
-a resource class in ``admin.py`` that will describe how this resource can be imported or
-exported.
+To integrate `django-import-export` with our ``Book`` model, we will create a
+:class:`~import_export.resources.ModelResource` class in ``admin.py`` that will
+describe how this resource can be imported or exported::
 
-::
+    # app/admin.py
 
     from import_export import resources
     from core.models import Book
-
 
     class BookResource(resources.ModelResource):
 
@@ -54,9 +54,10 @@ exported.
             model = Book
 
 Exporting data
---------------
+==============
 
-Now that we have defined a resource class, we can export books::
+Now that we have defined a :class:`~import_export.resources.ModelResource` class,
+we can export books::
 
     >>> dataset = BookResource().export()
     >>> print dataset.csv
@@ -64,11 +65,11 @@ Now that we have defined a resource class, we can export books::
     2,Some book,1,,0,2012-12-05,8.85,1
 
 Customize resource options
---------------------------
+==========================
 
-By default ``ModelResource`` introspects model fields and creates
-``import_export.fields.Field`` attributes with an appropriate widget
-for each field.
+By default :class:`~import_export.resources.ModelResource` introspects model
+fields and creates :class:`~import_export.fields.Field`-attributes with an
+appropriate :class:`~import_export.widgets.Widget` for each field.
 
 To affect which model fields will be included in an import-export
 resource, use the ``fields`` option to whitelist fields::
@@ -105,7 +106,7 @@ The default field for object identification is ``id``, you can optionally set wh
             import_id_fields = ('isbn',)
             fields = ('isbn', 'name', 'author', 'price',)
 
-When defining ``ModelResource`` fields it is possible to follow
+When defining :class:`~import_export.resources.ModelResource` fields it is possible to follow
 model relationships::
 
     class BookResource(resources.ModelResource):
@@ -135,10 +136,10 @@ whether skipped records will show in the import preview page::
 .. seealso::
 
     :doc:`/api_resources`
-        
+
 
 Declaring fields
-----------------
+================
 
 It is possible to override a resource field to change some of its
 options::
@@ -147,14 +148,14 @@ options::
 
     class BookResource(resources.ModelResource):
         published = fields.Field(column_name='published_date')
-        
+
         class Meta:
             model = Book
 
 Other fields that don't exist in the target model may be added::
 
     from import_export import fields
-    
+
     class BookResource(resources.ModelResource):
         myfield = fields.Field(column_name='myfield')
 
@@ -168,7 +169,7 @@ Other fields that don't exist in the target model may be added::
 
 
 Advanced data manipulation
---------------------------
+==========================
 
 Not all data can be easily extracted from an object/model attribute.
 In order to turn complicated data model into a (generally simpler) processed
@@ -178,7 +179,7 @@ data structure, ``dehydrate_<fieldname>`` method should be defined::
 
     class BookResource(resources.ModelResource):
         full_title = fields.Field()
-        
+
         class Meta:
             model = Book
 
@@ -187,11 +188,11 @@ data structure, ``dehydrate_<fieldname>`` method should be defined::
 
 
 Customize widgets
------------------
+=================
 
-``ModelResource`` creates a field with a default widget for a given field
-type. If the widget should be initialized with different arguments, set the
-``widgets`` dict.
+A :class:`~import_export.resources.ModelResource` creates a field with a
+default widget for a given field type. If the widget should be initialized
+with different arguments, set the ``widgets`` dict.
 
 In this example widget, the ``published`` field is overriden to use a
 different date format. This format will be used both for importing
@@ -200,7 +201,7 @@ and exporting resource.
 ::
 
     class BookResource(resources.ModelResource):
-        
+
         class Meta:
             model = Book
             widgets = {
@@ -213,66 +214,78 @@ and exporting resource.
         available widget types and options.
 
 Importing data
---------------
+==============
 
 Let's import data::
 
     >>> import tablib
     >>> from import_export import resources
     >>> from core.models import Book
-    >>> book_resource = resources.modelresource_factory(model=Book)()
-    >>> dataset = tablib.Dataset(['', 'New book'], headers=['id', 'name'])
+    >>> book_resource = resources.modelresource_factory(model=Book)()  # Line 4
+    >>> dataset = tablib.Dataset(                                      # Line 5
+    ...     ['', 'New book'], headers=['id', 'name']
+    ... )
     >>> result = book_resource.import_data(dataset, dry_run=True)
     >>> print result.has_errors()
     False
     >>> result = book_resource.import_data(dataset, dry_run=False)
 
-In 4th line we use ``modelresource_factory`` to create a default
-``ModelResource``. ModelResource class created this way is equal
-as in :ref:`base-modelresource`.
+In the fourth line we use :func:`~import_export.resources.modelresource_factory`
+to create a default :class:`~import_export.resources.ModelResource`.
+The ModelResource class created this way is equal to the one shown in the
+example in section :ref:`base-modelresource`.
 
-In 5th line a ``Dataset`` with subset of ``Book`` fields is created.
+In fifth line a :class:`~tablib.Dataset` with columns ``id`` and ``name``, and one book entry, are created. A field for a primary key field (in this case, ``id``) always needs to be present.
 
-In rest of code we first pretend to import data with ``dry_run`` set, then
-check for any errors and import data.
+In the rest of the code we first pretend to import data using
+:meth:`~import_export.resources.Resource.import_data` and ``dry_run`` set,
+then check for any errors and actually import data this time.
 
 .. seealso::
 
     :doc:`/import_workflow`
-        for detailed import workflow descripton and customization options.
+        for a detailed description of the import workflow and its customization options.
+
 
 Deleting data
-^^^^^^^^^^^^^
+-------------
 
-To delete objects during import, implement ``for_delete`` method on resource
-class.
+To delete objects during import, implement the
+:meth:`~import_export.resources.Resource.for_delete` method on
+your :class:`~import_export.resources.Resource` class.
 
-Example resource with ``delete`` field::
+The following is an example resource which expects a ``delete`` field in the
+dataset. An import using this resource will delete model instances for rows
+that have their column ``delete`` set to ``1``::
 
     class BookResource(resources.ModelResource):
         delete = fields.Field(widget=widgets.BooleanWidget())
 
         def for_delete(self, row, instance):
             return self.fields['delete'].clean(row)
-        
+
         class Meta:
             model = Book
 
-Import of this resource will delete model instances for rows
-that have column ``delete`` set to ``1``.
+
+.. _admin-integration:
 
 Admin integration
------------------
+=================
 
-Admin integration is achieved by subclassing (in ``admin.py``)
-``ImportExportModelAdmin`` or one of the available mixins (``ImportMixin``, 
-``ExportMixin``, or ``ImportExportMixin``)::
+Exporting via list filters
+--------------------------
 
+Admin integration is achieved by subclassing
+:class:`~import_export.admin.ImportExportModelAdmin` or one of the available
+mixins (:class:`~import_export.admin.ImportMixin`,
+:class:`~import_export.admin.ExportMixin`,
+:class:`~import_export.admin.ImportExportMixin`)::
+
+    # app/admin.py
     from import_export.admin import ImportExportModelAdmin
 
-
     class BookAdmin(ImportExportModelAdmin):
-        resource_class = BookResource
         pass
 
 .. figure:: _static/images/django-import-export-change.png
@@ -287,18 +300,19 @@ Admin integration is achieved by subclassing (in ``admin.py``)
 
    A screenshot of the confirm import view.
 
-|
+
+Exporting via admin action
+--------------------------
 
 Another approach to exporting data is by subclassing
-``ImportExportActionModelAdmin`` which implements export as an admin action.
-As a result it's possible to export a list of objects selected on the change
-list page::
+:class:`~import_export.admin.ImportExportActionModelAdmin` which implements
+export as an admin action. As a result it's possible to export a list of
+objects selected on the change list page::
 
+    # app/admin.py
     from import_export.admin import ImportExportActionModelAdmin
 
-
     class BookAdmin(ImportExportActionModelAdmin):
-        resource_class = BookResource
         pass
 
 
@@ -306,7 +320,6 @@ list page::
 
    A screenshot of the change view with Import and Export as an admin action.
 
-|
 
 .. seealso::
 
