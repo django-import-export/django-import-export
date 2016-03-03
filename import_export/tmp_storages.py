@@ -79,9 +79,9 @@ class MediaStorage(BaseStorage):
             self.name = uuid4().hex
         default_storage.save(self.get_full_path(), ContentFile(data))
 
-    def read(self, read_mode='r'):
-        with default_storage.open(self.get_full_path()) as file:
-            return file.read()
+    def read(self, read_mode='rb'):
+        with default_storage.open(self.get_full_path(), mode=read_mode) as f:
+            return f.read()
 
     def remove(self):
         default_storage.delete(self.get_full_path())

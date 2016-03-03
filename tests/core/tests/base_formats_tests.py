@@ -52,6 +52,16 @@ class CSVTest(TestCase):
         expected = 'id,name,author_email\n1,Some book,test@example.com\n'
         self.assertEqual(in_stream, expected)
 
+    def test_import_mac(self):
+        filename = os.path.join(
+            os.path.dirname(__file__),
+            os.path.pardir,
+            'exports',
+            'books-mac.csv')
+        in_stream = open(filename, self.format.get_read_mode()).read()
+        expected = 'id,name,author_email\n1,Some book,test@example.com\n'
+        self.assertEqual(in_stream, expected)
+
     def test_import_unicode(self):
         # importing csv UnicodeEncodeError 347
         filename = os.path.join(
