@@ -62,8 +62,16 @@ class Field(object):
                            "columns are: %s" % (self.column_name,
                                                 list(data.keys())))
 
+        # If this Field uses a ForeignKeyWidget, also pass the row data to the
+        # widget's clean method because it might be needed for additional
+        # filtering on the related objects queryset.
+        if isinstance(self.widget, widgets.ForeignKeyWidget):
+            clean_args = (value, data)
+        else:
+            clean_args = (value,)
+
         try:
-            value = self.widget.clean(value)
+            value = self.widget.clean(*clean_args)
         except ValueError as e:
             raise ValueError("Column '%s': %s" % (self.column_name, e))
 

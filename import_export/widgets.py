@@ -267,9 +267,35 @@ class ForeignKeyWidget(Widget):
         self.field = field
         super(ForeignKeyWidget, self).__init__(*args, **kwargs)
 
-    def clean(self, value):
+    def get_queryset(self, value, row, *args, **kwargs):
+        """
+        Returns a queryset of all objects for this Model.
+
+        Overwrite this method if you want to limit the pool of objects from
+        which the related object is retrieved.
+
+        :param value: The field's value in the datasource.
+        :param row: The datasource's current row.
+
+        As an example; if you'd like to have ForeignKeyWidget look up a Person
+        by their pre- **and** lastname column, you could subclass the widget
+        like so::
+
+            class FullNameForeignKeyWidget(ForeignKeyWidget):
+                def get_queryset(self, value, row):
+                    return self.model.objects.filter(
+                        first_name__iexact=row["first_name"],
+                        last_name__iexact=row["last_name"]
+                    )
+        """
+        return self.model.objects.all()
+
+    def clean(self, value, row=None, *args, **kwargs):
         val = super(ForeignKeyWidget, self).clean(value)
-        return self.model.objects.get(**{self.field: val}) if val else None
+        if val:
+            return self.get_queryset(value, row, *args, **kwargs).get(**{self.field: val})
+        else:
+            return None
 
     def render(self, value):
         if value is None:
