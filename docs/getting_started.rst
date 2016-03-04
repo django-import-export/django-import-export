@@ -216,15 +216,17 @@ and exporting resource.
 Importing data
 ==============
 
-Let's import data::
+Let's import some data!
+
+.. code-block:: python
+    :linenos:
+    :emphasize-lines: 4,5
 
     >>> import tablib
     >>> from import_export import resources
     >>> from core.models import Book
-    >>> book_resource = resources.modelresource_factory(model=Book)()  # Line 4
-    >>> dataset = tablib.Dataset(                                      # Line 5
-    ...     ['', 'New book'], headers=['id', 'name']
-    ... )
+    >>> book_resource = resources.modelresource_factory(model=Book)()
+    >>> dataset = tablib.Dataset(['', 'New book'], headers=['id', 'name'])
     >>> result = book_resource.import_data(dataset, dry_run=True)
     >>> print result.has_errors()
     False
