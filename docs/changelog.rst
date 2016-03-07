@@ -1,5 +1,5 @@
-Changelog for django-import-export
-==================================
+Changelog
+=========
 
 0.4.3 (unreleased)
 ------------------
@@ -11,6 +11,7 @@ Changelog for django-import-export
 - Fixes error when a single value is stored in m2m relation field (#177)
 
 - Add support for django.db.models.TimeField (#381)
+
 
 0.4.2 (2015-12-18)
 ------------------
@@ -89,7 +90,7 @@ Changelog for django-import-export
 
 - added use of get_diff_headers method into import.html template (#158)
 
-- Try to use OrderedDict instead of SortedDict, which is deprecated in 
+- Try to use OrderedDict instead of SortedDict, which is deprecated in
   Django 1.7 (#157)
 
 - fixed #105 unicode import
@@ -112,9 +113,9 @@ Changelog for django-import-export
 
 - Fixed XLS import on python 3. Optimized loop
 
-- Fixed properly skipping row marked as skipped when importing data from 
+- Fixed properly skipping row marked as skipped when importing data from
   the admin interface.
-  
+
 - Allow Resource.export to accept iterables as well as querysets
 
 - Improve error messages
