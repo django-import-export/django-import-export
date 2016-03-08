@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.4.3 (unreleased)
+0.4.3 (2016-03-08)
 ------------------
 
 - fix MediaStorage does not respect the read_mode parameter (#416)
