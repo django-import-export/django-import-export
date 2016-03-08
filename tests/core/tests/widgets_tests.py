@@ -179,7 +179,12 @@ class ManyToManyWidget(TestCase):
         self.assertIn(self.cat1, cleaned_data)
 
     def test_render(self):
-        self.assertEqual(self.widget.render(Category.objects),
-                         "%s,%s" % (self.cat1.pk, self.cat2.pk))
-        self.assertEqual(self.widget_name.render(Category.objects),
-                         u"%s,%s" % (self.cat1.name, self.cat2.name))
+        items = Category.objects
+        self.assertEqual(
+            self.widget.render(items),
+            ','.join([str(item.pk) for item in items.all()])
+        )
+        self.assertEqual(
+            self.widget_name.render(items),
+            ','.join([item.name for item in items.all()])
+        )
