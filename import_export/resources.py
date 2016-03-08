@@ -23,10 +23,7 @@ from .fields import Field
 from .instance_loaders import ModelInstanceLoader
 from .results import Error, Result, RowResult
 
-try:
-    from django.db.transaction import atomic, savepoint, savepoint_rollback, savepoint_commit  # noqa
-except ImportError:
-    from .django_compat import atomic, savepoint, savepoint_rollback, savepoint_commit  # noqa
+from django.db.transaction import atomic, savepoint, savepoint_rollback, savepoint_commit  # noqa
 
 
 if VERSION < (1, 8):
