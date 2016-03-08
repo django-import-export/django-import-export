@@ -426,7 +426,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
                     else:
                         with transaction.atomic():
                             self.save_instance(instance, real_dry_run)
-                        self.save_m2m(instance, row, real_dry_run)
+                            self.save_m2m(instance, row, real_dry_run)
                         # Add object info to RowResult for LogEntry
                         row_result.object_repr = force_text(instance)
                         row_result.object_id = instance.pk
