@@ -4,6 +4,8 @@ Changelog
 0.4.3 (unreleased)
 ------------------
 
+- fix MediaStorage does not respect the read_mode parameter (#416)
+
 - Reset SQL sequences when new objects are imported (#59)
 
 - Let Resource rollback if import throws exception (#377)
