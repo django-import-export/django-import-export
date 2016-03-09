@@ -1,4 +1,4 @@
-Django>=1.5
+Django>=1.6
 tablib
 diff-match-patch
 openpyxl

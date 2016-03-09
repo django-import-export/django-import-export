@@ -113,6 +113,12 @@ class BookResource(resources.ModelResource):
         exclude = ('imported', )
 
 
+class CategoryResource(resources.ModelResource):
+
+    class Meta:
+        model = Category
+
+
 class ProfileResource(resources.ModelResource):
     class Meta:
         model = Profile
@@ -662,6 +668,27 @@ class ModelResourceTransactionTest(TransactionTestCase):
 
         # Ensure the rollback has worked properly.
         self.assertEqual(Profile.objects.count(), 0)
+
+    @skipUnlessDBFeature('supports_transactions')
+    def test_integrity_error_rollback_on_savem2m(self):
+        # savepoint_rollback() after an IntegrityError gives
+        # TransactionManagementError (#399)
+        class CategoryResourceRaisesIntegrityError(CategoryResource):
+            def save_m2m(self, instance, *args, **kwargs):
+                # force raising IntegrityError
+                Category.objects.create(name=instance.name)
+
+        resource = CategoryResourceRaisesIntegrityError()
+        headers = ['id', 'name']
+        rows = [
+            [None, 'foo'],
+        ]
+        dataset = tablib.Dataset(*rows, headers=headers)
+        result = resource.import_data(
+            dataset,
+            use_transactions=True,
+        )
+        self.assertTrue(result.has_errors())
 
 
 class ModelResourceFactoryTest(TestCase):
