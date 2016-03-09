@@ -98,7 +98,6 @@ class ImportExportAdminIntegrationTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, _('Import finished, with 1 new book'))
 
-
     def test_export(self):
         response = self.client.get('/admin/core/book/export/')
         self.assertEqual(response.status_code, 200)

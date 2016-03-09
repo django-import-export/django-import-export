@@ -15,6 +15,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.http import HttpResponseRedirect, HttpResponse
 from django.core.urlresolvers import reverse
 from django.conf import settings
+from django.template.defaultfilters import pluralize
 
 from .forms import (
     ImportForm,
@@ -141,6 +142,8 @@ class ImportMixin(ImportExportMixinBase):
         '''
         opts = self.model._meta
         resource = self.get_import_resource_class()()
+        total_imports = 0
+        total_updates = 0
 
         confirm_form = ConfirmImportForm(request.POST)
         if confirm_form.is_valid():
@@ -177,8 +180,15 @@ class ImportMixin(ImportExportMixinBase):
                             action_flag=logentry_map[row.import_type],
                             change_message="%s through import_export" % row.import_type,
                         )
+                    if row.import_type == row.IMPORT_TYPE_NEW:
+                        total_imports += 1
+                    elif row.import_type == row.IMPORT_TYPE_UPDATE:
+                        total_updates += 1
 
-            success_message = _('Import finished')
+            success_message = u'Import finished, with {} new {}{} and ' \
+                              u'{} updated {}{}.'.format(total_imports, opts.model_name, pluralize(total_imports),
+                                                         total_updates, opts.model_name, pluralize(total_updates))
+
             messages.success(request, success_message)
             tmp_storage.remove()
 
