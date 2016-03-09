@@ -62,7 +62,7 @@ class ImportExportAdminIntegrationTest(TestCase):
         response = self.client.post('/admin/core/book/process_import/', data,
                                     follow=True)
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, _('Import finished'))
+        self.assertContains(response, _('Import finished, with 1 new book'))
 
     @override_settings(TEMPLATE_STRING_IF_INVALID='INVALID_VARIABLE')
     def test_import_mac(self):
@@ -96,7 +96,8 @@ class ImportExportAdminIntegrationTest(TestCase):
         response = self.client.post('/admin/core/book/process_import/', data,
                                     follow=True)
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, _('Import finished'))
+        self.assertContains(response, _('Import finished, with 1 new book'))
+
 
     def test_export(self):
         response = self.client.get('/admin/core/book/export/')
