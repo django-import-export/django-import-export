@@ -1,27 +1,27 @@
 from __future__ import unicode_literals
 
 import functools
-from copy import deepcopy
 import sys
-import traceback
-
 import tablib
+import traceback
+from copy import deepcopy
+
 from diff_match_patch import diff_match_patch
 
 from django import VERSION
-from django.utils.safestring import mark_safe
-from django.utils import six
+from django.conf import settings
+from django.core.management.color import no_style
+from django.db import connections, transaction, DEFAULT_DB_ALIAS
 from django.db.models.fields import FieldDoesNotExist
 from django.db.models.query import QuerySet
 from django.db.transaction import TransactionManagementError
-from django.conf import settings
+from django.utils import six
+from django.utils.safestring import mark_safe
 
-from .results import Error, Result, RowResult
+from . import widgets
 from .fields import Field
-from import_export import widgets
-from .instance_loaders import (
-    ModelInstanceLoader,
-)
+from .instance_loaders import ModelInstanceLoader
+from .results import Error, Result, RowResult
 
 try:
     from django.db.transaction import atomic, savepoint, savepoint_rollback, savepoint_commit  # noqa
@@ -47,7 +47,7 @@ except ImportError:
     from django.utils.datastructures import SortedDict as OrderedDict
 
 # Set default logging handler to avoid "No handler found" warnings.
-import logging
+import logging # isort:skip
 try:  # Python 2.7+
     from logging import NullHandler
 except ImportError:
@@ -64,47 +64,65 @@ class ResourceOptions(object):
     """
     The inner Meta class allows for class-level configuration of how the
     Resource should behave. The following options are available:
+    """
 
-    * ``fields`` - Controls what introspected fields the Resource
-      should include. A whitelist of fields.
-
-    * ``exclude`` - Controls what introspected fields the Resource should
-      NOT include. A blacklist of fields.
-
-    * ``model`` - Django Model class. It is used to introspect available
-      fields.
-
-    * ``instance_loader_class`` - Controls which class instance will take
-      care of loading existing objects.
-
-    * ``import_id_fields`` - Controls which object fields will be used to
-      identify existing instances.
-
-    * ``export_order`` - Controls export order for columns.
-
-    * ``widgets`` - dictionary defines widget kwargs for fields.
-
-    * ``use_transactions`` - Controls if import should use database
-      transactions. Default value is ``None`` meaning
-      ``settings.IMPORT_EXPORT_USE_TRANSACTIONS`` will be evaluated.
-
-    * ``skip_unchanged`` - Controls if the import should skip unchanged records.
-      Default value is False
-
-    * ``report_skipped`` - Controls if the result reports skipped rows
-      Default value is True
+    model = None
+    """
+    Django Model class. It is used to introspect available
+    fields.
 
     """
     fields = None
-    model = None
+    """
+    Controls what introspected fields the Resource should include. A whitelist
+    of fields.
+    """
+
     exclude = None
+    """
+    Controls what introspected fields the Resource should
+    NOT include. A blacklist of fields.
+    """
+
     instance_loader_class = None
+    """
+    Controls which class instance will take
+    care of loading existing objects.
+    """
+
     import_id_fields = ['id']
+    """
+    Controls which object fields will be used to
+    identify existing instances.
+    """
+
     export_order = None
+    """
+    Controls export order for columns.
+    """
+
     widgets = None
+    """
+    This dictionary defines widget kwargs for fields.
+    """
+
     use_transactions = None
+    """
+    Controls if import should use database transactions. Default value is
+    ``None`` meaning ``settings.IMPORT_EXPORT_USE_TRANSACTIONS`` will be
+    evaluated.
+    """
+
     skip_unchanged = False
+    """
+    Controls if the import should skip unchanged records. Default value is
+    False
+    """
+
     report_skipped = True
+    """
+    Controls if the result reports skipped rows Default value is True
+    """
 
 
 class DeclarativeMetaclass(type):
@@ -113,9 +131,9 @@ class DeclarativeMetaclass(type):
         declared_fields = []
         meta = ResourceOptions()
 
-        # If this class is subclassing another Resource, add that Resource's fields.
-        # Note that we loop over the bases in *reverse*. This is necessary in
-        # order to preserve the correct order of fields.
+        # If this class is subclassing another Resource, add that Resource's
+        # fields. Note that we loop over the bases in *reverse*. This is
+        # necessary in order to preserve the correct order of fields.
         for base in bases[::-1]:
             if hasattr(base, 'fields'):
                 declared_fields = list(six.iteritems(base.fields)) + declared_fields
@@ -135,7 +153,7 @@ class DeclarativeMetaclass(type):
 
         attrs['fields'] = OrderedDict(declared_fields)
         new_class = super(DeclarativeMetaclass, cls).__new__(cls, name,
-                bases, attrs)
+                                                             bases, attrs)
 
         # Add direct options
         options = getattr(new_class, 'Meta', None)
@@ -161,14 +179,15 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
 
     def get_fields(self):
         """
-        Returns fields in ``export_order`` order.
+        Returns fields sorted according to
+        :attr:`~import_export.resources.ResourceOptions.export_order`.
         """
         return [self.fields[f] for f in self.get_export_order()]
 
     @classmethod
     def get_field_name(cls, field):
         """
-        Returns field name for given field.
+        Returns the field name for a given field.
         """
         for field_name, f in cls.fields.items():
             if f == field:
@@ -180,9 +199,15 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         raise NotImplementedError()
 
     def get_instance(self, instance_loader, row):
+        """
+        Calls the :doc:`InstanceLoader <api_instance_loaders>`.
+        """
         return instance_loader.get_instance(row)
 
     def get_or_init_instance(self, instance_loader, row):
+        """
+        Either fetches an already existing instance or initializes a new one.
+        """
         instance = self.get_instance(instance_loader, row)
         if instance:
             return (instance, False)
@@ -190,6 +215,12 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
             return (self.init_instance(row), True)
 
     def save_instance(self, instance, dry_run=False):
+        """
+        Takes care of saving the object to the database.
+
+        Keep in mind that this is done by calling ``instance.save()``, so
+        objects are not created in bulk!
+        """
         self.before_save_instance(instance, dry_run)
         if not dry_run:
             instance.save()
@@ -197,17 +228,20 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
 
     def before_save_instance(self, instance, dry_run):
         """
-        Override to add additional logic.
+        Override to add additional logic. Does nothing by default.
         """
         pass
 
     def after_save_instance(self, instance, dry_run):
         """
-        Override to add additional logic.
+        Override to add additional logic. Does nothing by default.
         """
         pass
 
     def delete_instance(self, instance, dry_run=False):
+        """
+        Calls :meth:`instance.delete` as long as ``dry_run`` is not set.
+        """
         self.before_delete_instance(instance, dry_run)
         if not dry_run:
             instance.delete()
@@ -215,22 +249,28 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
 
     def before_delete_instance(self, instance, dry_run):
         """
-        Override to add additional logic.
+        Override to add additional logic. Does nothing by default.
         """
         pass
 
     def after_delete_instance(self, instance, dry_run):
         """
-        Override to add additional logic.
+        Override to add additional logic. Does nothing by default.
         """
         pass
 
     def import_field(self, field, obj, data):
+        """
+        Calls :meth:`import_export.fields.Field.save` if ``Field.attribute``
+        and ``Field.column_name`` are found in ``data``.
+        """
         if field.attribute and field.column_name in data:
             field.save(obj, data)
 
     def import_obj(self, obj, data, dry_run):
         """
+        Traverses every field in this Resource and calls
+        :meth:`~import_export.resources.Resource.import_field`.
         """
         for field in self.get_fields():
             if isinstance(field.widget, widgets.ManyToManyWidget):
@@ -264,7 +304,8 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         Returns ``True`` if ``row`` importing should be skipped.
 
         Default implementation returns ``False`` unless skip_unchanged == True.
-        Override this method to handle skipping rows meeting certain conditions.
+        Override this method to handle skipping rows meeting certain
+        conditions.
         """
         if not self._meta.skip_unchanged:
             return False
@@ -307,20 +348,32 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
 
     def before_import(self, dataset, dry_run, **kwargs):
         """
-        Override to add additional logic.
+        Override to add additional logic. Does nothing by default.
+
+        This method receives the ``dataset`` that's going to be imported, the
+        ``dry_run`` parameter which determines whether changes are saved to
+        the database, and any additional keyword arguments passed to
+        ``import_data`` in a ``kwargs`` dict.
         """
         pass
 
     @atomic()
     def import_data(self, dataset, dry_run=False, raise_errors=False,
-            use_transactions=None, **kwargs):
+                    use_transactions=None, **kwargs):
         """
-        Imports data from ``dataset``.
+        Imports data from ``tablib.Dataset``. Refer to :doc:`import_workflow`
+        for a more complete description of the whole import process.
 
-        ``use_transactions``
-            If ``True`` import process will be processed inside transaction.
-            If ``dry_run`` is set, or error occurs, transaction will be rolled
-            back.
+        :param dataset: A ``tablib.Dataset``
+
+        :param raise_errors: Whether errors should be printed to the end user
+            or raised regularly.
+
+        :param use_transactions: If ``True`` import process will be processed
+            inside transaction.
+
+        :param dry_run: If ``dry_run`` is set, or error occurs, transaction
+            will be rolled back.
         """
         result = Result()
         result.diff_headers = self.get_diff_headers()
@@ -345,8 +398,8 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
             self.before_import(dataset, real_dry_run, **kwargs)
         except Exception as e:
             logging.exception(e)
-            tb_info = traceback.format_exc(2)
-            result.base_errors.append(Error(repr(e), tb_info))
+            tb_info = traceback.format_exc()
+            result.base_errors.append(Error(e, tb_info))
             if raise_errors:
                 if use_transactions:
                     savepoint_rollback(sp1)
@@ -368,24 +421,25 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
                     if new:
                         row_result.import_type = RowResult.IMPORT_TYPE_SKIP
                         row_result.diff = self.get_diff(None, None,
-                                real_dry_run)
+                                                        real_dry_run)
                     else:
                         row_result.import_type = RowResult.IMPORT_TYPE_DELETE
                         self.delete_instance(instance, real_dry_run)
                         row_result.diff = self.get_diff(original, None,
-                                real_dry_run)
+                                                        real_dry_run)
                 else:
                     self.import_obj(instance, row, real_dry_run)
                     if self.skip_row(instance, original):
                         row_result.import_type = RowResult.IMPORT_TYPE_SKIP
                     else:
-                        self.save_instance(instance, real_dry_run)
+                        with transaction.atomic():
+                            self.save_instance(instance, real_dry_run)
                         self.save_m2m(instance, row, real_dry_run)
                         # Add object info to RowResult for LogEntry
                         row_result.object_repr = force_text(instance)
                         row_result.object_id = instance.pk
                     row_result.diff = self.get_diff(original, instance,
-                            real_dry_run)
+                                                    real_dry_run)
                 result.totals[row_result.import_type] += 1
             except Exception as e:
                 result.totals[row_result.IMPORT_TYPE_ERROR] += 1
@@ -393,15 +447,25 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
                 # when only the original error is likely to be relevant
                 if not isinstance(e, TransactionManagementError):
                     logging.exception(e)
-                tb_info = traceback.format_exc(2)
+                tb_info = traceback.format_exc()
                 row_result.errors.append(Error(e, tb_info, row))
                 if raise_errors:
                     if use_transactions:
                         savepoint_rollback(sp1)
                     six.reraise(*sys.exc_info())
             if (row_result.import_type != RowResult.IMPORT_TYPE_SKIP or
-                        self._meta.report_skipped):
+                    self._meta.report_skipped):
                 result.rows.append(row_result)
+
+        # Reset the SQL sequences when new objects are imported
+        # Adapted from django's loaddata
+        if not dry_run and any(r.import_type == RowResult.IMPORT_TYPE_NEW for r in result.rows):
+            connection = connections[DEFAULT_DB_ALIAS]
+            sequence_sql = connection.ops.sequence_reset_sql(no_style(), [self.Meta.model])
+            if sequence_sql:
+                with connection.cursor() as cursor:
+                    for line in sequence_sql:
+                        cursor.execute(line)
 
         if use_transactions:
             if dry_run or result.has_errors():
@@ -413,8 +477,8 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         return result
 
     def get_export_order(self):
-        order = tuple (self._meta.export_order or ())
-        return order + tuple (k for k in self.fields.keys() if k not in order)
+        order = tuple(self._meta.export_order or ())
+        return order + tuple(k for k in self.fields.keys() if k not in order)
 
     def export_field(self, field, obj):
         field_name = self.get_field_name(field)
@@ -427,7 +491,8 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         return [self.export_field(field, obj) for field in self.get_fields()]
 
     def get_export_headers(self):
-        headers = [force_text(field.column_name) for field in self.get_fields()]
+        headers = [
+            force_text(field.column_name) for field in self.get_fields()]
         return headers
 
     def export(self, queryset=None):
@@ -454,7 +519,7 @@ class ModelDeclarativeMetaclass(DeclarativeMetaclass):
 
     def __new__(cls, name, bases, attrs):
         new_class = super(ModelDeclarativeMetaclass,
-                cls).__new__(cls, name, bases, attrs)
+                          cls).__new__(cls, name, bases, attrs)
 
         opts = new_class._meta
 
@@ -475,12 +540,12 @@ class ModelDeclarativeMetaclass(DeclarativeMetaclass):
                     continue
 
                 field = new_class.field_from_django_field(f.name, f,
-                    readonly=False)
+                                                          readonly=False)
                 field_list.append((f.name, field, ))
 
             new_class.fields.update(OrderedDict(field_list))
 
-            #add fields that follow relationships
+            # add fields that follow relationships
             if opts.fields is not None:
                 field_list = []
                 for field_name in opts.fields:
@@ -495,16 +560,20 @@ class ModelDeclarativeMetaclass(DeclarativeMetaclass):
                         verbose_path = ".".join([opts.model.__name__] + attrs[0:i+1])
 
                         try:
-                            f = model._meta.get_field_by_name(attr)[0]
+                            if VERSION >= (1, 8):
+                                f = model._meta.get_field(attr)
+                            else:
+                                f = model._meta.get_field_by_name(attr)[0]
                         except FieldDoesNotExist as e:
                             logging.exception(e)
-                            raise FieldDoesNotExist("%s: %s has no field named '%s'" %
+                            raise FieldDoesNotExist(
+                                "%s: %s has no field named '%s'" %
                                 (verbose_path, model.__name__, attr))
 
                         if i < len(attrs) - 1:
-                            # We're not at the last attribute yet, so check that
-                            # we're looking at a relation, and move on to the
-                            # next model.
+                            # We're not at the last attribute yet, so check
+                            # that we're looking at a relation, and move on to
+                            # the next model.
                             if isinstance(f, ForeignObjectRel):
                                 if RelatedObject is None:
                                     model = f.related_model
@@ -513,14 +582,15 @@ class ModelDeclarativeMetaclass(DeclarativeMetaclass):
                                     model = f.model
                             else:
                                 if f.rel is None:
-                                    raise KeyError('%s is not a relation' % verbose_path)
+                                    raise KeyError(
+                                        '%s is not a relation' % verbose_path)
                                 model = f.rel.to
 
                     if isinstance(f, ForeignObjectRel):
                         f = f.field
 
                     field = new_class.field_from_django_field(field_name, f,
-                        readonly=True)
+                                                              readonly=True)
                     field_list.append((field_name, field))
 
                 new_class.fields.update(OrderedDict(field_list))
@@ -543,18 +613,21 @@ class ModelResource(six.with_metaclass(ModelDeclarativeMetaclass, Resource)):
         internal_type = f.get_internal_type()
         if internal_type in ('ManyToManyField', ):
             result = functools.partial(widgets.ManyToManyWidget,
-                    model=f.rel.to)
+                                       model=f.rel.to)
         if internal_type in ('ForeignKey', 'OneToOneField', ):
             result = functools.partial(widgets.ForeignKeyWidget,
-                    model=f.rel.to)
+                                       model=f.rel.to)
         if internal_type in ('DecimalField', ):
             result = widgets.DecimalWidget
         if internal_type in ('DateTimeField', ):
             result = widgets.DateTimeWidget
         elif internal_type in ('DateField', ):
             result = widgets.DateWidget
-        elif internal_type in ('IntegerField', 'PositiveIntegerField', 'BigIntegerField',
-                'PositiveSmallIntegerField', 'SmallIntegerField', 'AutoField'):
+        elif internal_type in ('TimeField', ):
+            result = widgets.TimeWidget
+        elif internal_type in ('IntegerField', 'PositiveIntegerField',
+                               'BigIntegerField', 'PositiveSmallIntegerField',
+                               'SmallIntegerField', 'AutoField'):
             result = widgets.IntegerWidget
         elif internal_type in ('BooleanField', 'NullBooleanField'):
             result = widgets.BooleanWidget
@@ -587,12 +660,21 @@ class ModelResource(six.with_metaclass(ModelDeclarativeMetaclass, Resource)):
         return field
 
     def get_import_id_fields(self):
+        """
+        """
         return self._meta.import_id_fields
 
     def get_queryset(self):
+        """
+        Returns a queryset of all objects for this model. Override this if you
+        want to limit the returned queryset.
+        """
         return self._meta.model.objects.all()
 
     def init_instance(self, row=None):
+        """
+        Initializes a new Django model.
+        """
         return self._meta.model()
 
 

@@ -1,5 +1,4 @@
 {% extends "admin/import_export/base.html" %}
-{% load url from future %}
 {% load i18n %}
 {% load admin_urls %}
 {% load import_export_tags %}
@@ -29,12 +28,7 @@
 
     <p>
       {% trans "This importer will import the following fields: " %}
-      {% for f in fields  %}
-        {% if forloop.counter0 %}
-        ,
-        {% endif %}
-        <code>{{ f }}</code>
-      {% endfor %}
+      <code>{{ fields|join:", " }}</code>
     </p>
 
     <fieldset class="module aligned">
@@ -74,7 +68,7 @@
         {% for error in errors %}
           <li>
             {% trans "Line number" %}: {{ line }} - {{ error.error }}
-            <div>{{ error.row }}</div>
+            <div><code>{{ error.row.values|join:", " }}</code></div>
             <div class="traceback">{{ error.traceback|linebreaks }}</div>
           </li>
         {% endfor %}

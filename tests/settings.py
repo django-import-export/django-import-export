@@ -33,6 +33,20 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
 
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': (
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
+            ),
+        },
+    },
+]
+
 if os.environ.get('IMPORT_EXPORT_TEST_TYPE') == 'mysql-innodb':
     IMPORT_EXPORT_USE_TRANSACTIONS = True
     DATABASES = {
@@ -43,6 +57,18 @@ if os.environ.get('IMPORT_EXPORT_TEST_TYPE') == 'mysql-innodb':
             'OPTIONS': {
                'init_command': 'SET storage_engine=INNODB',
             }
+        }
+    }
+elif os.environ.get('IMPORT_EXPORT_TEST_TYPE') == 'postgres':
+    IMPORT_EXPORT_USE_TRANSACTIONS = True
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': 'import_export',
+            'USER': os.environ.get('IMPORT_EXPORT_POSTGRESQL_USER'),
+            'PASSWORD': os.environ.get('IMPORT_EXPORT_POSTGRESQL_PASSWORD'),
+            'HOST': 'localhost',
+            'PORT': 5432
         }
     }
 else:

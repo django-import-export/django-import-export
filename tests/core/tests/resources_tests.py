@@ -1,32 +1,23 @@
 from __future__ import unicode_literals
 
-from decimal import Decimal
-from datetime import date
+import tablib
 from copy import deepcopy
-from unittest import (
-    skip,
-)
+from datetime import date
+from decimal import Decimal
+from unittest import skip, skipUnless
 
-from django.db import models
+from django.conf import settings
+from django.contrib.auth.models import User
+from django.db import IntegrityError
 from django.db.models import Count
 from django.db.models.fields import FieldDoesNotExist
-from django.test import (
-        TestCase,
-        TransactionTestCase,
-        skipUnlessDBFeature,
-        )
+from django.test import TestCase, TransactionTestCase, skipUnlessDBFeature
 from django.utils.html import strip_tags
-from django.contrib.auth.models import User
 
-import tablib
-
-from import_export import resources
-from import_export import fields
-from import_export import widgets
-from import_export import results
+from import_export import fields, resources, results, widgets
 from import_export.instance_loaders import ModelInstanceLoader
 
-from core.models import Book, Author, Category, Entry, Profile, WithDefault
+from ..models import Author, Book, Category, Entry, Profile, WithDefault, WithDynamicDefault
 
 try:
     from django.utils.encoding import force_text
@@ -58,11 +49,11 @@ class ResourceTestCase(TestCase):
 
     def test_meta(self):
         self.assertIsInstance(self.my_resource._meta,
-                resources.ResourceOptions)
+                              resources.ResourceOptions)
 
     def test_get_export_order(self):
         self.assertEqual(self.my_resource.get_export_headers(),
-                ['email', 'name', 'extra'])
+                         ['email', 'name', 'extra'])
 
     # Issue 140 Attributes aren't inherited by subclasses
     def test_inheritance(self):
@@ -83,7 +74,7 @@ class ResourceTestCase(TestCase):
         self.assertIn('inherited', resource.fields)
         self.assertIn('local', resource.fields)
         self.assertEqual(resource.get_export_headers(),
-                ['email', 'extra', 'name', 'inherited', 'local'])
+                         ['email', 'extra', 'name', 'inherited', 'local'])
         self.assertEqual(resource._meta.import_id_fields, ('email',))
 
     def test_inheritance_with_custom_attributes(self):
@@ -122,6 +113,12 @@ class BookResource(resources.ModelResource):
         exclude = ('imported', )
 
 
+class ProfileResource(resources.ModelResource):
+    class Meta:
+        model = Profile
+        exclude = ('user', )
+
+
 class WithDefaultResource(resources.ModelResource):
     class Meta:
         model = WithDefault
@@ -134,13 +131,13 @@ class ModelResourceTest(TestCase):
 
         self.book = Book.objects.create(name="Some book")
         self.dataset = tablib.Dataset(headers=['id', 'name', 'author_email',
-            'price'])
+                                               'price'])
         row = [self.book.pk, 'Some book', 'test@example.com', "10.25"]
         self.dataset.append(row)
 
     def test_default_instance_loader_class(self):
         self.assertIs(self.resource._meta.instance_loader_class,
-                ModelInstanceLoader)
+                      ModelInstanceLoader)
 
     def test_fields(self):
         fields = self.resource.fields
@@ -168,33 +165,47 @@ class ModelResourceTest(TestCase):
         self.assertIsInstance(instance, Book)
 
     def test_default(self):
-        self.assertTrue(callable(WithDefaultResource.fields['name'].default))
         self.assertEquals(WithDefaultResource.fields['name'].clean({'name': ''}), 'foo_bar')
 
     def test_get_instance(self):
         instance_loader = self.resource._meta.instance_loader_class(
-                self.resource)
+            self.resource)
+        self.resource._meta.import_id_fields = ['id']
         instance = self.resource.get_instance(instance_loader,
-                self.dataset.dict[0])
+                                              self.dataset.dict[0])
+        self.assertEqual(instance, self.book)
+
+    def test_get_instance_import_id_fields(self):
+
+        class BookResource(resources.ModelResource):
+            name = fields.Field(attribute='name', widget=widgets.CharWidget())
+
+            class Meta:
+                model = Book
+                import_id_fields = ['name']
+
+        resource = BookResource()
+        instance_loader = resource._meta.instance_loader_class(resource)
+        instance = resource.get_instance(instance_loader, self.dataset.dict[0])
         self.assertEqual(instance, self.book)
 
     def test_get_instance_with_missing_field_data(self):
         instance_loader = self.resource._meta.instance_loader_class(
-                self.resource)
+            self.resource)
         # construct a dataset with a missing "id" column
         dataset = tablib.Dataset(headers=['name', 'author_email', 'price'])
         dataset.append(['Some book', 'test@example.com', "10.25"])
         with self.assertRaises(KeyError) as cm:
-            instance = self.resource.get_instance(instance_loader,
-                dataset.dict[0])
+            self.resource.get_instance(instance_loader, dataset.dict[0])
         self.assertEqual(u"Column 'id' not found in dataset. Available columns "
-            "are: %s" % [u'name', u'author_email', u'price'], cm.exception.args[0])
+                         "are: %s" % [u'name', u'author_email', u'price'],
+                         cm.exception.args[0])
 
     def test_get_export_headers(self):
         headers = self.resource.get_export_headers()
-        self.assertEqual(headers, ['published_date',
-            'id', 'name', 'author', 'author_email', 'price', 'categories',
-            ])
+        self.assertEqual(headers, ['published_date', 'id', 'name', 'author',
+                                   'author_email', 'published_time', 'price',
+                                   'categories', ])
 
     def test_export(self):
         dataset = self.resource.export(Book.objects.all())
@@ -209,8 +220,8 @@ class ModelResourceTest(TestCase):
         diff = self.resource.get_diff(self.book, book2)
         headers = self.resource.get_export_headers()
         self.assertEqual(diff[headers.index('name')],
-                u'<span>Some </span><ins style="background:#e6ffe6;">'
-                u'other </ins><span>book</span>')
+                         u'<span>Some </span><ins style="background:#e6ffe6;">'
+                         u'other </ins><span>book</span>')
         self.assertFalse(diff[headers.index('author_email')])
 
     @skip("See: https://github.com/django-import-export/django-import-export/issues/311")
@@ -224,7 +235,7 @@ class ModelResourceTest(TestCase):
         diff = resource.get_diff(author2, author)
         headers = resource.get_export_headers()
         self.assertEqual(diff[headers.index('books')],
-                '<span>core.Book.None</span>')
+                         '<span>core.Book.None</span>')
 
     def test_import_data(self):
         result = self.resource.import_data(self.dataset, raise_errors=True)
@@ -233,7 +244,7 @@ class ModelResourceTest(TestCase):
         self.assertEqual(len(result.rows), 1)
         self.assertTrue(result.rows[0].diff)
         self.assertEqual(result.rows[0].import_type,
-                results.RowResult.IMPORT_TYPE_UPDATE)
+                         results.RowResult.IMPORT_TYPE_UPDATE)
 
         instance = Book.objects.get(pk=self.book.pk)
         self.assertEqual(instance.author_email, 'test@example.com')
@@ -284,7 +295,7 @@ class ModelResourceTest(TestCase):
         result = B().import_data(dataset, raise_errors=True)
         self.assertFalse(result.has_errors())
         self.assertEqual(result.rows[0].import_type,
-                results.RowResult.IMPORT_TYPE_DELETE)
+                         results.RowResult.IMPORT_TYPE_DELETE)
         self.assertFalse(Book.objects.filter(pk=self.book.pk))
 
     def test_relationships_fields(self):
@@ -316,7 +327,8 @@ class ModelResourceTest(TestCase):
         self.book.author = author
         resource = B()
         full_title = resource.export_field(resource.get_fields()[0], self.book)
-        self.assertEqual(full_title, '%s by %s' % (self.book.name, self.book.author.name))
+        self.assertEqual(full_title, '%s by %s' % (self.book.name,
+                                                   self.book.author.name))
 
     def test_widget_fomat_in_fk_field(self):
         class B(resources.ModelResource):
@@ -342,8 +354,8 @@ class ModelResourceTest(TestCase):
                 model = Book
                 fields = ('published',)
                 widgets = {
-                        'published': {'format': '%d.%m.%Y'},
-                        }
+                    'published': {'format': '%d.%m.%Y'},
+                }
 
         resource = B()
         self.book.published = date(2012, 8, 13)
@@ -376,7 +388,7 @@ class ModelResourceTest(TestCase):
 
         dataset = self.resource.export(Book.objects.all())
         self.assertEqual(dataset.dict[0]['categories'],
-                '%d,%d' % (cat1.pk, cat2.pk))
+                         '%d,%d' % (cat1.pk, cat2.pk))
 
     def test_m2m_import(self):
         cat1 = Category.objects.create(name='Cat 1')
@@ -460,7 +472,7 @@ class ModelResourceTest(TestCase):
         self.assertEqual(len(result.rows), len(dataset))
         self.assertTrue(result.rows[0].diff)
         self.assertEqual(result.rows[0].import_type,
-                results.RowResult.IMPORT_TYPE_SKIP)
+                         results.RowResult.IMPORT_TYPE_SKIP)
 
         # Test that we can suppress reporting of skipped rows
         resource._meta.report_skipped = False
@@ -487,37 +499,37 @@ class ModelResourceTest(TestCase):
 
     def test_link_to_nonexistent_field(self):
         with self.assertRaises(FieldDoesNotExist) as cm:
-            class BrokenBook(resources.ModelResource):
+            class BrokenBook1(resources.ModelResource):
                 class Meta:
                     model = Book
                     fields = ('nonexistent__invalid',)
         self.assertEqual("Book.nonexistent: Book has no field named 'nonexistent'",
-            cm.exception.args[0])
+                         cm.exception.args[0])
 
         with self.assertRaises(FieldDoesNotExist) as cm:
-            class BrokenBook(resources.ModelResource):
+            class BrokenBook2(resources.ModelResource):
                 class Meta:
                     model = Book
                     fields = ('author__nonexistent',)
         self.assertEqual("Book.author.nonexistent: Author has no field named "
-            "'nonexistent'", cm.exception.args[0])
+                         "'nonexistent'", cm.exception.args[0])
 
     def test_link_to_nonrelation_field(self):
         with self.assertRaises(KeyError) as cm:
-            class BrokenBook(resources.ModelResource):
+            class BrokenBook1(resources.ModelResource):
                 class Meta:
                     model = Book
                     fields = ('published__invalid',)
         self.assertEqual("Book.published is not a relation",
-            cm.exception.args[0])
+                         cm.exception.args[0])
 
         with self.assertRaises(KeyError) as cm:
-            class BrokenBook(resources.ModelResource):
+            class BrokenBook2(resources.ModelResource):
                 class Meta:
                     model = Book
                     fields = ('author__name__invalid',)
         self.assertEqual("Book.author.name is not a relation",
-            cm.exception.args[0])
+                         cm.exception.args[0])
 
     def test_override_field_construction_in_resource(self):
         class B(resources.ModelResource):
@@ -526,11 +538,12 @@ class ModelResourceTest(TestCase):
                 fields = ('published',)
 
             @classmethod
-            def field_from_django_field(self, field_name, django_field, readonly):
+            def field_from_django_field(self, field_name, django_field,
+                                        readonly):
                 if field_name == 'published':
                     return {'sound': 'quack'}
 
-        resource = B()
+        B()
         self.assertEqual({'sound': 'quack'}, B.fields['published'])
 
     def test_readonly_annotated_field_import_and_export(self):
@@ -585,37 +598,70 @@ class ModelResourceTest(TestCase):
         self.assertFalse(result.has_errors())
         self.assertEquals(User.objects.get(pk=user.pk).username, 'bar')
 
+    def test_import_data_dynamic_default_callable(self):
+
+        class DynamicDefaultResource(resources.ModelResource):
+            class Meta:
+                model = WithDynamicDefault
+                fields = ('id', 'name',)
+
+        self.assertTrue(callable(DynamicDefaultResource.fields['name'].default))
+
+        resource = DynamicDefaultResource()
+        dataset = tablib.Dataset(headers=['id', 'name', ])
+        dataset.append([1, None])
+        dataset.append([2, None])
+        resource.import_data(dataset, raise_errors=False)
+        objs = WithDynamicDefault.objects.all()
+        self.assertNotEqual(objs[0].name, objs[1].name)
+
 
 class ModelResourceTransactionTest(TransactionTestCase):
-
-    def setUp(self):
-        self.resource = BookResource()
-
     @skipUnlessDBFeature('supports_transactions')
     def test_m2m_import_with_transactions(self):
+        resource = BookResource()
         cat1 = Category.objects.create(name='Cat 1')
         headers = ['id', 'name', 'categories']
         row = [None, 'FooBook', "%s" % cat1.pk]
         dataset = tablib.Dataset(row, headers=headers)
 
-        result = self.resource.import_data(dataset, dry_run=True,
-                use_transactions=True)
+        result = resource.import_data(
+            dataset, dry_run=True, use_transactions=True
+        )
 
         row_diff = result.rows[0].diff
-        fields = self.resource.get_fields()
+        fields = resource.get_fields()
 
-        id_field = self.resource.fields['id']
+        id_field = resource.fields['id']
         id_diff = row_diff[fields.index(id_field)]
-        #id diff should exists because in rollbacked transaction
-        #FooBook has been saved
+        # id diff should exists because in rollbacked transaction
+        # FooBook has been saved
         self.assertTrue(id_diff)
 
-        category_field = self.resource.fields['categories']
+        category_field = resource.fields['categories']
         categories_diff = row_diff[fields.index(category_field)]
         self.assertEqual(strip_tags(categories_diff), force_text(cat1.pk))
 
-        #check that it is really rollbacked
+        # check that it is really rollbacked
         self.assertFalse(Book.objects.filter(name='FooBook'))
+
+    @skipUnlessDBFeature('supports_transactions')
+    def test_m2m_import_with_transactions_error(self):
+        resource = ProfileResource()
+        headers = ['id', 'user']
+        # 'user' is a required field, the database will raise an error.
+        row = [None, None]
+        dataset = tablib.Dataset(row, headers=headers)
+
+        result = resource.import_data(
+            dataset, dry_run=True, use_transactions=True
+        )
+
+        # Ensure the error raised by the database has been saved.
+        self.assertTrue(result.has_errors())
+
+        # Ensure the rollback has worked properly.
+        self.assertEqual(Profile.objects.count(), 0)
 
 
 class ModelResourceFactoryTest(TestCase):
@@ -624,3 +670,22 @@ class ModelResourceFactoryTest(TestCase):
         BookResource = resources.modelresource_factory(Book)
         self.assertIn('id', BookResource.fields)
         self.assertEqual(BookResource._meta.model, Book)
+
+
+@skipUnless(
+    'postgresql' in settings.DATABASES['default']['ENGINE'],
+    'Run only against Postgres')
+class PostgresTests(TransactionTestCase):
+    # Make sure to start the sequences back at 1
+    reset_sequences = True
+
+    def test_create_object_after_importing_dataset_with_id(self):
+        dataset = tablib.Dataset(headers=['id', 'name'])
+        dataset.append([1, 'Some book'])
+        resource = BookResource()
+        result = resource.import_data(dataset)
+        self.assertFalse(result.has_errors())
+        try:
+            Book.objects.create(name='Some other book')
+        except IntegrityError:
+            self.fail('IntegrityError was raised.')

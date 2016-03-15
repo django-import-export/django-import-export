@@ -1,3 +1,4 @@
 -r base.txt
 sphinx
 mysql-python
+psycopg2==2.6.1

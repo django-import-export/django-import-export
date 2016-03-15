@@ -20,6 +20,12 @@ Widgets
 .. autoclass:: import_export.widgets.DateWidget
    :members:
 
+.. autoclass:: import_export.widgets.TimeWidget
+  :members:
+
+.. autoclass:: import_export.widgets.DateTimeWidget
+   :members:
+
 .. autoclass:: import_export.widgets.ForeignKeyWidget
    :members:
 

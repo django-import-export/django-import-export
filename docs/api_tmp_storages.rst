@@ -1,6 +1,6 @@
-============
-Tmp storages
-============
+==================
+Temporary storages
+==================
 
 .. currentmodule:: import_export.tmp_storages
 

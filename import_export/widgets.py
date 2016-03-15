@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
 from decimal import Decimal
@@ -14,29 +15,40 @@ except ImportError:
 
 class Widget(object):
     """
-    Widget takes care of converting between import and export representations.
+    A Widget takes care of converting between import and export representations.
 
-    Widget objects have two functions:
-
-    * converts object field value to export representation
-
-    * converts import value and converts it to appropriate python
-      representation
+    This is achieved by the two methods,
+    :meth:`~import_export.widgets.Widget.clean` and
+    :meth:`~import_export.widgets.Widget.render`.
     """
+
     def clean(self, value):
         """
-        Returns appropriate python objects for import value.
+        Returns an appropriate Python object for an imported value.
+
+        For example, if you import a value from a spreadsheet,
+        :meth:`~import_export.widgets.Widget.clean` handles conversion
+        of this value into the corresponding Python object.
+
+        Numbers or dates can be *cleaned* to their respective data types and
+        don't have to be imported as Strings.
         """
         return value
 
     def render(self, value):
         """
-        Returns export representation of python value.
+        Returns an export representation of a Python value.
+
+        For example, if you have an object you want to export,
+        :meth:`~import_export.widgets.Widget.render` takes care of converting
+        the object's field to a value that can be written to a spreadsheet.
         """
         return force_text(value)
 
 
 class NumberWidget(Widget):
+    """
+    """
 
     def is_empty(self, value):
         # 0 is not empty
@@ -135,7 +147,8 @@ class DateTimeWidget(Widget):
     """
     Widget for converting date fields.
 
-    Takes optional ``format`` parameter.
+    Takes optional ``format`` parameter. If none is set, either
+    ``settings.DATETIME_INPUT_FORMATS`` or ``"%Y-%m-%d %H:%M:%S"`` is used.
     """
 
     def __init__(self, format=None):
@@ -170,27 +183,73 @@ class DateTimeWidget(Widget):
         return value.strftime(self.formats[0])
 
 
+class TimeWidget(Widget):
+    """
+    Widget for converting time fields.
+
+    Takes optional ``format`` parameter.
+    """
+
+    def __init__(self, format=None):
+        if format is None:
+            if not settings.TIME_INPUT_FORMATS:
+                formats = ("%H:%M:%S",)
+            else:
+                formats = settings.TIME_INPUT_FORMATS
+        else:
+            formats = (format,)
+        self.formats = formats
+
+    def clean(self, value):
+        if not value:
+            return None
+        for format in self.formats:
+            try:
+                return datetime.strptime(value, format).time()
+            except (ValueError, TypeError):
+                continue
+        raise ValueError("Enter a valid time.")
+
+    def render(self, value):
+        if not value:
+            return ""
+        return value.strftime(self.formats[0])
+
+
 class ForeignKeyWidget(Widget):
     """
-    Widget for ``ForeignKey`` which looks up a related model.
+    Widget for a ``ForeignKey`` field which looks up a related model using
+    "natural keys" in both export an import.
 
-    The lookup field defaults to using the primary key (``pk``), but
-    can be customised to use any field on the related model.
+    The lookup field defaults to using the primary key (``pk``) as lookup
+    criterion but can be customised to use any field on the related model.
 
-    e.g. To use a lookup field other than ``pk``, rather than specifying a
-    field in your Resource as ``class Meta: fields = ('author__name', ...)``,
-    you would specify it in your Resource like so:
+    Unlike specifying a related field in your resource like so…
+
+    ::
+
+        class Meta:
+            fields = ('author__name',)
+
+    …using a :class:`~import_export.widgets.ForeignKeyWidget` has the
+    advantage that it can not only be used for exporting, but also importing
+    data with foreign key relationships.
+
+    Here's an example on how to use
+    :class:`~import_export.widgets.ForeignKeyWidget` to lookup related objects
+    using ``Author.name`` instead of ``Author.pk``::
 
         class BookResource(resources.ModelResource):
-            author = fields.Field(column_name='author', attribute='author', \
+            author = fields.Field(
+                column_name='author',
+                attribute='author',
                 widget=ForeignKeyWidget(Author, 'name'))
-            class Meta: fields = ('author', ...)
 
-    This will allow you to use "natural keys" for both import and export.
+            class Meta:
+                fields = ('author',)
 
-    Parameters:
-        ``model`` should be the Model instance for this ForeignKey (required).
-        ``field`` should be the lookup field on the related model.
+    :param model: The Model the ForeignKey refers to (required).
+    :param field: A field on the related model used for looking up a particular object.
     """
     def __init__(self, model, field='pk', *args, **kwargs):
         self.model = model
@@ -209,16 +268,12 @@ class ForeignKeyWidget(Widget):
 
 class ManyToManyWidget(Widget):
     """
-    Widget for ``ManyToManyField`` model field that represent m2m field
-    as values that identify many-to-many relationship.
+    Widget that converts between representations of a ManyToMany relationships
+    as a list and an actual ManyToMany field.
 
-    Requires a positional argument: the class to which the field is related.
-
-    Optional keyword arguments are:
-
-        separator - default ","
-
-        field - field of related model, default ``pk``
+    :param model: The model the ManyToMany field refers to (required).
+    :param separator: Defaults to ``','``.
+    :param field: A field on the related model. Default is ``pk``.
     """
 
     def __init__(self, model, separator=None, field=None, *args, **kwargs):
@@ -234,6 +289,10 @@ class ManyToManyWidget(Widget):
     def clean(self, value):
         if not value:
             return self.model.objects.none()
+        if isinstance(value, float):
+            ids = [int(value)]
+        else:
+            ids = value.split(self.separator)
         ids = filter(None, value.split(self.separator))
         return self.model.objects.filter(**{
             '%s__in' % self.field: ids

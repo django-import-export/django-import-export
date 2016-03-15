@@ -12,19 +12,21 @@ class Field(object):
     Field represent mapping between `object` field and representation of
     this field.
 
-    ``attribute`` string of either an instance attribute or callable
-    off the object.
+    :param attribute: A string of either an instance attribute or callable off
+        the object.
 
-    ``column_name`` let you provide how this field is named
-    in datasource.
+    :param column_name: Lets you provide a name for the column that represents
+        this field in the export.
 
-    ``widget`` defines widget that will be used to represent field data
-    in export.
+    :param widget: Defines a widget that will be used to represent this
+        field's data in the export.
 
-    ``readonly`` boolean value defines that if this field will be assigned
-    to object during import.
+    :param readonly: A Boolean which defines if this field will be ignored
+        during import.
 
-    ``default`` value returned by :meth`clean` if returned value evaluates to False
+    :param default: This value will be returned by
+        :meth:`~import_export.fields.Field.clean` if this field's widget did
+        not return an adequate value.
     """
 
     def __init__(self, attribute=None, column_name=None, widget=None,
@@ -49,14 +51,15 @@ class Field(object):
 
     def clean(self, data):
         """
-        Takes value stored in the data for the field and returns it as
-        appropriate python object.
+        Translates the value stored in the imported datasource to an
+        appropriate Python object and returns it.
         """
         try:
             value = data[self.column_name]
         except KeyError:
             raise KeyError("Column '%s' not found in dataset. Available "
-                "columns are: %s" % (self.column_name, list(data.keys())))
+                           "columns are: %s" % (self.column_name,
+                                                list(data.keys())))
 
         try:
             value = self.widget.clean(value)
@@ -65,14 +68,14 @@ class Field(object):
 
         if not value and self.default != NOT_PROVIDED:
             if callable(self.default):
-                self.default = self.default()
+                return self.default()
             return self.default
 
         return value
 
     def get_value(self, obj):
         """
-        Returns value for this field from object attribute.
+        Returns the value of the object's attribute.
         """
         if self.attribute is None:
             return None
@@ -98,7 +101,8 @@ class Field(object):
 
     def save(self, obj, data):
         """
-        Cleans this field value and assign it to provided object.
+        If this field is not declared readonly, the object's attribute will
+        be set to the value returned by :meth:`~import_export.fields.Field.clean`.
         """
         if not self.readonly:
             attrs = self.attribute.split('__')

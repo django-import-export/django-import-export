@@ -1,10 +1,56 @@
-Changelog for django-import-export
-==================================
+Changelog
+=========
 
-0.3 (unreleased)
-----------------
+0.4.4 (unreleased)
+------------------
 
 - Nothing changed yet.
+
+
+0.4.3 (2016-03-08)
+------------------
+
+- fix MediaStorage does not respect the read_mode parameter (#416)
+
+- Reset SQL sequences when new objects are imported (#59)
+
+- Let Resource rollback if import throws exception (#377)
+
+- Fixes error when a single value is stored in m2m relation field (#177)
+
+- Add support for django.db.models.TimeField (#381)
+
+
+0.4.2 (2015-12-18)
+------------------
+
+- add xlsx import support
+
+
+0.4.1 (2015-12-11)
+------------------
+
+- fix for fields with a dyanmic default callable (#360)
+
+
+0.4.0 (2015-12-02)
+------------------
+
+- Add Django 1.9 support
+
+- Django 1.4 is not supported (#348)
+
+
+0.3.1 (2015-11-20)
+------------------
+
+- FIX: importing csv in python 3
+
+
+0.3 (2015-11-20)
+----------------
+
+- FIX: importing csv UnicodeEncodeError introduced in 0.2.9 (#347)
 
 
 0.2.9 (2015-11-12)
@@ -52,7 +98,7 @@ Changelog for django-import-export
 
 - added use of get_diff_headers method into import.html template (#158)
 
-- Try to use OrderedDict instead of SortedDict, which is deprecated in 
+- Try to use OrderedDict instead of SortedDict, which is deprecated in
   Django 1.7 (#157)
 
 - fixed #105 unicode import
@@ -75,9 +121,9 @@ Changelog for django-import-export
 
 - Fixed XLS import on python 3. Optimized loop
 
-- Fixed properly skipping row marked as skipped when importing data from 
+- Fixed properly skipping row marked as skipped when importing data from
   the admin interface.
-  
+
 - Allow Resource.export to accept iterables as well as querysets
 
 - Improve error messages
