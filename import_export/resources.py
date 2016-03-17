@@ -378,6 +378,19 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         """
         pass
 
+    def after_import(self, dataset, result, dry_run, **kwargs):
+        """
+        Override to add additional logic. Does nothing by default.
+
+        This method receives the ``dataset`` that's just been imported, the
+        ``result`` of the import and the ``dry_run`` parameter which determines
+        whether changes will be saved to the database, and any additional
+        keyword arguments passed to ``import_data`` in a ``kwargs`` dict. This
+        method runs after the main import finishes but before the changes are
+        committed or rolled back.
+        """
+        pass
+
     def import_row(self, row, instance_loader, dry_run=False, **kwargs):
         """
         Imports data from ``tablib.Dataset``. Refer to :doc:`import_workflow`
@@ -496,15 +509,16 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
                     self._meta.report_skipped):
                 result.rows.append(row_result)
 
-        # Reset the SQL sequences when new objects are imported
-        # Adapted from django's loaddata
-        if not dry_run and any(r.import_type == RowResult.IMPORT_TYPE_NEW for r in result.rows):
-            connection = connections[DEFAULT_DB_ALIAS]
-            sequence_sql = connection.ops.sequence_reset_sql(no_style(), [self.Meta.model])
-            if sequence_sql:
-                with connection.cursor() as cursor:
-                    for line in sequence_sql:
-                        cursor.execute(line)
+        try:
+            self.after_import(dataset, result, real_dry_run, **kwargs)
+        except Exception as e:
+            logging.exception(e)
+            tb_info = traceback.format_exc()
+            result.base_errors.append(self.get_error_result_class()(e, tb_info))
+            if raise_errors:
+                if use_transactions:
+                    savepoint_rollback(sp1)
+                raise
 
         if use_transactions:
             if dry_run or result.has_errors():
@@ -715,6 +729,22 @@ class ModelResource(six.with_metaclass(ModelDeclarativeMetaclass, Resource)):
         """
         return self._meta.model()
 
+    def after_import(self, dataset, result, dry_run, **kwargs):
+        """
+        Reset the SQL sequences after new objects are imported
+        """
+        # Adapted from django's loaddata
+        if not dry_run and any(r.import_type == RowResult.IMPORT_TYPE_NEW for r in result.rows):
+            connection = connections[DEFAULT_DB_ALIAS]
+            sequence_sql = connection.ops.sequence_reset_sql(no_style(), [self._meta.model])
+            if sequence_sql:
+                cursor = connection.cursor()
+                try:
+                    for line in sequence_sql:
+                        cursor.execute(line)
+                finally:
+                    cursor.close()
+
 
 def modelresource_factory(model, resource_class=ModelResource):
     """
@@ -727,7 +757,7 @@ def modelresource_factory(model, resource_class=ModelResource):
 
     class_attrs = {
         'Meta': Meta,
-        }
+    }
 
     metaclass = ModelDeclarativeMetaclass
     return metaclass(class_name, (resource_class,), class_attrs)
