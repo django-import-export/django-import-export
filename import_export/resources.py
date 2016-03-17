@@ -47,7 +47,7 @@ except ImportError:
     from django.utils.datastructures import SortedDict as OrderedDict
 
 # Set default logging handler to avoid "No handler found" warnings.
-import logging # isort:skip
+import logging  # isort:skip
 try:  # Python 2.7+
     from logging import NullHandler
 except ImportError:
@@ -170,6 +170,27 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
     Resource defines how objects are mapped to their import and export
     representations and handle importing and exporting data.
     """
+
+    @classmethod
+    def get_result_class(self):
+        """
+        Returns the class used to store the result of an import.
+        """
+        return Result
+
+    @classmethod
+    def get_row_result_class(self):
+        """
+        Returns the class used to store the result of a row import.
+        """
+        return RowResult
+
+    @classmethod
+    def get_error_result_class(self):
+        """
+        Returns the class used to store an error resulting from an import.
+        """
+        return Error
 
     def get_use_transactions(self):
         if self._meta.use_transactions is None:
@@ -357,6 +378,56 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         """
         pass
 
+    def import_row(self, row, instance_loader, dry_run=False, **kwargs):
+        """
+        Imports data from ``tablib.Dataset``. Refer to :doc:`import_workflow`
+        for a more complete description of the whole import process.
+
+        :param row: A ``dict`` of the row to import
+
+        :param instance_loader: The instance loader to be used to load the row
+
+        :param dry_run: If ``dry_run`` is set, or error occurs, transaction
+            will be rolled back.
+        """
+        try:
+            row_result = self.get_row_result_class()()
+            instance, new = self.get_or_init_instance(instance_loader, row)
+            if new:
+                row_result.import_type = RowResult.IMPORT_TYPE_NEW
+            else:
+                row_result.import_type = RowResult.IMPORT_TYPE_UPDATE
+            row_result.new_record = new
+            original = deepcopy(instance)
+            if self.for_delete(row, instance):
+                if new:
+                    row_result.import_type = RowResult.IMPORT_TYPE_SKIP
+                    row_result.diff = self.get_diff(None, None, dry_run)
+                else:
+                    row_result.import_type = RowResult.IMPORT_TYPE_DELETE
+                    self.delete_instance(instance, dry_run)
+                    row_result.diff = self.get_diff(original, None, dry_run)
+            else:
+                self.import_obj(instance, row, dry_run)
+                if self.skip_row(instance, original):
+                    row_result.import_type = RowResult.IMPORT_TYPE_SKIP
+                else:
+                    with transaction.atomic():
+                        self.save_instance(instance, dry_run)
+                    self.save_m2m(instance, row, dry_run)
+                    # Add object info to RowResult for LogEntry
+                    row_result.object_repr = force_text(instance)
+                    row_result.object_id = instance.pk
+                row_result.diff = self.get_diff(original, instance, dry_run)
+        except Exception as e:
+            # There is no point logging a transaction error for each row
+            # when only the original error is likely to be relevant
+            if not isinstance(e, TransactionManagementError):
+                logging.exception(e)
+            tb_info = traceback.format_exc()
+            row_result.errors.append(self.get_error_result_class()(e, tb_info, row))
+        return row_result
+
     @atomic()
     def import_data(self, dataset, dry_run=False, raise_errors=False,
                     use_transactions=None, **kwargs):
@@ -375,13 +446,14 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         :param dry_run: If ``dry_run`` is set, or error occurs, transaction
             will be rolled back.
         """
-        result = Result()
+        result = self.get_result_class()()
         result.diff_headers = self.get_diff_headers()
         result.totals = OrderedDict({RowResult.IMPORT_TYPE_NEW: 0,
                                      RowResult.IMPORT_TYPE_UPDATE: 0,
                                      RowResult.IMPORT_TYPE_DELETE: 0,
                                      RowResult.IMPORT_TYPE_SKIP: 0,
-                                     RowResult.IMPORT_TYPE_ERROR: 0})
+                                     RowResult.IMPORT_TYPE_ERROR: 0,
+                                     'total': len(dataset)})
 
         if use_transactions is None:
             use_transactions = self.get_use_transactions()
@@ -399,7 +471,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         except Exception as e:
             logging.exception(e)
             tb_info = traceback.format_exc()
-            result.base_errors.append(Error(e, tb_info))
+            result.base_errors.append(self.get_error_result_class()(e, tb_info))
             if raise_errors:
                 if use_transactions:
                     savepoint_rollback(sp1)
@@ -407,52 +479,19 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
 
         instance_loader = self._meta.instance_loader_class(self, dataset)
 
+        # Update the total in case the dataset was altered by before_import()
+        result.totals['total'] = len(dataset)
+
         for row in dataset.dict:
-            try:
-                row_result = RowResult()
-                instance, new = self.get_or_init_instance(instance_loader, row)
-                if new:
-                    row_result.import_type = RowResult.IMPORT_TYPE_NEW
-                else:
-                    row_result.import_type = RowResult.IMPORT_TYPE_UPDATE
-                row_result.new_record = new
-                original = deepcopy(instance)
-                if self.for_delete(row, instance):
-                    if new:
-                        row_result.import_type = RowResult.IMPORT_TYPE_SKIP
-                        row_result.diff = self.get_diff(None, None,
-                                                        real_dry_run)
-                    else:
-                        row_result.import_type = RowResult.IMPORT_TYPE_DELETE
-                        self.delete_instance(instance, real_dry_run)
-                        row_result.diff = self.get_diff(original, None,
-                                                        real_dry_run)
-                else:
-                    self.import_obj(instance, row, real_dry_run)
-                    if self.skip_row(instance, original):
-                        row_result.import_type = RowResult.IMPORT_TYPE_SKIP
-                    else:
-                        with transaction.atomic():
-                            self.save_instance(instance, real_dry_run)
-                        self.save_m2m(instance, row, real_dry_run)
-                        # Add object info to RowResult for LogEntry
-                        row_result.object_repr = force_text(instance)
-                        row_result.object_id = instance.pk
-                    row_result.diff = self.get_diff(original, instance,
-                                                    real_dry_run)
-                result.totals[row_result.import_type] += 1
-            except Exception as e:
+            row_result = self.import_row(row, instance_loader, real_dry_run, **kwargs)
+            if row_result.errors:
                 result.totals[row_result.IMPORT_TYPE_ERROR] += 1
-                # There is no point logging a transaction error for each row
-                # when only the original error is likely to be relevant
-                if not isinstance(e, TransactionManagementError):
-                    logging.exception(e)
-                tb_info = traceback.format_exc()
-                row_result.errors.append(Error(e, tb_info, row))
                 if raise_errors:
                     if use_transactions:
                         savepoint_rollback(sp1)
                     six.reraise(*sys.exc_info())
+            else:
+                result.totals[row_result.import_type] += 1
             if (row_result.import_type != RowResult.IMPORT_TYPE_SKIP or
                     self._meta.report_skipped):
                 result.rows.append(row_result)
@@ -473,7 +512,6 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
             else:
                 savepoint_commit(sp1)
 
-        result.totals['total'] = len(dataset)
         return result
 
     def get_export_order(self):
