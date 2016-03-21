@@ -461,12 +461,12 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         """
         result = self.get_result_class()()
         result.diff_headers = self.get_diff_headers()
-        result.totals = OrderedDict({RowResult.IMPORT_TYPE_NEW: 0,
-                                     RowResult.IMPORT_TYPE_UPDATE: 0,
-                                     RowResult.IMPORT_TYPE_DELETE: 0,
-                                     RowResult.IMPORT_TYPE_SKIP: 0,
-                                     RowResult.IMPORT_TYPE_ERROR: 0,
-                                     'total': len(dataset)})
+        result.totals = OrderedDict([(RowResult.IMPORT_TYPE_NEW, 0),
+                                     (RowResult.IMPORT_TYPE_UPDATE, 0),
+                                     (RowResult.IMPORT_TYPE_DELETE, 0),
+                                     (RowResult.IMPORT_TYPE_SKIP, 0),
+                                     (RowResult.IMPORT_TYPE_ERROR, 0),
+                                     ('total', len(dataset))])
 
         if use_transactions is None:
             use_transactions = self.get_use_transactions()
