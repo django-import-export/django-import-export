@@ -4,7 +4,9 @@ Changelog
 0.4.4 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- FIX: No static/ when installed via pip #427
+
+- Add total # of imports and total # of updates to import success msg
 
 
 0.4.3 (2016-03-08)
