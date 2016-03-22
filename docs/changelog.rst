@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.4.4 (unreleased)
+0.4.4 (2016-03-22)
 ------------------
 
 - FIX: No static/ when installed via pip #427
