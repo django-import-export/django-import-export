@@ -502,7 +502,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
                 if raise_errors:
                     if use_transactions:
                         savepoint_rollback(sp1)
-                    six.reraise(*sys.exc_info())
+                    raise row_result.errors[-1].error
             else:
                 result.totals[row_result.import_type] += 1
             if (row_result.import_type != RowResult.IMPORT_TYPE_SKIP or
