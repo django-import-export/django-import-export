@@ -66,7 +66,7 @@ class Field(object):
         except ValueError as e:
             raise ValueError("Column '%s': %s" % (self.column_name, e))
 
-        if not value and self.default != NOT_PROVIDED:
+        if value == '' and self.default != NOT_PROVIDED:
             if callable(self.default):
                 return self.default()
             return self.default
