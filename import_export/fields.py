@@ -28,9 +28,10 @@ class Field(object):
         :meth:`~import_export.fields.Field.clean` if this field's widget did
         not return an adequate value.
     """
+    empty_values = [None, '']
 
     def __init__(self, attribute=None, column_name=None, widget=None,
-                 default=None, readonly=False):
+                 default=NOT_PROVIDED, readonly=False):
         self.attribute = attribute
         self.default = default
         self.column_name = column_name
@@ -66,7 +67,7 @@ class Field(object):
         except ValueError as e:
             raise ValueError("Column '%s': %s" % (self.column_name, e))
 
-        if not value and self.default != NOT_PROVIDED:
+        if value in self.empty_values and self.default != NOT_PROVIDED:
             if callable(self.default):
                 return self.default()
             return self.default

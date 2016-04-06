@@ -4,8 +4,10 @@ Changelog
 0.4.5 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Fix default values in fields (#431, #364)
 
+  Field constructor `default` argument is NOT_PROVIDED instead of None
+  Field clean method checks value against `Field.empty_values` [None, '']
 
 0.4.4 (2016-03-22)
 ------------------
