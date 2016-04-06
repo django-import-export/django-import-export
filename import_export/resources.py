@@ -411,6 +411,8 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
             else:
                 row_result.import_type = RowResult.IMPORT_TYPE_UPDATE
             row_result.new_record = new
+            row_result.object_repr = force_text(instance)
+            row_result.object_id = instance.pk
             original = deepcopy(instance)
             if self.for_delete(row, instance):
                 if new:
