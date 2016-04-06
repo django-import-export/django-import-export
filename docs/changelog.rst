@@ -4,6 +4,8 @@ Changelog
 0.4.5 (unreleased)
 ------------------
 
+- Add FloatWidget, use with model fields models.FloatField (#433)
+
 - Fix default values in fields (#431, #364)
 
   Field constructor `default` argument is NOT_PROVIDED instead of None

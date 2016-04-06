@@ -60,3 +60,7 @@ class WithDynamicDefault(models.Model):
 
     name = models.CharField('Dyn Default', max_length=100,
             default=random_name)
+
+
+class WithFloatField(models.Model):
+    f = models.FloatField(blank=True, null=True)

@@ -17,7 +17,10 @@ from django.utils.html import strip_tags
 from import_export import fields, resources, results, widgets
 from import_export.instance_loaders import ModelInstanceLoader
 
-from ..models import Author, Book, Category, Entry, Profile, WithDefault, WithDynamicDefault
+from ..models import (
+    Author, Book, Category, Entry, Profile, WithDefault, WithDynamicDefault,
+    WithFloatField,
+)
 
 try:
     from django.utils.encoding import force_text
@@ -614,6 +617,19 @@ class ModelResourceTest(TestCase):
         resource.import_data(dataset, raise_errors=False)
         objs = WithDynamicDefault.objects.all()
         self.assertNotEqual(objs[0].name, objs[1].name)
+
+    def test_float_field(self):
+        #433
+        class R(resources.ModelResource):
+            class Meta:
+                model = WithFloatField
+        resource = R()
+        dataset = tablib.Dataset(headers=['id', 'f', ])
+        dataset.append([None, None])
+        dataset.append([None, ''])
+        resource.import_data(dataset, raise_errors=True)
+        self.assertEqual(WithFloatField.objects.all()[0].f, None)
+        self.assertEqual(WithFloatField.objects.all()[1].f, None)
 
 
 class ModelResourceTransactionTest(TransactionTestCase):

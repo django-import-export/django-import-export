@@ -58,6 +58,17 @@ class NumberWidget(Widget):
         return value
 
 
+class FloatWidget(NumberWidget):
+    """
+    Widget for converting floats fields.
+    """
+
+    def clean(self, value):
+        if self.is_empty(value):
+            return None
+        return float(value)
+
+
 class IntegerWidget(NumberWidget):
     """
     Widget for converting integer fields.
