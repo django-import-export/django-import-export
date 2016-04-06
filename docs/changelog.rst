@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.4.5 (unreleased)
+0.4.5 (2016-04-06)
 ------------------
 
 - Add FloatWidget, use with model fields models.FloatField (#433)
