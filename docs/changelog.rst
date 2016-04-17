@@ -4,7 +4,7 @@ Changelog
 0.4.6 (unreleased)
 ------------------
 
-- Nothing changed yet.
+-add **kwargs to export_data / create_dataset
 
 
 0.4.5 (2016-04-06)
