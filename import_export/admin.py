@@ -29,6 +29,7 @@ from .resources import (
 from .formats import base_formats
 from .results import RowResult
 from .tmp_storages import TempFolderStorage
+from .signals import post_export, post_import
 
 try:
     from django.utils.encoding import force_text
@@ -189,6 +190,8 @@ class ImportMixin(ImportExportMixinBase):
 
             messages.success(request, success_message)
             tmp_storage.remove()
+
+            post_import.send(sender=None, model=self.model)
 
             url = reverse('admin:%s_%s_changelist' % self.get_model_info(),
                           current_app=self.admin_site.name)
@@ -364,6 +367,8 @@ class ExportMixin(ImportExportMixinBase):
             response['Content-Disposition'] = 'attachment; filename=%s' % (
                 self.get_export_filename(file_format),
             )
+
+            post_export.send(sender=None, model=self.model)
             return response
 
         context = {}
