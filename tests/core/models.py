@@ -34,9 +34,14 @@ class Book(models.Model):
     price = models.DecimalField(max_digits=10, decimal_places=2, null=True,
                                 blank=True)
     categories = models.ManyToManyField(Category, blank=True)
+    isbn = models.ForeignKey('ISBN', to_field='code', blank=True, null=True)
 
     def __str__(self):
         return self.name
+
+
+class ISBN(models.Model):
+    code = models.CharField('ISBN code', max_length=20, unique=True)
 
 
 class Profile(models.Model):

@@ -19,7 +19,7 @@ from import_export.instance_loaders import ModelInstanceLoader
 
 from ..models import (
     Author, Book, Category, Entry, Profile, WithDefault, WithDynamicDefault,
-    WithFloatField,
+    WithFloatField, ISBN
 )
 
 try:
@@ -155,6 +155,10 @@ class ModelResourceTest(TestCase):
         widget = fields['author'].widget
         self.assertIsInstance(widget, widgets.ForeignKeyWidget)
         self.assertEqual(widget.model, Author)
+        widget = fields['isbn'].widget
+        self.assertIsInstance(widget, widgets.ForeignKeyWidget)
+        self.assertEqual(widget.model, ISBN)
+        self.assertEqual(widget.field, 'code')
 
     def test_fields_m2m(self):
         fields = self.resource.fields
@@ -208,7 +212,7 @@ class ModelResourceTest(TestCase):
         headers = self.resource.get_export_headers()
         self.assertEqual(headers, ['published_date', 'id', 'name', 'author',
                                    'author_email', 'published_time', 'price',
-                                   'categories', ])
+                                   'categories', 'isbn'])
 
     def test_export(self):
         dataset = self.resource.export(Book.objects.all())
