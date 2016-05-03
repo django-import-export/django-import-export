@@ -339,12 +339,12 @@ class ExportMixin(ImportExportMixinBase):
         except AttributeError:
             return cl.query_set
 
-    def get_export_data(self, file_format, queryset):
+    def get_export_data(self, file_format, queryset, *args, **kwargs):
         """
         Returns file_format representation for given queryset.
         """
         resource_class = self.get_export_resource_class()
-        data = resource_class().export(queryset)
+        data = resource_class().export(queryset, *args, **kwargs)
         export_data = file_format.export_data(data)
         return export_data
 
@@ -357,7 +357,7 @@ class ExportMixin(ImportExportMixinBase):
             ]()
 
             queryset = self.get_export_queryset(request)
-            export_data = self.get_export_data(file_format, queryset)
+            export_data = self.get_export_data(file_format, queryset, user=request.user)
             content_type = file_format.get_content_type()
             # Django 1.7 uses the content_type kwarg instead of mimetype
             try:

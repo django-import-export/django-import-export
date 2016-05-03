@@ -549,7 +549,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
             force_text(field.column_name) for field in self.get_fields()]
         return headers
 
-    def export(self, queryset=None):
+    def export(self, queryset=None, *args, **kwargs):
         """
         Exports a resource.
         """
