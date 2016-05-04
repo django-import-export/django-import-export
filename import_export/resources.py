@@ -534,6 +534,19 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         order = tuple(self._meta.export_order or ())
         return order + tuple(k for k in self.fields.keys() if k not in order)
 
+
+    def before_export(self, queryset, *args, **kwargs):
+        """
+        Override to add additional logic. Does nothing by default.
+        """
+        pass
+
+    def after_export(self, queryset, data, *args, **kwargs):
+        """
+        Override to add additional logic. Does nothing by default.
+        """
+        pass
+
     def export_field(self, field, obj):
         field_name = self.get_field_name(field)
         method = getattr(self, 'dehydrate_%s' % field_name, None)
@@ -553,6 +566,9 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         """
         Exports a resource.
         """
+
+        self.before_export(queryset, *args, **kwargs)
+
         if queryset is None:
             queryset = self.get_queryset()
         headers = self.get_export_headers()
@@ -566,6 +582,9 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
             iterable = queryset
         for obj in iterable:
             data.append(self.export_resource(obj))
+
+        self.after_export(queryset, data, *args, **kwargs)
+
         return data
 
 
