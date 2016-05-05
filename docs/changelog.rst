@@ -4,6 +4,8 @@ Changelog
 0.4.6 (unreleased)
 ------------------
 
+- Add before_export and after_export hooks (#449)
+
 - fire events post_import, post_export events (#440)
 
 - add **kwargs to export_data / create_dataset
