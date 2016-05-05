@@ -259,7 +259,7 @@ class ImportMixin(ImportExportMixinBase):
 
         context['form'] = form
         context['opts'] = self.model._meta
-        context['fields'] = [f.column_name for f in resource.get_fields()]
+        context['fields'] = [f.column_name for f in resource.get_fields(user=request.user)]
 
         request.current_app = self.admin_site.name
         return TemplateResponse(request, [self.import_template_name],

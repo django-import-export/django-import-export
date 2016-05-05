@@ -198,7 +198,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         else:
             return self._meta.use_transactions
 
-    def get_fields(self):
+    def get_fields(self, **kwargs):
         """
         Returns fields sorted according to
         :attr:`~import_export.resources.ResourceOptions.export_order`.
