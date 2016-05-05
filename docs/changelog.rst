@@ -4,6 +4,8 @@ Changelog
 0.4.6 (unreleased)
 ------------------
 
+- Expose Django user to get_export_data() and export() (#447)
+
 - Add before_export and after_export hooks (#449)
 
 - fire events post_import, post_export events (#440)
