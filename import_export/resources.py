@@ -391,6 +391,18 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         """
         pass
 
+    def before_import_row(self, row, **kwargs):
+        """
+        Override to add additional logic. Does nothing by default.
+        """
+        pass
+
+    def after_import_row(self, row, row_result, **kwargs):
+        """
+        Override to add additional logic. Does nothing by default.
+        """
+        pass
+
     def import_row(self, row, instance_loader, dry_run=False, **kwargs):
         """
         Imports data from ``tablib.Dataset``. Refer to :doc:`import_workflow`
@@ -405,6 +417,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         """
         try:
             row_result = self.get_row_result_class()()
+            self.before_import_row(row, **kwargs)
             instance, new = self.get_or_init_instance(instance_loader, row)
             if new:
                 row_result.import_type = RowResult.IMPORT_TYPE_NEW
@@ -434,6 +447,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
                     row_result.object_repr = force_text(instance)
                     row_result.object_id = instance.pk
                 row_result.diff = self.get_diff(original, instance, dry_run)
+            self.after_import_row(row, row_result, **kwargs)
         except Exception as e:
             # There is no point logging a transaction error for each row
             # when only the original error is likely to be relevant
