@@ -40,6 +40,8 @@ This is what happens when the method is invoked:
 
 #. Each row of the to-be-imported dataset is processed according to the following steps:
 
+   #. The :meth:`~import_export.resources.Resource.before_import_row` hook is called to allow for row data to be modified before it is imported
+
    #. :meth:`~import_export.resources.Resource.get_or_init_instance` is called
       with current :class:`~import_export.instance_loaders.BaseInstanceLoader`
       and current row of the dataset, returning an object and a Boolean
@@ -107,6 +109,9 @@ This is what happens when the method is invoked:
       If either the row was not skipped or the
       :class:`~import_export.resources.Resource` is configured to report
       skipped rows, the :class:`~import_export.results.RowResult` is appended to the :class:`~import_export.results.Result`
+
+   #. The :meth:`~import_export.resources.Resource.after_import_row` hook is called
+
 #. The :class:`~import_export.results.Result` is returned.
 
 Transaction support
