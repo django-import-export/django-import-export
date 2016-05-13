@@ -118,11 +118,11 @@ class ImportMixin(ImportExportMixinBase):
         ]
         return my_urls + urls
 
-    def get_resource_kwargs(self, user, *args, **kwargs):
+    def get_resource_kwargs(self, request, *args, **kwargs):
         return {}
 
-    def get_import_resource_kwargs(self, user, *args, **kwargs):
-        return self.get_resource_kwargs(user, *args, **kwargs)
+    def get_import_resource_kwargs(self, request, *args, **kwargs):
+        return self.get_resource_kwargs(request, *args, **kwargs)
 
     def get_resource_class(self):
         if not self.resource_class:
@@ -210,7 +210,7 @@ class ImportMixin(ImportExportMixinBase):
         uploaded file to a local temp file that will be used by
         'process_import' for the actual import.
         '''
-        resource = self.get_import_resource_class()(**self.get_import_resource_kwargs(request.user, *args, **kwargs))
+        resource = self.get_import_resource_class()(**self.get_import_resource_kwargs(request, *args, **kwargs))
 
         context = {}
 
@@ -296,11 +296,11 @@ class ExportMixin(ImportExportMixinBase):
         ]
         return my_urls + urls
 
-    def get_resource_kwargs(self, user, *args, **kwargs):
+    def get_resource_kwargs(self, request, *args, **kwargs):
         return {}
 
-    def get_export_resource_kwargs(self, user, *args, **kwargs):
-        return self.get_resource_kwargs(user, *args, **kwargs)
+    def get_export_resource_kwargs(self, request, *args, **kwargs):
+        return self.get_resource_kwargs(request, *args, **kwargs)
 
     def get_resource_class(self):
         if not self.resource_class:
@@ -355,9 +355,9 @@ class ExportMixin(ImportExportMixinBase):
         """
         Returns file_format representation for given queryset.
         """
-        user = kwargs.pop("user")
+        request = kwargs.pop("request")
         resource_class = self.get_export_resource_class()
-        data = resource_class(**self.get_export_resource_kwargs(user)).export(queryset, *args, **kwargs)
+        data = resource_class(**self.get_export_resource_kwargs(request)).export(queryset, *args, **kwargs)
         export_data = file_format.export_data(data)
         return export_data
 
@@ -448,7 +448,7 @@ class ExportActionModelAdmin(ExportMixin, admin.ModelAdmin):
             formats = self.get_export_formats()
             file_format = formats[int(export_format)]()
 
-            export_data = self.get_export_data(file_format, queryset, user=request.user)
+            export_data = self.get_export_data(file_format, queryset, request=request)
             content_type = file_format.get_content_type()
             # Django 1.7 uses the content_type kwarg instead of mimetype
             try:
