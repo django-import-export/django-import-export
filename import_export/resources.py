@@ -351,7 +351,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         """
         data = []
         dmp = diff_match_patch()
-        for field in self.get_fields():
+        for field in self.get_user_visible_fields():
             v1 = self.export_field(field, original) if original else ""
             v2 = self.export_field(field, current) if current else ""
             if v1 != v2 and new:
@@ -580,6 +580,9 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         headers = [
             force_text(field.column_name) for field in self.get_export_fields()]
         return headers
+
+    def get_user_visible_fields(self):
+        return self.get_fields()
 
     def export(self, queryset=None, *args, **kwargs):
         """
