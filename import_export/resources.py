@@ -523,7 +523,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
                 result.totals[row_result.import_type] += 1
             if (row_result.import_type != RowResult.IMPORT_TYPE_SKIP or
                     self._meta.report_skipped):
-                result.rows.append(row_result)
+                result.append_row_result(row_result)
 
         try:
             self.after_import(dataset, result, real_dry_run, **kwargs)
