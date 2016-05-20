@@ -568,12 +568,15 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
             return method(obj)
         return field.export(obj)
 
+    def get_export_fields(self):
+        return self.get_fields()
+
     def export_resource(self, obj):
-        return [self.export_field(field, obj) for field in self.get_fields()]
+        return [self.export_field(field, obj) for field in self.get_export_fields()]
 
     def get_export_headers(self):
         headers = [
-            force_text(field.column_name) for field in self.get_fields()]
+            force_text(field.column_name) for field in self.get_export_fields()]
         return headers
 
     def export(self, queryset=None, *args, **kwargs):
