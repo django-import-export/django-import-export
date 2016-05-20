@@ -148,7 +148,7 @@ class ImportMixin(ImportExportMixinBase):
         wishes to import)
         '''
         opts = self.model._meta
-        resource = self.get_import_resource_class()()
+        resource = self.get_import_resource_class()(**self.get_import_resource_kwargs(request, *args, **kwargs))
 
         confirm_form = ConfirmImportForm(request.POST)
         if confirm_form.is_valid():
