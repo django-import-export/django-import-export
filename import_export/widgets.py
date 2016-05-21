@@ -55,7 +55,7 @@ class NumberWidget(Widget):
         return value is None or value == ""
 
     def render(self, value):
-        return value
+        return value.replace(',','')
 
 
 class FloatWidget(NumberWidget):
@@ -90,6 +90,13 @@ class DecimalWidget(NumberWidget):
             return None
         return Decimal(value)
 
+class CurrencyWidget(DecimalWidget):
+    """
+    Widget for converting currently values with $ and , symbols"""
+    def clean(self, value):
+        if not value:
+            return None
+        return value.replace('$','').replace(',','')
 
 class CharWidget(Widget):
     """
