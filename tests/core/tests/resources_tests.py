@@ -220,7 +220,7 @@ class ModelResourceTest(TestCase):
 
     def test_get_diff(self):
         book2 = Book(name="Some other book")
-        diff = self.resource.get_diff(self.book, book2)
+        diff = self.resource.get_diff(self.book, False, book2)
         headers = self.resource.get_export_headers()
         self.assertEqual(diff[headers.index('name')],
                          u'<span>Some </span><ins style="background:#e6ffe6;">'
@@ -235,7 +235,7 @@ class ModelResourceTest(TestCase):
         author2 = Author(name="Some author")
         self.book.author = author
         self.book.save()
-        diff = resource.get_diff(author2, author)
+        diff = resource.get_diff(author2, False, author)
         headers = resource.get_export_headers()
         self.assertEqual(diff[headers.index('books')],
                          '<span>core.Book.None</span>')
