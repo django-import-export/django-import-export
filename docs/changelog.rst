@@ -4,6 +4,12 @@ Changelog
 0.4.6 (unreleased)
 ------------------
 
+- Hide default value in diff when importing a new instance (#458)
+
+- Append rows to Result object via function call to allow overriding (#462)
+
+- Add get_resource_kwargs to allow passing request to resource (#457) 
+
 - Expose Django user to get_export_data() and export() (#447)
 
 - Add before_export and after_export hooks (#449)
