@@ -29,6 +29,9 @@ class Result(object):
         self.base_errors = []
         self.rows = []
 
+    def append_row_result(self, row_result):
+        self.rows.append(row_result)
+
     def row_errors(self):
         return [(i + 1, row.errors)
                 for i, row in enumerate(self.rows) if row.errors]
