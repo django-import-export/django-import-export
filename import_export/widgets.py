@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 
 from decimal import Decimal
 from datetime import datetime
-from django.utils import datetime_safe, timezone
+from django.utils import datetime_safe, timezone, six
 from django.utils.encoding import smart_text
 from django.conf import settings
 
@@ -225,6 +225,20 @@ class TimeWidget(Widget):
         if not value:
             return ""
         return value.strftime(self.formats[0])
+
+
+class SimpleArrayWidget(Widget):
+    def __init__(self, separator=None):
+        if separator is None:
+            separator = ','
+        self.separator = separator
+        super(SimpleArrayWidget, self).__init__()
+
+    def clean(self, value):
+        return value.split(self.separator) if value else []
+
+    def render(self, value):
+        return self.separator.join(six.text_type(v) for v in value)
 
 
 class ForeignKeyWidget(Widget):

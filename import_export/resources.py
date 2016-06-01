@@ -33,6 +33,7 @@ if VERSION < (1, 8):
     from django.db.models.related import RelatedObject
     ForeignObjectRel = RelatedObject
 else:
+    from django.contrib.postgres.fields import ArrayField
     from django.db.models.fields.related import ForeignObjectRel
     RelatedObject = None
 
@@ -725,6 +726,9 @@ class ModelResource(six.with_metaclass(ModelDeclarativeMetaclass, Resource)):
             result = widgets.IntegerWidget
         elif internal_type in ('BooleanField', 'NullBooleanField'):
             result = widgets.BooleanWidget
+        elif VERSION >= (1, 8):
+            if type(f) == ArrayField:
+                return widgets.SimpleArrayWidget
         return result
 
     @classmethod
