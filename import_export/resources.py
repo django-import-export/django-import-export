@@ -703,7 +703,7 @@ class ModelResource(six.with_metaclass(ModelDeclarativeMetaclass, Resource)):
         Django type.
         """
         result = default
-        internal_type = f.get_internal_type()
+        internal_type = f.get_internal_type() if callable(getattr(f, "get_internal_type", None)) else ""
         if internal_type in ('ManyToManyField', ):
             result = functools.partial(widgets.ManyToManyWidget,
                                        model=f.rel.to)
