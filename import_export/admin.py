@@ -244,6 +244,18 @@ class ImportMixin(ImportExportMixinBase):
                 return HttpResponse(_(u"<h1>Imported file has a wrong encoding: %s</h1>" % e))
             except Exception as e:
                 return HttpResponse(_(u"<h1>%s encountered while trying to read file: %s</h1>" % (type(e).__name__, import_file.name)))
+
+            if resource._meta.bulk_replace:
+                # No preview
+                resource.bulk_replace_import(dataset)
+                tmp_storage.remove()
+
+                post_import.send(sender=None, model=self.model)
+
+                url = reverse('admin:%s_%s_changelist' % self.get_model_info(),
+                              current_app=self.admin_site.name)
+                return HttpResponseRedirect(url)
+
             result = resource.import_data(dataset, dry_run=True,
                                           raise_errors=False,
                                           file_name=import_file.name,

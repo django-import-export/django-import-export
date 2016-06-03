@@ -124,6 +124,14 @@ class ResourceOptions(object):
     Controls if the result reports skipped rows Default value is True
     """
 
+    bulk_replace = False
+    """
+    Controls if import should be replace old data.
+    Default value is ``False`` meaning the default behavior.
+    ``True`` meaning delete old data totally, use the imported data.
+    and no preview page.
+    """
+
 
 class DeclarativeMetaclass(type):
 
@@ -545,6 +553,17 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
                 savepoint_commit(sp1)
 
         return result
+
+    @atomic()
+    def bulk_replace_import(self, dataset):
+        """
+
+        :param dataset: A ``tablib.Dataset``
+        """
+        data_list = [self._meta.model(**row) for row in dataset.dict]
+
+        self._meta.model.objects.all().delete()
+        self._meta.model.objects.bulk_create(data_list)
 
     def get_export_order(self):
         order = tuple(self._meta.export_order or ())
