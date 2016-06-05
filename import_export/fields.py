@@ -120,3 +120,75 @@ class Field(object):
         if value is None:
             return ""
         return self.widget.render(value)
+
+
+class CombinedField(Field):
+    def __init__(self, model, mapping, *args, **kwargs):
+        self.model = model
+        self.mapping = mapping
+        super().__init__(*args, **kwargs)
+
+    def clean(self, data):
+        search = {}
+        for csvfield, modelfield in self.mapping.items():
+            search[modelfield] = data.get(csvfield)
+        return self.model.objects.get(**search)
+
+
+class CachedCombinedField(Field):
+    """
+    class PropertyImportResource(resources.ModelResource):
+        client = CachedCombinedField(
+            column_name='client',
+            attribute='client',
+            model=Client,
+            mapping={
+                # { csv field name: client model field name }
+                'client': 'name',
+                'primary_contact': 'primary_contact',
+            },
+    )
+    """
+    cached_instances = None
+
+    def __init__(self, model, mapping, *args, **kwargs):
+        self.model = model
+        self.mapping = mapping # { csv row heading => client model field name }
+        self.cache_keys = self.mapping.keys() # Do this once, order is important and not guarenteed otherwise
+        super().__init__(*args, **kwargs)
+
+    def build_cache(self, cache_keys, mapping):
+        cache = {}
+        # this will look like:
+        # cache[("Vic Body Corp Serv", "Manager #1")]
+        for row in self.model.objects.all():
+            key = ()
+            for csv_field_name in cache_keys:
+                model_field_name = mapping[csv_field_name]
+                key = key + (getattr(row, model_field_name), )
+            cache[key] = row
+        return cache
+
+    def clean(self, data):
+        # Build the cache if it doesn't exist
+        if not self.cached_instances:
+            self.cached_instances = self.build_cache(self.cache_keys, self.mapping)
+
+        # Grab the CSV values in the correct order
+        key = ()
+        for csv_field_name in self.cache_keys:
+            value = data.get(csv_field_name)
+            key = key + (self.widget.clean(value), )
+
+        obj = self.cached_instances.get(key, False)
+
+        # Build a nice error message
+        if not obj:
+            search = [self.mapping[csv_field_name] for csv_field_name in self.cache_keys]
+            raise ValueError('{model} not found matching {search} = {values}'.format(
+                model=self.model.__name__,
+                search=tuple(search),
+                values=key
+            ))
+
+        return obj
