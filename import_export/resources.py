@@ -428,7 +428,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
             row_result.object_repr = force_text(instance)
             row_result.object_id = instance.pk
             original = deepcopy(instance)
-            original_fields = [self.export_field(f, original) if original else "" for f in self.get_fields()]
+            original_fields = [self.export_field(f, original) if original else "" for f in self.get_user_visible_fields()]
             if self.for_delete(row, instance):
                 if new:
                     row_result.import_type = RowResult.IMPORT_TYPE_SKIP
@@ -448,7 +448,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
                     # Add object info to RowResult for LogEntry
                     row_result.object_repr = force_text(instance)
                     row_result.object_id = instance.pk
-                instance_fields = [self.export_field(f, instance) if instance else "" for f in self.get_fields()]
+                instance_fields = [self.export_field(f, instance) if instance else "" for f in self.get_user_visible_fields()]
                 row_result.diff = self.get_diff(original_fields, new, instance_fields, dry_run)
             self.after_import_row(row, row_result, **kwargs)
         except Exception as e:
@@ -581,6 +581,9 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         headers = [
             force_text(field.column_name) for field in self.get_export_fields()]
         return headers
+
+    def get_user_visible_fields(self):
+        return self.get_fields()
 
     def export(self, queryset=None, *args, **kwargs):
         """
