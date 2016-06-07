@@ -219,8 +219,12 @@ class ModelResourceTest(TestCase):
         self.assertEqual(len(dataset), 1)
 
     def test_get_diff(self):
+        book_fields = [self.resource.export_field(f, self.book) if self.book else ""
+                       for f in self.resource.get_user_visible_fields()]
         book2 = Book(name="Some other book")
-        diff = self.resource.get_diff(self.book, False, book2)
+        book2_fields = [self.resource.export_field(f, book2) if book2 else ""
+                        for f in self.resource.get_user_visible_fields()]
+        diff = self.resource.get_diff(book_fields, False, book2_fields)
         headers = self.resource.get_export_headers()
         self.assertEqual(diff[headers.index('name')],
                          u'<span>Some </span><ins style="background:#e6ffe6;">'
@@ -235,7 +239,11 @@ class ModelResourceTest(TestCase):
         author2 = Author(name="Some author")
         self.book.author = author
         self.book.save()
-        diff = resource.get_diff(author2, False, author)
+        author_fields = [self.resource.export_field(f, author) if author else ""
+                         for f in self.resource.get_user_visible_fields()]
+        author2_fields = [self.resource.export_field(f, author2) if author2 else ""
+                          for f in self.resource.get_user_visible_fields()]
+        diff = resource.get_diff(author2_fields, False, author_fields)
         headers = resource.get_export_headers()
         self.assertEqual(diff[headers.index('books')],
                          '<span>core.Book.None</span>')
