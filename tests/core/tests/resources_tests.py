@@ -705,3 +705,35 @@ class PostgresTests(TransactionTestCase):
             Book.objects.create(name='Some other book')
         except IntegrityError:
             self.fail('IntegrityError was raised.')
+
+
+class ManyRelatedManagerDiffTest(TestCase):
+    fixtures = ["category"]
+
+    def setUp(self):
+        pass
+
+    def test_related_manager_diff(self):
+        dataset_headers = ["id", "name", "categories"]
+        dataset_row = ["1", "Test Book", "1"]
+        original_dataset = tablib.Dataset(headers=dataset_headers)
+        original_dataset.append(dataset_row)
+        dataset_row[2] = "2"
+        changed_dataset = tablib.Dataset(headers=dataset_headers)
+        changed_dataset.append(dataset_row)
+
+        book_resource = BookResource()
+        export_headers = book_resource.get_export_headers()
+
+        add_result = book_resource.import_data(original_dataset, dry_run=False)
+        expected_value = u'<ins style="background:#e6ffe6;">1</ins>'
+        self.check_value(add_result, export_headers, expected_value)
+        change_result = book_resource.import_data(changed_dataset, dry_run=False)
+        expected_value = u'<del style="background:#ffe6e6;">1</del><ins style="background:#e6ffe6;">2</ins>'
+        self.check_value(change_result, export_headers, expected_value)
+
+    def check_value(self, result, export_headers, expected_value):
+        self.assertEqual(len(result.rows), 1)
+        diff = result.rows[0].diff
+        self.assertEqual(diff[export_headers.index("categories")],
+                         expected_value)
