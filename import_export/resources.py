@@ -432,11 +432,11 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
             if self.for_delete(row, instance):
                 if new:
                     row_result.import_type = RowResult.IMPORT_TYPE_SKIP
-                    row_result.diff = self.get_diff(None, False, None, dry_run)
+                    row_result.diff = self.get_diff([], False, [], dry_run)
                 else:
                     row_result.import_type = RowResult.IMPORT_TYPE_DELETE
                     self.delete_instance(instance, dry_run)
-                    row_result.diff = self.get_diff(original, False, None, dry_run)
+                    row_result.diff = self.get_diff(original_fields, False, [], dry_run)
             else:
                 self.import_obj(instance, row, dry_run)
                 if self.skip_row(instance, original):
