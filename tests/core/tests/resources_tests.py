@@ -6,6 +6,7 @@ from datetime import date
 from decimal import Decimal
 from unittest import skip, skipUnless
 
+from django import VERSION
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import IntegrityError
@@ -705,3 +706,30 @@ class PostgresTests(TransactionTestCase):
             Book.objects.create(name='Some other book')
         except IntegrityError:
             self.fail('IntegrityError was raised.')
+
+
+if VERSION >= (1, 8) and 'postgresql' in settings.DATABASES['default']['ENGINE']:
+    from django.contrib.postgres.fields import ArrayField
+    from django.db import models
+
+    class BookWithChapters(models.Model):
+        name = models.CharField('Book name', max_length=100)
+        chapters = ArrayField(models.CharField(max_length=100), default=list)
+
+    class ArrayFieldTest(TestCase):
+        fixtures = []
+
+        def setUp(self):
+            pass
+
+        def test_arrayfield(self):
+            dataset_headers = ["id", "name", "chapters"]
+            chapters = ["Introduction", "Middle Chapter", "Ending"]
+            dataset_row = ["1", "Book With Chapters", ",".join(chapters)]
+            dataset = tablib.Dataset(headers=dataset_headers)
+            dataset.append(dataset_row)
+            book_with_chapters_resource = resources.modelresource_factory(model=BookWithChapters)()
+            result = book_with_chapters_resource.import_data(dataset, dry_run=False)
+            self.assertFalse(result.has_errors())
+            book_with_chapters = list(BookWithChapters.objects.all())[0]
+            self.assertListEqual(book_with_chapters.chapters, chapters)
