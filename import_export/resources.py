@@ -124,6 +124,13 @@ class ResourceOptions(object):
     Controls if the result reports skipped rows Default value is True
     """
 
+    use_iterator = True
+    """
+    Controls if export should use queryset iterator. Default value is
+    ``True``. Set to ``False`` if you want to use prefetch_related in
+    the export_queryset
+    """
+
 
 class DeclarativeMetaclass(type):
 
@@ -596,7 +603,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         headers = self.get_export_headers()
         data = tablib.Dataset(headers=headers)
 
-        if isinstance(queryset, QuerySet):
+        if self._meta.use_iterator and isinstance(queryset, QuerySet):
             # Iterate without the queryset cache, to avoid wasting memory when
             # exporting large datasets.
             iterable = queryset.iterator()
