@@ -16,6 +16,7 @@ from django.utils.html import strip_tags
 
 from import_export import fields, resources, results, widgets
 from import_export.instance_loaders import ModelInstanceLoader
+from import_export.resources import Diff
 
 from ..models import (
     Author, Book, Category, Entry, Profile, WithDefault, WithDynamicDefault,
@@ -219,17 +220,15 @@ class ModelResourceTest(TestCase):
         self.assertEqual(len(dataset), 1)
 
     def test_get_diff(self):
-        book_fields = [self.resource.export_field(f, self.book) if self.book else ""
-                       for f in self.resource.get_user_visible_fields()]
+        diff = Diff(self.resource, self.book, False)
         book2 = Book(name="Some other book")
-        book2_fields = [self.resource.export_field(f, book2) if book2 else ""
-                        for f in self.resource.get_user_visible_fields()]
-        diff = self.resource.get_diff(book_fields, False, book2_fields)
+        diff.compare_with(self.resource, book2)
+        html = diff.as_html()
         headers = self.resource.get_export_headers()
-        self.assertEqual(diff[headers.index('name')],
+        self.assertEqual(html[headers.index('name')],
                          u'<span>Some </span><ins style="background:#e6ffe6;">'
                          u'other </ins><span>book</span>')
-        self.assertFalse(diff[headers.index('author_email')])
+        self.assertFalse(html[headers.index('author_email')])
 
     @skip("See: https://github.com/django-import-export/django-import-export/issues/311")
     def test_get_diff_with_callable_related_manager(self):
@@ -239,13 +238,11 @@ class ModelResourceTest(TestCase):
         author2 = Author(name="Some author")
         self.book.author = author
         self.book.save()
-        author_fields = [self.resource.export_field(f, author) if author else ""
-                         for f in self.resource.get_user_visible_fields()]
-        author2_fields = [self.resource.export_field(f, author2) if author2 else ""
-                          for f in self.resource.get_user_visible_fields()]
-        diff = resource.get_diff(author2_fields, False, author_fields)
+        diff = Diff(self.resource, author, False)
+        diff.compare_with(self.resource, author2)
+        html = diff.as_html()
         headers = resource.get_export_headers()
-        self.assertEqual(diff[headers.index('books')],
+        self.assertEqual(html[headers.index('books')],
                          '<span>core.Book.None</span>')
 
     def test_import_data(self):

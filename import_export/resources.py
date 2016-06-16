@@ -1,8 +1,6 @@
 from __future__ import unicode_literals
 
-import itertools
 import functools
-import sys
 import tablib
 import traceback
 from copy import deepcopy
@@ -172,13 +170,13 @@ class Diff(object):
         self.right = []
         self.new = new
 
-    def compare_with(self, resource, instance, dry_run):
+    def compare_with(self, resource, instance, dry_run=False):
         self.right = self._export_resource_fields(resource, instance)
 
     def as_html(self):
         data = []
         dmp = diff_match_patch()
-        for v1, v2 in itertools.izip(self.left, self.right):
+        for v1, v2 in zip(self.left, self.right):
             if v1 != v2 and self.new:
                 v1 = ""
             diff = dmp.diff_main(force_text(v1), force_text(v2))
@@ -367,26 +365,6 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
                 if field.get_value(instance) != field.get_value(original):
                     return False
         return True
-
-    def get_diff(self, original_fields, new, current_fields, dry_run=False):
-        """
-        Get diff between original and current object when ``import_data``
-        is run.
-
-        ``dry_run`` allows handling special cases when object is not saved
-        to database (ie. m2m relationships).
-        """
-        data = []
-        dmp = diff_match_patch()
-        for v1, v2 in itertools.izip(original_fields, current_fields):
-            if v1 != v2 and new:
-                v1 = ""
-            diff = dmp.diff_main(force_text(v1), force_text(v2))
-            dmp.diff_cleanupSemantic(diff)
-            html = dmp.diff_prettyHtml(diff)
-            html = mark_safe(html)
-            data.append(html)
-        return data
 
     def get_diff_headers(self):
         """
