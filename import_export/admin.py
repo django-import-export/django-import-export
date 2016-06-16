@@ -118,6 +118,12 @@ class ImportMixin(ImportExportMixinBase):
         ]
         return my_urls + urls
 
+    def get_resource_kwargs(self, request, *args, **kwargs):
+        return {}
+
+    def get_import_resource_kwargs(self, request, *args, **kwargs):
+        return self.get_resource_kwargs(request, *args, **kwargs)
+
     def get_resource_class(self):
         if not self.resource_class:
             return modelresource_factory(self.model)
@@ -142,7 +148,7 @@ class ImportMixin(ImportExportMixinBase):
         wishes to import)
         '''
         opts = self.model._meta
-        resource = self.get_import_resource_class()()
+        resource = self.get_import_resource_class()(**self.get_import_resource_kwargs(request, *args, **kwargs))
 
         confirm_form = ConfirmImportForm(request.POST)
         if confirm_form.is_valid():
@@ -204,7 +210,7 @@ class ImportMixin(ImportExportMixinBase):
         uploaded file to a local temp file that will be used by
         'process_import' for the actual import.
         '''
-        resource = self.get_import_resource_class()()
+        resource = self.get_import_resource_class()(**self.get_import_resource_kwargs(request, *args, **kwargs))
 
         context = {}
 
@@ -259,7 +265,7 @@ class ImportMixin(ImportExportMixinBase):
 
         context['form'] = form
         context['opts'] = self.model._meta
-        context['fields'] = [f.column_name for f in resource.get_fields(user=request.user)]
+        context['fields'] = [f.column_name for f in resource.get_user_visible_fields()]
 
         request.current_app = self.admin_site.name
         return TemplateResponse(request, [self.import_template_name],
@@ -289,6 +295,12 @@ class ExportMixin(ImportExportMixinBase):
                 name='%s_%s_export' % self.get_model_info()),
         ]
         return my_urls + urls
+
+    def get_resource_kwargs(self, request, *args, **kwargs):
+        return {}
+
+    def get_export_resource_kwargs(self, request, *args, **kwargs):
+        return self.get_resource_kwargs(request, *args, **kwargs)
 
     def get_resource_class(self):
         if not self.resource_class:
@@ -343,8 +355,9 @@ class ExportMixin(ImportExportMixinBase):
         """
         Returns file_format representation for given queryset.
         """
+        request = kwargs.pop("request")
         resource_class = self.get_export_resource_class()
-        data = resource_class().export(queryset, *args, **kwargs)
+        data = resource_class(**self.get_export_resource_kwargs(request)).export(queryset, *args, **kwargs)
         export_data = file_format.export_data(data)
         return export_data
 
@@ -357,7 +370,7 @@ class ExportMixin(ImportExportMixinBase):
             ]()
 
             queryset = self.get_export_queryset(request)
-            export_data = self.get_export_data(file_format, queryset, user=request.user)
+            export_data = self.get_export_data(file_format, queryset, request=request)
             content_type = file_format.get_content_type()
             # Django 1.7 uses the content_type kwarg instead of mimetype
             try:
@@ -435,7 +448,7 @@ class ExportActionModelAdmin(ExportMixin, admin.ModelAdmin):
             formats = self.get_export_formats()
             file_format = formats[int(export_format)]()
 
-            export_data = self.get_export_data(file_format, queryset)
+            export_data = self.get_export_data(file_format, queryset, request=request)
             content_type = file_format.get_content_type()
             # Django 1.7 uses the content_type kwarg instead of mimetype
             try:

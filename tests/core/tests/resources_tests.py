@@ -219,8 +219,12 @@ class ModelResourceTest(TestCase):
         self.assertEqual(len(dataset), 1)
 
     def test_get_diff(self):
+        book_fields = [self.resource.export_field(f, self.book) if self.book else ""
+                       for f in self.resource.get_user_visible_fields()]
         book2 = Book(name="Some other book")
-        diff = self.resource.get_diff(self.book, book2)
+        book2_fields = [self.resource.export_field(f, book2) if book2 else ""
+                        for f in self.resource.get_user_visible_fields()]
+        diff = self.resource.get_diff(book_fields, False, book2_fields)
         headers = self.resource.get_export_headers()
         self.assertEqual(diff[headers.index('name')],
                          u'<span>Some </span><ins style="background:#e6ffe6;">'
@@ -235,7 +239,11 @@ class ModelResourceTest(TestCase):
         author2 = Author(name="Some author")
         self.book.author = author
         self.book.save()
-        diff = resource.get_diff(author2, author)
+        author_fields = [self.resource.export_field(f, author) if author else ""
+                         for f in self.resource.get_user_visible_fields()]
+        author2_fields = [self.resource.export_field(f, author2) if author2 else ""
+                          for f in self.resource.get_user_visible_fields()]
+        diff = resource.get_diff(author2_fields, False, author_fields)
         headers = resource.get_export_headers()
         self.assertEqual(diff[headers.index('books')],
                          '<span>core.Book.None</span>')
@@ -705,3 +713,35 @@ class PostgresTests(TransactionTestCase):
             Book.objects.create(name='Some other book')
         except IntegrityError:
             self.fail('IntegrityError was raised.')
+
+
+class ManyRelatedManagerDiffTest(TestCase):
+    fixtures = ["category"]
+
+    def setUp(self):
+        pass
+
+    def test_related_manager_diff(self):
+        dataset_headers = ["id", "name", "categories"]
+        dataset_row = ["1", "Test Book", "1"]
+        original_dataset = tablib.Dataset(headers=dataset_headers)
+        original_dataset.append(dataset_row)
+        dataset_row[2] = "2"
+        changed_dataset = tablib.Dataset(headers=dataset_headers)
+        changed_dataset.append(dataset_row)
+
+        book_resource = BookResource()
+        export_headers = book_resource.get_export_headers()
+
+        add_result = book_resource.import_data(original_dataset, dry_run=False)
+        expected_value = u'<ins style="background:#e6ffe6;">1</ins>'
+        self.check_value(add_result, export_headers, expected_value)
+        change_result = book_resource.import_data(changed_dataset, dry_run=False)
+        expected_value = u'<del style="background:#ffe6e6;">1</del><ins style="background:#e6ffe6;">2</ins>'
+        self.check_value(change_result, export_headers, expected_value)
+
+    def check_value(self, result, export_headers, expected_value):
+        self.assertEqual(len(result.rows), 1)
+        diff = result.rows[0].diff
+        self.assertEqual(diff[export_headers.index("categories")],
+                         expected_value)
