@@ -166,6 +166,32 @@ class DeclarativeMetaclass(type):
         return new_class
 
 
+class Diff(object):
+    def __init__(self, resource, instance, new):
+        self.left = self._export_resource_fields(resource, instance)
+        self.right = []
+        self.new = new
+
+    def compare_with(self, resource, instance, dry_run):
+        self.right = self._export_resource_fields(resource, instance)
+
+    def as_html(self):
+        data = []
+        dmp = diff_match_patch()
+        for v1, v2 in itertools.izip(self.left, self.right):
+            if v1 != v2 and self.new:
+                v1 = ""
+            diff = dmp.diff_main(force_text(v1), force_text(v2))
+            dmp.diff_cleanupSemantic(diff)
+            html = dmp.diff_prettyHtml(diff)
+            html = mark_safe(html)
+            data.append(html)
+        return data
+
+    def _export_resource_fields(self, resource, instance):
+        return [resource.export_field(f, instance) if instance else "" for f in resource.get_user_visible_fields()]
+
+
 class Resource(six.with_metaclass(DeclarativeMetaclass)):
     """
     Resource defines how objects are mapped to their import and export
@@ -428,15 +454,15 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
             row_result.object_repr = force_text(instance)
             row_result.object_id = instance.pk
             original = deepcopy(instance)
-            original_fields = [self.export_field(f, original) if original else "" for f in self.get_user_visible_fields()]
+            diff = Diff(self, original, new)
             if self.for_delete(row, instance):
                 if new:
                     row_result.import_type = RowResult.IMPORT_TYPE_SKIP
-                    row_result.diff = self.get_diff([], False, [], dry_run)
+                    diff.compare_with(self, None, dry_run)
                 else:
                     row_result.import_type = RowResult.IMPORT_TYPE_DELETE
                     self.delete_instance(instance, dry_run)
-                    row_result.diff = self.get_diff(original_fields, False, [], dry_run)
+                    diff.compare_with(self, None, dry_run)
             else:
                 self.import_obj(instance, row, dry_run)
                 if self.skip_row(instance, original):
@@ -448,8 +474,8 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
                     # Add object info to RowResult for LogEntry
                     row_result.object_repr = force_text(instance)
                     row_result.object_id = instance.pk
-                instance_fields = [self.export_field(f, instance) if instance else "" for f in self.get_user_visible_fields()]
-                row_result.diff = self.get_diff(original_fields, new, instance_fields, dry_run)
+                diff.compare_with(self, instance, dry_run)
+            row_result.diff = diff.as_html()
             self.after_import_row(row, row_result, **kwargs)
         except Exception as e:
             # There is no point logging a transaction error for each row
