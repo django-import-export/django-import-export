@@ -34,7 +34,7 @@ class Widget(object):
         """
         return value
 
-    def render(self, value):
+    def render(self, value, obj=None):
         """
         Returns an export representation of a Python value.
 
@@ -53,7 +53,7 @@ class NumberWidget(Widget):
         # 0 is not empty
         return value is None or value == ""
 
-    def render(self, value):
+    def render(self, value, obj=None):
         return value
 
 
@@ -62,7 +62,7 @@ class FloatWidget(NumberWidget):
     Widget for converting floats fields.
     """
 
-    def clean(self, value):
+    def clean(self, value, row=None, *args, **kwargs):
         if self.is_empty(value):
             return None
         return float(value)
@@ -95,7 +95,7 @@ class CharWidget(Widget):
     Widget for converting text fields.
     """
 
-    def render(self, value):
+    def render(self, value, obj=None):
         return force_text(value)
 
 
@@ -106,7 +106,7 @@ class BooleanWidget(Widget):
     TRUE_VALUES = ["1", 1]
     FALSE_VALUE = "0"
 
-    def render(self, value):
+    def render(self, value, obj=None):
         if value is None:
             return ""
         return self.TRUE_VALUES[0] if value else self.FALSE_VALUE
@@ -144,7 +144,7 @@ class DateWidget(Widget):
                 continue
         raise ValueError("Enter a valid date.")
 
-    def render(self, value):
+    def render(self, value, obj=None):
         if not value:
             return ""
         try:
@@ -187,7 +187,7 @@ class DateTimeWidget(Widget):
                 continue
         raise ValueError("Enter a valid date/time.")
 
-    def render(self, value):
+    def render(self, value, obj=None):
         if not value:
             return ""
         return value.strftime(self.formats[0])
@@ -220,7 +220,7 @@ class TimeWidget(Widget):
                 continue
         raise ValueError("Enter a valid time.")
 
-    def render(self, value):
+    def render(self, value, obj=None):
         if not value:
             return ""
         return value.strftime(self.formats[0])
@@ -296,7 +296,7 @@ class ForeignKeyWidget(Widget):
         else:
             return None
 
-    def render(self, value):
+    def render(self, value, obj=None):
         if value is None:
             return ""
         return getattr(value, self.field)
@@ -334,6 +334,6 @@ class ManyToManyWidget(Widget):
             '%s__in' % self.field: ids
         })
 
-    def render(self, value):
+    def render(self, value, obj=None):
         ids = [smart_text(getattr(obj, self.field)) for obj in value.all()]
         return self.separator.join(ids)
