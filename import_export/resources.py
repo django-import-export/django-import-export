@@ -460,9 +460,8 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
             row_result.errors.append(self.get_error_result_class()(e, tb_info, row))
         return row_result
 
-    @atomic()
     def import_data(self, dataset, dry_run=False, raise_errors=False,
-                    use_transactions=None, **kwargs):
+                    use_transactions=True, **kwargs):
         """
         Imports data from ``tablib.Dataset``. Refer to :doc:`import_workflow`
         for a more complete description of the whole import process.
@@ -478,6 +477,12 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         :param dry_run: If ``dry_run`` is set, or error occurs, transaction
             will be rolled back.
         """
+        if use_transactions or dry_run:
+            with transaction.atomic():
+                return self.import_data_inner(dataset, dry_run, raise_errors, use_transactions, **kwargs)
+        return self.import_data_inner(dataset, dry_run, raise_errors, use_transactions, **kwargs)
+
+    def import_data_inner(self, dataset, dry_run, raise_errors, use_transactions, **kwargs):
         result = self.get_result_class()()
         result.diff_headers = self.get_diff_headers()
         result.totals = OrderedDict([(RowResult.IMPORT_TYPE_NEW, 0),
@@ -490,13 +495,15 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         if use_transactions is None:
             use_transactions = self.get_use_transactions()
 
-        if use_transactions is True:
+        if use_transactions or dry_run:
             # when transactions are used we want to create/update/delete object
             # as transaction will be rolled back if dry_run is set
-            real_dry_run = False
             sp1 = savepoint()
-        else:
-            real_dry_run = dry_run
+
+        # real_dry_run is true when database lacks transaction support.
+        # In that case, avoid all database operations and only change model
+        # If database has transaction support, for dry runs we'll roll everything back at the end
+        real_dry_run = False if use_transactions else dry_run
 
         try:
             self.before_import(dataset, real_dry_run, **kwargs)
@@ -505,7 +512,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
             tb_info = traceback.format_exc()
             result.base_errors.append(self.get_error_result_class()(e, tb_info))
             if raise_errors:
-                if use_transactions:
+                if use_transactions or dry_run:
                     savepoint_rollback(sp1)
                 raise
 
@@ -519,7 +526,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
             if row_result.errors:
                 result.totals[row_result.IMPORT_TYPE_ERROR] += 1
                 if raise_errors:
-                    if use_transactions:
+                    if use_transactions or dry_run:
                         savepoint_rollback(sp1)
                     raise row_result.errors[-1].error
             else:
@@ -535,11 +542,11 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
             tb_info = traceback.format_exc()
             result.base_errors.append(self.get_error_result_class()(e, tb_info))
             if raise_errors:
-                if use_transactions:
+                if use_transactions or dry_run:
                     savepoint_rollback(sp1)
                 raise
 
-        if use_transactions:
+        if use_transactions or dry_run:
             if dry_run or result.has_errors():
                 savepoint_rollback(sp1)
             else:
@@ -550,7 +557,6 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
     def get_export_order(self):
         order = tuple(self._meta.export_order or ())
         return order + tuple(k for k in self.fields.keys() if k not in order)
-
 
     def before_export(self, queryset, *args, **kwargs):
         """
