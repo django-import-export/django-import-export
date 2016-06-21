@@ -58,7 +58,7 @@ except ImportError:
 
 logging.getLogger(__name__).addHandler(NullHandler())
 
-USE_TRANSACTIONS = getattr(settings, 'IMPORT_EXPORT_USE_TRANSACTIONS', False)
+USE_TRANSACTIONS = getattr(settings, 'IMPORT_EXPORT_USE_TRANSACTIONS', True)
 
 
 class ResourceOptions(object):
@@ -461,7 +461,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         return row_result
 
     def import_data(self, dataset, dry_run=False, raise_errors=False,
-                    use_transactions=True, **kwargs):
+                    use_transactions=None, **kwargs):
         """
         Imports data from ``tablib.Dataset``. Refer to :doc:`import_workflow`
         for a more complete description of the whole import process.
@@ -477,6 +477,10 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         :param dry_run: If ``dry_run`` is set, or error occurs, transaction
             will be rolled back.
         """
+
+        if use_transactions is None:
+            use_transactions = self.get_use_transactions()
+
         if use_transactions or dry_run:
             with transaction.atomic():
                 return self.import_data_inner(dataset, dry_run, raise_errors, use_transactions, **kwargs)
@@ -491,9 +495,6 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
                                      (RowResult.IMPORT_TYPE_SKIP, 0),
                                      (RowResult.IMPORT_TYPE_ERROR, 0),
                                      ('total', len(dataset))])
-
-        if use_transactions is None:
-            use_transactions = self.get_use_transactions()
 
         if use_transactions or dry_run:
             # when transactions are used we want to create/update/delete object
