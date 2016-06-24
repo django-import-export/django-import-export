@@ -150,7 +150,6 @@ class ImportMixin(ImportExportMixinBase):
         Perform the actual import action (after the user has confirmed he
         wishes to import)
         '''
-        opts = self.model._meta
         resource = self.get_import_resource_class()(**self.get_import_resource_kwargs(request, *args, **kwargs))
 
         confirm_form = ConfirmImportForm(request.POST)
@@ -165,46 +164,56 @@ class ImportMixin(ImportExportMixinBase):
                 data = force_text(data, self.from_encoding)
             dataset = input_format.create_dataset(data)
 
-            result = resource.import_data(dataset, dry_run=False,
+            result = self.process_dataset(dataset, resource,
+                                          dry_run=False,
                                           raise_errors=True,
                                           file_name=confirm_form.cleaned_data['original_file_name'],
                                           user=request.user)
 
-            if not self.get_skip_admin_log():
-                # Add imported objects to LogEntry
-                logentry_map = {
-                    RowResult.IMPORT_TYPE_NEW: ADDITION,
-                    RowResult.IMPORT_TYPE_UPDATE: CHANGE,
-                    RowResult.IMPORT_TYPE_DELETE: DELETION,
-                }
-                content_type_id = ContentType.objects.get_for_model(self.model).pk
-                for row in result:
-                    if row.import_type != row.IMPORT_TYPE_ERROR and row.import_type != row.IMPORT_TYPE_SKIP:
-                        LogEntry.objects.log_action(
-                            user_id=request.user.pk,
-                            content_type_id=content_type_id,
-                            object_id=row.object_id,
-                            object_repr=row.object_repr,
-                            action_flag=logentry_map[row.import_type],
-                            change_message="%s through import_export" % row.import_type,
-                        )
-
-            success_message = u'Import finished, with {} new {}{} and ' \
-                              u'{} updated {}{}.'.format(result.totals[RowResult.IMPORT_TYPE_NEW],
-                                                         opts.model_name,
-                                                         pluralize(result.totals[RowResult.IMPORT_TYPE_NEW]),
-                                                         result.totals[RowResult.IMPORT_TYPE_UPDATE],
-                                                         opts.model_name,
-                                                         pluralize(result.totals[RowResult.IMPORT_TYPE_UPDATE]))
-
-            messages.success(request, success_message)
             tmp_storage.remove()
 
-            post_import.send(sender=None, model=self.model)
+            return self.process_result(result, request)
 
-            url = reverse('admin:%s_%s_changelist' % self.get_model_info(),
-                          current_app=self.admin_site.name)
-            return HttpResponseRedirect(url)
+    def process_dataset(self, dataset, resource, **kwargs):
+        return resource.import_data(dataset, **kwargs)
+
+    def process_result(self, result, request):
+        opts = self.model._meta
+
+        if not self.get_skip_admin_log():
+            # Add imported objects to LogEntry
+            logentry_map = {
+                RowResult.IMPORT_TYPE_NEW: ADDITION,
+                RowResult.IMPORT_TYPE_UPDATE: CHANGE,
+                RowResult.IMPORT_TYPE_DELETE: DELETION,
+            }
+            content_type_id = ContentType.objects.get_for_model(self.model).pk
+            for row in result:
+                if row.import_type != row.IMPORT_TYPE_ERROR and row.import_type != row.IMPORT_TYPE_SKIP:
+                    LogEntry.objects.log_action(
+                        user_id=request.user.pk,
+                        content_type_id=content_type_id,
+                        object_id=row.object_id,
+                        object_repr=row.object_repr,
+                        action_flag=logentry_map[row.import_type],
+                        change_message="%s through import_export" % row.import_type,
+                    )
+
+        success_message = u'Import finished, with {} new {}{} and ' \
+                          u'{} updated {}{}.'.format(result.totals[RowResult.IMPORT_TYPE_NEW],
+                                                     opts.model_name,
+                                                     pluralize(result.totals[RowResult.IMPORT_TYPE_NEW]),
+                                                     result.totals[RowResult.IMPORT_TYPE_UPDATE],
+                                                     opts.model_name,
+                                                     pluralize(result.totals[RowResult.IMPORT_TYPE_UPDATE]))
+
+        messages.success(request, success_message)
+
+        post_import.send(sender=None, model=self.model)
+
+        url = reverse('admin:%s_%s_changelist' % self.get_model_info(),
+                      current_app=self.admin_site.name)
+        return HttpResponseRedirect(url)
 
     def import_action(self, request, *args, **kwargs):
         '''
