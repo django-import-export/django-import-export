@@ -149,7 +149,6 @@ class ImportMixin(ImportExportMixinBase):
         """
         Perform the actual import action (after the user has confirmed the import)
         """
-        resource = self.get_import_resource_class()(**self.get_import_resource_kwargs(request, *args, **kwargs))
 
         confirm_form = ConfirmImportForm(request.POST)
         if confirm_form.is_valid():
@@ -163,18 +162,20 @@ class ImportMixin(ImportExportMixinBase):
                 data = force_text(data, self.from_encoding)
             dataset = input_format.create_dataset(data)
 
-            result = self.process_dataset(dataset, resource,
-                                          dry_run=False,
-                                          raise_errors=True,
-                                          file_name=confirm_form.cleaned_data['original_file_name'],
-                                          user=request.user)
+            result = self.process_dataset(dataset, confirm_form, request, *args, **kwargs)
 
             tmp_storage.remove()
 
             return self.process_result(result, request)
 
-    def process_dataset(self, dataset, resource, **kwargs):
-        return resource.import_data(dataset, **kwargs)
+    def process_dataset(self, dataset, confirm_form, request, *args, **kwargs):
+        resource = self.get_import_resource_class()(**self.get_import_resource_kwargs(request, *args, **kwargs))
+        return resource.import_data(dataset,
+                                    dry_run=False,
+                                    raise_errors=True,
+                                    file_name=confirm_form.cleaned_data['original_file_name'],
+                                    user=request.user,
+                                    **kwargs)
 
     def process_result(self, result, request):
         self.generate_log_entries(result, request)
