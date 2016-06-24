@@ -146,10 +146,9 @@ class ImportMixin(ImportExportMixinBase):
 
     @method_decorator(require_POST)
     def process_import(self, request, *args, **kwargs):
-        '''
-        Perform the actual import action (after the user has confirmed he
-        wishes to import)
-        '''
+        """
+        Perform the actual import action (after the user has confirmed the import)
+        """
         resource = self.get_import_resource_class()(**self.get_import_resource_kwargs(request, *args, **kwargs))
 
         confirm_form = ConfirmImportForm(request.POST)
@@ -178,8 +177,15 @@ class ImportMixin(ImportExportMixinBase):
         return resource.import_data(dataset, **kwargs)
 
     def process_result(self, result, request):
-        opts = self.model._meta
+        self.generate_log_entries(result, request)
+        self.add_success_message(result, request)
+        post_import.send(sender=None, model=self.model)
 
+        url = reverse('admin:%s_%s_changelist' % self.get_model_info(),
+                      current_app=self.admin_site.name)
+        return HttpResponseRedirect(url)
+
+    def generate_log_entries(self, result, request):
         if not self.get_skip_admin_log():
             # Add imported objects to LogEntry
             logentry_map = {
@@ -199,6 +205,9 @@ class ImportMixin(ImportExportMixinBase):
                         change_message="%s through import_export" % row.import_type,
                     )
 
+    def add_success_message(self, result, request):
+        opts = self.model._meta
+
         success_message = u'Import finished, with {} new {}{} and ' \
                           u'{} updated {}{}.'.format(result.totals[RowResult.IMPORT_TYPE_NEW],
                                                      opts.model_name,
@@ -208,12 +217,6 @@ class ImportMixin(ImportExportMixinBase):
                                                      pluralize(result.totals[RowResult.IMPORT_TYPE_UPDATE]))
 
         messages.success(request, success_message)
-
-        post_import.send(sender=None, model=self.model)
-
-        url = reverse('admin:%s_%s_changelist' % self.get_model_info(),
-                      current_app=self.admin_site.name)
-        return HttpResponseRedirect(url)
 
     def import_action(self, request, *args, **kwargs):
         '''
