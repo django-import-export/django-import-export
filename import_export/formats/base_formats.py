@@ -40,8 +40,6 @@ try:
 except ImportError:
     from django.utils.importlib import import_module
 
-from django.utils import six
-
 
 class Format(object):
     def get_title(self):
@@ -209,13 +207,16 @@ class XLSX(TablibFormat):
         """
         assert XLSX_IMPORT
         from io import BytesIO
-        xlsx_book = openpyxl.load_workbook(BytesIO(in_stream))
+        xlsx_book = openpyxl.load_workbook(BytesIO(in_stream), read_only=True)
 
         dataset = tablib.Dataset()
         sheet = xlsx_book.active
 
-        dataset.headers = [cell.value for cell in sheet.rows[0]]
-        for i in moves.range(1, len(sheet.rows)):
-            row_values = [cell.value for cell in sheet.rows[i]]
+        # obtain generator
+        rows = sheet.rows
+        dataset.headers = [cell.value for cell in next(rows)]
+
+        for row in rows:
+            row_values = [cell.value for cell in row]
             dataset.append(row_values)
         return dataset
