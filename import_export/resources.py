@@ -427,8 +427,9 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         :param dry_run: If ``dry_run`` is set, or error occurs, transaction
             will be rolled back.
         """
+        row_result = self.get_row_result_class()()
+        row_result.import_type = RowResult.IMPORT_TYPE_ERROR
         try:
-            row_result = self.get_row_result_class()()
             self.before_import_row(row, **kwargs)
             instance, new = self.get_or_init_instance(instance_loader, row)
             self.after_import_instance(instance, new, **kwargs)
