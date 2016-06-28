@@ -493,7 +493,7 @@ class ModelResourceTest(TestCase):
 
     def test_before_import_access_to_kwargs(self):
         class B(BookResource):
-            def before_import(self, dataset, dry_run, **kwargs):
+            def before_import(self, dataset, using_transactions, dry_run, **kwargs):
                 if 'extra_arg' in kwargs:
                     dataset.headers[dataset.headers.index('author_email')] = 'old_email'
                     dataset.insert_col(0,
@@ -592,8 +592,11 @@ class ModelResourceTest(TestCase):
                 model = Entry
                 fields = ('id', )
 
-            def after_save_instance(self, instance, dry_run):
-                if not dry_run:
+            def after_save_instance(self, instance, using_transactions, dry_run):
+                if not using_transactions and dry_run:
+                    # we don't have transactions and we want to do a dry_run
+                    pass
+                else:
                     instance.user.save()
 
         user = User.objects.create(username='foo')
@@ -658,7 +661,7 @@ class ModelResourceTransactionTest(TransactionTestCase):
 
         id_field = resource.fields['id']
         id_diff = row_diff[fields.index(id_field)]
-        # id diff should exists because in rollbacked transaction
+        # id diff should exist because in rollbacked transaction
         # FooBook has been saved
         self.assertTrue(id_diff)
 
