@@ -5,6 +5,8 @@ try:
 except ImportError:
     from django.utils.datastructures import SortedDict as OrderedDict
 
+from tablib import Dataset
+
 
 class Error(object):
     def __init__(self, error, traceback=None, row=None):
@@ -32,7 +34,7 @@ class Result(object):
         self.base_errors = []
         self.diff_headers = []
         self.rows = []  # RowResults
-        self.failed_rows = []
+        self.failed_dataset = Dataset()
         self.totals = OrderedDict([(RowResult.IMPORT_TYPE_NEW, 0),
                                    (RowResult.IMPORT_TYPE_UPDATE, 0),
                                    (RowResult.IMPORT_TYPE_DELETE, 0),
@@ -47,7 +49,8 @@ class Result(object):
         self.base_errors.append(error)
 
     def append_failed_row(self, row):
-        self.failed_rows.append(row)
+        row_values = [v for (k, v) in row.items()]
+        self.failed_dataset.append(row_values)
 
     def increment_row_result_total(self, row_result):
         if row_result.import_type:

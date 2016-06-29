@@ -536,6 +536,9 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         # Update the total in case the dataset was altered by before_import()
         result.total_rows = len(dataset)
 
+        if collect_failed_rows:
+            result.failed_dataset.headers = dataset.headers
+
         for row in dataset.dict:
             row_result = self.import_row(row, instance_loader, using_transactions, dry_run, **kwargs)
             result.increment_row_result_total(row_result)
