@@ -48,8 +48,12 @@ class Result(object):
     def append_base_error(self, error):
         self.base_errors.append(error)
 
-    def append_failed_row(self, row):
+    def add_dataset_headers(self, headers):
+        self.failed_dataset.headers = headers + ["Error"]
+
+    def append_failed_row(self, row, error):
         row_values = [v for (k, v) in row.items()]
+        row_values.append(error.error.message)
         self.failed_dataset.append(row_values)
 
     def increment_row_result_total(self, row_result):
