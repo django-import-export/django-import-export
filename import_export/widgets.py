@@ -191,7 +191,10 @@ class DateTimeWidget(Widget):
     def render(self, value):
         if not value:
             return ""
-        return value.strftime(self.formats[0])
+        try:
+            return value.strftime(self.formats[0])
+        except:
+            return datetime_safe.new_date(value).strftime(self.formats[0])
 
 
 class TimeWidget(Widget):
