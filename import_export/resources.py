@@ -398,7 +398,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         """
         pass
 
-    def after_import_instance(instance, new, **kwargs):
+    def after_import_instance(self, instance, new, **kwargs):
         """
         Override to add additional logic. Does nothing by default.
         """
