@@ -398,6 +398,12 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         """
         pass
 
+    def after_import_instance(self, instance, new, **kwargs):
+        """
+        Override to add additional logic. Does nothing by default.
+        """
+        pass
+
     def after_import_row(self, row, row_result, **kwargs):
         """
         Override to add additional logic. Does nothing by default.
@@ -420,6 +426,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
             row_result = self.get_row_result_class()()
             self.before_import_row(row, **kwargs)
             instance, new = self.get_or_init_instance(instance_loader, row)
+            self.after_import_instance(instance, new, **kwargs)
             if new:
                 row_result.import_type = RowResult.IMPORT_TYPE_NEW
             else:
@@ -491,15 +498,10 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
             use_transactions = self.get_use_transactions()
 
         if use_transactions is True:
-            # when transactions are used we want to create/update/delete object
-            # as transaction will be rolled back if dry_run is set
-            real_dry_run = False
             sp1 = savepoint()
-        else:
-            real_dry_run = dry_run
 
         try:
-            self.before_import(dataset, real_dry_run, **kwargs)
+            self.before_import(dataset, dry_run, **kwargs)
         except Exception as e:
             logging.exception(e)
             tb_info = traceback.format_exc()
@@ -515,7 +517,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         result.totals['total'] = len(dataset)
 
         for row in dataset.dict:
-            row_result = self.import_row(row, instance_loader, real_dry_run, **kwargs)
+            row_result = self.import_row(row, instance_loader, dry_run, **kwargs)
             if row_result.errors:
                 result.totals[row_result.IMPORT_TYPE_ERROR] += 1
                 if raise_errors:
@@ -529,7 +531,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
                 result.append_row_result(row_result)
 
         try:
-            self.after_import(dataset, result, real_dry_run, **kwargs)
+            self.after_import(dataset, result, dry_run, **kwargs)
         except Exception as e:
             logging.exception(e)
             tb_info = traceback.format_exc()
