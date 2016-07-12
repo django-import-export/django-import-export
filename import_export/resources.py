@@ -404,6 +404,12 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         """
         pass
 
+    def after_import_instance(self, instance, new, **kwargs):
+        """
+        Override to add additional logic. Does nothing by default.
+        """
+        pass
+
     def import_row(self, row, instance_loader, dry_run=False, **kwargs):
         """
         Imports data from ``tablib.Dataset``. Refer to :doc:`import_workflow`
@@ -420,6 +426,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
             row_result = self.get_row_result_class()()
             self.before_import_row(row, **kwargs)
             instance, new = self.get_or_init_instance(instance_loader, row)
+            self.after_import_instance(instance, new, **kwargs)
             if new:
                 row_result.import_type = RowResult.IMPORT_TYPE_NEW
             else:
