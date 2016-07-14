@@ -32,7 +32,6 @@ if VERSION < (1, 8):
     from django.db.models.related import RelatedObject
     ForeignObjectRel = RelatedObject
 else:
-    from django.contrib.postgres.fields import ArrayField
     from django.db.models.fields.related import ForeignObjectRel
     RelatedObject = None
 
@@ -742,6 +741,13 @@ class ModelResource(six.with_metaclass(ModelDeclarativeMetaclass, Resource)):
         elif internal_type in ('BooleanField', 'NullBooleanField'):
             result = widgets.BooleanWidget
         elif VERSION >= (1, 8):
+            try:
+                from django.contrib.postgres.fields import ArrayField
+            except ImportError:
+                # Consume error when psycopg2 is not installed:
+                # ImportError: No module named psycopg2.extras
+                class ArrayField(object):
+                    pass
             if type(f) == ArrayField:
                 return widgets.SimpleArrayWidget
         return result
