@@ -63,7 +63,7 @@ class Field(object):
                                                 list(data.keys())))
 
         try:
-            value = self.widget.clean(value)
+            value = self.widget.clean(value, row=data)
         except ValueError as e:
             raise ValueError("Column '%s': %s" % (self.column_name, e))
 
@@ -119,4 +119,4 @@ class Field(object):
         value = self.get_value(obj)
         if value is None:
             return ""
-        return self.widget.render(value)
+        return self.widget.render(value, obj)

@@ -156,6 +156,19 @@ class ForeignKeyWidgetTest(TestCase):
     def test_render_empty(self):
         self.assertEqual(self.widget.render(None), "")
 
+    def test_clean_multi_column(self):
+        class BirthdayWidget(widgets.ForeignKeyWidget):
+            def get_queryset(self, value, row):
+                return self.model.objects.filter(
+                    birthday=row['birthday']
+                )
+        author2 = Author.objects.create(name='Foo')
+        author2.birthday = "2016-01-01"
+        author2.save()
+        birthday_widget = BirthdayWidget(Author, 'name')
+        row = {'name': "Foo", 'birthday': author2.birthday}
+        self.assertEqual(birthday_widget.clean("Foo", row), author2)
+
 
 class ManyToManyWidget(TestCase):
 

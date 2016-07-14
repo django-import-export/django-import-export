@@ -16,6 +16,8 @@ from django.http import HttpResponseRedirect, HttpResponse
 from django.core.urlresolvers import reverse
 from django.conf import settings
 from django.template.defaultfilters import pluralize
+from django.utils.decorators import method_decorator
+from django.views.decorators.http import require_POST
 
 from .forms import (
     ImportForm,
@@ -142,6 +144,7 @@ class ImportMixin(ImportExportMixinBase):
         """
         return [f for f in self.formats if f().can_import()]
 
+    @method_decorator(require_POST)
     def process_import(self, request, *args, **kwargs):
         '''
         Perform the actual import action (after the user has confirmed he

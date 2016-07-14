@@ -1,8 +1,6 @@
 from __future__ import unicode_literals
 
-import itertools
 import functools
-import sys
 import tablib
 import traceback
 from copy import deepcopy
@@ -35,6 +33,7 @@ if VERSION < (1, 8):
     from django.db.models.related import RelatedObject
     ForeignObjectRel = RelatedObject
 else:
+    from django.contrib.postgres.fields import ArrayField
     from django.db.models.fields.related import ForeignObjectRel
     RelatedObject = None
 
@@ -165,6 +164,32 @@ class DeclarativeMetaclass(type):
         new_class._meta = meta
 
         return new_class
+
+
+class Diff(object):
+    def __init__(self, resource, instance, new):
+        self.left = self._export_resource_fields(resource, instance)
+        self.right = []
+        self.new = new
+
+    def compare_with(self, resource, instance, dry_run=False):
+        self.right = self._export_resource_fields(resource, instance)
+
+    def as_html(self):
+        data = []
+        dmp = diff_match_patch()
+        for v1, v2 in zip(self.left, self.right):
+            if v1 != v2 and self.new:
+                v1 = ""
+            diff = dmp.diff_main(force_text(v1), force_text(v2))
+            dmp.diff_cleanupSemantic(diff)
+            html = dmp.diff_prettyHtml(diff)
+            html = mark_safe(html)
+            data.append(html)
+        return data
+
+    def _export_resource_fields(self, resource, instance):
+        return [resource.export_field(f, instance) if instance else "" for f in resource.get_user_visible_fields()]
 
 
 class Resource(six.with_metaclass(DeclarativeMetaclass)):
@@ -352,26 +377,6 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
                     return False
         return True
 
-    def get_diff(self, original_fields, new, current_fields, dry_run=False):
-        """
-        Get diff between original and current object when ``import_data``
-        is run.
-
-        ``dry_run`` allows handling special cases when object is not saved
-        to database (ie. m2m relationships).
-        """
-        data = []
-        dmp = diff_match_patch()
-        for v1, v2 in itertools.izip(original_fields, current_fields):
-            if v1 != v2 and new:
-                v1 = ""
-            diff = dmp.diff_main(force_text(v1), force_text(v2))
-            dmp.diff_cleanupSemantic(diff)
-            html = dmp.diff_prettyHtml(diff)
-            html = mark_safe(html)
-            data.append(html)
-        return data
-
     def get_diff_headers(self):
         """
         Diff representation headers.
@@ -402,6 +407,12 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         """
         pass
 
+    def after_import_instance(self, instance, new, **kwargs):
+        """
+        Override to add additional logic. Does nothing by default.
+        """
+        pass
+
     def import_row(self, row, instance_loader, using_transactions=True, dry_run=False, **kwargs):
         """
         Imports data from ``tablib.Dataset``. Refer to :doc:`import_workflow`
@@ -421,6 +432,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
             row_result = self.get_row_result_class()()
             self.before_import_row(row, **kwargs)
             instance, new = self.get_or_init_instance(instance_loader, row)
+            self.after_import_instance(instance, new, **kwargs)
             if new:
                 row_result.import_type = RowResult.IMPORT_TYPE_NEW
             else:
@@ -429,15 +441,15 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
             row_result.object_repr = force_text(instance)
             row_result.object_id = instance.pk
             original = deepcopy(instance)
-            original_fields = [self.export_field(f, original) if original else "" for f in self.get_user_visible_fields()]
+            diff = Diff(self, original, new)
             if self.for_delete(row, instance):
                 if new:
                     row_result.import_type = RowResult.IMPORT_TYPE_SKIP
-                    row_result.diff = self.get_diff([], False, [], dry_run)
+                    diff.compare_with(self, None, dry_run)
                 else:
                     row_result.import_type = RowResult.IMPORT_TYPE_DELETE
                     self.delete_instance(instance, dry_run)
-                    row_result.diff = self.get_diff(original_fields, False, [], dry_run)
+                    diff.compare_with(self, None, dry_run)
             else:
                 self.import_obj(instance, row, dry_run)
                 if self.skip_row(instance, original):
@@ -449,8 +461,8 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
                     # Add object info to RowResult for LogEntry
                     row_result.object_repr = force_text(instance)
                     row_result.object_id = instance.pk
-                instance_fields = [self.export_field(f, instance) if instance else "" for f in self.get_user_visible_fields()]
-                row_result.diff = self.get_diff(original_fields, new, instance_fields, dry_run)
+                diff.compare_with(self, instance, dry_run)
+            row_result.diff = diff.as_html()
             self.after_import_row(row, row_result, **kwargs)
         except Exception as e:
             # There is no point logging a transaction error for each row
@@ -717,7 +729,7 @@ class ModelResource(six.with_metaclass(ModelDeclarativeMetaclass, Resource)):
         Django type.
         """
         result = default
-        internal_type = f.get_internal_type()
+        internal_type = f.get_internal_type() if callable(getattr(f, "get_internal_type", None)) else ""
         if internal_type in ('ManyToManyField', ):
             result = functools.partial(widgets.ManyToManyWidget,
                                        model=f.rel.to)
@@ -740,6 +752,9 @@ class ModelResource(six.with_metaclass(ModelDeclarativeMetaclass, Resource)):
             result = widgets.IntegerWidget
         elif internal_type in ('BooleanField', 'NullBooleanField'):
             result = widgets.BooleanWidget
+        elif VERSION >= (1, 8):
+            if type(f) == ArrayField:
+                return widgets.SimpleArrayWidget
         return result
 
     @classmethod
