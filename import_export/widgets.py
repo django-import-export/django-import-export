@@ -2,7 +2,7 @@
 from __future__ import unicode_literals
 
 from decimal import Decimal
-from datetime import datetime
+from datetime import datetime, date
 from django.utils import datetime_safe, timezone
 from django.utils.encoding import smart_text
 from django.conf import settings
@@ -138,6 +138,8 @@ class DateWidget(Widget):
     def clean(self, value):
         if not value:
             return None
+        if isinstance(value, date):
+            return value
         for format in self.formats:
             try:
                 return datetime.strptime(value, format).date()
@@ -175,6 +177,8 @@ class DateTimeWidget(Widget):
     def clean(self, value):
         if not value:
             return None
+        if isinstance(value, datetime):
+            return value
         for format in self.formats:
             try:
                 dt = datetime.strptime(value, format)
