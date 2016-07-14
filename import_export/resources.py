@@ -176,7 +176,7 @@ class Diff(object):
     def as_html(self):
         data = []
         dmp = diff_match_patch()
-        for v1, v2 in zip(self.left, self.right):
+        for v1, v2 in six.moves.zip(self.left, self.right):
             if v1 != v2 and self.new:
                 v1 = ""
             diff = dmp.diff_main(force_text(v1), force_text(v2))
