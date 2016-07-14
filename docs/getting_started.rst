@@ -308,7 +308,7 @@ mixins (:class:`~import_export.admin.ImportMixin`,
     from import_export.admin import ImportExportModelAdmin
 
     class BookAdmin(ImportExportModelAdmin):
-        pass
+        resource_class = BookResource
 
 .. figure:: _static/images/django-import-export-change.png
 
