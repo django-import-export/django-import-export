@@ -34,6 +34,7 @@ if VERSION < (1, 8):
     from django.db.models.related import RelatedObject
     ForeignObjectRel = RelatedObject
 else:
+    from django.contrib.postgres.fields import ArrayField
     from django.db.models.fields.related import ForeignObjectRel
     RelatedObject = None
 
@@ -713,7 +714,7 @@ class ModelResource(six.with_metaclass(ModelDeclarativeMetaclass, Resource)):
         Django type.
         """
         result = default
-        internal_type = f.get_internal_type()
+        internal_type = f.get_internal_type() if callable(getattr(f, "get_internal_type", None)) else ""
         if internal_type in ('ManyToManyField', ):
             result = functools.partial(widgets.ManyToManyWidget,
                                        model=f.rel.to)
@@ -736,6 +737,9 @@ class ModelResource(six.with_metaclass(ModelDeclarativeMetaclass, Resource)):
             result = widgets.IntegerWidget
         elif internal_type in ('BooleanField', 'NullBooleanField'):
             result = widgets.BooleanWidget
+        elif VERSION >= (1, 8):
+            if type(f) == ArrayField:
+                return widgets.SimpleArrayWidget
         return result
 
     @classmethod
