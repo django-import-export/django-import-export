@@ -352,7 +352,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         """
         data = []
         dmp = diff_match_patch()
-        for v1, v2 in itertools.izip(original_fields, current_fields):
+        for v1, v2 in six.moves.zip(original_fields, current_fields):
             if v1 != v2 and new:
                 v1 = ""
             diff = dmp.diff_main(force_text(v1), force_text(v2))

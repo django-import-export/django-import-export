@@ -147,6 +147,10 @@ class ImportExportAdminIntegrationTest(TestCase):
         with self.assertRaises(IOError):
             self.client.post('/admin/core/book/process_import/', data)
 
+    def test_csrf(self):
+        response = self.client.get('/admin/core/book/process_import/')
+        self.assertEqual(response.status_code, 405)
+
     def test_import_log_entry(self):
         input_format = '0'
         filename = os.path.join(
