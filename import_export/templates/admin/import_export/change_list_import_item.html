@@ -1,2 +1,4 @@
 {% load i18n %}
-<li><a href="import/" class="import_link">{% trans "Import" %}</a></li>
+{% load admin_urls %}
+
+<li><a href='{% url opts|admin_urlname:"import" %}' class="import_link">{% trans "Import" %}</a></li>
