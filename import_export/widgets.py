@@ -237,10 +237,10 @@ class SimpleArrayWidget(Widget):
         self.separator = separator
         super(SimpleArrayWidget, self).__init__()
 
-    def clean(self, value):
+    def clean(self, value, row=None, *args, **kwargs):
         return value.split(self.separator) if value else []
 
-    def render(self, value):
+    def render(self, value, obj=None):
         return self.separator.join(six.text_type(v) for v in value)
 
 
