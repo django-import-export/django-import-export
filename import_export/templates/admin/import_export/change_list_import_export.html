@@ -1,8 +1,7 @@
 {% extends "admin/import_export/change_list.html" %}
-{% load i18n %}
 
 {% block object-tools-items %}
-  <li><a href="import/" class="import_link">{% trans "Import" %}</a></li>
-  <li><a href="export/{{ cl.get_query_string }}" class="export_link">{% trans "Export" %}</a></li>
+  {% include "admin/import_export/change_list_import_item.html" %}
+  {% include "admin/import_export/change_list_export_item.html" %}
   {{ block.super }}
 {% endblock %}
