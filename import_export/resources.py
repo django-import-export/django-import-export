@@ -9,6 +9,7 @@ from diff_match_patch import diff_match_patch
 
 from django import VERSION
 from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
 from django.core.management.color import no_style
 from django.db import connections, transaction, DEFAULT_DB_ALIAS
 from django.db.models.fields import FieldDoesNotExist
@@ -56,7 +57,7 @@ except ImportError:
 
 logging.getLogger(__name__).addHandler(NullHandler())
 
-USE_TRANSACTIONS = getattr(settings, 'IMPORT_EXPORT_USE_TRANSACTIONS', False)
+USE_TRANSACTIONS = getattr(settings, 'IMPORT_EXPORT_USE_TRANSACTIONS', True)
 
 
 class ResourceOptions(object):
@@ -260,36 +261,42 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         else:
             return (self.init_instance(row), True)
 
-    def save_instance(self, instance, dry_run=False):
+    def save_instance(self, instance, using_transactions=True, dry_run=False):
         """
         Takes care of saving the object to the database.
 
         Keep in mind that this is done by calling ``instance.save()``, so
         objects are not created in bulk!
         """
-        self.before_save_instance(instance, dry_run)
-        if not dry_run:
+        self.before_save_instance(instance, using_transactions, dry_run)
+        if not using_transactions and dry_run:
+            # we don't have transactions and we want to do a dry_run
+            pass
+        else:
             instance.save()
-        self.after_save_instance(instance, dry_run)
+        self.after_save_instance(instance, using_transactions, dry_run)
 
-    def before_save_instance(self, instance, dry_run):
+    def before_save_instance(self, instance, using_transactions, dry_run):
         """
         Override to add additional logic. Does nothing by default.
         """
         pass
 
-    def after_save_instance(self, instance, dry_run):
+    def after_save_instance(self, instance, using_transactions, dry_run):
         """
         Override to add additional logic. Does nothing by default.
         """
         pass
 
-    def delete_instance(self, instance, dry_run=False):
+    def delete_instance(self, instance, using_transactions=True, dry_run=False):
         """
         Calls :meth:`instance.delete` as long as ``dry_run`` is not set.
         """
         self.before_delete_instance(instance, dry_run)
-        if not dry_run:
+        if not using_transactions and dry_run:
+            # we don't have transactions and we want to do a dry_run
+            pass
+        else:
             instance.delete()
         self.after_delete_instance(instance, dry_run)
 
@@ -323,14 +330,17 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
                 continue
             self.import_field(field, obj, data)
 
-    def save_m2m(self, obj, data, dry_run):
+    def save_m2m(self, obj, data, using_transactions, dry_run):
         """
         Saves m2m fields.
 
         Model instance need to have a primary key value before
         a many-to-many relationship can be used.
         """
-        if not dry_run:
+        if not using_transactions and dry_run:
+            # we don't have transactions and we want to do a dry_run
+            pass
+        else:
             for field in self.get_fields():
                 if not isinstance(field.widget, widgets.ManyToManyWidget):
                     continue
@@ -372,27 +382,15 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         """
         return self.get_export_headers()
 
-    def before_import(self, dataset, dry_run, **kwargs):
+    def before_import(self, dataset, using_transactions, dry_run, **kwargs):
         """
         Override to add additional logic. Does nothing by default.
-
-        This method receives the ``dataset`` that's going to be imported, the
-        ``dry_run`` parameter which determines whether changes are saved to
-        the database, and any additional keyword arguments passed to
-        ``import_data`` in a ``kwargs`` dict.
         """
         pass
 
-    def after_import(self, dataset, result, dry_run, **kwargs):
+    def after_import(self, dataset, result, using_transactions, dry_run, **kwargs):
         """
         Override to add additional logic. Does nothing by default.
-
-        This method receives the ``dataset`` that's just been imported, the
-        ``result`` of the import and the ``dry_run`` parameter which determines
-        whether changes will be saved to the database, and any additional
-        keyword arguments passed to ``import_data`` in a ``kwargs`` dict. This
-        method runs after the main import finishes but before the changes are
-        committed or rolled back.
         """
         pass
 
@@ -414,7 +412,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         """
         pass
 
-    def import_row(self, row, instance_loader, dry_run=False, **kwargs):
+    def import_row(self, row, instance_loader, using_transactions=True, dry_run=False, **kwargs):
         """
         Imports data from ``tablib.Dataset``. Refer to :doc:`import_workflow`
         for a more complete description of the whole import process.
@@ -422,6 +420,9 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         :param row: A ``dict`` of the row to import
 
         :param instance_loader: The instance loader to be used to load the row
+
+        :param using_transactions: If ``using_transactions`` is set, a transaction
+            is being used to wrap the import
 
         :param dry_run: If ``dry_run`` is set, or error occurs, transaction
             will be rolled back.
@@ -455,7 +456,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
                 else:
                     with transaction.atomic():
                         self.save_instance(instance, dry_run)
-                    self.save_m2m(instance, row, dry_run)
+                    self.save_m2m(instance, row, using_transactions, dry_run)
                     # Add object info to RowResult for LogEntry
                     row_result.object_repr = force_text(instance)
                     row_result.object_id = instance.pk
@@ -471,7 +472,6 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
             row_result.errors.append(self.get_error_result_class()(e, tb_info, row))
         return row_result
 
-    @atomic()
     def import_data(self, dataset, dry_run=False, raise_errors=False,
                     use_transactions=None, **kwargs):
         """
@@ -486,9 +486,27 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         :param use_transactions: If ``True`` import process will be processed
             inside transaction.
 
-        :param dry_run: If ``dry_run`` is set, or error occurs, transaction
-            will be rolled back.
+        :param dry_run: If ``dry_run`` is set, or an error occurs, if a transaction
+            is being used, it will be rolled back.
         """
+
+        if use_transactions is None:
+            use_transactions = self.get_use_transactions()
+
+        connection = connections[DEFAULT_DB_ALIAS]
+        supports_transactions = getattr(connection.features, "supports_transactions", False)
+
+        if use_transactions and not supports_transactions:
+            raise ImproperlyConfigured
+
+        using_transactions = (use_transactions or dry_run) and supports_transactions
+
+        if using_transactions:
+            with transaction.atomic():
+                return self.import_data_inner(dataset, dry_run, raise_errors, using_transactions, **kwargs)
+        return self.import_data_inner(dataset, dry_run, raise_errors, using_transactions, **kwargs)
+
+    def import_data_inner(self, dataset, dry_run, raise_errors, using_transactions, **kwargs):
         result = self.get_result_class()()
         result.diff_headers = self.get_diff_headers()
         result.totals = OrderedDict([(RowResult.IMPORT_TYPE_NEW, 0),
@@ -498,25 +516,19 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
                                      (RowResult.IMPORT_TYPE_ERROR, 0),
                                      ('total', len(dataset))])
 
-        if use_transactions is None:
-            use_transactions = self.get_use_transactions()
-
-        if use_transactions is True:
+        if using_transactions:
             # when transactions are used we want to create/update/delete object
             # as transaction will be rolled back if dry_run is set
-            real_dry_run = False
             sp1 = savepoint()
-        else:
-            real_dry_run = dry_run
 
         try:
-            self.before_import(dataset, real_dry_run, **kwargs)
+            self.before_import(dataset, using_transactions, dry_run, **kwargs)
         except Exception as e:
             logging.exception(e)
             tb_info = traceback.format_exc()
             result.base_errors.append(self.get_error_result_class()(e, tb_info))
             if raise_errors:
-                if use_transactions:
+                if using_transactions:
                     savepoint_rollback(sp1)
                 raise
 
@@ -526,11 +538,11 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         result.totals['total'] = len(dataset)
 
         for row in dataset.dict:
-            row_result = self.import_row(row, instance_loader, real_dry_run, **kwargs)
+            row_result = self.import_row(row, instance_loader, using_transactions, dry_run, **kwargs)
             if row_result.errors:
                 result.totals[row_result.IMPORT_TYPE_ERROR] += 1
                 if raise_errors:
-                    if use_transactions:
+                    if using_transactions:
                         savepoint_rollback(sp1)
                     raise row_result.errors[-1].error
             else:
@@ -540,17 +552,17 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
                 result.append_row_result(row_result)
 
         try:
-            self.after_import(dataset, result, real_dry_run, **kwargs)
+            self.after_import(dataset, result, using_transactions, dry_run, **kwargs)
         except Exception as e:
             logging.exception(e)
             tb_info = traceback.format_exc()
             result.base_errors.append(self.get_error_result_class()(e, tb_info))
             if raise_errors:
-                if use_transactions:
+                if using_transactions:
                     savepoint_rollback(sp1)
                 raise
 
-        if use_transactions:
+        if using_transactions:
             if dry_run or result.has_errors():
                 savepoint_rollback(sp1)
             else:
@@ -561,7 +573,6 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
     def get_export_order(self):
         order = tuple(self._meta.export_order or ())
         return order + tuple(k for k in self.fields.keys() if k not in order)
-
 
     def before_export(self, queryset, *args, **kwargs):
         """
@@ -796,7 +807,7 @@ class ModelResource(six.with_metaclass(ModelDeclarativeMetaclass, Resource)):
         """
         return self._meta.model()
 
-    def after_import(self, dataset, result, dry_run, **kwargs):
+    def after_import(self, dataset, result, using_transactions, dry_run, **kwargs):
         """
         Reset the SQL sequences after new objects are imported
         """
