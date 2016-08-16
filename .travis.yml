@@ -11,9 +11,9 @@ env:
   - DJANGO="Django>=1.9,<1.10"
   - DJANGO="https://github.com/django/django/archive/master.tar.gz"
 install:
-  - pip install -q $DJANGO --use-mirrors
+  - pip install -q $DJANGO
   - pip install -e git+https://github.com/kennethreitz/tablib.git#egg=tablib
-  - pip install -r requirements/base.txt --use-mirrors
+  - pip install -r requirements/base.txt
 script:
   - python -Wall tests/manage.py test core --settings=
 matrix:
