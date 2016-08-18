@@ -733,8 +733,15 @@ class ModelResource(six.with_metaclass(ModelDeclarativeMetaclass, Resource)):
             result = functools.partial(widgets.ManyToManyWidget,
                                        model=f.rel.to)
         if internal_type in ('ForeignKey', 'OneToOneField', ):
+            field = 'pk'
+            if hasattr(f, 'to_fields'):
+                if len(f.to_fields) > 0:
+                    # to_fields can be [None]
+                    field = f.to_fields[0] or field
             result = functools.partial(widgets.ForeignKeyWidget,
-                                       model=f.rel.to)
+                                       model=f.rel.to,
+                                       field=field)
+
         if internal_type in ('DecimalField', ):
             result = widgets.DecimalWidget
         if internal_type in ('DateTimeField', ):
