@@ -9,7 +9,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.contrib.admin.models import LogEntry
 
 from core.admin import BookAdmin, AuthorAdmin
-from core.models import Category, Author
+from core.models import Category, Parent
 
 
 class ImportExportAdminIntegrationTest(TestCase):
@@ -173,6 +173,30 @@ class ImportExportAdminIntegrationTest(TestCase):
         book = LogEntry.objects.latest('id')
         self.assertEqual(book.object_repr, "Some book")
         self.assertEqual(book.object_id, str(1))
+
+    def test_import_log_entry_with_fk(self):
+        Parent.objects.create(id=1234, name='Some Parent')
+        input_format = '0'
+        filename = os.path.join(
+            os.path.dirname(__file__),
+            os.path.pardir,
+            'exports',
+            'child.csv')
+        with open(filename, "rb") as f:
+            data = {
+                'input_format': input_format,
+                'import_file': f,
+            }
+            response = self.client.post('/admin/core/child/import/', data)
+        self.assertEqual(response.status_code, 200)
+        confirm_form = response.context['confirm_form']
+        data = confirm_form.initial
+        response = self.client.post('/admin/core/child/process_import/', data,
+                                    follow=True)
+        self.assertEqual(response.status_code, 200)
+        child = LogEntry.objects.latest('id')
+        self.assertEqual(child.object_repr, 'Some - child of Some Parent')
+        self.assertEqual(child.object_id, str(1))
 
 
 class ExportActionAdminIntegrationTest(TestCase):
