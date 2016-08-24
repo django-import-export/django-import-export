@@ -447,7 +447,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
                     diff.compare_with(self, None, dry_run)
                 else:
                     row_result.import_type = RowResult.IMPORT_TYPE_DELETE
-                    self.delete_instance(instance, dry_run)
+                    self.delete_instance(instance, using_transactions, dry_run)
                     diff.compare_with(self, None, dry_run)
             else:
                 self.import_obj(instance, row, dry_run)
