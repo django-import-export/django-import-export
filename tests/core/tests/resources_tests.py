@@ -311,33 +311,33 @@ class ModelResourceTest(TestCase):
         class B(BookResource):
             def before_save_instance(self, instance, using_transactions, dry_run):
                 super(B, self).before_save_instance(instance, using_transactions, dry_run)
-                if not dry_run:
-                    self.before_save_instance_real_run = True
+                if dry_run:
+                    self.before_save_instance_dry_run = True
                 else:
-                    self.before_save_instance_real_run = False
+                    self.before_save_instance_dry_run = False
             def save_instance(self, instance, using_transactions=True, dry_run=False):
                 super(B, self).save_instance(instance, using_transactions, dry_run)
-                if not dry_run:
-                    self.save_instance_real_run = True
+                if dry_run:
+                    self.save_instance_dry_run = True
                 else:
-                    self.save_instance_real_run = False
+                    self.save_instance_dry_run = False
             def after_save_instance(self, instance, using_transactions, dry_run):
                 super(B, self).after_save_instance(instance, using_transactions, dry_run)
-                if not dry_run:
-                    self.after_save_instance_real_run = True
+                if dry_run:
+                    self.after_save_instance_dry_run = True
                 else:
-                    self.after_save_instance_real_run = False
+                    self.after_save_instance_dry_run = False
 
         resource = B()
         resource.import_data(self.dataset, dry_run=True, raise_errors=True)
-        self.assertFalse(resource.before_save_instance_real_run)
-        self.assertFalse(resource.save_instance_real_run)
-        self.assertFalse(resource.after_save_instance_real_run)
+        self.assertTrue(resource.before_save_instance_dry_run)
+        self.assertTrue(resource.save_instance_dry_run)
+        self.assertTrue(resource.after_save_instance_dry_run)
 
         resource.import_data(self.dataset, dry_run=False, raise_errors=True)
-        self.assertTrue(resource.before_save_instance_real_run)
-        self.assertTrue(resource.save_instance_real_run)
-        self.assertTrue(resource.after_save_instance_real_run)
+        self.assertFalse(resource.before_save_instance_dry_run)
+        self.assertFalse(resource.save_instance_dry_run)
+        self.assertFalse(resource.after_save_instance_dry_run)
 
     def test_delete_instance_with_dry_run_flag(self):
         class B(BookResource):
@@ -348,37 +348,37 @@ class ModelResourceTest(TestCase):
 
             def before_delete_instance(self, instance, dry_run):
                 super(B, self).before_delete_instance(instance, dry_run)
-                if not dry_run:
-                    self.before_delete_instance_real_run = True
+                if dry_run:
+                    self.before_delete_instance_dry_run = True
                 else:
-                    self.before_delete_instance_real_run = False
+                    self.before_delete_instance_dry_run = False
 
             def delete_instance(self, instance, using_transactions=True, dry_run=False):
                 super(B, self).delete_instance(instance, using_transactions, dry_run)
-                if not dry_run:
-                    self.delete_instance_real_run = True
+                if dry_run:
+                    self.delete_instance_dry_run = True
                 else:
-                    self.delete_instance_real_run = False
+                    self.delete_instance_dry_run = False
 
             def after_delete_instance(self, instance, dry_run):
                 super(B, self).after_delete_instance(instance, dry_run)
-                if not dry_run:
-                    self.after_delete_instance_real_run = True
+                if dry_run:
+                    self.after_delete_instance_dry_run = True
                 else:
-                    self.after_delete_instance_real_run = False
+                    self.after_delete_instance_dry_run = False
 
         resource = B()
         row = [self.book.pk, self.book.name, '1']
         dataset = tablib.Dataset(*[row], headers=['id', 'name', 'delete'])
         resource.import_data(dataset, dry_run=True, raise_errors=True)
-        self.assertFalse(resource.before_delete_instance_real_run)
-        self.assertFalse(resource.delete_instance_real_run)
-        self.assertFalse(resource.after_delete_instance_real_run)
+        self.assertTrue(resource.before_delete_instance_dry_run)
+        self.assertTrue(resource.delete_instance_dry_run)
+        self.assertTrue(resource.after_delete_instance_dry_run)
 
         resource.import_data(dataset, dry_run=False, raise_errors=True)
-        self.assertTrue(resource.before_delete_instance_real_run)
-        self.assertTrue(resource.delete_instance_real_run)
-        self.assertTrue(resource.after_delete_instance_real_run)
+        self.assertFalse(resource.before_delete_instance_dry_run)
+        self.assertFalse(resource.delete_instance_dry_run)
+        self.assertFalse(resource.after_delete_instance_dry_run)
 
     def test_relationships_fields(self):
 
