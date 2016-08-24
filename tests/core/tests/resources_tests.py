@@ -307,7 +307,7 @@ class ModelResourceTest(TestCase):
                          results.RowResult.IMPORT_TYPE_DELETE)
         self.assertFalse(Book.objects.filter(pk=self.book.pk))
 
-    def test_save_instance_real_run_specific_logic(self):
+    def test_save_instance_with_dry_run_flag(self):
         class B(BookResource):
             def before_save_instance(self, instance, using_transactions, dry_run):
                 super(B, self).before_save_instance(instance, using_transactions, dry_run)
@@ -339,7 +339,7 @@ class ModelResourceTest(TestCase):
         self.assertTrue(resource.save_instance_real_run)
         self.assertTrue(resource.after_save_instance_real_run)
 
-    def test_delete_instance_real_run_specific_logic(self):
+    def test_delete_instance_with_dry_run_flag(self):
         class B(BookResource):
             delete = fields.Field(widget=widgets.BooleanWidget())
 
