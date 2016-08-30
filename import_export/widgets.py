@@ -6,6 +6,8 @@ from datetime import datetime, date
 from django.utils import datetime_safe, timezone, six
 from django.utils.encoding import smart_text
 from django.conf import settings
+from django.db.models import Value, CharField
+from django.db.models.functions import Concat
 
 try:
     from django.utils.encoding import force_text
@@ -21,6 +23,7 @@ class Widget(object):
     :meth:`~import_export.widgets.Widget.clean` and
     :meth:`~import_export.widgets.Widget.render`.
     """
+
     def clean(self, value, row=None, *args, **kwargs):
         """
         Returns an appropriate Python object for an imported value.
@@ -279,6 +282,7 @@ class ForeignKeyWidget(Widget):
     :param model: The Model the ForeignKey refers to (required).
     :param field: A field on the related model used for looking up a particular object.
     """
+
     def __init__(self, model, field='pk', *args, **kwargs):
         self.model = model
         self.field = field
@@ -395,7 +399,6 @@ class ManyToManyMultiFieldsWidget(Widget):
         qs = self.model.objects.all().annotate(c_field=Concat(*fields, output_field=CharField())) \
             .filter(**{'c_field__in': ids})
         return qs if qs.exists() else None
-
 
     def render(self, value):
         ids = []
