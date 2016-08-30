@@ -355,3 +355,51 @@ class ManyToManyWidget(Widget):
     def render(self, value, obj=None):
         ids = [smart_text(getattr(obj, self.field)) for obj in value.all()]
         return self.separator.join(ids)
+
+
+class ManyToManyMultiFieldsWidget(Widget):
+    """
+    Widget that converts between representations of a ManyToMany relationships
+    as a list and an actual ManyToMany fields
+
+    Note: separator must be different from field_seperator
+
+    :param model: The model the ManyToMany field refers to (required).
+    :param separator: Defaults to ``','``.
+    :param field_seperator: seperator between fields, defaults to ``':'``
+    :param fields: Fields on the related model. Default is ``pk``.
+    """
+
+    def __init__(self, model, separator=None, field_seperator=None, fields=None, *args, **kwargs):
+        if separator is None:
+            separator = ','
+        if field_seperator is None:
+            field_seperator = ':'
+        if fields is None:
+            fields = ['pk', ]
+        self.model = model
+        self.separator = separator
+        self.field_seperator = field_seperator
+        self.fields = fields
+        super(ManyToManyMultiFieldsWidget, self).__init__(*args, **kwargs)
+
+    def clean(self, value):
+        if not value:
+            return self.model.objects.none()
+        ids = filter(None, value.split(self.separator))
+        fields = list(self.fields)
+        i = len(fields) - 1
+        while i > 0:
+            fields.insert(i, Value("'%s'" % self.field_seperator))
+            i -= 2
+        qs = self.model.objects.all().annotate(c_field=Concat(*fields, output_field=CharField())) \
+            .filter(**{'c_field__in': ids})
+        return qs if qs.exists() else None
+
+
+    def render(self, value):
+        ids = []
+        for obj in value.all():
+            fields = [smart_text(getattr(obj, field)) for field in self.fields]
+            ids.append(self.field_seperator.join(fields))
+        return self.separator.join(ids)
