@@ -713,6 +713,27 @@ class ModelResourceTest(TestCase):
         self.assertEqual(WithFloatField.objects.all()[0].f, None)
         self.assertEqual(WithFloatField.objects.all()[1].f, None)
 
+    def test_collect_failed_rows(self):
+        resource = ProfileResource()
+        headers = ['id', 'user']
+        # 'user' is a required field, the database will raise an error.
+        row = [None, None]
+        dataset = tablib.Dataset(row, headers=headers)
+        result = resource.import_data(
+            dataset, dry_run=True, use_transactions=True,
+            collect_failed_rows=True,
+        )
+        self.assertEqual(
+            result.failed_dataset.headers,
+            [u'id', u'user', u'Error']
+        )
+        self.assertEqual(len(result.failed_dataset), 1)
+        self.assertEqual(len(result.failed_dataset), 1)
+        self.assertEqual(
+            result.failed_dataset.dict[0]['Error'],
+            'NOT NULL constraint failed: core_profile.user_id'
+        )
+
 
 class ModelResourceTransactionTest(TransactionTestCase):
     @skipUnlessDBFeature('supports_transactions')
