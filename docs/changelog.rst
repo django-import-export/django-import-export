@@ -1,7 +1,8 @@
 Changelog
 =========
 
-0.4.6 (unreleased)
+
+0.5.0 (2016-09-01)
 ------------------
 
 - Hide default value in diff when importing a new instance (#458)
@@ -17,6 +18,38 @@ Changelog
 - fire events post_import, post_export events (#440)
 
 - add **kwargs to export_data / create_dataset
+
+- Add before_import_row() and after_import_row() (#452)
+
+- Add get_export_fields() to Resource to control what fields are exported (#461)
+
+- Control user-visible fields (#466)
+
+- Fix diff for models using ManyRelatedManager
+
+- Handle already cleaned objects (#484)
+
+- Add after_import_instance hook (#489)
+
+- Use optimized xlsx reader (#482)
+
+- Adds resource_class of BookResource (re-adds) in admin docs (#481)
+
+- Require POST method for process_import() (#478)
+
+- Add SimpleArrayWidget to support use of django.contrib.postgres.fields.ArrayField (#472)
+
+- Add new Diff class (#477)
+
+- Fix #375: add row to widget.clean(), obj to widget.render() (#479)
+
+- Restore transactions for data import (#480)
+
+- Refactor the import-export templates (#496)
+
+- Update doc links to the stable version, update rtfd to .io (#507)
+
+- Fixed typo in the Czech translation (#495)
 
 
 0.4.5 (2016-04-06)
