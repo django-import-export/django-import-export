@@ -427,8 +427,9 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         :param dry_run: If ``dry_run`` is set, or error occurs, transaction
             will be rolled back.
         """
+        row_result = self.get_row_result_class()()
+        row_result.import_type = RowResult.IMPORT_TYPE_ERROR
         try:
-            row_result = self.get_row_result_class()()
             self.before_import_row(row, **kwargs)
             instance, new = self.get_or_init_instance(instance_loader, row)
             self.after_import_instance(instance, new, **kwargs)
@@ -473,7 +474,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         return row_result
 
     def import_data(self, dataset, dry_run=False, raise_errors=False,
-                    use_transactions=None, **kwargs):
+                    use_transactions=None, collect_failed_rows=False, **kwargs):
         """
         Imports data from ``tablib.Dataset``. Refer to :doc:`import_workflow`
         for a more complete description of the whole import process.
@@ -483,8 +484,11 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         :param raise_errors: Whether errors should be printed to the end user
             or raised regularly.
 
-        :param use_transactions: If ``True`` import process will be processed
-            inside transaction.
+        :param use_transactions: If ``True`` the import process will be processed
+            inside a transaction.
+
+        :param collect_failed_rows: If ``True`` the import process will collect
+            failed rows.
 
         :param dry_run: If ``dry_run`` is set, or an error occurs, if a transaction
             is being used, it will be rolled back.
@@ -503,18 +507,13 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
 
         if using_transactions:
             with transaction.atomic():
-                return self.import_data_inner(dataset, dry_run, raise_errors, using_transactions, **kwargs)
-        return self.import_data_inner(dataset, dry_run, raise_errors, using_transactions, **kwargs)
+                return self.import_data_inner(dataset, dry_run, raise_errors, using_transactions, collect_failed_rows, **kwargs)
+        return self.import_data_inner(dataset, dry_run, raise_errors, using_transactions, collect_failed_rows, **kwargs)
 
-    def import_data_inner(self, dataset, dry_run, raise_errors, using_transactions, **kwargs):
+    def import_data_inner(self, dataset, dry_run, raise_errors, using_transactions, collect_failed_rows, **kwargs):
         result = self.get_result_class()()
         result.diff_headers = self.get_diff_headers()
-        result.totals = OrderedDict([(RowResult.IMPORT_TYPE_NEW, 0),
-                                     (RowResult.IMPORT_TYPE_UPDATE, 0),
-                                     (RowResult.IMPORT_TYPE_DELETE, 0),
-                                     (RowResult.IMPORT_TYPE_SKIP, 0),
-                                     (RowResult.IMPORT_TYPE_ERROR, 0),
-                                     ('total', len(dataset))])
+        result.total_rows = len(dataset)
 
         if using_transactions:
             # when transactions are used we want to create/update/delete object
@@ -526,7 +525,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         except Exception as e:
             logging.exception(e)
             tb_info = traceback.format_exc()
-            result.base_errors.append(self.get_error_result_class()(e, tb_info))
+            result.append_base_error(self.get_error_result_class()(e, tb_info))
             if raise_errors:
                 if using_transactions:
                     savepoint_rollback(sp1)
@@ -535,18 +534,21 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         instance_loader = self._meta.instance_loader_class(self, dataset)
 
         # Update the total in case the dataset was altered by before_import()
-        result.totals['total'] = len(dataset)
+        result.total_rows = len(dataset)
+
+        if collect_failed_rows:
+            result.add_dataset_headers(dataset.headers)
 
         for row in dataset.dict:
             row_result = self.import_row(row, instance_loader, using_transactions, dry_run, **kwargs)
+            result.increment_row_result_total(row_result)
             if row_result.errors:
-                result.totals[row_result.IMPORT_TYPE_ERROR] += 1
+                if collect_failed_rows:
+                    result.append_failed_row(row, row_result.errors[0])
                 if raise_errors:
                     if using_transactions:
                         savepoint_rollback(sp1)
                     raise row_result.errors[-1].error
-            else:
-                result.totals[row_result.import_type] += 1
             if (row_result.import_type != RowResult.IMPORT_TYPE_SKIP or
                     self._meta.report_skipped):
                 result.append_row_result(row_result)
@@ -556,7 +558,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         except Exception as e:
             logging.exception(e)
             tb_info = traceback.format_exc()
-            result.base_errors.append(self.get_error_result_class()(e, tb_info))
+            result.append_base_error(self.get_error_result_class()(e, tb_info))
             if raise_errors:
                 if using_transactions:
                     savepoint_rollback(sp1)

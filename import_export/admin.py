@@ -179,7 +179,7 @@ class ImportMixin(ImportExportMixinBase):
                 }
                 content_type_id = ContentType.objects.get_for_model(self.model).pk
                 for row in result:
-                    if row.import_type != row.IMPORT_TYPE_SKIP:
+                    if row.import_type != row.IMPORT_TYPE_ERROR and row.import_type != row.IMPORT_TYPE_SKIP:
                         LogEntry.objects.log_action(
                             user_id=request.user.pk,
                             content_type_id=content_type_id,
