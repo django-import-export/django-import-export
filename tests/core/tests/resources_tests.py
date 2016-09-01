@@ -730,7 +730,6 @@ class PostgresTests(TransactionTestCase):
             [u'id', u'user', u'Error']
         )
         self.assertEqual(len(result.failed_dataset), 1)
-        self.assertEqual(len(result.failed_dataset), 1)
         self.assertEqual(
             result.failed_dataset.dict[0]['Error'],
             'NOT NULL constraint failed: core_profile.user_id'
