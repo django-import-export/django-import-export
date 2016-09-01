@@ -730,10 +730,7 @@ class PostgresTests(TransactionTestCase):
             [u'id', u'user', u'Error']
         )
         self.assertEqual(len(result.failed_dataset), 1)
-        self.assertEqual(
-            result.failed_dataset.dict[0]['Error'],
-            'NOT NULL constraint failed: core_profile.user_id'
-        )
+        # We can't check the error message because it's package- and version-dependent
 
 
 if VERSION >= (1, 8) and 'postgresql' in settings.DATABASES['default']['ENGINE']:
