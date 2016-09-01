@@ -715,6 +715,27 @@ class PostgresTests(TransactionTestCase):
         except IntegrityError:
             self.fail('IntegrityError was raised.')
 
+    def test_collect_failed_rows(self):
+        resource = ProfileResource()
+        headers = ['id', 'user']
+        # 'user' is a required field, the database will raise an error.
+        row = [None, None]
+        dataset = tablib.Dataset(row, headers=headers)
+        result = resource.import_data(
+            dataset, dry_run=True, use_transactions=True,
+            collect_failed_rows=True,
+        )
+        self.assertEqual(
+            result.failed_dataset.headers,
+            [u'id', u'user', u'Error']
+        )
+        self.assertEqual(len(result.failed_dataset), 1)
+        self.assertEqual(len(result.failed_dataset), 1)
+        self.assertEqual(
+            result.failed_dataset.dict[0]['Error'],
+            'NOT NULL constraint failed: core_profile.user_id'
+        )
+
 
 if VERSION >= (1, 8) and 'postgresql' in settings.DATABASES['default']['ENGINE']:
     from django.contrib.postgres.fields import ArrayField
