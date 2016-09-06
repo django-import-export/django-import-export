@@ -6,6 +6,7 @@ from datetime import datetime, date
 from django.utils import datetime_safe, timezone, six
 from django.utils.encoding import smart_text
 from django.conf import settings
+from django.utils import formats
 
 try:
     from django.utils.encoding import force_text
@@ -117,33 +118,37 @@ class BooleanWidget(Widget):
         return True if value in self.TRUE_VALUES else False
 
 
-class DateWidget(Widget):
+class BaseTemporalWidget(Widget):
+    def __init__(self, format=None, *args, **kwargs):
+        super(BaseTemporalWidget, self).__init__(*args, **kwargs)
+        # Set formats to Django's (localized) default INPUT_FORMATS or use the
+        # supplied ``format``
+        self.formats = formats.get_format_lazy(self.default_formats)
+        if format:
+            self.formats = (format,)
+
+
+class DateWidget(BaseTemporalWidget):
     """
     Widget for converting date fields.
 
     Takes optional ``format`` parameter.
     """
-
-    def __init__(self, format=None):
-        if format is None:
-            if not settings.DATE_INPUT_FORMATS:
-                formats = ("%Y-%m-%d",)
-            else:
-                formats = settings.DATE_INPUT_FORMATS
-        else:
-            formats = (format,)
-        self.formats = formats
+    default_formats = 'DATE_INPUT_FORMATS'
 
     def clean(self, value, row=None, *args, **kwargs):
+        # return None if no input value given
         if not value:
             return None
         if isinstance(value, date):
             return value
+        # try to format given value with each available input format
         for format in self.formats:
             try:
                 return datetime.strptime(value, format).date()
             except (ValueError, TypeError):
                 continue
+        # all options are exhausted, display an error
         raise ValueError("Enter a valid date.")
 
     def render(self, value, obj=None):
@@ -155,23 +160,14 @@ class DateWidget(Widget):
             return datetime_safe.new_date(value).strftime(self.formats[0])
 
 
-class DateTimeWidget(Widget):
+class DateTimeWidget(BaseTemporalWidget):
     """
     Widget for converting date fields.
 
     Takes optional ``format`` parameter. If none is set, either
     ``settings.DATETIME_INPUT_FORMATS`` or ``"%Y-%m-%d %H:%M:%S"`` is used.
     """
-
-    def __init__(self, format=None):
-        if format is None:
-            if not settings.DATETIME_INPUT_FORMATS:
-                formats = ("%Y-%m-%d %H:%M:%S",)
-            else:
-                formats = settings.DATETIME_INPUT_FORMATS
-        else:
-            formats = (format,)
-        self.formats = formats
+    default_formats = 'DATETIME_INPUT_FORMATS'
 
     def clean(self, value, row=None, *args, **kwargs):
         if not value:
@@ -197,22 +193,13 @@ class DateTimeWidget(Widget):
         return value.strftime(self.formats[0])
 
 
-class TimeWidget(Widget):
+class TimeWidget(BaseTemporalWidget):
     """
     Widget for converting time fields.
 
     Takes optional ``format`` parameter.
     """
-
-    def __init__(self, format=None):
-        if format is None:
-            if not settings.TIME_INPUT_FORMATS:
-                formats = ("%H:%M:%S",)
-            else:
-                formats = settings.TIME_INPUT_FORMATS
-        else:
-            formats = (format,)
-        self.formats = formats
+    default_formats = 'TIME_INPUT_FORMATS'
 
     def clean(self, value, row=None, *args, **kwargs):
         if not value:
