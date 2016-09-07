@@ -5,7 +5,11 @@ from django.contrib import admin
 from import_export.resources import ModelResource
 from import_export.admin import ImportExportMixin, ImportMixin, ExportActionModelAdmin
 
-from .models import Book, Category, Author
+from .models import Book, Category, Author, Child
+
+
+class ChildAdmin(ImportMixin, admin.ModelAdmin):
+    pass
 
 
 class BookResource(ModelResource):
@@ -32,3 +36,4 @@ class AuthorAdmin(ImportMixin, admin.ModelAdmin):
 admin.site.register(Book, BookAdmin)
 admin.site.register(Category, CategoryAdmin)
 admin.site.register(Author, AuthorAdmin)
+admin.site.register(Child, ChildAdmin)
