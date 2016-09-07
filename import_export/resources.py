@@ -438,8 +438,6 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
             else:
                 row_result.import_type = RowResult.IMPORT_TYPE_UPDATE
             row_result.new_record = new
-            row_result.object_repr = force_text(instance)
-            row_result.object_id = instance.pk
             original = deepcopy(instance)
             diff = Diff(self, original, new)
             if self.for_delete(row, instance):
@@ -458,11 +456,12 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
                     with transaction.atomic():
                         self.save_instance(instance, using_transactions, dry_run)
                     self.save_m2m(instance, row, using_transactions, dry_run)
-                    # Add object info to RowResult for LogEntry
-                    row_result.object_repr = force_text(instance)
-                    row_result.object_id = instance.pk
                 diff.compare_with(self, instance, dry_run)
             row_result.diff = diff.as_html()
+            # Add object info to RowResult for LogEntry
+            if row_result.import_type != RowResult.IMPORT_TYPE_SKIP:
+                row_result.object_id = instance.pk
+                row_result.object_repr = force_text(instance)
             self.after_import_row(row, row_result, **kwargs)
         except Exception as e:
             # There is no point logging a transaction error for each row
