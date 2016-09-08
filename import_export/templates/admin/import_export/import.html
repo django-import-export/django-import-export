@@ -8,8 +8,6 @@
 {% endblock %}
 
 {% block content %}
-<h1>{% trans "Import" %}</h1>
-
 {% if confirm_form %}
   <form action="{% url opts|admin_urlname:"process_import" %}" method="POST">
     {% csrf_token %}
