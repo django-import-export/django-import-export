@@ -266,6 +266,7 @@ class ImportMixin(ImportExportMixinBase):
         elif django.VERSION >= (1, 7, 0):
             context.update(self.admin_site.each_context())
 
+        context['title'] = _("Import")
         context['form'] = form
         context['opts'] = self.model._meta
         context['fields'] = [f.column_name for f in resource.get_user_visible_fields()]
@@ -394,6 +395,7 @@ class ExportMixin(ImportExportMixinBase):
         elif django.VERSION >= (1, 7, 0):
             context.update(self.admin_site.each_context())
 
+        context['title'] = _("Export")
         context['form'] = form
         context['opts'] = self.model._meta
         request.current_app = self.admin_site.name
