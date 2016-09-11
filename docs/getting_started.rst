@@ -280,12 +280,12 @@ To hook in the import export workflow, you can connect to ``post_import``, ``pos
     from import_export.signals import post_import, post_export
 
     @receiver(post_import, dispatch_uid='balabala...')
-    def _post_import(model, **kwargs):
+    def _post_import(model, request, **kwargs):
         # model is the actual model instance which after import
         pass
 
     @receiver(post_export, dispatch_uid='balabala...')
-    def _post_export(model, **kwargs):
+    def _post_export(model, request, **kwargs):
         # model is the actual model instance which after export 
         pass
 

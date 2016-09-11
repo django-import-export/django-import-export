@@ -200,7 +200,7 @@ class ImportMixin(ImportExportMixinBase):
             messages.success(request, success_message)
             tmp_storage.remove()
 
-            post_import.send(sender=None, model=self.model)
+            post_import.send(sender=None, model=self.model, request=request)
 
             url = reverse('admin:%s_%s_changelist' % self.get_model_info(),
                           current_app=self.admin_site.name)
@@ -385,7 +385,7 @@ class ExportMixin(ImportExportMixinBase):
                 self.get_export_filename(file_format),
             )
 
-            post_export.send(sender=None, model=self.model)
+            post_export.send(sender=None, model=self.model, request=request)
             return response
 
         context = {}
