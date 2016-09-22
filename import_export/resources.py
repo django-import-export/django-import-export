@@ -428,7 +428,6 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
             will be rolled back.
         """
         row_result = self.get_row_result_class()()
-        row_result.import_type = RowResult.IMPORT_TYPE_ERROR
         try:
             self.before_import_row(row, **kwargs)
             instance, new = self.get_or_init_instance(instance_loader, row)
@@ -469,6 +468,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
             if not isinstance(e, TransactionManagementError):
                 logging.exception(e)
             tb_info = traceback.format_exc()
+            row_result.import_type = RowResult.IMPORT_TYPE_ERROR
             row_result.errors.append(self.get_error_result_class()(e, tb_info, row))
         return row_result
 
