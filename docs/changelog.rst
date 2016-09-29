@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-0.5.1 (unreleased)
+0.5.1 (2016-09-29)
 ------------------
 
 - French locale not in pypi (#524)
