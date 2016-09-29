@@ -5,7 +5,9 @@ Changelog
 0.5.1 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- French locale not in pypi (#524)
+
+- Bugfix/fix undefined template variables (#519)
 
 
 0.5.0 (2016-09-01)
