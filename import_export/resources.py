@@ -19,7 +19,7 @@ from django.utils import six
 from django.utils.safestring import mark_safe
 
 from . import widgets
-from .fields import Field
+from .fields import Field, ResourceField
 from .instance_loaders import ModelInstanceLoader
 from .results import Error, Result, RowResult
 
@@ -188,7 +188,9 @@ class Diff(object):
         return data
 
     def _export_resource_fields(self, resource, instance):
-        return [resource.export_field(f, instance) if instance else "" for f in resource.get_user_visible_fields()]
+        return [getattr(instance, f.column_name,
+                resource.export_field(f, instance)) if instance else ""
+                for f in resource.get_user_visible_fields()]
 
 
 class Resource(six.with_metaclass(DeclarativeMetaclass)):
@@ -224,23 +226,51 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         else:
             return self._meta.use_transactions
 
+    def get_extra_names(self):
+        """Returns array of extra fields
+        """
+        return [field
+                for field in self.get_export_order()
+                if field not in self.fields]
+
+    def get_extra_fields(self):
+
+        if not hasattr(self, 'extra_fields'):
+            self.extra_fields = OrderedDict()
+
+            for f in self.get_extra_names():
+                self.extra_fields[f] = ResourceField(resource=self,
+                                                     column_name=f)
+
+        return self.extra_fields
+
     def get_fields(self, **kwargs):
         """
         Returns fields sorted according to
         :attr:`~import_export.resources.ResourceOptions.export_order`.
         """
-        return [self.fields[f] for f in self.get_export_order()]
 
-    @classmethod
-    def get_field_name(cls, field):
+        if not hasattr(self, 'extra_fields'):
+            self.get_extra_fields()
+
+        return [self.fields[f] if f in self.fields else self.extra_fields[f]
+                for f in self.get_export_order()
+                if f in self.fields or f in self.extra_fields]
+
+    def get_field_name(self, field):
         """
         Returns the field name for a given field.
         """
-        for field_name, f in cls.fields.items():
+        for field_name, f in self.fields.items():
             if f == field:
                 return field_name
+
+        for field_name, f in self.get_extra_fields().items():
+            if field_name == field.id:
+                return field_name
+
         raise AttributeError("Field %s does not exists in %s resource" % (
-            field, cls))
+            field, self))
 
     def init_instance(self, row=None):
         raise NotImplementedError()
@@ -456,6 +486,10 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
                     with transaction.atomic():
                         self.save_instance(instance, using_transactions, dry_run)
                     self.save_m2m(instance, row, using_transactions, dry_run)
+
+                for key, field in self.get_extra_fields().items():
+                    setattr(instance, key, field.clean(row))
+
                 diff.compare_with(self, instance, dry_run)
             row_result.diff = diff.as_html()
             # Add object info to RowResult for LogEntry

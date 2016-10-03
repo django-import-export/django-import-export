@@ -120,3 +120,85 @@ class Field(object):
         if value is None:
             return ""
         return self.widget.render(value, obj)
+
+
+class ResourceField(Field):
+
+    """Proxy to the resource class
+
+    Support method on resource without writing field
+
+    .. code-block:: python
+
+        class MyModelResource(ModelReource):
+
+            def export_myextra_field(self, obj):
+
+                return obj.related.value
+
+            def save_myextra_field(self, obj, data):
+                # optional
+
+                RelatedObject.create(**data)
+                RelatedObject1.create(**data)
+
+            def get_myextra_field_name(self):
+                # optional
+
+                return "ColumnName"
+
+    """
+
+    def __init__(self, column_name, resource, id=None, *args, **kwargs):
+
+        self.resource = resource
+
+        super(ResourceField, self).__init__(
+            column_name=column_name,
+            *args, **kwargs)
+
+        self.attribute = column_name
+
+        method = getattr(resource, 'get_%s_name' % column_name, None)
+
+        if method:
+            self.column_name = method()
+        else:
+            self.column_name = column_name
+
+        self.id = column_name
+
+        if not hasattr(self.resource,
+                       "export_%s" % self.attribute):
+            raise NotImplementedError("Missing export method for "
+                                      "declared field %s" % self.attribute)
+
+        if not hasattr(resource, "save_%s" % self.attribute):
+            self.readonly = True
+
+    def save(self, obj, data):
+        """
+        Call save method field on resource
+        """
+
+        if not self.readonly:
+            method = getattr(self.resource,
+                             "save_%s" % self.attribute,
+                             None)
+
+            method(obj, data)
+
+    def get_value(self, obj):
+        """
+        Returns the value of the object's attribute.
+
+        def export_fieldname(self, obj):
+            return obj.whatever
+
+        """
+
+        method = getattr(self.resource,
+                         "export_%s" % self.attribute,
+                         None)
+
+        return method(obj)
