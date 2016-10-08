@@ -85,7 +85,7 @@ msgstr "Provést import"
 
 #: templates/admin/import_export/import.html:30
 msgid "This importer will import the following fields: "
-msgstr "Budou importováný následující pole"
+msgstr "Budou importována následující pole"
 
 #: templates/admin/import_export/import.html:64
 msgid "Errors"
