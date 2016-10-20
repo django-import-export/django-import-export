@@ -1,5 +1,7 @@
 from __future__ import unicode_literals
 
+import six
+
 try:
     from collections import OrderedDict
 except ImportError:
@@ -53,7 +55,7 @@ class Result(object):
 
     def append_failed_row(self, row, error):
         row_values = [v for (k, v) in row.items()]
-        row_values.append(error.error.message)
+        row_values.append(six.text_type(error.error))
         self.failed_dataset.append(row_values)
 
     def increment_row_result_total(self, row_result):
