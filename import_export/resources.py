@@ -428,7 +428,6 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
             will be rolled back.
         """
         row_result = self.get_row_result_class()()
-        row_result.import_type = RowResult.IMPORT_TYPE_ERROR
         try:
             self.before_import_row(row, **kwargs)
             instance, new = self.get_or_init_instance(instance_loader, row)
@@ -464,6 +463,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
                 row_result.object_repr = force_text(instance)
             self.after_import_row(row, row_result, **kwargs)
         except Exception as e:
+            row_result.import_type = RowResult.IMPORT_TYPE_ERROR
             # There is no point logging a transaction error for each row
             # when only the original error is likely to be relevant
             if not isinstance(e, TransactionManagementError):
