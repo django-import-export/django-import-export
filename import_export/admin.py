@@ -219,6 +219,12 @@ class ImportMixin(ImportExportMixinBase):
 
         messages.success(request, success_message)
 
+    def get_import_context_data(self, **kwargs):
+        return self.get_context_data(**kwargs)
+
+    def get_context_data(self, **kwargs):
+        return {}
+
     def import_action(self, request, *args, **kwargs):
         '''
         Perform a dry_run of the import to make sure the import will not
@@ -228,7 +234,7 @@ class ImportMixin(ImportExportMixinBase):
         '''
         resource = self.get_import_resource_class()(**self.get_import_resource_kwargs(request, *args, **kwargs))
 
-        context = {}
+        context = self.get_import_context_data()
 
         import_formats = self.get_import_formats()
         form = ImportForm(import_formats,
@@ -378,6 +384,12 @@ class ExportMixin(ImportExportMixinBase):
         export_data = file_format.export_data(data)
         return export_data
 
+    def get_export_context_data(self, **kwargs):
+        return self.get_context_data(**kwargs)
+
+    def get_context_data(self, **kwargs):
+        return {}
+
     def export_action(self, request, *args, **kwargs):
         formats = self.get_export_formats()
         form = ExportForm(formats, request.POST or None)
@@ -401,7 +413,7 @@ class ExportMixin(ImportExportMixinBase):
             post_export.send(sender=None, model=self.model)
             return response
 
-        context = {}
+        context = self.get_export_context_data()
 
         if django.VERSION >= (1, 8, 0):
             context.update(self.admin_site.each_context(request))
