@@ -201,4 +201,10 @@ class ResourceField(Field):
                          "export_%s" % self.attribute,
                          None)
 
+        if hasattr(self.resource, self.attribute):
+            field = getattr(self.resource, self.attribute)
+
+            if field.widget:
+                return field.widget.clean(method(obj))
+
         return method(obj)
