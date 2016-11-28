@@ -56,6 +56,8 @@ You can use the following directives in your settings file:
     is checked first, which defaults to ``None``. If not found, this
     global option is used. Default is ``TempFolderStorage``.
 
+``IMPORT_EXPORT_CSV_DELIMITER``
+    This setting allows use of custom delimiter like `(;)` in CSV files. Default is `(,)`
 
 
 Example app
