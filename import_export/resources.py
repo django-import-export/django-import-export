@@ -188,9 +188,18 @@ class Diff(object):
         return data
 
     def _export_resource_fields(self, resource, instance):
-        return [getattr(instance, f.column_name,
-                resource.export_field(f, instance)) if instance else ""
-                for f in resource.get_user_visible_fields()]
+        fields = []
+        for f in resource.get_user_visible_fields():
+            if instance:
+                try:
+                    value = getattr(instance, f.column_name)
+                except:
+                    fields.append(resource.export_field(f, instance))
+                else:
+                    fields.append(value)
+            else:
+                fields.append("")
+        return fields
 
 
 class Resource(six.with_metaclass(DeclarativeMetaclass)):
