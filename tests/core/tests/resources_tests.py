@@ -25,6 +25,11 @@ from ..models import (
 )
 
 try:
+    from collections import OrderedDict
+except ImportError:
+    from django.utils.datastructures import SortedDict as OrderedDict
+
+try:
     from django.utils.encoding import force_text
 except ImportError:
     from django.utils.encoding import force_unicode as force_text
@@ -45,8 +50,35 @@ class ResourceTestCase(TestCase):
         self.my_resource = MyResource()
 
     def test_fields(self):
-        fields = self.my_resource.fields
-        self.assertIn('name', fields)
+        """Check that fields were determined correctly """
+
+        # check that our fields were determined
+        self.assertIn('name', self.my_resource.fields)
+
+        # check that resource instance fields attr isn't link to resource cls
+        # fields
+        self.assertFalse(
+            MyResource.fields is self.my_resource.fields
+        )
+
+        # dynamically add new resource field into resource instance
+        self.my_resource.fields.update(
+            OrderedDict([
+                ('new_field', fields.Field()),
+            ])
+        )
+
+        # check that new field in resource instance fields
+        self.assertIn(
+            'new_field',
+            self.my_resource.fields
+        )
+
+        # check that new field not in resource cls fields
+        self.assertNotIn(
+            'new_field',
+            MyResource.fields
+        )
 
     def test_field_column_name(self):
         field = self.my_resource.fields['name']
