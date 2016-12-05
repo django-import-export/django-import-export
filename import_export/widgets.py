@@ -343,11 +343,11 @@ class ManyToManyWidget(Widget):
     def clean(self, value, row=None, *args, **kwargs):
         if not value:
             return self.model.objects.none()
-        if isinstance(value, float):
+        if isinstance(value, (float, int)):
             ids = [int(value)]
         else:
             ids = value.split(self.separator)
-        ids = filter(None, value.split(self.separator))
+        ids = filter(None, ids)
         return self.model.objects.filter(**{
             '%s__in' % self.field: ids
         })
