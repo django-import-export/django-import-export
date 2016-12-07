@@ -9,3 +9,8 @@ class ImportExportError(Exception):
 class FieldError(ImportExportError):
     """Raised when a field encounters an error."""
     pass
+
+
+class SkipRow(ImportExportError):
+    """Raised when exporting a row that should be skipped"""
+    pass

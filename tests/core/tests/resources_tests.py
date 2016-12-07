@@ -16,12 +16,19 @@ from django.test import TestCase, TransactionTestCase, skipUnlessDBFeature
 from django.utils.html import strip_tags
 
 from import_export import fields, resources, results, widgets
+from import_export.exceptions import SkipRow
 from import_export.instance_loaders import ModelInstanceLoader
 from import_export.resources import Diff
 
 from ..models import (
-    Author, Book, Category, Entry, Profile, WithDefault, WithDynamicDefault,
-    WithFloatField,
+    Author,
+    Book,
+    Category,
+    Entry,
+    Profile,
+    WithDefault,
+    WithDynamicDefault,
+    WithFloatField
 )
 
 try:
@@ -411,6 +418,31 @@ class ModelResourceTest(TestCase):
         full_title = resource.export_field(resource.get_fields()[0], self.book)
         self.assertEqual(full_title, '%s by %s' % (self.book.name,
                                                    self.book.author.name))
+
+    def test_skipping_rows(self):
+
+        class B(resources.ModelResource):
+            full_title = fields.Field(column_name="Full title")
+
+            class Meta:
+                model = Book
+                fields = ('author__name', 'full_title')
+
+            def dehydrate_full_title(self, obj):
+                if obj.name == 'skipme':
+                    raise SkipRow()
+                return '%s by %s' % (obj.name, obj.author.name)
+
+        author = Author.objects.create(name="Author")
+        books = [Book.objects.create(name=name, author=author) for name in ('foo', 'skipme', 'bar')]
+        resource = B()
+        data = resource.export(books)
+        self.assertEqual(len(data), 2)
+        self.assertIn('foo', data.csv)
+        self.assertNotIn('skipme', data.csv)
+        self.assertIn('bar', data.csv)
+        self.assertEqual(len(data.skipped), 1)
+        self.assertTrue(data.skipped[0].name == 'skipme')
 
     def test_widget_fomat_in_fk_field(self):
         class B(resources.ModelResource):
