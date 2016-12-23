@@ -520,7 +520,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
             sp1 = savepoint()
 
         try:
-            self.before_import(dataset, using_transactions, dry_run, **kwargs)
+            dataset = self.before_import(dataset, using_transactions, dry_run, **kwargs)
         except Exception as e:
             logging.exception(e)
             tb_info = traceback.format_exc()
