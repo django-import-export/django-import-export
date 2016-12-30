@@ -496,13 +496,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         if use_transactions is None:
             use_transactions = self.get_use_transactions()
 
-        connection = connections[DEFAULT_DB_ALIAS]
-        supports_transactions = getattr(connection.features, "supports_transactions", False)
-
-        if use_transactions and not supports_transactions:
-            raise ImproperlyConfigured
-
-        using_transactions = (use_transactions or dry_run) and supports_transactions
+        using_transactions = use_transactions or dry_run
 
         if using_transactions:
             with transaction.atomic():
