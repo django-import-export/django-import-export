@@ -747,6 +747,8 @@ class ModelResource(six.with_metaclass(ModelDeclarativeMetaclass, Resource)):
             result = widgets.DateWidget
         elif internal_type in ('TimeField', ):
             result = widgets.TimeWidget
+        elif internal_type in ('DurationField', ):
+            result = widgets.DurationWidget
         elif internal_type in ('FloatField',):
             result = widgets.FloatWidget
         elif internal_type in ('IntegerField', 'PositiveIntegerField',
