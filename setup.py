@@ -29,7 +29,7 @@ setup(
     author_email="bmihelac@mihelac.org",
     license='BSD License',
     platforms=['OS Independent'],
-    url="https://github.com/bmihelac/django-import-export",
+    url="https://github.com/django-import-export/django-import-export",
     packages=find_packages(exclude=["tests"]),
     include_package_data=True,
     install_requires=install_requires,
