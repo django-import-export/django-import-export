@@ -11,7 +11,7 @@ from django import VERSION
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.core.management.color import no_style
-from django.db import connections, transaction, DEFAULT_DB_ALIAS
+from django.db import connections, router, transaction, DEFAULT_DB_ALIAS
 from django.db.models.fields import FieldDoesNotExist
 from django.db.models.query import QuerySet
 from django.db.transaction import TransactionManagementError
@@ -415,6 +415,12 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         """
         pass
 
+    def get_connection_name(self):
+        """
+        Connection name to perform transactions on. Returns "default" by default.
+        """
+        return DEFAULT_DB_ALIAS
+
     def import_row(self, row, instance_loader, using_transactions=True, dry_run=False, **kwargs):
         """
         Imports data from ``tablib.Dataset``. Refer to :doc:`import_workflow`
@@ -455,7 +461,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
                 if self.skip_row(instance, original):
                     row_result.import_type = RowResult.IMPORT_TYPE_SKIP
                 else:
-                    with transaction.atomic():
+                    with transaction.atomic(using=self.get_connection_name()):
                         self.save_instance(instance, using_transactions, dry_run)
                     self.save_m2m(instance, row, using_transactions, dry_run)
                 diff.compare_with(self, instance, dry_run)
@@ -508,8 +514,9 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         using_transactions = (use_transactions or dry_run) and supports_transactions
 
         if using_transactions:
-            with transaction.atomic():
-                return self.import_data_inner(dataset, dry_run, raise_errors, using_transactions, collect_failed_rows, **kwargs)
+            with transaction.atomic(using=self.get_connection_name()):
+                return self.import_data_inner(dataset, dry_run, raise_errors, using_transactions, collect_failed_rows,
+                                              **kwargs)
         return self.import_data_inner(dataset, dry_run, raise_errors, using_transactions, collect_failed_rows, **kwargs)
 
     def import_data_inner(self, dataset, dry_run, raise_errors, using_transactions, collect_failed_rows, **kwargs):
@@ -520,7 +527,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         if using_transactions:
             # when transactions are used we want to create/update/delete object
             # as transaction will be rolled back if dry_run is set
-            sp1 = savepoint()
+            sp1 = savepoint(using=self.get_connection_name())
 
         try:
             self.before_import(dataset, using_transactions, dry_run, **kwargs)
@@ -530,7 +537,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
             result.append_base_error(self.get_error_result_class()(e, tb_info))
             if raise_errors:
                 if using_transactions:
-                    savepoint_rollback(sp1)
+                    savepoint_rollback(sp1, using=self.get_connection_name())
                 raise
 
         instance_loader = self._meta.instance_loader_class(self, dataset)
@@ -549,7 +556,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
                     result.append_failed_row(row, row_result.errors[0])
                 if raise_errors:
                     if using_transactions:
-                        savepoint_rollback(sp1)
+                        savepoint_rollback(sp1, using=self.get_connection_name())
                     raise row_result.errors[-1].error
             if (row_result.import_type != RowResult.IMPORT_TYPE_SKIP or
                     self._meta.report_skipped):
@@ -563,14 +570,14 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
             result.append_base_error(self.get_error_result_class()(e, tb_info))
             if raise_errors:
                 if using_transactions:
-                    savepoint_rollback(sp1)
+                    savepoint_rollback(sp1, using=self.get_connection_name())
                 raise
 
         if using_transactions:
             if dry_run or result.has_errors():
-                savepoint_rollback(sp1)
+                savepoint_rollback(sp1, using=self.get_connection_name())
             else:
-                savepoint_commit(sp1)
+                savepoint_commit(sp1, using=self.get_connection_name())
 
         return result
 
@@ -806,6 +813,12 @@ class ModelResource(six.with_metaclass(ModelDeclarativeMetaclass, Resource)):
         want to limit the returned queryset.
         """
         return self._meta.model.objects.all()
+
+    def get_connection_name(self):
+        """
+        Returns the right connection for writes so we can perform transactions on it properly. 
+        """
+        return router.db_for_write(self._meta.model)
 
     def init_instance(self, row=None):
         """
