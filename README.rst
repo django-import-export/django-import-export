@@ -16,7 +16,7 @@ django-import-export
 
 .. image:: http://readthedocs.org/projects/django-import-export/badge/?version=stable
     :target: http://django-import-export.readthedocs.io/en/stable/
-    :alt: Docmentation
+    :alt: Documentation
 
 django-import-export is a Django application and library for importing
 and exporting data with included admin integration.

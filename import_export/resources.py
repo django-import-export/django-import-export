@@ -325,12 +325,15 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         if field.attribute and field.column_name in data:
             field.save(obj, data)
 
+    def get_import_fields(self):
+        return self.get_fields()
+
     def import_obj(self, obj, data, dry_run):
         """
         Traverses every field in this Resource and calls
         :meth:`~import_export.resources.Resource.import_field`.
         """
-        for field in self.get_fields():
+        for field in self.get_import_fields():
             if isinstance(field.widget, widgets.ManyToManyWidget):
                 continue
             self.import_field(field, obj, data)
@@ -346,7 +349,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
             # we don't have transactions and we want to do a dry_run
             pass
         else:
-            for field in self.get_fields():
+            for field in self.get_import_fields():
                 if not isinstance(field.widget, widgets.ManyToManyWidget):
                     continue
                 self.import_field(field, obj, data)
@@ -370,7 +373,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         """
         if not self._meta.skip_unchanged:
             return False
-        for field in self.get_fields():
+        for field in self.get_import_fields():
             try:
                 # For fields that are models.fields.related.ManyRelatedManager
                 # we need to compare the results
@@ -752,6 +755,8 @@ class ModelResource(six.with_metaclass(ModelDeclarativeMetaclass, Resource)):
             result = widgets.DateWidget
         elif internal_type in ('TimeField', ):
             result = widgets.TimeWidget
+        elif internal_type in ('DurationField', ):
+            result = widgets.DurationWidget
         elif internal_type in ('FloatField',):
             result = widgets.FloatWidget
         elif internal_type in ('IntegerField', 'PositiveIntegerField',

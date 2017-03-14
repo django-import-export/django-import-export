@@ -2,7 +2,8 @@
 from __future__ import unicode_literals
 
 from decimal import Decimal
-from datetime import date, datetime, time
+from datetime import date, datetime, time, timedelta
+from unittest import SkipTest
 
 from django.test.utils import override_settings
 from django.test import TestCase
@@ -105,6 +106,29 @@ class TimeWidgetTest(TestCase):
 
     def test_clean(self):
         self.assertEqual(self.widget.clean("20:15:00"), self.time)
+
+
+class DurationWidgetTest(TestCase):
+
+    def setUp(self):
+
+        try:
+            from django.utils.dateparse import parse_duration
+        except ImportError:
+            # Duration fields were added in Django 1.8
+            raise SkipTest
+
+        self.duration = timedelta(hours=1, minutes=57, seconds=0)
+        self.widget = widgets.DurationWidget()
+
+    def test_render(self):
+        self.assertEqual(self.widget.render(self.duration), "1:57:00")
+
+    def test_render_none(self):
+        self.assertEqual(self.widget.render(None), "")
+
+    def test_clean(self):
+        self.assertEqual(self.widget.clean("1:57:00"), self.duration)
 
 
 class DecimalWidgetTest(TestCase):
