@@ -9,3 +9,4 @@ dist/
 *.egg-info/
 .tox/
 .idea/
+*.python-version
