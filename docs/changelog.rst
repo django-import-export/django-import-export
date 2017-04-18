@@ -5,7 +5,29 @@ Changelog
 0.5.2 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Refactor import_row call by using keyword arguments
+
+- Added {{ block.super }} call in block bodyclass in admin/base_site.html
+
+- Add support for the Django DurationField with DurationWidget
+
+- GitHub bmihelac -> django-import-export Account Update
+
+- Add intersphinx links to documentation
+
+- Add Resource.get_import_fields()
+
+- Fixed readme mistake
+
+- Bugfix/fix m2m widget clean
+
+- Allow injection of context data for template rendered by import_action() and export_action()
+
+- Bugfix/fix exception in generate_log_entries()
+
+- Process import dataset and result in separate methods
+
+- Bugfix/fix error in converting exceptions to strings
 
 
 0.5.1 (2016-09-29)
