@@ -238,8 +238,6 @@ class DurationWidget(Widget):
                 return duration
             else:
                 raise ValueError("Enter a valid duration.")
-        else:
-            return None
 
     def render(self, value, obj=None):
         if not value:
