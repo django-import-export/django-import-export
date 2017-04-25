@@ -170,6 +170,19 @@ class IntegerWidgetTest(TestCase):
         self.assertEqual(self.widget.clean("0.0"), self.value)
 
 
+class FloatWidgetTest(TestCase):
+
+    def setUp(self):
+        self.value = float(1.0/3.0)
+        self.widget = widgets.FloatWidget()
+
+    def test_clean_none(self):
+        self.assertEqual(self.widget.clean(None), None)
+
+    def test_clean_float(self):
+        self.assertEqual(self.widget.clean(self.value), 0.3333333333333333)
+
+
 class ForeignKeyWidgetTest(TestCase):
 
     def setUp(self):
