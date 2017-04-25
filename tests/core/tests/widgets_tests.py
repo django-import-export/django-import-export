@@ -30,6 +30,20 @@ class BooleanWidgetTest(TestCase):
         self.assertEqual(self.widget.render(None), "")
 
 
+class BaseTemporalWidgetTest(TestCase):
+
+    def setUp(self):
+        self.date = date(2012, 8, 13)
+
+    def test_default_format(self):
+        self.widget = widgets.BaseTemporalWidget()
+        self.assertEqual(self.widget.render(self.date), "2012-08-13")
+
+    def test_init_format(self):
+        self.widget = widgets.BaseTemporalWidget(format='%d.%m.%Y')
+        self.assertEqual(self.widget.render(self.date), "2012-08-13")
+
+
 class DateWidgetTest(TestCase):
 
     def setUp(self):
@@ -44,6 +58,15 @@ class DateWidgetTest(TestCase):
 
     def test_clean(self):
         self.assertEqual(self.widget.clean("13.08.2012"), self.date)
+
+    def test_clean_none(self):
+        self.assertEqual(self.widget.clean(None), None)
+
+    def test_clean_instance(self):
+        self.assertEqual(self.widget.clean(self.date), self.date)
+
+    def test_clean_invalid_date(self):
+        self.assertRaises(ValueError, self.widget.clean, 'asdf')
 
     @override_settings(USE_TZ=True)
     def test_use_tz(self):
