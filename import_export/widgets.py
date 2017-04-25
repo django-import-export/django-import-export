@@ -230,13 +230,16 @@ class DurationWidget(Widget):
         if not value:
             return None
 
-        try:
-            return parse_duration(value)
-        except NameError:
-            # Duration fields were added in Django 1.8
-            raise RuntimeError("Duration parsing not supported.")
-        except (ValueError, TypeError):
-            raise ValueError("Enter a valid duration.")
+        # Duration fields were added in Django 1.8
+        if django.VERSION >= (1, 8):
+            duration = parse_duration(value)
+
+            if duration:
+                return duration
+            else:
+                raise ValueError("Enter a valid duration.")
+        else:
+            return None
 
     def render(self, value, obj=None):
         if not value:

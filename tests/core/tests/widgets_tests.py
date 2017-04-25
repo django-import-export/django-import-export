@@ -160,6 +160,13 @@ class DurationWidgetTest(TestCase):
     def test_clean(self):
         self.assertEqual(self.widget.clean("1:57:00"), self.duration)
 
+    def test_clean_none(self):
+        self.assertEqual(self.widget.clean(None), None)
+
+    def test_clean_invalid(self):
+        self.assertRaises(ValueError, self.widget.clean, 'asdf')
+
+
 
 class DecimalWidgetTest(TestCase):
 
