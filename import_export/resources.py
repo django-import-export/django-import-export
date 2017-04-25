@@ -320,12 +320,15 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         if field.attribute and field.column_name in data:
             field.save(obj, data)
 
+    def get_import_fields(self):
+        return self.get_fields()
+
     def import_obj(self, obj, data, dry_run):
         """
         Traverses every field in this Resource and calls
         :meth:`~import_export.resources.Resource.import_field`.
         """
-        for field in self.get_fields():
+        for field in self.get_import_fields():
             if isinstance(field.widget, widgets.ManyToManyWidget):
                 continue
             self.import_field(field, obj, data)
@@ -341,7 +344,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
             # we don't have transactions and we want to do a dry_run
             pass
         else:
-            for field in self.get_fields():
+            for field in self.get_import_fields():
                 if not isinstance(field.widget, widgets.ManyToManyWidget):
                     continue
                 self.import_field(field, obj, data)
@@ -365,7 +368,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         """
         if not self._meta.skip_unchanged:
             return False
-        for field in self.get_fields():
+        for field in self.get_import_fields():
             try:
                 # For fields that are models.fields.related.ManyRelatedManager
                 # we need to compare the results
@@ -428,7 +431,6 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
             will be rolled back.
         """
         row_result = self.get_row_result_class()()
-        row_result.import_type = RowResult.IMPORT_TYPE_ERROR
         try:
             self.before_import_row(row, **kwargs)
             instance, new = self.get_or_init_instance(instance_loader, row)
@@ -438,8 +440,6 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
             else:
                 row_result.import_type = RowResult.IMPORT_TYPE_UPDATE
             row_result.new_record = new
-            row_result.object_repr = force_text(instance)
-            row_result.object_id = instance.pk
             original = deepcopy(instance)
             diff = Diff(self, original, new)
             if self.for_delete(row, instance):
@@ -458,13 +458,15 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
                     with transaction.atomic():
                         self.save_instance(instance, using_transactions, dry_run)
                     self.save_m2m(instance, row, using_transactions, dry_run)
-                    # Add object info to RowResult for LogEntry
-                    row_result.object_repr = force_text(instance)
-                    row_result.object_id = instance.pk
                 diff.compare_with(self, instance, dry_run)
             row_result.diff = diff.as_html()
+            # Add object info to RowResult for LogEntry
+            if row_result.import_type != RowResult.IMPORT_TYPE_SKIP:
+                row_result.object_id = instance.pk
+                row_result.object_repr = force_text(instance)
             self.after_import_row(row, row_result, **kwargs)
         except Exception as e:
+            row_result.import_type = RowResult.IMPORT_TYPE_ERROR
             # There is no point logging a transaction error for each row
             # when only the original error is likely to be relevant
             if not isinstance(e, TransactionManagementError):
@@ -540,7 +542,9 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
             result.add_dataset_headers(dataset.headers)
 
         for row in dataset.dict:
-            row_result = self.import_row(row, instance_loader, using_transactions, dry_run, **kwargs)
+            row_result = self.import_row(row, instance_loader,
+                                         using_transactions=using_transactions, dry_run=dry_run,
+                                         **kwargs)
             result.increment_row_result_total(row_result)
             if row_result.errors:
                 if collect_failed_rows:
@@ -745,6 +749,8 @@ class ModelResource(six.with_metaclass(ModelDeclarativeMetaclass, Resource)):
             result = widgets.DateWidget
         elif internal_type in ('TimeField', ):
             result = widgets.TimeWidget
+        elif internal_type in ('DurationField', ):
+            result = widgets.DurationWidget
         elif internal_type in ('FloatField',):
             result = widgets.FloatWidget
         elif internal_type in ('IntegerField', 'PositiveIntegerField',
