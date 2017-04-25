@@ -135,6 +135,9 @@ class TimeWidgetTest(TestCase):
     def test_clean(self):
         self.assertEqual(self.widget.clean("20:15:00"), self.time)
 
+    def test_clean_invalid_date(self):
+        self.assertRaises(ValueError, self.widget.clean, 'asdf')
+
 
 class DecimalWidgetTest(TestCase):
 
