@@ -183,6 +183,19 @@ class FloatWidgetTest(TestCase):
         self.assertEqual(self.widget.clean(self.value), 0.3333333333333333)
 
 
+class CharWidgetTest(TestCase):
+
+    def setUp(self):
+        self.value = 'asdf'
+        self.widget = widgets.CharWidget()
+
+    def test_clean_none(self):
+        self.assertEqual(self.widget.render(None), 'None')
+
+    def test_clean_string(self):
+        self.assertEqual(self.widget.render(self.value), 'asdf')
+
+
 class ForeignKeyWidgetTest(TestCase):
 
     def setUp(self):
