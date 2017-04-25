@@ -2,3 +2,4 @@
 sphinx
 mysql-python
 psycopg2==2.6.1
+coverage>=4.3.0
