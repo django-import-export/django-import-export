@@ -119,6 +119,8 @@ class BooleanWidget(Widget):
 
 
 class BaseTemporalWidget(Widget):
+    default_formats = formats.get_format_modules()
+
     def __init__(self, format=None, *args, **kwargs):
         super(BaseTemporalWidget, self).__init__(*args, **kwargs)
         # Set formats to Django's (localized) default INPUT_FORMATS or use the
