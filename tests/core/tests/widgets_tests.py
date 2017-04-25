@@ -10,7 +10,7 @@ from django.utils import timezone
 
 from import_export import widgets
 
-from core.models import (
+from ..models import (
     Author,
     Category,
 )
