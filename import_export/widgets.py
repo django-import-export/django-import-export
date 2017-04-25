@@ -1,19 +1,19 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+import django
+
 from decimal import Decimal
 from datetime import datetime, date
 from django.utils import datetime_safe, timezone, six
 from django.utils.encoding import smart_text
 from django.conf import settings
-from django.utils import formats
+from django.utils import formats, version
 from django.utils.encoding import force_text
 
-try:
+# Duration fields were added in Django 1.8
+if django.VERSION >= (1, 8):
     from django.utils.dateparse import parse_duration
-except ImportError:
-    # Duration fields were added in Django 1.8
-    pass
 
 
 class Widget(object):
