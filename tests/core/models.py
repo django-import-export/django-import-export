@@ -39,6 +39,23 @@ class Book(models.Model):
         return self.name
 
 
+@python_2_unicode_compatible
+class Parent(models.Model):
+    name = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.name
+
+
+@python_2_unicode_compatible
+class Child(models.Model):
+    parent = models.ForeignKey(Parent)
+    name = models.CharField(max_length=100)
+
+    def __str__(self):
+        return '%s - child of %s' % (self.name, self.parent.name)
+
+
 class Profile(models.Model):
     user = models.OneToOneField('auth.User')
     is_private = models.BooleanField(default=True)

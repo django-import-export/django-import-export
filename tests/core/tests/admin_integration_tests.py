@@ -5,11 +5,13 @@ import os.path
 from django.test.utils import override_settings
 from django.test.testcases import TestCase
 from django.contrib.auth.models import User
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.admin.models import LogEntry
+from tablib import Dataset
 
-from core.admin import BookAdmin, AuthorAdmin
-from core.models import Category, Author
+from core.admin import BookAdmin, AuthorAdmin, BookResource
+from core.models import Category, Parent
 
 
 class ImportExportAdminIntegrationTest(TestCase):
@@ -173,6 +175,81 @@ class ImportExportAdminIntegrationTest(TestCase):
         book = LogEntry.objects.latest('id')
         self.assertEqual(book.object_repr, "Some book")
         self.assertEqual(book.object_id, str(1))
+
+    def test_import_log_entry_with_fk(self):
+        Parent.objects.create(id=1234, name='Some Parent')
+        input_format = '0'
+        filename = os.path.join(
+            os.path.dirname(__file__),
+            os.path.pardir,
+            'exports',
+            'child.csv')
+        with open(filename, "rb") as f:
+            data = {
+                'input_format': input_format,
+                'import_file': f,
+            }
+            response = self.client.post('/admin/core/child/import/', data)
+        self.assertEqual(response.status_code, 200)
+        confirm_form = response.context['confirm_form']
+        data = confirm_form.initial
+        response = self.client.post('/admin/core/child/process_import/', data,
+                                    follow=True)
+        self.assertEqual(response.status_code, 200)
+        child = LogEntry.objects.latest('id')
+        self.assertEqual(child.object_repr, 'Some - child of Some Parent')
+        self.assertEqual(child.object_id, str(1))
+
+    def test_logentry_creation_with_import_obj_exception(self):
+        # from http://mail.python.org/pipermail/python-dev/2008-January/076194.html
+        def monkeypatch_method(cls):
+            def decorator(func):
+                setattr(cls, func.__name__, func)
+                return func
+            return decorator
+
+        # Cause an exception in import_row, but only after import is confirmed,
+        # so a failure only occurs when ImportMixin.process_import is called.
+        class R(BookResource):
+            def import_obj(self, obj, data, dry_run):
+                if dry_run:
+                    super(R, self).import_obj(obj, data, dry_run)
+                else:
+                    raise Exception
+
+        @monkeypatch_method(BookAdmin)
+        def get_resource_class(self):
+            return R
+
+        # Verify that when an exception occurs in import_row, when raise_errors is False,
+        # the returned row result has a correct import_type value,
+        # so generating log entries does not fail.
+        @monkeypatch_method(BookAdmin)
+        def process_dataset(self, dataset, confirm_form, request, *args, **kwargs):
+            resource = self.get_import_resource_class()(**self.get_import_resource_kwargs(request, *args, **kwargs))
+            return resource.import_data(dataset,
+                                        dry_run=False,
+                                        raise_errors=False,
+                                        file_name=confirm_form.cleaned_data['original_file_name'],
+                                        user=request.user,
+                                        **kwargs)
+
+        dataset = Dataset(headers=["id","name","author_email"])
+        dataset.append([1, "Test 1", "test@example.com"])
+        input_format = '0'
+        content = dataset.csv
+        f = SimpleUploadedFile("data.csv", content.encode("utf-8"), content_type="text/csv")
+        data = {
+            "input_format": input_format,
+            "import_file": f,
+        }
+        response = self.client.post('/admin/core/book/import/', data)
+        self.assertEqual(response.status_code, 200)
+        confirm_form = response.context['confirm_form']
+        data = confirm_form.initial
+        response = self.client.post('/admin/core/book/process_import/', data,
+                                    follow=True)
+        self.assertEqual(response.status_code, 200)
 
 
 class ExportActionAdminIntegrationTest(TestCase):

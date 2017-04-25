@@ -2,7 +2,8 @@
 from __future__ import unicode_literals
 
 from decimal import Decimal
-from datetime import date, datetime, time
+from datetime import date, datetime, time, timedelta
+from unittest import SkipTest
 
 from django.test.utils import override_settings
 from django.test import TestCase
@@ -137,6 +138,29 @@ class TimeWidgetTest(TestCase):
 
     def test_clean_invalid_date(self):
         self.assertRaises(ValueError, self.widget.clean, 'asdf')
+
+
+class DurationWidgetTest(TestCase):
+
+    def setUp(self):
+
+        try:
+            from django.utils.dateparse import parse_duration
+        except ImportError:
+            # Duration fields were added in Django 1.8
+            raise SkipTest
+
+        self.duration = timedelta(hours=1, minutes=57, seconds=0)
+        self.widget = widgets.DurationWidget()
+
+    def test_render(self):
+        self.assertEqual(self.widget.render(self.duration), "1:57:00")
+
+    def test_render_none(self):
+        self.assertEqual(self.widget.render(None), "")
+
+    def test_clean(self):
+        self.assertEqual(self.widget.clean("1:57:00"), self.duration)
 
 
 class DecimalWidgetTest(TestCase):
@@ -281,6 +305,18 @@ class ManyToManyWidget(TestCase):
         value = None
         cleaned_data = self.widget.clean(value)
         self.assertEqual(len(cleaned_data), 0)
+        
+    def test_int(self):
+        value = self.cat1.pk
+        cleaned_data = self.widget.clean(value)
+        self.assertEqual(len(cleaned_data), 1)
+        self.assertIn(self.cat1, cleaned_data)
+
+    def test_float(self):
+        value = float(self.cat1.pk)
+        cleaned_data = self.widget.clean(value)
+        self.assertEqual(len(cleaned_data), 1)
+        self.assertIn(self.cat1, cleaned_data)
 
     def test_render(self):
         self.assertEqual(self.widget.render(Category.objects),

@@ -9,6 +9,12 @@ from django.conf import settings
 from django.utils import formats
 from django.utils.encoding import force_text
 
+try:
+    from django.utils.dateparse import parse_duration
+except ImportError:
+    # Duration fields were added in Django 1.8
+    pass
+
 
 class Widget(object):
     """
@@ -215,6 +221,29 @@ class TimeWidget(BaseTemporalWidget):
         return value.strftime(self.formats[0])
 
 
+class DurationWidget(Widget):
+    """
+    Widget for converting time duration fields.
+    """
+
+    def clean(self, value, row=None, *args, **kwargs):
+        if not value:
+            return None
+
+        try:
+            return parse_duration(value)
+        except NameError:
+            # Duration fields were added in Django 1.8
+            raise RuntimeError("Duration parsing not supported.")
+        except (ValueError, TypeError):
+            raise ValueError("Enter a valid duration.")
+
+    def render(self, value, obj=None):
+        if not value:
+            return ""
+        return str(value)
+
+
 class SimpleArrayWidget(Widget):
     def __init__(self, separator=None):
         if separator is None:
@@ -328,11 +357,11 @@ class ManyToManyWidget(Widget):
     def clean(self, value, row=None, *args, **kwargs):
         if not value:
             return self.model.objects.none()
-        if isinstance(value, float):
+        if isinstance(value, (float, int)):
             ids = [int(value)]
         else:
             ids = value.split(self.separator)
-        ids = filter(None, value.split(self.separator))
+        ids = filter(None, ids)
         return self.model.objects.filter(**{
             '%s__in' % self.field: ids
         })
