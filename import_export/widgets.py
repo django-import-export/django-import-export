@@ -7,11 +7,7 @@ from django.utils import datetime_safe, timezone, six
 from django.utils.encoding import smart_text
 from django.conf import settings
 from django.utils import formats
-
-try:
-    from django.utils.encoding import force_text
-except ImportError:
-    from django.utils.encoding import force_unicode as force_text
+from django.utils.encoding import force_text
 
 
 class Widget(object):
