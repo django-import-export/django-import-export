@@ -196,6 +196,34 @@ class CharWidgetTest(TestCase):
         self.assertEqual(self.widget.render(self.value), 'asdf')
 
 
+class SimpleArrayWidgetTest(TestCase):
+
+    def setUp(self):
+        self.string_value = 'asdf1,asdf2'
+        self.tuple_value = ('asdf1', 'asdf2')
+        self.list_value = ['asdf1', 'asdf2']
+        self.widget = widgets.SimpleArrayWidget()
+
+    def test_init_default_separator(self):
+        self.assertEqual(self.widget.separator, ",")
+
+    def test_init_specified_separator(self):
+        self.test_widget = widgets.SimpleArrayWidget(separator=";")
+        self.assertEqual(self.test_widget.separator, ";")
+
+    def test_clean_with_string(self):
+        self.assertEqual(self.widget.clean(self.string_value), self.list_value)
+
+    def test_clean_with_none(self):
+        self.assertEqual(self.widget.clean(None), [])
+
+    def test_render_with_list(self):
+        self.assertEqual(self.widget.render(self.list_value), self.string_value)
+
+    def test_render_with_none(self):
+        self.assertRaises(TypeError, self.widget.render, None)
+
+
 class ForeignKeyWidgetTest(TestCase):
 
     def setUp(self):
