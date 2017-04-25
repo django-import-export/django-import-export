@@ -91,6 +91,12 @@ class DateTimeWidgetTest(TestCase):
         self.assertEqual(self.widget.clean("13.08.2012 18:00:00"),
                          self.datetime)
 
+    def test_clean_none(self):
+        self.assertEqual(self.widget.clean(None), None)
+
+    def test_clean_instance(self):
+        self.assertEqual(self.widget.clean(self.datetime), self.datetime)
+
     @override_settings(USE_TZ=True)
     def test_use_tz(self):
         self.assertEqual(self.widget.render(self.datetime),
