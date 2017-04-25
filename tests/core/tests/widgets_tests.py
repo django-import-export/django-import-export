@@ -11,7 +11,7 @@ from django.utils import timezone
 
 from import_export import widgets
 
-from core.models import (
+from ..models import (
     Author,
     Category,
 )
@@ -194,6 +194,60 @@ class IntegerWidgetTest(TestCase):
         self.assertEqual(self.widget.clean("0.0"), self.value)
 
 
+class FloatWidgetTest(TestCase):
+
+    def setUp(self):
+        self.value = float(1.0/3.0)
+        self.widget = widgets.FloatWidget()
+
+    def test_clean_none(self):
+        self.assertEqual(self.widget.clean(None), None)
+
+    def test_clean_float(self):
+        self.assertEqual(self.widget.clean(self.value), 0.3333333333333333)
+
+
+class CharWidgetTest(TestCase):
+
+    def setUp(self):
+        self.value = 'asdf'
+        self.widget = widgets.CharWidget()
+
+    def test_clean_none(self):
+        self.assertEqual(self.widget.render(None), 'None')
+
+    def test_clean_string(self):
+        self.assertEqual(self.widget.render(self.value), 'asdf')
+
+
+class SimpleArrayWidgetTest(TestCase):
+
+    def setUp(self):
+        self.string_value = 'asdf1,asdf2'
+        self.tuple_value = ('asdf1', 'asdf2')
+        self.list_value = ['asdf1', 'asdf2']
+        self.widget = widgets.SimpleArrayWidget()
+
+    def test_init_default_separator(self):
+        self.assertEqual(self.widget.separator, ",")
+
+    def test_init_specified_separator(self):
+        self.test_widget = widgets.SimpleArrayWidget(separator=";")
+        self.assertEqual(self.test_widget.separator, ";")
+
+    def test_clean_with_string(self):
+        self.assertEqual(self.widget.clean(self.string_value), self.list_value)
+
+    def test_clean_with_none(self):
+        self.assertEqual(self.widget.clean(None), [])
+
+    def test_render_with_list(self):
+        self.assertEqual(self.widget.render(self.list_value), self.string_value)
+
+    def test_render_with_none(self):
+        self.assertRaises(TypeError, self.widget.render, None)
+
+
 class ForeignKeyWidgetTest(TestCase):
 
     def setUp(self):
@@ -247,6 +301,11 @@ class ManyToManyWidget(TestCase):
         self.assertEqual(len(cleaned_data), 1)
         self.assertIn(self.cat1, cleaned_data)
 
+    def test_clean_none(self):
+        value = None
+        cleaned_data = self.widget.clean(value)
+        self.assertEqual(len(cleaned_data), 0)
+        
     def test_int(self):
         value = self.cat1.pk
         cleaned_data = self.widget.clean(value)
