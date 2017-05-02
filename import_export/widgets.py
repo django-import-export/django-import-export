@@ -202,7 +202,7 @@ class DateTimeWidget(Widget):
             return ""
         if settings.USE_TZ and value.tzinfo is not None and \
                 value.tzinfo.utcoffset(value) is not None:
-            value = current_timezone.normalize(value)
+            value = timezone.get_current_timezone().normalize(value)
         return value.strftime(self.formats[0])
 
 
