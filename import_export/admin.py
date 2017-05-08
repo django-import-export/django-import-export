@@ -203,19 +203,16 @@ class ImportMixin(ImportExportMixinBase):
                         object_id=row.object_id,
                         object_repr=row.object_repr,
                         action_flag=logentry_map[row.import_type],
-                        change_message="%s through import_export" % row.import_type,
+                        change_message=_("%s through import_export" % row.import_type),
                     )
 
     def add_success_message(self, result, request):
         opts = self.model._meta
 
-        success_message = u'Import finished, with {} new {}{} and ' \
-                          u'{} updated {}{}.'.format(result.totals[RowResult.IMPORT_TYPE_NEW],
-                                                     opts.model_name,
-                                                     pluralize(result.totals[RowResult.IMPORT_TYPE_NEW]),
-                                                     result.totals[RowResult.IMPORT_TYPE_UPDATE],
-                                                     opts.model_name,
-                                                     pluralize(result.totals[RowResult.IMPORT_TYPE_UPDATE]))
+        success_message = _(u'Import finished, with {} new and ' \
+                            u'{} updated {}.').format(result.totals[RowResult.IMPORT_TYPE_NEW],
+                                                      result.totals[RowResult.IMPORT_TYPE_UPDATE],
+                                                      opts.verbose_name_plural)
 
         messages.success(request, success_message)
 
