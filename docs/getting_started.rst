@@ -310,6 +310,10 @@ mixins (:class:`~import_export.admin.ImportMixin`,
     class BookAdmin(ImportExportModelAdmin):
         resource_class = BookResource
 
+When you register your Book to the Admin, don't forget to also register your BookAdmin::
+    
+    admin.site.register(Book, BookAdmin)
+
 .. figure:: _static/images/django-import-export-change.png
 
    A screenshot of the change view with Import and Export buttons.
