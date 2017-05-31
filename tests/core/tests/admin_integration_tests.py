@@ -65,7 +65,7 @@ class ImportExportAdminIntegrationTest(TestCase):
                                     follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 
-            _(u'Import finished, with {} new and {} updated {}.').format(
+            _('Import finished, with {} new and {} updated {}.').format(
                 1, 0, Book._meta.verbose_name_plural)
         )
 
@@ -102,7 +102,7 @@ class ImportExportAdminIntegrationTest(TestCase):
                                     follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 
-            _(u'Import finished, with {} new and {} updated {}.').format(
+            _('Import finished, with {} new and {} updated {}.').format(
                 1, 0, Book._meta.verbose_name_plural)
         )
 
