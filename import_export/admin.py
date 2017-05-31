@@ -209,8 +209,8 @@ class ImportMixin(ImportExportMixinBase):
     def add_success_message(self, result, request):
         opts = self.model._meta
 
-        success_message = _(u'Import finished, with {} new and ' \
-                            u'{} updated {}.').format(result.totals[RowResult.IMPORT_TYPE_NEW],
+        success_message = _('Import finished, with {} new and ' \
+                            '{} updated {}.').format(result.totals[RowResult.IMPORT_TYPE_NEW],
                                                       result.totals[RowResult.IMPORT_TYPE_UPDATE],
                                                       opts.verbose_name_plural)
 
