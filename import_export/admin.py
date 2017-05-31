@@ -222,6 +222,12 @@ class ImportMixin(ImportExportMixinBase):
     def get_context_data(self, **kwargs):
         return {}
 
+    def get_import_form(self):
+        '''
+        Get the form type used to read the import format and file.
+        '''
+        return ImportForm
+
     def import_action(self, request, *args, **kwargs):
         '''
         Perform a dry_run of the import to make sure the import will not
@@ -234,9 +240,10 @@ class ImportMixin(ImportExportMixinBase):
         context = self.get_import_context_data()
 
         import_formats = self.get_import_formats()
-        form = ImportForm(import_formats,
-                          request.POST or None,
-                          request.FILES or None)
+        form_type = self.get_import_form()
+        form = form_type(import_formats,
+                         request.POST or None,
+                         request.FILES or None)
 
         if request.POST and form.is_valid():
             input_format = import_formats[
