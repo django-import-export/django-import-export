@@ -472,6 +472,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
             if not isinstance(e, TransactionManagementError):
                 logging.exception(e)
             tb_info = traceback.format_exc()
+            row_result.import_type = RowResult.IMPORT_TYPE_ERROR
             row_result.errors.append(self.get_error_result_class()(e, tb_info, row))
         return row_result
 
