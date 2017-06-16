@@ -500,7 +500,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
             use_transactions = self.get_use_transactions()
 
         connection = connections[DEFAULT_DB_ALIAS]
-        supports_transactions = getattr(connection.features, "supports_transactions", False)
+        supports_transactions = getattr(connection, 'in_atomic_block', False) or getattr(connection.features, "supports_transactions", False)
 
         if use_transactions and not supports_transactions:
             raise ImproperlyConfigured
