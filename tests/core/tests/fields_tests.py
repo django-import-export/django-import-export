@@ -64,3 +64,14 @@ class FieldTest(TestCase):
     def test_default_falsy_values_without_default(self):
         field = fields.Field(column_name='name')
         self.assertEqual(field.clean({'name': 0}), 0)
+
+    def test_saves_null_values(self):
+        field = fields.Field(column_name='name', attribute='name', saves_null_values=False)
+        row = {
+            'name': None,
+        }
+        field.save(self.obj, row)
+        self.assertEqual(self.obj.name, 'Foo')
+
+        self.field.save(self.obj, row)
+        self.assertIsNone(self.obj.name)
