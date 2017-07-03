@@ -6,7 +6,7 @@ from django.utils import translation
 from faker.providers import currency
 from parler.utils.context import switch_language
 
-from core.loading import get_model
+from django_smartshop.core.loading import get_model
 from . import widgets
 
 from django.core.exceptions import ObjectDoesNotExist
