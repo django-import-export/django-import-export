@@ -60,7 +60,12 @@ You can use the following directives in your settings file:
     Global settings to control whether export permission is required.
     If this settings is ``True``, permission will be checked for the current model
     before allowing the user to export data. This setting is ``False`` by default
-    for backwards compatibility.
+    for backwards compatibility. To use permissions, add ``export`` to the model's default permission.
+    For example::
+
+    class ExampleModel(models.Model)
+        class Meta:
+            default_permissions = ('add', 'change', 'delete', 'export')
 
 
 
