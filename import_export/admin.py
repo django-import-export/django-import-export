@@ -112,9 +112,15 @@ class ImportMixin(ImportExportMixinBase):
     def has_export_permission(self, request):
         if REQUIRE_EXPORT_PERMISSION == False:
             return True
-        opts = settings.opts
+        opts = self.opts
         codename = get_permission_codename('export', opts)
         return request.user.has_perm("%s.%s" % (opts.app_label, codename))
+
+    def changelist_view(self, request, extra_context=None):
+        if extra_context is None:
+            extra_context = {}
+        extra_context['has_export_permission'] = self.has_export_permission(request)
+        return super(ImportMixin, self).changelist_view(request, extra_context)
 
     def get_urls(self):
         urls = super(ImportMixin, self).get_urls()
