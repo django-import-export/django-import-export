@@ -56,6 +56,12 @@ You can use the following directives in your settings file:
     is checked first, which defaults to ``None``. If not found, this
     global option is used. Default is ``TempFolderStorage``.
 
+``IMPORT_EXPORT_REQUIRE_EXPORT_PERMISSION``
+    Global settings to control whether export permission is required.
+    If this settings is ``True``, permission will be checked for the current model
+    before allowing the user to export data. This setting is ``False`` by default
+    for backwards compatibility.
+
 
 
 Example app
