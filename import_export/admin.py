@@ -6,6 +6,7 @@ import importlib
 import django
 from django.contrib import admin
 from django.contrib.auth import get_permission_codename
+from django.core.exceptions import PermissionDenied
 from django.utils import six
 from django.utils.translation import ugettext_lazy as _
 from django.conf.urls import url
@@ -108,19 +109,6 @@ class ImportMixin(ImportExportMixinBase):
             return TMP_STORAGE_CLASS
         else:
             return self.tmp_storage_class
-
-    def has_export_permission(self, request):
-        if REQUIRE_EXPORT_PERMISSION == False:
-            return True
-        opts = self.opts
-        codename = get_permission_codename('export', opts)
-        return request.user.has_perm("%s.%s" % (opts.app_label, codename))
-
-    def changelist_view(self, request, extra_context=None):
-        if extra_context is None:
-            extra_context = {}
-        extra_context['has_export_permission'] = self.has_export_permission(request)
-        return super(ImportMixin, self).changelist_view(request, extra_context)
 
     def get_urls(self):
         urls = super(ImportMixin, self).get_urls()
@@ -409,7 +397,22 @@ class ExportMixin(ImportExportMixinBase):
     def get_context_data(self, **kwargs):
         return {}
 
+    def has_export_permission(self, request):
+        if REQUIRE_EXPORT_PERMISSION == False:
+            return True
+        opts = self.opts
+        codename = get_permission_codename('export', opts)
+        return request.user.has_perm("%s.%s" % (opts.app_label, codename))
+
+    def changelist_view(self, request, extra_context=None):
+        if extra_context is None:
+            extra_context = {}
+        extra_context['has_export_permission'] = self.has_export_permission(request)
+        return super(ImportMixin, self).changelist_view(request, extra_context)
+
     def export_action(self, request, *args, **kwargs):
+        if not self.has_export_permission(request):
+            raise PermissionDenied
         formats = self.get_export_formats()
         form = ExportForm(formats, request.POST or None)
         if form.is_valid():
