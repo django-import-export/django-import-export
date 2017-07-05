@@ -408,7 +408,7 @@ class ExportMixin(ImportExportMixinBase):
         if extra_context is None:
             extra_context = {}
         extra_context['has_export_permission'] = self.has_export_permission(request)
-        return super(ImportMixin, self).changelist_view(request, extra_context)
+        return super(ExportMixin, self).changelist_view(request, extra_context)
 
     def export_action(self, request, *args, **kwargs):
         if not self.has_export_permission(request):
