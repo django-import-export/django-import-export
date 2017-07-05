@@ -5,6 +5,7 @@ from datetime import datetime
 import importlib
 import django
 from django.contrib import admin
+from django.contrib.auth import get_permission_codename
 from django.utils import six
 from django.utils.translation import ugettext_lazy as _
 from django.conf.urls import url
@@ -38,6 +39,7 @@ try:
 except ImportError:
     from django.utils.encoding import force_unicode as force_text
 
+REQUIRE_EXPORT_PERMISSION = getattr(settings, 'IMPORT_EXPORT_REQUIRE_EXPORT_PERMISSION', False)
 SKIP_ADMIN_LOG = getattr(settings, 'IMPORT_EXPORT_SKIP_ADMIN_LOG', False)
 TMP_STORAGE_CLASS = getattr(settings, 'IMPORT_EXPORT_TMP_STORAGE_CLASS',
                             TempFolderStorage)
@@ -106,6 +108,13 @@ class ImportMixin(ImportExportMixinBase):
             return TMP_STORAGE_CLASS
         else:
             return self.tmp_storage_class
+
+    def has_export_permission(self, request):
+        if REQUIRE_EXPORT_PERMISSION == False:
+            return True
+        opts = settings.opts
+        codename = get_permission_codename('export', opts)
+        return request.user.has_perm("%s.%s" % (opts.app_label, codename))
 
     def get_urls(self):
         urls = super(ImportMixin, self).get_urls()
