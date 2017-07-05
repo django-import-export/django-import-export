@@ -68,7 +68,6 @@ You can use the following directives in your settings file:
             default_permissions = ('add', 'change', 'delete', 'export')
 
 
-
 Example app
 ===========
 
