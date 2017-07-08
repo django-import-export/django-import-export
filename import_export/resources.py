@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 import functools
 import tablib
 import traceback
+from collections import OrderedDict
 from copy import deepcopy
 
 from diff_match_patch import diff_match_patch
@@ -40,11 +41,6 @@ try:
     from django.utils.encoding import force_text
 except ImportError:
     from django.utils.encoding import force_unicode as force_text
-
-try:
-    from collections import OrderedDict
-except ImportError:
-    from django.utils.datastructures import SortedDict as OrderedDict
 
 # Set default logging handler to avoid "No handler found" warnings.
 import logging  # isort:skip
