@@ -586,7 +586,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
 
     def get_export_order(self):
         order = tuple(self._meta.export_order or ())
-        return order + tuple(k for k in self.fields.keys() if k not in order)
+        return order + tuple(k for k in self.fields if k not in order)
 
     def before_export(self, queryset, *args, **kwargs):
         """
