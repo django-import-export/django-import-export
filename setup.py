@@ -16,8 +16,9 @@ CLASSIFIERS = [
 ]
 
 install_requires = [
-    'tablib',
     'diff-match-patch',
+    'django>=1.5',
+    'tablib',
 ]
 
 setup(
