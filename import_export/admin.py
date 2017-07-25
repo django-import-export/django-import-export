@@ -1,6 +1,7 @@
 from __future__ import with_statement
 
 from datetime import datetime
+import traceback
 
 import importlib
 import django
@@ -266,14 +267,17 @@ class ImportMixin(ImportExportMixinBase):
                 if not input_format.is_binary() and self.from_encoding:
                     data = force_text(data, self.from_encoding)
                 dataset = input_format.create_dataset(data)
+
+                result = resource.import_data(dataset, dry_run=True,
+                                              raise_errors=False,
+                                              file_name=import_file.name,
+                                              user=request.user)
             except UnicodeDecodeError as e:
-                return HttpResponse(_(u"<h1>Imported file has a wrong encoding: %s</h1>" % e))
+                result = resource.get_result_class()()
+                result.append_base_error(resource.get_error_result_class()('Invalid encoding!', traceback.format_exc()))
             except Exception as e:
-                return HttpResponse(_(u"<h1>%s encountered while trying to read file: %s</h1>" % (type(e).__name__, import_file.name)))
-            result = resource.import_data(dataset, dry_run=True,
-                                          raise_errors=False,
-                                          file_name=import_file.name,
-                                          user=request.user)
+                result = resource.get_result_class()()
+                result.append_base_error(resource.get_error_result_class()('Invalid file or format!', traceback.format_exc()))
 
             context['result'] = result
 
