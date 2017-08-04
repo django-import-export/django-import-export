@@ -5,6 +5,7 @@ import os.path
 from django import forms
 from django.contrib.admin.helpers import ActionForm
 from django.utils.translation import ugettext_lazy as _
+from django.conf import settings
 
 
 class ImportForm(forms.Form):
@@ -25,6 +26,11 @@ class ImportForm(forms.Form):
             choices.insert(0, ('', '---'))
 
         self.fields['input_format'].choices = choices
+
+        if hasattr(settings, 'IMPORT_DEFAULT'):
+            for i, c in enumerate(choices):
+                if c[1] == settings.IMPORT_DEFAULT.lower():
+                    self.fields['input_format'].initial = choices[int(i)]
 
 
 class ConfirmImportForm(forms.Form):
@@ -53,6 +59,11 @@ class ExportForm(forms.Form):
             choices.insert(0, ('', '---'))
 
         self.fields['file_format'].choices = choices
+
+        if hasattr(settings, 'EXPORT_DEFAULT'):
+            for i, c in enumerate(choices):
+                if c[1] == settings.EXPORT_DEFAULT.lower():
+                    self.fields['file_format'].initial = choices[int(i)]
 
 
 def export_action_form_factory(formats):
