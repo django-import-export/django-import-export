@@ -124,6 +124,11 @@ class ResourceOptions(object):
     Controls if the result reports skipped rows Default value is True
     """
 
+    custom_headers = []
+    """
+    Controls what custom headers should be applied
+    """
+
 
 class DeclarativeMetaclass(type):
 
@@ -607,7 +612,11 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
 
     def get_export_headers(self):
         headers = [
-            force_text(field.column_name) for field in self.get_export_fields()]
+             self._meta.custom_headers[field.column_name]
+             if field.column_name in self._meta.custom_headers
+             else force_text(field.column_name)
+             for field in self.get_export_fields()
+        ]
         return headers
 
     def get_user_visible_fields(self):
