@@ -1,0 +1,105 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2015-10-27 11:13+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: admin.py:179
+msgid "Import finished"
+msgstr "导入完成"
+
+#: admin.py:412
+msgid "You must select an export format."
+msgstr "您必须选择一个导出格式。"
+
+#: admin.py:429
+#, python-format
+msgid "Export selected %(verbose_name_plural)s"
+msgstr "导出选中的 %(verbose_name_plural)s"
+
+#: forms.py:12
+msgid "File to import"
+msgstr "导入文件"
+
+#: forms.py:15 forms.py:43 forms.py:68
+msgid "Format"
+msgstr "格式"
+
+#: templates/admin/import_export/base.html:11
+msgid "Home"
+msgstr ""
+
+#: templates/admin/import_export/change_list_export.html:5
+#: templates/admin/import_export/change_list_import_export.html:6
+#: templates/admin/import_export/export.html:8
+#: templates/admin/import_export/export.html:12
+msgid "Export"
+msgstr "导出"
+
+#: templates/admin/import_export/change_list_import.html:5
+#: templates/admin/import_export/change_list_import_export.html:5
+#: templates/admin/import_export/import.html:8
+#: templates/admin/import_export/import.html:12
+msgid "Import"
+msgstr "导入"
+
+#: templates/admin/import_export/export.html:34
+#: templates/admin/import_export/import.html:57
+msgid "Submit"
+msgstr "提交"
+
+#: templates/admin/import_export/import.html:19
+msgid ""
+"Below is a preview of data to be imported. If you are satisfied with the "
+"results, click 'Confirm import'"
+msgstr "以下是导入数据的预览。如果确认结果没有问题，可以点击 “确认导入”"
+
+#: templates/admin/import_export/import.html:22
+msgid "Confirm import"
+msgstr "确认导入"
+
+#: templates/admin/import_export/import.html:31
+msgid "This importer will import the following fields: "
+msgstr "此次将导入以下字段："
+
+#: templates/admin/import_export/import.html:65
+msgid "Errors"
+msgstr "错误"
+
+#: templates/admin/import_export/import.html:76
+msgid "Line number"
+msgstr "行号"
+
+#: templates/admin/import_export/import.html:86
+msgid "Preview"
+msgstr "预览"
+
+#: templates/admin/import_export/import.html:101
+msgid "New"
+msgstr "新增"
+
+#: templates/admin/import_export/import.html:103
+msgid "Skipped"
+msgstr "忽略"
+
+#: templates/admin/import_export/import.html:105
+msgid "Delete"
+msgstr "删除"
+
+#: templates/admin/import_export/import.html:107
+msgid "Update"
+msgstr "更新"

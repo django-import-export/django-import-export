@@ -1,3 +1,6 @@
+from __future__ import unicode_literals
+
+
 class BaseInstanceLoader(object):
     """
     Base abstract implementation of instance loader.

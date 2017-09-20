@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 import tablib
 
 from django.test import TestCase
@@ -5,7 +7,7 @@ from django.test import TestCase
 from import_export import instance_loaders
 from import_export import resources
 
-from ..models import Book
+from core.models import Book
 
 
 class CachedInstanceLoaderTest(TestCase):
@@ -18,13 +20,13 @@ class CachedInstanceLoaderTest(TestCase):
         row = [str(self.book.pk), 'Some book', 'test@example.com']
         self.dataset.append(row)
         self.instance_loader = instance_loaders.CachedInstanceLoader(
-                self.resource, self.dataset)
+            self.resource, self.dataset)
 
     def test_all_instances(self):
         self.assertTrue(self.instance_loader.all_instances)
         self.assertEqual(len(self.instance_loader.all_instances), 1)
-        self.assertEqual(self.instance_loader.all_instances.keys(),
-                [self.book.pk])
+        self.assertEqual(list(self.instance_loader.all_instances.keys()),
+                         [self.book.pk])
 
     def test_get_instance(self):
         obj = self.instance_loader.get_instance(self.dataset.dict[0])

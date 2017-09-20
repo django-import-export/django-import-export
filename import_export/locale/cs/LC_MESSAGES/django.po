@@ -1,0 +1,121 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2017-05-02 19:17+0200\n"
+"PO-Revision-Date: 2017-05-02 19:17+0200\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: cs\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
+"X-Generator: Poedit 2.0.1\n"
+
+#: import_export/admin.py:206
+#, python-format
+msgid "%s through import_export"
+msgstr "%s skrz import_export"
+
+#: import_export/admin.py:212
+msgid "Import finished, with {} new and {} updated {}."
+msgstr "Import dokončen, {} nové a {} aktualizované {}."
+
+#: import_export/admin.py:263
+#, python-format
+msgid "<h1>Imported file has a wrong encoding: %s</h1>"
+msgstr "<h1>Importovaný soubor má nesprávné kódování: %s</h1>"
+
+#: import_export/admin.py:265
+#, python-format
+msgid "<h1>%s encountered while trying to read file: %s</h1>"
+msgstr "<h1>Při zpracování souboru nastala chyba %s (soubor %s)</h1>"
+
+#: import_export/admin.py:285
+#: import_export/templates/admin/import_export/change_list_import_item.html:4
+#: import_export/templates/admin/import_export/import.html:7
+msgid "Import"
+msgstr "Import"
+
+#: import_export/admin.py:420
+#: import_export/templates/admin/import_export/change_list_export_item.html:4
+#: import_export/templates/admin/import_export/export.html:7
+msgid "Export"
+msgstr "Export"
+
+#: import_export/admin.py:473
+msgid "You must select an export format."
+msgstr "Musíte vybrat formát pro export."
+
+#: import_export/admin.py:490
+#, python-format
+msgid "Export selected %(verbose_name_plural)s"
+msgstr "Vybrán export %(verbose_name_plural)s"
+
+#: import_export/forms.py:12
+msgid "File to import"
+msgstr "Soubor k importu"
+
+#: import_export/forms.py:15 import_export/forms.py:43
+#: import_export/forms.py:68
+msgid "Format"
+msgstr "Formát"
+
+#: import_export/templates/admin/import_export/base.html:10
+msgid "Home"
+msgstr "Domů"
+
+#: import_export/templates/admin/import_export/export.html:31
+#: import_export/templates/admin/import_export/import.html:49
+msgid "Submit"
+msgstr "Odeslat"
+
+#: import_export/templates/admin/import_export/import.html:16
+msgid ""
+"Below is a preview of data to be imported. If you are satisfied with the "
+"results, click 'Confirm import'"
+msgstr ""
+"Níže je zobrazen náhled importovaných dat. Pokud je vše v pořádku, stiskněte "
+"tlačítko „Provést import”"
+
+#: import_export/templates/admin/import_export/import.html:19
+msgid "Confirm import"
+msgstr "Provést import"
+
+#: import_export/templates/admin/import_export/import.html:28
+msgid "This importer will import the following fields: "
+msgstr "Budou importována následující pole: "
+
+#: import_export/templates/admin/import_export/import.html:57
+msgid "Errors"
+msgstr "Chyby"
+
+#: import_export/templates/admin/import_export/import.html:68
+msgid "Line number"
+msgstr "Číslo řádku"
+
+#: import_export/templates/admin/import_export/import.html:78
+msgid "Preview"
+msgstr "Náhled"
+
+#: import_export/templates/admin/import_export/import.html:93
+msgid "New"
+msgstr "Nové"
+
+#: import_export/templates/admin/import_export/import.html:95
+msgid "Skipped"
+msgstr "Přeskočené"
+
+#: import_export/templates/admin/import_export/import.html:97
+msgid "Delete"
+msgstr "Smazání"
+
+#: import_export/templates/admin/import_export/import.html:99
+msgid "Update"
+msgstr "Aktualizace"

@@ -1,0 +1,112 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2016-09-06 19:25-0500\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+#: import_export/admin.py:247
+#, python-format
+msgid "<h1>Imported file has a wrong encoding: %s</h1>"
+msgstr "<h1>Le fichier importé a un encodage erroné: %s</h1>"
+
+#: import_export/admin.py:249
+#, python-format
+msgid "<h1>%s encountered while trying to read file: %s</h1>"
+msgstr "<h1>%s rencontré en essayant de lire le fichier: %s</h1>"
+
+#: import_export/admin.py:449
+msgid "You must select an export format."
+msgstr "Vous devez sélectionner un format d'exportation."
+
+#: import_export/admin.py:466
+#, python-format
+msgid "Export selected %(verbose_name_plural)s"
+msgstr "Exporter %(verbose_name_plural)s selectionnés"
+
+#: import_export/forms.py:12
+msgid "File to import"
+msgstr "Fichier à importer"
+
+#: import_export/forms.py:15 import_export/forms.py:43
+#: import_export/forms.py:68
+msgid "Format"
+msgstr "Format"
+
+#: import_export/templates/admin/import_export/base.html:10
+msgid "Home"
+msgstr "Accueil"
+
+#: import_export/templates/admin/import_export/change_list_export_item.html:4
+#: import_export/templates/admin/import_export/export.html:7
+#: import_export/templates/admin/import_export/export.html:11
+msgid "Export"
+msgstr "Exporter"
+
+#: import_export/templates/admin/import_export/change_list_import_item.html:4
+#: import_export/templates/admin/import_export/import.html:7
+#: import_export/templates/admin/import_export/import.html:11
+msgid "Import"
+msgstr "Importer"
+
+#: import_export/templates/admin/import_export/export.html:33
+#: import_export/templates/admin/import_export/import.html:51
+msgid "Submit"
+msgstr "Soumettre"
+
+#: import_export/templates/admin/import_export/import.html:18
+msgid ""
+"Below is a preview of data to be imported. If you are satisfied with the "
+"results, click 'Confirm import'"
+msgstr ""
+"Voici un aperçu des données à importer. Si vous êtes satisfait des "
+"résultats, cliquez sur 'Confirmer l'importation'"
+
+#: import_export/templates/admin/import_export/import.html:21
+msgid "Confirm import"
+msgstr "Confirmer l'importation"
+
+#: import_export/templates/admin/import_export/import.html:30
+msgid "This importer will import the following fields: "
+msgstr "Cet importateur va importer les champs suivants: "
+
+#: import_export/templates/admin/import_export/import.html:59
+msgid "Errors"
+msgstr "Erreurs"
+
+#: import_export/templates/admin/import_export/import.html:70
+msgid "Line number"
+msgstr "Numéro de ligne"
+
+#: import_export/templates/admin/import_export/import.html:80
+msgid "Preview"
+msgstr "Aperçu"
+
+#: import_export/templates/admin/import_export/import.html:95
+msgid "New"
+msgstr "Nouveau"
+
+#: import_export/templates/admin/import_export/import.html:97
+msgid "Skipped"
+msgstr "Ignoré"
+
+#: import_export/templates/admin/import_export/import.html:99
+msgid "Delete"
+msgstr "Supprimer"
+
+#: import_export/templates/admin/import_export/import.html:101
+msgid "Update"
+msgstr "Mettre à jour"

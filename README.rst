@@ -2,12 +2,21 @@
 django-import-export
 ====================
 
-.. image:: https://travis-ci.org/bmihelac/django-import-export.png?branch=master
-        :target: https://travis-ci.org/bmihelac/django-import-export
-.. image:: https://pypip.in/d/django-import-export/badge.png
-    :target: https://crate.io/packages/django-import-export
-.. image:: https://pypip.in/v/django-import-export/badge.png   
-    :target: https://crate.io/packages/django-import-export
+.. image:: https://travis-ci.org/django-import-export/django-import-export.svg?branch=master
+    :target: https://travis-ci.org/django-import-export/django-import-export
+    :alt: Build status on Travis-CI
+
+.. image:: https://img.shields.io/pypi/v/django-import-export.svg
+    :target: https://pypi.python.org/pypi/django-import-export
+    :alt: Current version on PyPi
+
+.. image:: https://img.shields.io/pypi/dm/django-import-export.svg
+    :target: https://pypi.python.org/pypi/django-import-export
+    :alt: Downloads per month on PyPi
+
+.. image:: http://readthedocs.org/projects/django-import-export/badge/?version=stable
+    :target: http://django-import-export.readthedocs.io/en/stable/
+    :alt: Documentation
 
 django-import-export is a Django application and library for importing
 and exporting data with included admin integration.
@@ -25,12 +34,20 @@ Features:
 
 * export data respecting admin filters
 
-.. image:: https://raw.github.com/bmihelac/django-import-export/master/docs/_static/images/django-import-export-change.png
+.. image:: docs/_static/images/django-import-export-change.png
 
-Documentation
--------------
 
-https://django-import-export.readthedocs.org/en/latest/
+* Documentation: http://django-import-export.readthedocs.io/en/stable/
+* GitHub: https://github.com/django-import-export/django-import-export/
+* Free software: BSD license
+* PyPI: https://pypi.python.org/pypi/django-import-export/
+
+Requirements
+-----------
+
+* Python 2.7+ or Python 3.3+
+* Django 1.5.3+
+* tablib (dev or 0.9.11)
 
 Example app
 -----------
@@ -41,5 +58,17 @@ Example app
 
 Username and password for admin are 'admin', 'password'.
 
+Contribute
+----------
 
+If you'd like to contribute, simply fork `the repository`_, commit your
+changes to the **develop** branch (or branch off of it), and send a pull
+request. Make sure you add yourself to AUTHORS_.
+
+As most projects, we try to follow PEP8_ as closely as possible. Please bear
+in mind that most pull requests will be rejected without proper unit testing.
+
+.. _`PEP8`: https://www.python.org/dev/peps/pep-0008/
 .. _`tablib`: https://github.com/kennethreitz/tablib
+.. _`the repository`: https://github.com/django-import-export/django-import-export/
+.. _AUTHORS: https://github.com/django-import-export/django-import-export/blob/master/AUTHORS
