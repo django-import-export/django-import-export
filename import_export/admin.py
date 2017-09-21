@@ -52,8 +52,8 @@ if isinstance(TMP_STORAGE_CLASS, six.string_types):
         msg = "Could not import '%s' for import_export setting 'IMPORT_EXPORT_TMP_STORAGE_CLASS'" % TMP_STORAGE_CLASS
         raise ImportError(msg)
 
-#: These are the default formats for import and export. Whether they can be
-#: used or not is depending on their implementation in the tablib library.
+# : These are the default formats for import and export. Whether they can be
+# : used or not is depending on their implementation in the tablib library.
 DEFAULT_FORMATS = (
     base_formats.CSV,
     base_formats.XLS,
@@ -64,6 +64,14 @@ DEFAULT_FORMATS = (
     base_formats.YAML,
     base_formats.HTML,
 )
+
+
+def celery_is_available():
+    try:
+        from celery import Celery
+        return True
+    except ImportError:
+        return False
 
 
 class ImportExportMixinBase(object):
@@ -81,15 +89,15 @@ class ImportMixin(ImportExportMixinBase):
     Import mixin.
     """
 
-    #: template for change_list view
+    # : template for change_list view
     change_list_template = 'admin/import_export/change_list_import.html'
-    #: template for import view
+    # : template for import view
     import_template_name = 'admin/import_export/import.html'
-    #: resource class
+    # : resource class
     resource_class = None
-    #: available import formats
+    # : available import formats
     formats = DEFAULT_FORMATS
-    #: import data encoding
+    # : import data encoding
     from_encoding = "utf-8"
     skip_admin_log = None
     # storage class for saving temporary files
@@ -120,11 +128,11 @@ class ImportMixin(ImportExportMixinBase):
         ]
         return my_urls + urls
 
-    def get_resource_kwargs(self, request, *args, **kwargs):
+    def get_resource_kwargs(self, *args, **kwargs):
         return {}
 
-    def get_import_resource_kwargs(self, request, *args, **kwargs):
-        return self.get_resource_kwargs(request, *args, **kwargs)
+    def get_import_resource_kwargs(self, *args, **kwargs):
+        return self.get_resource_kwargs(*args, **kwargs)
 
     def get_resource_class(self):
         if not self.resource_class:
@@ -303,15 +311,15 @@ class ExportMixin(ImportExportMixinBase):
     """
     Export mixin.
     """
-    #: resource class
+    # : resource class
     resource_class = None
-    #: template for change_list view
+    # : template for change_list view
     change_list_template = 'admin/import_export/change_list_export.html'
-    #: template for export view
+    # : template for export view
     export_template_name = 'admin/import_export/export.html'
-    #: available export formats
+    # : available export formats
     formats = DEFAULT_FORMATS
-    #: export data encoding
+    # : export data encoding
     to_encoding = "utf-8"
 
     def get_urls(self):
@@ -323,11 +331,11 @@ class ExportMixin(ImportExportMixinBase):
         ]
         return my_urls + urls
 
-    def get_resource_kwargs(self, request, *args, **kwargs):
+    def get_resource_kwargs(self, *args, **kwargs):
         return {}
 
-    def get_export_resource_kwargs(self, request, *args, **kwargs):
-        return self.get_resource_kwargs(request, *args, **kwargs)
+    def get_export_resource_kwargs(self, *args, **kwargs):
+        return self.get_resource_kwargs(*args, **kwargs)
 
     def get_resource_class(self):
         if not self.resource_class:
@@ -436,7 +444,7 @@ class ImportExportMixin(ImportMixin, ExportMixin):
     """
     Import and export mixin.
     """
-    #: template for change_list view
+    # : template for change_list view
     change_list_template = 'admin/import_export/change_list_import_export.html'
 
 
