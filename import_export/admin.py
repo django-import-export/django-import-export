@@ -402,6 +402,32 @@ class ExportMixin(ImportExportMixinBase):
     def get_context_data(self, **kwargs):
         return {}
 
+    def handle_export(self, file_format, queryset, request=None):
+        export_data = self.get_export_data(file_format, queryset, request=request)
+        content_type = file_format.get_content_type()
+        # Django 1.7 uses the content_type kwarg instead of mimetype
+        try:
+            response = HttpResponse(export_data, content_type=content_type)
+        except TypeError:
+            response = HttpResponse(export_data, mimetype=content_type)
+        response['Content-Disposition'] = 'attachment; filename=%s' % (
+            self.get_export_filename(file_format),
+        )
+
+        return response
+
+    def process_export_result(self, request):
+        self.add_successful_export_message(request)
+        post_export.send(sender=None, model=self.model)
+
+        url = reverse('admin:%s_%s_changelist' % self.get_model_info(),
+                      current_app=self.admin_site.name)
+        return HttpResponseRedirect(url)
+
+    def add_successful_export_message(self, request):
+        success_message = "Data successfully exported."
+        messages.success(request, success_message)
+
     def export_action(self, request, *args, **kwargs):
         formats = self.get_export_formats()
         form = ExportForm(formats, request.POST or None)
@@ -411,18 +437,13 @@ class ExportMixin(ImportExportMixinBase):
             ]()
 
             queryset = self.get_export_queryset(request)
-            export_data = self.get_export_data(file_format, queryset, request=request)
-            content_type = file_format.get_content_type()
-            # Django 1.7 uses the content_type kwarg instead of mimetype
-            try:
-                response = HttpResponse(export_data, content_type=content_type)
-            except TypeError:
-                response = HttpResponse(export_data, mimetype=content_type)
-            response['Content-Disposition'] = 'attachment; filename=%s' % (
-                self.get_export_filename(file_format),
-            )
+            result = self.handle_export(file_format, queryset, request)
 
-            post_export.send(sender=None, model=self.model)
+            if isinstance(result, HttpResponse):
+                response = result
+            else:
+                response = self.process_export_result(request)
+
             return response
 
         context = self.get_export_context_data()
