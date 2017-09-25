@@ -32,6 +32,7 @@ from .formats import base_formats
 from .results import RowResult
 from .tmp_storages import TempFolderStorage
 from .signals import post_export, post_import
+from .tasks import export_data
 
 try:
     from django.utils.encoding import force_text
@@ -64,14 +65,6 @@ DEFAULT_FORMATS = (
     base_formats.YAML,
     base_formats.HTML,
 )
-
-
-def celery_is_available():
-    try:
-        from celery import Celery
-        return True
-    except ImportError:
-        return False
 
 
 class ImportExportMixinBase(object):
@@ -128,11 +121,11 @@ class ImportMixin(ImportExportMixinBase):
         ]
         return my_urls + urls
 
-    def get_resource_kwargs(self, *args, **kwargs):
+    def get_resource_kwargs(self, request, *args, **kwargs):
         return {}
 
-    def get_import_resource_kwargs(self, *args, **kwargs):
-        return self.get_resource_kwargs(*args, **kwargs)
+    def get_import_resource_kwargs(self, request, *args, **kwargs):
+        return self.get_resource_kwargs(request, *args, **kwargs)
 
     def get_resource_class(self):
         if not self.resource_class:
@@ -331,11 +324,11 @@ class ExportMixin(ImportExportMixinBase):
         ]
         return my_urls + urls
 
-    def get_resource_kwargs(self, *args, **kwargs):
+    def get_resource_kwargs(self, request, *args, **kwargs):
         return {}
 
-    def get_export_resource_kwargs(self, *args, **kwargs):
-        return self.get_resource_kwargs(*args, **kwargs)
+    def get_export_resource_kwargs(self, request, *args, **kwargs):
+        return self.get_resource_kwargs(request, *args, **kwargs)
 
     def get_resource_class(self):
         if not self.resource_class:
@@ -386,16 +379,6 @@ class ExportMixin(ImportExportMixinBase):
         except AttributeError:
             return cl.query_set
 
-    def get_export_data(self, file_format, queryset, *args, **kwargs):
-        """
-        Returns file_format representation for given queryset.
-        """
-        request = kwargs.pop("request", None)
-        resource_class = self.get_export_resource_class()
-        data = resource_class(**self.get_export_resource_kwargs(request)).export(queryset, *args, **kwargs)
-        export_data = file_format.export_data(data)
-        return export_data
-
     def get_export_context_data(self, **kwargs):
         return self.get_context_data(**kwargs)
 
@@ -403,16 +386,20 @@ class ExportMixin(ImportExportMixinBase):
         return {}
 
     def handle_export(self, file_format, queryset, request=None):
-        export_data = self.get_export_data(file_format, queryset, request=request)
-        content_type = file_format.get_content_type()
-        # Django 1.7 uses the content_type kwarg instead of mimetype
-        try:
-            response = HttpResponse(export_data, content_type=content_type)
-        except TypeError:
-            response = HttpResponse(export_data, mimetype=content_type)
-        response['Content-Disposition'] = 'attachment; filename=%s' % (
-            self.get_export_filename(file_format),
-        )
+        file_format_name = unicode(file_format.__name__)
+        model_name = self.get_model_info()[1]
+        model_name = model_name.capitalize()
+        subject_line = model_name + str(_(' Data Export'))
+        resource_class = self.get_export_resource_class()
+        resource_kwargs = self.get_export_resource_kwargs(request)
+        resource_class_import_path = '{0}.{1}'.format(resource_class.__module__, resource_class.__name__)
+
+        result = export_data.delay(file_format_name, list(queryset.values_list('id', flat=True)), resource_class_import_path, resource_kwargs, request.user.id, subject_line)
+
+        if isinstance(result, HttpResponse):
+            response = result
+        else:
+            response = self.process_export_result(request)
 
         return response
 
@@ -434,16 +421,12 @@ class ExportMixin(ImportExportMixinBase):
         if form.is_valid():
             file_format = formats[
                 int(form.cleaned_data['file_format'])
-            ]()
+            ]
 
             queryset = self.get_export_queryset(request)
-            result = self.handle_export(file_format, queryset, request)
+            response = self.handle_export(file_format, queryset, request)
 
-            if isinstance(result, HttpResponse):
-                response = result
-            else:
-                response = self.process_export_result(request)
-
+            post_export.send(sender=None, model=self.model)
             return response
 
         context = self.get_export_context_data()
@@ -509,18 +492,9 @@ class ExportActionModelAdmin(ExportMixin, admin.ModelAdmin):
             messages.warning(request, _('You must select an export format.'))
         else:
             formats = self.get_export_formats()
-            file_format = formats[int(export_format)]()
+            file_format = formats[int(export_format)]
 
-            export_data = self.get_export_data(file_format, queryset, request=request)
-            content_type = file_format.get_content_type()
-            # Django 1.7 uses the content_type kwarg instead of mimetype
-            try:
-                response = HttpResponse(export_data, content_type=content_type)
-            except TypeError:
-                response = HttpResponse(export_data, mimetype=content_type)
-            response['Content-Disposition'] = 'attachment; filename=%s' % (
-                self.get_export_filename(file_format),
-            )
+            response = self.handle_export(file_format, queryset, request)
             return response
     export_admin_action.short_description = _(
         'Export selected %(verbose_name_plural)s')
