@@ -42,7 +42,9 @@ except ImportError:
 SKIP_ADMIN_LOG = getattr(settings, 'IMPORT_EXPORT_SKIP_ADMIN_LOG', False)
 TMP_STORAGE_CLASS = getattr(settings, 'IMPORT_EXPORT_TMP_STORAGE_CLASS',
                             TempFolderStorage)
-EXPORT_USING_CELERY_LEVEL = getattr(settings, 'IMPORT_EXPORT_EXPORT_USING_CELERY_LEVEL', 1000)
+USE_CELERY = getattr(settings, 'IMPORT_EXPORT_USE_CELERY', False)
+EXPORT_USING_CELERY_LEVEL = getattr(settings, 'IMPORT_EXPORT_EXPORT_USING_CELERY_LEVEL', 0)
+
 
 if isinstance(TMP_STORAGE_CLASS, six.string_types):
     try:
@@ -69,6 +71,16 @@ DEFAULT_FORMATS = (
 )
 
 
+def celery_is_present():
+    try:
+        import celery
+        result = True
+    except ImportError:
+        result = False
+
+    return result
+
+
 class ImportExportMixinBase(object):
     def get_model_info(self):
         # module_name is renamed to model_name in Django 1.8
@@ -84,15 +96,15 @@ class ImportMixin(ImportExportMixinBase):
     Import mixin.
     """
 
-    #: template for change_list view
+    # : template for change_list view
     change_list_template = 'admin/import_export/change_list_import.html'
-    #: template for import view
+    # : template for import view
     import_template_name = 'admin/import_export/import.html'
-    #: resource class
+    # : resource class
     resource_class = None
-    #: available import formats
+    # : available import formats
     formats = DEFAULT_FORMATS
-    #: import data encoding
+    # : import data encoding
     from_encoding = "utf-8"
     skip_admin_log = None
     # storage class for saving temporary files
@@ -306,15 +318,15 @@ class ExportMixin(ImportExportMixinBase):
     """
     Export mixin.
     """
-    #: resource class
+    # : resource class
     resource_class = None
-    #: template for change_list view
+    # : template for change_list view
     change_list_template = 'admin/import_export/change_list_export.html'
-    #: template for export view
+    # : template for export view
     export_template_name = 'admin/import_export/export.html'
     # : available export formats
     formats = DEFAULT_FORMATS
-    #: export data encoding
+    # : export data encoding
     to_encoding = "utf-8"
 
     def get_urls(self):
@@ -401,13 +413,13 @@ class ExportMixin(ImportExportMixinBase):
         resource_class = self.get_export_resource_class()
         resource_kwargs = self.get_export_resource_kwargs(request)
 
-        if queryset.count() > EXPORT_USING_CELERY_LEVEL:
+        if celery_is_present() and USE_CELERY and queryset.count() > EXPORT_USING_CELERY_LEVEL:
             file_format_name = unicode(file_format.__name__)
             model_name = self.get_model_info()[1]
             model_name = model_name.capitalize()
             subject_line = model_name + str(_(' Data Export'))
 
-            resource_class_import_path = '{0}.{1}'.format(resource_class.__module__, resource_class.__name__)
+            resource_class_import_path = '%s.%s' % (resource_class.__module__, resource_class.__name__)
 
             result = export_data.delay(file_format_name, list(queryset.values_list('id', flat=True)), resource_class_import_path, resource_kwargs, request.user.id, subject_line)
         else:
@@ -475,7 +487,7 @@ class ImportExportMixin(ImportMixin, ExportMixin):
     """
     Import and export mixin.
     """
-    #: template for change_list view
+    # : template for change_list view
     change_list_template = 'admin/import_export/change_list_import_export.html'
 
 
