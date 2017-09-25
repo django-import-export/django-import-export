@@ -53,8 +53,8 @@ if isinstance(TMP_STORAGE_CLASS, six.string_types):
         msg = "Could not import '%s' for import_export setting 'IMPORT_EXPORT_TMP_STORAGE_CLASS'" % TMP_STORAGE_CLASS
         raise ImportError(msg)
 
-# : These are the default formats for import and export. Whether they can be
-# : used or not is depending on their implementation in the tablib library.
+#: These are the default formats for import and export. Whether they can be
+#: used or not is depending on their implementation in the tablib library.
 DEFAULT_FORMATS = (
     base_formats.CSV,
     base_formats.XLS,
@@ -82,15 +82,15 @@ class ImportMixin(ImportExportMixinBase):
     Import mixin.
     """
 
-    # : template for change_list view
+    #: template for change_list view
     change_list_template = 'admin/import_export/change_list_import.html'
-    # : template for import view
+    #: template for import view
     import_template_name = 'admin/import_export/import.html'
-    # : resource class
+    #: resource class
     resource_class = None
-    # : available import formats
+    #: available import formats
     formats = DEFAULT_FORMATS
-    # : import data encoding
+    #: import data encoding
     from_encoding = "utf-8"
     skip_admin_log = None
     # storage class for saving temporary files
@@ -304,15 +304,15 @@ class ExportMixin(ImportExportMixinBase):
     """
     Export mixin.
     """
-    # : resource class
+    #: resource class
     resource_class = None
-    # : template for change_list view
+    #: template for change_list view
     change_list_template = 'admin/import_export/change_list_export.html'
-    # : template for export view
+    #: template for export view
     export_template_name = 'admin/import_export/export.html'
-    # : available export formats
+    #: available export formats
     formats = DEFAULT_FORMATS
-    # : export data encoding
+    #: export data encoding
     to_encoding = "utf-8"
 
     def get_urls(self):
@@ -379,6 +379,16 @@ class ExportMixin(ImportExportMixinBase):
         except AttributeError:
             return cl.query_set
 
+    def get_export_data(self, file_format, queryset, *args, **kwargs):
+        """
+        Returns file_format representation for given queryset.
+        """
+        request = kwargs.pop("request")
+        resource_class = self.get_export_resource_class()
+        data = resource_class(**self.get_export_resource_kwargs(request)).export(queryset, *args, **kwargs)
+        export_data = file_format.export_data(data)
+        return export_data
+
     def get_export_context_data(self, **kwargs):
         return self.get_context_data(**kwargs)
 
@@ -386,15 +396,30 @@ class ExportMixin(ImportExportMixinBase):
         return {}
 
     def handle_export(self, file_format, queryset, request=None):
-        file_format_name = unicode(file_format.__name__)
-        model_name = self.get_model_info()[1]
-        model_name = model_name.capitalize()
-        subject_line = model_name + str(_(' Data Export'))
         resource_class = self.get_export_resource_class()
         resource_kwargs = self.get_export_resource_kwargs(request)
-        resource_class_import_path = '{0}.{1}'.format(resource_class.__module__, resource_class.__name__)
 
-        result = export_data.delay(file_format_name, list(queryset.values_list('id', flat=True)), resource_class_import_path, resource_kwargs, request.user.id, subject_line)
+        if queryset.count() > settings.IMPORT_EXPORT_EXPORT_USING_CELERY_COUNT:
+            file_format_name = unicode(file_format.__name__)
+            model_name = self.get_model_info()[1]
+            model_name = model_name.capitalize()
+            subject_line = model_name + str(_(' Data Export'))
+
+            resource_class_import_path = '{0}.{1}'.format(resource_class.__module__, resource_class.__name__)
+
+            result = export_data.delay(file_format_name, list(queryset.values_list('id', flat=True)), resource_class_import_path, resource_kwargs, request.user.id, subject_line)
+        else:
+            file_format_instance = file_format()
+            export_data = self.get_export_data(file_format_instance, queryset, request=request)
+            content_type = file_format_instance.get_content_type()
+            # Django 1.7 uses the content_type kwarg instead of mimetype
+            try:
+                result = HttpResponse(export_data, content_type=content_type)
+            except TypeError:
+                result = HttpResponse(export_data, mimetype=content_type)
+            result['Content-Disposition'] = 'attachment; filename=%s' % (
+                self.get_export_filename(file_format_instance),
+            )
 
         if isinstance(result, HttpResponse):
             response = result
@@ -448,7 +473,7 @@ class ImportExportMixin(ImportMixin, ExportMixin):
     """
     Import and export mixin.
     """
-    # : template for change_list view
+    #: template for change_list view
     change_list_template = 'admin/import_export/change_list_import_export.html'
 
 
