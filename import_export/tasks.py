@@ -10,6 +10,36 @@ from celery.app import shared_task
 from .formats import base_formats
 
 
+def _get_resource(resource_import_path, resource_kwargs):
+    resource_module_parts = resource_import_path.split('.')
+    resource_name = resource_module_parts.pop()
+    resource_module_name = '.'.join(resource_module_parts)
+    resource_module = locate(resource_module_name)
+    resource_class = getattr(resource_module, resource_name)
+    return resource_class(**resource_kwargs)
+
+
+def _get_exported_data_as_attachment(file_format, resource, queryset, *args, **kwargs):
+    queryset = resource.get_queryset().filter(pk__in=queryset)
+
+    data = resource.export(queryset, *args, **kwargs)
+    exported_data = file_format.export_data(data)
+
+    file_name = '{0}.{1}'.format(uuid.uuid4(), file_format.get_extension())
+
+    return ContentFile(exported_data, name=file_name)
+
+
+def _get_email_message(subject, user, data, file_format):
+    email_field = user.get_email_field_name()
+
+    message = EmailMessage(subject, '', to=[getattr(user, email_field)])
+
+    message.attach(data.name, data.read(), file_format.get_content_type())
+
+    return message
+
+
 @shared_task
 def export_data(file_format_name, queryset, resource_import_path, resource_kwargs, user_id, email_subject, *args, **kwargs):
     """
@@ -18,28 +48,13 @@ def export_data(file_format_name, queryset, resource_import_path, resource_kwarg
     file_format_class = getattr(base_formats, file_format_name)
     file_format = file_format_class()
 
+    resource = _get_resource(resource_import_path, resource_kwargs)
+
+    export = _get_exported_data_as_attachment(file_format, resource, queryset, *args, **kwargs)
+
     User = get_user_model()
     user = User.objects.get(pk=user_id)
 
-    resource_module_parts = resource_import_path.split('.')
-    resource_name = resource_module_parts.pop()
-    resource_module_name = '.'.join(resource_module_parts)
-    resource_module = locate(resource_module_name)
-    resource_class = getattr(resource_module, resource_name)
-    resource = resource_class(**resource_kwargs)
+    message = _get_email_message(email_subject, user, export, file_format)
 
-    queryset = resource.get_queryset().filter(pk__in=queryset)
-
-    data = resource.export(queryset, *args, **kwargs)
-    exported_data = file_format.export_data(data)
-
-    file_name = '{0}.{1}'.format(uuid.uuid4(), file_format.get_extension())
-
-    export = ContentFile(exported_data, name=file_name)
-
-    email_field = user.get_email_field_name()
-
-    message = EmailMessage(email_subject, '', to=[getattr(user, email_field)])
-
-    message.attach(file_name, export.read(), file_format.get_content_type())
     message.send()
