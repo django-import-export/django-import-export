@@ -49,8 +49,6 @@ TEMPLATES = [
 ]
 
 
-IMPORT_EXPORT_EXPORT_USING_CELERY_COUNT = os.environ.get('IMPORT_EXPORT_EXPORT_USING_CELERY_COUNT', 1000)
-
 CELERY_RESULT_BACKEND = 'db+sqlite:///django-db'
 
 if os.environ.get('IMPORT_EXPORT_TEST_TYPE') == 'mysql-innodb':

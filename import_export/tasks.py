@@ -1,5 +1,5 @@
 import uuid
-from pydoc import locate
+import importlib
 
 from django.core.files.base import ContentFile
 from django.core.mail.message import EmailMessage
@@ -14,7 +14,7 @@ def _get_resource(resource_import_path, resource_kwargs):
     resource_module_parts = resource_import_path.split('.')
     resource_name = resource_module_parts.pop()
     resource_module_name = '.'.join(resource_module_parts)
-    resource_module = locate(resource_module_name)
+    resource_module = importlib.import_module(resource_module_name)
     resource_class = getattr(resource_module, resource_name)
     return resource_class(**resource_kwargs)
 
@@ -25,7 +25,7 @@ def _get_exported_data_as_attachment(file_format, resource, queryset, *args, **k
     data = resource.export(queryset, *args, **kwargs)
     exported_data = file_format.export_data(data)
 
-    file_name = '{0}.{1}'.format(uuid.uuid4(), file_format.get_extension())
+    file_name = '%s.%s' % (uuid.uuid4(), file_format.get_extension())
 
     return ContentFile(exported_data, name=file_name)
 

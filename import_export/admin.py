@@ -42,6 +42,8 @@ except ImportError:
 SKIP_ADMIN_LOG = getattr(settings, 'IMPORT_EXPORT_SKIP_ADMIN_LOG', False)
 TMP_STORAGE_CLASS = getattr(settings, 'IMPORT_EXPORT_TMP_STORAGE_CLASS',
                             TempFolderStorage)
+EXPORT_USING_CELERY_LEVEL = getattr(settings, 'IMPORT_EXPORT_EXPORT_USING_CELERY_LEVEL', 1000)
+
 if isinstance(TMP_STORAGE_CLASS, six.string_types):
     try:
         # Nod to tastypie's use of importlib.
@@ -53,8 +55,8 @@ if isinstance(TMP_STORAGE_CLASS, six.string_types):
         msg = "Could not import '%s' for import_export setting 'IMPORT_EXPORT_TMP_STORAGE_CLASS'" % TMP_STORAGE_CLASS
         raise ImportError(msg)
 
-#: These are the default formats for import and export. Whether they can be
-#: used or not is depending on their implementation in the tablib library.
+# : These are the default formats for import and export. Whether they can be
+# : used or not is depending on their implementation in the tablib library.
 DEFAULT_FORMATS = (
     base_formats.CSV,
     base_formats.XLS,
@@ -310,7 +312,7 @@ class ExportMixin(ImportExportMixinBase):
     change_list_template = 'admin/import_export/change_list_export.html'
     #: template for export view
     export_template_name = 'admin/import_export/export.html'
-    #: available export formats
+    # : available export formats
     formats = DEFAULT_FORMATS
     #: export data encoding
     to_encoding = "utf-8"
@@ -399,7 +401,7 @@ class ExportMixin(ImportExportMixinBase):
         resource_class = self.get_export_resource_class()
         resource_kwargs = self.get_export_resource_kwargs(request)
 
-        if queryset.count() > settings.IMPORT_EXPORT_EXPORT_USING_CELERY_COUNT:
+        if queryset.count() > EXPORT_USING_CELERY_LEVEL:
             file_format_name = unicode(file_format.__name__)
             model_name = self.get_model_info()[1]
             model_name = model_name.capitalize()
