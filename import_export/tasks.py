@@ -1,9 +1,11 @@
 import uuid
 import importlib
+import pickle
 
 from django.core.files.base import ContentFile
 from django.core.mail.message import EmailMessage
 from django.contrib.auth import get_user_model
+from django.db.models.sql import Query
 
 from celery.app import shared_task
 
@@ -19,8 +21,13 @@ def _get_resource(resource_import_path, resource_kwargs):
     return resource_class(**resource_kwargs)
 
 
-def _get_exported_data_as_attachment(file_format, resource, queryset, *args, **kwargs):
-    queryset = resource.get_queryset().filter(pk__in=queryset)
+def _get_exported_data_as_attachment(file_format, resource, pickled_query, *args, **kwargs):
+    query = pickle.loads(pickled_query)
+    # query could be anything. It should be an instance of the Query class and
+    # if it isn't then something is very wrong
+    assert isinstance(query, Query)
+    queryset = resource.get_queryset()
+    queryset.query = query
 
     data = resource.export(queryset, *args, **kwargs)
     exported_data = file_format.export_data(data)

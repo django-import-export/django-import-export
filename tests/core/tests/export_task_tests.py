@@ -1,6 +1,9 @@
+import pickle
+
 from django.contrib.auth.models import User
 from django.core import mail
 from django.test.testcases import TestCase
+
 from import_export import resources, fields
 from import_export.formats import base_formats
 from import_export.tasks import export_data
@@ -28,5 +31,5 @@ class ExportTaskTests(TestCase):
         self.user.save()
 
     def test_task_sends_email_with_attachments(self):
-        export_data(self.format.__class__.__name__, list(Book.objects.values_list('id', flat=True)), 'core.tests.export_task_tests.BookResource', {}, self.user.id, 'Test subject')
+        export_data(self.format.__class__.__name__, pickle.dumps(Book.objects.all().query), 'core.tests.export_task_tests.BookResource', {}, self.user.id, 'Test subject')
         self.assertEqual(1, len(mail.outbox))

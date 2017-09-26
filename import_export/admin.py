@@ -1,8 +1,9 @@
 from __future__ import with_statement
 
 from datetime import datetime
-
 import importlib
+import pickle
+
 import django
 from django.contrib import admin
 from django.utils import six
@@ -421,16 +422,16 @@ class ExportMixin(ImportExportMixinBase):
 
             resource_class_import_path = '%s.%s' % (resource_class.__module__, resource_class.__name__)
 
-            result = export_data.delay(file_format_name, list(queryset.values_list('id', flat=True)), resource_class_import_path, resource_kwargs, request.user.id, subject_line)
+            result = export_data.delay(file_format_name, pickle.dumps(queryset.query), resource_class_import_path, resource_kwargs, request.user.id, subject_line)
         else:
             file_format_instance = file_format()
-            export_data = self.get_export_data(file_format_instance, queryset, request=request)
+            exported_data = self.get_export_data(file_format_instance, queryset, request=request)
             content_type = file_format_instance.get_content_type()
             # Django 1.7 uses the content_type kwarg instead of mimetype
             try:
-                result = HttpResponse(export_data, content_type=content_type)
+                result = HttpResponse(exported_data, content_type=content_type)
             except TypeError:
-                result = HttpResponse(export_data, mimetype=content_type)
+                result = HttpResponse(exported_data, mimetype=content_type)
             result['Content-Disposition'] = 'attachment; filename=%s' % (
                 self.get_export_filename(file_format_instance),
             )
