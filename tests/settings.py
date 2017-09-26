@@ -19,7 +19,6 @@ SITE_ID = 1
 ROOT_URLCONF = "urls"
 
 DEBUG = True
-ALLOWED_HOSTS = ['lap-e330-dl']
 
 STATIC_URL = '/static/'
 
