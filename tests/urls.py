@@ -1,13 +1,13 @@
 from __future__ import unicode_literals
 
-from django.conf import settings
 from django.conf.urls import url, include
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
-from django.contrib.staticfiles.views import serve
 
 
 from django.contrib import admin
 admin.autodiscover()
+
+from import_export.views import RetrieveExportedFileView
 
 
 urlpatterns = [
@@ -15,7 +15,5 @@ urlpatterns = [
 ]
 
 urlpatterns += staticfiles_urlpatterns() + [
-    url(r'^exported_files/(?P<path>.*)$', serve, {
-            'document_root': settings.IMPORT_EXPORT_STORAGE_PATH,
-        }),
+    url(r'^exported_files/(?P<path>.*)$', RetrieveExportedFileView.as_view()),
 ]
