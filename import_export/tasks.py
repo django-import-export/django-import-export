@@ -36,7 +36,7 @@ def _get_exported_data_as_attachment(file_format, resource, pickled_query, *args
     data = resource.export(queryset, *args, **kwargs)
     exported_data = file_format.export_data(data)
 
-    file_name = '%s.%s' % (uuid.uuid4(), file_format.get_extension())
+    file_name = '%s.%s' % (uuid.uuid4().hex, file_format.get_extension())
 
     return ContentFile(exported_data, name=file_name)
 
