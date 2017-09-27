@@ -452,7 +452,7 @@ class ExportMixin(ImportExportMixinBase):
         return HttpResponseRedirect(url)
 
     def add_successful_export_message(self, request):
-        success_message = "Data successfully exported."
+        success_message = _("Data export in process. When it's done, you will get an email with a url where you can download the results.")
         messages.success(request, success_message)
 
     def export_action(self, request, *args, **kwargs):
