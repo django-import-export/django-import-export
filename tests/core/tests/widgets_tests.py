@@ -209,6 +209,20 @@ class ManyToManyWidget(TestCase):
         self.assertIn(self.cat1, cleaned_data)
         self.assertIn(self.cat2, cleaned_data)
 
+    def test_clean_field(self):
+        value = "%s,%s" % (self.cat1.name, self.cat2.name)
+        cleaned_data = self.widget_name.clean(value)
+        self.assertEqual(len(cleaned_data), 2)
+        self.assertIn(self.cat1, cleaned_data)
+        self.assertIn(self.cat2, cleaned_data)
+
+    def test_clean_field_spaces(self):
+        value = "%s, %s" % (self.cat1.name, self.cat2.name)
+        cleaned_data = self.widget_name.clean(value)
+        self.assertEqual(len(cleaned_data), 2)
+        self.assertIn(self.cat1, cleaned_data)
+        self.assertIn(self.cat2, cleaned_data)
+
     def test_clean_typo(self):
         value = "%s," % self.cat1.pk
         cleaned_data = self.widget.clean(value)
