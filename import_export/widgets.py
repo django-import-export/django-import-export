@@ -2,8 +2,8 @@
 from __future__ import unicode_literals
 
 from decimal import Decimal
-from datetime import datetime
-from django.utils import datetime_safe, timezone
+from datetime import datetime, date
+from django.utils import datetime_safe, timezone, six
 from django.utils.encoding import smart_text
 from django.conf import settings
 
@@ -11,6 +11,12 @@ try:
     from django.utils.encoding import force_text
 except ImportError:
     from django.utils.encoding import force_unicode as force_text
+
+try:
+    from django.utils.dateparse import parse_duration
+except ImportError:
+    # Duration fields were added in Django 1.8
+    pass
 
 
 class Widget(object):
@@ -21,8 +27,7 @@ class Widget(object):
     :meth:`~import_export.widgets.Widget.clean` and
     :meth:`~import_export.widgets.Widget.render`.
     """
-
-    def clean(self, value):
+    def clean(self, value, row=None, *args, **kwargs):
         """
         Returns an appropriate Python object for an imported value.
 
@@ -35,7 +40,7 @@ class Widget(object):
         """
         return value
 
-    def render(self, value):
+    def render(self, value, obj=None):
         """
         Returns an export representation of a Python value.
 
@@ -54,7 +59,7 @@ class NumberWidget(Widget):
         # 0 is not empty
         return value is None or value == ""
 
-    def render(self, value):
+    def render(self, value, obj=None):
         return value
 
 
@@ -63,7 +68,7 @@ class FloatWidget(NumberWidget):
     Widget for converting floats fields.
     """
 
-    def clean(self, value):
+    def clean(self, value, row=None, *args, **kwargs):
         if self.is_empty(value):
             return None
         return float(value)
@@ -74,7 +79,7 @@ class IntegerWidget(NumberWidget):
     Widget for converting integer fields.
     """
 
-    def clean(self, value):
+    def clean(self, value, row=None, *args, **kwargs):
         if self.is_empty(value):
             return None
         return int(float(value))
@@ -85,7 +90,7 @@ class DecimalWidget(NumberWidget):
     Widget for converting decimal fields.
     """
 
-    def clean(self, value):
+    def clean(self, value, row=None, *args, **kwargs):
         if self.is_empty(value):
             return None
         return Decimal(value)
@@ -96,7 +101,7 @@ class CharWidget(Widget):
     Widget for converting text fields.
     """
 
-    def render(self, value):
+    def render(self, value, obj=None):
         return force_text(value)
 
 
@@ -107,12 +112,12 @@ class BooleanWidget(Widget):
     TRUE_VALUES = ["1", 1]
     FALSE_VALUE = "0"
 
-    def render(self, value):
+    def render(self, value, obj=None):
         if value is None:
             return ""
         return self.TRUE_VALUES[0] if value else self.FALSE_VALUE
 
-    def clean(self, value):
+    def clean(self, value, row=None, *args, **kwargs):
         if value == "":
             return None
         return True if value in self.TRUE_VALUES else False
@@ -135,9 +140,11 @@ class DateWidget(Widget):
             formats = (format,)
         self.formats = formats
 
-    def clean(self, value):
+    def clean(self, value, row=None, *args, **kwargs):
         if not value:
             return None
+        if isinstance(value, date):
+            return value
         for format in self.formats:
             try:
                 return datetime.strptime(value, format).date()
@@ -145,7 +152,7 @@ class DateWidget(Widget):
                 continue
         raise ValueError("Enter a valid date.")
 
-    def render(self, value):
+    def render(self, value, obj=None):
         if not value:
             return ""
         try:
@@ -172,9 +179,11 @@ class DateTimeWidget(Widget):
             formats = (format,)
         self.formats = formats
 
-    def clean(self, value):
+    def clean(self, value, row=None, *args, **kwargs):
         if not value:
             return None
+        if isinstance(value, datetime):
+            return value
         for format in self.formats:
             try:
                 dt = datetime.strptime(value, format)
@@ -188,7 +197,7 @@ class DateTimeWidget(Widget):
                 continue
         raise ValueError("Enter a valid date/time.")
 
-    def render(self, value):
+    def render(self, value, obj=None):
         if not value:
             return ""
         return value.strftime(self.formats[0])
@@ -211,7 +220,7 @@ class TimeWidget(Widget):
             formats = (format,)
         self.formats = formats
 
-    def clean(self, value):
+    def clean(self, value, row=None, *args, **kwargs):
         if not value:
             return None
         for format in self.formats:
@@ -221,10 +230,47 @@ class TimeWidget(Widget):
                 continue
         raise ValueError("Enter a valid time.")
 
-    def render(self, value):
+    def render(self, value, obj=None):
         if not value:
             return ""
         return value.strftime(self.formats[0])
+
+
+class DurationWidget(Widget):
+    """
+    Widget for converting time duration fields.
+    """
+
+    def clean(self, value, row=None, *args, **kwargs):
+        if not value:
+            return None
+
+        try:
+            return parse_duration(value)
+        except NameError:
+            # Duration fields were added in Django 1.8
+            raise RuntimeError("Duration parsing not supported.")
+        except (ValueError, TypeError):
+            raise ValueError("Enter a valid duration.")
+
+    def render(self, value, obj=None):
+        if not value:
+            return ""
+        return str(value)
+
+
+class SimpleArrayWidget(Widget):
+    def __init__(self, separator=None):
+        if separator is None:
+            separator = ','
+        self.separator = separator
+        super(SimpleArrayWidget, self).__init__()
+
+    def clean(self, value, row=None, *args, **kwargs):
+        return value.split(self.separator) if value else []
+
+    def render(self, value, obj=None):
+        return self.separator.join(six.text_type(v) for v in value)
 
 
 class ForeignKeyWidget(Widget):
@@ -267,11 +313,37 @@ class ForeignKeyWidget(Widget):
         self.field = field
         super(ForeignKeyWidget, self).__init__(*args, **kwargs)
 
-    def clean(self, value):
-        val = super(ForeignKeyWidget, self).clean(value)
-        return self.model.objects.get(**{self.field: val}) if val else None
+    def get_queryset(self, value, row, *args, **kwargs):
+        """
+        Returns a queryset of all objects for this Model.
 
-    def render(self, value):
+        Overwrite this method if you want to limit the pool of objects from
+        which the related object is retrieved.
+
+        :param value: The field's value in the datasource.
+        :param row: The datasource's current row.
+
+        As an example; if you'd like to have ForeignKeyWidget look up a Person
+        by their pre- **and** lastname column, you could subclass the widget
+        like so::
+
+            class FullNameForeignKeyWidget(ForeignKeyWidget):
+                def get_queryset(self, value, row):
+                    return self.model.objects.filter(
+                        first_name__iexact=row["first_name"],
+                        last_name__iexact=row["last_name"]
+                    )
+        """
+        return self.model.objects.all()
+
+    def clean(self, value, row=None, *args, **kwargs):
+        val = super(ForeignKeyWidget, self).clean(value)
+        if val:
+            return self.get_queryset(value, row, *args, **kwargs).get(**{self.field: val})
+        else:
+            return None
+
+    def render(self, value, obj=None):
         if value is None:
             return ""
         return getattr(value, self.field)
@@ -297,18 +369,18 @@ class ManyToManyWidget(Widget):
         self.field = field
         super(ManyToManyWidget, self).__init__(*args, **kwargs)
 
-    def clean(self, value):
+    def clean(self, value, row=None, *args, **kwargs):
         if not value:
             return self.model.objects.none()
-        if isinstance(value, float):
+        if isinstance(value, (float, int)):
             ids = [int(value)]
         else:
             ids = value.split(self.separator)
-        ids = filter(None, value.split(self.separator))
+        ids = filter(None, ids)
         return self.model.objects.filter(**{
             '%s__in' % self.field: ids
         })
 
-    def render(self, value):
+    def render(self, value, obj=None):
         ids = [smart_text(getattr(obj, self.field)) for obj in value.all()]
         return self.separator.join(ids)

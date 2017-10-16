@@ -1,7 +1,6 @@
 from __future__ import unicode_literals
 
 import functools
-import sys
 import tablib
 import traceback
 from copy import deepcopy
@@ -10,6 +9,7 @@ from diff_match_patch import diff_match_patch
 
 from django import VERSION
 from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
 from django.core.management.color import no_style
 from django.db import connections, transaction, DEFAULT_DB_ALIAS
 from django.db.models.fields import FieldDoesNotExist
@@ -57,7 +57,7 @@ except ImportError:
 
 logging.getLogger(__name__).addHandler(NullHandler())
 
-USE_TRANSACTIONS = getattr(settings, 'IMPORT_EXPORT_USE_TRANSACTIONS', False)
+USE_TRANSACTIONS = getattr(settings, 'IMPORT_EXPORT_USE_TRANSACTIONS', True)
 
 
 class ResourceOptions(object):
@@ -165,6 +165,32 @@ class DeclarativeMetaclass(type):
         return new_class
 
 
+class Diff(object):
+    def __init__(self, resource, instance, new):
+        self.left = self._export_resource_fields(resource, instance)
+        self.right = []
+        self.new = new
+
+    def compare_with(self, resource, instance, dry_run=False):
+        self.right = self._export_resource_fields(resource, instance)
+
+    def as_html(self):
+        data = []
+        dmp = diff_match_patch()
+        for v1, v2 in six.moves.zip(self.left, self.right):
+            if v1 != v2 and self.new:
+                v1 = ""
+            diff = dmp.diff_main(force_text(v1), force_text(v2))
+            dmp.diff_cleanupSemantic(diff)
+            html = dmp.diff_prettyHtml(diff)
+            html = mark_safe(html)
+            data.append(html)
+        return data
+
+    def _export_resource_fields(self, resource, instance):
+        return [resource.export_field(f, instance) if instance else "" for f in resource.get_user_visible_fields()]
+
+
 class Resource(six.with_metaclass(DeclarativeMetaclass)):
     """
     Resource defines how objects are mapped to their import and export
@@ -235,36 +261,42 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         else:
             return (self.init_instance(row), True)
 
-    def save_instance(self, instance, dry_run=False):
+    def save_instance(self, instance, using_transactions=True, dry_run=False):
         """
         Takes care of saving the object to the database.
 
         Keep in mind that this is done by calling ``instance.save()``, so
         objects are not created in bulk!
         """
-        self.before_save_instance(instance, dry_run)
-        if not dry_run:
+        self.before_save_instance(instance, using_transactions, dry_run)
+        if not using_transactions and dry_run:
+            # we don't have transactions and we want to do a dry_run
+            pass
+        else:
             instance.save()
-        self.after_save_instance(instance, dry_run)
+        self.after_save_instance(instance, using_transactions, dry_run)
 
-    def before_save_instance(self, instance, dry_run):
+    def before_save_instance(self, instance, using_transactions, dry_run):
         """
         Override to add additional logic. Does nothing by default.
         """
         pass
 
-    def after_save_instance(self, instance, dry_run):
+    def after_save_instance(self, instance, using_transactions, dry_run):
         """
         Override to add additional logic. Does nothing by default.
         """
         pass
 
-    def delete_instance(self, instance, dry_run=False):
+    def delete_instance(self, instance, using_transactions=True, dry_run=False):
         """
         Calls :meth:`instance.delete` as long as ``dry_run`` is not set.
         """
         self.before_delete_instance(instance, dry_run)
-        if not dry_run:
+        if not using_transactions and dry_run:
+            # we don't have transactions and we want to do a dry_run
+            pass
+        else:
             instance.delete()
         self.after_delete_instance(instance, dry_run)
 
@@ -288,25 +320,31 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         if field.attribute and field.column_name in data:
             field.save(obj, data)
 
+    def get_import_fields(self):
+        return self.get_fields()
+
     def import_obj(self, obj, data, dry_run):
         """
         Traverses every field in this Resource and calls
         :meth:`~import_export.resources.Resource.import_field`.
         """
-        for field in self.get_fields():
+        for field in self.get_import_fields():
             if isinstance(field.widget, widgets.ManyToManyWidget):
                 continue
             self.import_field(field, obj, data)
 
-    def save_m2m(self, obj, data, dry_run):
+    def save_m2m(self, obj, data, using_transactions, dry_run):
         """
         Saves m2m fields.
 
         Model instance need to have a primary key value before
         a many-to-many relationship can be used.
         """
-        if not dry_run:
-            for field in self.get_fields():
+        if not using_transactions and dry_run:
+            # we don't have transactions and we want to do a dry_run
+            pass
+        else:
+            for field in self.get_import_fields():
                 if not isinstance(field.widget, widgets.ManyToManyWidget):
                     continue
                 self.import_field(field, obj, data)
@@ -330,7 +368,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         """
         if not self._meta.skip_unchanged:
             return False
-        for field in self.get_fields():
+        for field in self.get_import_fields():
             try:
                 # For fields that are models.fields.related.ManyRelatedManager
                 # we need to compare the results
@@ -341,55 +379,21 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
                     return False
         return True
 
-    def get_diff(self, original, new, current, dry_run=False):
-        """
-        Get diff between original and current object when ``import_data``
-        is run.
-
-        ``dry_run`` allows handling special cases when object is not saved
-        to database (ie. m2m relationships).
-        """
-        data = []
-        dmp = diff_match_patch()
-        for field in self.get_user_visible_fields():
-            v1 = self.export_field(field, original) if original else ""
-            v2 = self.export_field(field, current) if current else ""
-            if v1 != v2 and new:
-                v1 = ""
-            diff = dmp.diff_main(force_text(v1), force_text(v2))
-            dmp.diff_cleanupSemantic(diff)
-            html = dmp.diff_prettyHtml(diff)
-            html = mark_safe(html)
-            data.append(html)
-        return data
-
     def get_diff_headers(self):
         """
         Diff representation headers.
         """
         return self.get_export_headers()
 
-    def before_import(self, dataset, dry_run, **kwargs):
+    def before_import(self, dataset, using_transactions, dry_run, **kwargs):
         """
         Override to add additional logic. Does nothing by default.
-
-        This method receives the ``dataset`` that's going to be imported, the
-        ``dry_run`` parameter which determines whether changes are saved to
-        the database, and any additional keyword arguments passed to
-        ``import_data`` in a ``kwargs`` dict.
         """
         pass
 
-    def after_import(self, dataset, result, dry_run, **kwargs):
+    def after_import(self, dataset, result, using_transactions, dry_run, **kwargs):
         """
         Override to add additional logic. Does nothing by default.
-
-        This method receives the ``dataset`` that's just been imported, the
-        ``result`` of the import and the ``dry_run`` parameter which determines
-        whether changes will be saved to the database, and any additional
-        keyword arguments passed to ``import_data`` in a ``kwargs`` dict. This
-        method runs after the main import finishes but before the changes are
-        committed or rolled back.
         """
         pass
 
@@ -405,7 +409,13 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         """
         pass
 
-    def import_row(self, row, instance_loader, dry_run=False, **kwargs):
+    def after_import_instance(self, instance, new, **kwargs):
+        """
+        Override to add additional logic. Does nothing by default.
+        """
+        pass
+
+    def import_row(self, row, instance_loader, using_transactions=True, dry_run=False, **kwargs):
         """
         Imports data from ``tablib.Dataset``. Refer to :doc:`import_workflow`
         for a more complete description of the whole import process.
@@ -414,43 +424,49 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
 
         :param instance_loader: The instance loader to be used to load the row
 
+        :param using_transactions: If ``using_transactions`` is set, a transaction
+            is being used to wrap the import
+
         :param dry_run: If ``dry_run`` is set, or error occurs, transaction
             will be rolled back.
         """
+        row_result = self.get_row_result_class()()
         try:
-            row_result = self.get_row_result_class()()
             self.before_import_row(row, **kwargs)
             instance, new = self.get_or_init_instance(instance_loader, row)
+            self.after_import_instance(instance, new, **kwargs)
             if new:
                 row_result.import_type = RowResult.IMPORT_TYPE_NEW
             else:
                 row_result.import_type = RowResult.IMPORT_TYPE_UPDATE
             row_result.new_record = new
-            row_result.object_repr = force_text(instance)
-            row_result.object_id = instance.pk
             original = deepcopy(instance)
+            diff = Diff(self, original, new)
             if self.for_delete(row, instance):
                 if new:
                     row_result.import_type = RowResult.IMPORT_TYPE_SKIP
-                    row_result.diff = self.get_diff(None, False, None, dry_run)
+                    diff.compare_with(self, None, dry_run)
                 else:
                     row_result.import_type = RowResult.IMPORT_TYPE_DELETE
-                    self.delete_instance(instance, dry_run)
-                    row_result.diff = self.get_diff(original, False, None, dry_run)
+                    self.delete_instance(instance, using_transactions, dry_run)
+                    diff.compare_with(self, None, dry_run)
             else:
                 self.import_obj(instance, row, dry_run)
                 if self.skip_row(instance, original):
                     row_result.import_type = RowResult.IMPORT_TYPE_SKIP
                 else:
                     with transaction.atomic():
-                        self.save_instance(instance, dry_run)
-                    self.save_m2m(instance, row, dry_run)
-                    # Add object info to RowResult for LogEntry
-                    row_result.object_repr = force_text(instance)
-                    row_result.object_id = instance.pk
-                row_result.diff = self.get_diff(original, new, instance, dry_run)
+                        self.save_instance(instance, using_transactions, dry_run)
+                    self.save_m2m(instance, row, using_transactions, dry_run)
+                diff.compare_with(self, instance, dry_run)
+            row_result.diff = diff.as_html()
+            # Add object info to RowResult for LogEntry
+            if row_result.import_type != RowResult.IMPORT_TYPE_SKIP:
+                row_result.object_id = instance.pk
+                row_result.object_repr = force_text(instance)
             self.after_import_row(row, row_result, **kwargs)
         except Exception as e:
+            row_result.import_type = RowResult.IMPORT_TYPE_ERROR
             # There is no point logging a transaction error for each row
             # when only the original error is likely to be relevant
             if not isinstance(e, TransactionManagementError):
@@ -459,9 +475,8 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
             row_result.errors.append(self.get_error_result_class()(e, tb_info, row))
         return row_result
 
-    @atomic()
     def import_data(self, dataset, dry_run=False, raise_errors=False,
-                    use_transactions=None, **kwargs):
+                    use_transactions=None, collect_failed_rows=False, **kwargs):
         """
         Imports data from ``tablib.Dataset``. Refer to :doc:`import_workflow`
         for a more complete description of the whole import process.
@@ -471,74 +486,89 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         :param raise_errors: Whether errors should be printed to the end user
             or raised regularly.
 
-        :param use_transactions: If ``True`` import process will be processed
-            inside transaction.
+        :param use_transactions: If ``True`` the import process will be processed
+            inside a transaction.
 
-        :param dry_run: If ``dry_run`` is set, or error occurs, transaction
-            will be rolled back.
+        :param collect_failed_rows: If ``True`` the import process will collect
+            failed rows.
+
+        :param dry_run: If ``dry_run`` is set, or an error occurs, if a transaction
+            is being used, it will be rolled back.
         """
-        result = self.get_result_class()()
-        result.diff_headers = self.get_diff_headers()
-        result.totals = OrderedDict([(RowResult.IMPORT_TYPE_NEW, 0),
-                                     (RowResult.IMPORT_TYPE_UPDATE, 0),
-                                     (RowResult.IMPORT_TYPE_DELETE, 0),
-                                     (RowResult.IMPORT_TYPE_SKIP, 0),
-                                     (RowResult.IMPORT_TYPE_ERROR, 0),
-                                     ('total', len(dataset))])
 
         if use_transactions is None:
             use_transactions = self.get_use_transactions()
 
-        if use_transactions is True:
+        connection = connections[DEFAULT_DB_ALIAS]
+        supports_transactions = getattr(connection.features, "supports_transactions", False)
+
+        if use_transactions and not supports_transactions:
+            raise ImproperlyConfigured
+
+        using_transactions = (use_transactions or dry_run) and supports_transactions
+
+        if using_transactions:
+            with transaction.atomic():
+                return self.import_data_inner(dataset, dry_run, raise_errors, using_transactions, collect_failed_rows, **kwargs)
+        return self.import_data_inner(dataset, dry_run, raise_errors, using_transactions, collect_failed_rows, **kwargs)
+
+    def import_data_inner(self, dataset, dry_run, raise_errors, using_transactions, collect_failed_rows, **kwargs):
+        result = self.get_result_class()()
+        result.diff_headers = self.get_diff_headers()
+        result.total_rows = len(dataset)
+
+        if using_transactions:
             # when transactions are used we want to create/update/delete object
             # as transaction will be rolled back if dry_run is set
-            real_dry_run = False
             sp1 = savepoint()
-        else:
-            real_dry_run = dry_run
 
         try:
-            self.before_import(dataset, real_dry_run, **kwargs)
+            self.before_import(dataset, using_transactions, dry_run, **kwargs)
         except Exception as e:
             logging.exception(e)
             tb_info = traceback.format_exc()
-            result.base_errors.append(self.get_error_result_class()(e, tb_info))
+            result.append_base_error(self.get_error_result_class()(e, tb_info))
             if raise_errors:
-                if use_transactions:
+                if using_transactions:
                     savepoint_rollback(sp1)
                 raise
 
         instance_loader = self._meta.instance_loader_class(self, dataset)
 
         # Update the total in case the dataset was altered by before_import()
-        result.totals['total'] = len(dataset)
+        result.total_rows = len(dataset)
+
+        if collect_failed_rows:
+            result.add_dataset_headers(dataset.headers)
 
         for row in dataset.dict:
-            row_result = self.import_row(row, instance_loader, real_dry_run, **kwargs)
+            row_result = self.import_row(row, instance_loader,
+                                         using_transactions=using_transactions, dry_run=dry_run,
+                                         **kwargs)
+            result.increment_row_result_total(row_result)
             if row_result.errors:
-                result.totals[row_result.IMPORT_TYPE_ERROR] += 1
+                if collect_failed_rows:
+                    result.append_failed_row(row, row_result.errors[0])
                 if raise_errors:
-                    if use_transactions:
+                    if using_transactions:
                         savepoint_rollback(sp1)
                     raise row_result.errors[-1].error
-            else:
-                result.totals[row_result.import_type] += 1
             if (row_result.import_type != RowResult.IMPORT_TYPE_SKIP or
                     self._meta.report_skipped):
                 result.append_row_result(row_result)
 
         try:
-            self.after_import(dataset, result, real_dry_run, **kwargs)
+            self.after_import(dataset, result, using_transactions, dry_run, **kwargs)
         except Exception as e:
             logging.exception(e)
             tb_info = traceback.format_exc()
-            result.base_errors.append(self.get_error_result_class()(e, tb_info))
+            result.append_base_error(self.get_error_result_class()(e, tb_info))
             if raise_errors:
-                if use_transactions:
+                if using_transactions:
                     savepoint_rollback(sp1)
                 raise
 
-        if use_transactions:
+        if using_transactions:
             if dry_run or result.has_errors():
                 savepoint_rollback(sp1)
             else:
@@ -549,7 +579,6 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
     def get_export_order(self):
         order = tuple(self._meta.export_order or ())
         return order + tuple(k for k in self.fields.keys() if k not in order)
-
 
     def before_export(self, queryset, *args, **kwargs):
         """
@@ -705,7 +734,7 @@ class ModelResource(six.with_metaclass(ModelDeclarativeMetaclass, Resource)):
         Django type.
         """
         result = default
-        internal_type = f.get_internal_type()
+        internal_type = f.get_internal_type() if callable(getattr(f, "get_internal_type", None)) else ""
         if internal_type in ('ManyToManyField', ):
             result = functools.partial(widgets.ManyToManyWidget,
                                        model=f.rel.to)
@@ -720,6 +749,8 @@ class ModelResource(six.with_metaclass(ModelDeclarativeMetaclass, Resource)):
             result = widgets.DateWidget
         elif internal_type in ('TimeField', ):
             result = widgets.TimeWidget
+        elif internal_type in ('DurationField', ):
+            result = widgets.DurationWidget
         elif internal_type in ('FloatField',):
             result = widgets.FloatWidget
         elif internal_type in ('IntegerField', 'PositiveIntegerField',
@@ -728,6 +759,16 @@ class ModelResource(six.with_metaclass(ModelDeclarativeMetaclass, Resource)):
             result = widgets.IntegerWidget
         elif internal_type in ('BooleanField', 'NullBooleanField'):
             result = widgets.BooleanWidget
+        elif VERSION >= (1, 8):
+            try:
+                from django.contrib.postgres.fields import ArrayField
+            except ImportError:
+                # Consume error when psycopg2 is not installed:
+                # ImportError: No module named psycopg2.extras
+                class ArrayField(object):
+                    pass
+            if type(f) == ArrayField:
+                return widgets.SimpleArrayWidget
         return result
 
     @classmethod
@@ -774,7 +815,7 @@ class ModelResource(six.with_metaclass(ModelDeclarativeMetaclass, Resource)):
         """
         return self._meta.model()
 
-    def after_import(self, dataset, result, dry_run, **kwargs):
+    def after_import(self, dataset, result, using_transactions, dry_run, **kwargs):
         """
         Reset the SQL sequences after new objects are imported
         """

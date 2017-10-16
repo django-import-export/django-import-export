@@ -16,6 +16,8 @@ from django.http import HttpResponseRedirect, HttpResponse
 from django.core.urlresolvers import reverse
 from django.conf import settings
 from django.template.defaultfilters import pluralize
+from django.utils.decorators import method_decorator
+from django.views.decorators.http import require_POST
 
 from .forms import (
     ImportForm,
@@ -142,13 +144,11 @@ class ImportMixin(ImportExportMixinBase):
         """
         return [f for f in self.formats if f().can_import()]
 
+    @method_decorator(require_POST)
     def process_import(self, request, *args, **kwargs):
-        '''
-        Perform the actual import action (after the user has confirmed he
-        wishes to import)
-        '''
-        opts = self.model._meta
-        resource = self.get_import_resource_class()(**self.get_import_resource_kwargs(request, *args, **kwargs))
+        """
+        Perform the actual import action (after the user has confirmed the import)
+        """
 
         confirm_form = ConfirmImportForm(request.POST)
         if confirm_form.is_valid():
@@ -162,46 +162,71 @@ class ImportMixin(ImportExportMixinBase):
                 data = force_text(data, self.from_encoding)
             dataset = input_format.create_dataset(data)
 
-            result = resource.import_data(dataset, dry_run=False,
-                                          raise_errors=True,
-                                          file_name=confirm_form.cleaned_data['original_file_name'],
-                                          user=request.user)
+            result = self.process_dataset(dataset, confirm_form, request, *args, **kwargs)
 
-            if not self.get_skip_admin_log():
-                # Add imported objects to LogEntry
-                logentry_map = {
-                    RowResult.IMPORT_TYPE_NEW: ADDITION,
-                    RowResult.IMPORT_TYPE_UPDATE: CHANGE,
-                    RowResult.IMPORT_TYPE_DELETE: DELETION,
-                }
-                content_type_id = ContentType.objects.get_for_model(self.model).pk
-                for row in result:
-                    if row.import_type != row.IMPORT_TYPE_SKIP:
-                        LogEntry.objects.log_action(
-                            user_id=request.user.pk,
-                            content_type_id=content_type_id,
-                            object_id=row.object_id,
-                            object_repr=row.object_repr,
-                            action_flag=logentry_map[row.import_type],
-                            change_message="%s through import_export" % row.import_type,
-                        )
-
-            success_message = u'Import finished, with {} new {}{} and ' \
-                              u'{} updated {}{}.'.format(result.totals[RowResult.IMPORT_TYPE_NEW],
-                                                         opts.model_name,
-                                                         pluralize(result.totals[RowResult.IMPORT_TYPE_NEW]),
-                                                         result.totals[RowResult.IMPORT_TYPE_UPDATE],
-                                                         opts.model_name,
-                                                         pluralize(result.totals[RowResult.IMPORT_TYPE_UPDATE]))
-
-            messages.success(request, success_message)
             tmp_storage.remove()
 
-            post_import.send(sender=None, model=self.model)
+            return self.process_result(result, request)
 
-            url = reverse('admin:%s_%s_changelist' % self.get_model_info(),
-                          current_app=self.admin_site.name)
-            return HttpResponseRedirect(url)
+    def process_dataset(self, dataset, confirm_form, request, *args, **kwargs):
+        resource = self.get_import_resource_class()(**self.get_import_resource_kwargs(request, *args, **kwargs))
+        return resource.import_data(dataset,
+                                    dry_run=False,
+                                    raise_errors=True,
+                                    file_name=confirm_form.cleaned_data['original_file_name'],
+                                    user=request.user,
+                                    **kwargs)
+
+    def process_result(self, result, request):
+        self.generate_log_entries(result, request)
+        self.add_success_message(result, request)
+        post_import.send(sender=None, model=self.model)
+
+        url = reverse('admin:%s_%s_changelist' % self.get_model_info(),
+                      current_app=self.admin_site.name)
+        return HttpResponseRedirect(url)
+
+    def generate_log_entries(self, result, request):
+        if not self.get_skip_admin_log():
+            # Add imported objects to LogEntry
+            logentry_map = {
+                RowResult.IMPORT_TYPE_NEW: ADDITION,
+                RowResult.IMPORT_TYPE_UPDATE: CHANGE,
+                RowResult.IMPORT_TYPE_DELETE: DELETION,
+            }
+            content_type_id = ContentType.objects.get_for_model(self.model).pk
+            for row in result:
+                if row.import_type != row.IMPORT_TYPE_ERROR and row.import_type != row.IMPORT_TYPE_SKIP:
+                    LogEntry.objects.log_action(
+                        user_id=request.user.pk,
+                        content_type_id=content_type_id,
+                        object_id=row.object_id,
+                        object_repr=row.object_repr,
+                        action_flag=logentry_map[row.import_type],
+                        change_message=_("%s through import_export" % row.import_type),
+                    )
+
+    def add_success_message(self, result, request):
+        opts = self.model._meta
+
+        success_message = _('Import finished, with {} new and ' \
+                            '{} updated {}.').format(result.totals[RowResult.IMPORT_TYPE_NEW],
+                                                      result.totals[RowResult.IMPORT_TYPE_UPDATE],
+                                                      opts.verbose_name_plural)
+
+        messages.success(request, success_message)
+
+    def get_import_context_data(self, **kwargs):
+        return self.get_context_data(**kwargs)
+
+    def get_context_data(self, **kwargs):
+        return {}
+
+    def get_import_form(self):
+        '''
+        Get the form type used to read the import format and file.
+        '''
+        return ImportForm
 
     def import_action(self, request, *args, **kwargs):
         '''
@@ -212,12 +237,13 @@ class ImportMixin(ImportExportMixinBase):
         '''
         resource = self.get_import_resource_class()(**self.get_import_resource_kwargs(request, *args, **kwargs))
 
-        context = {}
+        context = self.get_import_context_data()
 
         import_formats = self.get_import_formats()
-        form = ImportForm(import_formats,
-                          request.POST or None,
-                          request.FILES or None)
+        form_type = self.get_import_form()
+        form = form_type(import_formats,
+                         request.POST or None,
+                         request.FILES or None)
 
         if request.POST and form.is_valid():
             input_format = import_formats[
@@ -263,6 +289,7 @@ class ImportMixin(ImportExportMixinBase):
         elif django.VERSION >= (1, 7, 0):
             context.update(self.admin_site.each_context())
 
+        context['title'] = _("Import")
         context['form'] = form
         context['opts'] = self.model._meta
         context['fields'] = [f.column_name for f in resource.get_user_visible_fields()]
@@ -361,6 +388,12 @@ class ExportMixin(ImportExportMixinBase):
         export_data = file_format.export_data(data)
         return export_data
 
+    def get_export_context_data(self, **kwargs):
+        return self.get_context_data(**kwargs)
+
+    def get_context_data(self, **kwargs):
+        return {}
+
     def export_action(self, request, *args, **kwargs):
         formats = self.get_export_formats()
         form = ExportForm(formats, request.POST or None)
@@ -384,13 +417,14 @@ class ExportMixin(ImportExportMixinBase):
             post_export.send(sender=None, model=self.model)
             return response
 
-        context = {}
+        context = self.get_export_context_data()
 
         if django.VERSION >= (1, 8, 0):
             context.update(self.admin_site.each_context(request))
         elif django.VERSION >= (1, 7, 0):
             context.update(self.admin_site.each_context())
 
+        context['title'] = _("Export")
         context['form'] = form
         context['opts'] = self.model._meta
         request.current_app = self.admin_site.name

@@ -6,6 +6,7 @@ from datetime import date
 from decimal import Decimal
 from unittest import skip, skipUnless
 
+from django import VERSION
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import IntegrityError
@@ -16,6 +17,7 @@ from django.utils.html import strip_tags
 
 from import_export import fields, resources, results, widgets
 from import_export.instance_loaders import ModelInstanceLoader
+from import_export.resources import Diff
 
 from ..models import (
     Author, Book, Category, Entry, Profile, WithDefault, WithDynamicDefault,
@@ -219,13 +221,15 @@ class ModelResourceTest(TestCase):
         self.assertEqual(len(dataset), 1)
 
     def test_get_diff(self):
+        diff = Diff(self.resource, self.book, False)
         book2 = Book(name="Some other book")
-        diff = self.resource.get_diff(self.book, False, book2)
+        diff.compare_with(self.resource, book2)
+        html = diff.as_html()
         headers = self.resource.get_export_headers()
-        self.assertEqual(diff[headers.index('name')],
+        self.assertEqual(html[headers.index('name')],
                          u'<span>Some </span><ins style="background:#e6ffe6;">'
                          u'other </ins><span>book</span>')
-        self.assertFalse(diff[headers.index('author_email')])
+        self.assertFalse(html[headers.index('author_email')])
 
     @skip("See: https://github.com/django-import-export/django-import-export/issues/311")
     def test_get_diff_with_callable_related_manager(self):
@@ -235,9 +239,11 @@ class ModelResourceTest(TestCase):
         author2 = Author(name="Some author")
         self.book.author = author
         self.book.save()
-        diff = resource.get_diff(author2, False, author)
+        diff = Diff(self.resource, author, False)
+        diff.compare_with(self.resource, author2)
+        html = diff.as_html()
         headers = resource.get_export_headers()
-        self.assertEqual(diff[headers.index('books')],
+        self.assertEqual(html[headers.index('books')],
                          '<span>core.Book.None</span>')
 
     def test_import_data(self):
@@ -300,6 +306,79 @@ class ModelResourceTest(TestCase):
         self.assertEqual(result.rows[0].import_type,
                          results.RowResult.IMPORT_TYPE_DELETE)
         self.assertFalse(Book.objects.filter(pk=self.book.pk))
+
+    def test_save_instance_with_dry_run_flag(self):
+        class B(BookResource):
+            def before_save_instance(self, instance, using_transactions, dry_run):
+                super(B, self).before_save_instance(instance, using_transactions, dry_run)
+                if dry_run:
+                    self.before_save_instance_dry_run = True
+                else:
+                    self.before_save_instance_dry_run = False
+            def save_instance(self, instance, using_transactions=True, dry_run=False):
+                super(B, self).save_instance(instance, using_transactions, dry_run)
+                if dry_run:
+                    self.save_instance_dry_run = True
+                else:
+                    self.save_instance_dry_run = False
+            def after_save_instance(self, instance, using_transactions, dry_run):
+                super(B, self).after_save_instance(instance, using_transactions, dry_run)
+                if dry_run:
+                    self.after_save_instance_dry_run = True
+                else:
+                    self.after_save_instance_dry_run = False
+
+        resource = B()
+        resource.import_data(self.dataset, dry_run=True, raise_errors=True)
+        self.assertTrue(resource.before_save_instance_dry_run)
+        self.assertTrue(resource.save_instance_dry_run)
+        self.assertTrue(resource.after_save_instance_dry_run)
+
+        resource.import_data(self.dataset, dry_run=False, raise_errors=True)
+        self.assertFalse(resource.before_save_instance_dry_run)
+        self.assertFalse(resource.save_instance_dry_run)
+        self.assertFalse(resource.after_save_instance_dry_run)
+
+    def test_delete_instance_with_dry_run_flag(self):
+        class B(BookResource):
+            delete = fields.Field(widget=widgets.BooleanWidget())
+
+            def for_delete(self, row, instance):
+                return self.fields['delete'].clean(row)
+
+            def before_delete_instance(self, instance, dry_run):
+                super(B, self).before_delete_instance(instance, dry_run)
+                if dry_run:
+                    self.before_delete_instance_dry_run = True
+                else:
+                    self.before_delete_instance_dry_run = False
+
+            def delete_instance(self, instance, using_transactions=True, dry_run=False):
+                super(B, self).delete_instance(instance, using_transactions, dry_run)
+                if dry_run:
+                    self.delete_instance_dry_run = True
+                else:
+                    self.delete_instance_dry_run = False
+
+            def after_delete_instance(self, instance, dry_run):
+                super(B, self).after_delete_instance(instance, dry_run)
+                if dry_run:
+                    self.after_delete_instance_dry_run = True
+                else:
+                    self.after_delete_instance_dry_run = False
+
+        resource = B()
+        row = [self.book.pk, self.book.name, '1']
+        dataset = tablib.Dataset(*[row], headers=['id', 'name', 'delete'])
+        resource.import_data(dataset, dry_run=True, raise_errors=True)
+        self.assertTrue(resource.before_delete_instance_dry_run)
+        self.assertTrue(resource.delete_instance_dry_run)
+        self.assertTrue(resource.after_delete_instance_dry_run)
+
+        resource.import_data(dataset, dry_run=False, raise_errors=True)
+        self.assertFalse(resource.before_delete_instance_dry_run)
+        self.assertFalse(resource.delete_instance_dry_run)
+        self.assertFalse(resource.after_delete_instance_dry_run)
 
     def test_relationships_fields(self):
 
@@ -485,7 +564,7 @@ class ModelResourceTest(TestCase):
 
     def test_before_import_access_to_kwargs(self):
         class B(BookResource):
-            def before_import(self, dataset, dry_run, **kwargs):
+            def before_import(self, dataset, using_transactions, dry_run, **kwargs):
                 if 'extra_arg' in kwargs:
                     dataset.headers[dataset.headers.index('author_email')] = 'old_email'
                     dataset.insert_col(0,
@@ -584,8 +663,11 @@ class ModelResourceTest(TestCase):
                 model = Entry
                 fields = ('id', )
 
-            def after_save_instance(self, instance, dry_run):
-                if not dry_run:
+            def after_save_instance(self, instance, using_transactions, dry_run):
+                if not using_transactions and dry_run:
+                    # we don't have transactions and we want to do a dry_run
+                    pass
+                else:
                     instance.user.save()
 
         user = User.objects.create(username='foo')
@@ -650,7 +732,7 @@ class ModelResourceTransactionTest(TransactionTestCase):
 
         id_field = resource.fields['id']
         id_diff = row_diff[fields.index(id_field)]
-        # id diff should exists because in rollbacked transaction
+        # id diff should exist because in rollbacked transaction
         # FooBook has been saved
         self.assertTrue(id_diff)
 
@@ -705,3 +787,79 @@ class PostgresTests(TransactionTestCase):
             Book.objects.create(name='Some other book')
         except IntegrityError:
             self.fail('IntegrityError was raised.')
+
+    def test_collect_failed_rows(self):
+        resource = ProfileResource()
+        headers = ['id', 'user']
+        # 'user' is a required field, the database will raise an error.
+        row = [None, None]
+        dataset = tablib.Dataset(row, headers=headers)
+        result = resource.import_data(
+            dataset, dry_run=True, use_transactions=True,
+            collect_failed_rows=True,
+        )
+        self.assertEqual(
+            result.failed_dataset.headers,
+            [u'id', u'user', u'Error']
+        )
+        self.assertEqual(len(result.failed_dataset), 1)
+        # We can't check the error message because it's package- and version-dependent
+
+
+if VERSION >= (1, 8) and 'postgresql' in settings.DATABASES['default']['ENGINE']:
+    from django.contrib.postgres.fields import ArrayField
+    from django.db import models
+
+    class BookWithChapters(models.Model):
+        name = models.CharField('Book name', max_length=100)
+        chapters = ArrayField(models.CharField(max_length=100), default=list)
+
+    class ArrayFieldTest(TestCase):
+        fixtures = []
+
+        def setUp(self):
+            pass
+
+        def test_arrayfield(self):
+            dataset_headers = ["id", "name", "chapters"]
+            chapters = ["Introduction", "Middle Chapter", "Ending"]
+            dataset_row = ["1", "Book With Chapters", ",".join(chapters)]
+            dataset = tablib.Dataset(headers=dataset_headers)
+            dataset.append(dataset_row)
+            book_with_chapters_resource = resources.modelresource_factory(model=BookWithChapters)()
+            result = book_with_chapters_resource.import_data(dataset, dry_run=False)
+            self.assertFalse(result.has_errors())
+            book_with_chapters = list(BookWithChapters.objects.all())[0]
+            self.assertListEqual(book_with_chapters.chapters, chapters)
+
+
+class ManyRelatedManagerDiffTest(TestCase):
+    fixtures = ["category"]
+
+    def setUp(self):
+        pass
+
+    def test_related_manager_diff(self):
+        dataset_headers = ["id", "name", "categories"]
+        dataset_row = ["1", "Test Book", "1"]
+        original_dataset = tablib.Dataset(headers=dataset_headers)
+        original_dataset.append(dataset_row)
+        dataset_row[2] = "2"
+        changed_dataset = tablib.Dataset(headers=dataset_headers)
+        changed_dataset.append(dataset_row)
+
+        book_resource = BookResource()
+        export_headers = book_resource.get_export_headers()
+
+        add_result = book_resource.import_data(original_dataset, dry_run=False)
+        expected_value = u'<ins style="background:#e6ffe6;">1</ins>'
+        self.check_value(add_result, export_headers, expected_value)
+        change_result = book_resource.import_data(changed_dataset, dry_run=False)
+        expected_value = u'<del style="background:#ffe6e6;">1</del><ins style="background:#e6ffe6;">2</ins>'
+        self.check_value(change_result, export_headers, expected_value)
+
+    def check_value(self, result, export_headers, expected_value):
+        self.assertEqual(len(result.rows), 1)
+        diff = result.rows[0].diff
+        self.assertEqual(diff[export_headers.index("categories")],
+                         expected_value)

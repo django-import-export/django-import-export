@@ -2,7 +2,8 @@
 from __future__ import unicode_literals
 
 from decimal import Decimal
-from datetime import date, datetime, time
+from datetime import date, datetime, time, timedelta
+from unittest import SkipTest
 
 from django.test.utils import override_settings
 from django.test import TestCase
@@ -107,6 +108,29 @@ class TimeWidgetTest(TestCase):
         self.assertEqual(self.widget.clean("20:15:00"), self.time)
 
 
+class DurationWidgetTest(TestCase):
+
+    def setUp(self):
+
+        try:
+            from django.utils.dateparse import parse_duration
+        except ImportError:
+            # Duration fields were added in Django 1.8
+            raise SkipTest
+
+        self.duration = timedelta(hours=1, minutes=57, seconds=0)
+        self.widget = widgets.DurationWidget()
+
+    def test_render(self):
+        self.assertEqual(self.widget.render(self.duration), "1:57:00")
+
+    def test_render_none(self):
+        self.assertEqual(self.widget.render(None), "")
+
+    def test_clean(self):
+        self.assertEqual(self.widget.clean("1:57:00"), self.duration)
+
+
 class DecimalWidgetTest(TestCase):
 
     def setUp(self):
@@ -156,6 +180,19 @@ class ForeignKeyWidgetTest(TestCase):
     def test_render_empty(self):
         self.assertEqual(self.widget.render(None), "")
 
+    def test_clean_multi_column(self):
+        class BirthdayWidget(widgets.ForeignKeyWidget):
+            def get_queryset(self, value, row):
+                return self.model.objects.filter(
+                    birthday=row['birthday']
+                )
+        author2 = Author.objects.create(name='Foo')
+        author2.birthday = "2016-01-01"
+        author2.save()
+        birthday_widget = BirthdayWidget(Author, 'name')
+        row = {'name': "Foo", 'birthday': author2.birthday}
+        self.assertEqual(birthday_widget.clean("Foo", row), author2)
+
 
 class ManyToManyWidget(TestCase):
 
@@ -174,6 +211,18 @@ class ManyToManyWidget(TestCase):
 
     def test_clean_typo(self):
         value = "%s," % self.cat1.pk
+        cleaned_data = self.widget.clean(value)
+        self.assertEqual(len(cleaned_data), 1)
+        self.assertIn(self.cat1, cleaned_data)
+
+    def test_int(self):
+        value = self.cat1.pk
+        cleaned_data = self.widget.clean(value)
+        self.assertEqual(len(cleaned_data), 1)
+        self.assertIn(self.cat1, cleaned_data)
+
+    def test_float(self):
+        value = float(self.cat1.pk)
         cleaned_data = self.widget.clean(value)
         self.assertEqual(len(cleaned_data), 1)
         self.assertIn(self.cat1, cleaned_data)

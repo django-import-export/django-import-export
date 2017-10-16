@@ -27,11 +27,13 @@ class Field(object):
     :param default: This value will be returned by
         :meth:`~import_export.fields.Field.clean` if this field's widget did
         not return an adequate value.
+
+    :param saves_null_values: Controls whether null values are saved on the object
     """
     empty_values = [None, '']
 
     def __init__(self, attribute=None, column_name=None, widget=None,
-                 default=NOT_PROVIDED, readonly=False):
+                 default=NOT_PROVIDED, readonly=False, saves_null_values=True):
         self.attribute = attribute
         self.default = default
         self.column_name = column_name
@@ -39,6 +41,7 @@ class Field(object):
             widget = widgets.Widget()
         self.widget = widget
         self.readonly = readonly
+        self.saves_null_values = saves_null_values
 
     def __repr__(self):
         """
@@ -63,7 +66,7 @@ class Field(object):
                                                 list(data.keys())))
 
         try:
-            value = self.widget.clean(value)
+            value = self.widget.clean(value, row=data)
         except ValueError as e:
             raise ValueError("Column '%s': %s" % (self.column_name, e))
 
@@ -109,7 +112,8 @@ class Field(object):
             attrs = self.attribute.split('__')
             for attr in attrs[:-1]:
                 obj = getattr(obj, attr, None)
-            setattr(obj, attrs[-1], self.clean(data))
+            if self.clean(data) != None or self.saves_null_values:
+                setattr(obj, attrs[-1], self.clean(data))
 
     def export(self, obj):
         """
@@ -119,4 +123,4 @@ class Field(object):
         value = self.get_value(obj)
         if value is None:
             return ""
-        return self.widget.render(value)
+        return self.widget.render(value, obj)

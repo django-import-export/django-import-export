@@ -1,8 +1,14 @@
 from __future__ import unicode_literals
 
+try:
+    from collections import OrderedDict
+except ImportError:
+    from django.utils.datastructures import SortedDict as OrderedDict
+
+from tablib import Dataset
+
 
 class Error(object):
-
     def __init__(self, error, traceback=None, row=None):
         self.error = error
         self.traceback = traceback
@@ -23,14 +29,36 @@ class RowResult(object):
 
 
 class Result(object):
-
     def __init__(self, *args, **kwargs):
-        super(Result, self).__init__(*args, **kwargs)
+        super(Result, self).__init__()
         self.base_errors = []
-        self.rows = []
+        self.diff_headers = []
+        self.rows = []  # RowResults
+        self.failed_dataset = Dataset()
+        self.totals = OrderedDict([(RowResult.IMPORT_TYPE_NEW, 0),
+                                   (RowResult.IMPORT_TYPE_UPDATE, 0),
+                                   (RowResult.IMPORT_TYPE_DELETE, 0),
+                                   (RowResult.IMPORT_TYPE_SKIP, 0),
+                                   (RowResult.IMPORT_TYPE_ERROR, 0)])
+        self.total_rows = 0
 
     def append_row_result(self, row_result):
         self.rows.append(row_result)
+
+    def append_base_error(self, error):
+        self.base_errors.append(error)
+
+    def add_dataset_headers(self, headers):
+        self.failed_dataset.headers = headers + ["Error"]
+
+    def append_failed_row(self, row, error):
+        row_values = [v for (k, v) in row.items()]
+        row_values.append(str(error.error))
+        self.failed_dataset.append(row_values)
+
+    def increment_row_result_total(self, row_result):
+        if row_result.import_type:
+            self.totals[row_result.import_type] += 1
 
     def row_errors(self):
         return [(i + 1, row.errors)

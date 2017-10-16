@@ -14,9 +14,9 @@ django-import-export
     :target: https://pypi.python.org/pypi/django-import-export
     :alt: Downloads per month on PyPi
 
-.. image:: http://readthedocs.org/projects/django-import-export/badge/?version=latest
-    :target: http://django-import-export.rtfd.org
-    :alt: Docmentation
+.. image:: http://readthedocs.org/projects/django-import-export/badge/?version=stable
+    :target: http://django-import-export.readthedocs.io/en/stable/
+    :alt: Documentation
 
 django-import-export is a Django application and library for importing
 and exporting data with included admin integration.
@@ -37,7 +37,7 @@ Features:
 .. image:: docs/_static/images/django-import-export-change.png
 
 
-* Documentation: https://django-import-export.readthedocs.org/en/latest/
+* Documentation: http://django-import-export.readthedocs.io/en/stable/
 * GitHub: https://github.com/django-import-export/django-import-export/
 * Free software: BSD license
 * PyPI: https://pypi.python.org/pypi/django-import-export/
