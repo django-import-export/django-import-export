@@ -363,6 +363,8 @@ class ExportMixin(ImportExportMixinBase):
         # copied from django/contrib/admin/options.py
         list_display = self.get_list_display(request)
         list_display_links = self.get_list_display_links(request, list_display)
+        if self.get_actions(request):
+            list_display = ['action_checkbox'] + list(list_display)
 
         ChangeList = self.get_changelist(request)
         cl = ChangeList(request, self.model, list_display,
