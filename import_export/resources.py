@@ -60,6 +60,14 @@ logging.getLogger(__name__).addHandler(NullHandler())
 USE_TRANSACTIONS = getattr(settings, 'IMPORT_EXPORT_USE_TRANSACTIONS', True)
 
 
+def get_related_model(field):
+    if hasattr(field, 'related_model'):
+        return field.related_model
+    # Django 1.6, 1.7
+    if field.rel:
+        return field.rel.to
+
+
 class ResourceOptions(object):
     """
     The inner Meta class allows for class-level configuration of how the
@@ -700,15 +708,15 @@ class ModelDeclarativeMetaclass(DeclarativeMetaclass):
                             # the next model.
                             if isinstance(f, ForeignObjectRel):
                                 if RelatedObject is None:
-                                    model = f.related_model
+                                    model = get_related_model(f)
                                 else:
                                     # Django < 1.8
                                     model = f.model
                             else:
-                                if f.rel is None:
+                                if get_related_model(f) is None:
                                     raise KeyError(
                                         '%s is not a relation' % verbose_path)
-                                model = f.rel.to
+                                model = get_related_model(f)
 
                     if isinstance(f, ForeignObjectRel):
                         f = f.field
@@ -737,10 +745,10 @@ class ModelResource(six.with_metaclass(ModelDeclarativeMetaclass, Resource)):
         internal_type = f.get_internal_type() if callable(getattr(f, "get_internal_type", None)) else ""
         if internal_type in ('ManyToManyField', ):
             result = functools.partial(widgets.ManyToManyWidget,
-                                       model=f.rel.to)
+                                       model=get_related_model(f))
         if internal_type in ('ForeignKey', 'OneToOneField', ):
             result = functools.partial(widgets.ForeignKeyWidget,
-                                       model=f.rel.to)
+                                       model=get_related_model(f))
         if internal_type in ('DecimalField', ):
             result = widgets.DecimalWidget
         if internal_type in ('DateTimeField', ):
