@@ -1,3 +1,5 @@
+DO NOT MERGE - TESTING ONLY
+
 ====================
 django-import-export
 ====================
