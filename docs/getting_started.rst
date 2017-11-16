@@ -274,7 +274,7 @@ that have their column ``delete`` set to ``1``::
 Signals
 =======
 
-To hook in the import export workflow, you can connect to ``post_import``, ``post_export`` signals:
+To hook in the import export workflow, you can connect to ``post_import``, ``post_export`` signals::
 
     from django.dispatch import receiver
     from import_export.signals import post_import, post_export
