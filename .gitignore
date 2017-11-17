@@ -10,3 +10,4 @@ dist/
 .tox/
 .idea/
 *.python-version
+.coverage

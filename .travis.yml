@@ -16,8 +16,11 @@ install:
   - pip install -q $DJANGO
   - pip install -e git+https://github.com/kennethreitz/tablib.git#egg=tablib
   - pip install -r requirements/base.txt
+  - pip install coveralls
 script:
-  - python -Wall tests/manage.py test core --settings=
+   - python -Wall `which coverage` run tests/manage.py test core --settings=
+after_success:
+  - coveralls
 matrix:
   exclude:
     - python: "3.3"
