@@ -18,7 +18,7 @@ install:
   - pip install -r requirements/base.txt
   - pip install coveralls
 script:
-   - python -Wall `which coverage` run --source=. tests/manage.py test core --settings=
+   - python -Wall `which coverage` run --omit='setup.py' --source=. tests/manage.py test core --settings=
 after_success:
   - coveralls
 matrix:
