@@ -10,10 +10,6 @@ django-import-export
     :target: https://pypi.python.org/pypi/django-import-export
     :alt: Current version on PyPi
 
-.. image:: https://img.shields.io/pypi/dm/django-import-export.svg
-    :target: https://pypi.python.org/pypi/django-import-export
-    :alt: Downloads per month on PyPi
-
 .. image:: http://readthedocs.org/projects/django-import-export/badge/?version=stable
     :target: http://django-import-export.readthedocs.io/en/stable/
     :alt: Documentation
