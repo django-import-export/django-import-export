@@ -29,6 +29,36 @@ Changelog
 
 - Bugfix/fix error in converting exceptions to strings
 
+- Update Czech translations to 100% coverage.
+
+- Fix admin integration tests for the new "Import finished..." message (#596)
+
+- Make import form type easier to override (#604)
+
+- Add saves_null_values attribute to Field to control whether null values are saved on the object (#611)
+
+- Add Bulgarian translations (#656)
+
+- Add django 1.11 to TravisCI (#621)
+
+- Make Signals code example format correctly in documentation (#553)
+
+- Add Django as requirement to setup.py (#634)
+
+- Update import of reverse for django 2.x (#620)
+
+- Add Django-version classifiers to setup.py’s CLASSIFIERS (#616)
+
+- Some fixes for Django 2.0 (#672)
+
+- Strip whitespace when looking up ManyToMany fields (#668)
+
+- Fix all ResourceWarnings during tests in Python 3.x (#637)
+
+- Remove downloads count badge from README since shields.io no longer supports it for PyPi (#677)
+
+- Add coveralls support and README badge (#678)
+
 
 0.5.1 (2016-09-29)
 ------------------
