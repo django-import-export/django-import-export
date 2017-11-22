@@ -5,33 +5,31 @@ Changelog
 0.5.2 (unreleased)
 ------------------
 
-- Refactor import_row call by using keyword arguments
+- Refactor import_row call by using keyword arguments (#585)
 
-- Added {{ block.super }} call in block bodyclass in admin/base_site.html
+- Added {{ block.super }} call in block bodyclass in admin/base_site.html (#582)
 
-- Add support for the Django DurationField with DurationWidget
+- Add support for the Django DurationField with DurationWidget (#575)
 
-- GitHub bmihelac -> django-import-export Account Update
+- GitHub bmihelac -> django-import-export Account Update (#574)
 
-- Add intersphinx links to documentation
+- Add intersphinx links to documentation (#572)
 
-- Add Resource.get_import_fields()
+- Add Resource.get_import_fields() (#569)
 
-- Fixed readme mistake
+- Fixed readme mistake (#568)
 
-- Bugfix/fix m2m widget clean
+- Bugfix/fix m2m widget clean (#515)
 
-- Allow injection of context data for template rendered by import_action() and export_action()
+- Allow injection of context data for template rendered by import_action() and export_action() (#544)
 
-- Bugfix/fix exception in generate_log_entries()
+- Bugfix/fix exception in generate_log_entries() (#543)
 
-- Process import dataset and result in separate methods
+- Process import dataset and result in separate methods (#542)
 
-- Bugfix/fix error in converting exceptions to strings
+- Bugfix/fix error in converting exceptions to strings (#526)
 
-- Update Czech translations to 100% coverage.
-
-- Fix admin integration tests for the new "Import finished..." message (#596)
+- Fix admin integration tests for the new "Import finished..." message, update Czech translations to 100% coverage. (#596)
 
 - Make import form type easier to override (#604)
 
