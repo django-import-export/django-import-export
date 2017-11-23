@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-0.6.0 (unreleased)
+0.6.0 (2017-11-23)
 ------------------
 
 - Refactor import_row call by using keyword arguments (#585)
