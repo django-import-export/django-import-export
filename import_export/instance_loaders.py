@@ -55,9 +55,10 @@ class CachedInstanceLoader(ModelInstanceLoader):
             "%s__in" % self.pk_field.attribute: ids
             })
 
-        self.all_instances = dict([
-            (self.pk_field.get_value(instance), instance)
-            for instance in qs])
+        self.all_instances = {
+            self.pk_field.get_value(instance): instance
+            for instance in qs
+        }
 
     def get_instance(self, row):
         return self.all_instances.get(self.pk_field.clean(row))
