@@ -401,11 +401,7 @@ class ExportMixin(ImportExportMixinBase):
             queryset = self.get_export_queryset(request)
             export_data = self.get_export_data(file_format, queryset, request=request)
             content_type = file_format.get_content_type()
-            # Django 1.7 uses the content_type kwarg instead of mimetype
-            try:
-                response = HttpResponse(export_data, content_type=content_type)
-            except TypeError:
-                response = HttpResponse(export_data, mimetype=content_type)
+            response = HttpResponse(export_data, content_type=content_type)
             response['Content-Disposition'] = 'attachment; filename=%s' % (
                 self.get_export_filename(file_format),
             )
@@ -477,11 +473,7 @@ class ExportActionModelAdmin(ExportMixin, admin.ModelAdmin):
 
             export_data = self.get_export_data(file_format, queryset, request=request)
             content_type = file_format.get_content_type()
-            # Django 1.7 uses the content_type kwarg instead of mimetype
-            try:
-                response = HttpResponse(export_data, content_type=content_type)
-            except TypeError:
-                response = HttpResponse(export_data, mimetype=content_type)
+            response = HttpResponse(export_data, content_type=content_type)
             response['Content-Disposition'] = 'attachment; filename=%s' % (
                 self.get_export_filename(file_format),
             )
