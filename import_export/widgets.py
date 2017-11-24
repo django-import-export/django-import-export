@@ -5,18 +5,13 @@ from decimal import Decimal
 from datetime import datetime, date
 from django.utils import datetime_safe, timezone, six
 from django.utils.encoding import smart_text
+from django.utils.dateparse import parse_duration
 from django.conf import settings
 
 try:
     from django.utils.encoding import force_text
 except ImportError:
     from django.utils.encoding import force_unicode as force_text
-
-try:
-    from django.utils.dateparse import parse_duration
-except ImportError:
-    # Duration fields were added in Django 1.8
-    pass
 
 
 class Widget(object):
@@ -247,9 +242,6 @@ class DurationWidget(Widget):
 
         try:
             return parse_duration(value)
-        except NameError:
-            # Duration fields were added in Django 1.8
-            raise RuntimeError("Duration parsing not supported.")
         except (ValueError, TypeError):
             raise ValueError("Enter a valid duration.")
 

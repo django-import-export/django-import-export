@@ -111,13 +111,6 @@ class TimeWidgetTest(TestCase):
 class DurationWidgetTest(TestCase):
 
     def setUp(self):
-
-        try:
-            from django.utils.dateparse import parse_duration
-        except ImportError:
-            # Duration fields were added in Django 1.8
-            raise SkipTest
-
         self.duration = timedelta(hours=1, minutes=57, seconds=0)
         self.widget = widgets.DurationWidget()
 
