@@ -45,7 +45,7 @@ Requirements
 -----------
 
 * Python 2.7+ or Python 3.3+
-* Django 1.5.3+
+* Django 1.8+
 * tablib (dev or 0.9.11)
 
 Example app
