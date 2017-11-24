@@ -372,11 +372,7 @@ class ExportMixin(ImportExportMixinBase):
                         self.list_max_show_all, self.list_editable,
                         self)
 
-        # query_set has been renamed to queryset in Django 1.8
-        try:
-            return cl.queryset
-        except AttributeError:
-            return cl.query_set
+        return cl.queryset
 
     def get_export_data(self, file_format, queryset, *args, **kwargs):
         """
