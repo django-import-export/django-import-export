@@ -287,10 +287,7 @@ class ImportMixin(ImportExportMixinBase):
                     'input_format': form.cleaned_data['input_format'],
                 })
 
-        if django.VERSION >= (1, 8, 0):
-            context.update(self.admin_site.each_context(request))
-        elif django.VERSION >= (1, 7, 0):
-            context.update(self.admin_site.each_context())
+        context.update(self.admin_site.each_context(request))
 
         context['title'] = _("Import")
         context['form'] = form
@@ -422,10 +419,7 @@ class ExportMixin(ImportExportMixinBase):
 
         context = self.get_export_context_data()
 
-        if django.VERSION >= (1, 8, 0):
-            context.update(self.admin_site.each_context(request))
-        elif django.VERSION >= (1, 7, 0):
-            context.update(self.admin_site.each_context())
+        context.update(self.admin_site.each_context(request))
 
         context['title'] = _("Export")
         context['form'] = form
