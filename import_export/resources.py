@@ -751,7 +751,7 @@ class ModelResource(six.with_metaclass(ModelDeclarativeMetaclass, Resource)):
             result = widgets.IntegerWidget
         elif internal_type in ('BooleanField', 'NullBooleanField'):
             result = widgets.BooleanWidget
-        elif VERSION >= (1, 8):
+        else:
             try:
                 from django.contrib.postgres.fields import ArrayField
             except ImportError:
