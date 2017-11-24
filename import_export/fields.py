@@ -112,8 +112,9 @@ class Field(object):
             attrs = self.attribute.split('__')
             for attr in attrs[:-1]:
                 obj = getattr(obj, attr, None)
-            if self.clean(data) != None or self.saves_null_values:
-                setattr(obj, attrs[-1], self.clean(data))
+            cleaned = self.clean(data)
+            if cleaned is not None or self.saves_null_values:
+                setattr(obj, attrs[-1], cleaned)
 
     def export(self, obj):
         """
