@@ -6,8 +6,6 @@ python:
   - "3.4"
   - "3.5"
 env:
-  - DJANGO="Django>=1.6,<1.7"
-  - DJANGO="Django>=1.7,<1.8"
   - DJANGO="Django>=1.8,<1.9"
   - DJANGO="Django>=1.9,<1.10"
   - DJANGO="Django>=1.10,<1.11"
@@ -34,9 +32,5 @@ matrix:
       env: DJANGO="Django>=1.11,<1.12"
     - python: "3.3"
       env: DJANGO="https://github.com/django/django/archive/master.tar.gz"
-    - python: "3.5"
-      env: DJANGO="Django>=1.6,<1.7"
-    - python: "3.5"
-      env: DJANGO="Django>=1.7,<1.8"
   allow_failures:
     - env: DJANGO="https://github.com/django/django/archive/master.tar.gz"
