@@ -5,7 +5,7 @@ Changelog
 0.6.1 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Refactors and optimizations (#686, #632, #684, #636, #631, #629, #635, #683)
 
 
 0.6.0 (2017-11-23)
