@@ -5,7 +5,9 @@ Changelog
 0.6.1 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Refactors and optimizations (#686, #632, #684, #636, #631, #629, #635, #683)
+
+- Travis tests for Django 2.0.x (#691)
 
 
 0.6.0 (2017-11-23)
