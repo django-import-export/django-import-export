@@ -55,19 +55,6 @@ if isinstance(TMP_STORAGE_CLASS, six.string_types):
         msg = "Could not import '%s' for import_export setting 'IMPORT_EXPORT_TMP_STORAGE_CLASS'" % TMP_STORAGE_CLASS
         raise ImportError(msg)
 
-#: These are the default formats for import and export. Whether they can be
-#: used or not is depending on their implementation in the tablib library.
-DEFAULT_FORMATS = (
-    base_formats.CSV,
-    base_formats.XLS,
-    base_formats.XLSX,
-    base_formats.TSV,
-    base_formats.ODS,
-    base_formats.JSON,
-    base_formats.YAML,
-    base_formats.HTML,
-)
-
 
 class ImportExportMixinBase(object):
     def get_model_info(self):
@@ -91,7 +78,7 @@ class ImportMixin(ImportExportMixinBase):
     #: resource class
     resource_class = None
     #: available import formats
-    formats = DEFAULT_FORMATS
+    formats = base_formats.DEFAULT_FORMATS
     #: import data encoding
     from_encoding = "utf-8"
     skip_admin_log = None
@@ -310,7 +297,7 @@ class ExportMixin(ImportExportMixinBase):
     #: template for export view
     export_template_name = 'admin/import_export/export.html'
     #: available export formats
-    formats = DEFAULT_FORMATS
+    formats = base_formats.DEFAULT_FORMATS
     #: export data encoding
     to_encoding = "utf-8"
 
