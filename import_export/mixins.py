@@ -8,7 +8,7 @@ from .signals import post_export
 from .forms import ExportForm
 
 
-class ExportViewMixin(FormView):
+class ExportViewMixin(object):
     formats = base_formats.DEFAULT_FORMATS
     form_class = ExportForm
     resource_class = None
@@ -62,6 +62,8 @@ class ExportViewMixin(FormView):
         kwargs['formats'] = self.get_export_formats()
         return kwargs
 
+
+class ExportViewFormMixin(ExportViewMixin, FormView):
     def form_valid(self, form): 
         formats = self.get_export_formats()
         file_format = formats[

@@ -31,7 +31,7 @@ from .forms import (
 from .resources import (
     modelresource_factory,
 )
-from .formats import base_formats
+from .formats.base_formats import DEFAULT_FORMATS
 from .results import RowResult
 from .tmp_storages import TempFolderStorage
 from .signals import post_export, post_import
@@ -78,7 +78,7 @@ class ImportMixin(ImportExportMixinBase):
     #: resource class
     resource_class = None
     #: available import formats
-    formats = base_formats.DEFAULT_FORMATS
+    formats = DEFAULT_FORMATS
     #: import data encoding
     from_encoding = "utf-8"
     skip_admin_log = None
@@ -297,7 +297,7 @@ class ExportMixin(ImportExportMixinBase):
     #: template for export view
     export_template_name = 'admin/import_export/export.html'
     #: available export formats
-    formats = base_formats.DEFAULT_FORMATS
+    formats = DEFAULT_FORMATS
     #: export data encoding
     to_encoding = "utf-8"
 
