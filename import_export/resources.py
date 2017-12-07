@@ -23,6 +23,7 @@ from . import widgets
 from .fields import Field
 from .instance_loaders import ModelInstanceLoader
 from .results import Error, Result, RowResult
+from .exceptions import SkipRow
 
 try:
     from django.db.transaction import atomic, savepoint, savepoint_rollback, savepoint_commit  # noqa
@@ -51,7 +52,8 @@ except ImportError:
         def emit(self, record):
             pass
 
-logging.getLogger(__name__).addHandler(NullHandler())
+logger = logging.getLogger(__name__)
+logger.addHandler(NullHandler())
 
 USE_TRANSACTIONS = getattr(settings, 'IMPORT_EXPORT_USE_TRANSACTIONS', True)
 
@@ -618,10 +620,16 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         return self.get_fields()
 
     def export(self, queryset=None, *args, **kwargs):
-        """
-        Exports a resource.
-        """
+        """Generate a dataset ready for export.
 
+        :param queryset: iterable of model instances to be exported
+        :param args: arguments to be passed to before_export/after_export hooks
+        :param kwargs: keyword arguments to be passed to before_export/after_export hooks
+
+        :returns: a dataset with a '.skipped' attribute containing instances which were skipped
+                  during generation of the dataset
+        :rtype: :py:class:`tablib.Dataset`
+        """
         self.before_export(queryset, *args, **kwargs)
 
         if queryset is None:
@@ -635,8 +643,17 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
             iterable = queryset.iterator()
         else:
             iterable = queryset
+
+        skipped = []
         for obj in iterable:
-            data.append(self.export_resource(obj))
+            try:
+                row = self.export_resource(obj)
+            except SkipRow:
+                logger.warning("Row skipped while exporting: %s", obj)
+                skipped.append(obj)
+            else:
+                data.append(row)
+        data.skipped = skipped
 
         self.after_export(queryset, data, *args, **kwargs)
 
