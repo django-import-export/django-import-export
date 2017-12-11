@@ -5,7 +5,7 @@ Changelog
 0.6.2 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Fixed middleware settings in test app for Django 2.x (#696)
 
 
 0.6.1 (2017-12-04)
