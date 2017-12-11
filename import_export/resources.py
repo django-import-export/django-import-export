@@ -316,13 +316,13 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         """
         pass
 
-    def import_field(self, field, obj, data):
+    def import_field(self, field, obj, data, is_m2m=False):
         """
         Calls :meth:`import_export.fields.Field.save` if ``Field.attribute``
         and ``Field.column_name`` are found in ``data``.
         """
         if field.attribute and field.column_name in data:
-            field.save(obj, data)
+            field.save(obj, data, is_m2m)
 
     def get_import_fields(self):
         return self.get_fields()
@@ -351,7 +351,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
             for field in self.get_import_fields():
                 if not isinstance(field.widget, widgets.ManyToManyWidget):
                     continue
-                self.import_field(field, obj, data)
+                self.import_field(field, obj, data, True)
 
     def for_delete(self, row, instance):
         """

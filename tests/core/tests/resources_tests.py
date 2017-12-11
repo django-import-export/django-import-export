@@ -834,7 +834,7 @@ if VERSION >= (1, 8) and 'postgresql' in settings.DATABASES['default']['ENGINE']
 
 
 class ManyRelatedManagerDiffTest(TestCase):
-    fixtures = ["category"]
+    fixtures = ["category", "book"]
 
     def setUp(self):
         pass
