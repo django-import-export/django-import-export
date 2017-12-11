@@ -5,7 +5,7 @@ Changelog
 0.6.2 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- discourage installation as a zipped egg (#548)
 
 
 0.6.1 (2017-12-04)
