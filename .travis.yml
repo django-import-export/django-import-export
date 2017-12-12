@@ -55,5 +55,4 @@ matrix:
     - python: "3.6"
       env: DJANGO="Django>=1.10,<1.11"
   allow_failures:
-    - env: DJANGO="Django>=2.0,<2.1"
     - env: DJANGO="https://github.com/django/django/archive/master.tar.gz"
