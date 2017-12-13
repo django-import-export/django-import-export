@@ -17,7 +17,10 @@ class Author(models.Model):
 
 @python_2_unicode_compatible
 class Category(models.Model):
-    name = models.CharField(max_length=100)
+    name = models.CharField(
+        max_length=100,
+        unique=True,
+    )
 
     def __str__(self):
         return self.name
@@ -26,7 +29,7 @@ class Category(models.Model):
 @python_2_unicode_compatible
 class Book(models.Model):
     name = models.CharField('Book name', max_length=100)
-    author = models.ForeignKey(Author, blank=True, null=True)
+    author = models.ForeignKey(Author, blank=True, null=True, on_delete=models.CASCADE)
     author_email = models.EmailField('Author email', max_length=75, blank=True)
     imported = models.BooleanField(default=False)
     published = models.DateField('Published', blank=True, null=True)
@@ -49,7 +52,7 @@ class Parent(models.Model):
 
 @python_2_unicode_compatible
 class Child(models.Model):
-    parent = models.ForeignKey(Parent)
+    parent = models.ForeignKey(Parent, on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
 
     def __str__(self):
@@ -57,12 +60,12 @@ class Child(models.Model):
 
 
 class Profile(models.Model):
-    user = models.OneToOneField('auth.User')
+    user = models.OneToOneField('auth.User', on_delete=models.CASCADE)
     is_private = models.BooleanField(default=True)
 
 
 class Entry(models.Model):
-    user = models.ForeignKey('auth.User')
+    user = models.ForeignKey('auth.User', on_delete=models.CASCADE)
 
 
 class WithDefault(models.Model):

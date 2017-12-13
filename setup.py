@@ -6,18 +6,28 @@ VERSION = __import__("import_export").__version__
 
 CLASSIFIERS = [
     'Framework :: Django',
+    'Framework :: Django :: 1.8',
+    'Framework :: Django :: 1.9',
+    'Framework :: Django :: 1.10',
+    'Framework :: Django :: 1.11',
     'Intended Audience :: Developers',
     'License :: OSI Approved :: BSD License',
     'Operating System :: OS Independent',
-    'Topic :: Software Development',
     'Programming Language :: Python',
     'Programming Language :: Python :: 2',
+    'Programming Language :: Python :: 2.7',
     'Programming Language :: Python :: 3',
+    'Programming Language :: Python :: 3.3',
+    'Programming Language :: Python :: 3.4',
+    'Programming Language :: Python :: 3.5',
+    'Programming Language :: Python :: 3.6',
+    'Topic :: Software Development',
 ]
 
 install_requires = [
-    'tablib',
     'diff-match-patch',
+    'django>=1.5',
+    'tablib',
 ]
 
 setup(
@@ -34,4 +44,5 @@ setup(
     include_package_data=True,
     install_requires=install_requires,
     classifiers=CLASSIFIERS,
+    zip_safe=False,
 )
