@@ -16,6 +16,7 @@ from django.db import connections, DEFAULT_DB_ALIAS
 from django.db.models.fields import FieldDoesNotExist
 from django.db.models.query import QuerySet
 from django.db.transaction import TransactionManagementError
+from django.db.utils import IntegrityError
 from django.utils import six
 from django.utils.safestring import mark_safe
 
@@ -571,7 +572,11 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
 
         if using_transactions:
             if dry_run or result.has_errors():
-                savepoint_rollback(sp1)
+                if not any([
+                    isinstance(row_error[1][0].error, IntegrityError)
+                    for row_error in result.row_errors()
+                ]):
+                        savepoint_rollback(sp1)
             else:
                 savepoint_commit(sp1)
 
