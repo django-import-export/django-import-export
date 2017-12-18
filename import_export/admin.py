@@ -363,23 +363,19 @@ class ExportMixin(ImportExportMixinBase):
 
         Default implementation respects applied search and filters.
         """
-        # copied from django/contrib/admin/options.py
         list_display = self.get_list_display(request)
         list_display_links = self.get_list_display_links(request, list_display)
+        list_filter = self.get_list_filter(request)
+        search_fields = self.get_search_fields(request)
 
         ChangeList = self.get_changelist(request)
         cl = ChangeList(request, self.model, list_display,
-                        list_display_links, self.list_filter,
-                        self.date_hierarchy, self.search_fields,
-                        self.list_select_related, self.list_per_page,
-                        self.list_max_show_all, self.list_editable,
-                        self)
+            list_display_links, list_filter, self.date_hierarchy,
+            search_fields, self.list_select_related, self.list_per_page,
+            self.list_max_show_all, self.list_editable, self
+        )
 
-        # query_set has been renamed to queryset in Django 1.8
-        try:
-            return cl.queryset
-        except AttributeError:
-            return cl.query_set
+        return cl.get_queryset(request)
 
     def get_export_data(self, file_format, queryset, *args, **kwargs):
         """
