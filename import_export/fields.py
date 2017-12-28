@@ -5,6 +5,7 @@ from . import widgets
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models.manager import Manager
 from django.db.models.fields import NOT_PROVIDED
+from django import VERSION
 
 
 class Field(object):
@@ -102,7 +103,7 @@ class Field(object):
             value = value()
         return value
 
-    def save(self, obj, data):
+    def save(self, obj, data, is_m2m=False):
         """
         If this field is not declared readonly, the object's attribute will
         be set to the value returned by :meth:`~import_export.fields.Field.clean`.
@@ -113,7 +114,12 @@ class Field(object):
                 obj = getattr(obj, attr, None)
             cleaned = self.clean(data)
             if cleaned is not None or self.saves_null_values:
-                setattr(obj, attrs[-1], cleaned)
+                if VERSION < (1, 9, 0):
+                    setattr(obj, attrs[-1], cleaned)
+                elif not is_m2m:
+                    setattr(obj, attrs[-1], cleaned)
+                else:
+                    getattr(obj, attrs[-1]).set(cleaned)
 
     def export(self, obj):
         """

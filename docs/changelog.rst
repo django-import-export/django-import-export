@@ -5,7 +5,9 @@ Changelog
 0.6.2 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- discourage installation as a zipped egg (#548)
+
+- Fixed middleware settings in test app for Django 2.x (#696)
 
 
 0.6.1 (2017-12-04)

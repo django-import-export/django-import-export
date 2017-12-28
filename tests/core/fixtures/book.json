@@ -1,0 +1,24 @@
+[
+    {
+        "model": "core.author",
+        "pk": 11,
+        "fields": {
+            "name": "George R. R. Martin",
+            "birthday": "1948-09-20"
+        }
+    },
+    {
+        "model": "core.book",
+        "pk": 11,
+        "fields": {
+            "name": "A Game of Thrones",
+            "author": 11,
+            "author_email": "martin@got.com",
+            "imported": false,
+            "published": "1996-08-01",
+            "published_time": "21:00",
+            "price": 25.0,
+            "categories": [1]
+        }
+    }
+]
