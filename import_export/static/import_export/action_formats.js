@@ -1,12 +1,22 @@
 (function($) {
   $(document).on('ready', function() {
-    $('select[name="action"]', '#changelist-form').on('change', function() {
-      if ($(this).val() == 'export_admin_action') {
-        $('select[name="file_format"]', '#changelist-form').parent().show();
+    var $actionsSelect, $formatsElement;
+    if ($('body').hasClass('grp-change-list')) {
+        // using grappelli
+        $actionsSelect = $('#grp-changelist-form select[name="action"]');
+        $formatsElement = $('#grp-changelist-form select[name="file_format"]');
+    } else {
+        // using default admin
+        $actionsSelect = $('#changelist-form select[name="action"]');
+        $formatsElement = $('#changelist-form select[name="file_format"]').parent();
+    }
+    $actionsSelect.on('change', function() {
+      if ($(this).val() === 'export_admin_action') {
+        $formatsElement.show();
       } else {
-        $('select[name="file_format"]', '#changelist-form').parent().hide();
+        $formatsElement.hide();
       }
     });
-    $('select[name="action"]', '#changelist-form').change();
+    $actionsSelect.change();
   });
 })(django.jQuery);
