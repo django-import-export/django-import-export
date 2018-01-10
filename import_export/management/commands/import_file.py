@@ -3,14 +3,17 @@ from __future__ import unicode_literals
 import mimetypes
 import argparse
 
+try:
+    from django.apps import apps as django_apps
+except ImportError:
+    from django.db import models as django_apps
+
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 from django.utils.encoding import force_text
 from django.utils.translation import ugettext as _
 
 from import_export.formats import base_formats
-
-from django.apps import apps as django_apps
 
 
 FORMATS = {
@@ -30,19 +33,20 @@ FORMATS = {
 class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.formatter_class = argparse.ArgumentDefaultsHelpFormatter
+        resource_def = parser.add_mutually_exclusive_group(required=True)
 
         parser.add_argument(
             'file-path',
             metavar='file-path',
             nargs=1,
             help='File path to import')
-        parser.add_argument(
+        resource_def.add_argument(
             '--resource-class',
             dest='resource_class',
             default=None,
             help='Resource class as dotted path,'
             'ie: mymodule.resources.MyResource')
-        parser.add_argument(
+        resource_def.add_argument(
             '--model-name',
             dest='model_name',
             default=None,
@@ -74,10 +78,9 @@ class Command(BaseCommand):
         from django.utils.module_loading import import_string
         from import_export.resources import modelresource_factory
 
-        if not resource_class:
-            return modelresource_factory(django_apps.get_model(model_name))
-        else:
+        if resource_class:
             return import_string(resource_class)
+        return modelresource_factory(django_apps.get_model(model_name))
 
     @transaction.atomic
     def handle(self, **options):
@@ -87,7 +90,7 @@ class Command(BaseCommand):
         raise_errors = options.get('raise_errors', None)
         if raise_errors is None:
             raise_errors = not dry_run
-        import_file_name = options['file-path'][0]
+        import_file_name = options.get('file-path')[0]
         mimetype = mimetypes.guess_type(import_file_name)[0]
         input_format = FORMATS[mimetype]()
         resource_class = self.get_resource_class(
