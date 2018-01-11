@@ -370,6 +370,14 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         Default implementation returns ``False`` unless skip_unchanged == True.
         Override this method to handle skipping rows meeting certain
         conditions.
+
+        Use ``super`` if you want to preserve default handling while overriding
+        ::
+            class YourResource(ModelResource):
+                def skip_row(self, instance, original):
+                    # Add code here
+                    return super(YourResource, self).skip_row(instance, original)
+
         """
         if not self._meta.skip_unchanged:
             return False
