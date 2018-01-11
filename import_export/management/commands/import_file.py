@@ -11,9 +11,11 @@ except ImportError:
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 from django.utils.encoding import force_text
+from django.utils.module_loading import import_string
 from django.utils.translation import ugettext as _
 
 from import_export.formats import base_formats
+from import_export.resources import modelresource_factory
 
 
 FORMATS = {
@@ -75,9 +77,6 @@ class Command(BaseCommand):
             help='Show total numbers of performed actions by type')
 
     def get_resource_class(self, resource_class, model_name):
-        from django.utils.module_loading import import_string
-        from import_export.resources import modelresource_factory
-
         if resource_class:
             return import_string(resource_class)
         return modelresource_factory(django_apps.get_model(model_name))
@@ -113,7 +112,7 @@ class Command(BaseCommand):
 
         if options.get('show_totals'):
             self.stdout.write(', '.join(
-                ['{} {}'.format(v, k) for k, v in result.totals.items()]
+                ['{} {}'.format(v, k) for k, v in result.totals.items() if v]
             ))
 
         if result.has_errors():
