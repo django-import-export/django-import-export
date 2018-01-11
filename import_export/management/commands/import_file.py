@@ -4,6 +4,11 @@ import mimetypes
 import argparse
 
 try:
+    FileNotFoundError
+except NameError:
+    FileNotFoundError = IOError
+
+try:
     from django.apps import apps as django_apps
 except ImportError:
     from django.db import models as django_apps
