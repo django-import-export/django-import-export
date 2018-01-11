@@ -7,6 +7,7 @@ try:
 except ImportError:
     from io import StringIO
 
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.test import TestCase
@@ -60,7 +61,7 @@ class CLIImportTest(TestCase):
                 stdout=self.output)
 
     def test_raise_errors(self):
-        with self.assertRaises(KeyError) as cm:
+        with self.assertRaises(ObjectDoesNotExist) as cm:
             call_command(
                 'import_file',
                 self.er_file,
@@ -70,5 +71,4 @@ class CLIImportTest(TestCase):
                 stdout=self.output)
         self.assertEqual(
             cm.exception.args[0],
-            'Column \'id\' not found in dataset. '
-            'Available columns are: [\'pk\', \'name\']')
+            'Author matching query does not exist.')

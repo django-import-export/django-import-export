@@ -8,10 +8,14 @@ try:
 except ImportError:
     from django.db import models as django_apps
 
+try:
+    from django.utils.module_loading import import_string
+except ImportError:
+    from django.utils.module_loading import import_by_path as import_string
+
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 from django.utils.encoding import force_text
-from django.utils.module_loading import import_string
 from django.utils.translation import ugettext as _
 
 from import_export.formats import base_formats
