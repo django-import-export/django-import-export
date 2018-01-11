@@ -2,8 +2,16 @@ Changelog
 =========
 
 
-0.6.2 (unreleased)
+0.7.0 (unreleased)
 ------------------
+
+- skip_row override example (#702)
+
+- Testing against Django 2.0 should not fail (#709)
+
+- Refactor transaction handling (#690)
+
+- Resolves #703 fields shadowed (#703)
 
 - discourage installation as a zipped egg (#548)
 
