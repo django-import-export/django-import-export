@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-0.7.0 (unreleased)
+0.7.0 (2018-01-17)
 ------------------
 
 - skip_row override example (#702)
