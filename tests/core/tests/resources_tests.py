@@ -9,7 +9,7 @@ from unittest import skip, skipUnless
 from django import VERSION
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.db import IntegrityError
+from django.db import IntegrityError, DatabaseError
 from django.db.models import Count
 from django.db.models.fields import FieldDoesNotExist
 from django.test import TestCase, TransactionTestCase, skipUnlessDBFeature
@@ -116,6 +116,12 @@ class BookResource(resources.ModelResource):
     class Meta:
         model = Book
         exclude = ('imported', )
+
+
+class CategoryResource(resources.ModelResource):
+
+    class Meta:
+        model = Category
 
 
 class ProfileResource(resources.ModelResource):
@@ -761,6 +767,50 @@ class ModelResourceTransactionTest(TransactionTestCase):
         # Ensure the rollback has worked properly.
         self.assertEqual(Profile.objects.count(), 0)
 
+    @skipUnlessDBFeature('supports_transactions')
+    def test_integrity_error_rollback_on_savem2m(self):
+        # savepoint_rollback() after an IntegrityError gives
+        # TransactionManagementError (#399)
+        class CategoryResourceRaisesIntegrityError(CategoryResource):
+            def save_m2m(self, instance, *args, **kwargs):
+                # force raising IntegrityError
+                Category.objects.create(name=instance.name)
+
+        resource = CategoryResourceRaisesIntegrityError()
+        headers = ['id', 'name']
+        rows = [
+            [None, 'foo'],
+        ]
+        dataset = tablib.Dataset(*rows, headers=headers)
+        result = resource.import_data(
+            dataset,
+            use_transactions=True,
+        )
+        self.assertTrue(result.has_errors())
+
+    @skipUnlessDBFeature('supports_transactions')
+    def test_multiple_database_errors(self):
+
+        class CategoryResourceDbErrorsResource(CategoryResource):
+
+            def before_import(self, *args, **kwargs):
+                raise DatabaseError()
+
+            def save_instance(self):
+                raise DatabaseError()
+
+        resource = CategoryResourceDbErrorsResource()
+        headers = ['id', 'name']
+        rows = [
+            [None, 'foo'],
+        ]
+        dataset = tablib.Dataset(*rows, headers=headers)
+        result = resource.import_data(
+            dataset,
+            use_transactions=True,
+        )
+        self.assertTrue(result.has_errors())
+
 
 class ModelResourceFactoryTest(TestCase):
 
@@ -834,7 +884,7 @@ if 'postgresql' in settings.DATABASES['default']['ENGINE']:
 
 
 class ManyRelatedManagerDiffTest(TestCase):
-    fixtures = ["category"]
+    fixtures = ["category", "book"]
 
     def setUp(self):
         pass
