@@ -58,7 +58,7 @@ Exporting data
 
 Now that we have defined a :class:`~import_export.resources.ModelResource` class,
 we can export books::
-    
+
     >>> from app.admin import BookResource
     >>> dataset = BookResource().export()
     >>> print dataset.csv
@@ -148,7 +148,7 @@ options::
     from import_export.fields import Field
 
     class BookResource(resources.ModelResource):
-        published = Field(column_name='published_date')
+        published = Field(attribute='published', column_name='published_date')
 
         class Meta:
             model = Book
@@ -286,7 +286,7 @@ To hook in the import export workflow, you can connect to ``post_import``, ``pos
 
     @receiver(post_export, dispatch_uid='balabala...')
     def _post_export(model, **kwargs):
-        # model is the actual model instance which after export 
+        # model is the actual model instance which after export
         pass
 
 
