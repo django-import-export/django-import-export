@@ -287,10 +287,7 @@ class ImportMixin(ImportExportMixinBase):
                     'input_format': form.cleaned_data['input_format'],
                 })
 
-        if django.VERSION >= (1, 8, 0):
-            context.update(self.admin_site.each_context(request))
-        elif django.VERSION >= (1, 7, 0):
-            context.update(self.admin_site.each_context())
+        context.update(self.admin_site.each_context(request))
 
         context['title'] = _("Import")
         context['form'] = form
@@ -375,11 +372,7 @@ class ExportMixin(ImportExportMixinBase):
                         self.list_max_show_all, self.list_editable,
                         self)
 
-        # query_set has been renamed to queryset in Django 1.8
-        try:
-            return cl.queryset
-        except AttributeError:
-            return cl.query_set
+        return cl.queryset
 
     def get_export_data(self, file_format, queryset, *args, **kwargs):
         """
@@ -408,11 +401,7 @@ class ExportMixin(ImportExportMixinBase):
             queryset = self.get_export_queryset(request)
             export_data = self.get_export_data(file_format, queryset, request=request)
             content_type = file_format.get_content_type()
-            # Django 1.7 uses the content_type kwarg instead of mimetype
-            try:
-                response = HttpResponse(export_data, content_type=content_type)
-            except TypeError:
-                response = HttpResponse(export_data, mimetype=content_type)
+            response = HttpResponse(export_data, content_type=content_type)
             response['Content-Disposition'] = 'attachment; filename=%s' % (
                 self.get_export_filename(file_format),
             )
@@ -422,10 +411,7 @@ class ExportMixin(ImportExportMixinBase):
 
         context = self.get_export_context_data()
 
-        if django.VERSION >= (1, 8, 0):
-            context.update(self.admin_site.each_context(request))
-        elif django.VERSION >= (1, 7, 0):
-            context.update(self.admin_site.each_context())
+        context.update(self.admin_site.each_context(request))
 
         context['title'] = _("Export")
         context['form'] = form
@@ -487,11 +473,7 @@ class ExportActionModelAdmin(ExportMixin, admin.ModelAdmin):
 
             export_data = self.get_export_data(file_format, queryset, request=request)
             content_type = file_format.get_content_type()
-            # Django 1.7 uses the content_type kwarg instead of mimetype
-            try:
-                response = HttpResponse(export_data, content_type=content_type)
-            except TypeError:
-                response = HttpResponse(export_data, mimetype=content_type)
+            response = HttpResponse(export_data, content_type=content_type)
             response['Content-Disposition'] = 'attachment; filename=%s' % (
                 self.get_export_filename(file_format),
             )

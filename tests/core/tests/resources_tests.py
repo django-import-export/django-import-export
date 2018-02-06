@@ -856,7 +856,7 @@ class PostgresTests(TransactionTestCase):
         # We can't check the error message because it's package- and version-dependent
 
 
-if VERSION >= (1, 8) and 'postgresql' in settings.DATABASES['default']['ENGINE']:
+if 'postgresql' in settings.DATABASES['default']['ENGINE']:
     from django.contrib.postgres.fields import ArrayField
     from django.db import models
 

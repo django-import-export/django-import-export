@@ -31,12 +31,7 @@ except ImportError:
     from .django_compat import atomic, savepoint, savepoint_rollback, savepoint_commit  # noqa
 
 
-if VERSION < (1, 8):
-    from django.db.models.related import RelatedObject
-    ForeignObjectRel = RelatedObject
-else:
-    from django.db.models.fields.related import ForeignObjectRel
-    RelatedObject = None
+from django.db.models.fields.related import ForeignObjectRel
 
 try:
     from django.utils.encoding import force_text
@@ -45,12 +40,7 @@ except ImportError:
 
 # Set default logging handler to avoid "No handler found" warnings.
 import logging  # isort:skip
-try:  # Python 2.7+
-    from logging import NullHandler
-except ImportError:
-    class NullHandler(logging.Handler):
-        def emit(self, record):
-            pass
+from logging import NullHandler
 
 logging.getLogger(__name__).addHandler(NullHandler())
 
@@ -693,10 +683,7 @@ class ModelDeclarativeMetaclass(DeclarativeMetaclass):
                         verbose_path = ".".join([opts.model.__name__] + attrs[0:i+1])
 
                         try:
-                            if VERSION >= (1, 8):
-                                f = model._meta.get_field(attr)
-                            else:
-                                f = model._meta.get_field_by_name(attr)[0]
+                            f = model._meta.get_field(attr)
                         except FieldDoesNotExist as e:
                             logging.exception(e)
                             raise FieldDoesNotExist(
@@ -708,11 +695,7 @@ class ModelDeclarativeMetaclass(DeclarativeMetaclass):
                             # that we're looking at a relation, and move on to
                             # the next model.
                             if isinstance(f, ForeignObjectRel):
-                                if RelatedObject is None:
-                                    model = get_related_model(f)
-                                else:
-                                    # Django < 1.8
-                                    model = f.model
+                                model = get_related_model(f)
                             else:
                                 if get_related_model(f) is None:
                                     raise KeyError(
@@ -768,7 +751,7 @@ class ModelResource(six.with_metaclass(ModelDeclarativeMetaclass, Resource)):
             result = widgets.IntegerWidget
         elif internal_type in ('BooleanField', 'NullBooleanField'):
             result = widgets.BooleanWidget
-        elif VERSION >= (1, 8):
+        else:
             try:
                 from django.contrib.postgres.fields import ArrayField
             except ImportError:
