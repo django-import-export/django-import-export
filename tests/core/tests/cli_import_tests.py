@@ -72,3 +72,15 @@ class CLIImportTest(TestCase):
         self.assertEqual(
             cm.exception.args[0],
             'Author matching query does not exist.')
+
+    def test_no_raise_errors(self):
+        call_command(
+            'import_file',
+            self.er_file,
+            '--model-name=core.Book',
+            '--no-raise-errors',
+            '--no-color',
+            stdout=self.output)
+        self.assertEqual(
+            self.output.getvalue(),
+            'Errors\nLine number: 1 - Author matching query does not exist.\n')
