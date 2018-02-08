@@ -250,6 +250,17 @@ then check for any errors and actually import data this time.
         for a detailed description of the import workflow and its customization options.
 
 
+Importing via management command
+--------------------------------
+
+For importing automation you can use ``import_file`` management command.
+Along with file path as the first positional argument it requires either  ``--resource-class`` or  ``--model-name`` as a dotted path::
+
+    manage.py import_file tests/core/exports/books.csv --model-name core.Book
+
+Use ``import-file --help`` to view other possible arguments.
+
+
 Deleting data
 -------------
 
