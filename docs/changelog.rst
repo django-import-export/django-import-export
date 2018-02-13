@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-1.0.0 (unreleased)
+1.0.0 (2018-02-13)
 ------------------
 
 - Switch to semver versioning (#687)
