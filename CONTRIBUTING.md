@@ -4,6 +4,7 @@ Contributing
 django-import-export is open-source and, as such, grows (or shrinks) & improves in part
 due to the community. Below are some guidelines on how to help with the project.
 
+By contributing you agree to abide by the [Contributor Code of Conduct][coc]
 
 Philosophy
 ----------
@@ -73,3 +74,5 @@ If your contribution lacks any of these things, they will have to be added
 by a core contributor before being merged into django-import-export proper, which may take
 substantial time for the all-volunteer team to get to.
 
+
+[coc]: https://github.com/bmihelac/django-import-export/blob/master/CODE_OF_CONDUCT.md
