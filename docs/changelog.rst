@@ -5,7 +5,11 @@ Changelog
 1.0.0 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Switch to semver versioning (#687)
+
+- Require Django>=1.8 (#685)
+
+- upgrade tox configuration (#737)
 
 
 0.7.0 (2018-01-17)
