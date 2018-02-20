@@ -288,6 +288,9 @@ class ForeignKeyWidget(Widget):
     :class:`~import_export.widgets.ForeignKeyWidget` to lookup related objects
     using ``Author.name`` instead of ``Author.pk``::
 
+        from import_export import fields, resources
+        from import_export.widgets import ForeignKeyWidget
+        
         class BookResource(resources.ModelResource):
             author = fields.Field(
                 column_name='author',
