@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-03-06 14:44+0800\n"
+"POT-Creation-Date: 2018-02-23 09:42+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -19,15 +19,40 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
 "|| n%100>=20) ? 1 : 2);\n"
 
-#: admin.py:160
-msgid "Import finished"
-msgstr "Zakończono importowanie"
+#: admin.py:209
+#, python-format
+msgid "%s through import_export"
+msgstr ""
 
-#: admin.py:378
+#: admin.py:215
+msgid "Import finished, with {} new and {} updated {}."
+msgstr ""
+
+#: admin.py:273
+#, python-format
+msgid "<h1>Imported file has a wrong encoding: %s</h1>"
+msgstr ""
+
+#: admin.py:275
+#, python-format
+msgid "<h1>%s encountered while trying to read file: %s</h1>"
+msgstr ""
+
+#: admin.py:292 templates/admin/import_export/change_list_import_item.html:4
+#: templates/admin/import_export/import.html:7
+msgid "Import"
+msgstr "Import"
+
+#: admin.py:416 templates/admin/import_export/change_list_export_item.html:4
+#: templates/admin/import_export/export.html:7
+msgid "Export"
+msgstr "Eksport"
+
+#: admin.py:469
 msgid "You must select an export format."
 msgstr "Musisz wybrać format eksportu."
 
-#: admin.py:395
+#: admin.py:482
 #, python-format
 msgid "Export selected %(verbose_name_plural)s"
 msgstr "Eksportuj wybrane %(verbose_name_plural)s"
@@ -36,72 +61,62 @@ msgstr "Eksportuj wybrane %(verbose_name_plural)s"
 msgid "File to import"
 msgstr "Plik do importu"
 
-#: forms.py:15 forms.py:42 forms.py:67
+#: forms.py:15 forms.py:43 forms.py:68
 msgid "Format"
 msgstr "Format"
 
-#: templates/admin/import_export/base.html:11
+#: templates/admin/import_export/base.html:10
 msgid "Home"
 msgstr "Powrót"
 
-#: templates/admin/import_export/change_list_export.html:5
-#: templates/admin/import_export/change_list_import_export.html:6
-#: templates/admin/import_export/export.html:8
-#: templates/admin/import_export/export.html:12
-msgid "Export"
-msgstr "Eksport"
-
-#: templates/admin/import_export/change_list_import.html:5
-#: templates/admin/import_export/change_list_import_export.html:5
-#: templates/admin/import_export/import.html:8
-#: templates/admin/import_export/import.html:12
-msgid "Import"
-msgstr "Import"
-
-#: templates/admin/import_export/export.html:34
-#: templates/admin/import_export/import.html:57
+#: templates/admin/import_export/export.html:31
+#: templates/admin/import_export/import.html:49
 msgid "Submit"
 msgstr "Wyślij"
 
-#: templates/admin/import_export/import.html:19
+#: templates/admin/import_export/import.html:16
 msgid ""
 "Below is a preview of data to be imported. If you are satisfied with the "
 "results, click 'Confirm import'"
-msgstr "Poniżej znajdują się przykładowe dane do zaimportowania. Jeśli"
+msgstr ""
+"Poniżej znajdują się przykładowe dane do zaimportowania. Jeśli "
 "satysfakcjonuje Cię wynik, kliknij 'Potwierdź import'"
 
-#: templates/admin/import_export/import.html:22
+#: templates/admin/import_export/import.html:19
 msgid "Confirm import"
 msgstr "Potwierdź import"
 
-#: templates/admin/import_export/import.html:31
+#: templates/admin/import_export/import.html:28
 msgid "This importer will import the following fields: "
 msgstr "Zostaną zaimportowane następujące pola: "
 
-#: templates/admin/import_export/import.html:65
+#: templates/admin/import_export/import.html:57
 msgid "Errors"
-msgstr "Błąd"
+msgstr "Błędy"
 
-#: templates/admin/import_export/import.html:73
+#: templates/admin/import_export/import.html:68
 msgid "Line number"
 msgstr "Numer linii"
 
-#: templates/admin/import_export/import.html:82
+#: templates/admin/import_export/import.html:78
 msgid "Preview"
 msgstr "Podgląd"
 
-#: templates/admin/import_export/import.html:97
+#: templates/admin/import_export/import.html:93
 msgid "New"
 msgstr "Nowy"
 
-#: templates/admin/import_export/import.html:99
+#: templates/admin/import_export/import.html:95
 msgid "Skipped"
 msgstr "Pominięty"
 
-#: templates/admin/import_export/import.html:101
+#: templates/admin/import_export/import.html:97
 msgid "Delete"
 msgstr "Usuń"
 
-#: templates/admin/import_export/import.html:103
+#: templates/admin/import_export/import.html:99
 msgid "Update"
-msgstr "Aktualizuj"
+msgstr "Zaktualizowany"
+
+#~ msgid "Import finished"
+#~ msgstr "Zakończono importowanie"
