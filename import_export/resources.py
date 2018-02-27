@@ -529,6 +529,8 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
             logging.exception(e)
             tb_info = traceback.format_exc()
             result.append_base_error(self.get_error_result_class()(e, tb_info))
+            if raise_errors:
+                raise
 
         instance_loader = self._meta.instance_loader_class(self, dataset)
 
