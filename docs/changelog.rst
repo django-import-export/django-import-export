@@ -5,6 +5,8 @@ Changelog
 1.0.1 (unreleased)
 ------------------
 
+- Use 'verbose_name' in breadcrumbs to match Django default (#732)
+
 - Add Resource.get_diff_class() (#745)
 
 - Fix and add polish translation (#747)
