@@ -213,6 +213,13 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         """
         return Error
 
+    @classmethod
+    def get_diff_class(self):
+        """
+        Returns the class used to display the diff for an imported instance.
+        """
+        return Diff
+
     def get_use_transactions(self):
         if self._meta.use_transactions is None:
             return USE_TRANSACTIONS
@@ -444,7 +451,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
                 row_result.import_type = RowResult.IMPORT_TYPE_UPDATE
             row_result.new_record = new
             original = deepcopy(instance)
-            diff = Diff(self, original, new)
+            diff = self.get_diff_class()(self, original, new)
             if self.for_delete(row, instance):
                 if new:
                     row_result.import_type = RowResult.IMPORT_TYPE_SKIP
