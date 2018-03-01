@@ -5,6 +5,8 @@ Changelog
 1.0.1 (unreleased)
 ------------------
 
+- Add Resource.get_diff_class() (#745)
+
 - Fix and add polish translation (#747)
 
 - Restore raise_errors to before_import (#749)
