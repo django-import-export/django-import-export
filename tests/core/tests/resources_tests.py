@@ -585,6 +585,26 @@ class ModelResourceTest(TestCase):
         instance = Book.objects.get(pk=self.book.pk)
         self.assertEqual(instance.author_email, 'extra@example.com')
 
+    def test_before_import_raises_error(self):
+        class B(BookResource):
+            def before_import(self, dataset, using_transactions, dry_run, **kwargs):
+                raise Exception('This is an invalid dataset')
+
+        resource = B()
+        with self.assertRaises(Exception) as cm:
+            resource.import_data(self.dataset, raise_errors=True)
+        self.assertEqual(u"This is an invalid dataset", cm.exception.args[0])
+
+    def test_after_import_raises_error(self):
+        class B(BookResource):
+            def after_import(self, dataset, result, using_transactions, dry_run, **kwargs):
+                raise Exception('This is an invalid dataset')
+
+        resource = B()
+        with self.assertRaises(Exception) as cm:
+            resource.import_data(self.dataset, raise_errors=True)
+        self.assertEqual(u"This is an invalid dataset", cm.exception.args[0])
+
     def test_link_to_nonexistent_field(self):
         with self.assertRaises(FieldDoesNotExist) as cm:
             class BrokenBook1(resources.ModelResource):
