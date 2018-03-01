@@ -5,7 +5,7 @@ Changelog
 1.0.1 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Restore raise_errors to before_import (#749)
 
 
 1.0.0 (2018-02-13)
