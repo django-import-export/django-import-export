@@ -5,6 +5,7 @@ from . import widgets
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models.manager import Manager
 from django.db.models.fields import NOT_PROVIDED
+from django import VERSION
 
 
 class Field(object):
@@ -27,11 +28,13 @@ class Field(object):
     :param default: This value will be returned by
         :meth:`~import_export.fields.Field.clean` if this field's widget did
         not return an adequate value.
+
+    :param saves_null_values: Controls whether null values are saved on the object
     """
     empty_values = [None, '']
 
     def __init__(self, attribute=None, column_name=None, widget=None,
-                 default=NOT_PROVIDED, readonly=False):
+                 default=NOT_PROVIDED, readonly=False, saves_null_values=True):
         self.attribute = attribute
         self.default = default
         self.column_name = column_name
@@ -39,6 +42,7 @@ class Field(object):
             widget = widgets.Widget()
         self.widget = widget
         self.readonly = readonly
+        self.saves_null_values = saves_null_values
 
     def __repr__(self):
         """
@@ -59,8 +63,7 @@ class Field(object):
             value = data[self.column_name]
         except KeyError:
             raise KeyError("Column '%s' not found in dataset. Available "
-                           "columns are: %s" % (self.column_name,
-                                                list(data.keys())))
+                           "columns are: %s" % (self.column_name, list(data)))
 
         try:
             value = self.widget.clean(value, row=data)
@@ -100,7 +103,7 @@ class Field(object):
             value = value()
         return value
 
-    def save(self, obj, data):
+    def save(self, obj, data, is_m2m=False):
         """
         If this field is not declared readonly, the object's attribute will
         be set to the value returned by :meth:`~import_export.fields.Field.clean`.
@@ -109,7 +112,14 @@ class Field(object):
             attrs = self.attribute.split('__')
             for attr in attrs[:-1]:
                 obj = getattr(obj, attr, None)
-            setattr(obj, attrs[-1], self.clean(data))
+            cleaned = self.clean(data)
+            if cleaned is not None or self.saves_null_values:
+                if VERSION < (1, 9, 0):
+                    setattr(obj, attrs[-1], cleaned)
+                elif not is_m2m:
+                    setattr(obj, attrs[-1], cleaned)
+                else:
+                    getattr(obj, attrs[-1]).set(cleaned)
 
     def export(self, obj):
         """

@@ -2,10 +2,108 @@ Changelog
 =========
 
 
-0.5.2 (unreleased)
+1.0.1 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- custom js for action form also handles grappelli (#719)
+
+- Use 'verbose_name' in breadcrumbs to match Django default (#732)
+
+- Add Resource.get_diff_class() (#745)
+
+- Fix and add polish translation (#747)
+
+- Restore raise_errors to before_import (#749)
+
+
+1.0.0 (2018-02-13)
+------------------
+
+- Switch to semver versioning (#687)
+
+- Require Django>=1.8 (#685)
+
+- upgrade tox configuration (#737)
+
+
+0.7.0 (2018-01-17)
+------------------
+
+- skip_row override example (#702)
+
+- Testing against Django 2.0 should not fail (#709)
+
+- Refactor transaction handling (#690)
+
+- Resolves #703 fields shadowed (#703)
+
+- discourage installation as a zipped egg (#548)
+
+- Fixed middleware settings in test app for Django 2.x (#696)
+
+
+0.6.1 (2017-12-04)
+------------------
+
+- Refactors and optimizations (#686, #632, #684, #636, #631, #629, #635, #683)
+
+- Travis tests for Django 2.0.x (#691)
+
+
+0.6.0 (2017-11-23)
+------------------
+
+- Refactor import_row call by using keyword arguments (#585)
+
+- Added {{ block.super }} call in block bodyclass in admin/base_site.html (#582)
+
+- Add support for the Django DurationField with DurationWidget (#575)
+
+- GitHub bmihelac -> django-import-export Account Update (#574)
+
+- Add intersphinx links to documentation (#572)
+
+- Add Resource.get_import_fields() (#569)
+
+- Fixed readme mistake (#568)
+
+- Bugfix/fix m2m widget clean (#515)
+
+- Allow injection of context data for template rendered by import_action() and export_action() (#544)
+
+- Bugfix/fix exception in generate_log_entries() (#543)
+
+- Process import dataset and result in separate methods (#542)
+
+- Bugfix/fix error in converting exceptions to strings (#526)
+
+- Fix admin integration tests for the new "Import finished..." message, update Czech translations to 100% coverage. (#596)
+
+- Make import form type easier to override (#604)
+
+- Add saves_null_values attribute to Field to control whether null values are saved on the object (#611)
+
+- Add Bulgarian translations (#656)
+
+- Add django 1.11 to TravisCI (#621)
+
+- Make Signals code example format correctly in documentation (#553)
+
+- Add Django as requirement to setup.py (#634)
+
+- Update import of reverse for django 2.x (#620)
+
+- Add Django-version classifiers to setup.py’s CLASSIFIERS (#616)
+
+- Some fixes for Django 2.0 (#672)
+
+- Strip whitespace when looking up ManyToMany fields (#668)
+
+- Fix all ResourceWarnings during tests in Python 3.x (#637)
+
+- Remove downloads count badge from README since shields.io no longer supports it for PyPi (#677)
+
+- Add coveralls support and README badge (#678)
 
 
 0.5.1 (2016-09-29)
