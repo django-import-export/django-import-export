@@ -99,15 +99,15 @@ class ImportMixin(ImportExportMixinBase):
     Import mixin.
     """
 
-    #: template for change_list view
+    # : template for change_list view
     change_list_template = 'admin/import_export/change_list_import.html'
-    #: template for import view
+    # : template for import view
     import_template_name = 'admin/import_export/import.html'
     #: resource class
     resource_class = None
-    #: available import formats
+    # : available import formats
     formats = DEFAULT_FORMATS
-    #: import data encoding
+    # : import data encoding
     from_encoding = "utf-8"
     skip_admin_log = None
     # storage class for saving temporary files
@@ -405,9 +405,8 @@ class ExportMixin(ImportExportMixinBase):
     def get_context_data(self, **kwargs):
         return {}
 
-    def handle_export(self, file_format, queryset, request=None):
-        resource_class = self.get_export_resource_class()
-        resource_kwargs = self.get_export_resource_kwargs(request)
+    def handle_export(self, file_format, queryset, *args, **kwargs):
+        request = kwargs.get("request")
 
         if celery_is_present() and USE_CELERY and queryset.count() > EXPORT_USING_CELERY_LEVEL:
             file_format_name = unicode(file_format.__name__)
@@ -415,6 +414,8 @@ class ExportMixin(ImportExportMixinBase):
             model_name = model_name.capitalize()
             subject_line = model_name + str(_(' Data Export'))
 
+            resource_class = self.get_export_resource_class()
+            resource_kwargs = self.get_export_resource_kwargs(request)
             resource_class_import_path = '%s.%s' % (resource_class.__module__, resource_class.__name__)
 
             result = export_data.delay(file_format_name, pickle.dumps(queryset.query), resource_class_import_path, resource_kwargs, request.user.id, subject_line)
@@ -422,9 +423,9 @@ class ExportMixin(ImportExportMixinBase):
             file_format_instance = file_format()
             exported_data = self.get_export_data(file_format_instance, queryset, request=request)
             content_type = file_format_instance.get_content_type()
-            response = HttpResponse(export_data, content_type=content_type)
-            response['Content-Disposition'] = 'attachment; filename=%s' % (
-                self.get_export_filename(file_format),
+            result = HttpResponse(exported_data, content_type=content_type)
+            result['Content-Disposition'] = 'attachment; filename=%s' % (
+                self.get_export_filename(file_format_instance),
             )
 
         if isinstance(result, HttpResponse):
@@ -455,7 +456,7 @@ class ExportMixin(ImportExportMixinBase):
             ]
 
             queryset = self.get_export_queryset(request)
-            response = self.handle_export(file_format, queryset, request)
+            response = self.handle_export(file_format, queryset, request=request)
 
             post_export.send(sender=None, model=self.model)
             return response
@@ -522,7 +523,7 @@ class ExportActionModelAdmin(ExportMixin, admin.ModelAdmin):
             formats = self.get_export_formats()
             file_format = formats[int(export_format)]
 
-            response = self.handle_export(file_format, queryset, request)
+            response = self.handle_export(file_format, queryset, request=request)
             return response
     export_admin_action.short_description = _(
         'Export selected %(verbose_name_plural)s')
