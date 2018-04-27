@@ -10,7 +10,6 @@ from django.core.mail.message import EmailMessage
 from django.db.models.sql import Query
 from django.utils.translation import ugettext as _
 
-from celery import current_app
 from celery.app import shared_task
 from celery.app.task import Task
 

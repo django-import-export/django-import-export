@@ -3,7 +3,6 @@ from __future__ import with_statement
 from datetime import datetime
 import importlib
 import pickle
-import django
 from django.contrib import admin
 from django.utils import six
 from django.utils.translation import ugettext_lazy as _
@@ -48,7 +47,6 @@ TMP_STORAGE_CLASS = getattr(settings, 'IMPORT_EXPORT_TMP_STORAGE_CLASS',
 USE_CELERY = getattr(settings, 'IMPORT_EXPORT_USE_CELERY', False)
 EXPORT_USING_CELERY_LEVEL = getattr(settings, 'IMPORT_EXPORT_EXPORT_USING_CELERY_LEVEL', 0)
 
-
 if isinstance(TMP_STORAGE_CLASS, six.string_types):
     try:
         # Nod to tastypie's use of importlib.
@@ -60,8 +58,8 @@ if isinstance(TMP_STORAGE_CLASS, six.string_types):
         msg = "Could not import '%s' for import_export setting 'IMPORT_EXPORT_TMP_STORAGE_CLASS'" % TMP_STORAGE_CLASS
         raise ImportError(msg)
 
-#: These are the default formats for import and export. Whether they can be
-#: used or not is depending on their implementation in the tablib library.
+# : These are the default formats for import and export. Whether they can be
+# : used or not is depending on their implementation in the tablib library.
 DEFAULT_FORMATS = (
     base_formats.CSV,
     base_formats.XLS,
@@ -85,6 +83,7 @@ def celery_is_present():
 
 
 class ImportExportMixinBase(object):
+
     def get_model_info(self):
         # module_name is renamed to model_name in Django 1.8
         app_label = self.model._meta.app_label
@@ -99,18 +98,18 @@ class ImportMixin(ImportExportMixinBase):
     Import mixin.
     """
 
-    #: template for change_list view
+    # : template for change_list view
     change_list_template = 'admin/import_export/change_list_import.html'
-    #: template for import view
+    # : template for import view
     import_template_name = 'admin/import_export/import.html'
-    #: resource class
+    # : resource class
     resource_class = None
-    #: available import formats
+    # : available import formats
     formats = DEFAULT_FORMATS
-    #: import data encoding
+    # : import data encoding
     from_encoding = "utf-8"
     skip_admin_log = None
-    #: storage class for saving temporary files
+    # : storage class for saving temporary files
     tmp_storage_class = None
 
     def get_skip_admin_log(self):
@@ -318,15 +317,15 @@ class ExportMixin(ImportExportMixinBase):
     """
     Export mixin.
     """
-    #: resource class
+    # : resource class
     resource_class = None
-    #: template for change_list view
+    # : template for change_list view
     change_list_template = 'admin/import_export/change_list_export.html'
-    #: template for export view
+    # : template for export view
     export_template_name = 'admin/import_export/export.html'
-    #: available export formats
+    # : available export formats
     formats = DEFAULT_FORMATS
-    #: export data encoding
+    # : export data encoding
     to_encoding = "utf-8"
 
     def get_urls(self):
@@ -477,7 +476,7 @@ class ImportExportMixin(ImportMixin, ExportMixin):
     """
     Import and export mixin.
     """
-    #: template for change_list view
+    # : template for change_list view
     change_list_template = 'admin/import_export/change_list_import_export.html'
 
 
@@ -493,7 +492,7 @@ class ExportActionModelAdmin(ExportMixin, admin.ModelAdmin):
     admin action.
     """
 
-    #: Don't use custom change list template.
+    # : Don't use custom change list template.
     change_list_template = None
 
     def __init__(self, *args, **kwargs):
@@ -525,6 +524,7 @@ class ExportActionModelAdmin(ExportMixin, admin.ModelAdmin):
 
             response = self.handle_export(file_format, queryset, request=request)
             return response
+
     export_admin_action.short_description = _(
         'Export selected %(verbose_name_plural)s')
 
