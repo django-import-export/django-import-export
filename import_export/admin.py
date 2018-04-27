@@ -99,18 +99,18 @@ class ImportMixin(ImportExportMixinBase):
     Import mixin.
     """
 
-    # : template for change_list view
+    #: template for change_list view
     change_list_template = 'admin/import_export/change_list_import.html'
-    # : template for import view
+    #: template for import view
     import_template_name = 'admin/import_export/import.html'
     #: resource class
     resource_class = None
-    # : available import formats
+    #: available import formats
     formats = DEFAULT_FORMATS
-    # : import data encoding
+    #: import data encoding
     from_encoding = "utf-8"
     skip_admin_log = None
-    # storage class for saving temporary files
+    #: storage class for saving temporary files
     tmp_storage_class = None
 
     def get_skip_admin_log(self):
@@ -493,7 +493,7 @@ class ExportActionModelAdmin(ExportMixin, admin.ModelAdmin):
     admin action.
     """
 
-    # Don't use custom change list template.
+    #: Don't use custom change list template.
     change_list_template = None
 
     def __init__(self, *args, **kwargs):
