@@ -33,8 +33,8 @@ class XLSXTest(TestCase):
             os.path.pardir,
             'exports',
             'books.xlsx')
-        in_stream = open(filename, self.format.get_read_mode())
-        self.format.create_dataset(in_stream.read())
+        with open(filename, self.format.get_read_mode()) as in_stream:
+            self.format.create_dataset(in_stream.read())
 
 
 class CSVTest(TestCase):
@@ -48,9 +48,10 @@ class CSVTest(TestCase):
             os.path.pardir,
             'exports',
             'books-dos.csv')
-        in_stream = open(filename, self.format.get_read_mode()).read()
+        with open(filename, self.format.get_read_mode()) as in_stream:
+            actual = in_stream.read()
         expected = 'id,name,author_email\n1,Some book,test@example.com\n'
-        self.assertEqual(in_stream, expected)
+        self.assertEqual(actual, expected)
 
     def test_import_mac(self):
         filename = os.path.join(
@@ -58,9 +59,10 @@ class CSVTest(TestCase):
             os.path.pardir,
             'exports',
             'books-mac.csv')
-        in_stream = open(filename, self.format.get_read_mode()).read()
+        with open(filename, self.format.get_read_mode()) as in_stream:
+            actual = in_stream.read()
         expected = 'id,name,author_email\n1,Some book,test@example.com\n'
-        self.assertEqual(in_stream, expected)
+        self.assertEqual(actual, expected)
 
     def test_import_unicode(self):
         # importing csv UnicodeEncodeError 347
@@ -69,6 +71,6 @@ class CSVTest(TestCase):
             os.path.pardir,
             'exports',
             'books-unicode.csv')
-        in_stream = open(filename, self.format.get_read_mode())
-        data = force_text(in_stream.read())
+        with open(filename, self.format.get_read_mode()) as in_stream:
+            data = force_text(in_stream.read())
         base_formats.CSV().create_dataset(data)

@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 import functools
 import tablib
 import traceback
+from collections import OrderedDict
 from copy import deepcopy
 
 from diff_match_patch import diff_match_patch
@@ -11,7 +12,7 @@ from django import VERSION
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.core.management.color import no_style
-from django.db import connections, transaction, DEFAULT_DB_ALIAS
+from django.db import connections, DEFAULT_DB_ALIAS
 from django.db.models.fields import FieldDoesNotExist
 from django.db.models.query import QuerySet
 from django.db.transaction import TransactionManagementError
@@ -22,6 +23,7 @@ from . import widgets
 from .fields import Field
 from .instance_loaders import ModelInstanceLoader
 from .results import Error, Result, RowResult
+from .utils import atomic_if_using_transaction
 
 try:
     from django.db.transaction import atomic, savepoint, savepoint_rollback, savepoint_commit  # noqa
@@ -29,35 +31,28 @@ except ImportError:
     from .django_compat import atomic, savepoint, savepoint_rollback, savepoint_commit  # noqa
 
 
-if VERSION < (1, 8):
-    from django.db.models.related import RelatedObject
-    ForeignObjectRel = RelatedObject
-else:
-    from django.db.models.fields.related import ForeignObjectRel
-    RelatedObject = None
+from django.db.models.fields.related import ForeignObjectRel
 
 try:
     from django.utils.encoding import force_text
 except ImportError:
     from django.utils.encoding import force_unicode as force_text
 
-try:
-    from collections import OrderedDict
-except ImportError:
-    from django.utils.datastructures import SortedDict as OrderedDict
-
 # Set default logging handler to avoid "No handler found" warnings.
 import logging  # isort:skip
-try:  # Python 2.7+
-    from logging import NullHandler
-except ImportError:
-    class NullHandler(logging.Handler):
-        def emit(self, record):
-            pass
+from logging import NullHandler
 
 logging.getLogger(__name__).addHandler(NullHandler())
 
 USE_TRANSACTIONS = getattr(settings, 'IMPORT_EXPORT_USE_TRANSACTIONS', True)
+
+
+def get_related_model(field):
+    if hasattr(field, 'related_model'):
+        return field.related_model
+    # Django 1.6, 1.7
+    if field.rel:
+        return field.rel.to
 
 
 class ResourceOptions(object):
@@ -218,6 +213,13 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         """
         return Error
 
+    @classmethod
+    def get_diff_class(self):
+        """
+        Returns the class used to display the diff for an imported instance.
+        """
+        return Diff
+
     def get_use_transactions(self):
         if self._meta.use_transactions is None:
             return USE_TRANSACTIONS
@@ -312,13 +314,13 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         """
         pass
 
-    def import_field(self, field, obj, data):
+    def import_field(self, field, obj, data, is_m2m=False):
         """
         Calls :meth:`import_export.fields.Field.save` if ``Field.attribute``
         and ``Field.column_name`` are found in ``data``.
         """
         if field.attribute and field.column_name in data:
-            field.save(obj, data)
+            field.save(obj, data, is_m2m)
 
     def get_import_fields(self):
         return self.get_fields()
@@ -347,7 +349,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
             for field in self.get_import_fields():
                 if not isinstance(field.widget, widgets.ManyToManyWidget):
                     continue
-                self.import_field(field, obj, data)
+                self.import_field(field, obj, data, True)
 
     def for_delete(self, row, instance):
         """
@@ -365,6 +367,14 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         Default implementation returns ``False`` unless skip_unchanged == True.
         Override this method to handle skipping rows meeting certain
         conditions.
+
+        Use ``super`` if you want to preserve default handling while overriding
+        ::
+            class YourResource(ModelResource):
+                def skip_row(self, instance, original):
+                    # Add code here
+                    return super(YourResource, self).skip_row(instance, original)
+
         """
         if not self._meta.skip_unchanged:
             return False
@@ -441,7 +451,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
                 row_result.import_type = RowResult.IMPORT_TYPE_UPDATE
             row_result.new_record = new
             original = deepcopy(instance)
-            diff = Diff(self, original, new)
+            diff = self.get_diff_class()(self, original, new)
             if self.for_delete(row, instance):
                 if new:
                     row_result.import_type = RowResult.IMPORT_TYPE_SKIP
@@ -455,8 +465,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
                 if self.skip_row(instance, original):
                     row_result.import_type = RowResult.IMPORT_TYPE_SKIP
                 else:
-                    with transaction.atomic():
-                        self.save_instance(instance, using_transactions, dry_run)
+                    self.save_instance(instance, using_transactions, dry_run)
                     self.save_m2m(instance, row, using_transactions, dry_run)
                 diff.compare_with(self, instance, dry_run)
             row_result.diff = diff.as_html()
@@ -507,10 +516,8 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
 
         using_transactions = (use_transactions or dry_run) and supports_transactions
 
-        if using_transactions:
-            with transaction.atomic():
-                return self.import_data_inner(dataset, dry_run, raise_errors, using_transactions, collect_failed_rows, **kwargs)
-        return self.import_data_inner(dataset, dry_run, raise_errors, using_transactions, collect_failed_rows, **kwargs)
+        with atomic_if_using_transaction(using_transactions):
+            return self.import_data_inner(dataset, dry_run, raise_errors, using_transactions, collect_failed_rows, **kwargs)
 
     def import_data_inner(self, dataset, dry_run, raise_errors, using_transactions, collect_failed_rows, **kwargs):
         result = self.get_result_class()()
@@ -523,14 +530,13 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
             sp1 = savepoint()
 
         try:
-            self.before_import(dataset, using_transactions, dry_run, **kwargs)
+            with atomic_if_using_transaction(using_transactions):
+                self.before_import(dataset, using_transactions, dry_run, **kwargs)
         except Exception as e:
             logging.exception(e)
             tb_info = traceback.format_exc()
             result.append_base_error(self.get_error_result_class()(e, tb_info))
             if raise_errors:
-                if using_transactions:
-                    savepoint_rollback(sp1)
                 raise
 
         instance_loader = self._meta.instance_loader_class(self, dataset)
@@ -542,30 +548,32 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
             result.add_dataset_headers(dataset.headers)
 
         for row in dataset.dict:
-            row_result = self.import_row(row, instance_loader,
-                                         using_transactions=using_transactions, dry_run=dry_run,
-                                         **kwargs)
+            with atomic_if_using_transaction(using_transactions):
+                row_result = self.import_row(
+                    row,
+                    instance_loader,
+                    using_transactions=using_transactions,
+                    dry_run=dry_run,
+                    **kwargs
+                )
             result.increment_row_result_total(row_result)
             if row_result.errors:
                 if collect_failed_rows:
                     result.append_failed_row(row, row_result.errors[0])
                 if raise_errors:
-                    if using_transactions:
-                        savepoint_rollback(sp1)
                     raise row_result.errors[-1].error
             if (row_result.import_type != RowResult.IMPORT_TYPE_SKIP or
                     self._meta.report_skipped):
                 result.append_row_result(row_result)
 
         try:
-            self.after_import(dataset, result, using_transactions, dry_run, **kwargs)
+            with atomic_if_using_transaction(using_transactions):
+                self.after_import(dataset, result, using_transactions, dry_run, **kwargs)
         except Exception as e:
             logging.exception(e)
             tb_info = traceback.format_exc()
             result.append_base_error(self.get_error_result_class()(e, tb_info))
             if raise_errors:
-                if using_transactions:
-                    savepoint_rollback(sp1)
                 raise
 
         if using_transactions:
@@ -578,7 +586,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
 
     def get_export_order(self):
         order = tuple(self._meta.export_order or ())
-        return order + tuple(k for k in self.fields.keys() if k not in order)
+        return order + tuple(k for k in self.fields if k not in order)
 
     def before_export(self, queryset, *args, **kwargs):
         """
@@ -684,10 +692,7 @@ class ModelDeclarativeMetaclass(DeclarativeMetaclass):
                         verbose_path = ".".join([opts.model.__name__] + attrs[0:i+1])
 
                         try:
-                            if VERSION >= (1, 8):
-                                f = model._meta.get_field(attr)
-                            else:
-                                f = model._meta.get_field_by_name(attr)[0]
+                            f = model._meta.get_field(attr)
                         except FieldDoesNotExist as e:
                             logging.exception(e)
                             raise FieldDoesNotExist(
@@ -699,16 +704,12 @@ class ModelDeclarativeMetaclass(DeclarativeMetaclass):
                             # that we're looking at a relation, and move on to
                             # the next model.
                             if isinstance(f, ForeignObjectRel):
-                                if RelatedObject is None:
-                                    model = f.related_model
-                                else:
-                                    # Django < 1.8
-                                    model = f.model
+                                model = get_related_model(f)
                             else:
-                                if f.rel is None:
+                                if get_related_model(f) is None:
                                     raise KeyError(
                                         '%s is not a relation' % verbose_path)
-                                model = f.rel.to
+                                model = get_related_model(f)
 
                     if isinstance(f, ForeignObjectRel):
                         f = f.field
@@ -737,10 +738,10 @@ class ModelResource(six.with_metaclass(ModelDeclarativeMetaclass, Resource)):
         internal_type = f.get_internal_type() if callable(getattr(f, "get_internal_type", None)) else ""
         if internal_type in ('ManyToManyField', ):
             result = functools.partial(widgets.ManyToManyWidget,
-                                       model=f.rel.to)
+                                       model=get_related_model(f))
         if internal_type in ('ForeignKey', 'OneToOneField', ):
             result = functools.partial(widgets.ForeignKeyWidget,
-                                       model=f.rel.to)
+                                       model=get_related_model(f))
         if internal_type in ('DecimalField', ):
             result = widgets.DecimalWidget
         if internal_type in ('DateTimeField', ):
@@ -759,7 +760,7 @@ class ModelResource(six.with_metaclass(ModelDeclarativeMetaclass, Resource)):
             result = widgets.IntegerWidget
         elif internal_type in ('BooleanField', 'NullBooleanField'):
             result = widgets.BooleanWidget
-        elif VERSION >= (1, 8):
+        else:
             try:
                 from django.contrib.postgres.fields import ArrayField
             except ImportError:

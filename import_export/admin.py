@@ -3,7 +3,6 @@ from __future__ import with_statement
 from datetime import datetime
 import importlib
 import pickle
-
 import django
 from django.contrib import admin
 from django.utils import six
@@ -14,7 +13,10 @@ from django.contrib import messages
 from django.contrib.admin.models import LogEntry, ADDITION, CHANGE, DELETION
 from django.contrib.contenttypes.models import ContentType
 from django.http import HttpResponseRedirect, HttpResponse
-from django.core.urlresolvers import reverse
+try:
+    from django.urls import reverse
+except ImportError:  # Django<2.0
+    from django.core.urlresolvers import reverse
 from django.conf import settings
 from django.template.defaultfilters import pluralize
 from django.utils.decorators import method_decorator
@@ -58,8 +60,8 @@ if isinstance(TMP_STORAGE_CLASS, six.string_types):
         msg = "Could not import '%s' for import_export setting 'IMPORT_EXPORT_TMP_STORAGE_CLASS'" % TMP_STORAGE_CLASS
         raise ImportError(msg)
 
-# : These are the default formats for import and export. Whether they can be
-# : used or not is depending on their implementation in the tablib library.
+#: These are the default formats for import and export. Whether they can be
+#: used or not is depending on their implementation in the tablib library.
 DEFAULT_FORMATS = (
     base_formats.CSV,
     base_formats.XLS,
@@ -97,15 +99,15 @@ class ImportMixin(ImportExportMixinBase):
     Import mixin.
     """
 
-    # : template for change_list view
+    #: template for change_list view
     change_list_template = 'admin/import_export/change_list_import.html'
-    # : template for import view
+    #: template for import view
     import_template_name = 'admin/import_export/import.html'
-    # : resource class
+    #: resource class
     resource_class = None
-    # : available import formats
+    #: available import formats
     formats = DEFAULT_FORMATS
-    # : import data encoding
+    #: import data encoding
     from_encoding = "utf-8"
     skip_admin_log = None
     # storage class for saving temporary files
@@ -300,10 +302,7 @@ class ImportMixin(ImportExportMixinBase):
                     'input_format': form.cleaned_data['input_format'],
                 })
 
-        if django.VERSION >= (1, 8, 0):
-            context.update(self.admin_site.each_context(request))
-        elif django.VERSION >= (1, 7, 0):
-            context.update(self.admin_site.each_context())
+        context.update(self.admin_site.each_context(request))
 
         context['title'] = _("Import")
         context['form'] = form
@@ -319,15 +318,15 @@ class ExportMixin(ImportExportMixinBase):
     """
     Export mixin.
     """
-    # : resource class
+    #: resource class
     resource_class = None
-    # : template for change_list view
+    #: template for change_list view
     change_list_template = 'admin/import_export/change_list_export.html'
-    # : template for export view
+    #: template for export view
     export_template_name = 'admin/import_export/export.html'
-    # : available export formats
+    #: available export formats
     formats = DEFAULT_FORMATS
-    # : export data encoding
+    #: export data encoding
     to_encoding = "utf-8"
 
     def get_urls(self):
@@ -388,11 +387,7 @@ class ExportMixin(ImportExportMixinBase):
                         self.list_max_show_all, self.list_editable,
                         self)
 
-        # query_set has been renamed to queryset in Django 1.8
-        try:
-            return cl.queryset
-        except AttributeError:
-            return cl.query_set
+        return cl.queryset
 
     def get_export_data(self, file_format, queryset, *args, **kwargs):
         """
@@ -427,13 +422,9 @@ class ExportMixin(ImportExportMixinBase):
             file_format_instance = file_format()
             exported_data = self.get_export_data(file_format_instance, queryset, request=request)
             content_type = file_format_instance.get_content_type()
-            # Django 1.7 uses the content_type kwarg instead of mimetype
-            try:
-                result = HttpResponse(exported_data, content_type=content_type)
-            except TypeError:
-                result = HttpResponse(exported_data, mimetype=content_type)
-            result['Content-Disposition'] = 'attachment; filename=%s' % (
-                self.get_export_filename(file_format_instance),
+            response = HttpResponse(export_data, content_type=content_type)
+            response['Content-Disposition'] = 'attachment; filename=%s' % (
+                self.get_export_filename(file_format),
             )
 
         if isinstance(result, HttpResponse):
@@ -471,10 +462,7 @@ class ExportMixin(ImportExportMixinBase):
 
         context = self.get_export_context_data()
 
-        if django.VERSION >= (1, 8, 0):
-            context.update(self.admin_site.each_context(request))
-        elif django.VERSION >= (1, 7, 0):
-            context.update(self.admin_site.each_context())
+        context.update(self.admin_site.each_context(request))
 
         context['title'] = _("Export")
         context['form'] = form
@@ -488,7 +476,7 @@ class ImportExportMixin(ImportMixin, ExportMixin):
     """
     Import and export mixin.
     """
-    # : template for change_list view
+    #: template for change_list view
     change_list_template = 'admin/import_export/change_list_import_export.html'
 
 
