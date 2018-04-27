@@ -25,7 +25,7 @@ class CachedInstanceLoaderTest(TestCase):
     def test_all_instances(self):
         self.assertTrue(self.instance_loader.all_instances)
         self.assertEqual(len(self.instance_loader.all_instances), 1)
-        self.assertEqual(list(self.instance_loader.all_instances.keys()),
+        self.assertEqual(list(self.instance_loader.all_instances),
                          [self.book.pk])
 
     def test_get_instance(self):

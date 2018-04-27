@@ -145,20 +145,20 @@ Declaring fields
 It is possible to override a resource field to change some of its
 options::
 
-    from import_export import fields
+    from import_export.fields import Field
 
     class BookResource(resources.ModelResource):
-        published = fields.Field(column_name='published_date')
+        published = Field(column_name='published_date')
 
         class Meta:
             model = Book
 
 Other fields that don't exist in the target model may be added::
 
-    from import_export import fields
+    from import_export.fields import Field
 
     class BookResource(resources.ModelResource):
-        myfield = fields.Field(column_name='myfield')
+        myfield = Field(column_name='myfield')
 
         class Meta:
             model = Book
@@ -176,10 +176,10 @@ Not all data can be easily extracted from an object/model attribute.
 In order to turn complicated data model into a (generally simpler) processed
 data structure, ``dehydrate_<fieldname>`` method should be defined::
 
-    from import_export import fields
+    from import_export.fields import Field
 
     class BookResource(resources.ModelResource):
-        full_title = fields.Field()
+        full_title = Field()
 
         class Meta:
             model = Book
@@ -274,7 +274,7 @@ that have their column ``delete`` set to ``1``::
 Signals
 =======
 
-To hook in the import export workflow, you can connect to ``post_import``, ``post_export`` signals:
+To hook in the import export workflow, you can connect to ``post_import``, ``post_export`` signals::
 
     from django.dispatch import receiver
     from import_export.signals import post_import, post_export

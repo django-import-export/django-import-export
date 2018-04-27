@@ -6,13 +6,12 @@ django-import-export
     :target: https://travis-ci.org/django-import-export/django-import-export
     :alt: Build status on Travis-CI
 
+.. image:: https://coveralls.io/repos/github/django-import-export/django-import-export/badge.svg?branch=coveralls
+    :target: https://coveralls.io/github/django-import-export/django-import-export?branch=coveralls
+
 .. image:: https://img.shields.io/pypi/v/django-import-export.svg
     :target: https://pypi.python.org/pypi/django-import-export
     :alt: Current version on PyPi
-
-.. image:: https://img.shields.io/pypi/dm/django-import-export.svg
-    :target: https://pypi.python.org/pypi/django-import-export
-    :alt: Downloads per month on PyPi
 
 .. image:: http://readthedocs.org/projects/django-import-export/badge/?version=stable
     :target: http://django-import-export.readthedocs.io/en/stable/
@@ -46,7 +45,7 @@ Requirements
 -----------
 
 * Python 2.7+ or Python 3.3+
-* Django 1.5.3+
+* Django 1.8+
 * tablib (dev or 0.9.11)
 
 Example app
