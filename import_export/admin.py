@@ -1,9 +1,8 @@
 from __future__ import with_statement
 
 from datetime import datetime
-
 import importlib
-import django
+import pickle
 from django.contrib import admin
 from django.utils import six
 from django.utils.translation import ugettext_lazy as _
@@ -35,6 +34,7 @@ from .formats import base_formats
 from .results import RowResult
 from .tmp_storages import TempFolderStorage
 from .signals import post_export, post_import
+from .tasks import export_data
 
 try:
     from django.utils.encoding import force_text
@@ -44,6 +44,9 @@ except ImportError:
 SKIP_ADMIN_LOG = getattr(settings, 'IMPORT_EXPORT_SKIP_ADMIN_LOG', False)
 TMP_STORAGE_CLASS = getattr(settings, 'IMPORT_EXPORT_TMP_STORAGE_CLASS',
                             TempFolderStorage)
+USE_CELERY = getattr(settings, 'IMPORT_EXPORT_USE_CELERY', False)
+EXPORT_USING_CELERY_LEVEL = getattr(settings, 'IMPORT_EXPORT_EXPORT_USING_CELERY_LEVEL', 0)
+
 if isinstance(TMP_STORAGE_CLASS, six.string_types):
     try:
         # Nod to tastypie's use of importlib.
@@ -55,8 +58,8 @@ if isinstance(TMP_STORAGE_CLASS, six.string_types):
         msg = "Could not import '%s' for import_export setting 'IMPORT_EXPORT_TMP_STORAGE_CLASS'" % TMP_STORAGE_CLASS
         raise ImportError(msg)
 
-#: These are the default formats for import and export. Whether they can be
-#: used or not is depending on their implementation in the tablib library.
+# : These are the default formats for import and export. Whether they can be
+# : used or not is depending on their implementation in the tablib library.
 DEFAULT_FORMATS = (
     base_formats.CSV,
     base_formats.XLS,
@@ -69,7 +72,18 @@ DEFAULT_FORMATS = (
 )
 
 
+def celery_is_present():
+    try:
+        import celery
+        result = True
+    except ImportError:
+        result = False
+
+    return result
+
+
 class ImportExportMixinBase(object):
+
     def get_model_info(self):
         # module_name is renamed to model_name in Django 1.8
         app_label = self.model._meta.app_label
@@ -84,18 +98,18 @@ class ImportMixin(ImportExportMixinBase):
     Import mixin.
     """
 
-    #: template for change_list view
+    # : template for change_list view
     change_list_template = 'admin/import_export/change_list_import.html'
-    #: template for import view
+    # : template for import view
     import_template_name = 'admin/import_export/import.html'
-    #: resource class
+    # : resource class
     resource_class = None
-    #: available import formats
+    # : available import formats
     formats = DEFAULT_FORMATS
-    #: import data encoding
+    # : import data encoding
     from_encoding = "utf-8"
     skip_admin_log = None
-    # storage class for saving temporary files
+    # : storage class for saving temporary files
     tmp_storage_class = None
 
     def get_skip_admin_log(self):
@@ -303,15 +317,15 @@ class ExportMixin(ImportExportMixinBase):
     """
     Export mixin.
     """
-    #: resource class
+    # : resource class
     resource_class = None
-    #: template for change_list view
+    # : template for change_list view
     change_list_template = 'admin/import_export/change_list_export.html'
-    #: template for export view
+    # : template for export view
     export_template_name = 'admin/import_export/export.html'
-    #: available export formats
+    # : available export formats
     formats = DEFAULT_FORMATS
-    #: export data encoding
+    # : export data encoding
     to_encoding = "utf-8"
 
     def get_urls(self):
@@ -390,21 +404,58 @@ class ExportMixin(ImportExportMixinBase):
     def get_context_data(self, **kwargs):
         return {}
 
+    def handle_export(self, file_format, queryset, *args, **kwargs):
+        request = kwargs.get("request")
+
+        if celery_is_present() and USE_CELERY and queryset.count() > EXPORT_USING_CELERY_LEVEL:
+            file_format_name = unicode(file_format.__name__)
+            model_name = self.get_model_info()[1]
+            model_name = model_name.capitalize()
+            subject_line = model_name + str(_(' Data Export'))
+
+            resource_class = self.get_export_resource_class()
+            resource_kwargs = self.get_export_resource_kwargs(request)
+            resource_class_import_path = '%s.%s' % (resource_class.__module__, resource_class.__name__)
+
+            result = export_data.delay(file_format_name, pickle.dumps(queryset.query), resource_class_import_path, resource_kwargs, request.user.id, subject_line)
+        else:
+            file_format_instance = file_format()
+            exported_data = self.get_export_data(file_format_instance, queryset, request=request)
+            content_type = file_format_instance.get_content_type()
+            result = HttpResponse(exported_data, content_type=content_type)
+            result['Content-Disposition'] = 'attachment; filename=%s' % (
+                self.get_export_filename(file_format_instance),
+            )
+
+        if isinstance(result, HttpResponse):
+            response = result
+        else:
+            response = self.process_export_result(request)
+
+        return response
+
+    def process_export_result(self, request):
+        self.add_successful_export_message(request)
+        post_export.send(sender=None, model=self.model)
+
+        url = reverse('admin:%s_%s_changelist' % self.get_model_info(),
+                      current_app=self.admin_site.name)
+        return HttpResponseRedirect(url)
+
+    def add_successful_export_message(self, request):
+        success_message = _("Data export in progress. When it's done, you will get an email with a url where you can download the results.")
+        messages.success(request, success_message)
+
     def export_action(self, request, *args, **kwargs):
         formats = self.get_export_formats()
         form = ExportForm(formats, request.POST or None)
         if form.is_valid():
             file_format = formats[
                 int(form.cleaned_data['file_format'])
-            ]()
+            ]
 
             queryset = self.get_export_queryset(request)
-            export_data = self.get_export_data(file_format, queryset, request=request)
-            content_type = file_format.get_content_type()
-            response = HttpResponse(export_data, content_type=content_type)
-            response['Content-Disposition'] = 'attachment; filename=%s' % (
-                self.get_export_filename(file_format),
-            )
+            response = self.handle_export(file_format, queryset, request=request)
 
             post_export.send(sender=None, model=self.model)
             return response
@@ -425,7 +476,7 @@ class ImportExportMixin(ImportMixin, ExportMixin):
     """
     Import and export mixin.
     """
-    #: template for change_list view
+    # : template for change_list view
     change_list_template = 'admin/import_export/change_list_import_export.html'
 
 
@@ -441,7 +492,7 @@ class ExportActionModelAdmin(ExportMixin, admin.ModelAdmin):
     admin action.
     """
 
-    # Don't use custom change list template.
+    # : Don't use custom change list template.
     change_list_template = None
 
     def __init__(self, *args, **kwargs):
@@ -469,15 +520,11 @@ class ExportActionModelAdmin(ExportMixin, admin.ModelAdmin):
             messages.warning(request, _('You must select an export format.'))
         else:
             formats = self.get_export_formats()
-            file_format = formats[int(export_format)]()
+            file_format = formats[int(export_format)]
 
-            export_data = self.get_export_data(file_format, queryset, request=request)
-            content_type = file_format.get_content_type()
-            response = HttpResponse(export_data, content_type=content_type)
-            response['Content-Disposition'] = 'attachment; filename=%s' % (
-                self.get_export_filename(file_format),
-            )
+            response = self.handle_export(file_format, queryset, request=request)
             return response
+
     export_admin_action.short_description = _(
         'Export selected %(verbose_name_plural)s')
 

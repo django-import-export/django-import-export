@@ -50,6 +50,11 @@ TEMPLATES = [
     },
 ]
 
+IMPORT_EXPORT_STORAGE_PATH = os.path.join(os.path.dirname(__file__), 'django-import-export')
+IMPORT_EXPORT_STORAGE_URL = '/exported_files/'
+
+CELERY_RESULT_BACKEND = 'db+sqlite:///django-db'
+
 if os.environ.get('IMPORT_EXPORT_TEST_TYPE') == 'mysql-innodb':
     IMPORT_EXPORT_USE_TRANSACTIONS = True
     DATABASES = {

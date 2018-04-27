@@ -18,6 +18,8 @@ install:
   - pip install -e git+https://github.com/kennethreitz/tablib.git#egg=tablib
   - pip install -r requirements/base.txt
   - pip install coveralls
+  - pip install celery
+
 script:
    - python -Wall `which coverage` run --omit='setup.py' --source=. tests/manage.py test core --settings=
 after_success:
