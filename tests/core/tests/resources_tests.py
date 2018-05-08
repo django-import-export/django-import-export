@@ -386,8 +386,8 @@ class ModelResourceTest(TestCase):
         self.assertFalse(resource.after_delete_instance_dry_run)
 
     def test_relationships_fields(self):
-        class B(resources.ModelResource):
 
+        class B(resources.ModelResource):
             class Meta:
                 model = Book
                 fields = ('author__name',)
@@ -595,9 +595,7 @@ class ModelResourceTest(TestCase):
         self.assertEqual(u"This is an invalid dataset", cm.exception.args[0])
 
     def test_after_import_raises_error(self):
-
         class B(BookResource):
-
             def after_import(self, dataset, result, using_transactions, dry_run, **kwargs):
                 raise Exception('This is an invalid dataset')
 
