@@ -55,7 +55,7 @@ class FileRetrievalViewTest(TestCase):
 
         self.client.login(username=self.username, password=self.password)
         response = self.client.get(path)
-        self.assertEqual(str(expected_content), str(response.content))
+        self.assertEqual(expected_content.decode(response.charset), response.content)
 
     def test_view_returns_file_content_type_for_csv_when_valid(self):
         file_name = uuid.uuid4().hex + '.csv'
