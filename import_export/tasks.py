@@ -69,7 +69,7 @@ class ExportData(Task):
         exported_data = self.file_format.export_data(data)
 
         if isinstance(exported_data, six.text_type):
-            exported_data = exported_data.decode('utf-8')
+            exported_data = exported_data.encode('utf-8')
 
         if not os.path.isdir(settings.IMPORT_EXPORT_STORAGE_PATH):
             os.mkdir(settings.IMPORT_EXPORT_STORAGE_PATH)
