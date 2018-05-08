@@ -1,3 +1,4 @@
+import io
 import six
 import os
 import pickle
@@ -132,5 +133,5 @@ class ExportTaskTests(TestCase):
         expected_content = '\r\n'.join(expected_rows)
         expected_content += '\r\n'
 
-        with open(file_path, 'r') as books_export:
+        with io.open(file_path, 'r', newline='\r\n') as books_export:
             self.assertEqual(expected_content, books_export.read())
