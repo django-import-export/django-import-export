@@ -56,6 +56,13 @@ You can use the following directives in your settings file:
     is checked first, which defaults to ``None``. If not found, this
     global option is used. Default is ``TempFolderStorage``.
 
+``IMPORT_EXPORT_USE_CELERY``
+    Global setting controls if exporting should be done in a celery task. This
+    requires that celery is installed. Default is ``False``.
+    
+``IMPORT_EXPORT_EXPORT_USING_CELERY_LEVEL``
+    Global setting controls the number of items that are exported before 
+    switching to use celery for exporting. Default is ``0``.
 
 
 Example app
