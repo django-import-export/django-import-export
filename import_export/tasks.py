@@ -1,7 +1,8 @@
-import uuid
 import importlib
 import os
 import pickle
+import six
+import uuid
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -67,11 +68,14 @@ class ExportData(Task):
         data = self.resource.export(self.queryset, *args, **kwargs)
         exported_data = self.file_format.export_data(data)
 
+        if isinstance(exported_data, six.text_type):
+            exported_data = exported_data.decode('utf-8')
+
         if not os.path.isdir(settings.IMPORT_EXPORT_STORAGE_PATH):
             os.mkdir(settings.IMPORT_EXPORT_STORAGE_PATH)
 
         with open(os.path.join(settings.IMPORT_EXPORT_STORAGE_PATH, self.file_name), 'wb') as the_file:
-            the_file.write(bytes(exported_data))
+            the_file.write(exported_data)
 
     def get_email_address(self):
         email_field = self.user.get_email_field_name() if hasattr(self.user, 'get_email_field_name') else USER_EMAIL_FIELD_NAME
