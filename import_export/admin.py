@@ -58,8 +58,8 @@ if isinstance(TMP_STORAGE_CLASS, six.string_types):
         msg = "Could not import '%s' for import_export setting 'IMPORT_EXPORT_TMP_STORAGE_CLASS'" % TMP_STORAGE_CLASS
         raise ImportError(msg)
 
-# : These are the default formats for import and export. Whether they can be
-# : used or not is depending on their implementation in the tablib library.
+#: These are the default formats for import and export. Whether they can be
+#: used or not is depending on their implementation in the tablib library.
 DEFAULT_FORMATS = (
     base_formats.CSV,
     base_formats.XLS,
@@ -83,7 +83,6 @@ def celery_is_present():
 
 
 class ImportExportMixinBase(object):
-
     def get_model_info(self):
         # module_name is renamed to model_name in Django 1.8
         app_label = self.model._meta.app_label
@@ -109,7 +108,7 @@ class ImportMixin(ImportExportMixinBase):
     #: import data encoding
     from_encoding = "utf-8"
     skip_admin_log = None
-    #: storage class for saving temporary files
+    # storage class for saving temporary files
     tmp_storage_class = None
 
     def get_skip_admin_log(self):
@@ -492,7 +491,7 @@ class ExportActionModelAdmin(ExportMixin, admin.ModelAdmin):
     admin action.
     """
 
-    #: Don't use custom change list template.
+    # Don't use custom change list template.
     change_list_template = None
 
     def __init__(self, *args, **kwargs):
@@ -524,7 +523,6 @@ class ExportActionModelAdmin(ExportMixin, admin.ModelAdmin):
 
             response = self.handle_export(file_format, queryset, request=request)
             return response
-
     export_admin_action.short_description = _(
         'Export selected %(verbose_name_plural)s')
 
