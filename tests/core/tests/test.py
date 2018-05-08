@@ -7,3 +7,5 @@ from .instance_loaders_tests import *
 from .admin_integration_tests import *
 from .base_formats_tests import *
 from .tmp_storages_tests import *
+from .export_task_tests import *
+from .file_retrieval_view_tests import *

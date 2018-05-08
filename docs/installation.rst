@@ -56,6 +56,20 @@ You can use the following directives in your settings file:
     is checked first, which defaults to ``None``. If not found, this
     global option is used. Default is ``TempFolderStorage``.
 
+``IMPORT_EXPORT_USE_CELERY``
+    Global setting controls if exporting should be done in a celery task. This
+    requires that celery is installed and running. Default is ``False``.
+    
+``IMPORT_EXPORT_EXPORT_USING_CELERY_LEVEL``
+    Global setting controls the number of items that are exported before 
+    switching to use celery for exporting. Default is ``0``.
+    
+``IMPORT_EXPORT_USER_EMAIL_FIELD_NAME``
+    Global setting controls where the celery task will look for the email 
+    address to send the email to. In Django 1.11 or greater it will use the
+    get_email_field_name method on the user. In earlier versions, it may be 
+    necessary to use this setting to specify a custom field. 
+    Defaults to ``email``. 
 
 
 Example app

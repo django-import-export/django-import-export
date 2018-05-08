@@ -8,6 +8,7 @@ from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.admin.models import LogEntry
+from django.http.response import HttpResponseRedirect
 from tablib import Dataset
 
 from core.admin import BookAdmin, AuthorAdmin, BookResource
@@ -64,7 +65,7 @@ class ImportExportAdminIntegrationTest(TestCase):
         response = self.client.post('/admin/core/book/process_import/', data,
                                     follow=True)
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 
+        self.assertContains(response,
             _('Import finished, with {} new and {} updated {}.').format(
                 1, 0, Book._meta.verbose_name_plural)
         )
@@ -101,7 +102,7 @@ class ImportExportAdminIntegrationTest(TestCase):
         response = self.client.post('/admin/core/book/process_import/', data,
                                     follow=True)
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 
+        self.assertContains(response,
             _('Import finished, with {} new and {} updated {}.').format(
                 1, 0, Book._meta.verbose_name_plural)
         )
@@ -240,7 +241,7 @@ class ImportExportAdminIntegrationTest(TestCase):
                                         user=request.user,
                                         **kwargs)
 
-        dataset = Dataset(headers=["id","name","author_email"])
+        dataset = Dataset(headers=["id", "name", "author_email"])
         dataset.append([1, "Test 1", "test@example.com"])
         input_format = '0'
         content = dataset.csv

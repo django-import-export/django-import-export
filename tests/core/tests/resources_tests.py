@@ -176,7 +176,7 @@ class ModelResourceTest(TestCase):
         self.assertIsInstance(instance, Book)
 
     def test_default(self):
-        self.assertEquals(WithDefaultResource.fields['name'].clean({'name': ''}), 'foo_bar')
+        self.assertEqual(WithDefaultResource.fields['name'].clean({'name': ''}), 'foo_bar')
 
     def test_get_instance(self):
         instance_loader = self.resource._meta.instance_loader_class(
@@ -707,7 +707,7 @@ class ModelResourceTest(TestCase):
         result = EntryResource().import_data(
             self.dataset, raise_errors=True, dry_run=False)
         self.assertFalse(result.has_errors())
-        self.assertEquals(User.objects.get(pk=user.pk).username, 'bar')
+        self.assertEqual(User.objects.get(pk=user.pk).username, 'bar')
 
     def test_import_data_dynamic_default_callable(self):
 

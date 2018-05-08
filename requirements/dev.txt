@@ -2,4 +2,7 @@
 sphinx
 sphinx-rtd-theme
 mysql-python
+mock
 psycopg2==2.6.1
+django-dynamic-fixture
+celery
