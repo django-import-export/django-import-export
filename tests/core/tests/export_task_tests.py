@@ -84,7 +84,7 @@ class ExportTaskTests(TestCase):
         expected_query = Book.objects.all().query
         query = pickle.dumps(expected_query)
         actual_query = export_data.deserialize_query(query)
-        self.assertEqual(unicode(expected_query), unicode(actual_query))
+        self.assertEqual(str(expected_query), str(actual_query))
 
     def test_email_sent_when_a_task_fails(self):
         self.export_data_instance.resource = BookResource()

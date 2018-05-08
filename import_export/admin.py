@@ -408,7 +408,7 @@ class ExportMixin(ImportExportMixinBase):
         request = kwargs.get("request")
 
         if celery_is_present() and USE_CELERY and queryset.count() > EXPORT_USING_CELERY_LEVEL:
-            file_format_name = unicode(file_format.__name__)
+            file_format_name = str(file_format.__name__)
             model_name = self.get_model_info()[1]
             model_name = model_name.capitalize()
             subject_line = model_name + str(_(' Data Export'))

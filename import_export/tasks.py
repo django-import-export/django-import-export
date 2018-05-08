@@ -71,7 +71,7 @@ class ExportData(Task):
             os.mkdir(settings.IMPORT_EXPORT_STORAGE_PATH)
 
         with open(os.path.join(settings.IMPORT_EXPORT_STORAGE_PATH, self.file_name), 'wb') as the_file:
-            the_file.write(exported_data)
+            the_file.write(bytes(exported_data))
 
     def get_email_address(self):
         email_field = self.user.get_email_field_name() if hasattr(self.user, 'get_email_field_name') else USER_EMAIL_FIELD_NAME

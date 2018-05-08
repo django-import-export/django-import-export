@@ -62,6 +62,7 @@ class ResourceTestCase(TestCase):
 
     # Issue 140 Attributes aren't inherited by subclasses
     def test_inheritance(self):
+
         class A(MyResource):
             inherited = fields.Field()
 
@@ -83,6 +84,7 @@ class ResourceTestCase(TestCase):
         self.assertEqual(resource._meta.import_id_fields, ('email',))
 
     def test_inheritance_with_custom_attributes(self):
+
         class A(MyResource):
             inherited = fields.Field()
 
@@ -115,7 +117,7 @@ class BookResource(resources.ModelResource):
 
     class Meta:
         model = Book
-        exclude = ('imported', )
+        exclude = ('imported',)
 
 
 class CategoryResource(resources.ModelResource):
@@ -125,18 +127,21 @@ class CategoryResource(resources.ModelResource):
 
 
 class ProfileResource(resources.ModelResource):
+
     class Meta:
         model = Profile
-        exclude = ('user', )
+        exclude = ('user',)
 
 
 class WithDefaultResource(resources.ModelResource):
+
     class Meta:
         model = WithDefault
         fields = ('name',)
 
 
 class ModelResourceTest(TestCase):
+
     def setUp(self):
         self.resource = BookResource()
 
@@ -176,7 +181,7 @@ class ModelResourceTest(TestCase):
         self.assertIsInstance(instance, Book)
 
     def test_default(self):
-        self.assertEquals(WithDefaultResource.fields['name'].clean({'name': ''}), 'foo_bar')
+        self.assertEqual(WithDefaultResource.fields['name'].clean({'name': ''}), 'foo_bar')
 
     def test_get_instance(self):
         instance_loader = self.resource._meta.instance_loader_class(
@@ -266,7 +271,9 @@ class ModelResourceTest(TestCase):
         self.assertEqual(instance.price, Decimal("10.25"))
 
     def test_import_data_value_error_includes_field_name(self):
+
         class AuthorResource(resources.ModelResource):
+
             class Meta:
                 model = Author
 
@@ -314,19 +321,23 @@ class ModelResourceTest(TestCase):
         self.assertFalse(Book.objects.filter(pk=self.book.pk))
 
     def test_save_instance_with_dry_run_flag(self):
+
         class B(BookResource):
+
             def before_save_instance(self, instance, using_transactions, dry_run):
                 super(B, self).before_save_instance(instance, using_transactions, dry_run)
                 if dry_run:
                     self.before_save_instance_dry_run = True
                 else:
                     self.before_save_instance_dry_run = False
+
             def save_instance(self, instance, using_transactions=True, dry_run=False):
                 super(B, self).save_instance(instance, using_transactions, dry_run)
                 if dry_run:
                     self.save_instance_dry_run = True
                 else:
                     self.save_instance_dry_run = False
+
             def after_save_instance(self, instance, using_transactions, dry_run):
                 super(B, self).after_save_instance(instance, using_transactions, dry_run)
                 if dry_run:
@@ -346,6 +357,7 @@ class ModelResourceTest(TestCase):
         self.assertFalse(resource.after_save_instance_dry_run)
 
     def test_delete_instance_with_dry_run_flag(self):
+
         class B(BookResource):
             delete = fields.Field(widget=widgets.BooleanWidget())
 
@@ -389,6 +401,7 @@ class ModelResourceTest(TestCase):
     def test_relationships_fields(self):
 
         class B(resources.ModelResource):
+
             class Meta:
                 model = Book
                 fields = ('author__name',)
@@ -419,6 +432,7 @@ class ModelResourceTest(TestCase):
                                                    self.book.author.name))
 
     def test_widget_fomat_in_fk_field(self):
+
         class B(resources.ModelResource):
 
             class Meta:
@@ -521,6 +535,7 @@ class ModelResourceTest(TestCase):
         Entry.objects.create(user=User.objects.create(username='bar'))
 
         class EntryResource(resources.ModelResource):
+
             class Meta:
                 model = Entry
                 fields = ('user__profile', 'user__profile__is_private')
@@ -539,6 +554,7 @@ class ModelResourceTest(TestCase):
         self.assertEqual(len(dataset), 0)
 
     def test_import_data_skip_unchanged(self):
+
         def attempted_save(instance, real_dry_run):
             self.fail('Resource attempted to save instead of skipping')
 
@@ -569,7 +585,9 @@ class ModelResourceTest(TestCase):
         self.assertEqual(len(result.rows), 0)
 
     def test_before_import_access_to_kwargs(self):
+
         class B(BookResource):
+
             def before_import(self, dataset, using_transactions, dry_run, **kwargs):
                 if 'extra_arg' in kwargs:
                     dataset.headers[dataset.headers.index('author_email')] = 'old_email'
@@ -586,7 +604,9 @@ class ModelResourceTest(TestCase):
         self.assertEqual(instance.author_email, 'extra@example.com')
 
     def test_before_import_raises_error(self):
+
         class B(BookResource):
+
             def before_import(self, dataset, using_transactions, dry_run, **kwargs):
                 raise Exception('This is an invalid dataset')
 
@@ -596,7 +616,9 @@ class ModelResourceTest(TestCase):
         self.assertEqual(u"This is an invalid dataset", cm.exception.args[0])
 
     def test_after_import_raises_error(self):
+
         class B(BookResource):
+
             def after_import(self, dataset, result, using_transactions, dry_run, **kwargs):
                 raise Exception('This is an invalid dataset')
 
@@ -607,40 +629,54 @@ class ModelResourceTest(TestCase):
 
     def test_link_to_nonexistent_field(self):
         with self.assertRaises(FieldDoesNotExist) as cm:
+
             class BrokenBook1(resources.ModelResource):
+
                 class Meta:
                     model = Book
                     fields = ('nonexistent__invalid',)
+
         self.assertEqual("Book.nonexistent: Book has no field named 'nonexistent'",
                          cm.exception.args[0])
 
         with self.assertRaises(FieldDoesNotExist) as cm:
+
             class BrokenBook2(resources.ModelResource):
+
                 class Meta:
                     model = Book
                     fields = ('author__nonexistent',)
+
         self.assertEqual("Book.author.nonexistent: Author has no field named "
                          "'nonexistent'", cm.exception.args[0])
 
     def test_link_to_nonrelation_field(self):
         with self.assertRaises(KeyError) as cm:
+
             class BrokenBook1(resources.ModelResource):
+
                 class Meta:
                     model = Book
                     fields = ('published__invalid',)
+
         self.assertEqual("Book.published is not a relation",
                          cm.exception.args[0])
 
         with self.assertRaises(KeyError) as cm:
+
             class BrokenBook2(resources.ModelResource):
+
                 class Meta:
                     model = Book
                     fields = ('author__name__invalid',)
+
         self.assertEqual("Book.author.name is not a relation",
                          cm.exception.args[0])
 
     def test_override_field_construction_in_resource(self):
+
         class B(resources.ModelResource):
+
             class Meta:
                 model = Book
                 fields = ('published',)
@@ -655,6 +691,7 @@ class ModelResourceTest(TestCase):
         self.assertEqual({'sound': 'quack'}, B.fields['published'])
 
     def test_readonly_annotated_field_import_and_export(self):
+
         class B(BookResource):
             total_categories = fields.Field('total_categories', readonly=True)
 
@@ -687,7 +724,7 @@ class ModelResourceTest(TestCase):
 
             class Meta:
                 model = Entry
-                fields = ('id', )
+                fields = ('id',)
 
             def after_save_instance(self, instance, using_transactions, dry_run):
                 if not using_transactions and dry_run:
@@ -707,11 +744,12 @@ class ModelResourceTest(TestCase):
         result = EntryResource().import_data(
             self.dataset, raise_errors=True, dry_run=False)
         self.assertFalse(result.has_errors())
-        self.assertEquals(User.objects.get(pk=user.pk).username, 'bar')
+        self.assertEqual(User.objects.get(pk=user.pk).username, 'bar')
 
     def test_import_data_dynamic_default_callable(self):
 
         class DynamicDefaultResource(resources.ModelResource):
+
             class Meta:
                 model = WithDynamicDefault
                 fields = ('id', 'name',)
@@ -727,10 +765,13 @@ class ModelResourceTest(TestCase):
         self.assertNotEqual(objs[0].name, objs[1].name)
 
     def test_float_field(self):
-        #433
+
+        # 433
         class R(resources.ModelResource):
+
             class Meta:
                 model = WithFloatField
+
         resource = R()
         dataset = tablib.Dataset(headers=['id', 'f', ])
         dataset.append([None, None])
@@ -741,6 +782,7 @@ class ModelResourceTest(TestCase):
 
 
 class ModelResourceTransactionTest(TransactionTestCase):
+
     @skipUnlessDBFeature('supports_transactions')
     def test_m2m_import_with_transactions(self):
         resource = BookResource()
@@ -789,9 +831,11 @@ class ModelResourceTransactionTest(TransactionTestCase):
 
     @skipUnlessDBFeature('supports_transactions')
     def test_integrity_error_rollback_on_savem2m(self):
+
         # savepoint_rollback() after an IntegrityError gives
         # TransactionManagementError (#399)
         class CategoryResourceRaisesIntegrityError(CategoryResource):
+
             def save_m2m(self, instance, *args, **kwargs):
                 # force raising IntegrityError
                 Category.objects.create(name=instance.name)

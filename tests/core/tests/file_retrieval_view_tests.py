@@ -10,6 +10,7 @@ from import_export.formats.base_formats import CSV, XLSX
 
 
 class FileRetrievalViewTest(TestCase):
+
     def setUp(self):
         self.username = 'test_user'
         self.password = 'password'
@@ -54,7 +55,7 @@ class FileRetrievalViewTest(TestCase):
 
         self.client.login(username=self.username, password=self.password)
         response = self.client.get(path)
-        self.assertEqual(expected_content, response.content)
+        self.assertEqual(str(expected_content), str(response.content))
 
     def test_view_returns_file_content_type_for_csv_when_valid(self):
         file_name = uuid.uuid4().hex + '.csv'
