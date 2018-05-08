@@ -1,10 +1,10 @@
+import six
 import os
 import pickle
 
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core import mail
-from django.core.files.base import ContentFile
 from django.test.testcases import TestCase
 
 from import_export import resources, fields
@@ -15,6 +15,7 @@ from ..models import Book
 
 
 class Stack(list):
+
     def push(self, *args, **kwargs):
         return list.append(self, *args, **kwargs)
 
@@ -60,7 +61,7 @@ class ExportTaskTests(TestCase):
     def test_get_filename_returns_32_bit_hex_dot_extension(self):
         self.export_data_instance.file_format = self.format
         file_name = self.export_data_instance.get_file_name()
-        self.assertRegex(file_name, '[0-9a-f]{32}\.\w{3,4}')
+        six.assertRegex(file_name, '[0-9a-f]{32}\.\w{3,4}')
 
     def test_file_created_at_right_location(self):
         self.export_data_instance.file_name = self.export_data_instance.get_file_name()

@@ -15,6 +15,8 @@ from celery.app.task import Task
 
 from .formats import base_formats
 
+USER_EMAIL_FIELD_NAME = getattr(settings, 'IMPORT_EXPORT_USER_EMAIL_FIELD_NAME', 'email')
+
 
 class ExportData(Task):
     name = 'Export Data'
@@ -72,7 +74,7 @@ class ExportData(Task):
             the_file.write(exported_data)
 
     def get_email_address(self):
-        email_field = self.user.get_email_field_name()
+        email_field = self.user.get_email_field_name() if hasattr(self.user, 'get_email_field_name') else USER_EMAIL_FIELD_NAME
         return getattr(self.user, email_field)
 
     def send_email(self, subject):
