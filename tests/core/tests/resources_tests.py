@@ -40,6 +40,7 @@ class MyResource(resources.Resource):
 
 
 class ResourceTestCase(TestCase):
+
     def setUp(self):
         self.my_resource = MyResource()
 
