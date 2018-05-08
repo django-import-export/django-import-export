@@ -61,7 +61,7 @@ class ExportTaskTests(TestCase):
     def test_get_filename_returns_32_bit_hex_dot_extension(self):
         self.export_data_instance.file_format = self.format
         file_name = self.export_data_instance.get_file_name()
-        six.assertRegex(file_name, '[0-9a-f]{32}\.\w{3,4}')
+        six.assertRegex(self, file_name, '[0-9a-f]{32}\.\w{3,4}')
 
     def test_file_created_at_right_location(self):
         self.export_data_instance.file_name = self.export_data_instance.get_file_name()
