@@ -75,4 +75,4 @@ by a core contributor before being merged into django-import-export proper, whic
 substantial time for the all-volunteer team to get to.
 
 
-[coc]: https://github.com/bmihelac/django-import-export/blob/master/CODE_OF_CONDUCT.md
+[coc]: https://github.com/django-import-export/django-import-export/blob/master/CODE_OF_CONDUCT.md
