@@ -364,6 +364,8 @@ class ExportMixin(ImportExportMixinBase):
         list_display_links = self.get_list_display_links(request, list_display)
         list_filter = self.get_list_filter(request)
         search_fields = self.get_search_fields(request)
+        if self.get_actions(request):
+            list_display = ['action_checkbox'] + list(list_display)
 
         ChangeList = self.get_changelist(request)
         cl = ChangeList(request, self.model, list_display,
