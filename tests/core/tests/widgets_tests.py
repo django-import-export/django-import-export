@@ -124,6 +124,28 @@ class DurationWidgetTest(TestCase):
         self.assertEqual(self.widget.clean("1:57:00"), self.duration)
 
 
+class FloatWidgetTest(TestCase):
+
+    def setUp(self):
+        self.value = 11.111
+        self.widget = widgets.FloatWidget()
+
+    def test_clean(self):
+        self.assertEqual(self.widget.clean(11.111), self.value)
+
+    def test_render(self):
+        self.assertEqual(self.widget.render(self.value), self.value)
+
+    def test_clean_string_zero(self):
+        self.assertEqual(self.widget.clean("0"), 0.0)
+        self.assertEqual(self.widget.clean("0.0"), 0.0)
+
+    def test_clean_empty_string(self):
+        self.assertEqual(self.widget.clean(""), None)
+        self.assertEqual(self.widget.clean(" "), None)
+        self.assertEqual(self.widget.clean("\r\n\t"), None)
+
+
 class DecimalWidgetTest(TestCase):
 
     def setUp(self):
@@ -140,6 +162,11 @@ class DecimalWidgetTest(TestCase):
         self.assertEqual(self.widget.clean("0"), Decimal("0"))
         self.assertEqual(self.widget.clean("0.0"), Decimal("0"))
 
+    def test_clean_empty_string(self):
+        self.assertEqual(self.widget.clean(""), None)
+        self.assertEqual(self.widget.clean(" "), None)
+        self.assertEqual(self.widget.clean("\r\n\t"), None)
+
 
 class IntegerWidgetTest(TestCase):
 
@@ -153,6 +180,11 @@ class IntegerWidgetTest(TestCase):
     def test_clean_string_zero(self):
         self.assertEqual(self.widget.clean("0"), self.value)
         self.assertEqual(self.widget.clean("0.0"), self.value)
+
+    def test_clean_empty_string(self):
+        self.assertEqual(self.widget.clean(""), None)
+        self.assertEqual(self.widget.clean(" "), None)
+        self.assertEqual(self.widget.clean("\n\t\r"), None)
 
 
 class ForeignKeyWidgetTest(TestCase):

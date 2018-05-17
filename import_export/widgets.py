@@ -51,6 +51,8 @@ class NumberWidget(Widget):
     """
 
     def is_empty(self, value):
+        if isinstance(value, six.string_types):
+            value = value.strip()
         # 0 is not empty
         return value is None or value == ""
 
