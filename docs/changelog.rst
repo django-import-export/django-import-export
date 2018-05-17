@@ -5,6 +5,20 @@ Changelog
 1.0.1 (unreleased)
 ------------------
 
+- Make deep copy of fileds from class attr to instance attr (#550)
+
+- Fix #612: NumberWidget.is_empty() should strip the value if string type (#613)
+
+- Fix #713: last day isn't included in results qs (#779)
+
+- use Python3 compatible MySql driver in development (#706)
+
+- fix: warning U mode is deprecated in python 3 (#776)
+
+- refactor: easier overridding widgets and default field (#769)
+
+- Updated documentation regardign declaring fields (#735)
+
 - custom js for action form also handles grappelli (#719)
 
 - Use 'verbose_name' in breadcrumbs to match Django default (#732)
