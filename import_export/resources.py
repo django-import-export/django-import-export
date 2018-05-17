@@ -192,6 +192,14 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
     representations and handle importing and exporting data.
     """
 
+    def __init__(self):
+        # The fields class attribute is the *class-wide* definition of
+        # fields. Because a particular *instance* of the class might want to
+        # alter self.fields, we create self.fields here by copying cls.fields.
+        # Instances should always modify self.fields; they should not modify
+        # cls.fields.
+        self.fields = deepcopy(self.fields)
+
     @classmethod
     def get_result_class(self):
         """
@@ -233,16 +241,15 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         """
         return [self.fields[f] for f in self.get_export_order()]
 
-    @classmethod
-    def get_field_name(cls, field):
+    def get_field_name(self, field):
         """
         Returns the field name for a given field.
         """
-        for field_name, f in cls.fields.items():
+        for field_name, f in self.fields.items():
             if f == field:
                 return field_name
         raise AttributeError("Field %s does not exists in %s resource" % (
-            field, cls))
+            field, self.__class__))
 
     def init_instance(self, row=None):
         raise NotImplementedError()
