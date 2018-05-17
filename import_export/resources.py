@@ -728,6 +728,46 @@ class ModelResource(six.with_metaclass(ModelDeclarativeMetaclass, Resource)):
     ModelResource is Resource subclass for handling Django models.
     """
 
+    DEFAULT_RESOURCE_FIELD = Field
+
+    WIDGETS_MAP = {
+        'ManyToManyField': 'get_m2m_widget',
+        'OneToOneField': 'get_fk_widget',
+        'ForeignKey': 'get_fk_widget',
+        'DecimalField': widgets.DecimalWidget,
+        'DateTimeField': widgets.DateTimeWidget,
+        'DateField': widgets.DateWidget,
+        'TimeField': widgets.TimeWidget,
+        'DurationField': widgets.DurationWidget,
+        'FloatField': widgets.FloatWidget,
+        'IntegerField': widgets.IntegerWidget,
+        'PositiveIntegerField': widgets.IntegerWidget,
+        'BigIntegerField': widgets.IntegerWidget,
+        'PositiveSmallIntegerField': widgets.IntegerWidget,
+        'SmallIntegerField': widgets.IntegerWidget,
+        'AutoField': widgets.IntegerWidget,
+        'NullBooleanField': widgets.BooleanWidget,
+        'BooleanField': widgets.BooleanWidget,
+    }
+
+    @classmethod
+    def get_m2m_widget(cls, field):
+        """
+        Prepare widget for m2m field
+        """
+        return functools.partial(
+            widgets.ManyToManyWidget,
+            model=get_related_model(field))
+
+    @classmethod
+    def get_fk_widget(cls, field):
+        """
+        Prepare widget for fk and o2o fields
+        """
+        return functools.partial(
+            widgets.ForeignKeyWidget,
+            model=get_related_model(field))
+
     @classmethod
     def widget_from_django_field(cls, f, default=widgets.Widget):
         """
@@ -736,30 +776,10 @@ class ModelResource(six.with_metaclass(ModelDeclarativeMetaclass, Resource)):
         """
         result = default
         internal_type = f.get_internal_type() if callable(getattr(f, "get_internal_type", None)) else ""
-        if internal_type in ('ManyToManyField', ):
-            result = functools.partial(widgets.ManyToManyWidget,
-                                       model=get_related_model(f))
-        if internal_type in ('ForeignKey', 'OneToOneField', ):
-            result = functools.partial(widgets.ForeignKeyWidget,
-                                       model=get_related_model(f))
-        if internal_type in ('DecimalField', ):
-            result = widgets.DecimalWidget
-        if internal_type in ('DateTimeField', ):
-            result = widgets.DateTimeWidget
-        elif internal_type in ('DateField', ):
-            result = widgets.DateWidget
-        elif internal_type in ('TimeField', ):
-            result = widgets.TimeWidget
-        elif internal_type in ('DurationField', ):
-            result = widgets.DurationWidget
-        elif internal_type in ('FloatField',):
-            result = widgets.FloatWidget
-        elif internal_type in ('IntegerField', 'PositiveIntegerField',
-                               'BigIntegerField', 'PositiveSmallIntegerField',
-                               'SmallIntegerField', 'AutoField'):
-            result = widgets.IntegerWidget
-        elif internal_type in ('BooleanField', 'NullBooleanField'):
-            result = widgets.BooleanWidget
+        if internal_type in cls.WIDGETS_MAP:
+            result = cls.WIDGETS_MAP[internal_type]
+            if isinstance(result, six.string_types):
+                result = getattr(cls, result)(f)
         else:
             try:
                 from django.contrib.postgres.fields import ArrayField
@@ -782,14 +802,14 @@ class ModelResource(six.with_metaclass(ModelDeclarativeMetaclass, Resource)):
         return {}
 
     @classmethod
-    def field_from_django_field(self, field_name, django_field, readonly):
+    def field_from_django_field(cls, field_name, django_field, readonly):
         """
         Returns a Resource Field instance for the given Django model field.
         """
 
-        FieldWidget = self.widget_from_django_field(django_field)
-        widget_kwargs = self.widget_kwargs_for_field(field_name)
-        field = Field(
+        FieldWidget = cls.widget_from_django_field(django_field)
+        widget_kwargs = cls.widget_kwargs_for_field(field_name)
+        field = cls.DEFAULT_RESOURCE_FIELD(
             attribute=field_name,
             column_name=field_name,
             widget=FieldWidget(**widget_kwargs),
