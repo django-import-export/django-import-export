@@ -129,7 +129,10 @@ class TablibFormat(Format):
 
 class TextFormat(TablibFormat):
     def get_read_mode(self):
-        return 'rU'
+        if sys.version_info[0] < 3:  # backwards compatibility for python 2.7
+            return 'rU'
+        else:
+            return 'r'
 
     def is_binary(self):
         return False
