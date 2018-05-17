@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-1.0.1 (unreleased)
+1.0.1 (2018-05-17)
 ------------------
 
 - Make deep copy of fileds from class attr to instance attr (#550)
