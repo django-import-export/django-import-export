@@ -11,3 +11,4 @@ dist/
 .idea/
 *.python-version
 .coverage
+*.sw[po]
