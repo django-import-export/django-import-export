@@ -82,7 +82,7 @@ class IntegerWidget(NumberWidget):
         try:
             value = Decimal(value)
         except:
-            raise ValueError("Decimal covert error")
+            raise ValueError("Column 'id': could not convert string to float, Decimal convert error")
         return int(value)
 
 
