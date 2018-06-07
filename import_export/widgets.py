@@ -79,7 +79,7 @@ class IntegerWidget(NumberWidget):
     def clean(self, value, row=None, *args, **kwargs):
         if self.is_empty(value):
             return None
-        return int(value)
+        return int(Decimal(value))
 
 
 class DecimalWidget(NumberWidget):
