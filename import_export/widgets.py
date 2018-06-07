@@ -79,7 +79,11 @@ class IntegerWidget(NumberWidget):
     def clean(self, value, row=None, *args, **kwargs):
         if self.is_empty(value):
             return None
-        return int(Decimal(value))
+        try:
+            value = Decimal(value)
+        except:
+            raise ValueError("Decimal covert error")
+        return int(value)
 
 
 class DecimalWidget(NumberWidget):
