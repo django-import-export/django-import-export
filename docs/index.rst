@@ -43,6 +43,7 @@ and exporting data with included admin integration.
    api_instance_loaders
    api_tmp_storages
    api_results
+   api_asyncronous_export_backends
 
 
 .. _`tablib`: https://github.com/kennethreitz/tablib

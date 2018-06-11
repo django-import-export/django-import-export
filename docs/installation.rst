@@ -56,6 +56,22 @@ You can use the following directives in your settings file:
     is checked first, which defaults to ``None``. If not found, this
     global option is used. Default is ``TempFolderStorage``.
 
+``IMPORT_EXPORT_USE_CELERY``
+    Global setting controls if exporting should be done in a celery task. This
+    requires that celery is installed and running. Default is ``False``.
+    
+``IMPORT_EXPORT_EXPORT_USING_CELERY_LEVEL``
+    Global setting controls the number of items that are exported before 
+    switching to use celery for exporting. Default is ``0``.
+    
+``IMPORT_EXPORT_ASYNC_EXPORT_BACKEND``
+    Global setting for the class to use to export data asynchronously defaults 
+    to ``None``.
+    
+``IMPORT_EXPORT_STORAGE_PATH``
+    Global setting controls where the export will store the results of its data.
+    Note that if you wish to export asynchronously, this setting is required, 
+
 
 
 Example app

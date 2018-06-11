@@ -1,0 +1,20 @@
+=============================
+Asynchronous export back ends
+=============================
+
+There are no back ends included with django-import-export at this time. You may
+be able to find some that can be installed separately, or you can write your own. 
+To do this, create a class with a ``create_task`` method that passes takes the
+task parameters and uses them to pass export the data.
+
+It should look something like this:
+
+    class AsyncBackend(object):
+
+        def create_task(self, format_name, query, resource_class_input_name, resource_kwargs, user_id, email_subject_line):
+            # Code to create the task here.
+ 
+
+It will also need to send an email to the user who requested the export to let 
+them know when it is finished.
+ 
