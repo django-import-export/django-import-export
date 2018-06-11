@@ -6,13 +6,17 @@ from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from django.contrib import admin
 admin.autodiscover()
 
-from core import views
+from import_export.views import RetrieveExportedFileView
 
+from core import views
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
     url(r'^export/category/', views.CategoryExportView.as_view(),
         name='export-category'),
+
 ]
 
-urlpatterns += staticfiles_urlpatterns()
+urlpatterns += staticfiles_urlpatterns() + [
+    url(r'^exported_files/(?P<path>.*)$', RetrieveExportedFileView.as_view()),
+]

@@ -36,6 +36,8 @@ MIDDLEWARE = (
 # For backwards compatibility for Django 1.8
 MIDDLEWARE_CLASSES = MIDDLEWARE
 
+IMPORT_EXPORT_STORAGE_PATH = os.path.join(os.path.dirname(__file__), 'django-import-export')
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
