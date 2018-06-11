@@ -9,3 +9,8 @@ class ImportExportError(Exception):
 class FieldError(ImportExportError):
     """Raised when a field encounters an error."""
     pass
+
+
+class AsyncExportError(ImportExportError):
+    """Raised when there is an error exporting data asynchronously"""
+    pass

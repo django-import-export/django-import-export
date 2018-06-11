@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.contrib.messages.storage.fallback import FallbackStorage
+from django.conf import settings
 try:
     from django.urls import reverse
 except ImportError:  # Django<2.0
@@ -9,6 +10,7 @@ from django.test.testcases import TestCase
 
 from import_export import admin as export_admin
 from import_export.admin import load_class_from_settings
+from import_export.exceptions import AsyncExportError
 from import_export.formats.base_formats import CSV
 
 from ..admin import BookAdmin
@@ -124,3 +126,25 @@ class AsyncExportTest(TestCase):
 
         # When exporting asynchronously, the response returned is a redirect
         self.assertEqual(200, response.status_code)
+
+    def test_exception_thrown_when_async_export_path_not_specified(self):
+        # Override module constants
+        export_admin.ALLOW_ASYNC_EXPORT = True
+        export_admin.ASYNC_EXPORT_BACKEND = MockAsyncBackend
+        export_admin.ASYNC_EXPORT_LEVEL = -1
+        export_admin.ASYNC_EXPORT_STORAGE_PATH = "";
+
+        request = RequestFactory().get('')
+
+        user = User.objects.create(username='test_user')
+        request.user = user
+
+        Book.objects.create(name="Some book")
+        book_admin = BookAdmin(Book, MockAdminSite())
+        self.assertRaises(AsyncExportError, book_admin.handle_export, CSV, Book.objects.all(), request=request)
+
+        # Reset module constants
+        export_admin.ALLOW_ASYNC_EXPORT = False
+        export_admin.ASYNC_EXPORT_BACKEND = None
+        export_admin.ASYNC_EXPORT_LEVEL = 0
+        export_admin.ASYNC_EXPORT_STORAGE_PATH = settings.IMPORT_EXPORT_STORAGE_PATH

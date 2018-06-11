@@ -22,6 +22,7 @@ from django.template.defaultfilters import pluralize
 from django.utils.decorators import method_decorator
 from django.views.decorators.http import require_POST
 
+from .exceptions import AsyncExportError
 from .forms import (
     ImportForm,
     ConfirmImportForm,
@@ -47,6 +48,7 @@ TMP_STORAGE_CLASS = getattr(settings, 'IMPORT_EXPORT_TMP_STORAGE_CLASS',
 ASYNC_EXPORT_BACKEND = getattr(settings, 'IMPORT_EXPORT_ASYNC_EXPORT_BACKEND', None)
 ALLOW_ASYNC_EXPORT = getattr(settings, 'IMPORT_EXPORT_ALLOW_ASYNC_EXPORT', False)
 ASYNC_EXPORT_LEVEL = getattr(settings, 'IMPORT_EXPORT_ASYNC_EXPORT_LEVEL', 0)
+ASYNC_EXPORT_STORAGE_PATH = getattr(settings, 'IMPORT_EXPORT_STORAGE_PATH', "")
 
 
 def load_class_from_settings(SETTINGS_CLASS, settings_class_name):
@@ -63,6 +65,7 @@ def load_class_from_settings(SETTINGS_CLASS, settings_class_name):
         ) % (SETTINGS_CLASS, settings_class_name)
         raise ImportError(msg)
 
+
 if isinstance(TMP_STORAGE_CLASS, six.string_types):
     TMP_STORAGE_CLASS = load_class_from_settings(TMP_STORAGE_CLASS, 'IMPORT_EXPORT_TMP_STORAGE_CLASS')
 
@@ -71,6 +74,7 @@ if isinstance(ASYNC_EXPORT_BACKEND, six.string_types):
 
 
 class ImportExportMixinBase(object):
+
     def get_model_info(self):
         # module_name is renamed to model_name in Django 1.8
         app_label = self.model._meta.app_label
@@ -85,15 +89,15 @@ class ImportMixin(ImportExportMixinBase):
     Import mixin.
     """
 
-    #: template for change_list view
+    # : template for change_list view
     change_list_template = 'admin/import_export/change_list_import.html'
-    #: template for import view
+    # : template for import view
     import_template_name = 'admin/import_export/import.html'
-    #: resource class
+    # : resource class
     resource_class = None
-    #: available import formats
+    # : available import formats
     formats = DEFAULT_FORMATS
-    #: import data encoding
+    # : import data encoding
     from_encoding = "utf-8"
     skip_admin_log = None
     # storage class for saving temporary files
@@ -304,15 +308,15 @@ class ExportMixin(ImportExportMixinBase):
     """
     Export mixin.
     """
-    #: resource class
+    # : resource class
     resource_class = None
-    #: template for change_list view
+    # : template for change_list view
     change_list_template = 'admin/import_export/change_list_export.html'
-    #: template for export view
+    # : template for export view
     export_template_name = 'admin/import_export/export.html'
-    #: available export formats
+    # : available export formats
     formats = DEFAULT_FORMATS
-    #: export data encoding
+    # : export data encoding
     to_encoding = "utf-8"
 
     def get_urls(self):
@@ -397,6 +401,8 @@ class ExportMixin(ImportExportMixinBase):
         request = kwargs.get("request")
 
         if not ASYNC_EXPORT_BACKEND is None and ALLOW_ASYNC_EXPORT and queryset.count() > ASYNC_EXPORT_LEVEL:
+            if not ASYNC_EXPORT_STORAGE_PATH:
+                raise AsyncExportError(_('When exporting data asynchronously, you must specify a directory in which to save the exported data.'))
             file_format_name = str(file_format.__name__)
             model_name = self.get_model_info()[1]
             model_name = model_name.capitalize()
@@ -467,7 +473,7 @@ class ImportExportMixin(ImportMixin, ExportMixin):
     """
     Import and export mixin.
     """
-    #: template for change_list view
+    # : template for change_list view
     change_list_template = 'admin/import_export/change_list_import_export.html'
 
 
@@ -515,6 +521,7 @@ class ExportActionModelAdmin(ExportMixin, admin.ModelAdmin):
 
             response = self.handle_export(file_format, queryset, request=request)
             return response
+
     export_admin_action.short_description = _(
         'Export selected %(verbose_name_plural)s')
 
