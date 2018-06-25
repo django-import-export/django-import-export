@@ -74,3 +74,20 @@ class CSVTest(TestCase):
         with open(filename, self.format.get_read_mode()) as in_stream:
             data = force_text(in_stream.read())
         base_formats.CSV().create_dataset(data)
+
+
+class TSVTest(TestCase):
+
+    def setUp(self):
+        self.format = base_formats.CSV()
+
+    def test_import_unicode(self):
+        # importing tsv UnicodeEncodeError
+        filename = os.path.join(
+            os.path.dirname(__file__),
+            os.path.pardir,
+            'exports',
+            'books-unicode.tsv')
+        with open(filename, self.format.get_read_mode()) as in_stream:
+            data = force_text(in_stream.read())
+        base_formats.CSV().create_dataset(data)
