@@ -79,7 +79,18 @@ class CSVTest(TestCase):
 class TSVTest(TestCase):
 
     def setUp(self):
-        self.format = base_formats.CSV()
+        self.format = base_formats.TSV()
+
+    def test_import_mac(self):
+        filename = os.path.join(
+            os.path.dirname(__file__),
+            os.path.pardir,
+            'exports',
+            'books-mac.tsv')
+        with open(filename, self.format.get_read_mode()) as in_stream:
+            actual = in_stream.read()
+        expected = 'id\tname\tauthor_email\n1\tSome book\ttest@example.com\n'
+        self.assertEqual(actual, expected)
 
     def test_import_unicode(self):
         # importing tsv UnicodeEncodeError
@@ -90,4 +101,4 @@ class TSVTest(TestCase):
             'books-unicode.tsv')
         with open(filename, self.format.get_read_mode()) as in_stream:
             data = force_text(in_stream.read())
-        base_formats.CSV().create_dataset(data)
+        base_formats.TSV().create_dataset(data)
