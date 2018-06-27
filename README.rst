@@ -10,7 +10,7 @@ django-import-export
     :target: https://coveralls.io/github/django-import-export/django-import-export?branch=coveralls
 
 .. image:: https://img.shields.io/pypi/v/django-import-export.svg
-    :target: https://pypi.python.org/pypi/django-import-export
+    :target: https://pypi.org/project/django-import-export/
     :alt: Current version on PyPi
 
 .. image:: http://readthedocs.org/projects/django-import-export/badge/?version=stable
@@ -39,7 +39,7 @@ Features:
 * Documentation: http://django-import-export.readthedocs.io/en/stable/
 * GitHub: https://github.com/django-import-export/django-import-export/
 * Free software: BSD license
-* PyPI: https://pypi.python.org/pypi/django-import-export/
+* PyPI: https://pypi.org/project/django-import-export/
 
 Requirements
 -----------
