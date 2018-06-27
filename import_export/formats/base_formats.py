@@ -164,6 +164,12 @@ class TSV(TextFormat):
     TABLIB_MODULE = 'tablib.formats._tsv'
     CONTENT_TYPE = 'text/tab-separated-values'
 
+    def create_dataset(self, in_stream, **kwargs):
+        if sys.version_info[0] < 3:
+            # python 2.7 csv does not do unicode
+            return super(TSV, self).create_dataset(in_stream.encode('utf-8'), **kwargs)
+        return super(TSV, self).create_dataset(in_stream, **kwargs)
+
 
 class ODS(TextFormat):
     TABLIB_MODULE = 'tablib.formats._ods'
