@@ -31,7 +31,7 @@ from .forms import (
 from .resources import (
     modelresource_factory,
 )
-from .formats import base_formats
+from .formats.base_formats import DEFAULT_FORMATS
 from .results import RowResult
 from .tmp_storages import TempFolderStorage
 from .signals import post_export, post_import
@@ -54,19 +54,6 @@ if isinstance(TMP_STORAGE_CLASS, six.string_types):
     except ImportError as e:
         msg = "Could not import '%s' for import_export setting 'IMPORT_EXPORT_TMP_STORAGE_CLASS'" % TMP_STORAGE_CLASS
         raise ImportError(msg)
-
-#: These are the default formats for import and export. Whether they can be
-#: used or not is depending on their implementation in the tablib library.
-DEFAULT_FORMATS = (
-    base_formats.CSV,
-    base_formats.XLS,
-    base_formats.XLSX,
-    base_formats.TSV,
-    base_formats.ODS,
-    base_formats.JSON,
-    base_formats.YAML,
-    base_formats.HTML,
-)
 
 
 class ImportExportMixinBase(object):

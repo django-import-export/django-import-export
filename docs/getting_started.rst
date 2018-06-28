@@ -61,7 +61,7 @@ we can export books::
 
     >>> from app.admin import BookResource
     >>> dataset = BookResource().export()
-    >>> print dataset.csv
+    >>> print(dataset.csv)
     id,name,author,author_email,imported,published,price,categories
     2,Some book,1,,0,2012-12-05,8.85,1
 
@@ -229,7 +229,7 @@ Let's import some data!
     >>> book_resource = resources.modelresource_factory(model=Book)()
     >>> dataset = tablib.Dataset(['', 'New book'], headers=['id', 'name'])
     >>> result = book_resource.import_data(dataset, dry_run=True)
-    >>> print result.has_errors()
+    >>> print(result.has_errors())
     False
     >>> result = book_resource.import_data(dataset, dry_run=False)
 

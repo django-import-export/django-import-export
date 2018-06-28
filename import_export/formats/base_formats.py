@@ -164,6 +164,12 @@ class TSV(TextFormat):
     TABLIB_MODULE = 'tablib.formats._tsv'
     CONTENT_TYPE = 'text/tab-separated-values'
 
+    def create_dataset(self, in_stream, **kwargs):
+        if sys.version_info[0] < 3:
+            # python 2.7 csv does not do unicode
+            return super(TSV, self).create_dataset(in_stream.encode('utf-8'), **kwargs)
+        return super(TSV, self).create_dataset(in_stream, **kwargs)
+
 
 class ODS(TextFormat):
     TABLIB_MODULE = 'tablib.formats._ods'
@@ -223,3 +229,16 @@ class XLSX(TablibFormat):
             row_values = [cell.value for cell in row]
             dataset.append(row_values)
         return dataset
+
+#: These are the default formats for import and export. Whether they can be
+#: used or not is depending on their implementation in the tablib library.
+DEFAULT_FORMATS = (
+    CSV,
+    XLS,
+    XLSX,
+    TSV,
+    ODS,
+    JSON,
+    YAML,
+    HTML,
+)
