@@ -68,6 +68,14 @@ class Entry(models.Model):
     user = models.ForeignKey('auth.User', on_delete=models.CASCADE)
 
 
+class Role(models.Model):
+    user = models.OneToOneField('auth.User', on_delete=models.CASCADE, null=True)
+
+
+class Person(models.Model):
+    role = models.ForeignKey(Role, on_delete=models.CASCADE)
+
+
 class WithDefault(models.Model):
     name = models.CharField('Default', max_length=75, blank=True,
                             default='foo_bar')

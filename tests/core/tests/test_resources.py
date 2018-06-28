@@ -21,7 +21,7 @@ from import_export.resources import Diff
 
 from ..models import (
     Author, Book, Category, Entry, Profile, WithDefault, WithDynamicDefault,
-    WithFloatField,
+    WithFloatField, Person, Role
 )
 
 try:
@@ -933,6 +933,38 @@ if 'postgresql' in settings.DATABASES['default']['ENGINE']:
             self.assertFalse(result.has_errors())
             book_with_chapters = list(BookWithChapters.objects.all())[0]
             self.assertListEqual(book_with_chapters.chapters, chapters)
+
+
+class ForeignKeyWidgetFollowRelationship(TestCase):
+    def setUp(self):
+        self.user = User.objects.create(username='foo')
+        self.role = Role.objects.create(user=self.user)
+        self.person = Person.objects.create(role=self.role)
+
+    def test_export(self):
+        class MyPersonResource(resources.ModelResource):
+            role = fields.Field(
+                column_name='role',
+                attribute='role',
+                widget=widgets.ForeignKeyWidget(Role, field='user__username')
+            )
+
+            class Meta:
+                model = Person
+                fields = ['id', 'role']
+
+        resource = MyPersonResource()
+        dataset = resource.export(Person.objects.all())
+        self.assertEqual(len(dataset), 1)
+        self.assertEqual(dataset[0][0], 'foo')
+
+        self.role.user = None
+        self.role.save()
+
+        resource = MyPersonResource()
+        dataset = resource.export(Person.objects.all())
+        self.assertEqual(len(dataset), 1)
+        self.assertEqual(dataset[0][0], None)
 
 
 class ManyRelatedManagerDiffTest(TestCase):
