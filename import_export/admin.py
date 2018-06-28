@@ -218,6 +218,15 @@ class ImportMixin(ImportExportMixinBase):
         '''
         return ImportForm
 
+    def write_to_tmp_storage(self, import_file, input_format):
+        tmp_storage = self.get_tmp_storage_class()()
+        data = bytes()
+        for chunk in import_file.chunks():
+            data += chunk
+
+        tmp_storage.save(data, input_format.get_read_mode())
+        return tmp_storage
+
     def import_action(self, request, *args, **kwargs):
         '''
         Perform a dry_run of the import to make sure the import will not
@@ -242,12 +251,7 @@ class ImportMixin(ImportExportMixinBase):
             import_file = form.cleaned_data['import_file']
             # first always write the uploaded file to disk as it may be a
             # memory file or else based on settings upload handlers
-            tmp_storage = self.get_tmp_storage_class()()
-            data = bytes()
-            for chunk in import_file.chunks():
-                data += chunk
-
-            tmp_storage.save(data, input_format.get_read_mode())
+            tmp_storage = self.write_to_tmp_storage(import_file, input_format)
 
             # then read the file, using the proper format-specific mode
             # warning, big files may exceed memory
