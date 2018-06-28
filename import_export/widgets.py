@@ -7,6 +7,7 @@ from django.utils import datetime_safe, timezone, six
 from django.utils.encoding import smart_text
 from django.utils.dateparse import parse_duration
 from django.conf import settings
+from django.core.exceptions import ObjectDoesNotExist
 
 try:
     from django.utils.encoding import force_text
@@ -343,7 +344,19 @@ class ForeignKeyWidget(Widget):
     def render(self, value, obj=None):
         if value is None:
             return ""
-        return getattr(value, self.field)
+
+        attrs = self.field.split('__')
+        for attr in attrs:
+            try:
+                value = getattr(value, attr, None)
+            except (ValueError, ObjectDoesNotExist):
+                # needs to have a primary key value before a many-to-many
+                # relationship can be used.
+                return None
+            if value is None:
+                return None
+
+        return value
 
 
 class ManyToManyWidget(Widget):
