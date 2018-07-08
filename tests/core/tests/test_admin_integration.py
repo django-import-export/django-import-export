@@ -118,6 +118,19 @@ class ImportExportAdminIntegrationTest(TestCase):
         self.assertTrue(response.has_header("Content-Disposition"))
         self.assertEqual(response['Content-Type'], 'text/csv')
 
+    def test_returns_xlsx_export(self):
+        response = self.client.get('/admin/core/book/export/')
+        self.assertEqual(response.status_code, 200)
+
+        data = {
+            'file_format': '2',
+            }
+        response = self.client.post('/admin/core/book/export/', data)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.has_header("Content-Disposition"))
+        self.assertEqual(response['Content-Type'],
+                         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+
     def test_import_export_buttons_visible_without_add_permission(self):
         # issue 38 - Export button not visible when no add permission
         original = BookAdmin.has_add_permission
