@@ -8,6 +8,8 @@ from django.utils.encoding import smart_text
 from django.utils.dateparse import parse_duration
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
+import json
+import ast
 
 try:
     from django.utils.encoding import force_text
@@ -266,6 +268,21 @@ class SimpleArrayWidget(Widget):
 
     def render(self, value, obj=None):
         return self.separator.join(six.text_type(v) for v in value)
+
+    
+class JSONWidget(Widget):
+    """
+    Widget for a JSON object (especially required for jsonb fields in PostgreSQL database.)
+    """
+
+    def clean(self, value, row=None, *args, **kwargs):
+        val = super(JSONWidget, self).clean(value)
+        if val:
+            return ast.literal_eval(val)
+
+    def render(self, value, obj=None):
+        if value:
+            return json.dumps(value)
 
 
 class ForeignKeyWidget(Widget):
