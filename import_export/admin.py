@@ -307,6 +307,12 @@ class ImportMixin(ImportExportMixinBase):
         return TemplateResponse(request, [self.import_template_name],
                                 context)
 
+    def changelist_view(self, request, extra_context=None):
+        if extra_context is None:
+            extra_context = {}
+        extra_context['has_import_permission'] = self.has_import_permission(request)
+        return super(ImportMixin, self).changelist_view(request, extra_context)
+
 
 class ExportMixin(ImportExportMixinBase):
     """
@@ -445,6 +451,12 @@ class ExportMixin(ImportExportMixinBase):
         request.current_app = self.admin_site.name
         return TemplateResponse(request, [self.export_template_name],
                                 context)
+
+    def changelist_view(self, request, extra_context=None):
+        if extra_context is None:
+            extra_context = {}
+        extra_context['has_export_permission'] = self.has_export_permission(request)
+        return super(ExportMixin, self).changelist_view(request, extra_context)
 
 
 class ImportExportMixin(ImportMixin, ExportMixin):
