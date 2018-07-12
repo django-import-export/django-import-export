@@ -52,13 +52,11 @@ class ImportExportPermissionTest(TestCase):
                 'import_file': f,
             }
 
-            self.assertEqual(Book.objects.count(), 0)
             response = self.client.post('/admin/core/book/import/', data)
             self.assertEqual(response.status_code, 403)
 
             response = self.client.post('/admin/core/book/process_import/', {})
             self.assertEqual(response.status_code, 403)
-            self.assertEqual(Book.objects.count(), 0)
 
         # user has sufficient permission to import
         self.set_user_book_model_permission('change')
@@ -80,7 +78,6 @@ class ImportExportPermissionTest(TestCase):
                 'import_file': f,
             }
 
-            self.assertEqual(Book.objects.count(), 0)
             response = self.client.post('/admin/core/book/import/', data)
             self.assertEqual(response.status_code, 200)
             confirm_form = response.context['confirm_form']
@@ -88,7 +85,6 @@ class ImportExportPermissionTest(TestCase):
             data = confirm_form.initial
             response = self.client.post('/admin/core/book/process_import/', data)
             self.assertEqual(response.status_code, 302)
-            self.assertEqual(Book.objects.count(), 1)
 
 
     @override_settings(IMPORT_EXPORT_EXPORT_PERMISSION_CODE='change')
