@@ -102,6 +102,9 @@ class ImportMixin(ImportExportMixinBase):
             return self.tmp_storage_class
 
     def has_import_permission(self, request):
+        """
+        Returns whether a request has import permission.
+        """
         IMPORT_PERMISSION_CODE = getattr(settings, 'IMPORT_EXPORT_IMPORT_PERMISSION_CODE', None)
         if IMPORT_PERMISSION_CODE is None:
             return True
@@ -339,6 +342,9 @@ class ExportMixin(ImportExportMixinBase):
         return my_urls + urls
 
     def has_export_permission(self, request):
+        """
+        Returns whether a request has export permission.
+        """
         EXPORT_PERMISSION_CODE = getattr(settings, 'IMPORT_EXPORT_EXPORT_PERMISSION_CODE', None)
         if EXPORT_PERMISSION_CODE is None:
             return True
