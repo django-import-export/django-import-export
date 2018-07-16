@@ -271,3 +271,24 @@ class ManyToManyWidget(TestCase):
                          "%s,%s" % (self.cat1.pk, self.cat2.pk))
         self.assertEqual(self.widget_name.render(Category.objects),
                          u"%s,%s" % (self.cat1.name, self.cat2.name))
+
+
+class JSONWidgetTest(TestCase):
+
+    def setUp(self):
+        self.value = {"value": 23}
+        self.widget = widgets.JSONWidget()
+
+    def test_clean(self):
+        self.assertEqual(self.widget.clean('{"value": 23}'), self.value)
+
+    def test_render(self):
+        self.assertEqual(self.widget.render(self.value), '{"value": 23}')
+
+    def test_clean_none(self):
+        self.assertEqual(self.widget.clean(None), None)
+        self.assertEqual(self.widget.clean('{}'), {})
+
+    def test_render_none(self):
+        self.assertEqual(self.widget.render(None), None)
+        self.assertEqual(self.widget.render(dict()), None)
