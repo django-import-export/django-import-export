@@ -371,7 +371,7 @@ class ExportMixin(ImportExportMixinBase):
         """
         Returns file_format representation for given queryset.
         """
-        request = kwargs.pop("request")
+        request = kwargs["request"]
         resource_class = self.get_export_resource_class()
         data = resource_class(**self.get_export_resource_kwargs(request)).export(queryset, *args, **kwargs)
         export_data = file_format.export_data(data)
