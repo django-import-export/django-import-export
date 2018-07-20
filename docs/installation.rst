@@ -56,7 +56,19 @@ You can use the following directives in your settings file:
     is checked first, which defaults to ``None``. If not found, this
     global option is used. Default is ``TempFolderStorage``.
 
+``IMPORT_EXPORT_IMPORT_PERMISSION_CODE``
+    Global setting for defining user permission that is required for
+    users/groups to execute import action. Django builtin permissions
+    are ``change``, ``add``, and ``delete``. It is possible to add
+    your own permission code. Default is ``None`` which means
+    everybody can execute import action.
 
+``IMPORT_EXPORT_EXPORT_PERMISSION_CODE``
+    Global setting for defining user permission that is required for
+    users/groups to execute export action. Django builtin permissions
+    are ``change``, ``add``, and ``delete``. It is possible to add
+    your own permission code. Default is ``None`` which means
+    everybody can execute export action.
 
 Example app
 ===========

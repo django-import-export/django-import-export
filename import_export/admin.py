@@ -5,6 +5,7 @@ from datetime import datetime
 import importlib
 import django
 from django.contrib import admin
+from django.contrib.auth import get_permission_codename
 from django.utils import six
 from django.utils.translation import ugettext_lazy as _
 from django.conf.urls import url
@@ -12,6 +13,7 @@ from django.template.response import TemplateResponse
 from django.contrib import messages
 from django.contrib.admin.models import LogEntry, ADDITION, CHANGE, DELETION
 from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import PermissionDenied
 from django.http import HttpResponseRedirect, HttpResponse
 try:
     from django.urls import reverse
@@ -44,6 +46,8 @@ except ImportError:
 SKIP_ADMIN_LOG = getattr(settings, 'IMPORT_EXPORT_SKIP_ADMIN_LOG', False)
 TMP_STORAGE_CLASS = getattr(settings, 'IMPORT_EXPORT_TMP_STORAGE_CLASS',
                             TempFolderStorage)
+
+
 if isinstance(TMP_STORAGE_CLASS, six.string_types):
     try:
         # Nod to tastypie's use of importlib.
@@ -97,6 +101,18 @@ class ImportMixin(ImportExportMixinBase):
         else:
             return self.tmp_storage_class
 
+    def has_import_permission(self, request):
+        """
+        Returns whether a request has import permission.
+        """
+        IMPORT_PERMISSION_CODE = getattr(settings, 'IMPORT_EXPORT_IMPORT_PERMISSION_CODE', None)
+        if IMPORT_PERMISSION_CODE is None:
+            return True
+
+        opts = self.opts
+        codename = get_permission_codename(IMPORT_PERMISSION_CODE, opts)
+        return request.user.has_perm("%s.%s" % (opts.app_label, codename))
+
     def get_urls(self):
         urls = super(ImportMixin, self).get_urls()
         info = self.get_model_info()
@@ -139,6 +155,8 @@ class ImportMixin(ImportExportMixinBase):
         """
         Perform the actual import action (after the user has confirmed the import)
         """
+        if not self.has_import_permission(request):
+            raise PermissionDenied
 
         confirm_form = ConfirmImportForm(request.POST)
         if confirm_form.is_valid():
@@ -234,6 +252,9 @@ class ImportMixin(ImportExportMixinBase):
         uploaded file to a local temp file that will be used by
         'process_import' for the actual import.
         '''
+        if not self.has_import_permission(request):
+            raise PermissionDenied
+
         resource = self.get_import_resource_class()(**self.get_import_resource_kwargs(request, *args, **kwargs))
 
         context = self.get_import_context_data()
@@ -289,6 +310,12 @@ class ImportMixin(ImportExportMixinBase):
         return TemplateResponse(request, [self.import_template_name],
                                 context)
 
+    def changelist_view(self, request, extra_context=None):
+        if extra_context is None:
+            extra_context = {}
+        extra_context['has_import_permission'] = self.has_import_permission(request)
+        return super(ImportMixin, self).changelist_view(request, extra_context)
+
 
 class ExportMixin(ImportExportMixinBase):
     """
@@ -313,6 +340,18 @@ class ExportMixin(ImportExportMixinBase):
                 name='%s_%s_export' % self.get_model_info()),
         ]
         return my_urls + urls
+
+    def has_export_permission(self, request):
+        """
+        Returns whether a request has export permission.
+        """
+        EXPORT_PERMISSION_CODE = getattr(settings, 'IMPORT_EXPORT_EXPORT_PERMISSION_CODE', None)
+        if EXPORT_PERMISSION_CODE is None:
+            return True
+
+        opts = self.opts
+        codename = get_permission_codename(EXPORT_PERMISSION_CODE, opts)
+        return request.user.has_perm("%s.%s" % (opts.app_label, codename))
 
     def get_resource_kwargs(self, request, *args, **kwargs):
         return {}
@@ -372,6 +411,9 @@ class ExportMixin(ImportExportMixinBase):
         Returns file_format representation for given queryset.
         """
         request = kwargs.pop("request")
+        if not self.has_export_permission(request):
+            raise PermissionDenied
+
         resource_class = self.get_export_resource_class()
         data = resource_class(**self.get_export_resource_kwargs(request)).export(queryset, *args, **kwargs)
         export_data = file_format.export_data(data)
@@ -384,6 +426,9 @@ class ExportMixin(ImportExportMixinBase):
         return {}
 
     def export_action(self, request, *args, **kwargs):
+        if not self.has_export_permission(request):
+            raise PermissionDenied
+
         formats = self.get_export_formats()
         form = ExportForm(formats, request.POST or None)
         if form.is_valid():
@@ -412,6 +457,12 @@ class ExportMixin(ImportExportMixinBase):
         request.current_app = self.admin_site.name
         return TemplateResponse(request, [self.export_template_name],
                                 context)
+
+    def changelist_view(self, request, extra_context=None):
+        if extra_context is None:
+            extra_context = {}
+        extra_context['has_export_permission'] = self.has_export_permission(request)
+        return super(ExportMixin, self).changelist_view(request, extra_context)
 
 
 class ImportExportMixin(ImportMixin, ExportMixin):
