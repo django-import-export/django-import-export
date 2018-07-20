@@ -479,10 +479,9 @@ class ImportExportModelAdmin(ImportExportMixin, admin.ModelAdmin):
     """
 
 
-class ExportActionModelAdmin(ExportMixin, admin.ModelAdmin):
+class ExportActionMixin(ExportMixin):
     """
-    Subclass of ModelAdmin with export functionality implemented as an
-    admin action.
+    Mixin with export functionality implemented as an admin action.
     """
 
     # Don't use custom change list template.
@@ -501,7 +500,7 @@ class ExportActionModelAdmin(ExportMixin, admin.ModelAdmin):
                 choices.append((str(i), f().get_title()))
 
         self.action_form = export_action_form_factory(choices)
-        super(ExportActionModelAdmin, self).__init__(*args, **kwargs)
+        super(ExportActionMixin, self).__init__(*args, **kwargs)
 
     def export_admin_action(self, request, queryset):
         """
@@ -529,6 +528,13 @@ class ExportActionModelAdmin(ExportMixin, admin.ModelAdmin):
 
     class Media:
         js = ['import_export/action_formats.js']
+
+
+class ExportActionModelAdmin(ExportActionMixin, admin.ModelAdmin):
+    """
+    Subclass of ModelAdmin with export functionality implemented as an
+    admin action.
+    """
 
 
 class ImportExportActionModelAdmin(ImportMixin, ExportActionModelAdmin):
