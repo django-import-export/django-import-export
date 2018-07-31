@@ -230,8 +230,6 @@ class XLSX(TablibFormat):
             dataset.append(row_values)
         return dataset
 
-    def export_data(self, dataset, **kwargs):
-        return self.get_format().export_set(dataset, **kwargs)
 
 #: These are the default formats for import and export. Whether they can be
 #: used or not is depending on their implementation in the tablib library.
