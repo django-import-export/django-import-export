@@ -236,12 +236,8 @@ class ImportMixin(ImportExportMixinBase):
         '''
         return ImportForm
 
-    def write_to_tmp_storage(self, import_file, input_format):
+    def write_to_tmp_storage(self, data, input_format):
         tmp_storage = self.get_tmp_storage_class()()
-        data = bytes()
-        for chunk in import_file.chunks():
-            data += chunk
-
         tmp_storage.save(data, input_format.get_read_mode())
         return tmp_storage
 
@@ -270,14 +266,19 @@ class ImportMixin(ImportExportMixinBase):
                 int(form.cleaned_data['input_format'])
             ]()
             import_file = form.cleaned_data['import_file']
-            # first always write the uploaded file to disk as it may be a
-            # memory file or else based on settings upload handlers
-            tmp_storage = self.write_to_tmp_storage(import_file, input_format)
 
-            # then read the file, using the proper format-specific mode
+            # first read the contents of the file into memory
             # warning, big files may exceed memory
+            data = bytes()
+            for chunk in import_file.chunks():
+                data += chunk
+
+            # then write the content to temporary storage as it may be
+            # a memory file or else based on settings upload handlers
+            tmp_storage = self.write_to_tmp_storage(data, input_format)
+
+            # then create the dataset
             try:
-                data = import_file.read()
                 if not input_format.is_binary() and self.from_encoding:
                     data = force_text(data, self.from_encoding)
                 dataset = input_format.create_dataset(data)
