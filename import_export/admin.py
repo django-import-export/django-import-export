@@ -277,7 +277,7 @@ class ImportMixin(ImportExportMixinBase):
             # then read the file, using the proper format-specific mode
             # warning, big files may exceed memory
             try:
-                data = tmp_storage.read(input_format.get_read_mode())
+                data = import_file.read()
                 if not input_format.is_binary() and self.from_encoding:
                     data = force_text(data, self.from_encoding)
                 dataset = input_format.create_dataset(data)
