@@ -270,7 +270,7 @@ class ImportMixin(ImportExportMixinBase):
             # first read the contents of the file into memory
             # warning, big files may exceed memory
             data = bytes()
-            for chunk in import_file.chunks():
+            for chunk in import_file.chunks(4000000):
                 data += chunk
 
             # then write the content to temporary storage as it may be
