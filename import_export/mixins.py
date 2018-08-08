@@ -1,4 +1,4 @@
-from django.http import HttpResponse
+from django import http
 from django.views.generic.edit import FormView
 from django.utils.timezone import now
 
@@ -18,6 +18,13 @@ class ExportViewMixin(object):
         Returns available export formats.
         """
         return [f for f in self.formats if f().can_export()]
+
+    def get_export_format(self):
+        """
+        Returns chosen export format.
+        """
+        fmt_code = int(self.request.GET.get('file_format', 0))
+        return self.get_export_formats()[fmt_code]
 
     def get_resource_class(self):
         if not self.resource_class:
@@ -43,7 +50,7 @@ class ExportViewMixin(object):
         resource_class = self.get_export_resource_class()
         data = resource_class(**self.get_export_resource_kwargs(self.request))\
             .export(queryset, *args, **kwargs)
-        export_data = file_format.export_data(data)
+        export_data = file_format.export_stream_data(data)
         return export_data
 
     def get_export_filename(self, file_format):
@@ -62,6 +69,12 @@ class ExportViewMixin(object):
         kwargs['formats'] = self.get_export_formats()
         return kwargs
 
+    def get_http_response_class(self):
+        file_format = self.get_export_format()
+        if issubclass(file_format, base_formats.TextFormat):
+            return http.StreamingHttpResponse
+        return http.FileResponse
+
 
 class ExportViewFormMixin(ExportViewMixin, FormView):
     def form_valid(self, form): 
@@ -76,10 +89,11 @@ class ExportViewFormMixin(ExportViewMixin, FormView):
         export_data = self.get_export_data(file_format, queryset)
         content_type = file_format.get_content_type()
         # Django 1.7 uses the content_type kwarg instead of mimetype
+        response_class = self.get_http_response_class()
         try:
-            response = HttpResponse(export_data, content_type=content_type)
+            response = response_class(export_data, content_type=content_type)
         except TypeError:
-            response = HttpResponse(export_data, mimetype=content_type)
+            response = response_class(export_data, mimetype=content_type)
         response['Content-Disposition'] = 'attachment; filename=%s' % (
             self.get_export_filename(file_format),
         )
