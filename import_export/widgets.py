@@ -326,7 +326,7 @@ class ForeignKeyWidget(Widget):
     def __init__(self, model, field='pk', *args, **kwargs):
         self.model = model
         self.field = field
-        super(ForeignKeyWidget, self).__init__(*args, **kwargs)
+        super(ForeignKeyWidget, self).__init__()
 
     def get_queryset(self, value, row, *args, **kwargs):
         """
@@ -394,7 +394,7 @@ class ManyToManyWidget(Widget):
         self.model = model
         self.separator = separator
         self.field = field
-        super(ManyToManyWidget, self).__init__(*args, **kwargs)
+        super(ManyToManyWidget, self).__init__()
 
     def clean(self, value, row=None, *args, **kwargs):
         if not value:
