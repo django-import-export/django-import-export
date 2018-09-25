@@ -30,7 +30,10 @@ class ModelInstanceLoader(BaseInstanceLoader):
             for key in self.resource.get_import_id_fields():
                 field = self.resource.fields[key]
                 params[field.attribute] = field.clean(row)
-            return self.get_queryset().get(**params)
+            if params:
+                return self.get_queryset().get(**params)
+            else:
+                return None
         except self.resource._meta.model.DoesNotExist:
             return None
 
