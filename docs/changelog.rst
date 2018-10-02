@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-1.1.0 (unreleased)
+1.1.0 (2018-10-02)
 ------------------
 
 - fix: Django2.1 ImportExportModelAdmin export (#797) (#819)
