@@ -2,11 +2,30 @@ Changelog
 =========
 
 
-1.0.2 (unreleased)
+1.1.0 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- fix: Django2.1 ImportExportModelAdmin export (#797) (#819)
 
+- setup: add django2.1 to test matrix
+
+- JSONWidget for jsonb fields (#803)
+
+- Add ExportActionMixin (#809) 
+
+- Add Import Export Permissioning #608 (#804)
+
+- write_to_tmp_storage() for import_action() (#781)
+
+- follow relationships on ForeignKeyWidget #798
+
+- Update all pypi.python.org URLs to pypi.org
+
+- added test for tsv import
+
+- added unicode support for TSV for pytjhon 2
+
+- Added ExportViewMixin (#692)
 
 1.0.1 (2018-05-17)
 ------------------
