@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 
 import functools
+import logging
 import tablib
 import traceback
 from collections import OrderedDict
@@ -38,11 +39,9 @@ try:
 except ImportError:
     from django.utils.encoding import force_unicode as force_text
 
+logger = logging.getLogger(__name__)
 # Set default logging handler to avoid "No handler found" warnings.
-import logging  # isort:skip
-from logging import NullHandler
-
-logger = logging.getLogger(__name__).addHandler(NullHandler())
+logger.addHandler(logging.NullHandler())
 
 USE_TRANSACTIONS = getattr(settings, 'IMPORT_EXPORT_USE_TRANSACTIONS', True)
 
