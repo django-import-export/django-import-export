@@ -491,12 +491,21 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
                 if self.skip_row(instance, original):
                     row_result.import_type = RowResult.IMPORT_TYPE_SKIP
                 else:
-                    self.save_instance(instance, using_transactions, dry_run)
-                    self.save_m2m(instance, row, using_transactions, dry_run)
+                    self.validate_row_instance(instance, row_result)
+                    if row_result.import_type == RowResult.IMPORT_TYPE_INVALID:
+                        # Avoid saving if there are validation errors, and reduce
+                        # potential confusion by not highlighting changes
+                        diff = self.get_diff_class()(self, instance, new)
+                    else:
+                        self.save_instance(instance, using_transactions, dry_run)
+                        self.save_m2m(instance, row, using_transactions, dry_run)
                 diff.compare_with(self, instance, dry_run)
             row_result.diff = diff.as_html()
             # Add object info to RowResult for LogEntry
-            if row_result.import_type != RowResult.IMPORT_TYPE_SKIP:
+            if row_result.import_type not in (
+                RowResult.IMPORT_TYPE_SKIP,
+                RowResult.IMPORT_TYPE_INVALID,
+            ):
                 row_result.object_id = instance.pk
                 row_result.object_repr = force_text(instance)
             self.after_import_row(row, row_result, **kwargs)
