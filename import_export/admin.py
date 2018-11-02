@@ -281,7 +281,7 @@ class ImportMixin(ImportExportMixinBase):
 
             context['result'] = result
 
-            if not result.has_errors():
+            if not result.has_errors() and not result.has_validation_errors():
                 context['confirm_form'] = ConfirmImportForm(initial={
                     'import_file_name': tmp_storage.name,
                     'original_file_name': import_file.name,

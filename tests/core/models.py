@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 import random
 import string
 
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
 
@@ -13,6 +14,15 @@ class Author(models.Model):
 
     def __str__(self):
         return self.name
+
+    def full_clean(self, exclude=None, validate_unique=True):
+        super(Author, self).full_clean(exclude, validate_unique)
+        if exclude is None:
+            exclude = []
+        else:
+            exclude = list(exclude)
+        if 'name' not in exclude and self.name == '123':
+            raise ValidationError({'name': "'123' is not a valid value"})
 
 
 @python_2_unicode_compatible

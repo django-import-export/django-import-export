@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
 import tablib
@@ -13,6 +14,7 @@ from django.db import IntegrityError, DatabaseError
 from django.db.models import Count
 from django.db.models.fields import FieldDoesNotExist
 from django.test import TestCase, TransactionTestCase, skipUnlessDBFeature
+from django.utils import six
 from django.utils.html import strip_tags
 from django.utils.encoding import force_text
 
@@ -159,6 +161,29 @@ class WithDefaultResource(resources.ModelResource):
         fields = ('name',)
 
 
+class HarshRussianWidget(widgets.CharWidget):
+    def clean(self, value, row=None, *args, **kwargs):
+        raise ValueError("Ова вриједност је страшна!")
+
+
+class AuthorResourceWithCustomWidget(resources.ModelResource):
+
+    class Meta:
+        model = Author
+
+    @classmethod
+    def widget_from_django_field(cls, f, default=widgets.Widget):
+        if f.name == 'name':
+            return HarshRussianWidget
+        result = default
+        internal_type = f.get_internal_type() if callable(getattr(f, "get_internal_type", None)) else ""
+        if internal_type in cls.WIDGETS_MAP:
+            result = cls.WIDGETS_MAP[internal_type]
+            if isinstance(result, six.string_types):
+                result = getattr(cls, result)(f)
+        return result
+
+
 class ModelResourceTest(TestCase):
     def setUp(self):
         self.resource = BookResource()
@@ -288,23 +313,87 @@ class ModelResourceTest(TestCase):
         self.assertEqual(instance.author_email, 'test@example.com')
         self.assertEqual(instance.price, Decimal("10.25"))
 
-    def test_import_data_value_error_includes_field_name(self):
-        class AuthorResource(resources.ModelResource):
-            class Meta:
-                model = Author
-
+    def test_import_data_raises_field_specific_validation_errors(self):
         resource = AuthorResource()
         dataset = tablib.Dataset(headers=['id', 'name', 'birthday'])
         dataset.append(['', 'A.A.Milne', '1882test-01-18'])
 
         result = resource.import_data(dataset, raise_errors=False)
 
-        self.assertTrue(result.has_errors())
-        self.assertTrue(result.rows[0].errors)
-        msg = ("Column 'birthday': Enter a valid date/time.")
-        actual = result.rows[0].errors[0].error
-        self.assertIsInstance(actual, ValueError)
-        self.assertEqual(msg, str(actual))
+        self.assertTrue(result.has_validation_errors())
+        self.assertIs(result.rows[0].import_type, results.RowResult.IMPORT_TYPE_INVALID)
+        self.assertIn('birthday', result.invalid_rows[0].field_specific_errors)
+
+    def test_import_data_handles_widget_valueerrors_with_unicode_messages(self):
+        resource = AuthorResourceWithCustomWidget()
+        dataset = tablib.Dataset(headers=['id', 'name', 'birthday'])
+        dataset.append(['', 'A.A.Milne', '1882-01-18'])
+
+        result = resource.import_data(dataset, raise_errors=False)
+
+        self.assertTrue(result.has_validation_errors())
+        self.assertIs(result.rows[0].import_type, results.RowResult.IMPORT_TYPE_INVALID)
+        self.assertEqual(
+            result.invalid_rows[0].field_specific_errors['name'],
+            ["Ова вриједност је страшна!"]
+        )
+
+    def test_model_validation_errors_not_raised_when_clean_model_instances_is_false(self):
+
+        class TestResource(resources.ModelResource):
+            class Meta:
+                model = Author
+                clean_model_instances = False
+
+        resource = TestResource()
+        dataset = tablib.Dataset(headers=['id', 'name'])
+        dataset.append(['', '123'])
+
+        result = resource.import_data(dataset, raise_errors=False)
+        self.assertFalse(result.has_validation_errors())
+        self.assertEqual(len(result.invalid_rows), 0)
+
+    def test_model_validation_errors_raised_when_clean_model_instances_is_true(self):
+
+        class TestResource(resources.ModelResource):
+            class Meta:
+                model = Author
+                clean_model_instances = True
+
+        resource = TestResource()
+        dataset = tablib.Dataset(headers=['id', 'name'])
+        dataset.append(['', '123'])
+
+        result = resource.import_data(dataset, raise_errors=False)
+        self.assertTrue(result.has_validation_errors())
+        self.assertEqual(result.invalid_rows[0].error_count, 1)
+        self.assertEqual(
+            result.invalid_rows[0].field_specific_errors,
+            {'name': ["'123' is not a valid value"]}
+        )
+
+    def test_known_invalid_fields_are_excluded_from_model_instance_cleaning(self):
+
+        # The custom widget on the parent class should complain about
+        # 'name' first, preventing Author.full_clean() from raising the
+        # error as it does in the previous test
+
+        class TestResource(AuthorResourceWithCustomWidget):
+            class Meta:
+                model = Author
+                clean_model_instances = True
+
+        resource = TestResource()
+        dataset = tablib.Dataset(headers=['id', 'name'])
+        dataset.append(['', '123'])
+
+        result = resource.import_data(dataset, raise_errors=False)
+        self.assertTrue(result.has_validation_errors())
+        self.assertEqual(result.invalid_rows[0].error_count, 1)
+        self.assertEqual(
+            result.invalid_rows[0].field_specific_errors,
+            {'name': ["Ова вриједност је страшна!"]}
+        )
 
     def test_import_data_error_saving_model(self):
         row = list(self.dataset.pop())
@@ -317,8 +406,7 @@ class ModelResourceTest(TestCase):
         self.assertTrue(result.rows[0].errors)
         actual = result.rows[0].errors[0].error
         self.assertIsInstance(actual, ValueError)
-        self.assertIn("Column 'id': could not convert string to float",
-                      str(actual))
+        self.assertIn("could not convert string to float", str(actual))
 
     def test_import_data_delete(self):
 

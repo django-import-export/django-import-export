@@ -10,7 +10,7 @@ from copy import deepcopy
 from diff_match_patch import diff_match_patch
 
 from django.conf import settings
-from django.core.exceptions import ImproperlyConfigured
+from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.core.management.color import no_style
 from django.db import connections, DEFAULT_DB_ALIAS
 from django.db.models.fields import FieldDoesNotExist
@@ -112,6 +112,13 @@ class ResourceOptions(object):
     report_skipped = True
     """
     Controls if the result reports skipped rows Default value is True
+    """
+
+    clean_model_instances = False
+    """
+    Controls whether ``instance.full_clean()`` is called during the import
+    process to identify potential validation errors for each (non skipped) row.
+    The default value is False.
     """
 
 
@@ -265,6 +272,31 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         else:
             return (self.init_instance(row), True)
 
+    def validate_instance(self, instance, import_validation_errors={}, validate_unique=True):
+        """
+        Takes any validation errors that were raised by
+        :meth:`~import_export.resources.Resource.import_obj`, and combines them
+        with validation errors raised by the instance's ``full_clean()``
+        method. The combined errors are then re-raised as single, multi-field
+        ValidationError.
+
+        If the ``clean_model_instances`` option is False, the instances's
+        ``full_clean()`` method is not called, and only the errors raised by
+        ``import_obj()`` are re-raised.
+        """
+        errors = import_validation_errors.copy()
+        if self._meta.clean_model_instances:
+            try:
+                instance.full_clean(
+                    exclude=errors.keys(),
+                    validate_unique=validate_unique,
+                )
+            except ValidationError as e:
+                errors = e.update_error_dict(errors)
+
+        if errors:
+            raise ValidationError(errors)
+
     def save_instance(self, instance, using_transactions=True, dry_run=False):
         """
         Takes care of saving the object to the database.
@@ -330,12 +362,21 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
     def import_obj(self, obj, data, dry_run):
         """
         Traverses every field in this Resource and calls
-        :meth:`~import_export.resources.Resource.import_field`.
-        """
+        :meth:`~import_export.resources.Resource.import_field`. If
+        ``import_field()`` results in a ``ValueError`` being raised for
+        one of more fields, those errors are captured and reraised as a single,
+        multi-field ValidationError."""
+        errors = {}
         for field in self.get_import_fields():
             if isinstance(field.widget, widgets.ManyToManyWidget):
                 continue
-            self.import_field(field, obj, data)
+            try:
+                self.import_field(field, obj, data)
+            except ValueError as e:
+                errors[field.attribute] = ValidationError(
+                    force_text(e), code="invalid")
+        if errors:
+            raise ValidationError(errors)
 
     def save_m2m(self, obj, data, using_transactions, dry_run):
         """
@@ -463,19 +504,31 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
                     self.delete_instance(instance, using_transactions, dry_run)
                     diff.compare_with(self, None, dry_run)
             else:
-                self.import_obj(instance, row, dry_run)
+                import_validation_errors = {}
+                try:
+                    self.import_obj(instance, row, dry_run)
+                except ValidationError as e:
+                    # Validation errors from import_obj() are passed on to
+                    # validate_instance(), where they can be combined with model
+                    # instance validation errors if necessary
+                    import_validation_errors = e.update_error_dict(import_validation_errors)
                 if self.skip_row(instance, original):
                     row_result.import_type = RowResult.IMPORT_TYPE_SKIP
                 else:
+                    self.validate_instance(instance, import_validation_errors)
                     self.save_instance(instance, using_transactions, dry_run)
                     self.save_m2m(instance, row, using_transactions, dry_run)
+                    # Add object info to RowResult for LogEntry
+                    row_result.object_id = instance.pk
+                    row_result.object_repr = force_text(instance)
                 diff.compare_with(self, instance, dry_run)
+
             row_result.diff = diff.as_html()
-            # Add object info to RowResult for LogEntry
-            if row_result.import_type != RowResult.IMPORT_TYPE_SKIP:
-                row_result.object_id = instance.pk
-                row_result.object_repr = force_text(instance)
             self.after_import_row(row, row_result, **kwargs)
+
+        except ValidationError as e:
+            row_result.import_type = RowResult.IMPORT_TYPE_INVALID
+            row_result.validation_error = e
         except Exception as e:
             row_result.import_type = RowResult.IMPORT_TYPE_ERROR
             # There is no point logging a transaction error for each row
@@ -549,7 +602,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         if collect_failed_rows:
             result.add_dataset_headers(dataset.headers)
 
-        for row in dataset.dict:
+        for i, row in enumerate(dataset.dict, 1):
             with atomic_if_using_transaction(using_transactions):
                 row_result = self.import_row(
                     row,
@@ -559,11 +612,18 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
                     **kwargs
                 )
             result.increment_row_result_total(row_result)
+
             if row_result.errors:
                 if collect_failed_rows:
                     result.append_failed_row(row, row_result.errors[0])
                 if raise_errors:
                     raise row_result.errors[-1].error
+            elif row_result.validation_error:
+                result.append_invalid_row(i, row, row_result.validation_error)
+                if collect_failed_rows:
+                    result.append_failed_row(row, row_result.validation_error)
+                if raise_errors:
+                    raise row_result.validation_error
             if (row_result.import_type != RowResult.IMPORT_TYPE_SKIP or
                     self._meta.report_skipped):
                 result.append_row_result(row_result)

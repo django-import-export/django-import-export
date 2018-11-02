@@ -65,10 +65,8 @@ class Field(object):
             raise KeyError("Column '%s' not found in dataset. Available "
                            "columns are: %s" % (self.column_name, list(data)))
 
-        try:
-            value = self.widget.clean(value, row=data)
-        except ValueError as e:
-            raise ValueError("Column '%s': %s" % (self.column_name, e))
+        # If ValueError is raised here, import_obj() will handle it
+        value = self.widget.clean(value, row=data)
 
         if value in self.empty_values and self.default != NOT_PROVIDED:
             if callable(self.default):

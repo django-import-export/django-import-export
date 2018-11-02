@@ -1,0 +1,66 @@
+.import-preview .errors {
+  position: relative;
+}
+
+.validation-error-count {
+  display: inline-block;
+  background-color: #e40000;
+  border-radius: 6px;
+  color: white;
+  font-size: 0.9em;
+  position: relative;
+  font-weight: bold;
+  margin-top: -2px;
+  padding: 0.2em 0.4em;
+}
+
+.validation-error-container {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  background-color: #ffc1c1;
+  padding: 14px 15px 10px;
+  left: 16px;
+  top: 25px;
+  margin: 0 0 20px 0;
+  width: 200px;
+  z-index: 2;
+}
+
+.import-preview td:hover .validation-error-count {
+  z-index: 3;
+}
+.import-preview td:hover .validation-error-container {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.validation-error-list {
+  margin: 0;
+  padding: 0;
+}
+
+.validation-error-list li {
+  list-style: none;
+  margin: 0;
+}
+
+.validation-error-list > li > ul {
+  margin: 8px 0;
+  padding: 0;
+}
+
+.validation-error-list > li > ul > li {
+  padding: 0;
+  margin: 0 0 10px;
+  line-height: 1.28em;
+}
+
+.validation-error-field-label {
+  display: block;
+  border-bottom: 1px solid #e40000;
+  color: #e40000;
+  text-transform: uppercase;
+  font-weight: bold;
+  font-size: 0.85em;
+}
