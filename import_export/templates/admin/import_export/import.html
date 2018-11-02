@@ -3,6 +3,8 @@
 {% load admin_urls %}
 {% load import_export_tags %}
 
+{% block extrastyle %}{{ block.super }}<link rel="stylesheet" type="text/css" href="{% static "import_export/import.css" %}" />{% endblock %}
+
 {% block breadcrumbs_last %}
 {% trans "Import" %}
 {% endblock %}
@@ -77,7 +79,7 @@
   <h2>
     {% trans "Preview" %}
   </h2>
-  <table>
+  <table class="import-preview">
     <thead>
       <tr>
         <th></th>
@@ -88,7 +90,7 @@
     </thead>
     {% for row in result.rows %}
     <tr>
-      <td>
+      <td class="import-type">
         {% if row.import_type == 'new' %}
           {% trans "New" %}
         {% elif row.import_type == 'skip' %}
@@ -97,6 +99,33 @@
           {% trans "Delete" %}
         {% elif row.import_type == 'update' %}
           {% trans "Update" %}
+        {% elif row.import_type == 'invalid '%}
+          {% trans "Invalid" %}
+          <span class="validation-error-count">{{ row.validation_error_count }}</span> 
+              <div class="validation-error-container">
+                <ul class="validation-error-list">
+                  {% for field_name, error_list in row.field_validation_errors.items %}
+                    <li>
+                        <span class="validation-error-field-label">{{ field_name }}</span>
+                        <ul>
+                          {% for error in error_list %}
+                            <li>{{ error }}</li>
+                          {% endfor %}
+                        </ul>
+                    </li>
+                  {% endfor %}
+                  {% if row.non_field_validation_errors %}
+                    <li>
+                      <span class="validation-error-field-label">{% trans "Non field specific" %}</span>
+                      <ul>
+                        {% for error in row.non_field_validation_errors %}
+                          <li>{{ error }}</li>
+                        {% endfor %}
+                      </ul>
+                    </li>
+                  {% endif %}
+                </ul>
+              </div>
         {% endif %}
       </td>
       {% for field in row.diff %}

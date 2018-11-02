@@ -1,0 +1,58 @@
+.import-preview .import-type {
+  position: relative;
+}
+
+.validation-error-count {
+  display: inline-block;
+  background-color: #e40000;
+  border-radius: 6px;
+  color: white;
+  font-weight: bold;
+  padding: 3px 6px 4px;
+  margin: -3px 0;
+}
+
+.validation-error-container {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  background-color: #ffc1c1;
+  padding: 12px 15px 10px;
+  left: 10px;
+  top: 100%;
+  margin: -5px 0 20px 0;
+  width: 260px;
+  z-index: 1;
+}
+
+.import-preview td:hover .validation-error-container {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.validation-error-list {
+  margin: 0;
+  padding: 0;
+}
+
+.validation-error-list li {
+  list-style: none;
+  margin: 0;
+}
+
+.validation-error-list > li > ul {
+  margin: 8px 0;
+  padding: 0;
+}
+
+.validation-error-list > li > ul > li {
+  border-left: 2px solid #e40000;
+  padding: 2px 0 2px 10px;
+  margin: 0 0 2px;
+}
+
+.validation-error-field-label {
+  text-transform: uppercase;
+  font-weight: bold;
+  font-size: 0.9em;
+}
