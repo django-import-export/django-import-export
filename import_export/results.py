@@ -2,6 +2,8 @@ from __future__ import unicode_literals
 
 from collections import OrderedDict
 
+from django.core.exceptions import NON_FIELD_ERRORS
+
 from tablib import Dataset
 
 
@@ -21,8 +23,30 @@ class RowResult(object):
 
     def __init__(self):
         self.errors = []
+        self.validation_errors = {}
         self.diff = None
         self.import_type = None
+
+    @property
+    def field_validation_errors(self):
+        """Returns a dictionary of field-specific validation errors for this row."""
+        return {
+            key: value for key, value in self.validation_errors.items()
+            if key != NON_FIELD_ERRORS
+        }
+
+    @property
+    def non_field_validation_errors(self):
+        """Returns a tuple of non field-specific validation errors for this row."""
+        return self.validation_errors.get(NON_FIELD_ERRORS, ())
+
+    @property
+    def validation_error_count(self):
+        """Returns the total number of validation errors for this row."""
+        count = 0
+        for error_list in self.validation_errors.values():
+            count += len(error_list)
+        return count
 
 
 class Result(object):
