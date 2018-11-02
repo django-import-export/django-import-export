@@ -276,7 +276,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         else:
             return (self.init_instance(row), True)
 
-    def validate_row_instance(self, instance, row_result):
+    def validate_row_instance(self, instance, row_result, exclude_fields=None, validate_unique=True):
         """
         If the ``validate_row_instances`` option is True, validates the
         instance created for a specific row (by calling its ``full_clean()``
@@ -284,7 +284,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         """
         if self._meta.validate_row_instances:
             try:
-                instance.full_clean()
+                instance.full_clean(exclude=exclude_fields, validate_unique=validate_unique)
             except ValidationError as e:
                 row_result.import_type = RowResult.IMPORT_TYPE_INVALID
                 row_result.validation_errors = e.message_dict
