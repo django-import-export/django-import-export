@@ -11,7 +11,7 @@ from diff_match_patch import diff_match_patch
 
 from django import VERSION
 from django.conf import settings
-from django.core.exceptions import ImproperlyConfigured
+from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.core.management.color import no_style
 from django.db import connections, DEFAULT_DB_ALIAS
 from django.db.models.fields import FieldDoesNotExist
@@ -275,6 +275,18 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
             return (instance, False)
         else:
             return (self.init_instance(row), True)
+
+    def validate_row_instance(self, instance, row_result):
+        """
+        If the ``validate_row_intances`` option is True, validates the instance
+        created for a specific row (by calling its ``full_clean()`` method),
+        and adds any resulting validation errors to ``result_row``.
+        """
+        if self._meta.validate_row_instances:
+            try:
+                instance.full_clean()
+            except ValidationError as e:
+                row_result.validation_errors = e.message_dict
 
     def save_instance(self, instance, using_transactions=True, dry_run=False):
         """
