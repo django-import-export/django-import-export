@@ -120,7 +120,7 @@ class ResourceOptions(object):
 
     validate_row_instances = False
     """
-    Controls whether instance.full_clean() is called during the import
+    Controls whether ``instance.full_clean()`` is called during the import
     process to identify potential validation errors for each (non skipped) row.
     The default value is False.
     """
