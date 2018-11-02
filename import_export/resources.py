@@ -278,9 +278,9 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
 
     def validate_row_instance(self, instance, row_result):
         """
-        If the ``validate_row_intances`` option is True, validates the instance
-        created for a specific row (by calling its ``full_clean()`` method),
-        and adds any resulting validation errors to ``result_row``.
+        If the ``validate_row_instances`` option is True, validates the
+        instance created for a specific row (by calling its ``full_clean()``
+        method), and adds any resulting validation errors to ``row_result``.
         """
         if self._meta.validate_row_instances:
             try:
