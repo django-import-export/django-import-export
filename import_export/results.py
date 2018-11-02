@@ -86,7 +86,17 @@ class Result(object):
                 for i, row in enumerate(self.rows) if row.errors]
 
     def has_errors(self):
+        """Returns a boolean indicating whether the import process resulted in
+        any critical (non-validation) errors for this result."""
         return bool(self.base_errors or self.row_errors())
+
+    def has_validation_errors(self):
+        """Returns a boolean indicating whether the import process resulted in
+        any validation errors for this result."""
+        for row in self.rows:
+            if row.validation_errors:
+                return True
+        return False
 
     def __iter__(self):
         return iter(self.rows)
