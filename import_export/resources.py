@@ -286,6 +286,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
             try:
                 instance.full_clean()
             except ValidationError as e:
+                row_result.import_type = RowResult.IMPORT_TYPE_INVALID
                 row_result.validation_errors = e.message_dict
 
     def save_instance(self, instance, using_transactions=True, dry_run=False):

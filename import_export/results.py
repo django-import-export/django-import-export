@@ -20,6 +20,7 @@ class RowResult(object):
     IMPORT_TYPE_DELETE = 'delete'
     IMPORT_TYPE_SKIP = 'skip'
     IMPORT_TYPE_ERROR = 'error'
+    IMPORT_TYPE_INVALID = 'invalid'
 
     def __init__(self):
         self.errors = []
