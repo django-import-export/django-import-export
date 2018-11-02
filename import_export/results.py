@@ -61,7 +61,8 @@ class Result(object):
                                    (RowResult.IMPORT_TYPE_UPDATE, 0),
                                    (RowResult.IMPORT_TYPE_DELETE, 0),
                                    (RowResult.IMPORT_TYPE_SKIP, 0),
-                                   (RowResult.IMPORT_TYPE_ERROR, 0)])
+                                   (RowResult.IMPORT_TYPE_ERROR, 0),
+                                   (RowResult.IMPORT_TYPE_INVALID, 0)])
         self.total_rows = 0
 
     def append_row_result(self, row_result):
