@@ -508,28 +508,36 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
                     self.delete_instance(instance, using_transactions, dry_run)
                     diff.compare_with(self, None, dry_run)
             else:
-                self.import_obj(instance, row, dry_run)
+                try:
+                    self.import_obj(instance, row, dry_run)
+                    widget_validation_errors = {}
+                except ValidationError as e:
+                    # Any widget validation errors must be passed on to
+                    # validate_obj() below, where they can be combined with
+                    # model instance validation errors.
+                    widget_validation_errors = e.message_dict
                 if self.skip_row(instance, original):
                     row_result.import_type = RowResult.IMPORT_TYPE_SKIP
+                    # Reduce potential confusion by not highlighting changes
+                    diff = self.get_diff_class()(self, instance, new)
                 else:
-                    self.validate_row_instance(instance, row_result)
-                    if row_result.import_type == RowResult.IMPORT_TYPE_INVALID:
-                        # Avoid saving if there are validation errors, and reduce
-                        # potential confusion by not highlighting changes
-                        diff = self.get_diff_class()(self, instance, new)
-                    else:
-                        self.save_instance(instance, using_transactions, dry_run)
-                        self.save_m2m(instance, row, using_transactions, dry_run)
+                    self.validate_instance(instance, widget_validation_errors)
+                    self.save_instance(instance, using_transactions, dry_run)
+                    self.save_m2m(instance, row, using_transactions, dry_run)
+                    # Add object info to RowResult for LogEntry
+                    row_result.object_id = instance.pk
+                    row_result.object_repr = force_text(instance)
                 diff.compare_with(self, instance, dry_run)
+
             row_result.diff = diff.as_html()
-            # Add object info to RowResult for LogEntry
-            if row_result.import_type not in (
-                RowResult.IMPORT_TYPE_SKIP,
-                RowResult.IMPORT_TYPE_INVALID,
-            ):
-                row_result.object_id = instance.pk
-                row_result.object_repr = force_text(instance)
             self.after_import_row(row, row_result, **kwargs)
+        except ValidationError as e:
+            row_result.import_type = RowResult.IMPORT_TYPE_INVALID
+            row_result.validation_errors = e.message_dict
+            # Reduce potential confusion by not highlighting changes
+            diff = self.get_diff_class()(self, instance, new)
+            diff.compare_with(self, instance, dry_run)
+            row_result.diff = diff.as_html()
         except Exception as e:
             row_result.import_type = RowResult.IMPORT_TYPE_ERROR
             # There is no point logging a transaction error for each row
