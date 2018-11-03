@@ -354,12 +354,20 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
     def import_obj(self, obj, data, dry_run):
         """
         Traverses every field in this Resource and calls
-        :meth:`~import_export.resources.Resource.import_field`.
-        """
+        :meth:`~import_export.resources.Resource.import_field`. If
+        ``import_field()`` results in a ``ValueError`` being raised for
+        one of more fields, those errors are captured and reraised as a single,
+        multi-field ValidationError."""
+        errors = {}
         for field in self.get_import_fields():
             if isinstance(field.widget, widgets.ManyToManyWidget):
                 continue
-            self.import_field(field, obj, data)
+            try:
+                self.import_field(field, obj, data)
+            except ValueError as e:
+                errors[field.column_name] = ValidationError(str(e), code='invalid')
+        if errors:
+            raise ValidationError(errors)
 
     def save_m2m(self, obj, data, using_transactions, dry_run):
         """
