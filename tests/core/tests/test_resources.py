@@ -297,7 +297,7 @@ class ModelResourceTest(TestCase):
         self.assertEqual(instance.author_email, 'test@example.com')
         self.assertEqual(instance.price, Decimal("10.25"))
 
-    def test_import_data_value_error_includes_field_name(self):
+    def test_import_data_raises_field_specific_validation_errors(self):
         class AuthorResource(resources.ModelResource):
             class Meta:
                 model = Author
@@ -308,12 +308,10 @@ class ModelResourceTest(TestCase):
 
         result = resource.import_data(dataset, raise_errors=False)
 
-        self.assertTrue(result.has_errors())
-        self.assertTrue(result.rows[0].errors)
-        msg = ("Column 'birthday': Enter a valid date/time.")
-        actual = result.rows[0].errors[0].error
-        self.assertIsInstance(actual, ValueError)
-        self.assertEqual(msg, str(actual))
+        self.assertTrue(result.has_validation_errors())
+        self.assertTrue(result.rows[0].validation_errors)
+        self.assertIs(result.rows[0].import_type, results.RowResult.IMPORT_TYPE_INVALID)
+        self.assertIn('birthday', result.rows[0].validation_errors)
 
     def test_import_data_error_saving_model(self):
         row = list(self.dataset.pop())
