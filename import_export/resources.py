@@ -276,18 +276,31 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         else:
             return (self.init_instance(row), True)
 
-    def validate_row_instance(self, instance, row_result, exclude_fields=None, validate_unique=True):
+    def validate_instance(self, instance, widget_validation_errors={}, validate_unique=True):
         """
-        If the ``validate_row_instances`` option is True, validates the
-        instance created for a specific row (by calling its ``full_clean()``
-        method), and adds any resulting validation errors to ``row_result``.
+        Takes any validation errors that may have been raised by
+        :meth:`~import_export.resources.Resource.import_obj`, and combines them
+        with validation errors raised as a result of calling the instance's
+        ``full_clean()`` method. The combined errors are then re-raised as
+        single ValidationError.
+
+        If the ``validate_row_instances`` option is False, the object's
+        ``full_clean()`` will not be called, and only the errors raised by
+        ``import_obj()`` will be reraised.
         """
+        errors = widget_validation_errors.copy()
         if self._meta.validate_row_instances:
             try:
-                instance.full_clean(exclude=exclude_fields, validate_unique=validate_unique)
+                instance.full_clean(
+                    exclude=errors.keys(),
+                    validate_unique=validate_unique,
+                )
             except ValidationError as e:
-                row_result.import_type = RowResult.IMPORT_TYPE_INVALID
-                row_result.validation_errors = e.message_dict
+                for field_name, error_list in e.message_dict.items():
+                    error_list = errors.get(field_name, []) + error_list
+                    errors[field_name] = error_list
+        if errors:
+            raise ValidationError(errors)
 
     def save_instance(self, instance, using_transactions=True, dry_run=False):
         """
