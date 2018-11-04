@@ -276,7 +276,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         else:
             return (self.init_instance(row), True)
 
-    def validate_instance(self, instance, widget_validation_errors={}, validate_unique=True):
+    def validate_instance(self, instance, import_validation_errors={}, validate_unique=True):
         """
         Takes any validation errors that may have been raised by
         :meth:`~import_export.resources.Resource.import_obj`, and combines them
@@ -288,7 +288,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         ``full_clean()`` will not be called, and only the errors raised by
         ``import_obj()`` will be reraised.
         """
-        errors = widget_validation_errors.copy()
+        errors = import_validation_errors.copy()
         if self._meta.validate_row_instances:
             try:
                 instance.full_clean(
@@ -510,18 +510,18 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
             else:
                 try:
                     self.import_obj(instance, row, dry_run)
-                    widget_validation_errors = {}
+                    import_validation_errors = {}
                 except ValidationError as e:
-                    # Any widget validation errors must be passed on to
-                    # validate_obj() below, where they can be combined with
-                    # model instance validation errors.
-                    widget_validation_errors = e.message_dict
+                    # Validation errors from import_obj() are passed on to
+                    # validate_obj(), where they can be combined with model
+                    # instance validation errors if necessary
+                    import_validation_errors = e.message_dict
                 if self.skip_row(instance, original):
                     row_result.import_type = RowResult.IMPORT_TYPE_SKIP
                     # Reduce potential confusion by not highlighting changes
                     diff = self.get_diff_class()(self, instance, new)
                 else:
-                    self.validate_instance(instance, widget_validation_errors)
+                    self.validate_instance(instance, import_validation_errors)
                     self.save_instance(instance, using_transactions, dry_run)
                     self.save_m2m(instance, row, using_transactions, dry_run)
                     # Add object info to RowResult for LogEntry
