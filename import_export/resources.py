@@ -513,7 +513,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
                     import_validation_errors = {}
                 except ValidationError as e:
                     # Validation errors from import_obj() are passed on to
-                    # validate_obj(), where they can be combined with model
+                    # validate_instance(), where they can be combined with model
                     # instance validation errors if necessary
                     import_validation_errors = e.message_dict
                 if self.skip_row(instance, original):
