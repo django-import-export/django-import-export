@@ -518,7 +518,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
                     import_validation_errors = e.message_dict
                 if self.skip_row(instance, original):
                     row_result.import_type = RowResult.IMPORT_TYPE_SKIP
-                    diff.compare_with(self, None, dry_run)
+                    diff.compare_with(self, original, dry_run)
                 else:
                     self.validate_instance(instance, import_validation_errors)
                     self.save_instance(instance, using_transactions, dry_run)
@@ -533,7 +533,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         except ValidationError as e:
             row_result.import_type = RowResult.IMPORT_TYPE_INVALID
             row_result.validation_errors = e.message_dict
-            diff.compare_with(self, None, dry_run)
+            diff.compare_with(self, original, dry_run)
             row_result.diff = diff.as_html()
         except Exception as e:
             row_result.import_type = RowResult.IMPORT_TYPE_ERROR
