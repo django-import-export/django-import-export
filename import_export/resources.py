@@ -378,7 +378,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
             try:
                 self.import_field(field, obj, data)
             except ValueError as e:
-                errors[field.column_name] = ValidationError(str(e), code='invalid')
+                errors[field.attribute] = ValidationError(str(e), code='invalid')
         if errors:
             raise ValidationError(errors)
 
