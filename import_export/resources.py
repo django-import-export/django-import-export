@@ -278,15 +278,15 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
 
     def validate_instance(self, instance, import_validation_errors={}, validate_unique=True):
         """
-        Takes any validation errors that may have been raised by
+        Takes any validation errors that were raised by
         :meth:`~import_export.resources.Resource.import_obj`, and combines them
-        with validation errors raised as a result of calling the instance's
-        ``full_clean()`` method. The combined errors are then re-raised as
-        single ValidationError.
+        with validation errors raised by the instance's ``full_clean()``
+        method. The combined errors are then re-raised as single, multi-field
+        ValidationError.
 
-        If the ``validate_row_instances`` option is False, the object's
-        ``full_clean()`` will not be called, and only the errors raised by
-        ``import_obj()`` will be reraised.
+        If the ``validate_row_instances`` option is False, the instances's
+        ``full_clean()`` method is not called, and only the errors raised by
+        ``import_obj()`` are re-raised.
         """
         errors = import_validation_errors.copy()
         if self._meta.validate_row_instances:
