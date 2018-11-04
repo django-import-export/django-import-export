@@ -118,7 +118,7 @@ class ResourceOptions(object):
     Controls if the result reports skipped rows Default value is True
     """
 
-    validate_row_instances = False
+    clean_model_instances = False
     """
     Controls whether ``instance.full_clean()`` is called during the import
     process to identify potential validation errors for each (non skipped) row.
@@ -284,12 +284,12 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         method. The combined errors are then re-raised as single, multi-field
         ValidationError.
 
-        If the ``validate_row_instances`` option is False, the instances's
+        If the ``clean_model_instances`` option is False, the instances's
         ``full_clean()`` method is not called, and only the errors raised by
         ``import_obj()`` are re-raised.
         """
         errors = import_validation_errors.copy()
-        if self._meta.validate_row_instances:
+        if self._meta.clean_model_instances:
             try:
                 instance.full_clean(
                     exclude=errors.keys(),
