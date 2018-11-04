@@ -518,8 +518,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
                     import_validation_errors = e.message_dict
                 if self.skip_row(instance, original):
                     row_result.import_type = RowResult.IMPORT_TYPE_SKIP
-                    # Reduce potential confusion by not highlighting changes
-                    diff = self.get_diff_class()(self, instance, new)
+                    diff.compare_with(self, None, dry_run)
                 else:
                     self.validate_instance(instance, import_validation_errors)
                     self.save_instance(instance, using_transactions, dry_run)
@@ -527,16 +526,14 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
                     # Add object info to RowResult for LogEntry
                     row_result.object_id = instance.pk
                     row_result.object_repr = force_text(instance)
-                diff.compare_with(self, instance, dry_run)
+                    diff.compare_with(self, instance, dry_run)
 
             row_result.diff = diff.as_html()
             self.after_import_row(row, row_result, **kwargs)
         except ValidationError as e:
             row_result.import_type = RowResult.IMPORT_TYPE_INVALID
             row_result.validation_errors = e.message_dict
-            # Reduce potential confusion by not highlighting changes
-            diff = self.get_diff_class()(self, instance, new)
-            diff.compare_with(self, instance, dry_run)
+            diff.compare_with(self, None, dry_run)
             row_result.diff = diff.as_html()
         except Exception as e:
             row_result.import_type = RowResult.IMPORT_TYPE_ERROR
