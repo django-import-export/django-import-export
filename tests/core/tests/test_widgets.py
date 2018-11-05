@@ -3,7 +3,6 @@ from __future__ import unicode_literals
 
 from decimal import Decimal
 from datetime import date, datetime, time, timedelta
-from unittest import SkipTest
 
 from django.test.utils import override_settings
 from django.test import TestCase
