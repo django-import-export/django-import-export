@@ -29,6 +29,10 @@ class RowResult(object):
         self.import_type = None
 
     @property
+    def is_invalid(self):
+        return bool(self.validation_errors)
+
+    @property
     def field_validation_errors(self):
         """Returns a dictionary of field-specific validation errors for this row."""
         return {
@@ -99,6 +103,11 @@ class Result(object):
             if row.validation_errors:
                 return True
         return False
+
+    def invalid_rows(self):
+        for row in iter(self.rows):
+            if row.is_invalid:
+                yield row
 
     def __iter__(self):
         return iter(self.rows)
