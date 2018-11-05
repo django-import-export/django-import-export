@@ -6,7 +6,6 @@ from datetime import date
 from decimal import Decimal
 from unittest import skip, skipUnless
 
-from django import VERSION
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import IntegrityError, DatabaseError
