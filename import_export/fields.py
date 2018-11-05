@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 
 from . import widgets
 
-from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.core.exceptions import ObjectDoesNotExist
 from django.db.models.manager import Manager
 from django.db.models.fields import NOT_PROVIDED
 from django import VERSION
@@ -65,10 +65,8 @@ class Field(object):
             raise KeyError("Column '%s' not found in dataset. Available "
                            "columns are: %s" % (self.column_name, list(data)))
 
-        try:
-            value = self.widget.clean(value, row=data)
-        except ValueError as e:
-            raise ValidationError(str(e), code="invalid")
+        # If ValueError is raised here, import_obj() will handle it
+        value = self.widget.clean(value, row=data)
 
         if value in self.empty_values and self.default != NOT_PROVIDED:
             if callable(self.default):
