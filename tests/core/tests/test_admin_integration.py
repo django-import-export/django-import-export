@@ -207,7 +207,7 @@ class ImportExportAdminIntegrationTest(TestCase):
         self.assertEqual(child.object_id, str(1))
 
     def test_logentry_creation_with_import_obj_exception(self):
-        # from http://mail.python.org/pipermail/python-dev/2008-January/076194.html
+        # from https://mail.python.org/pipermail/python-dev/2008-January/076194.html
         def monkeypatch_method(cls):
             def decorator(func):
                 setattr(cls, func.__name__, func)
