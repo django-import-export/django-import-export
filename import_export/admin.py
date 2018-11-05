@@ -22,6 +22,7 @@ except ImportError:  # Django<2.0
 from django.conf import settings
 from django.template.defaultfilters import pluralize
 from django.utils.decorators import method_decorator
+from django.utils.module_loading import import_string
 from django.views.decorators.http import require_POST
 
 from .forms import (
@@ -49,15 +50,7 @@ TMP_STORAGE_CLASS = getattr(settings, 'IMPORT_EXPORT_TMP_STORAGE_CLASS',
 
 
 if isinstance(TMP_STORAGE_CLASS, six.string_types):
-    try:
-        # Nod to tastypie's use of importlib.
-        parts = TMP_STORAGE_CLASS.split('.')
-        module_path, class_name = '.'.join(parts[:-1]), parts[-1]
-        module = importlib.import_module(module_path)
-        TMP_STORAGE_CLASS = getattr(module, class_name)
-    except ImportError as e:
-        msg = "Could not import '%s' for import_export setting 'IMPORT_EXPORT_TMP_STORAGE_CLASS'" % TMP_STORAGE_CLASS
-        raise ImportError(msg)
+    TMP_STORAGE_CLASS = import_string(TMP_STORAGE_CLASS)
 
 
 class ImportExportMixinBase(object):
