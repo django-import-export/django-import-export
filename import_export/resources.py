@@ -378,7 +378,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
             try:
                 self.import_field(field, obj, data)
             except ValidationError as e:
-                errors[field.attribute] = e.error_list
+                errors[field.attribute] = e
             except ValueError as e:
                 # TODO: Surface a DeprecationWarning here, advising users to
                 # update custom Field classes to raise ValidationError instead?
