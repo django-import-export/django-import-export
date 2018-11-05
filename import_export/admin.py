@@ -21,6 +21,7 @@ except ImportError:  # Django<2.0
     from django.core.urlresolvers import reverse
 from django.conf import settings
 from django.utils.decorators import method_decorator
+from django.utils.encoding import force_text
 from django.views.decorators.http import require_POST
 
 from .forms import (
@@ -37,10 +38,6 @@ from .results import RowResult
 from .tmp_storages import TempFolderStorage
 from .signals import post_export, post_import
 
-try:
-    from django.utils.encoding import force_text
-except ImportError:
-    from django.utils.encoding import force_unicode as force_text
 
 SKIP_ADMIN_LOG = getattr(settings, 'IMPORT_EXPORT_SKIP_ADMIN_LOG', False)
 TMP_STORAGE_CLASS = getattr(settings, 'IMPORT_EXPORT_TMP_STORAGE_CLASS',

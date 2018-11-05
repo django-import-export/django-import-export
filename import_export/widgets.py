@@ -4,17 +4,12 @@ from __future__ import unicode_literals
 from decimal import Decimal
 from datetime import datetime, date
 from django.utils import datetime_safe, timezone, six
-from django.utils.encoding import smart_text
+from django.utils.encoding import smart_text, force_text
 from django.utils.dateparse import parse_duration
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 import json
 import ast
-
-try:
-    from django.utils.encoding import force_text
-except ImportError:
-    from django.utils.encoding import force_unicode as force_text
 
 
 class Widget(object):
