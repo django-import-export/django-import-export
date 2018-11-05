@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 
 import tablib
+from collections import OrderedDict
 from copy import deepcopy
 from datetime import date
 from decimal import Decimal
@@ -22,11 +23,6 @@ from ..models import (
     Author, Book, Category, Entry, Profile, WithDefault, WithDynamicDefault,
     WithFloatField, Person, Role
 )
-
-try:
-    from collections import OrderedDict
-except ImportError:
-    from django.utils.datastructures import SortedDict as OrderedDict
 
 try:
     from django.utils.encoding import force_text
