@@ -4,6 +4,7 @@ from django.utils.six import moves
 import sys
 import warnings
 import tablib
+from importlib import import_module
 
 try:
     from tablib.compat import xlrd
@@ -33,12 +34,6 @@ except ImportError:
         "import support for 'xlsx' format and openpyxl module is not found."
         warnings.warn(xlsx_warning, ImportWarning)
         XLSX_IMPORT = False
-
-
-try:
-    from importlib import import_module
-except ImportError:
-    from django.utils.importlib import import_module
 
 
 class Format(object):
