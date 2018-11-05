@@ -324,8 +324,7 @@ class ModelResourceTest(TestCase):
         self.assertTrue(result.rows[0].errors)
         actual = result.rows[0].errors[0].error
         self.assertIsInstance(actual, ValueError)
-        self.assertIn("Column 'id': could not convert string to float",
-                      str(actual))
+        self.assertIn("Column 'id': could not convert string to float", str(actual))
 
     def test_import_data_delete(self):
 
