@@ -269,7 +269,7 @@ class SimpleArrayWidget(Widget):
     def render(self, value, obj=None):
         return self.separator.join(six.text_type(v) for v in value)
 
-    
+
 class JSONWidget(Widget):
     """
     Widget for a JSON object (especially required for jsonb fields in PostgreSQL database.)
@@ -310,7 +310,7 @@ class ForeignKeyWidget(Widget):
 
         from import_export import fields, resources
         from import_export.widgets import ForeignKeyWidget
-        
+
         class BookResource(resources.ModelResource):
             author = fields.Field(
                 column_name='author',

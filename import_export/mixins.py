@@ -64,7 +64,7 @@ class ExportViewMixin(object):
 
 
 class ExportViewFormMixin(ExportViewMixin, FormView):
-    def form_valid(self, form): 
+    def form_valid(self, form):
         formats = self.get_export_formats()
         file_format = formats[
             int(form.cleaned_data['file_format'])

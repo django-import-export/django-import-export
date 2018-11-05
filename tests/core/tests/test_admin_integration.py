@@ -64,7 +64,7 @@ class ImportExportAdminIntegrationTest(TestCase):
         response = self.client.post('/admin/core/book/process_import/', data,
                                     follow=True)
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 
+        self.assertContains(response,
             _('Import finished, with {} new and {} updated {}.').format(
                 1, 0, Book._meta.verbose_name_plural)
         )
@@ -101,7 +101,7 @@ class ImportExportAdminIntegrationTest(TestCase):
         response = self.client.post('/admin/core/book/process_import/', data,
                                     follow=True)
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 
+        self.assertContains(response,
             _('Import finished, with {} new and {} updated {}.').format(
                 1, 0, Book._meta.verbose_name_plural)
         )
