@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 
 from . import widgets
 
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models.manager import Manager
 from django.db.models.fields import NOT_PROVIDED
 from django import VERSION
@@ -68,7 +68,7 @@ class Field(object):
         try:
             value = self.widget.clean(value, row=data)
         except ValueError as e:
-            raise ValueError("Column '%s': %s" % (self.column_name, e))
+            raise ValidationError(str(e), code="invalid")
 
         if value in self.empty_values and self.default != NOT_PROVIDED:
             if callable(self.default):
