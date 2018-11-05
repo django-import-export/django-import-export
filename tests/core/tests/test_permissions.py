@@ -2,18 +2,10 @@ from __future__ import unicode_literals
 
 import os.path
 
-from django.contrib.auth import get_permission_codename
 from django.contrib.auth.models import Permission
 from django.test.utils import override_settings
 from django.test.testcases import TestCase
 from django.contrib.auth.models import User
-from django.core.files.uploadedfile import SimpleUploadedFile
-from django.utils.translation import ugettext_lazy as _
-from django.contrib.admin.models import LogEntry
-from tablib import Dataset
-
-from core.admin import BookAdmin, AuthorAdmin, BookResource
-from core.models import Category, Parent, Book
 
 
 class ImportExportPermissionTest(TestCase):

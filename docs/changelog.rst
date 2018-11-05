@@ -17,7 +17,7 @@ Changelog
 
 - JSONWidget for jsonb fields (#803)
 
-- Add ExportActionMixin (#809) 
+- Add ExportActionMixin (#809)
 
 - Add Import Export Permissioning #608 (#804)
 
@@ -166,7 +166,7 @@ Changelog
 
 - Append rows to Result object via function call to allow overriding (#462)
 
-- Add get_resource_kwargs to allow passing request to resource (#457) 
+- Add get_resource_kwargs to allow passing request to resource (#457)
 
 - Expose Django user to get_export_data() and export() (#447)
 

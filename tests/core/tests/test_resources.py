@@ -1,12 +1,12 @@
 from __future__ import unicode_literals
 
 import tablib
+from collections import OrderedDict
 from copy import deepcopy
 from datetime import date
 from decimal import Decimal
 from unittest import skip, skipUnless
 
-from django import VERSION
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import IntegrityError, DatabaseError
@@ -14,6 +14,7 @@ from django.db.models import Count
 from django.db.models.fields import FieldDoesNotExist
 from django.test import TestCase, TransactionTestCase, skipUnlessDBFeature
 from django.utils.html import strip_tags
+from django.utils.encoding import force_text
 
 from import_export import fields, resources, results, widgets
 from import_export.instance_loaders import ModelInstanceLoader
@@ -23,16 +24,6 @@ from ..models import (
     Author, Book, Category, Entry, Profile, WithDefault, WithDynamicDefault,
     WithFloatField, Person, Role
 )
-
-try:
-    from collections import OrderedDict
-except ImportError:
-    from django.utils.datastructures import SortedDict as OrderedDict
-
-try:
-    from django.utils.encoding import force_text
-except ImportError:
-    from django.utils.encoding import force_unicode as force_text
 
 
 class MyResource(resources.Resource):

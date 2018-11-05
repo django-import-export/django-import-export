@@ -9,7 +9,6 @@ from copy import deepcopy
 
 from diff_match_patch import diff_match_patch
 
-from django import VERSION
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.core.management.color import no_style
@@ -19,6 +18,7 @@ from django.db.models.query import QuerySet
 from django.db.transaction import TransactionManagementError
 from django.utils import six
 from django.utils.safestring import mark_safe
+from django.utils.encoding import force_text
 
 from . import widgets
 from .fields import Field
@@ -34,10 +34,6 @@ except ImportError:
 
 from django.db.models.fields.related import ForeignObjectRel
 
-try:
-    from django.utils.encoding import force_text
-except ImportError:
-    from django.utils.encoding import force_unicode as force_text
 
 logger = logging.getLogger(__name__)
 # Set default logging handler to avoid "No handler found" warnings.

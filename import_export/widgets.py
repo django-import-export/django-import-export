@@ -4,17 +4,12 @@ from __future__ import unicode_literals
 from decimal import Decimal
 from datetime import datetime, date
 from django.utils import datetime_safe, timezone, six
-from django.utils.encoding import smart_text
+from django.utils.encoding import smart_text, force_text
 from django.utils.dateparse import parse_duration
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 import json
 import ast
-
-try:
-    from django.utils.encoding import force_text
-except ImportError:
-    from django.utils.encoding import force_unicode as force_text
 
 
 class Widget(object):
@@ -269,7 +264,7 @@ class SimpleArrayWidget(Widget):
     def render(self, value, obj=None):
         return self.separator.join(six.text_type(v) for v in value)
 
-    
+
 class JSONWidget(Widget):
     """
     Widget for a JSON object (especially required for jsonb fields in PostgreSQL database.)
@@ -310,7 +305,7 @@ class ForeignKeyWidget(Widget):
 
         from import_export import fields, resources
         from import_export.widgets import ForeignKeyWidget
-        
+
         class BookResource(resources.ModelResource):
             author = fields.Field(
                 column_name='author',

@@ -4,6 +4,7 @@ from django.utils.six import moves
 import sys
 import warnings
 import tablib
+from importlib import import_module
 
 try:
     from tablib.compat import xlrd
@@ -33,12 +34,6 @@ except ImportError:
         "import support for 'xlsx' format and openpyxl module is not found."
         warnings.warn(xlsx_warning, ImportWarning)
         XLSX_IMPORT = False
-
-
-try:
-    from importlib import import_module
-except ImportError:
-    from django.utils.importlib import import_module
 
 
 class Format(object):
@@ -77,7 +72,7 @@ class Format(object):
 
     def get_content_type(self):
         # For content types see
-        # http://www.iana.org/assignments/media-types/media-types.xhtml
+        # https://www.iana.org/assignments/media-types/media-types.xhtml
         return 'application/octet-stream'
 
     def can_import(self):
@@ -156,7 +151,7 @@ class JSON(TextFormat):
 
 class YAML(TextFormat):
     TABLIB_MODULE = 'tablib.formats._yaml'
-    # See http://stackoverflow.com/questions/332129/yaml-mime-type
+    # See https://stackoverflow.com/questions/332129/yaml-mime-type
     CONTENT_TYPE = 'text/yaml'
 
 
