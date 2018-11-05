@@ -14,6 +14,7 @@ from django.db.models import Count
 from django.db.models.fields import FieldDoesNotExist
 from django.test import TestCase, TransactionTestCase, skipUnlessDBFeature
 from django.utils.html import strip_tags
+from django.utils.encoding import force_text
 
 from import_export import fields, resources, results, widgets
 from import_export.instance_loaders import ModelInstanceLoader
@@ -28,11 +29,6 @@ try:
     from collections import OrderedDict
 except ImportError:
     from django.utils.datastructures import SortedDict as OrderedDict
-
-try:
-    from django.utils.encoding import force_text
-except ImportError:
-    from django.utils.encoding import force_unicode as force_text
 
 
 class MyResource(resources.Resource):
