@@ -14,7 +14,7 @@ django-import-export
     :alt: Current version on PyPi
 
 .. image:: http://readthedocs.org/projects/django-import-export/badge/?version=stable
-    :target: http://django-import-export.readthedocs.io/en/stable/
+    :target: https://django-import-export.readthedocs.io/en/stable/
     :alt: Documentation
 
 django-import-export is a Django application and library for importing
@@ -36,7 +36,7 @@ Features:
 .. image:: docs/_static/images/django-import-export-change.png
 
 
-* Documentation: http://django-import-export.readthedocs.io/en/stable/
+* Documentation: https://django-import-export.readthedocs.io/en/stable/
 * GitHub: https://github.com/django-import-export/django-import-export/
 * Free software: BSD license
 * PyPI: https://pypi.org/project/django-import-export/

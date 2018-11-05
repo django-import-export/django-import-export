@@ -1,12 +1,12 @@
 from __future__ import unicode_literals
 
 import tablib
+from collections import OrderedDict
 from copy import deepcopy
 from datetime import date
 from decimal import Decimal
 from unittest import skip, skipUnless
 
-from django import VERSION
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import IntegrityError, DatabaseError
@@ -24,11 +24,6 @@ from ..models import (
     Author, Book, Category, Entry, Profile, WithDefault, WithDynamicDefault,
     WithFloatField, Person, Role
 )
-
-try:
-    from collections import OrderedDict
-except ImportError:
-    from django.utils.datastructures import SortedDict as OrderedDict
 
 
 class MyResource(resources.Resource):

@@ -9,7 +9,6 @@ from copy import deepcopy
 
 from diff_match_patch import diff_match_patch
 
-from django import VERSION
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.core.management.color import no_style

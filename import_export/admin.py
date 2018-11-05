@@ -20,7 +20,6 @@ try:
 except ImportError:  # Django<2.0
     from django.core.urlresolvers import reverse
 from django.conf import settings
-from django.template.defaultfilters import pluralize
 from django.utils.decorators import method_decorator
 from django.utils.encoding import force_text
 from django.views.decorators.http import require_POST
