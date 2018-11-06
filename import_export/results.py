@@ -27,6 +27,7 @@ class RowResult(object):
         self.validation_errors = {}
         self.diff = None
         self.import_type = None
+        self.raw_values = {}
 
     @property
     def is_invalid(self):

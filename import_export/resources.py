@@ -488,6 +488,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
             will be rolled back.
         """
         row_result = self.get_row_result_class()()
+        row_result.raw_values = row
         try:
             self.before_import_row(row, **kwargs)
             instance, new = self.get_or_init_instance(instance_loader, row)
@@ -533,8 +534,6 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         except ValidationError as e:
             row_result.import_type = RowResult.IMPORT_TYPE_INVALID
             row_result.validation_errors = e.message_dict
-            diff.compare_with(self, instance, dry_run)
-            row_result.diff = diff.as_html()
 
         except Exception as e:
             row_result.import_type = RowResult.IMPORT_TYPE_ERROR
