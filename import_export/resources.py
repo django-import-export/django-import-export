@@ -533,8 +533,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
 
         except ValidationError as e:
             row_result.import_type = RowResult.IMPORT_TYPE_INVALID
-            row_result.validation_errors = e.message_dict
-
+            row_result.validation_error = e
         except Exception as e:
             row_result.import_type = RowResult.IMPORT_TYPE_ERROR
             # There is no point logging a transaction error for each row
@@ -608,7 +607,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         if collect_failed_rows:
             result.add_dataset_headers(dataset.headers)
 
-        for row in dataset.dict:
+        for row_number, row in enumerate(dataset.dict, 1):
             with atomic_if_using_transaction(using_transactions):
                 row_result = self.import_row(
                     row,
@@ -618,11 +617,18 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
                     **kwargs
                 )
             result.increment_row_result_total(row_result)
+
             if row_result.errors:
                 if collect_failed_rows:
                     result.append_failed_row(row, row_result.errors[0])
                 if raise_errors:
                     raise row_result.errors[-1].error
+            elif row_result.validation_error:
+                result.append_invalid_row(row_number, row, row_result.validation_error)
+                if collect_failed_rows:
+                    result.append_failed_row(row, row_result.validation_error)
+                if raise_errors:
+                    raise row_result.validation_error
             if (row_result.import_type != RowResult.IMPORT_TYPE_SKIP or
                     self._meta.report_skipped):
                 result.append_row_result(row_result)
