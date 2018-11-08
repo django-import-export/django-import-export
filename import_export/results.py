@@ -71,6 +71,7 @@ class Result(object):
         self.base_errors = []
         self.diff_headers = []
         self.rows = []  # RowResults
+        self.invalid_rows = []  # InvalidRow
         self.failed_dataset = Dataset()
         self.totals = OrderedDict([(RowResult.IMPORT_TYPE_NEW, 0),
                                    (RowResult.IMPORT_TYPE_UPDATE, 0),
@@ -94,6 +95,14 @@ class Result(object):
         row_values.append(str(error.error))
         self.failed_dataset.append(row_values)
 
+    def append_invalid_row(self, number, row, validation_error):
+        row_values = [row.get(header, '') for header in self.diff_headers]
+        self.invalid_rows.append(InvalidRow(
+            number=number,
+            validation_error=validation_error,
+            values=row_values,
+        ))
+
     def increment_row_result_total(self, row_result):
         if row_result.import_type:
             self.totals[row_result.import_type] += 1
@@ -110,15 +119,7 @@ class Result(object):
     def has_validation_errors(self):
         """Returns a boolean indicating whether the import process resulted in
         any validation errors for this result."""
-        for row in self.rows:
-            if row.validation_errors:
-                return True
-        return False
-
-    def invalid_rows(self):
-        for row in iter(self.rows):
-            if row.is_invalid:
-                yield row
+        return bool(self.invalid_rows)
 
     def __iter__(self):
         return iter(self.rows)
