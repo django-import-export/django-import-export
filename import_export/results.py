@@ -33,24 +33,35 @@ class RowResult(object):
     def is_invalid(self):
         return bool(self.validation_errors)
 
+
+class InvalidRow(object):
+
+    def __init__(self, number, validation_error, values):
+        """A row from that resulted in one or more ``ValidationError`` being
+        raised during import."""
+        self.number = number
+        self.error = validation_error
+        self.error_dict = validation_error.message_dict
+        self.values = values
+
     @property
-    def field_validation_errors(self):
+    def field_specific_errors(self):
         """Returns a dictionary of field-specific validation errors for this row."""
         return {
-            key: value for key, value in self.validation_errors.items()
+            key: value for key, value in self.error_dict.items()
             if key != NON_FIELD_ERRORS
         }
 
     @property
-    def non_field_validation_errors(self):
-        """Returns a tuple of non field-specific validation errors for this row."""
-        return self.validation_errors.get(NON_FIELD_ERRORS, ())
+    def non_field_specific_errors(self):
+        """Returns a list of non field-specific validation errors for this row."""
+        return self.error_dict.get(NON_FIELD_ERRORS, [])
 
     @property
-    def validation_error_count(self):
+    def error_count(self):
         """Returns the total number of validation errors for this row."""
         count = 0
-        for error_list in self.validation_errors.values():
+        for error_list in self.error_dict.values():
             count += len(error_list)
         return count
 
