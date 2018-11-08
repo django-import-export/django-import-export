@@ -24,14 +24,10 @@ class RowResult(object):
 
     def __init__(self):
         self.errors = []
-        self.validation_errors = {}
+        self.validation_error = None
         self.diff = None
         self.import_type = None
         self.raw_values = {}
-
-    @property
-    def is_invalid(self):
-        return bool(self.validation_errors)
 
 
 class InvalidRow(object):
