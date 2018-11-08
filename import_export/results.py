@@ -35,10 +35,9 @@ class RowResult(object):
 
 
 class InvalidRow(object):
+    """A row that resulted in one or more ``ValidationError`` being raised during import."""
 
     def __init__(self, number, validation_error, values):
-        """A row from that resulted in one or more ``ValidationError`` being
-        raised during import."""
         self.number = number
         self.error = validation_error
         self.error_dict = validation_error.message_dict
