@@ -88,7 +88,10 @@ class Result(object):
 
     def append_failed_row(self, row, error):
         row_values = [v for (k, v) in row.items()]
-        row_values.append(str(error.error))
+        try:
+            row_values.append(str(error.error))
+        except AttributeError:
+            row_values.append(str(error))
         self.failed_dataset.append(row_values)
 
     def append_invalid_row(self, number, row, validation_error):
