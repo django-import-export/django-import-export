@@ -11,6 +11,57 @@
 {% endblock %}
 
 {% block content %}
+  {% if result and result.has_validation_errors %}
+    <h2>{% trans "Validation failed for the following rows" %}</h2>
+      
+    <p>{% trans "Where possible, please correct these errors in your data, then re-upload it using the form below." %}</p>
+    
+    <table class="import-preview">
+      <tr>
+        <th>{% trans "Row" %}</th>
+        <th>{% trans "Errors" %}</th>
+        {% for field in result.diff_headers %}
+          <th>{{ field }}</th>
+        {% endfor %}
+      </tr>
+      {% for row in result.invalid_rows %}
+        <tr>
+          <td>{{ row.number }} </td>
+          <td class="errors">
+            <span class="validation-error-count">{{ row.error_count }}</span> 
+            <div class="validation-error-container">
+              <ul class="validation-error-list">
+                {% for field_name, error_list in row.field_specific_errors.items %}
+                  <li>
+                      <span class="validation-error-field-label">{{ field_name }}</span>
+                      <ul>
+                        {% for error in error_list %}
+                          <li>{{ error }}</li>
+                        {% endfor %}
+                      </ul>
+                  </li>
+                {% endfor %}
+                {% if row.non_field_specific_errors %}
+                  <li>
+                    <span class="validation-error-field-label">{% trans "Non field specific" %}</span>
+                    <ul>
+                      {% for error in row.non_field_specific_errors %}
+                        <li>{{ error }}</li>
+                      {% endfor %}
+                    </ul>
+                  </li>
+                {% endif %}
+              </ul>
+            </div>
+          </td>
+          {% for field in row.values %}
+            <td>{{ field }}</td>
+          {% endfor %}
+        </tr>
+      {% endfor %}
+    </table>
+  {% endif %}
+
   {% if confirm_form %}
     <form action="{% url opts|admin_urlname:"process_import" %}" method="POST">
       {% csrf_token %}
@@ -76,58 +127,7 @@
         {% endfor %}
       </ul>
 
-    {% elif result.has_validation_errors %}
-      
-      <h2>{% trans "The following rows failed validation" %}</h2>
-      
-      <p>{% trans "Where possible, please correct these errors in your data, then re-upload it using the form above." %}</p>
-      
-      <table class="import-preview">
-        <tr>
-          <th>{% trans "Row" %}</th>
-          <th>{% trans "Errors" %}</th>
-          {% for field in result.diff_headers %}
-            <th>{{ field }}</th>
-          {% endfor %}
-        </tr>
-        {% for row in result.invalid_rows %}
-          <tr>
-            <td>{{ row.number }} </td>
-            <td class="errors">
-              <span class="validation-error-count">{{ row.error_count }}</span> 
-              <div class="validation-error-container">
-                <ul class="validation-error-list">
-                  {% for field_name, error_list in row.field_specific_errors.items %}
-                    <li>
-                        <span class="validation-error-field-label">{{ field_name }}</span>
-                        <ul>
-                          {% for error in error_list %}
-                            <li>{{ error }}</li>
-                          {% endfor %}
-                        </ul>
-                    </li>
-                  {% endfor %}
-                  {% if row.non_field_specific_errors %}
-                    <li>
-                      <span class="validation-error-field-label">{% trans "Non field specific" %}</span>
-                      <ul>
-                        {% for error in row.non_field_specific_errors %}
-                          <li>{{ error }}</li>
-                        {% endfor %}
-                      </ul>
-                    </li>
-                  {% endif %}
-                </ul>
-              </div>
-            </td>
-            {% for field in row.values %}
-              <td>{{ field }}</td>
-            {% endfor %}
-          </tr>
-        {% endfor %}
-      </table>
-
-    {% else %}
+    {% elif result.has_valid_rows %}
 
       <h2>{% trans "Preview" %}</h2>
 
