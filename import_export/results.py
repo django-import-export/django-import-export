@@ -22,6 +22,13 @@ class RowResult(object):
     IMPORT_TYPE_ERROR = 'error'
     IMPORT_TYPE_INVALID = 'invalid'
 
+    valid_import_types = frozenset([
+        IMPORT_TYPE_NEW,
+        IMPORT_TYPE_UPDATE,
+        IMPORT_TYPE_DELETE,
+        IMPORT_TYPE_SKIP,
+    ])
+
     def __init__(self):
         self.errors = []
         self.validation_error = None
@@ -78,10 +85,9 @@ class Result(object):
         self.total_rows = 0
 
     def valid_rows(self):
-        ignore_statuses = frozenset([RowResult.IMPORT_TYPE_ERROR,
-                                     RowResult.IMPORT_TYPE_INVALID])
         return [
-            r for r in self.rows if r.import_status not in ignore_statuses
+            r for r in self.rows
+            if r.import_type not in RowResult.valid_import_types
         ]
 
     def append_row_result(self, row_result):
