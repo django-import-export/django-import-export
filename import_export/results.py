@@ -133,5 +133,12 @@ class Result(object):
         any validation errors for this result."""
         return bool(self.invalid_rows)
 
+    def has_valid_rows(self):
+        """Returns a boolean indicating whether the import process managed to
+        create at least one valid result (without validation or other errors)"""
+        for import_type in RowResult.valid_import_types:
+            if self.totals[import_type]:
+                return True
+
     def __iter__(self):
         return iter(self.rows)
