@@ -607,7 +607,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         if collect_failed_rows:
             result.add_dataset_headers(dataset.headers)
 
-        for row_number, row in enumerate(dataset.dict, 1):
+        for i, row in enumerate(dataset.dict, 1):
             with atomic_if_using_transaction(using_transactions):
                 row_result = self.import_row(
                     row,
@@ -624,7 +624,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
                 if raise_errors:
                     raise row_result.errors[-1].error
             elif row_result.validation_error:
-                result.append_invalid_row(row_number, row, row_result.validation_error)
+                result.append_invalid_row(i, row, row_result.validation_error)
                 if collect_failed_rows:
                     result.append_failed_row(row, row_result.validation_error)
                 if raise_errors:
