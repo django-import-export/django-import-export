@@ -108,11 +108,10 @@ class Result(object):
         self.failed_dataset.append(row_values)
 
     def append_invalid_row(self, number, row, validation_error):
-        row_values = [row.get(header, '') for header in self.diff_headers]
         self.invalid_rows.append(InvalidRow(
             number=number,
             validation_error=validation_error,
-            values=row_values,
+            values=row.values(),
         ))
 
     def increment_row_result_total(self, row_result):
