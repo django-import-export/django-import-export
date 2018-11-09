@@ -17,13 +17,16 @@
     <p>{% trans "Where possible, please correct these errors in your data, then re-upload it using the form below." %}</p>
     
     <table class="import-preview">
-      <tr>
-        <th>{% trans "Row" %}</th>
-        <th>{% trans "Errors" %}</th>
-        {% for field in result.diff_headers %}
-          <th>{{ field }}</th>
-        {% endfor %}
-      </tr>
+      <thead>
+        <tr>
+          <th>{% trans "Row" %}</th>
+          <th>{% trans "Errors" %}</th>
+          {% for field in result.diff_headers %}
+            <th>{{ field }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
       {% for row in result.invalid_rows %}
         <tr>
           <td>{{ row.number }} </td>
@@ -59,6 +62,7 @@
           {% endfor %}
         </tr>
       {% endfor %}
+      </tbody>
     </table>
   {% endif %}
 
