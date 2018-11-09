@@ -77,6 +77,13 @@ class Result(object):
                                    (RowResult.IMPORT_TYPE_INVALID, 0)])
         self.total_rows = 0
 
+    def valid_rows(self):
+        ignore_statuses = frozenset([RowResult.IMPORT_TYPE_ERROR,
+                                     RowResult.IMPORT_TYPE_INVALID])
+        return [
+            r for r in self.rows if r.import_status not in ignore_statuses
+        ]
+
     def append_row_result(self, row_result):
         self.rows.append(row_result)
 
