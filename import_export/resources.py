@@ -488,7 +488,6 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
             will be rolled back.
         """
         row_result = self.get_row_result_class()()
-        row_result.raw_values = row
         try:
             self.before_import_row(row, **kwargs)
             instance, new = self.get_or_init_instance(instance_loader, row)
