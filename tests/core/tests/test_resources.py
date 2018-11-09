@@ -309,9 +309,8 @@ class ModelResourceTest(TestCase):
         result = resource.import_data(dataset, raise_errors=False)
 
         self.assertTrue(result.has_validation_errors())
-        self.assertTrue(result.rows[0].validation_errors)
         self.assertIs(result.rows[0].import_type, results.RowResult.IMPORT_TYPE_INVALID)
-        self.assertIn('birthday', result.rows[0].validation_errors)
+        self.assertIn('birthday', result.result.invalid_rows[0].field_specific_errors)
 
     def test_import_data_error_saving_model(self):
         row = list(self.dataset.pop())
