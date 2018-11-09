@@ -87,7 +87,7 @@ class Result(object):
     def valid_rows(self):
         return [
             r for r in self.rows
-            if r.import_type not in RowResult.valid_import_types
+            if r.import_type in RowResult.valid_import_types
         ]
 
     def append_row_result(self, row_result):
@@ -137,6 +137,7 @@ class Result(object):
         """Returns a boolean indicating whether the import process managed to
         create at least one valid result (without validation or other errors)"""
         for import_type in RowResult.valid_import_types:
+            print(import_type)
             if self.totals[import_type]:
                 return True
 
