@@ -1,4 +1,4 @@
-.import-preview .import-type {
+.import-preview .errors {
   position: relative;
 }
 
@@ -7,9 +7,11 @@
   background-color: #e40000;
   border-radius: 6px;
   color: white;
+  font-size: 0.9em;
+  position: relative;
   font-weight: bold;
-  padding: 3px 6px 4px;
-  margin: -3px 0;
+  margin-top: -2px;
+  padding: 0.2em 0.4em;
 }
 
 .validation-error-container {
@@ -17,14 +19,17 @@
   opacity: 0;
   pointer-events: none;
   background-color: #ffc1c1;
-  padding: 12px 15px 10px;
-  left: 35px;
-  top: 100%;
-  margin: -6px 0 20px 0;
-  width: 245px;
-  z-index: 1;
+  padding: 14px 15px 10px;
+  left: 16px;
+  top: 25px;
+  margin: 0 0 20px 0;
+  width: 200px;
+  z-index: 2;
 }
 
+.import-preview td:hover .validation-error-count {
+  z-index: 3;
+}
 .import-preview td:hover .validation-error-container {
   opacity: 1;
   pointer-events: auto;
@@ -46,13 +51,16 @@
 }
 
 .validation-error-list > li > ul > li {
-  border-left: 2px solid #e40000;
-  padding: 2px 0 2px 10px;
-  margin: 0 0 2px;
+  padding: 0;
+  margin: 0 0 10px;
+  line-height: 1.28em;
 }
 
 .validation-error-field-label {
+  display: block;
+  border-bottom: 1px solid #e40000;
+  color: #e40000;
   text-transform: uppercase;
   font-weight: bold;
-  font-size: 0.9em;
+  font-size: 0.85em;
 }
