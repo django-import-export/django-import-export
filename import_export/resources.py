@@ -7,7 +7,7 @@ import traceback
 from collections import OrderedDict
 from copy import deepcopy
 
-from diff_match_patch import diff_match_patch
+from diff_match_patch import *
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
