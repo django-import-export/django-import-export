@@ -329,7 +329,7 @@ class ModelResourceTest(TestCase):
             def widget_from_django_field(cls, f, default=widgets.Widget):
                 if f.name == 'name':
                     return HarshRussianWidget
-                return super(AuthorResource, cls).widget_from_django_field(f, default)
+                return widgets.CharWidget
 
         resource = AuthorResource()
         dataset = tablib.Dataset(headers=['id', 'name', 'birthday'])
