@@ -322,14 +322,14 @@ class ModelResourceTest(TestCase):
 
         class AuthorResource(resources.ModelResource):
 
+            class Meta:
+                model = Author
+
             @classmethod
             def widget_from_django_field(cls, f, default=widgets.Widget):
                 if f.name == 'name':
                     return HarshRussianWidget
                 return super(AuthorResource, cls).widget_from_django_field(f, default)
-
-            class Meta:
-                model = Author
 
         resource = AuthorResource()
         dataset = tablib.Dataset(headers=['id', 'name', 'birthday'])
