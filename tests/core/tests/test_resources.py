@@ -321,6 +321,7 @@ class ModelResourceTest(TestCase):
                 raise ValueError(russian_valueerror_msg)
 
         class AuthorResource(resources.ModelResource):
+
             @classmethod
             def widget_from_django_field(cls, f, default=widgets.Widget):
                 if f.name == 'name':
