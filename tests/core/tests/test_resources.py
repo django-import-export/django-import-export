@@ -169,6 +169,23 @@ class WithDefaultResource(resources.ModelResource):
         fields = ('name',)
 
 
+class HarshRussianWidget(widgets.CharWidget):
+    def clean(self, value, row=None, *args, **kwargs):
+        raise ValueError("Ова вриједност је страшна!")
+
+
+class AuthorResourceWithCustomWidget(resources.ModelResource):
+
+    class Meta:
+        model = Author
+
+    @classmethod
+    def widget_from_django_field(cls, f, default=widgets.Widget):
+        if f.name == 'name':
+            return HarshRussianWidget
+        return super(AuthorResourceWithCustomWidget, cls).widget_from_django_field(f, default=widgets.Widget)
+
+
 class ModelResourceTest(TestCase):
     def setUp(self):
         self.resource = BookResource()
@@ -299,10 +316,6 @@ class ModelResourceTest(TestCase):
         self.assertEqual(instance.price, Decimal("10.25"))
 
     def test_import_data_raises_field_specific_validation_errors(self):
-        class AuthorResource(resources.ModelResource):
-            class Meta:
-                model = Author
-
         resource = AuthorResource()
         dataset = tablib.Dataset(headers=['id', 'name', 'birthday'])
         dataset.append(['', 'A.A.Milne', '1882test-01-18'])
@@ -313,23 +326,8 @@ class ModelResourceTest(TestCase):
         self.assertIs(result.rows[0].import_type, results.RowResult.IMPORT_TYPE_INVALID)
         self.assertIn('birthday', result.invalid_rows[0].field_specific_errors)
 
-    def test_import_data_raises_unicode_validation_errors_without_erroring(self):
-        russian_valueerror_msg = "Ова вриједност је страшна!"
-
-        class HarshRussianWidget(widgets.CharWidget):
-            def clean(self, value, row=None, *args, **kwargs):
-                raise ValueError(russian_valueerror_msg)
-
-        class AuthorResource(resources.ModelResource):
-
-            class Meta:
-                model = Author
-
-            @classmethod
-            def widget_from_django_field(cls, f, default=widgets.Widget):
-                return HarshRussianWidget
-
-        resource = AuthorResource()
+    def test_import_data_handles_widget_valueerrors_with_unicode_messages(self):
+        resource = AuthorResourceWithCustomWidget()
         dataset = tablib.Dataset(headers=['id', 'name', 'birthday'])
         dataset.append(['', 'A.A.Milne', '1882-01-18'])
 
@@ -339,7 +337,7 @@ class ModelResourceTest(TestCase):
         self.assertIs(result.rows[0].import_type, results.RowResult.IMPORT_TYPE_INVALID)
         self.assertEqual(
             result.invalid_rows[0].field_specific_errors['name'],
-            [russian_valueerror_msg]
+            ["Ова вриједност је страшна!"]
         )
 
     def test_import_data_error_saving_model(self):
