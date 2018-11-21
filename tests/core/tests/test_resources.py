@@ -317,7 +317,7 @@ class ModelResourceTest(TestCase):
         russian_valueerror_msg = "Ова вриједност је страшна!"
 
         class HarshRussianWidget(widgets.CharWidget):
-            def clean(self, *args, **kwargs):
+            def clean(self, value, row=None, *args, **kwargs):
                 raise ValueError(russian_valueerror_msg)
 
         class AuthorResource(resources.ModelResource):
@@ -327,9 +327,7 @@ class ModelResourceTest(TestCase):
 
             @classmethod
             def widget_from_django_field(cls, f, default=widgets.Widget):
-                if f.name == 'name':
-                    return HarshRussianWidget
-                return widgets.CharWidget
+                return HarshRussianWidget
 
         resource = AuthorResource()
         dataset = tablib.Dataset(headers=['id', 'name', 'birthday'])
