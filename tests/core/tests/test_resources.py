@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
 import tablib
@@ -311,6 +312,36 @@ class ModelResourceTest(TestCase):
         self.assertTrue(result.has_validation_errors())
         self.assertIs(result.rows[0].import_type, results.RowResult.IMPORT_TYPE_INVALID)
         self.assertIn('birthday', result.invalid_rows[0].field_specific_errors)
+
+    def test_import_data_raises_unicode_validation_errors_without_erroring(self):
+        russian_valueerror_msg = "Ова вриједност је страшна!"
+
+        class HarshRussianWidget(widgets.CharWidget):
+            def clean(self, *args, **kwargs):
+                raise ValueError(russian_valueerror_msg)
+
+        class AuthorResource(resources.ModelResource):
+            @classmethod
+            def widget_from_django_field(cls, f, default=widgets.Widget):
+                if f.name == 'name':
+                    return HarshRussianWidget
+                return super(AuthorResource, cls).widget_from_django_field(f, default)
+
+            class Meta:
+                model = Author
+
+        resource = AuthorResource()
+        dataset = tablib.Dataset(headers=['id', 'name', 'birthday'])
+        dataset.append(['', 'A.A.Milne', '1882-01-18'])
+
+        result = resource.import_data(dataset, raise_errors=False)
+
+        self.assertTrue(result.has_validation_errors())
+        self.assertIs(result.rows[0].import_type, results.RowResult.IMPORT_TYPE_INVALID)
+        self.assertEqual(
+            result.invalid_rows[0].field_specific_errors['name'],
+            [russian_valueerror_msg]
+        )
 
     def test_import_data_error_saving_model(self):
         row = list(self.dataset.pop())
