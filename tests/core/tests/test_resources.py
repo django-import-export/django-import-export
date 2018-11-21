@@ -14,6 +14,7 @@ from django.db import IntegrityError, DatabaseError
 from django.db.models import Count
 from django.db.models.fields import FieldDoesNotExist
 from django.test import TestCase, TransactionTestCase, skipUnlessDBFeature
+from django.utils import six
 from django.utils.html import strip_tags
 
 from import_export import fields, resources, results, widgets
@@ -183,7 +184,13 @@ class AuthorResourceWithCustomWidget(resources.ModelResource):
     def widget_from_django_field(cls, f, default=widgets.Widget):
         if f.name == 'name':
             return HarshRussianWidget
-        return super(AuthorResourceWithCustomWidget, cls).widget_from_django_field(f, default=widgets.Widget)
+        result = default
+        internal_type = f.get_internal_type() if callable(getattr(f, "get_internal_type", None)) else ""
+        if internal_type in cls.WIDGETS_MAP:
+            result = cls.WIDGETS_MAP[internal_type]
+            if isinstance(result, six.string_types):
+                result = getattr(cls, result)(f)
+        return result
 
 
 class ModelResourceTest(TestCase):
