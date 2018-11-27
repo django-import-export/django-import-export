@@ -347,6 +347,63 @@ class ModelResourceTest(TestCase):
             ["Ова вриједност је страшна!"]
         )
 
+    def test_model_validation_errors_not_raised_when_clean_model_instances_is_false(self):
+
+        class TestResource(resources.ModelResource):
+            class Meta:
+                model = Author
+                clean_model_instances = False
+
+        resource = TestResource()
+        dataset = tablib.Dataset(headers=['id', 'name'])
+        dataset.append(['', '123'])
+
+        result = resource.import_data(dataset, raise_errors=False)
+        self.assertFalse(result.has_validation_errors())
+        self.assertEqual(len(result.invalid_rows), 0)
+
+    def test_model_validation_errors_raised_when_clean_model_instances_is_true(self):
+
+        class TestResource(resources.ModelResource):
+            class Meta:
+                model = Author
+                clean_model_instances = True
+
+        resource = TestResource()
+        dataset = tablib.Dataset(headers=['id', 'name'])
+        dataset.append(['', '123'])
+
+        result = resource.import_data(dataset, raise_errors=False)
+        self.assertTrue(result.has_validation_errors())
+        self.assertEqual(result.invalid_rows[0].error_count, 1)
+        self.assertEqual(
+            result.invalid_rows[0].field_specific_errors,
+            {'name': ["'123' is not a valid value"]}
+        )
+
+    def test_known_invalid_fields_are_excluded_from_model_instance_cleaning(self):
+
+        # The custom widget on the parent class should complain about
+        # 'name' first, preventing Author.full_clean() from raising the
+        # error as it does in the previous test
+
+        class TestResource(AuthorResourceWithCustomWidget):
+            class Meta:
+                model = Author
+                clean_model_instances = True
+
+        resource = TestResource()
+        dataset = tablib.Dataset(headers=['id', 'name'])
+        dataset.append(['', '123'])
+
+        result = resource.import_data(dataset, raise_errors=False)
+        self.assertTrue(result.has_validation_errors())
+        self.assertEqual(result.invalid_rows[0].error_count, 1)
+        self.assertEqual(
+            result.invalid_rows[0].field_specific_errors,
+            {'name': ["Ова вриједност је страшна!"]}
+        )
+
     def test_import_data_error_saving_model(self):
         row = list(self.dataset.pop())
         # set pk to something that would yield error
