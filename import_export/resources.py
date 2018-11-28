@@ -296,9 +296,8 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
                     validate_unique=validate_unique,
                 )
             except ValidationError as e:
-                for field_name, error_list in e.message_dict.items():
-                    error_list = errors.get(field_name, []) + error_list
-                    errors[field_name] = error_list
+                errors = e.update_error_dict(errors)
+
         if errors:
             raise ValidationError(errors)
 
@@ -509,14 +508,14 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
                     self.delete_instance(instance, using_transactions, dry_run)
                     diff.compare_with(self, None, dry_run)
             else:
+                import_validation_errors = {}
                 try:
                     self.import_obj(instance, row, dry_run)
-                    import_validation_errors = {}
                 except ValidationError as e:
                     # Validation errors from import_obj() are passed on to
                     # validate_instance(), where they can be combined with model
                     # instance validation errors if necessary
-                    import_validation_errors = e.message_dict
+                    import_validation_errors = e.update_error_dict(import_validation_errors)
                 if self.skip_row(instance, original):
                     row_result.import_type = RowResult.IMPORT_TYPE_SKIP
                 else:

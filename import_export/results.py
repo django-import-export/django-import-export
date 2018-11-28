@@ -43,7 +43,7 @@ class InvalidRow(object):
     def __init__(self, number, validation_error, values):
         self.number = number
         self.error = validation_error
-        self.error_dict = validation_error.message_dict
+        self.error_dict = validation_error.update_error_dict({})
         self.values = values
 
     @property
