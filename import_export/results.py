@@ -43,8 +43,11 @@ class InvalidRow(object):
     def __init__(self, number, validation_error, values):
         self.number = number
         self.error = validation_error
-        self.error_dict = validation_error.update_error_dict({})
         self.values = values
+        try:
+            self.error_dict = validation_error.message_dict
+        except AttributeError:
+            self.error_dict = {NON_FIELD_ERRORS: validation_error.error_list}
 
     @property
     def field_specific_errors(self):
