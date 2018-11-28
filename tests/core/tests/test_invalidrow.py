@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
 
-from django.core.exceptions import ValidationError
+from django.core.exceptions import NON_FIELD_ERRORS, ValidationError
 from django.test import TestCase
 
 from import_export.results import InvalidRow
@@ -10,16 +10,21 @@ class InvalidRowTest(TestCase):
 
     def setUp(self):
         # Create a ValidationEror with a mix of field-specific and non-field-specific errors
-        non_field_errors = ValidationError(['Error 1', 'Error 2', 'Error 3'])
-        field_errors = ValidationError({
+        self.non_field_errors = ValidationError(['Error 1', 'Error 2', 'Error 3'])
+        self.field_errors = ValidationError({
             'name': ['Error 4', 'Error 5'],
             'birthday': ['Error 6', 'Error 7'],
         })
-        combined_error_dict = non_field_errors.update_error_dict(field_errors.error_dict)
-        e = ValidationError(combined_error_dict)
+        combined_errors = self.non_field_errors.update_error_dict(
+            self.field_errors.error_dict.copy()
+        )
+        e = ValidationError(combined_errors)
         # Use the error to create an InvalidRow instance
-        values = {'name': 'ABC', 'birthday': '123'}
-        self.obj = InvalidRow(number=1, validation_error=e, values=values)
+        self.obj = InvalidRow(
+            number=1,
+            validation_error=e,
+            values={'name': 'ABC', 'birthday': '123'}
+        )
 
     def test_error_count(self):
         self.assertEqual(self.obj.error_count, 7)
@@ -35,3 +40,16 @@ class InvalidRowTest(TestCase):
         self.assertEqual(len(result), 2)
         self.assertEqual(result['name'], ['Error 4', 'Error 5'])
         self.assertEqual(result['birthday'], ['Error 6', 'Error 7'])
+
+    def test_creates_error_dict_from_error_list_if_validation_error_only_has_error_list(self):
+        obj = InvalidRow(
+            number=1,
+            validation_error=self.non_field_errors,
+            values={}
+        )
+        self.assertIsInstance(obj.error_dict, dict)
+        self.assertIn(NON_FIELD_ERRORS, obj.error_dict)
+        self.assertEqual(
+            obj.error_dict[NON_FIELD_ERRORS],
+            ['Error 1', 'Error 2', 'Error 3']
+        )
