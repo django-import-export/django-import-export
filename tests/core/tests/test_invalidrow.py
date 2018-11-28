@@ -22,7 +22,7 @@ class InvalidRowTest(TestCase):
         self.obj = InvalidRow(number=1, validation_error=e, values=values)
 
     def test_error_count(self):
-        self.assertEqual(self.obj.error_count(), 7)
+        self.assertEqual(self.obj.error_count, 7)
 
     def test_non_field_specific_errors(self):
         result = self.obj.non_field_specific_errors
