@@ -47,7 +47,7 @@ class InvalidRow(object):
         try:
             self.error_dict = validation_error.message_dict
         except AttributeError:
-            self.error_dict = {NON_FIELD_ERRORS: validation_error.error_list}
+            self.error_dict = {NON_FIELD_ERRORS: validation_error.messages}
 
     @property
     def field_specific_errors(self):
