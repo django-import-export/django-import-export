@@ -15,11 +15,11 @@ class InvalidRowTest(TestCase):
             'name': ['Error 4', 'Error 5'],
             'birthday': ['Error 6', 'Error 7'],
         })
-        combined_errors = self.non_field_errors.update_error_dict(
+        combined_error_dict = self.non_field_errors.update_error_dict(
             self.field_errors.error_dict.copy()
         )
-        e = ValidationError(combined_errors)
-        # Use the error to create an InvalidRow instance
+        e = ValidationError(combined_error_dict)
+        # Create an InvalidRow instance to use in tests
         self.obj = InvalidRow(
             number=1,
             validation_error=e,
@@ -49,7 +49,4 @@ class InvalidRowTest(TestCase):
         )
         self.assertIsInstance(obj.error_dict, dict)
         self.assertIn(NON_FIELD_ERRORS, obj.error_dict)
-        self.assertEqual(
-            obj.error_dict[NON_FIELD_ERRORS],
-            ['Error 1', 'Error 2', 'Error 3']
-        )
+        self.assertEqual(obj.error_dict[NON_FIELD_ERRORS], ['Error 1', 'Error 2', 'Error 3'])
