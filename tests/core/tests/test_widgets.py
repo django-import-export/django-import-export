@@ -217,6 +217,11 @@ class ForeignKeyWidgetTest(TestCase):
         row = {'name': "Foo", 'birthday': author2.birthday}
         self.assertEqual(birthday_widget.clean("Foo", row), author2)
 
+    def test_clean_raises_value_error(self):
+        with self.assertRaises(ValueError):
+            self.widget.clean(2)
+
+
 
 class ManyToManyWidget(TestCase):
 

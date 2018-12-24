@@ -8,6 +8,7 @@ from django.utils.encoding import smart_text, force_text
 from django.utils.dateparse import parse_duration
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
+from django.utils.translation import ugettext_lazy as _
 import json
 import ast
 
@@ -349,7 +350,10 @@ class ForeignKeyWidget(Widget):
     def clean(self, value, row=None, *args, **kwargs):
         val = super(ForeignKeyWidget, self).clean(value)
         if val:
-            return self.get_queryset(value, row, *args, **kwargs).get(**{self.field: val})
+            try:
+                return self.get_queryset(value, row, *args, **kwargs).get(**{self.field: val})
+            except ObjectDoesNotExist:
+                raise ValueError(_("Select a valid choice. That choice is not one of the available choices."))
         else:
             return None
 
