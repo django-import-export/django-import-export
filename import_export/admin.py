@@ -1,7 +1,7 @@
 from __future__ import with_statement
 
 from datetime import datetime
-
+import traceback
 import importlib
 import django
 from django.contrib import admin
@@ -20,9 +20,8 @@ try:
 except ImportError:  # Django<2.0
     from django.core.urlresolvers import reverse
 from django.conf import settings
+from django.template.defaultfilters import pluralize
 from django.utils.decorators import method_decorator
-from django.utils.module_loading import import_string
-from django.utils.encoding import force_text
 from django.views.decorators.http import require_POST
 
 from .forms import (
@@ -39,6 +38,10 @@ from .results import RowResult
 from .tmp_storages import TempFolderStorage
 from .signals import post_export, post_import
 
+try:
+    from django.utils.encoding import force_text
+except ImportError:
+    from django.utils.encoding import force_unicode as force_text
 
 SKIP_ADMIN_LOG = getattr(settings, 'IMPORT_EXPORT_SKIP_ADMIN_LOG', False)
 TMP_STORAGE_CLASS = getattr(settings, 'IMPORT_EXPORT_TMP_STORAGE_CLASS',
@@ -46,7 +49,15 @@ TMP_STORAGE_CLASS = getattr(settings, 'IMPORT_EXPORT_TMP_STORAGE_CLASS',
 
 
 if isinstance(TMP_STORAGE_CLASS, six.string_types):
-    TMP_STORAGE_CLASS = import_string(TMP_STORAGE_CLASS)
+    try:
+        # Nod to tastypie's use of importlib.
+        parts = TMP_STORAGE_CLASS.split('.')
+        module_path, class_name = '.'.join(parts[:-1]), parts[-1]
+        module = importlib.import_module(module_path)
+        TMP_STORAGE_CLASS = getattr(module, class_name)
+    except ImportError as e:
+        msg = "Could not import '%s' for import_export setting 'IMPORT_EXPORT_TMP_STORAGE_CLASS'" % TMP_STORAGE_CLASS
+        raise ImportError(msg)
 
 
 class ImportExportMixinBase(object):
@@ -270,14 +281,21 @@ class ImportMixin(ImportExportMixinBase):
                 if not input_format.is_binary() and self.from_encoding:
                     data = force_text(data, self.from_encoding)
                 dataset = input_format.create_dataset(data)
+                result = resource.import_data(dataset, dry_run=True,
+                                               raise_errors=False,
+                                               file_name=import_file.name,
+                                               user=request.user)
             except UnicodeDecodeError as e:
-                return HttpResponse(_(u"<h1>Imported file has a wrong encoding: %s</h1>" % e))
+                result = resource.get_result_class()()
+                result.append_base_error(
+                    resource.get_error_result_class()(
+                        'Sorry, the selected format does not match the imported file. \
+                        Please ensure the file extension macthes the file format selected.'))
             except Exception as e:
-                return HttpResponse(_(u"<h1>%s encountered while trying to read file: %s</h1>" % (type(e).__name__, import_file.name)))
-            result = resource.import_data(dataset, dry_run=True,
-                                          raise_errors=False,
-                                          file_name=import_file.name,
-                                          user=request.user)
+                result = resource.get_result_class()()
+                result.append_base_error(
+                    resource.get_error_result_class()(
+                        'Kindly ensure the file extensin macthes the file format selected.'))
 
             context['result'] = result
 
