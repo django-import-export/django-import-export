@@ -2,7 +2,6 @@ from __future__ import with_statement
 
 from datetime import datetime
 
-import importlib
 import django
 from django.contrib import admin
 from django.contrib.auth import get_permission_codename
