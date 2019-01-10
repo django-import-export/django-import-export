@@ -10,6 +10,8 @@ Changelog
 1.2.0 (2019-01-10)
 ------------------
 
+- feat: Better surfacing of validation errors in UI / optional model instance validation (#852)
+
 - chore: Use modern setuptools in setup.py (#862)
 
 - chore: Update URLs to use https:// (#863)
