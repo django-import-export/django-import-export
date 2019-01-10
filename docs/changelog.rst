@@ -5,6 +5,12 @@ Changelog
 1.2.0
 ------------------
 
+1.2.1 (unreleased)
+------------------
+
+- Nothing changed yet.
+
+
 1.2.0 (2019-01-10)
 
 - chore: Use modern setuptools in setup.py (#862)
