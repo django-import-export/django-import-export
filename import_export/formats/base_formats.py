@@ -225,6 +225,7 @@ class XLSX(TablibFormat):
             dataset.append(row_values)
         return dataset
 
+
 #: These are the default formats for import and export. Whether they can be
 #: used or not is depending on their implementation in the tablib library.
 DEFAULT_FORMATS = (
