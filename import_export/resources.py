@@ -15,7 +15,7 @@ from django.core.management.color import no_style
 from django.db import connections, DEFAULT_DB_ALIAS
 from django.db.models.fields import FieldDoesNotExist
 from django.db.models.query import QuerySet
-from django.db.transaction import TransactionManagementError
+from django.db.transaction import TransactionManagementError, atomic, savepoint, savepoint_rollback, savepoint_commit
 from django.utils import six
 from django.utils.safestring import mark_safe
 from django.utils.encoding import force_text
@@ -25,12 +25,6 @@ from .fields import Field
 from .instance_loaders import ModelInstanceLoader
 from .results import Error, Result, RowResult
 from .utils import atomic_if_using_transaction
-
-try:
-    from django.db.transaction import atomic, savepoint, savepoint_rollback, savepoint_commit  # noqa
-except ImportError:
-    from .django_compat import atomic, savepoint, savepoint_rollback, savepoint_commit  # noqa
-
 
 from django.db.models.fields.related import ForeignObjectRel
 
