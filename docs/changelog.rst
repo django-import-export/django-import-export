@@ -2,11 +2,22 @@ Changelog
 =========
 
 
-1.1.1 (unreleased)
+1.2.0
 ------------------
 
-- Nothing changed yet.
+- feat: Better surfacing of validation errors in UI / optional model instance validation (#852)
 
+- chore: Use modern setuptools in setup.py (#862)
+
+- chore: Update URLs to use https:// (#863)
+
+- chore: remove outdated workarounds
+
+- chore: Run SQLite tests with in-memory database
+
+- fix: Change logging level (#832)
+
+- fix: Changed `get_instance()` return val (#842)
 
 1.1.0 (2018-10-02)
 ------------------
