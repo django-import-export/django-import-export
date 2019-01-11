@@ -1,12 +1,9 @@
-from __future__ import with_statement
-
 from datetime import datetime
 
 import django
 from django.contrib import admin
 from django.contrib.auth import get_permission_codename
-from django.utils import six
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from django.conf.urls import url
 from django.template.response import TemplateResponse
 from django.contrib import messages
@@ -14,10 +11,7 @@ from django.contrib.admin.models import LogEntry, ADDITION, CHANGE, DELETION
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import PermissionDenied
 from django.http import HttpResponseRedirect, HttpResponse
-try:
-    from django.urls import reverse
-except ImportError:  # Django<2.0
-    from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.conf import settings
 from django.utils.decorators import method_decorator
 from django.utils.module_loading import import_string
@@ -44,18 +38,14 @@ TMP_STORAGE_CLASS = getattr(settings, 'IMPORT_EXPORT_TMP_STORAGE_CLASS',
                             TempFolderStorage)
 
 
-if isinstance(TMP_STORAGE_CLASS, six.string_types):
+if isinstance(TMP_STORAGE_CLASS, str):
     TMP_STORAGE_CLASS = import_string(TMP_STORAGE_CLASS)
 
 
-class ImportExportMixinBase(object):
+class ImportExportMixinBase:
     def get_model_info(self):
-        # module_name is renamed to model_name in Django 1.8
         app_label = self.model._meta.app_label
-        try:
-            return (app_label, self.model._meta.model_name,)
-        except AttributeError:
-            return (app_label, self.model._meta.module_name,)
+        return (app_label, self.model._meta.model_name)
 
 
 class ImportMixin(ImportExportMixinBase):
@@ -102,7 +92,7 @@ class ImportMixin(ImportExportMixinBase):
         return request.user.has_perm("%s.%s" % (opts.app_label, codename))
 
     def get_urls(self):
-        urls = super(ImportMixin, self).get_urls()
+        urls = super().get_urls()
         info = self.get_model_info()
         my_urls = [
             url(r'^process_import/$',
@@ -270,9 +260,9 @@ class ImportMixin(ImportExportMixinBase):
                     data = force_text(data, self.from_encoding)
                 dataset = input_format.create_dataset(data)
             except UnicodeDecodeError as e:
-                return HttpResponse(_(u"<h1>Imported file has a wrong encoding: %s</h1>" % e))
+                return HttpResponse(_("<h1>Imported file has a wrong encoding: %s</h1>" % e))
             except Exception as e:
-                return HttpResponse(_(u"<h1>%s encountered while trying to read file: %s</h1>" % (type(e).__name__, import_file.name)))
+                return HttpResponse(_("<h1>%s encountered while trying to read file: %s</h1>" % (type(e).__name__, import_file.name)))
             result = resource.import_data(dataset, dry_run=True,
                                           raise_errors=False,
                                           file_name=import_file.name,
@@ -302,7 +292,7 @@ class ImportMixin(ImportExportMixinBase):
         if extra_context is None:
             extra_context = {}
         extra_context['has_import_permission'] = self.has_import_permission(request)
-        return super(ImportMixin, self).changelist_view(request, extra_context)
+        return super().changelist_view(request, extra_context)
 
 
 class ExportMixin(ImportExportMixinBase):
@@ -321,7 +311,7 @@ class ExportMixin(ImportExportMixinBase):
     to_encoding = "utf-8"
 
     def get_urls(self):
-        urls = super(ExportMixin, self).get_urls()
+        urls = super().get_urls()
         my_urls = [
             url(r'^export/$',
                 self.admin_site.admin_view(self.export_action),
@@ -462,7 +452,7 @@ class ExportMixin(ImportExportMixinBase):
         if extra_context is None:
             extra_context = {}
         extra_context['has_export_permission'] = self.has_export_permission(request)
-        return super(ExportMixin, self).changelist_view(request, extra_context)
+        return super().changelist_view(request, extra_context)
 
 
 class ImportExportMixin(ImportMixin, ExportMixin):
@@ -500,7 +490,7 @@ class ExportActionMixin(ExportMixin):
                 choices.append((str(i), f().get_title()))
 
         self.action_form = export_action_form_factory(choices)
-        super(ExportActionMixin, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def export_admin_action(self, request, queryset):
         """

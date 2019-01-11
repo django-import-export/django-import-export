@@ -1,5 +1,3 @@
-from __future__ import unicode_literals
-
 import os
 
 INSTALLED_APPS = [
@@ -7,6 +5,7 @@ INSTALLED_APPS = [
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
+    'django.contrib.messages',
     'django.contrib.sites',
 
     'import_export',
@@ -32,9 +31,6 @@ MIDDLEWARE = (
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
-
-# For backwards compatibility for Django 1.8
-MIDDLEWARE_CLASSES = MIDDLEWARE
 
 TEMPLATES = [
     {

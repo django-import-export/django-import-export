@@ -1,9 +1,7 @@
-from __future__ import unicode_literals
-
 from django.db import transaction
 
 
-class atomic_if_using_transaction(object):
+class atomic_if_using_transaction:
     """Context manager wraps `atomic` if `using_transactions`.
 
     Replaces code::

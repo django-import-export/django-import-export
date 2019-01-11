@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-
 from decimal import Decimal
 from datetime import date, datetime, time, timedelta
 
@@ -223,7 +220,7 @@ class ManyToManyWidget(TestCase):
     def setUp(self):
         self.widget = widgets.ManyToManyWidget(Category)
         self.widget_name = widgets.ManyToManyWidget(Category, field="name")
-        self.cat1 = Category.objects.create(name=u'Cat úňíčóďě')
+        self.cat1 = Category.objects.create(name='Cat úňíčóďě')
         self.cat2 = Category.objects.create(name='Cat 2')
 
     def test_clean(self):
@@ -269,7 +266,7 @@ class ManyToManyWidget(TestCase):
         self.assertEqual(self.widget.render(Category.objects),
                          "%s,%s" % (self.cat1.pk, self.cat2.pk))
         self.assertEqual(self.widget_name.render(Category.objects),
-                         u"%s,%s" % (self.cat1.name, self.cat2.name))
+                         "%s,%s" % (self.cat1.name, self.cat2.name))
 
 
 class JSONWidgetTest(TestCase):

@@ -44,9 +44,14 @@ Features:
 Requirements
 -----------
 
-* Python 2.7+ or Python 3.3+
-* Django 1.8+
+* Python 3.5+
+* Django 2.0+
 * tablib (dev or 0.9.11)
+
+django-import-export requires Python 3.5 and Django 2.0 or newer. See the 1.x
+branch for older Python and Django versions where fixes for security issues and
+critical errors continue to be released for all officially supported Django
+versions.
 
 Example app
 -----------

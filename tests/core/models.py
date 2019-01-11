@@ -1,4 +1,3 @@
-from __future__ import unicode_literals
 import random
 import string
 
@@ -16,7 +15,7 @@ class Author(models.Model):
         return self.name
 
     def full_clean(self, exclude=None, validate_unique=True):
-        super(Author, self).full_clean(exclude, validate_unique)
+        super().full_clean(exclude, validate_unique)
         if exclude is None:
             exclude = []
         else:

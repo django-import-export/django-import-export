@@ -10,14 +10,14 @@ For example purposes, we'll use a simplified book app. Here is our
     class Author(models.Model):
         name = models.CharField(max_length=100)
 
-        def __unicode__(self):
+        def __str__(self):
             return self.name
 
 
     class Category(models.Model):
         name = models.CharField(max_length=100)
 
-        def __unicode__(self):
+        def __str__(self):
             return self.name
 
 
@@ -30,7 +30,7 @@ For example purposes, we'll use a simplified book app. Here is our
         price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
         categories = models.ManyToManyField(Category, blank=True)
 
-        def __unicode__(self):
+        def __str__(self):
             return self.name
 
 

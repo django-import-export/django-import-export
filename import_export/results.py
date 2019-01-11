@@ -1,5 +1,3 @@
-from __future__ import unicode_literals
-
 from collections import OrderedDict
 
 from django.core.exceptions import NON_FIELD_ERRORS
@@ -7,14 +5,14 @@ from django.core.exceptions import NON_FIELD_ERRORS
 from tablib import Dataset
 
 
-class Error(object):
+class Error:
     def __init__(self, error, traceback=None, row=None):
         self.error = error
         self.traceback = traceback
         self.row = row
 
 
-class RowResult(object):
+class RowResult:
     IMPORT_TYPE_UPDATE = 'update'
     IMPORT_TYPE_NEW = 'new'
     IMPORT_TYPE_DELETE = 'delete'
@@ -37,7 +35,7 @@ class RowResult(object):
         self.raw_values = {}
 
 
-class InvalidRow(object):
+class InvalidRow:
     """A row that resulted in one or more ``ValidationError`` being raised during import."""
 
     def __init__(self, number, validation_error, values):
@@ -71,9 +69,9 @@ class InvalidRow(object):
         return count
 
 
-class Result(object):
+class Result:
     def __init__(self, *args, **kwargs):
-        super(Result, self).__init__()
+        super().__init__()
         self.base_errors = []
         self.diff_headers = []
         self.rows = []  # RowResults
