@@ -597,7 +597,7 @@ class ModelResourceTest(TestCase):
     def test_m2m_import(self):
         cat1 = Category.objects.create(name='Cat 1')
         headers = ['id', 'name', 'categories']
-        row = [None, 'FooBook', "%s" % cat1.pk]
+        row = [None, 'FooBook', str(cat1.pk)]
         dataset = tablib.Dataset(row, headers=headers)
         self.resource.import_data(dataset, raise_errors=True)
 
@@ -862,7 +862,7 @@ class ModelResourceTransactionTest(TransactionTestCase):
         resource = BookResource()
         cat1 = Category.objects.create(name='Cat 1')
         headers = ['id', 'name', 'categories']
-        row = [None, 'FooBook', "%s" % cat1.pk]
+        row = [None, 'FooBook', str(cat1.pk)]
         dataset = tablib.Dataset(row, headers=headers)
 
         result = resource.import_data(
