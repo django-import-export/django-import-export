@@ -56,7 +56,7 @@ class Command(BaseCommand):
             dest='resource_class',
             default=None,
             help='Resource class as dotted path,'
-            'ie: mymodule.resources.MyResource')
+            'e.g.: mymodule.resources.MyResource')
         resource_def.add_argument(
             '--model-name',
             dest='model_name',

@@ -253,12 +253,19 @@ then check for any errors and actually import data this time.
 Importing via management command
 --------------------------------
 
-For importing automation you can use ``import_file`` management command.
-Along with file path as the first positional argument it requires either  ``--resource-class`` or  ``--model-name`` as a dotted path::
+To import via the command line, or to make imports more automatable,
+you can use the ``import_file`` management command.
 
-    manage.py import_file tests/core/exports/books.csv --model-name core.Book
+.. code-block:: sh
 
-Use ``import-file --help`` to view other possible arguments.
+    python manage.py import_file tests/core/exports/books.csv --model-name core.Book
+
+The command guesses the import format from the file extension. It also requires a Python class,
+specified as a dotted path. If the class is a :class:`ModelResource`, use the ``--resource-class`` flag.
+If the class is a Django model, use the ``--model-name`` flag and ``import_file`` will automatically
+create a default :class:`ModelResource` for it.
+
+To see the other available arguments, use ``--help``.
 
 
 Deleting data
