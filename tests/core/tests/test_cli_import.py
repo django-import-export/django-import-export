@@ -36,7 +36,7 @@ class CLIImportTest(TestCase):
             'import_file',
             self.books_file,
             '--dry-run',
-            '--resource-class=core.tests.resources_tests.BookResource',
+            '--resource-class=core.tests.test_resources.BookResource',
             '--no-color',
             stdout=self.output)
         self.assertEqual(self.output.getvalue(), 'Dry run\nOK\n')
