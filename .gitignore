@@ -12,3 +12,4 @@ dist/
 *.python-version
 .coverage
 *.sw[po]
+example/database.db

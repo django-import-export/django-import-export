@@ -53,9 +53,12 @@ Example app
 
 ::
 
-    cd tests && ./manage.py runserver
+   $ cd example
+   $ ./manage.py migrate
+   $ ./manage.py createsuperuser
+   $ ./manage.py runserver
 
-Username and password for admin are 'admin', 'password'.
+http://localhost:8000/admin/
 
 Contribute
 ----------
