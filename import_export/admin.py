@@ -146,7 +146,8 @@ class ImportMixin(ImportExportMixinBase):
         if not self.has_import_permission(request):
             raise PermissionDenied
 
-        confirm_form = ConfirmImportForm(request.POST)
+        form_type = self.get_confirm_import_form()
+        confirm_form = form_type(request.POST)
         if confirm_form.is_valid():
             import_formats = self.get_import_formats()
             input_format = import_formats[
@@ -165,13 +166,17 @@ class ImportMixin(ImportExportMixinBase):
             return self.process_result(result, request)
 
     def process_dataset(self, dataset, confirm_form, request, *args, **kwargs):
-        resource = self.get_import_resource_class()(**self.get_import_resource_kwargs(request, *args, **kwargs))
+
+        res_kwargs = self.get_import_resource_kwargs(request, *args, **kwargs)
+        resource = self.get_import_resource_class()(**res_kwargs)
+
+        imp_kwargs = self.get_import_data_kwargs(request, *args, **kwargs)
         return resource.import_data(dataset,
                                     dry_run=False,
                                     raise_errors=True,
                                     file_name=confirm_form.cleaned_data['original_file_name'],
                                     user=request.user,
-                                    **kwargs)
+                                    **imp_kwargs)
 
     def process_result(self, result, request):
         self.generate_log_entries(result, request)
@@ -224,6 +229,34 @@ class ImportMixin(ImportExportMixinBase):
         '''
         return ImportForm
 
+    def get_import_confirm_form(self):
+        """
+        Get the form type (class) used to confirm the import.
+        """
+        return ConfirmImportForm
+
+    def get_form_kwargs(self, form, *args, **kwargs):
+        """
+        Prepare/customize kwargs for an import form.
+
+        If you wish to distinguish between import and confirm import forms,
+        you could use the following approach:
+            if isinstance(form, ImportForm):
+                # your code here for the import form kwargs
+                # e.g. update.kwargs({...})
+            elif isinstance(form, ConfirmImportForm):
+                # your code here for the confirm import form kwargs
+                # e.g. update.kwargs({...})
+            ...
+        """
+        return kwargs
+
+    def get_import_resource_kwargs(self, request, *args, **kwargs):
+        """
+        Prepare kwargs for the import resource, given: request, args, kwargs.
+        """
+        return {}
+
     def write_to_tmp_storage(self, import_file, input_format):
         tmp_storage = self.get_tmp_storage_class()()
         data = bytes()
@@ -243,15 +276,15 @@ class ImportMixin(ImportExportMixinBase):
         if not self.has_import_permission(request):
             raise PermissionDenied
 
-        resource = self.get_import_resource_class()(**self.get_import_resource_kwargs(request, *args, **kwargs))
-
         context = self.get_import_context_data()
 
         import_formats = self.get_import_formats()
         form_type = self.get_import_form()
+        form_kwargs = self.get_form_kwargs(form_type, *args, **kwargs)
         form = form_type(import_formats,
                          request.POST or None,
-                         request.FILES or None)
+                         request.FILES or None,
+                         **form_kwargs)
 
         if request.POST and form.is_valid():
             input_format = import_formats[
@@ -273,30 +306,46 @@ class ImportMixin(ImportExportMixinBase):
                 return HttpResponse(_(u"<h1>Imported file has a wrong encoding: %s</h1>" % e))
             except Exception as e:
                 return HttpResponse(_(u"<h1>%s encountered while trying to read file: %s</h1>" % (type(e).__name__, import_file.name)))
+
+            # prepare kwargs for import data, if needed
+            res_kwargs = self.get_import_resource_kwargs(request, form=form, *args, **kwargs)
+            resource = self.get_import_resource_class()(**res_kwargs)
+
+            # prepare additional kwargs for import_data, if needed
+            imp_kwargs = self.get_import_data_kwargs(request, form=form, *args, **kwargs)
+
             result = resource.import_data(dataset, dry_run=True,
                                           raise_errors=False,
                                           file_name=import_file.name,
-                                          user=request.user)
+                                          user=request.user,
+                                          **imp_kwargs)
 
             context['result'] = result
 
             if not result.has_errors() and not result.has_validation_errors():
-                context['confirm_form'] = ConfirmImportForm(initial={
+                initial = {
                     'import_file_name': tmp_storage.name,
                     'original_file_name': import_file.name,
                     'input_format': form.cleaned_data['input_format'],
-                })
+                }
+                confirm_form = self.get_confirm_import_form()
+                initial = self.get_form_kwargs(form=form, **initial)
+                context['confirm_form'] = confirm_form(initial=initial)
+        else:
+            res_kwargs = self.get_import_resource_kwargs(request, form=form,
+                                                         *args, **kwargs)
+            resource = self.get_import_resource_class()(**res_kwargs)
 
         context.update(self.admin_site.each_context(request))
 
         context['title'] = _("Import")
         context['form'] = form
         context['opts'] = self.model._meta
-        context['fields'] = [f.column_name for f in resource.get_user_visible_fields()]
+        context['fields'] = [field.column_name
+                             for field in resource.get_user_visible_fields()]
 
         request.current_app = self.admin_site.name
-        return TemplateResponse(request, [self.import_template_name],
-                                context)
+        return TemplateResponse(request, [self.import_template_name], context)
 
     def changelist_view(self, request, extra_context=None):
         if extra_context is None:
