@@ -229,7 +229,7 @@ class ImportMixin(ImportExportMixinBase):
         '''
         return ImportForm
 
-    def get_import_confirm_form(self):
+    def get_confirm_import_form(self):
         """
         Get the form type (class) used to confirm the import.
         """
@@ -250,6 +250,16 @@ class ImportMixin(ImportExportMixinBase):
             ...
         """
         return kwargs
+
+    def get_import_data_kwargs(self, request, *args, **kwargs):
+        """
+        Prepare kwargs for import_data.
+        """
+        form = kwargs.get('form')
+        if form:
+            kwargs.pop('form')
+            return kwargs
+        return {}
 
     def get_import_resource_kwargs(self, request, *args, **kwargs):
         """
