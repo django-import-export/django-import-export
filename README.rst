@@ -6,8 +6,8 @@ django-import-export
     :target: https://travis-ci.org/django-import-export/django-import-export
     :alt: Build status on Travis-CI
 
-.. image:: https://coveralls.io/repos/github/django-import-export/django-import-export/badge.svg?branch=coveralls
-    :target: https://coveralls.io/github/django-import-export/django-import-export?branch=coveralls
+.. image:: https://coveralls.io/repos/github/django-import-export/django-import-export/badge.svg?branch=master
+    :target: https://coveralls.io/github/django-import-export/django-import-export?branch=master
 
 .. image:: https://img.shields.io/pypi/v/django-import-export.svg
     :target: https://pypi.org/project/django-import-export/
