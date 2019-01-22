@@ -1,14 +1,10 @@
 import os
 
-from django.test import TestCase
 from django.core.cache import cache
 from django.core.files.storage import default_storage
+from django.test import TestCase
 
-from import_export.tmp_storages import (
-    CacheStorage,
-    MediaStorage,
-    TempFolderStorage
-    )
+from import_export.tmp_storages import CacheStorage, MediaStorage, TempFolderStorage
 
 
 class TempStoragesTest(TestCase):

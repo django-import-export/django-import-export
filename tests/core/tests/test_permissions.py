@@ -1,9 +1,8 @@
 import os.path
 
-from django.contrib.auth.models import Permission
-from django.test.utils import override_settings
+from django.contrib.auth.models import Permission, User
 from django.test.testcases import TestCase
-from django.contrib.auth.models import User
+from django.test.utils import override_settings
 
 
 class ImportExportPermissionTest(TestCase):

@@ -1,11 +1,10 @@
 import tablib
 
+from core.models import Book
+
 from django.test import TestCase
 
-from import_export import instance_loaders
-from import_export import resources
-
-from core.models import Book
+from import_export import instance_loaders, resources
 
 
 class CachedInstanceLoaderTest(TestCase):

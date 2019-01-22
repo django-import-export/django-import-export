@@ -1,15 +1,15 @@
 import os.path
-
-from django.test.utils import override_settings
-from django.test.testcases import TestCase
-from django.contrib.auth.models import User
-from django.core.files.uploadedfile import SimpleUploadedFile
-from django.utils.translation import gettext_lazy as _
-from django.contrib.admin.models import LogEntry
 from tablib import Dataset
 
-from core.admin import BookAdmin, AuthorAdmin, BookResource
-from core.models import Category, Parent, Book
+from core.admin import AuthorAdmin, BookAdmin, BookResource
+from core.models import Book, Category, Parent
+
+from django.contrib.admin.models import LogEntry
+from django.contrib.auth.models import User
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test.testcases import TestCase
+from django.test.utils import override_settings
+from django.utils.translation import gettext_lazy as _
 
 
 class ImportExportAdminIntegrationTest(TestCase):
