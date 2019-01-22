@@ -1,9 +1,6 @@
-# -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-
 from decimal import Decimal
 from datetime import datetime, date
-from django.utils import datetime_safe, timezone, six
+from django.utils import datetime_safe, timezone
 from django.utils.encoding import smart_text, force_text
 from django.utils.dateparse import parse_duration
 from django.conf import settings
@@ -12,7 +9,7 @@ import json
 import ast
 
 
-class Widget(object):
+class Widget:
     """
     A Widget takes care of converting between import and export representations.
 
@@ -49,7 +46,7 @@ class NumberWidget(Widget):
     """
 
     def is_empty(self, value):
-        if isinstance(value, six.string_types):
+        if isinstance(value, str):
             value = value.strip()
         # 0 is not empty
         return value is None or value == ""
@@ -256,13 +253,13 @@ class SimpleArrayWidget(Widget):
         if separator is None:
             separator = ','
         self.separator = separator
-        super(SimpleArrayWidget, self).__init__()
+        super().__init__()
 
     def clean(self, value, row=None, *args, **kwargs):
         return value.split(self.separator) if value else []
 
     def render(self, value, obj=None):
-        return self.separator.join(six.text_type(v) for v in value)
+        return self.separator.join(str(v) for v in value)
 
 
 class JSONWidget(Widget):
@@ -271,7 +268,7 @@ class JSONWidget(Widget):
     """
 
     def clean(self, value, row=None, *args, **kwargs):
-        val = super(JSONWidget, self).clean(value)
+        val = super().clean(value)
         if val:
             return ast.literal_eval(val)
 
@@ -321,7 +318,7 @@ class ForeignKeyWidget(Widget):
     def __init__(self, model, field='pk', *args, **kwargs):
         self.model = model
         self.field = field
-        super(ForeignKeyWidget, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def get_queryset(self, value, row, *args, **kwargs):
         """
@@ -347,7 +344,7 @@ class ForeignKeyWidget(Widget):
         return self.model.objects.all()
 
     def clean(self, value, row=None, *args, **kwargs):
-        val = super(ForeignKeyWidget, self).clean(value)
+        val = super().clean(value)
         if val:
             return self.get_queryset(value, row, *args, **kwargs).get(**{self.field: val})
         else:
@@ -389,7 +386,7 @@ class ManyToManyWidget(Widget):
         self.model = model
         self.separator = separator
         self.field = field
-        super(ManyToManyWidget, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def clean(self, value, row=None, *args, **kwargs):
         if not value:

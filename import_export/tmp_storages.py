@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import os
 import tempfile
 
@@ -9,7 +8,7 @@ from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 
 
-class BaseStorage(object):
+class BaseStorage:
 
     def __init__(self, name=None):
         self.name = name
@@ -57,7 +56,7 @@ class CacheStorage(BaseStorage):
     By default memcache maximum size per key is 1MB, be careful with large files.
     """
     CACHE_LIFETIME = 86400
-    CACHE_PREFIX = u'django-import-export-'
+    CACHE_PREFIX = 'django-import-export-'
 
     def save(self, data, mode=None):
         if not self.name:
