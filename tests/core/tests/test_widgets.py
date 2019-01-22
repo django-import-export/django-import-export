@@ -1,16 +1,13 @@
-from decimal import Decimal
 from datetime import date, datetime, time, timedelta
+from decimal import Decimal
 
-from django.test.utils import override_settings
+from core.models import Author, Category
+
 from django.test import TestCase
+from django.test.utils import override_settings
 from django.utils import timezone
 
 from import_export import widgets
-
-from core.models import (
-    Author,
-    Category,
-)
 
 
 class BooleanWidgetTest(TestCase):

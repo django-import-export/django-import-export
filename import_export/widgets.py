@@ -1,12 +1,13 @@
+import ast
+import json
+from datetime import date, datetime
 from decimal import Decimal
-from datetime import datetime, date
-from django.utils import datetime_safe, timezone
-from django.utils.encoding import smart_text, force_text
-from django.utils.dateparse import parse_duration
+
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
-import json
-import ast
+from django.utils import datetime_safe, timezone
+from django.utils.dateparse import parse_duration
+from django.utils.encoding import force_text, smart_text
 
 
 class Widget:

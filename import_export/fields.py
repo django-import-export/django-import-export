@@ -1,8 +1,8 @@
-from . import widgets
-
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models.manager import Manager
 from django.db.models.fields import NOT_PROVIDED
+from django.db.models.manager import Manager
+
+from . import widgets
 
 
 class Field:
