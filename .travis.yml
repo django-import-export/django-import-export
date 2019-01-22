@@ -13,9 +13,15 @@ install:
   - pip install -q $DJANGO
   - pip install tablib==0.12.1
   - pip install -r requirements/base.txt
+  - pip install -r requirements/test.txt
   - pip install coveralls
 script:
+<<<<<<< Updated upstream
    - python -Wall -m coverage run --omit='setup.py' --source=. tests/manage.py test core --settings=
+=======
+   - python -Wall `which coverage` run --omit='setup.py' --source=. tests/manage.py test core --settings=
+   - isort --check-only
+>>>>>>> Stashed changes
 after_success:
   - coveralls
 matrix:
