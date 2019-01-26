@@ -3,10 +3,8 @@ import string
 
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.utils.encoding import python_2_unicode_compatible
 
 
-@python_2_unicode_compatible
 class Author(models.Model):
     name = models.CharField(max_length=100)
     birthday = models.DateTimeField(auto_now_add=True)
@@ -24,7 +22,6 @@ class Author(models.Model):
             raise ValidationError({'name': "'123' is not a valid value"})
 
 
-@python_2_unicode_compatible
 class Category(models.Model):
     name = models.CharField(
         max_length=100,
@@ -35,7 +32,6 @@ class Category(models.Model):
         return self.name
 
 
-@python_2_unicode_compatible
 class Book(models.Model):
     name = models.CharField('Book name', max_length=100)
     author = models.ForeignKey(Author, blank=True, null=True, on_delete=models.CASCADE)
@@ -51,7 +47,6 @@ class Book(models.Model):
         return self.name
 
 
-@python_2_unicode_compatible
 class Parent(models.Model):
     name = models.CharField(max_length=100)
 
@@ -59,7 +54,6 @@ class Parent(models.Model):
         return self.name
 
 
-@python_2_unicode_compatible
 class Child(models.Model):
     parent = models.ForeignKey(Parent, on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
@@ -89,9 +83,11 @@ class WithDefault(models.Model):
     name = models.CharField('Default', max_length=75, blank=True,
                             default='foo_bar')
 
+
 def random_name():
     chars = string.ascii_lowercase
     return ''.join(random.SystemRandom().choice(chars) for _ in range(100))
+
 
 class WithDynamicDefault(models.Model):
 
