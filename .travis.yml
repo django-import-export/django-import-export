@@ -1,14 +1,21 @@
 dist: xenial
 language: python
 cache: pip
+services:
+  - postgresql
 python:
   - "3.5"
   - "3.6"
   - "3.7"
 env:
-  - DJANGO="Django>=2.0,<2.1"
-  - DJANGO="Django>=2.1,<2.2"
-  - DJANGO="https://github.com/django/django/archive/master.tar.gz"
+  global:
+    - IMPORT_EXPORT_POSTGRESQL_USER=postgres
+  matrix:
+    - DJANGO="Django>=2.0,<2.1"
+    - DJANGO="Django>=2.1,<2.2"
+    - DJANGO="https://github.com/django/django/archive/master.tar.gz"
+    - IMPORT_EXPORT_TEST_TYPE=postgres
+    - IMPORT_EXPORT_TEST_TYPE=sqlite
 install:
   - pip install -q $DJANGO
   - pip install tablib==0.12.1
