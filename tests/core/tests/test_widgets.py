@@ -187,6 +187,8 @@ class ForeignKeyWidgetTest(TestCase):
         self.author = Author.objects.create(name='Foo')
 
     def test_clean(self):
+        print(Author.objects.all().count())
+        print(Author.objects.filter(name='Foo').count())
         self.assertEqual(self.widget.clean(1), self.author)
 
     def test_clean_empty(self):
