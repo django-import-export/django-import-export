@@ -827,27 +827,39 @@ class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
             model=get_related_model(field))
 
     @classmethod
-    def widget_from_django_field(cls, f, default=widgets.Widget):
+    def widget_from_django_field(cls, field, default=widgets.Widget):
         """
         Returns the widget that would likely be associated with each
         Django type.
         """
         result = default
-        internal_type = f.get_internal_type() if callable(getattr(f, "get_internal_type", None)) else ""
+
+        if callable(getattr(field, "get_internal_type", None)):
+            internal_type = field.get_internal_type()
+        else:
+            internal_type = ""
+
         if internal_type in cls.WIDGETS_MAP:
             result = cls.WIDGETS_MAP[internal_type]
             if isinstance(result, str):
-                result = getattr(cls, result)(f)
+                result = getattr(cls, result)(field)
         else:
             try:
-                from django.contrib.postgres.fields import ArrayField
+                from django.contrib.postgres.fields import ArrayField, JSONField
             except ImportError:
                 # Consume error when psycopg2 is not installed:
                 # ImportError: No module named psycopg2.extras
                 class ArrayField:
                     pass
-            if type(f) == ArrayField:
+
+                class JSONField:
+                    pass
+
+            if isinstance(field, ArrayField):
                 return widgets.SimpleArrayWidget
+            elif isinstance(field, JSONField):
+                return widgets.JSONWidget
+
         return result
 
     @classmethod

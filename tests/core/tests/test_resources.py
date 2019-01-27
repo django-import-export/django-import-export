@@ -1,3 +1,5 @@
+import json
+
 import tablib
 from collections import OrderedDict
 from copy import deepcopy
@@ -176,15 +178,15 @@ class AuthorResourceWithCustomWidget(resources.ModelResource):
         model = Author
 
     @classmethod
-    def widget_from_django_field(cls, f, default=widgets.Widget):
-        if f.name == 'name':
+    def widget_from_django_field(cls, field, default=widgets.Widget):
+        if field.name == 'name':
             return HarshRussianWidget
         result = default
-        internal_type = f.get_internal_type() if callable(getattr(f, "get_internal_type", None)) else ""
+        internal_type = field.get_internal_type() if callable(getattr(field, "get_internal_type", None)) else ""
         if internal_type in cls.WIDGETS_MAP:
             result = cls.WIDGETS_MAP[internal_type]
             if isinstance(result, str):
-                result = getattr(cls, result)(f)
+                result = getattr(cls, result)(field)
         return result
 
 
@@ -992,12 +994,13 @@ class PostgresTests(TransactionTestCase):
 
 
 if 'postgresql' in settings.DATABASES['default']['ENGINE']:
-    from django.contrib.postgres.fields import ArrayField
+    from django.contrib.postgres.fields import ArrayField, JSONField
     from django.db import models
 
     class BookWithChapters(models.Model):
         name = models.CharField('Book name', max_length=100)
         chapters = ArrayField(models.CharField(max_length=100), default=list)
+        data = JSONField(null=True)
 
     class ArrayFieldTest(TestCase):
         fixtures = []
@@ -1005,7 +1008,7 @@ if 'postgresql' in settings.DATABASES['default']['ENGINE']:
         def setUp(self):
             pass
 
-        def test_arrayfield(self):
+        def test_exports_array_field(self):
             dataset_headers = ["id", "name", "chapters"]
             chapters = ["Introduction", "Middle Chapter", "Ending"]
             dataset_row = ["1", "Book With Chapters", ",".join(chapters)]
@@ -1013,9 +1016,24 @@ if 'postgresql' in settings.DATABASES['default']['ENGINE']:
             dataset.append(dataset_row)
             book_with_chapters_resource = resources.modelresource_factory(model=BookWithChapters)()
             result = book_with_chapters_resource.import_data(dataset, dry_run=False)
+
             self.assertFalse(result.has_errors())
             book_with_chapters = list(BookWithChapters.objects.all())[0]
             self.assertListEqual(book_with_chapters.chapters, chapters)
+
+    class TestJsonField(TestCase):
+        fixtures = []
+
+        def setUp(self):
+            self.json_data = {"some_key": "some_value"}
+            self.book = BookWithChapters.objects.create(name='foo', data=self.json_data)
+
+        def test_export_field_with_appropriate_format(self):
+            book_with_chapters_resource = resources.modelresource_factory(
+                    model=BookWithChapters)()
+            result = book_with_chapters_resource.export(BookWithChapters.objects.all())
+
+            assert result[0][3] == json.dumps(self.json_data)
 
 
 class ForeignKeyWidgetFollowRelationship(TestCase):
