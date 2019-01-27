@@ -10,6 +10,7 @@ python:
 env:
   global:
     - IMPORT_EXPORT_POSTGRESQL_USER=postgres
+    - IMPORT_EXPORT_POSTGRESQL_PASSWORD=
   matrix:
     - DJANGO="Django>=2.0,<2.1" IMPORT_EXPORT_TEST_TYPE=postgres
     - DJANGO="Django>=2.0,<2.1" IMPORT_EXPORT_TEST_TYPE=sqlite
