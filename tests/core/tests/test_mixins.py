@@ -14,7 +14,7 @@ class ExportViewMixinTest(TestCase):
     def test_get(self):
         response = self.client.get(self.url)
         self.assertContains(response, self.cat1.name, status_code=200)
-        self.assertEquals(response['Content-Type'], 'text/html; charset=utf-8')
+        self.assertEqual(response['Content-Type'], 'text/html; charset=utf-8')
 
     def test_post(self):
         data = {
@@ -23,4 +23,4 @@ class ExportViewMixinTest(TestCase):
         response = self.client.post(self.url, data)
         self.assertContains(response, self.cat1.name, status_code=200)
         self.assertTrue(response.has_header("Content-Disposition"))
-        self.assertEquals(response['Content-Type'], 'text/csv')
+        self.assertEqual(response['Content-Type'], 'text/csv')

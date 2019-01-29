@@ -187,7 +187,7 @@ class ForeignKeyWidgetTest(TestCase):
         self.author = Author.objects.create(name='Foo')
 
     def test_clean(self):
-        self.assertEqual(self.widget.clean(1), self.author)
+        self.assertEqual(self.widget.clean(self.author.id), self.author)
 
     def test_clean_empty(self):
         self.assertEqual(self.widget.clean(""), None)
