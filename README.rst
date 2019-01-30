@@ -58,9 +58,10 @@ Example app
 
 ::
 
-    cd tests && ./manage.py runserver
-
-Username and password for admin are 'admin', 'password'.
+    cd tests
+    ./manage.py migrate
+    ./manage.py createsuperuser
+    ./manage.py runserver
 
 Contribute
 ----------

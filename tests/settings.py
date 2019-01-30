@@ -1,4 +1,5 @@
 import os
+import sys
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -71,9 +72,14 @@ elif os.environ.get('IMPORT_EXPORT_TEST_TYPE') == 'postgres':
         }
     }
 else:
+    if 'test' in sys.argv:
+        database_name = ''
+    else:
+        database_name = os.path.join(os.path.dirname(__file__), 'database.db')
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': database_name,
         }
     }
 
