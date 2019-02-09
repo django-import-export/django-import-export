@@ -1006,7 +1006,6 @@ if 'postgresql' in settings.DATABASES['default']['ENGINE']:
 
 
     class BookWithChaptersResource(resources.ModelResource):
-        data = fields.Field('data', widget=widgets.JSONWidget())
 
         class Meta:
             model = BookWithChapters
@@ -1018,7 +1017,7 @@ if 'postgresql' in settings.DATABASES['default']['ENGINE']:
             )
 
 
-    class ArrayFieldTest(TestCase):
+    class TestExportArrayField(TestCase):
         fixtures = []
 
         def setUp(self):
@@ -1036,6 +1035,26 @@ if 'postgresql' in settings.DATABASES['default']['ENGINE']:
             self.assertFalse(result.has_errors())
             book_with_chapters = list(BookWithChapters.objects.all())[0]
             self.assertListEqual(book_with_chapters.chapters, chapters)
+
+    class TestImportArrayField(TestCase):
+
+        def setUp(self):
+            self.resource = BookWithChaptersResource()
+            self.chapters = ["Introduction", "Middle Chapter", "Ending"]
+            self.book = BookWithChapters.objects.create(name='foo')
+            self.dataset = tablib.Dataset(headers=['id', 'name', 'chapters'])
+            row = [self.book.id, 'Some book', ",".join(self.chapters)]
+            self.dataset.append(row)
+
+        def test_import_of_data_with_array(self):
+            self.assertListEqual(self.book.chapters, [])
+            result = self.resource.import_data(self.dataset, raise_errors=True)
+
+            self.assertFalse(result.has_errors())
+            self.assertEqual(len(result.rows), 1)
+
+            self.book.refresh_from_db()
+            self.assertEqual(self.book.chapters, self.chapters)
 
     class TestExportJsonField(TestCase):
         fixtures = []
@@ -1062,7 +1081,7 @@ if 'postgresql' in settings.DATABASES['default']['ENGINE']:
             row = [self.book.id, 'Some book', self.json_data]
             self.dataset.append(row)
 
-        def test_import_of_data_with_json(self):
+        def test_sets_json_data_when_model_field_is_empty(self):
             self.assertIsNone(self.book.data)
             result = self.resource.import_data(self.dataset, raise_errors=True)
 
