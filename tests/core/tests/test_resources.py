@@ -1,5 +1,4 @@
 import json
-
 import tablib
 from collections import OrderedDict
 from copy import deepcopy
@@ -19,7 +18,6 @@ from django.utils.html import strip_tags
 from import_export import fields, resources, results, widgets
 from import_export.instance_loaders import ModelInstanceLoader
 from import_export.resources import Diff
-from import_export.widgets import JSONWidget
 
 from ..models import (
     Author,
@@ -1018,10 +1016,6 @@ if 'postgresql' in settings.DATABASES['default']['ENGINE']:
 
 
     class TestExportArrayField(TestCase):
-        fixtures = []
-
-        def setUp(self):
-            pass
 
         def test_exports_array_field(self):
             dataset_headers = ["id", "name", "chapters"]
@@ -1057,7 +1051,6 @@ if 'postgresql' in settings.DATABASES['default']['ENGINE']:
             self.assertEqual(self.book.chapters, self.chapters)
 
     class TestExportJsonField(TestCase):
-        fixtures = []
 
         def setUp(self):
             self.json_data = {"some_key": "some_value"}
