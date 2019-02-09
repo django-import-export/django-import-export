@@ -177,15 +177,15 @@ class AuthorResourceWithCustomWidget(resources.ModelResource):
         model = Author
 
     @classmethod
-    def widget_from_django_field(cls, field, default=widgets.Widget):
-        if field.name == 'name':
+    def widget_from_django_field(cls, f, default=widgets.Widget):
+        if f.name == 'name':
             return HarshRussianWidget
         result = default
-        internal_type = field.get_internal_type() if callable(getattr(field, "get_internal_type", None)) else ""
+        internal_type = f.get_internal_type() if callable(getattr(f, "get_internal_type", None)) else ""
         if internal_type in cls.WIDGETS_MAP:
             result = cls.WIDGETS_MAP[internal_type]
             if isinstance(result, str):
-                result = getattr(cls, result)(field)
+                result = getattr(cls, result)(f)
         return result
 
 

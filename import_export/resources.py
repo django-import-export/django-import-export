@@ -827,22 +827,20 @@ class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
             model=get_related_model(field))
 
     @classmethod
-    def widget_from_django_field(cls, field, default=widgets.Widget):
+    def widget_from_django_field(cls, f, default=widgets.Widget):
         """
         Returns the widget that would likely be associated with each
         Django type.
         """
         result = default
-
-        if callable(getattr(field, "get_internal_type", None)):
-            internal_type = field.get_internal_type()
-        else:
-            internal_type = ""
+        internal_type = ""
+        if callable(getattr(f, "get_internal_type", None)):
+            internal_type = f.get_internal_type()
 
         if internal_type in cls.WIDGETS_MAP:
             result = cls.WIDGETS_MAP[internal_type]
             if isinstance(result, str):
-                result = getattr(cls, result)(field)
+                result = getattr(cls, result)(f)
         else:
             try:
                 from django.contrib.postgres.fields import ArrayField, JSONField
@@ -855,9 +853,9 @@ class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
                 class JSONField:
                     pass
 
-            if isinstance(field, ArrayField):
+            if isinstance(f, ArrayField):
                 return widgets.SimpleArrayWidget
-            elif isinstance(field, JSONField):
+            elif isinstance(f, JSONField):
                 return widgets.JSONWidget
 
         return result
