@@ -19,6 +19,7 @@ from django.utils.html import strip_tags
 from import_export import fields, resources, results, widgets
 from import_export.instance_loaders import ModelInstanceLoader
 from import_export.resources import Diff
+from import_export.widgets import JSONWidget
 
 from ..models import (
     Author,
@@ -997,10 +998,25 @@ if 'postgresql' in settings.DATABASES['default']['ENGINE']:
     from django.contrib.postgres.fields import ArrayField, JSONField
     from django.db import models
 
+
     class BookWithChapters(models.Model):
         name = models.CharField('Book name', max_length=100)
         chapters = ArrayField(models.CharField(max_length=100), default=list)
         data = JSONField(null=True)
+
+
+    class BookWithChaptersResource(resources.ModelResource):
+        data = fields.Field('data', widget=widgets.JSONWidget())
+
+        class Meta:
+            model = BookWithChapters
+            fields = (
+                'id',
+                'name',
+                'chapters',
+                'data',
+            )
+
 
     class ArrayFieldTest(TestCase):
         fixtures = []
@@ -1021,7 +1037,7 @@ if 'postgresql' in settings.DATABASES['default']['ENGINE']:
             book_with_chapters = list(BookWithChapters.objects.all())[0]
             self.assertListEqual(book_with_chapters.chapters, chapters)
 
-    class TestJsonField(TestCase):
+    class TestExportJsonField(TestCase):
         fixtures = []
 
         def setUp(self):
@@ -1029,11 +1045,32 @@ if 'postgresql' in settings.DATABASES['default']['ENGINE']:
             self.book = BookWithChapters.objects.create(name='foo', data=self.json_data)
 
         def test_export_field_with_appropriate_format(self):
-            book_with_chapters_resource = resources.modelresource_factory(
-                    model=BookWithChapters)()
-            result = book_with_chapters_resource.export(BookWithChapters.objects.all())
+            resource = resources.modelresource_factory(model=BookWithChapters)()
+            result = resource.export(BookWithChapters.objects.all())
 
             assert result[0][3] == json.dumps(self.json_data)
+
+
+    class TestImportJsonField(TestCase):
+
+        def setUp(self):
+            self.resource = BookWithChaptersResource()
+            self.data = {"some_key": "some_value"}
+            self.json_data = json.dumps(self.data)
+            self.book = BookWithChapters.objects.create(name='foo')
+            self.dataset = tablib.Dataset(headers=['id', 'name', 'data'])
+            row = [self.book.id, 'Some book', self.json_data]
+            self.dataset.append(row)
+
+        def test_import_of_data_with_json(self):
+            self.assertIsNone(self.book.data)
+            result = self.resource.import_data(self.dataset, raise_errors=True)
+
+            self.assertFalse(result.has_errors())
+            self.assertEqual(len(result.rows), 1)
+
+            self.book.refresh_from_db()
+            self.assertEqual(self.book.data, self.data)
 
 
 class ForeignKeyWidgetFollowRelationship(TestCase):
