@@ -21,7 +21,9 @@ env:
 matrix:
   exclude:
     - python: "3.5"
-      env: DJANGO="https://github.com/django/django/archive/master.tar.gz"
+      env: DJANGO="https://github.com/django/django/archive/master.tar.gz" IMPORT_EXPORT_TEST_TYPE=postgres
+    - python: "3.5"
+      env: DJANGO="https://github.com/django/django/archive/master.tar.gz" IMPORT_EXPORT_TEST_TYPE=sqlite
 install:
   - pip install -q $DJANGO
   - pip install tablib==0.12.1
