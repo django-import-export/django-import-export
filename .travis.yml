@@ -31,7 +31,7 @@ install:
   - pip install -r requirements/test.txt
   - pip install coveralls
 script:
-   - python -Wall -m coverage run --omit='setup.py' --source=. tests/manage.py test core --settings=
+   - python -Wall -m coverage run --source=. tests/manage.py test core --settings=
    - isort --check-only
 after_success:
   - coveralls
