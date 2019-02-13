@@ -88,6 +88,8 @@ class DecimalWidget(NumberWidget):
             return None
         return Decimal(value)
 
+    def render(self, value, obj=None):
+        return value.normalize()
 
 class CharWidget(Widget):
     """
