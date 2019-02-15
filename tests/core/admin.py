@@ -1,11 +1,9 @@
-from __future__ import unicode_literals
-
 from django.contrib import admin
 
+from import_export.admin import ExportActionModelAdmin, ImportExportMixin, ImportMixin
 from import_export.resources import ModelResource
-from import_export.admin import ImportExportMixin, ImportMixin, ExportActionModelAdmin
 
-from .models import Book, Category, Author, Child
+from .models import Author, Book, Category, Child
 
 
 class ChildAdmin(ImportMixin, admin.ModelAdmin):

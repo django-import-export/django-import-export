@@ -1,17 +1,15 @@
-from __future__ import unicode_literals
-
 import os.path
-
-from django.test.utils import override_settings
-from django.test.testcases import TestCase
-from django.contrib.auth.models import User
-from django.core.files.uploadedfile import SimpleUploadedFile
-from django.utils.translation import ugettext_lazy as _
-from django.contrib.admin.models import LogEntry
 from tablib import Dataset
 
-from core.admin import BookAdmin, AuthorAdmin, BookResource
-from core.models import Category, Parent, Book
+from core.admin import AuthorAdmin, BookAdmin, BookResource
+from core.models import Book, Category, Parent
+
+from django.contrib.admin.models import LogEntry
+from django.contrib.auth.models import User
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test.testcases import TestCase
+from django.test.utils import override_settings
+from django.utils.translation import gettext_lazy as _
 
 
 class ImportExportAdminIntegrationTest(TestCase):
@@ -165,7 +163,7 @@ class ImportExportAdminIntegrationTest(TestCase):
             'import_file_name': import_file_name,
             'original_file_name': 'books.csv'
         }
-        with self.assertRaises(IOError):
+        with self.assertRaises(FileNotFoundError):
             self.client.post('/admin/core/book/process_import/', data)
 
     def test_csrf(self):
@@ -232,7 +230,7 @@ class ImportExportAdminIntegrationTest(TestCase):
         class R(BookResource):
             def import_obj(self, obj, data, dry_run):
                 if dry_run:
-                    super(R, self).import_obj(obj, data, dry_run)
+                    super().import_obj(obj, data, dry_run)
                 else:
                     raise Exception
 
@@ -257,7 +255,7 @@ class ImportExportAdminIntegrationTest(TestCase):
         dataset.append([1, "Test 1", "test@example.com"])
         input_format = '0'
         content = dataset.csv
-        f = SimpleUploadedFile("data.csv", content.encode("utf-8"), content_type="text/csv")
+        f = SimpleUploadedFile("data.csv", content.encode(), content_type="text/csv")
         data = {
             "input_format": input_format,
             "import_file": f,

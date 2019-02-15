@@ -2,10 +2,11 @@ Changelog
 =========
 
 
-1.2.1 (unreleased)
-------------------
+2.0 (unreleased)
+----------------
 
-- Nothing changed yet.
+- Removed support for Django < 2.0
+- Removed support for Python < 3.5
 
 1.2.0 (2019-01-10)
 ------------------

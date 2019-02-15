@@ -1,19 +1,13 @@
-# -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-
-from decimal import Decimal
 from datetime import date, datetime, time, timedelta
+from decimal import Decimal
 
-from django.test.utils import override_settings
+from core.models import Author, Category
+
 from django.test import TestCase
+from django.test.utils import override_settings
 from django.utils import timezone
 
 from import_export import widgets
-
-from core.models import (
-    Author,
-    Category,
-)
 
 
 class BooleanWidgetTest(TestCase):
@@ -193,7 +187,7 @@ class ForeignKeyWidgetTest(TestCase):
         self.author = Author.objects.create(name='Foo')
 
     def test_clean(self):
-        self.assertEqual(self.widget.clean(1), self.author)
+        self.assertEqual(self.widget.clean(self.author.id), self.author)
 
     def test_clean_empty(self):
         self.assertEqual(self.widget.clean(""), None)
@@ -223,7 +217,7 @@ class ManyToManyWidget(TestCase):
     def setUp(self):
         self.widget = widgets.ManyToManyWidget(Category)
         self.widget_name = widgets.ManyToManyWidget(Category, field="name")
-        self.cat1 = Category.objects.create(name=u'Cat úňíčóďě')
+        self.cat1 = Category.objects.create(name='Cat úňíčóďě')
         self.cat2 = Category.objects.create(name='Cat 2')
 
     def test_clean(self):
@@ -269,7 +263,7 @@ class ManyToManyWidget(TestCase):
         self.assertEqual(self.widget.render(Category.objects),
                          "%s,%s" % (self.cat1.pk, self.cat2.pk))
         self.assertEqual(self.widget_name.render(Category.objects),
-                         u"%s,%s" % (self.cat1.name, self.cat2.name))
+                         "%s,%s" % (self.cat1.name, self.cat2.name))
 
 
 class JSONWidgetTest(TestCase):

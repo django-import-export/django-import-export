@@ -1,5 +1,3 @@
-from __future__ import unicode_literals
-
 import functools
 import logging
 import tablib
@@ -12,22 +10,25 @@ from diff_match_patch import diff_match_patch
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.core.management.color import no_style
-from django.db import connections, DEFAULT_DB_ALIAS
+from django.db import DEFAULT_DB_ALIAS, connections
 from django.db.models.fields import FieldDoesNotExist
+from django.db.models.fields.related import ForeignObjectRel
 from django.db.models.query import QuerySet
-from django.db.transaction import TransactionManagementError, atomic, savepoint, savepoint_rollback, savepoint_commit
-from django.utils import six
-from django.utils.safestring import mark_safe
+from django.db.transaction import (
+    TransactionManagementError,
+    atomic,
+    savepoint,
+    savepoint_commit,
+    savepoint_rollback
+)
 from django.utils.encoding import force_text
+from django.utils.safestring import mark_safe
 
 from . import widgets
 from .fields import Field
 from .instance_loaders import ModelInstanceLoader
 from .results import Error, Result, RowResult
 from .utils import atomic_if_using_transaction
-
-from django.db.models.fields.related import ForeignObjectRel
-
 
 logger = logging.getLogger(__name__)
 # Set default logging handler to avoid "No handler found" warnings.
@@ -44,7 +45,7 @@ def get_related_model(field):
         return field.rel.to
 
 
-class ResourceOptions(object):
+class ResourceOptions:
     """
     The inner Meta class allows for class-level configuration of how the
     Resource should behave. The following options are available:
@@ -127,7 +128,7 @@ class DeclarativeMetaclass(type):
         # necessary in order to preserve the correct order of fields.
         for base in bases[::-1]:
             if hasattr(base, 'fields'):
-                declared_fields = list(six.iteritems(base.fields)) + declared_fields
+                declared_fields = list(base.fields.items()) + declared_fields
                 # Collect the Meta options
                 options = getattr(base, 'Meta', None)
                 for option in [option for option in dir(options)
@@ -143,8 +144,7 @@ class DeclarativeMetaclass(type):
                 declared_fields.append((field_name, field))
 
         attrs['fields'] = OrderedDict(declared_fields)
-        new_class = super(DeclarativeMetaclass, cls).__new__(cls, name,
-                                                             bases, attrs)
+        new_class = super().__new__(cls, name, bases, attrs)
 
         # Add direct options
         options = getattr(new_class, 'Meta', None)
@@ -156,7 +156,7 @@ class DeclarativeMetaclass(type):
         return new_class
 
 
-class Diff(object):
+class Diff:
     def __init__(self, resource, instance, new):
         self.left = self._export_resource_fields(resource, instance)
         self.right = []
@@ -168,7 +168,7 @@ class Diff(object):
     def as_html(self):
         data = []
         dmp = diff_match_patch()
-        for v1, v2 in six.moves.zip(self.left, self.right):
+        for v1, v2 in zip(self.left, self.right):
             if v1 != v2 and self.new:
                 v1 = ""
             diff = dmp.diff_main(force_text(v1), force_text(v2))
@@ -182,7 +182,7 @@ class Diff(object):
         return [resource.export_field(f, instance) if instance else "" for f in resource.get_user_visible_fields()]
 
 
-class Resource(six.with_metaclass(DeclarativeMetaclass)):
+class Resource(metaclass=DeclarativeMetaclass):
     """
     Resource defines how objects are mapped to their import and export
     representations and handle importing and exporting data.
@@ -709,8 +709,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
 class ModelDeclarativeMetaclass(DeclarativeMetaclass):
 
     def __new__(cls, name, bases, attrs):
-        new_class = super(ModelDeclarativeMetaclass,
-                          cls).__new__(cls, name, bases, attrs)
+        new_class = super().__new__(cls, name, bases, attrs)
 
         opts = new_class._meta
 
@@ -782,7 +781,7 @@ class ModelDeclarativeMetaclass(DeclarativeMetaclass):
         return new_class
 
 
-class ModelResource(six.with_metaclass(ModelDeclarativeMetaclass, Resource)):
+class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
     """
     ModelResource is Resource subclass for handling Django models.
     """
@@ -837,7 +836,7 @@ class ModelResource(six.with_metaclass(ModelDeclarativeMetaclass, Resource)):
         internal_type = f.get_internal_type() if callable(getattr(f, "get_internal_type", None)) else ""
         if internal_type in cls.WIDGETS_MAP:
             result = cls.WIDGETS_MAP[internal_type]
-            if isinstance(result, six.string_types):
+            if isinstance(result, str):
                 result = getattr(cls, result)(f)
         else:
             try:
@@ -845,7 +844,7 @@ class ModelResource(six.with_metaclass(ModelDeclarativeMetaclass, Resource)):
             except ImportError:
                 # Consume error when psycopg2 is not installed:
                 # ImportError: No module named psycopg2.extras
-                class ArrayField(object):
+                class ArrayField:
                     pass
             if type(f) == ArrayField:
                 return widgets.SimpleArrayWidget

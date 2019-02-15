@@ -1,14 +1,11 @@
-from __future__ import unicode_literals
+from django.core.exceptions import ObjectDoesNotExist
+from django.db.models.fields import NOT_PROVIDED
+from django.db.models.manager import Manager
 
 from . import widgets
 
-from django.core.exceptions import ObjectDoesNotExist
-from django.db.models.manager import Manager
-from django.db.models.fields import NOT_PROVIDED
-from django import VERSION
 
-
-class Field(object):
+class Field:
     """
     Field represent mapping between `object` field and representation of
     this field.
@@ -112,9 +109,7 @@ class Field(object):
                 obj = getattr(obj, attr, None)
             cleaned = self.clean(data)
             if cleaned is not None or self.saves_null_values:
-                if VERSION < (1, 9, 0):
-                    setattr(obj, attrs[-1], cleaned)
-                elif not is_m2m:
+                if not is_m2m:
                     setattr(obj, attrs[-1], cleaned)
                 else:
                     getattr(obj, attrs[-1]).set(cleaned)

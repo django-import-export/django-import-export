@@ -1,0 +1,2 @@
+isort
+psycopg2

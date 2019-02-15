@@ -1,7 +1,4 @@
-from __future__ import unicode_literals
-
-
-class BaseInstanceLoader(object):
+class BaseInstanceLoader:
     """
     Base abstract implementation of instance loader.
     """
@@ -48,7 +45,7 @@ class CachedInstanceLoader(ModelInstanceLoader):
     """
 
     def __init__(self, *args, **kwargs):
-        super(CachedInstanceLoader, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         pk_field_name = self.resource.get_import_id_fields()[0]
         self.pk_field = self.resource.fields[pk_field_name]

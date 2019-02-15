@@ -1,9 +1,5 @@
-from __future__ import unicode_literals
-from django.utils.six import moves
-
-import sys
-import warnings
 import tablib
+import warnings
 from importlib import import_module
 
 try:
@@ -36,7 +32,7 @@ except ImportError:
         XLSX_IMPORT = False
 
 
-class Format(object):
+class Format:
     def get_title(self):
         return type(self)
 
@@ -124,10 +120,7 @@ class TablibFormat(Format):
 
 class TextFormat(TablibFormat):
     def get_read_mode(self):
-        if sys.version_info[0] < 3:  # backwards compatibility for python 2.7
-            return 'rU'
-        else:
-            return 'r'
+        return 'r'
 
     def is_binary(self):
         return False
@@ -138,10 +131,7 @@ class CSV(TextFormat):
     CONTENT_TYPE = 'text/csv'
 
     def create_dataset(self, in_stream, **kwargs):
-        if sys.version_info[0] < 3:
-            # python 2.7 csv does not do unicode
-            return super(CSV, self).create_dataset(in_stream.encode('utf-8'), **kwargs)
-        return super(CSV, self).create_dataset(in_stream, **kwargs)
+        return super().create_dataset(in_stream, **kwargs)
 
 
 class JSON(TextFormat):
@@ -160,10 +150,7 @@ class TSV(TextFormat):
     CONTENT_TYPE = 'text/tab-separated-values'
 
     def create_dataset(self, in_stream, **kwargs):
-        if sys.version_info[0] < 3:
-            # python 2.7 csv does not do unicode
-            return super(TSV, self).create_dataset(in_stream.encode('utf-8'), **kwargs)
-        return super(TSV, self).create_dataset(in_stream, **kwargs)
+        return super().create_dataset(in_stream, **kwargs)
 
 
 class ODS(TextFormat):
@@ -193,7 +180,7 @@ class XLS(TablibFormat):
         sheet = xls_book.sheets()[0]
 
         dataset.headers = sheet.row_values(0)
-        for i in moves.range(1, sheet.nrows):
+        for i in range(1, sheet.nrows):
             dataset.append(sheet.row_values(i))
         return dataset
 

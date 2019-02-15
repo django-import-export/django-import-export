@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-
 import tablib
 from collections import OrderedDict
 from copy import deepcopy
@@ -10,21 +7,28 @@ from unittest import skip, skipUnless
 
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.db import IntegrityError, DatabaseError
+from django.db import DatabaseError, IntegrityError
 from django.db.models import Count
 from django.db.models.fields import FieldDoesNotExist
 from django.test import TestCase, TransactionTestCase, skipUnlessDBFeature
-from django.utils import six
-from django.utils.html import strip_tags
 from django.utils.encoding import force_text
+from django.utils.html import strip_tags
 
 from import_export import fields, resources, results, widgets
 from import_export.instance_loaders import ModelInstanceLoader
 from import_export.resources import Diff
 
 from ..models import (
-    Author, Book, Category, Entry, Profile, WithDefault, WithDynamicDefault,
-    WithFloatField, Person, Role
+    Author,
+    Book,
+    Category,
+    Entry,
+    Person,
+    Profile,
+    Role,
+    WithDefault,
+    WithDynamicDefault,
+    WithFloatField
 )
 
 
@@ -179,7 +183,7 @@ class AuthorResourceWithCustomWidget(resources.ModelResource):
         internal_type = f.get_internal_type() if callable(getattr(f, "get_internal_type", None)) else ""
         if internal_type in cls.WIDGETS_MAP:
             result = cls.WIDGETS_MAP[internal_type]
-            if isinstance(result, six.string_types):
+            if isinstance(result, str):
                 result = getattr(cls, result)(f)
         return result
 
@@ -224,7 +228,7 @@ class ModelResourceTest(TestCase):
         self.assertIsInstance(instance, Book)
 
     def test_default(self):
-        self.assertEquals(WithDefaultResource.fields['name'].clean({'name': ''}), 'foo_bar')
+        self.assertEqual(WithDefaultResource.fields['name'].clean({'name': ''}), 'foo_bar')
 
     def test_get_instance(self):
         instance_loader = self.resource._meta.instance_loader_class(
@@ -256,8 +260,8 @@ class ModelResourceTest(TestCase):
         dataset.append(['Some book', 'test@example.com', "10.25"])
         with self.assertRaises(KeyError) as cm:
             self.resource.get_instance(instance_loader, dataset.dict[0])
-        self.assertEqual(u"Column 'id' not found in dataset. Available columns "
-                         "are: %s" % [u'name', u'author_email', u'price'],
+        self.assertEqual("Column 'id' not found in dataset. Available columns "
+                         "are: %s" % ['name', 'author_email', 'price'],
                          cm.exception.args[0])
 
     def test_get_export_headers(self):
@@ -281,8 +285,8 @@ class ModelResourceTest(TestCase):
         html = diff.as_html()
         headers = self.resource.get_export_headers()
         self.assertEqual(html[headers.index('name')],
-                         u'<span>Some </span><ins style="background:#e6ffe6;">'
-                         u'other </ins><span>book</span>')
+                         '<span>Some </span><ins style="background:#e6ffe6;">'
+                         'other </ins><span>book</span>')
         self.assertFalse(html[headers.index('author_email')])
 
     @skip("See: https://github.com/django-import-export/django-import-export/issues/311")
@@ -427,19 +431,19 @@ class ModelResourceTest(TestCase):
     def test_save_instance_with_dry_run_flag(self):
         class B(BookResource):
             def before_save_instance(self, instance, using_transactions, dry_run):
-                super(B, self).before_save_instance(instance, using_transactions, dry_run)
+                super().before_save_instance(instance, using_transactions, dry_run)
                 if dry_run:
                     self.before_save_instance_dry_run = True
                 else:
                     self.before_save_instance_dry_run = False
             def save_instance(self, instance, using_transactions=True, dry_run=False):
-                super(B, self).save_instance(instance, using_transactions, dry_run)
+                super().save_instance(instance, using_transactions, dry_run)
                 if dry_run:
                     self.save_instance_dry_run = True
                 else:
                     self.save_instance_dry_run = False
             def after_save_instance(self, instance, using_transactions, dry_run):
-                super(B, self).after_save_instance(instance, using_transactions, dry_run)
+                super().after_save_instance(instance, using_transactions, dry_run)
                 if dry_run:
                     self.after_save_instance_dry_run = True
                 else:
@@ -464,21 +468,21 @@ class ModelResourceTest(TestCase):
                 return self.fields['delete'].clean(row)
 
             def before_delete_instance(self, instance, dry_run):
-                super(B, self).before_delete_instance(instance, dry_run)
+                super().before_delete_instance(instance, dry_run)
                 if dry_run:
                     self.before_delete_instance_dry_run = True
                 else:
                     self.before_delete_instance_dry_run = False
 
             def delete_instance(self, instance, using_transactions=True, dry_run=False):
-                super(B, self).delete_instance(instance, using_transactions, dry_run)
+                super().delete_instance(instance, using_transactions, dry_run)
                 if dry_run:
                     self.delete_instance_dry_run = True
                 else:
                     self.delete_instance_dry_run = False
 
             def after_delete_instance(self, instance, dry_run):
-                super(B, self).after_delete_instance(instance, dry_run)
+                super().after_delete_instance(instance, dry_run)
                 if dry_run:
                     self.after_delete_instance_dry_run = True
                 else:
@@ -704,7 +708,7 @@ class ModelResourceTest(TestCase):
         resource = B()
         with self.assertRaises(Exception) as cm:
             resource.import_data(self.dataset, raise_errors=True)
-        self.assertEqual(u"This is an invalid dataset", cm.exception.args[0])
+        self.assertEqual("This is an invalid dataset", cm.exception.args[0])
 
     def test_after_import_raises_error(self):
         class B(BookResource):
@@ -714,7 +718,7 @@ class ModelResourceTest(TestCase):
         resource = B()
         with self.assertRaises(Exception) as cm:
             resource.import_data(self.dataset, raise_errors=True)
-        self.assertEqual(u"This is an invalid dataset", cm.exception.args[0])
+        self.assertEqual("This is an invalid dataset", cm.exception.args[0])
 
     def test_link_to_nonexistent_field(self):
         with self.assertRaises(FieldDoesNotExist) as cm:
@@ -818,7 +822,7 @@ class ModelResourceTest(TestCase):
         result = EntryResource().import_data(
             self.dataset, raise_errors=True, dry_run=False)
         self.assertFalse(result.has_errors())
-        self.assertEquals(User.objects.get(pk=user.pk).username, 'bar')
+        self.assertEqual(User.objects.get(pk=user.pk).username, 'bar')
 
     def test_import_data_dynamic_default_callable(self):
 
@@ -981,7 +985,7 @@ class PostgresTests(TransactionTestCase):
         )
         self.assertEqual(
             result.failed_dataset.headers,
-            [u'id', u'user', u'Error']
+            ['id', 'user', 'Error']
         )
         self.assertEqual(len(result.failed_dataset), 1)
         # We can't check the error message because it's package- and version-dependent
@@ -1065,10 +1069,10 @@ class ManyRelatedManagerDiffTest(TestCase):
         export_headers = book_resource.get_export_headers()
 
         add_result = book_resource.import_data(original_dataset, dry_run=False)
-        expected_value = u'<ins style="background:#e6ffe6;">1</ins>'
+        expected_value = '<ins style="background:#e6ffe6;">1</ins>'
         self.check_value(add_result, export_headers, expected_value)
         change_result = book_resource.import_data(changed_dataset, dry_run=False)
-        expected_value = u'<del style="background:#ffe6e6;">1</del><ins style="background:#e6ffe6;">2</ins>'
+        expected_value = '<del style="background:#ffe6e6;">1</del><ins style="background:#e6ffe6;">2</ins>'
         self.check_value(change_result, export_headers, expected_value)
 
     def check_value(self, result, export_headers, expected_value):

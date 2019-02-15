@@ -1,16 +1,10 @@
-# -*- coding: utf-8 -*-
 import os
 
-from django.test import TestCase
 from django.core.cache import cache
 from django.core.files.storage import default_storage
-from django.utils import six
+from django.test import TestCase
 
-from import_export.tmp_storages import (
-    CacheStorage,
-    MediaStorage,
-    TempFolderStorage
-    )
+from import_export.tmp_storages import CacheStorage, MediaStorage, TempFolderStorage
 
 
 class TempStoragesTest(TestCase):
@@ -28,7 +22,7 @@ id,name,author,author_email,imported,published,price,categories
         name = tmp_storage.name
 
         tmp_storage = TempFolderStorage(name=name)
-        self.assertEqual(self.test_string.decode('utf-8'), tmp_storage.read())
+        self.assertEqual(self.test_string.decode(), tmp_storage.read())
 
         self.assertTrue(os.path.isfile(tmp_storage.get_full_path()))
         tmp_storage.remove()
@@ -68,6 +62,5 @@ id,name,author,author_email,imported,published,price,categories
         name = tmp_storage.name
 
         tmp_storage = MediaStorage(name=name)
-        read_mode = 'r' if six.PY3 else 'rbU'
-        self.assertEqual(self.test_string.decode('utf-8'),
-                         tmp_storage.read(read_mode=read_mode))
+        self.assertEqual(self.test_string.decode(),
+                         tmp_storage.read(read_mode='r'))
