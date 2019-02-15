@@ -42,6 +42,9 @@ class ImportExportMixinBase:
 class ImportMixin(ImportExportMixinBase):
     """
     Import mixin.
+    
+    This is intended to be mixed with django.contrib.admin.ModelAdmin
+    https://docs.djangoproject.com/en/2.1/ref/contrib/admin/#modeladmin-objects
     """
 
     #: template for change_list view
@@ -289,6 +292,9 @@ class ImportMixin(ImportExportMixinBase):
 class ExportMixin(ImportExportMixinBase):
     """
     Export mixin.
+    
+    This is intended to be mixed with django.contrib.admin.ModelAdmin
+    https://docs.djangoproject.com/en/2.1/ref/contrib/admin/#modeladmin-objects
     """
     #: resource class
     resource_class = None
