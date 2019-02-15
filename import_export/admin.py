@@ -205,9 +205,9 @@ class ImportMixin(ImportExportMixinBase):
         return {}
 
     def get_import_form(self):
-        '''
+        """
         Get the form type used to read the import format and file.
-        '''
+        """
         return ImportForm
 
     def get_confirm_import_form(self):
@@ -258,12 +258,12 @@ class ImportMixin(ImportExportMixinBase):
         return tmp_storage
 
     def import_action(self, request, *args, **kwargs):
-        '''
+        """
         Perform a dry_run of the import to make sure the import will not
         result in errors.  If there where no error, save the user
         uploaded file to a local temp file that will be used by
         'process_import' for the actual import.
-        '''
+        """
         if not self.has_import_permission(request):
             raise PermissionDenied
 
