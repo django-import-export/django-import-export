@@ -217,7 +217,7 @@ class ManyToManyWidget(TestCase):
     def setUp(self):
         self.widget = widgets.ManyToManyWidget(Category)
         self.widget_name = widgets.ManyToManyWidget(Category, field="name")
-        self.cat1 = Category.objects.create(name='Cat úňíčóďě'.encode())
+        self.cat1 = Category.objects.create(name='Cat úňíčóďě')
         self.cat2 = Category.objects.create(name='Cat 2')
 
     def test_clean(self):

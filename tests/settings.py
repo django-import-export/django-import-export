@@ -57,10 +57,8 @@ if os.environ.get('IMPORT_EXPORT_TEST_TYPE') == 'mysql-innodb':
             'PASSWORD': os.environ.get('IMPORT_EXPORT_MYSQL_PASSWORD', 'password'),
             'HOST': '127.0.0.1',
             'PORT': 3306,
-            'OPTIONS': {
-                'charset': 'utf8',
-                'use_unicode': True,
-            },
+            'CHARSET': 'utf8',
+            'COLLATION': 'utf8_general_ci',
         }
     }
 
