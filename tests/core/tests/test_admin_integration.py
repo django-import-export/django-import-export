@@ -2,7 +2,7 @@ import os.path
 from tablib import Dataset
 
 from core.admin import AuthorAdmin, BookAdmin, BookResource, CustomBookAdmin
-from core.models import Book, Category, Parent, Author, EBook
+from core.models import Author, Book, Category, EBook, Parent
 
 from django.contrib.admin.models import LogEntry
 from django.contrib.auth.models import User
