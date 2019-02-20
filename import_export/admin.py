@@ -99,9 +99,11 @@ class ImportMixin(ImportExportMixinBase):
         return {}
 
     def get_import_resource_kwargs(self, request, *args, **kwargs):
+        """Prepares/returns kwargs used when initializing Resource"""
         return self.get_resource_kwargs(request, *args, **kwargs)
 
     def get_resource_class(self):
+        """Returns ResourceClass"""
         if not self.resource_class:
             return modelresource_factory(self.model)
         else:
@@ -218,10 +220,11 @@ class ImportMixin(ImportExportMixinBase):
 
     def get_form_kwargs(self, form, *args, **kwargs):
         """
-        Prepare/customize kwargs for an import form.
+        Prepare/returns kwargs for the import form.
 
-        If you wish to distinguish between import and confirm import forms,
-        you could use the following approach:
+        To distinguish between import and confirm import forms,
+        the following approach may be used:
+
             if isinstance(form, ImportForm):
                 # your code here for the import form kwargs
                 # e.g. update.kwargs({...})
