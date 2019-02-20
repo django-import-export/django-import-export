@@ -1,8 +1,8 @@
 import os.path
 from tablib import Dataset
 
-from core.admin import AuthorAdmin, BookAdmin, BookResource
-from core.models import Book, Category, Parent
+from core.admin import AuthorAdmin, BookAdmin, BookResource, CustomBookAdmin
+from core.models import Book, Category, Parent, Author, EBook
 
 from django.contrib.admin.models import LogEntry
 from django.contrib.auth.models import User
@@ -267,6 +267,55 @@ class ImportExportAdminIntegrationTest(TestCase):
         response = self.client.post('/admin/core/book/process_import/', data,
                                     follow=True)
         self.assertEqual(response.status_code, 200)
+
+    def test_import_with_customized_forms(self):
+        """Test if admin import works if forms are customized"""
+        # We reuse import scheme from `test_import` to import books.csv.
+        # We use customized BookAdmin (CustomBookAdmin) with modified import
+        # form, which requires Author to be selected (from available authors).
+        # Note that url is /admin/core/ebook/import (and not: ...book/import)!
+
+        # We need at least a single author in the db to select from in the
+        # admin import custom forms
+        Author.objects.create(id=11, name='Test Author')
+
+        # GET the import form
+        response = self.client.get('/admin/core/ebook/import/')
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'admin/import_export/import.html')
+        self.assertContains(response, 'form action=""')
+
+        # POST the import form
+        input_format = '0'
+        filename = os.path.join(os.path.dirname(__file__),
+                                os.path.pardir,
+                                'exports',
+                                'books.csv')
+        with open(filename, "rb") as fobj:
+            data = {'author': 11,
+                    'input_format': input_format,
+                    'import_file': fobj}
+            response = self.client.post('/admin/core/ebook/import/', data)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('result', response.context)
+        self.assertFalse(response.context['result'].has_errors())
+        self.assertIn('confirm_form', response.context)
+        confirm_form = response.context['confirm_form']
+        self.assertIsInstance(confirm_form,
+                              CustomBookAdmin(EBook, 'ebook/import')
+                              .get_confirm_import_form())
+
+        data = confirm_form.initial
+        self.assertEqual(data['original_file_name'], 'books.csv')
+        response = self.client.post('/admin/core/ebook/process_import/',
+                                    data, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response,
+            _('Import finished, with {} new and {} updated {}.').format(
+                1, 0, EBook._meta.verbose_name_plural)
+        )
 
 
 class ExportActionAdminIntegrationTest(TestCase):
