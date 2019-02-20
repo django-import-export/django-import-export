@@ -242,12 +242,6 @@ class ImportMixin(ImportExportMixinBase):
             return kwargs
         return {}
 
-    def get_import_resource_kwargs(self, request, *args, **kwargs):
-        """
-        Prepare kwargs for the import resource, given: request, args, kwargs.
-        """
-        return {}
-
     def write_to_tmp_storage(self, import_file, input_format):
         tmp_storage = self.get_tmp_storage_class()()
         data = bytes()
