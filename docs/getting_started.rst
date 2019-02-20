@@ -350,9 +350,7 @@ Importing
 ---------
 
 It is also possible to enable data import via standard Django admin interface. To do this subclass :class:`~import_export.admin.ImportExportModelAdmin` or use one of the available mixins, i.e.
-:class:`~import_export.admin.ImportMixin`, or :class:`~import_export.admin.ImportExportMixin`.
-
-Customizations are, of course, possible.
+:class:`~import_export.admin.ImportMixin`, or :class:`~import_export.admin.ImportExportMixin`. Customizations are, of course, possible.
 
 
 Customize admin import forms
@@ -360,32 +358,27 @@ Customize admin import forms
 
 It is possible to modify default import forms used in the model admin. For example, to add an additional field in the import form, subclass and extend the :class:`~import_export.forms.ImportForm` (note that you may want to also consider :class:`~import_export.forms.ConfirmImportForm` as importing is a two-step process).
 
-To use the customized form(s), overload :class:`~import_export.admin.ImportMixin` respective methods, i.e. :func:`~import_export.forms.ImportForm.get_import_form`, and also :func:`~import_export.forms.ImportForm.get_confirm_import_form` if need be.
+To use the customized form(s), overload :class:`~import_export.admin.ImportMixin` respective methods, i.e. :meth:`~import_export.admin.ImportMixin.get_import_form`, and also :meth:`~import_export.admin.ImportMixin.get_confirm_import_form` if need be.
 
 For example, imagine you want to import books for a specific author. You can extend the import forms to include ``author`` field to select the author from.
 
-::
+Customize forms::
+
     from django import forms
 
     class CustomImportForm(ImportForm):
-        """Customized import form with author field"""
-
         author = forms.ModelChoiceField(
             queryset=Author.objects.all(),
             required=True)
 
     class CustomConfirmImportForm(ConfirmImportForm):
-        """Customized import confirm form with author field"""
-
-        # You may want to have `HiddenInput()` as the widget
         author = forms.ModelChoiceField(
             queryset=Author.objects.all(),
             required=True)
 
+Customize ``ModelAdmin``::
 
-::
     class CustomBookAdmin(ImportMixin, admin.ModelAdmin)
-        """Import with modified import form"""
         resource_class = BookResource
 
         def get_import_form(self):
@@ -395,7 +388,7 @@ For example, imagine you want to import books for a specific author. You can ext
             return CustomConfirmImportForm
 
         def get_form_kwargs(self, form, *args, **kwargs):
-            # pass on author to the custom confirm form
+            # pass on `author` to the kwargs for the custom confirm form
             if isinstance(form, CustomImportForm):
                 if form.is_valid():
                     author = form.cleaned_data['author']
@@ -405,8 +398,9 @@ For example, imagine you want to import books for a specific author. You can ext
 
     admin.site.register(Book, CustomBookAdmin)
 
+To further customize admin imports, consider modifying the following :class:`~import_export.admin.ImportMixin` methods: :meth:`~import_export.admin.ImportMixin.get_form_kwargs`, :meth:`~import_export.admin.ImportMixin.get_import_resource_kwargs`, :meth:`~import_export.admin.ImportMixin.get_import_data_kwargs`.
 
-To further customize admin imports, consider modifying the following :class:`~import_export.admin.ImportMixin` methods: :func:`~import_export.forms.ImportForm.get_form_kwargs`, :func:`~import_export.forms.ImportForm.get_import_resource_kwargs`, :func:`~import_export.forms.ImportForm.get_import_data_kwargs`.
+Using the above methods it is possible to customize import form initialization as well as importing customizations.
 
 
 .. seealso::
