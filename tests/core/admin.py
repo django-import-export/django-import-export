@@ -3,8 +3,8 @@ from django.contrib import admin
 from import_export.admin import ExportActionModelAdmin, ImportExportMixin, ImportMixin
 from import_export.resources import ModelResource
 
+from .forms import CustomConfirmImportForm, CustomImportForm
 from .models import Author, Book, Category, Child, EBook
-from .forms import CustomImportForm, CustomConfirmImportForm
 
 
 class ChildAdmin(ImportMixin, admin.ModelAdmin):

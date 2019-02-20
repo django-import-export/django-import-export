@@ -1,5 +1,7 @@
 from django import forms
-from import_export.forms import ImportForm, ConfirmImportForm
+
+from import_export.forms import ConfirmImportForm, ImportForm
+
 from .models import Author
 
 
