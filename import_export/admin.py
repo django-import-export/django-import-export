@@ -235,8 +235,7 @@ class ImportMixin(ImportExportMixinBase):
         form_type = self.get_import_form()
         form = form_type(import_formats,
                          request.POST or None,
-                         request.FILES or None)
-
+                         request.FILES or None, initial = {'input_format': 0})
         if request.POST and form.is_valid():
             input_format = import_formats[
                 int(form.cleaned_data['input_format'])
@@ -417,7 +416,7 @@ class ExportMixin(ImportExportMixinBase):
             raise PermissionDenied
 
         formats = self.get_export_formats()
-        form = ExportForm(formats, request.POST or None)
+        form = ExportForm(formats, request.POST or None, initial = {'file_format': 0})
         if form.is_valid():
             file_format = formats[
                 int(form.cleaned_data['file_format'])
