@@ -260,9 +260,9 @@ class ManyToManyWidget(TestCase):
         self.assertIn(self.cat1, cleaned_data)
 
     def test_render(self):
-        self.assertEqual(self.widget.render(Category.objects),
+        self.assertEqual(self.widget.render(Category.objects.order_by('id')),
                          "%s,%s" % (self.cat1.pk, self.cat2.pk))
-        self.assertEqual(self.widget_name.render(Category.objects),
+        self.assertEqual(self.widget_name.render(Category.objects.order_by('id')),
                          "%s,%s" % (self.cat1.name, self.cat2.name))
 
 

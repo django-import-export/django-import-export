@@ -52,13 +52,19 @@ if os.environ.get('IMPORT_EXPORT_TEST_TYPE') == 'mysql-innodb':
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.mysql',
-            'TEST_NAME': 'import_export_test',
+            'NAME': 'import_export',
             'USER': os.environ.get('IMPORT_EXPORT_MYSQL_USER', 'root'),
-            'OPTIONS': {
-               'init_command': 'SET storage_engine=INNODB',
+            'PASSWORD': os.environ.get('IMPORT_EXPORT_MYSQL_PASSWORD', 'password'),
+            'HOST': '127.0.0.1',
+            'PORT': 3306,
+            'TEST': {
+                'CHARSET': 'utf8',
+                'COLLATION': 'utf8_general_ci',
             }
         }
     }
+
+
 elif os.environ.get('IMPORT_EXPORT_TEST_TYPE') == 'postgres':
     IMPORT_EXPORT_USE_TRANSACTIONS = True
     DATABASES = {
