@@ -831,6 +831,10 @@ class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
         """
         Returns the widget that would likely be associated with each
         Django type.
+
+        Includes mapping of Postgres Array and JSON fields. In the case that
+        psycopg2 is not installed, we consume the error and process the field
+        regardless.
         """
         result = default
         internal_type = ""
@@ -845,7 +849,6 @@ class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
             try:
                 from django.contrib.postgres.fields import ArrayField, JSONField
             except ImportError:
-                # Consume error when psycopg2 is not installed:
                 # ImportError: No module named psycopg2.extras
                 class ArrayField:
                     pass
