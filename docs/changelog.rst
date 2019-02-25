@@ -7,6 +7,7 @@ Changelog
 
 - Removed support for Django < 2.0
 - Removed support for Python < 3.5
+- feat: Support for Postgres JSONb Field (#904)
 
 1.2.0 (2019-01-10)
 ------------------
@@ -46,7 +47,7 @@ Changelog
 
 - added test for tsv import
 
-- added unicode support for TSV for pytjhon 2
+- added unicode support for TSV for python 2
 
 - Added ExportViewMixin (#692)
 

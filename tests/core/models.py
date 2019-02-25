@@ -39,8 +39,8 @@ class Book(models.Model):
     imported = models.BooleanField(default=False)
     published = models.DateField('Published', blank=True, null=True)
     published_time = models.TimeField('Time published', blank=True, null=True)
-    price = models.DecimalField(max_digits=10, decimal_places=2, null=True,
-                                blank=True)
+    price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+
     categories = models.ManyToManyField(Category, blank=True)
 
     def __str__(self):
