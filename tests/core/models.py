@@ -97,3 +97,9 @@ class WithDynamicDefault(models.Model):
 
 class WithFloatField(models.Model):
     f = models.FloatField(blank=True, null=True)
+
+
+class EBook(Book):
+    """Book proxy model to have a separate admin url access and name"""
+    class Meta:
+        proxy = True
