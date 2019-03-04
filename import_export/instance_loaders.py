@@ -19,7 +19,7 @@ class ModelInstanceLoader(BaseInstanceLoader):
     """
 
     def get_queryset(self):
-        return self.resource._meta.model.objects.all()
+        return self.resource.get_queryset()
 
     def get_instance(self, row):
         try:
