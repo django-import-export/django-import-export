@@ -250,6 +250,12 @@ class DurationWidget(Widget):
 
 
 class SimpleArrayWidget(Widget):
+    """
+    Widget for an Array field. Can be used for Postgres' Array field.
+
+    :param separator: Defaults to ``','``
+    """
+
     def __init__(self, separator=None):
         if separator is None:
             separator = ','
