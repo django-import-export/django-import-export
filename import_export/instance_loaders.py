@@ -1,7 +1,4 @@
-from __future__ import unicode_literals
-
-
-class BaseInstanceLoader(object):
+class BaseInstanceLoader:
     """
     Base abstract implementation of instance loader.
     """
@@ -22,7 +19,7 @@ class ModelInstanceLoader(BaseInstanceLoader):
     """
 
     def get_queryset(self):
-        return self.resource._meta.model.objects.all()
+        return self.resource.get_queryset()
 
     def get_instance(self, row):
         try:
@@ -30,7 +27,10 @@ class ModelInstanceLoader(BaseInstanceLoader):
             for key in self.resource.get_import_id_fields():
                 field = self.resource.fields[key]
                 params[field.attribute] = field.clean(row)
-            return self.get_queryset().get(**params)
+            if params:
+                return self.get_queryset().get(**params)
+            else:
+                return None
         except self.resource._meta.model.DoesNotExist:
             return None
 
@@ -45,7 +45,7 @@ class CachedInstanceLoader(ModelInstanceLoader):
     """
 
     def __init__(self, *args, **kwargs):
-        super(CachedInstanceLoader, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         pk_field_name = self.resource.get_import_id_fields()[0]
         self.pk_field = self.resource.fields[pk_field_name]

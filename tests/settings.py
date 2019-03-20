@@ -1,12 +1,12 @@
-from __future__ import unicode_literals
-
 import os
+import sys
 
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
+    'django.contrib.messages',
     'django.contrib.sites',
 
     'import_export',
@@ -33,9 +33,6 @@ MIDDLEWARE = (
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
 
-# For backwards compatibility for Django 1.8
-MIDDLEWARE_CLASSES = MIDDLEWARE
-
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -55,13 +52,19 @@ if os.environ.get('IMPORT_EXPORT_TEST_TYPE') == 'mysql-innodb':
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.mysql',
-            'TEST_NAME': 'import_export_test',
+            'NAME': 'import_export',
             'USER': os.environ.get('IMPORT_EXPORT_MYSQL_USER', 'root'),
-            'OPTIONS': {
-               'init_command': 'SET storage_engine=INNODB',
+            'PASSWORD': os.environ.get('IMPORT_EXPORT_MYSQL_PASSWORD', 'password'),
+            'HOST': '127.0.0.1',
+            'PORT': 3306,
+            'TEST': {
+                'CHARSET': 'utf8',
+                'COLLATION': 'utf8_general_ci',
             }
         }
     }
+
+
 elif os.environ.get('IMPORT_EXPORT_TEST_TYPE') == 'postgres':
     IMPORT_EXPORT_USE_TRANSACTIONS = True
     DATABASES = {
@@ -75,10 +78,14 @@ elif os.environ.get('IMPORT_EXPORT_TEST_TYPE') == 'postgres':
         }
     }
 else:
+    if 'test' in sys.argv:
+        database_name = ''
+    else:
+        database_name = os.path.join(os.path.dirname(__file__), 'database.db')
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': os.path.join(os.path.dirname(__file__), 'database.db'),
+            'NAME': database_name,
         }
     }
 

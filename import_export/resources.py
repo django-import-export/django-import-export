@@ -1,6 +1,5 @@
-from __future__ import unicode_literals
-
 import functools
+import logging
 import tablib
 import traceback
 from collections import OrderedDict
@@ -8,15 +7,21 @@ from copy import deepcopy
 
 from diff_match_patch import diff_match_patch
 
-from django import VERSION
 from django.conf import settings
-from django.core.exceptions import ImproperlyConfigured
+from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.core.management.color import no_style
-from django.db import connections, DEFAULT_DB_ALIAS
+from django.db import DEFAULT_DB_ALIAS, connections
 from django.db.models.fields import FieldDoesNotExist
+from django.db.models.fields.related import ForeignObjectRel
 from django.db.models.query import QuerySet
-from django.db.transaction import TransactionManagementError
-from django.utils import six
+from django.db.transaction import (
+    TransactionManagementError,
+    atomic,
+    savepoint,
+    savepoint_commit,
+    savepoint_rollback
+)
+from django.utils.encoding import force_text
 from django.utils.safestring import mark_safe
 
 from . import widgets
@@ -25,24 +30,9 @@ from .instance_loaders import ModelInstanceLoader
 from .results import Error, Result, RowResult
 from .utils import atomic_if_using_transaction
 
-try:
-    from django.db.transaction import atomic, savepoint, savepoint_rollback, savepoint_commit  # noqa
-except ImportError:
-    from .django_compat import atomic, savepoint, savepoint_rollback, savepoint_commit  # noqa
-
-
-from django.db.models.fields.related import ForeignObjectRel
-
-try:
-    from django.utils.encoding import force_text
-except ImportError:
-    from django.utils.encoding import force_unicode as force_text
-
+logger = logging.getLogger(__name__)
 # Set default logging handler to avoid "No handler found" warnings.
-import logging  # isort:skip
-from logging import NullHandler
-
-logging.getLogger(__name__).addHandler(NullHandler())
+logger.addHandler(logging.NullHandler())
 
 USE_TRANSACTIONS = getattr(settings, 'IMPORT_EXPORT_USE_TRANSACTIONS', True)
 
@@ -55,7 +45,7 @@ def get_related_model(field):
         return field.rel.to
 
 
-class ResourceOptions(object):
+class ResourceOptions:
     """
     The inner Meta class allows for class-level configuration of how the
     Resource should behave. The following options are available:
@@ -119,6 +109,13 @@ class ResourceOptions(object):
     Controls if the result reports skipped rows Default value is True
     """
 
+    clean_model_instances = False
+    """
+    Controls whether ``instance.full_clean()`` is called during the import
+    process to identify potential validation errors for each (non skipped) row.
+    The default value is False.
+    """
+
 
 class DeclarativeMetaclass(type):
 
@@ -131,7 +128,7 @@ class DeclarativeMetaclass(type):
         # necessary in order to preserve the correct order of fields.
         for base in bases[::-1]:
             if hasattr(base, 'fields'):
-                declared_fields = list(six.iteritems(base.fields)) + declared_fields
+                declared_fields = list(base.fields.items()) + declared_fields
                 # Collect the Meta options
                 options = getattr(base, 'Meta', None)
                 for option in [option for option in dir(options)
@@ -147,8 +144,7 @@ class DeclarativeMetaclass(type):
                 declared_fields.append((field_name, field))
 
         attrs['fields'] = OrderedDict(declared_fields)
-        new_class = super(DeclarativeMetaclass, cls).__new__(cls, name,
-                                                             bases, attrs)
+        new_class = super().__new__(cls, name, bases, attrs)
 
         # Add direct options
         options = getattr(new_class, 'Meta', None)
@@ -160,7 +156,7 @@ class DeclarativeMetaclass(type):
         return new_class
 
 
-class Diff(object):
+class Diff:
     def __init__(self, resource, instance, new):
         self.left = self._export_resource_fields(resource, instance)
         self.right = []
@@ -172,7 +168,7 @@ class Diff(object):
     def as_html(self):
         data = []
         dmp = diff_match_patch()
-        for v1, v2 in six.moves.zip(self.left, self.right):
+        for v1, v2 in zip(self.left, self.right):
             if v1 != v2 and self.new:
                 v1 = ""
             diff = dmp.diff_main(force_text(v1), force_text(v2))
@@ -186,7 +182,7 @@ class Diff(object):
         return [resource.export_field(f, instance) if instance else "" for f in resource.get_user_visible_fields()]
 
 
-class Resource(six.with_metaclass(DeclarativeMetaclass)):
+class Resource(metaclass=DeclarativeMetaclass):
     """
     Resource defines how objects are mapped to their import and export
     representations and handle importing and exporting data.
@@ -270,6 +266,34 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         else:
             return (self.init_instance(row), True)
 
+    def validate_instance(self, instance, import_validation_errors=None, validate_unique=True):
+        """
+        Takes any validation errors that were raised by
+        :meth:`~import_export.resources.Resource.import_obj`, and combines them
+        with validation errors raised by the instance's ``full_clean()``
+        method. The combined errors are then re-raised as single, multi-field
+        ValidationError.
+
+        If the ``clean_model_instances`` option is False, the instances's
+        ``full_clean()`` method is not called, and only the errors raised by
+        ``import_obj()`` are re-raised.
+        """
+        if import_validation_errors is None:
+            errors = {}
+        else:
+            errors = import_validation_errors.copy()
+        if self._meta.clean_model_instances:
+            try:
+                instance.full_clean(
+                    exclude=errors.keys(),
+                    validate_unique=validate_unique,
+                )
+            except ValidationError as e:
+                errors = e.update_error_dict(errors)
+
+        if errors:
+            raise ValidationError(errors)
+
     def save_instance(self, instance, using_transactions=True, dry_run=False):
         """
         Takes care of saving the object to the database.
@@ -335,12 +359,21 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
     def import_obj(self, obj, data, dry_run):
         """
         Traverses every field in this Resource and calls
-        :meth:`~import_export.resources.Resource.import_field`.
-        """
+        :meth:`~import_export.resources.Resource.import_field`. If
+        ``import_field()`` results in a ``ValueError`` being raised for
+        one of more fields, those errors are captured and reraised as a single,
+        multi-field ValidationError."""
+        errors = {}
         for field in self.get_import_fields():
             if isinstance(field.widget, widgets.ManyToManyWidget):
                 continue
-            self.import_field(field, obj, data)
+            try:
+                self.import_field(field, obj, data)
+            except ValueError as e:
+                errors[field.attribute] = ValidationError(
+                    force_text(e), code="invalid")
+        if errors:
+            raise ValidationError(errors)
 
     def save_m2m(self, obj, data, using_transactions, dry_run):
         """
@@ -468,25 +501,37 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
                     self.delete_instance(instance, using_transactions, dry_run)
                     diff.compare_with(self, None, dry_run)
             else:
-                self.import_obj(instance, row, dry_run)
+                import_validation_errors = {}
+                try:
+                    self.import_obj(instance, row, dry_run)
+                except ValidationError as e:
+                    # Validation errors from import_obj() are passed on to
+                    # validate_instance(), where they can be combined with model
+                    # instance validation errors if necessary
+                    import_validation_errors = e.update_error_dict(import_validation_errors)
                 if self.skip_row(instance, original):
                     row_result.import_type = RowResult.IMPORT_TYPE_SKIP
                 else:
+                    self.validate_instance(instance, import_validation_errors)
                     self.save_instance(instance, using_transactions, dry_run)
                     self.save_m2m(instance, row, using_transactions, dry_run)
+                    # Add object info to RowResult for LogEntry
+                    row_result.object_id = instance.pk
+                    row_result.object_repr = force_text(instance)
                 diff.compare_with(self, instance, dry_run)
+
             row_result.diff = diff.as_html()
-            # Add object info to RowResult for LogEntry
-            if row_result.import_type != RowResult.IMPORT_TYPE_SKIP:
-                row_result.object_id = instance.pk
-                row_result.object_repr = force_text(instance)
             self.after_import_row(row, row_result, **kwargs)
+
+        except ValidationError as e:
+            row_result.import_type = RowResult.IMPORT_TYPE_INVALID
+            row_result.validation_error = e
         except Exception as e:
             row_result.import_type = RowResult.IMPORT_TYPE_ERROR
             # There is no point logging a transaction error for each row
             # when only the original error is likely to be relevant
             if not isinstance(e, TransactionManagementError):
-                logging.exception(e)
+                logger.debug(e, exc_info=e)
             tb_info = traceback.format_exc()
             row_result.errors.append(self.get_error_result_class()(e, tb_info, row))
         return row_result
@@ -540,7 +585,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
             with atomic_if_using_transaction(using_transactions):
                 self.before_import(dataset, using_transactions, dry_run, **kwargs)
         except Exception as e:
-            logging.exception(e)
+            logger.debug(e, exc_info=e)
             tb_info = traceback.format_exc()
             result.append_base_error(self.get_error_result_class()(e, tb_info))
             if raise_errors:
@@ -554,7 +599,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
         if collect_failed_rows:
             result.add_dataset_headers(dataset.headers)
 
-        for row in dataset.dict:
+        for i, row in enumerate(dataset.dict, 1):
             with atomic_if_using_transaction(using_transactions):
                 row_result = self.import_row(
                     row,
@@ -564,11 +609,18 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
                     **kwargs
                 )
             result.increment_row_result_total(row_result)
+
             if row_result.errors:
                 if collect_failed_rows:
                     result.append_failed_row(row, row_result.errors[0])
                 if raise_errors:
                     raise row_result.errors[-1].error
+            elif row_result.validation_error:
+                result.append_invalid_row(i, row, row_result.validation_error)
+                if collect_failed_rows:
+                    result.append_failed_row(row, row_result.validation_error)
+                if raise_errors:
+                    raise row_result.validation_error
             if (row_result.import_type != RowResult.IMPORT_TYPE_SKIP or
                     self._meta.report_skipped):
                 result.append_row_result(row_result)
@@ -577,7 +629,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
             with atomic_if_using_transaction(using_transactions):
                 self.after_import(dataset, result, using_transactions, dry_run, **kwargs)
         except Exception as e:
-            logging.exception(e)
+            logger.debug(e, exc_info=e)
             tb_info = traceback.format_exc()
             result.append_base_error(self.get_error_result_class()(e, tb_info))
             if raise_errors:
@@ -657,8 +709,7 @@ class Resource(six.with_metaclass(DeclarativeMetaclass)):
 class ModelDeclarativeMetaclass(DeclarativeMetaclass):
 
     def __new__(cls, name, bases, attrs):
-        new_class = super(ModelDeclarativeMetaclass,
-                          cls).__new__(cls, name, bases, attrs)
+        new_class = super().__new__(cls, name, bases, attrs)
 
         opts = new_class._meta
 
@@ -701,7 +752,7 @@ class ModelDeclarativeMetaclass(DeclarativeMetaclass):
                         try:
                             f = model._meta.get_field(attr)
                         except FieldDoesNotExist as e:
-                            logging.exception(e)
+                            logger.debug(e, exc_info=e)
                             raise FieldDoesNotExist(
                                 "%s: %s has no field named '%s'" %
                                 (verbose_path, model.__name__, attr))
@@ -730,7 +781,7 @@ class ModelDeclarativeMetaclass(DeclarativeMetaclass):
         return new_class
 
 
-class ModelResource(six.with_metaclass(ModelDeclarativeMetaclass, Resource)):
+class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
     """
     ModelResource is Resource subclass for handling Django models.
     """
@@ -780,23 +831,36 @@ class ModelResource(six.with_metaclass(ModelDeclarativeMetaclass, Resource)):
         """
         Returns the widget that would likely be associated with each
         Django type.
+
+        Includes mapping of Postgres Array and JSON fields. In the case that
+        psycopg2 is not installed, we consume the error and process the field
+        regardless.
         """
         result = default
-        internal_type = f.get_internal_type() if callable(getattr(f, "get_internal_type", None)) else ""
+        internal_type = ""
+        if callable(getattr(f, "get_internal_type", None)):
+            internal_type = f.get_internal_type()
+
         if internal_type in cls.WIDGETS_MAP:
             result = cls.WIDGETS_MAP[internal_type]
-            if isinstance(result, six.string_types):
+            if isinstance(result, str):
                 result = getattr(cls, result)(f)
         else:
             try:
-                from django.contrib.postgres.fields import ArrayField
+                from django.contrib.postgres.fields import ArrayField, JSONField
             except ImportError:
-                # Consume error when psycopg2 is not installed:
                 # ImportError: No module named psycopg2.extras
-                class ArrayField(object):
+                class ArrayField:
                     pass
-            if type(f) == ArrayField:
+
+                class JSONField:
+                    pass
+
+            if isinstance(f, ArrayField):
                 return widgets.SimpleArrayWidget
+            elif isinstance(f, JSONField):
+                return widgets.JSONWidget
+
         return result
 
     @classmethod

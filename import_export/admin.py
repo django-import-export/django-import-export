@@ -1,74 +1,50 @@
-from __future__ import with_statement
-
 from datetime import datetime
 
-import importlib
 import django
-from django.contrib import admin
-from django.utils import six
-from django.utils.translation import ugettext_lazy as _
-from django.conf.urls import url
-from django.template.response import TemplateResponse
-from django.contrib import messages
-from django.contrib.admin.models import LogEntry, ADDITION, CHANGE, DELETION
-from django.contrib.contenttypes.models import ContentType
-from django.http import HttpResponseRedirect, HttpResponse
-try:
-    from django.urls import reverse
-except ImportError:  # Django<2.0
-    from django.core.urlresolvers import reverse
 from django.conf import settings
-from django.template.defaultfilters import pluralize
+from django.conf.urls import url
+from django.contrib import admin, messages
+from django.contrib.admin.models import ADDITION, CHANGE, DELETION, LogEntry
+from django.contrib.auth import get_permission_codename
+from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import PermissionDenied
+from django.http import HttpResponse, HttpResponseRedirect
+from django.template.response import TemplateResponse
+from django.urls import reverse
 from django.utils.decorators import method_decorator
+from django.utils.encoding import force_text
+from django.utils.module_loading import import_string
+from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_POST
 
-from .forms import (
-    ImportForm,
-    ConfirmImportForm,
-    ExportForm,
-    export_action_form_factory,
-)
-from .resources import (
-    modelresource_factory,
-)
 from .formats.base_formats import DEFAULT_FORMATS
+from .forms import ConfirmImportForm, ExportForm, ImportForm, export_action_form_factory
+from .resources import modelresource_factory
 from .results import RowResult
-from .tmp_storages import TempFolderStorage
 from .signals import post_export, post_import
-
-try:
-    from django.utils.encoding import force_text
-except ImportError:
-    from django.utils.encoding import force_unicode as force_text
+from .tmp_storages import TempFolderStorage
 
 SKIP_ADMIN_LOG = getattr(settings, 'IMPORT_EXPORT_SKIP_ADMIN_LOG', False)
 TMP_STORAGE_CLASS = getattr(settings, 'IMPORT_EXPORT_TMP_STORAGE_CLASS',
                             TempFolderStorage)
-if isinstance(TMP_STORAGE_CLASS, six.string_types):
-    try:
-        # Nod to tastypie's use of importlib.
-        parts = TMP_STORAGE_CLASS.split('.')
-        module_path, class_name = '.'.join(parts[:-1]), parts[-1]
-        module = importlib.import_module(module_path)
-        TMP_STORAGE_CLASS = getattr(module, class_name)
-    except ImportError as e:
-        msg = "Could not import '%s' for import_export setting 'IMPORT_EXPORT_TMP_STORAGE_CLASS'" % TMP_STORAGE_CLASS
-        raise ImportError(msg)
 
 
-class ImportExportMixinBase(object):
+if isinstance(TMP_STORAGE_CLASS, str):
+    TMP_STORAGE_CLASS = import_string(TMP_STORAGE_CLASS)
+
+
+class ImportExportMixinBase:
     def get_model_info(self):
-        # module_name is renamed to model_name in Django 1.8
         app_label = self.model._meta.app_label
-        try:
-            return (app_label, self.model._meta.model_name,)
-        except AttributeError:
-            return (app_label, self.model._meta.module_name,)
+        return (app_label, self.model._meta.model_name)
 
 
 class ImportMixin(ImportExportMixinBase):
     """
     Import mixin.
+    
+    This is intended to be mixed with django.contrib.admin.ModelAdmin
+    https://docs.djangoproject.com/en/2.1/ref/contrib/admin/#modeladmin-objects
     """
 
     #: template for change_list view
@@ -97,8 +73,20 @@ class ImportMixin(ImportExportMixinBase):
         else:
             return self.tmp_storage_class
 
+    def has_import_permission(self, request):
+        """
+        Returns whether a request has import permission.
+        """
+        IMPORT_PERMISSION_CODE = getattr(settings, 'IMPORT_EXPORT_IMPORT_PERMISSION_CODE', None)
+        if IMPORT_PERMISSION_CODE is None:
+            return True
+
+        opts = self.opts
+        codename = get_permission_codename(IMPORT_PERMISSION_CODE, opts)
+        return request.user.has_perm("%s.%s" % (opts.app_label, codename))
+
     def get_urls(self):
-        urls = super(ImportMixin, self).get_urls()
+        urls = super().get_urls()
         info = self.get_model_info()
         my_urls = [
             url(r'^process_import/$',
@@ -114,9 +102,11 @@ class ImportMixin(ImportExportMixinBase):
         return {}
 
     def get_import_resource_kwargs(self, request, *args, **kwargs):
+        """Prepares/returns kwargs used when initializing Resource"""
         return self.get_resource_kwargs(request, *args, **kwargs)
 
     def get_resource_class(self):
+        """Returns ResourceClass"""
         if not self.resource_class:
             return modelresource_factory(self.model)
         else:
@@ -139,8 +129,11 @@ class ImportMixin(ImportExportMixinBase):
         """
         Perform the actual import action (after the user has confirmed the import)
         """
+        if not self.has_import_permission(request):
+            raise PermissionDenied
 
-        confirm_form = ConfirmImportForm(request.POST)
+        form_type = self.get_confirm_import_form()
+        confirm_form = form_type(request.POST)
         if confirm_form.is_valid():
             import_formats = self.get_import_formats()
             input_format = import_formats[
@@ -159,13 +152,17 @@ class ImportMixin(ImportExportMixinBase):
             return self.process_result(result, request)
 
     def process_dataset(self, dataset, confirm_form, request, *args, **kwargs):
-        resource = self.get_import_resource_class()(**self.get_import_resource_kwargs(request, *args, **kwargs))
+
+        res_kwargs = self.get_import_resource_kwargs(request, *args, **kwargs)
+        resource = self.get_import_resource_class()(**res_kwargs)
+
+        imp_kwargs = self.get_import_data_kwargs(request, *args, **kwargs)
         return resource.import_data(dataset,
                                     dry_run=False,
                                     raise_errors=True,
                                     file_name=confirm_form.cleaned_data['original_file_name'],
                                     user=request.user,
-                                    **kwargs)
+                                    **imp_kwargs)
 
     def process_result(self, result, request):
         self.generate_log_entries(result, request)
@@ -213,10 +210,43 @@ class ImportMixin(ImportExportMixinBase):
         return {}
 
     def get_import_form(self):
-        '''
+        """
         Get the form type used to read the import format and file.
-        '''
+        """
         return ImportForm
+
+    def get_confirm_import_form(self):
+        """
+        Get the form type (class) used to confirm the import.
+        """
+        return ConfirmImportForm
+
+    def get_form_kwargs(self, form, *args, **kwargs):
+        """
+        Prepare/returns kwargs for the import form.
+
+        To distinguish between import and confirm import forms,
+        the following approach may be used:
+
+            if isinstance(form, ImportForm):
+                # your code here for the import form kwargs
+                # e.g. update.kwargs({...})
+            elif isinstance(form, ConfirmImportForm):
+                # your code here for the confirm import form kwargs
+                # e.g. update.kwargs({...})
+            ...
+        """
+        return kwargs
+
+    def get_import_data_kwargs(self, request, *args, **kwargs):
+        """
+        Prepare kwargs for import_data.
+        """
+        form = kwargs.get('form')
+        if form:
+            kwargs.pop('form')
+            return kwargs
+        return {}
 
     def write_to_tmp_storage(self, import_file, input_format):
         tmp_storage = self.get_tmp_storage_class()()
@@ -228,21 +258,24 @@ class ImportMixin(ImportExportMixinBase):
         return tmp_storage
 
     def import_action(self, request, *args, **kwargs):
-        '''
+        """
         Perform a dry_run of the import to make sure the import will not
         result in errors.  If there where no error, save the user
         uploaded file to a local temp file that will be used by
         'process_import' for the actual import.
-        '''
-        resource = self.get_import_resource_class()(**self.get_import_resource_kwargs(request, *args, **kwargs))
+        """
+        if not self.has_import_permission(request):
+            raise PermissionDenied
 
         context = self.get_import_context_data()
 
         import_formats = self.get_import_formats()
         form_type = self.get_import_form()
+        form_kwargs = self.get_form_kwargs(form_type, *args, **kwargs)
         form = form_type(import_formats,
                          request.POST or None,
-                         request.FILES or None)
+                         request.FILES or None,
+                         **form_kwargs)
 
         if request.POST and form.is_valid():
             input_format = import_formats[
@@ -264,19 +297,33 @@ class ImportMixin(ImportExportMixinBase):
                 return HttpResponse(_(u"<h1>Imported file has a wrong encoding: %s</h1>" % e))
             except Exception as e:
                 return HttpResponse(_(u"<h1>%s encountered while trying to read file: %s</h1>" % (type(e).__name__, import_file.name)))
+
+            # prepare kwargs for import data, if needed
+            res_kwargs = self.get_import_resource_kwargs(request, form=form, *args, **kwargs)
+            resource = self.get_import_resource_class()(**res_kwargs)
+
+            # prepare additional kwargs for import_data, if needed
+            imp_kwargs = self.get_import_data_kwargs(request, form=form, *args, **kwargs)
             result = resource.import_data(dataset, dry_run=True,
                                           raise_errors=False,
                                           file_name=import_file.name,
-                                          user=request.user)
+                                          user=request.user,
+                                          **imp_kwargs)
 
             context['result'] = result
 
-            if not result.has_errors():
-                context['confirm_form'] = ConfirmImportForm(initial={
+            if not result.has_errors() and not result.has_validation_errors():
+                initial = {
                     'import_file_name': tmp_storage.name,
                     'original_file_name': import_file.name,
                     'input_format': form.cleaned_data['input_format'],
-                })
+                }
+                confirm_form = self.get_confirm_import_form()
+                initial = self.get_form_kwargs(form=form, **initial)
+                context['confirm_form'] = confirm_form(initial=initial)
+        else:
+            res_kwargs = self.get_import_resource_kwargs(request, form=form, *args, **kwargs)
+            resource = self.get_import_resource_class()(**res_kwargs)
 
         context.update(self.admin_site.each_context(request))
 
@@ -289,10 +336,19 @@ class ImportMixin(ImportExportMixinBase):
         return TemplateResponse(request, [self.import_template_name],
                                 context)
 
+    def changelist_view(self, request, extra_context=None):
+        if extra_context is None:
+            extra_context = {}
+        extra_context['has_import_permission'] = self.has_import_permission(request)
+        return super().changelist_view(request, extra_context)
+
 
 class ExportMixin(ImportExportMixinBase):
     """
     Export mixin.
+    
+    This is intended to be mixed with django.contrib.admin.ModelAdmin
+    https://docs.djangoproject.com/en/2.1/ref/contrib/admin/#modeladmin-objects
     """
     #: resource class
     resource_class = None
@@ -306,13 +362,25 @@ class ExportMixin(ImportExportMixinBase):
     to_encoding = "utf-8"
 
     def get_urls(self):
-        urls = super(ExportMixin, self).get_urls()
+        urls = super().get_urls()
         my_urls = [
             url(r'^export/$',
                 self.admin_site.admin_view(self.export_action),
                 name='%s_%s_export' % self.get_model_info()),
         ]
         return my_urls + urls
+
+    def has_export_permission(self, request):
+        """
+        Returns whether a request has export permission.
+        """
+        EXPORT_PERMISSION_CODE = getattr(settings, 'IMPORT_EXPORT_EXPORT_PERMISSION_CODE', None)
+        if EXPORT_PERMISSION_CODE is None:
+            return True
+
+        opts = self.opts
+        codename = get_permission_codename(EXPORT_PERMISSION_CODE, opts)
+        return request.user.has_perm("%s.%s" % (opts.app_label, codename))
 
     def get_resource_kwargs(self, request, *args, **kwargs):
         return {}
@@ -359,11 +427,23 @@ class ExportMixin(ImportExportMixinBase):
             list_display = ['action_checkbox'] + list(list_display)
 
         ChangeList = self.get_changelist(request)
-        cl = ChangeList(request, self.model, list_display,
-            list_display_links, list_filter, self.date_hierarchy,
-            search_fields, self.list_select_related, self.list_per_page,
-            self.list_max_show_all, self.list_editable, self
-        )
+        changelist_kwargs = {
+            'request': request,
+            'model': self.model,
+            'list_display': list_display,
+            'list_display_links': list_display_links,
+            'list_filter': list_filter,
+            'date_hierarchy': self.date_hierarchy,
+            'search_fields': search_fields,
+            'list_select_related': self.list_select_related,
+            'list_per_page': self.list_per_page,
+            'list_max_show_all': self.list_max_show_all,
+            'list_editable': self.list_editable,
+            'model_admin': self,
+        }
+        if django.VERSION >= (2, 1):
+            changelist_kwargs['sortable_by'] = self.sortable_by
+        cl = ChangeList(**changelist_kwargs)
 
         return cl.get_queryset(request)
 
@@ -372,6 +452,9 @@ class ExportMixin(ImportExportMixinBase):
         Returns file_format representation for given queryset.
         """
         request = kwargs.pop("request")
+        if not self.has_export_permission(request):
+            raise PermissionDenied
+
         resource_class = self.get_export_resource_class()
         data = resource_class(**self.get_export_resource_kwargs(request)).export(queryset, *args, **kwargs)
         export_data = file_format.export_data(data)
@@ -384,6 +467,9 @@ class ExportMixin(ImportExportMixinBase):
         return {}
 
     def export_action(self, request, *args, **kwargs):
+        if not self.has_export_permission(request):
+            raise PermissionDenied
+
         formats = self.get_export_formats()
         form = ExportForm(formats, request.POST or None)
         if form.is_valid():
@@ -413,6 +499,12 @@ class ExportMixin(ImportExportMixinBase):
         return TemplateResponse(request, [self.export_template_name],
                                 context)
 
+    def changelist_view(self, request, extra_context=None):
+        if extra_context is None:
+            extra_context = {}
+        extra_context['has_export_permission'] = self.has_export_permission(request)
+        return super().changelist_view(request, extra_context)
+
 
 class ImportExportMixin(ImportMixin, ExportMixin):
     """
@@ -428,10 +520,9 @@ class ImportExportModelAdmin(ImportExportMixin, admin.ModelAdmin):
     """
 
 
-class ExportActionModelAdmin(ExportMixin, admin.ModelAdmin):
+class ExportActionMixin(ExportMixin):
     """
-    Subclass of ModelAdmin with export functionality implemented as an
-    admin action.
+    Mixin with export functionality implemented as an admin action.
     """
 
     # Don't use custom change list template.
@@ -450,7 +541,7 @@ class ExportActionModelAdmin(ExportMixin, admin.ModelAdmin):
                 choices.append((str(i), f().get_title()))
 
         self.action_form = export_action_form_factory(choices)
-        super(ExportActionModelAdmin, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def export_admin_action(self, request, queryset):
         """
@@ -478,6 +569,13 @@ class ExportActionModelAdmin(ExportMixin, admin.ModelAdmin):
 
     class Media:
         js = ['import_export/action_formats.js']
+
+
+class ExportActionModelAdmin(ExportActionMixin, admin.ModelAdmin):
+    """
+    Subclass of ModelAdmin with export functionality implemented as an
+    admin action.
+    """
 
 
 class ImportExportActionModelAdmin(ImportMixin, ExportActionModelAdmin):

@@ -12,3 +12,5 @@ dist/
 *.python-version
 .coverage
 *.sw[po]
+
+tests/database.db

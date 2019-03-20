@@ -1,9 +1,6 @@
-from __future__ import unicode_literals
-from django.utils.six import moves
-
-import sys
-import warnings
 import tablib
+import warnings
+from importlib import import_module
 
 try:
     from tablib.compat import xlrd
@@ -35,13 +32,7 @@ except ImportError:
         XLSX_IMPORT = False
 
 
-try:
-    from importlib import import_module
-except ImportError:
-    from django.utils.importlib import import_module
-
-
-class Format(object):
+class Format:
     def get_title(self):
         return type(self)
 
@@ -77,7 +68,7 @@ class Format(object):
 
     def get_content_type(self):
         # For content types see
-        # http://www.iana.org/assignments/media-types/media-types.xhtml
+        # https://www.iana.org/assignments/media-types/media-types.xhtml
         return 'application/octet-stream'
 
     def can_import(self):
@@ -129,10 +120,7 @@ class TablibFormat(Format):
 
 class TextFormat(TablibFormat):
     def get_read_mode(self):
-        if sys.version_info[0] < 3:  # backwards compatibility for python 2.7
-            return 'rU'
-        else:
-            return 'r'
+        return 'r'
 
     def is_binary(self):
         return False
@@ -143,10 +131,7 @@ class CSV(TextFormat):
     CONTENT_TYPE = 'text/csv'
 
     def create_dataset(self, in_stream, **kwargs):
-        if sys.version_info[0] < 3:
-            # python 2.7 csv does not do unicode
-            return super(CSV, self).create_dataset(in_stream.encode('utf-8'), **kwargs)
-        return super(CSV, self).create_dataset(in_stream, **kwargs)
+        return super().create_dataset(in_stream, **kwargs)
 
 
 class JSON(TextFormat):
@@ -156,7 +141,7 @@ class JSON(TextFormat):
 
 class YAML(TextFormat):
     TABLIB_MODULE = 'tablib.formats._yaml'
-    # See http://stackoverflow.com/questions/332129/yaml-mime-type
+    # See https://stackoverflow.com/questions/332129/yaml-mime-type
     CONTENT_TYPE = 'text/yaml'
 
 
@@ -165,10 +150,7 @@ class TSV(TextFormat):
     CONTENT_TYPE = 'text/tab-separated-values'
 
     def create_dataset(self, in_stream, **kwargs):
-        if sys.version_info[0] < 3:
-            # python 2.7 csv does not do unicode
-            return super(TSV, self).create_dataset(in_stream.encode('utf-8'), **kwargs)
-        return super(TSV, self).create_dataset(in_stream, **kwargs)
+        return super().create_dataset(in_stream, **kwargs)
 
 
 class ODS(TextFormat):
@@ -198,7 +180,7 @@ class XLS(TablibFormat):
         sheet = xls_book.sheets()[0]
 
         dataset.headers = sheet.row_values(0)
-        for i in moves.range(1, sheet.nrows):
+        for i in range(1, sheet.nrows):
             dataset.append(sheet.row_values(i))
         return dataset
 
@@ -229,6 +211,7 @@ class XLSX(TablibFormat):
             row_values = [cell.value for cell in row]
             dataset.append(row_values)
         return dataset
+
 
 #: These are the default formats for import and export. Whether they can be
 #: used or not is depending on their implementation in the tablib library.

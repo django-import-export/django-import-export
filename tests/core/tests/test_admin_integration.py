@@ -1,17 +1,15 @@
-from __future__ import unicode_literals
-
 import os.path
-
-from django.test.utils import override_settings
-from django.test.testcases import TestCase
-from django.contrib.auth.models import User
-from django.core.files.uploadedfile import SimpleUploadedFile
-from django.utils.translation import ugettext_lazy as _
-from django.contrib.admin.models import LogEntry
 from tablib import Dataset
 
-from core.admin import BookAdmin, AuthorAdmin, BookResource
-from core.models import Category, Parent, Book
+from core.admin import AuthorAdmin, BookAdmin, BookResource, CustomBookAdmin
+from core.models import Author, Book, Category, EBook, Parent
+
+from django.contrib.admin.models import LogEntry
+from django.contrib.auth.models import User
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test.testcases import TestCase
+from django.test.utils import override_settings
+from django.utils.translation import gettext_lazy as _
 
 
 class ImportExportAdminIntegrationTest(TestCase):
@@ -64,7 +62,7 @@ class ImportExportAdminIntegrationTest(TestCase):
         response = self.client.post('/admin/core/book/process_import/', data,
                                     follow=True)
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 
+        self.assertContains(response,
             _('Import finished, with {} new and {} updated {}.').format(
                 1, 0, Book._meta.verbose_name_plural)
         )
@@ -101,7 +99,7 @@ class ImportExportAdminIntegrationTest(TestCase):
         response = self.client.post('/admin/core/book/process_import/', data,
                                     follow=True)
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 
+        self.assertContains(response,
             _('Import finished, with {} new and {} updated {}.').format(
                 1, 0, Book._meta.verbose_name_plural)
         )
@@ -117,6 +115,19 @@ class ImportExportAdminIntegrationTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.has_header("Content-Disposition"))
         self.assertEqual(response['Content-Type'], 'text/csv')
+
+    def test_returns_xlsx_export(self):
+        response = self.client.get('/admin/core/book/export/')
+        self.assertEqual(response.status_code, 200)
+
+        data = {
+            'file_format': '2',
+            }
+        response = self.client.post('/admin/core/book/export/', data)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.has_header("Content-Disposition"))
+        self.assertEqual(response['Content-Type'],
+                         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
 
     def test_import_export_buttons_visible_without_add_permission(self):
         # issue 38 - Export button not visible when no add permission
@@ -152,7 +163,7 @@ class ImportExportAdminIntegrationTest(TestCase):
             'import_file_name': import_file_name,
             'original_file_name': 'books.csv'
         }
-        with self.assertRaises(IOError):
+        with self.assertRaises(FileNotFoundError):
             self.client.post('/admin/core/book/process_import/', data)
 
     def test_csrf(self):
@@ -207,7 +218,7 @@ class ImportExportAdminIntegrationTest(TestCase):
         self.assertEqual(child.object_id, str(1))
 
     def test_logentry_creation_with_import_obj_exception(self):
-        # from http://mail.python.org/pipermail/python-dev/2008-January/076194.html
+        # from https://mail.python.org/pipermail/python-dev/2008-January/076194.html
         def monkeypatch_method(cls):
             def decorator(func):
                 setattr(cls, func.__name__, func)
@@ -219,7 +230,7 @@ class ImportExportAdminIntegrationTest(TestCase):
         class R(BookResource):
             def import_obj(self, obj, data, dry_run):
                 if dry_run:
-                    super(R, self).import_obj(obj, data, dry_run)
+                    super().import_obj(obj, data, dry_run)
                 else:
                     raise Exception
 
@@ -244,7 +255,7 @@ class ImportExportAdminIntegrationTest(TestCase):
         dataset.append([1, "Test 1", "test@example.com"])
         input_format = '0'
         content = dataset.csv
-        f = SimpleUploadedFile("data.csv", content.encode("utf-8"), content_type="text/csv")
+        f = SimpleUploadedFile("data.csv", content.encode(), content_type="text/csv")
         data = {
             "input_format": input_format,
             "import_file": f,
@@ -256,6 +267,55 @@ class ImportExportAdminIntegrationTest(TestCase):
         response = self.client.post('/admin/core/book/process_import/', data,
                                     follow=True)
         self.assertEqual(response.status_code, 200)
+
+    def test_import_with_customized_forms(self):
+        """Test if admin import works if forms are customized"""
+        # We reuse import scheme from `test_import` to import books.csv.
+        # We use customized BookAdmin (CustomBookAdmin) with modified import
+        # form, which requires Author to be selected (from available authors).
+        # Note that url is /admin/core/ebook/import (and not: ...book/import)!
+
+        # We need at least a single author in the db to select from in the
+        # admin import custom forms
+        Author.objects.create(id=11, name='Test Author')
+
+        # GET the import form
+        response = self.client.get('/admin/core/ebook/import/')
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'admin/import_export/import.html')
+        self.assertContains(response, 'form action=""')
+
+        # POST the import form
+        input_format = '0'
+        filename = os.path.join(os.path.dirname(__file__),
+                                os.path.pardir,
+                                'exports',
+                                'books.csv')
+        with open(filename, "rb") as fobj:
+            data = {'author': 11,
+                    'input_format': input_format,
+                    'import_file': fobj}
+            response = self.client.post('/admin/core/ebook/import/', data)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('result', response.context)
+        self.assertFalse(response.context['result'].has_errors())
+        self.assertIn('confirm_form', response.context)
+        confirm_form = response.context['confirm_form']
+        self.assertIsInstance(confirm_form,
+                              CustomBookAdmin(EBook, 'ebook/import')
+                              .get_confirm_import_form())
+
+        data = confirm_form.initial
+        self.assertEqual(data['original_file_name'], 'books.csv')
+        response = self.client.post('/admin/core/ebook/process_import/',
+                                    data, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response,
+            _('Import finished, with {} new and {} updated {}.').format(
+                1, 0, EBook._meta.verbose_name_plural)
+        )
 
 
 class ExportActionAdminIntegrationTest(TestCase):
