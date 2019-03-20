@@ -6,15 +6,15 @@ django-import-export
     :target: https://travis-ci.org/django-import-export/django-import-export
     :alt: Build status on Travis-CI
 
-.. image:: https://coveralls.io/repos/github/django-import-export/django-import-export/badge.svg?branch=coveralls
-    :target: https://coveralls.io/github/django-import-export/django-import-export?branch=coveralls
+.. image:: https://coveralls.io/repos/github/django-import-export/django-import-export/badge.svg?branch=master
+    :target: https://coveralls.io/github/django-import-export/django-import-export?branch=master
 
 .. image:: https://img.shields.io/pypi/v/django-import-export.svg
     :target: https://pypi.org/project/django-import-export/
     :alt: Current version on PyPi
 
 .. image:: http://readthedocs.org/projects/django-import-export/badge/?version=stable
-    :target: http://django-import-export.readthedocs.io/en/stable/
+    :target: https://django-import-export.readthedocs.io/en/stable/
     :alt: Documentation
 
 django-import-export is a Django application and library for importing
@@ -36,7 +36,7 @@ Features:
 .. image:: docs/_static/images/django-import-export-change.png
 
 
-* Documentation: http://django-import-export.readthedocs.io/en/stable/
+* Documentation: https://django-import-export.readthedocs.io/en/stable/
 * GitHub: https://github.com/django-import-export/django-import-export/
 * Free software: BSD license
 * PyPI: https://pypi.org/project/django-import-export/
@@ -44,18 +44,24 @@ Features:
 Requirements
 -----------
 
-* Python 2.7+ or Python 3.3+
-* Django 1.8+
+* Python 3.5+
+* Django 2.0+
 * tablib (dev or 0.9.11)
+
+django-import-export requires Python 3.5 and Django 2.0 or newer. See the 1.x
+branch for older Python and Django versions where fixes for security issues and
+critical errors continue to be released for all officially supported Django
+versions.
 
 Example app
 -----------
 
 ::
 
-    cd tests && ./manage.py runserver
-
-Username and password for admin are 'admin', 'password'.
+    cd tests
+    ./manage.py migrate
+    ./manage.py createsuperuser
+    ./manage.py runserver
 
 Contribute
 ----------

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import sys, os
 
 # If extensions (or modules to document with autodoc) are in another directory,
@@ -34,8 +33,8 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'django-import-export'
-copyright = u'2012–2017, Bojan Mihelac'
+project = 'django-import-export'
+copyright = '2012–2019, Bojan Mihelac'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -176,8 +175,8 @@ htmlhelp_basename = 'django-import-export'
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'django-import-export.tex', u'django-import-export Documentation',
-   u'Bojan Mihelac', 'manual'),
+  ('index', 'django-import-export.tex', 'django-import-export Documentation',
+   'Bojan Mihelac', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -209,8 +208,8 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'django-import-export', u'django-import-export Documentation',
-     [u'Bojan Mihelac'], 1)
+    ('index', 'django-import-export', 'django-import-export Documentation',
+     ['Bojan Mihelac'], 1)
 ]
 
 # If true, show URL addresses after external links.
@@ -222,7 +221,7 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('index', 'django-import-export', u'django-import-export Documentation', u'Bojan Mihelac',
+  ('index', 'django-import-export', 'django-import-export Documentation', 'Bojan Mihelac',
    'django-import-export', 'Import/export data for Django', 'Miscellaneous'),
 ]
 

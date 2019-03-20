@@ -1,14 +1,14 @@
 from django.http import HttpResponse
-from django.views.generic.edit import FormView
 from django.utils.timezone import now
+from django.views.generic.edit import FormView
 
 from .formats import base_formats
+from .forms import ExportForm
 from .resources import modelresource_factory
 from .signals import post_export
-from .forms import ExportForm
 
 
-class ExportViewMixin(object):
+class ExportViewMixin:
     formats = base_formats.DEFAULT_FORMATS
     form_class = ExportForm
     resource_class = None
@@ -54,17 +54,17 @@ class ExportViewMixin(object):
         return filename
 
     def get_context_data(self, **kwargs):
-        context = super(ExportViewMixin, self).get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
         return context
 
     def get_form_kwargs(self):
-        kwargs = super(ExportViewMixin, self).get_form_kwargs()
+        kwargs = super().get_form_kwargs()
         kwargs['formats'] = self.get_export_formats()
         return kwargs
 
 
 class ExportViewFormMixin(ExportViewMixin, FormView):
-    def form_valid(self, form): 
+    def form_valid(self, form):
         formats = self.get_export_formats()
         file_format = formats[
             int(form.cleaned_data['file_format'])

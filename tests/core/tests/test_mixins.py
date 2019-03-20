@@ -1,10 +1,7 @@
-from __future__ import unicode_literals
-from django.test.testcases import TestCase
-try:
-    from django.urls import reverse
-except ImportError:
-    from django.core.urlresolvers import reverse
 from core.models import Category
+
+from django.test.testcases import TestCase
+from django.urls import reverse
 
 
 class ExportViewMixinTest(TestCase):
@@ -17,7 +14,7 @@ class ExportViewMixinTest(TestCase):
     def test_get(self):
         response = self.client.get(self.url)
         self.assertContains(response, self.cat1.name, status_code=200)
-        self.assertTrue(response['Content-Type'], 'text/html')
+        self.assertEqual(response['Content-Type'], 'text/html; charset=utf-8')
 
     def test_post(self):
         data = {
@@ -26,4 +23,4 @@ class ExportViewMixinTest(TestCase):
         response = self.client.post(self.url, data)
         self.assertContains(response, self.cat1.name, status_code=200)
         self.assertTrue(response.has_header("Content-Disposition"))
-        self.assertTrue(response['Content-Type'], 'text/csv')
+        self.assertEqual(response['Content-Type'], 'text/csv')

@@ -2,4 +2,5 @@
 sphinx
 sphinx-rtd-theme
 mysqlclient
-psycopg2==2.6.1
+psycopg2
+wheel

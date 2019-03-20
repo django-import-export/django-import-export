@@ -1,18 +1,18 @@
-from __future__ import unicode_literals
-
+import json
 import tablib
+from collections import OrderedDict
 from copy import deepcopy
 from datetime import date
 from decimal import Decimal
 from unittest import skip, skipUnless
 
-from django import VERSION
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.db import IntegrityError, DatabaseError
+from django.db import DatabaseError, IntegrityError
 from django.db.models import Count
 from django.db.models.fields import FieldDoesNotExist
 from django.test import TestCase, TransactionTestCase, skipUnlessDBFeature
+from django.utils.encoding import force_text
 from django.utils.html import strip_tags
 
 from import_export import fields, resources, results, widgets
@@ -20,19 +20,17 @@ from import_export.instance_loaders import ModelInstanceLoader
 from import_export.resources import Diff
 
 from ..models import (
-    Author, Book, Category, Entry, Profile, WithDefault, WithDynamicDefault,
-    WithFloatField, Person, Role
+    Author,
+    Book,
+    Category,
+    Entry,
+    Person,
+    Profile,
+    Role,
+    WithDefault,
+    WithDynamicDefault,
+    WithFloatField
 )
-
-try:
-    from collections import OrderedDict
-except ImportError:
-    from django.utils.datastructures import SortedDict as OrderedDict
-
-try:
-    from django.utils.encoding import force_text
-except ImportError:
-    from django.utils.encoding import force_unicode as force_text
 
 
 class MyResource(resources.Resource):
@@ -168,6 +166,29 @@ class WithDefaultResource(resources.ModelResource):
         fields = ('name',)
 
 
+class HarshRussianWidget(widgets.CharWidget):
+    def clean(self, value, row=None, *args, **kwargs):
+        raise ValueError("Ова вриједност је страшна!")
+
+
+class AuthorResourceWithCustomWidget(resources.ModelResource):
+
+    class Meta:
+        model = Author
+
+    @classmethod
+    def widget_from_django_field(cls, f, default=widgets.Widget):
+        if f.name == 'name':
+            return HarshRussianWidget
+        result = default
+        internal_type = f.get_internal_type() if callable(getattr(f, "get_internal_type", None)) else ""
+        if internal_type in cls.WIDGETS_MAP:
+            result = cls.WIDGETS_MAP[internal_type]
+            if isinstance(result, str):
+                result = getattr(cls, result)(f)
+        return result
+
+
 class ModelResourceTest(TestCase):
     def setUp(self):
         self.resource = BookResource()
@@ -208,7 +229,7 @@ class ModelResourceTest(TestCase):
         self.assertIsInstance(instance, Book)
 
     def test_default(self):
-        self.assertEquals(WithDefaultResource.fields['name'].clean({'name': ''}), 'foo_bar')
+        self.assertEqual(WithDefaultResource.fields['name'].clean({'name': ''}), 'foo_bar')
 
     def test_get_instance(self):
         instance_loader = self.resource._meta.instance_loader_class(
@@ -240,8 +261,8 @@ class ModelResourceTest(TestCase):
         dataset.append(['Some book', 'test@example.com', "10.25"])
         with self.assertRaises(KeyError) as cm:
             self.resource.get_instance(instance_loader, dataset.dict[0])
-        self.assertEqual(u"Column 'id' not found in dataset. Available columns "
-                         "are: %s" % [u'name', u'author_email', u'price'],
+        self.assertEqual("Column 'id' not found in dataset. Available columns "
+                         "are: %s" % ['name', 'author_email', 'price'],
                          cm.exception.args[0])
 
     def test_get_export_headers(self):
@@ -265,8 +286,8 @@ class ModelResourceTest(TestCase):
         html = diff.as_html()
         headers = self.resource.get_export_headers()
         self.assertEqual(html[headers.index('name')],
-                         u'<span>Some </span><ins style="background:#e6ffe6;">'
-                         u'other </ins><span>book</span>')
+                         '<span>Some </span><ins style="background:#e6ffe6;">'
+                         'other </ins><span>book</span>')
         self.assertFalse(html[headers.index('author_email')])
 
     @skip("See: https://github.com/django-import-export/django-import-export/issues/311")
@@ -297,23 +318,87 @@ class ModelResourceTest(TestCase):
         self.assertEqual(instance.author_email, 'test@example.com')
         self.assertEqual(instance.price, Decimal("10.25"))
 
-    def test_import_data_value_error_includes_field_name(self):
-        class AuthorResource(resources.ModelResource):
-            class Meta:
-                model = Author
-
+    def test_import_data_raises_field_specific_validation_errors(self):
         resource = AuthorResource()
         dataset = tablib.Dataset(headers=['id', 'name', 'birthday'])
         dataset.append(['', 'A.A.Milne', '1882test-01-18'])
 
         result = resource.import_data(dataset, raise_errors=False)
 
-        self.assertTrue(result.has_errors())
-        self.assertTrue(result.rows[0].errors)
-        msg = ("Column 'birthday': Enter a valid date/time.")
-        actual = result.rows[0].errors[0].error
-        self.assertIsInstance(actual, ValueError)
-        self.assertEqual(msg, str(actual))
+        self.assertTrue(result.has_validation_errors())
+        self.assertIs(result.rows[0].import_type, results.RowResult.IMPORT_TYPE_INVALID)
+        self.assertIn('birthday', result.invalid_rows[0].field_specific_errors)
+
+    def test_import_data_handles_widget_valueerrors_with_unicode_messages(self):
+        resource = AuthorResourceWithCustomWidget()
+        dataset = tablib.Dataset(headers=['id', 'name', 'birthday'])
+        dataset.append(['', 'A.A.Milne', '1882-01-18'])
+
+        result = resource.import_data(dataset, raise_errors=False)
+
+        self.assertTrue(result.has_validation_errors())
+        self.assertIs(result.rows[0].import_type, results.RowResult.IMPORT_TYPE_INVALID)
+        self.assertEqual(
+            result.invalid_rows[0].field_specific_errors['name'],
+            ["Ова вриједност је страшна!"]
+        )
+
+    def test_model_validation_errors_not_raised_when_clean_model_instances_is_false(self):
+
+        class TestResource(resources.ModelResource):
+            class Meta:
+                model = Author
+                clean_model_instances = False
+
+        resource = TestResource()
+        dataset = tablib.Dataset(headers=['id', 'name'])
+        dataset.append(['', '123'])
+
+        result = resource.import_data(dataset, raise_errors=False)
+        self.assertFalse(result.has_validation_errors())
+        self.assertEqual(len(result.invalid_rows), 0)
+
+    def test_model_validation_errors_raised_when_clean_model_instances_is_true(self):
+
+        class TestResource(resources.ModelResource):
+            class Meta:
+                model = Author
+                clean_model_instances = True
+
+        resource = TestResource()
+        dataset = tablib.Dataset(headers=['id', 'name'])
+        dataset.append(['', '123'])
+
+        result = resource.import_data(dataset, raise_errors=False)
+        self.assertTrue(result.has_validation_errors())
+        self.assertEqual(result.invalid_rows[0].error_count, 1)
+        self.assertEqual(
+            result.invalid_rows[0].field_specific_errors,
+            {'name': ["'123' is not a valid value"]}
+        )
+
+    def test_known_invalid_fields_are_excluded_from_model_instance_cleaning(self):
+
+        # The custom widget on the parent class should complain about
+        # 'name' first, preventing Author.full_clean() from raising the
+        # error as it does in the previous test
+
+        class TestResource(AuthorResourceWithCustomWidget):
+            class Meta:
+                model = Author
+                clean_model_instances = True
+
+        resource = TestResource()
+        dataset = tablib.Dataset(headers=['id', 'name'])
+        dataset.append(['', '123'])
+
+        result = resource.import_data(dataset, raise_errors=False)
+        self.assertTrue(result.has_validation_errors())
+        self.assertEqual(result.invalid_rows[0].error_count, 1)
+        self.assertEqual(
+            result.invalid_rows[0].field_specific_errors,
+            {'name': ["Ова вриједност је страшна!"]}
+        )
 
     def test_import_data_error_saving_model(self):
         row = list(self.dataset.pop())
@@ -326,8 +411,7 @@ class ModelResourceTest(TestCase):
         self.assertTrue(result.rows[0].errors)
         actual = result.rows[0].errors[0].error
         self.assertIsInstance(actual, ValueError)
-        self.assertIn("Column 'id': could not convert string to float",
-                      str(actual))
+        self.assertIn("could not convert string to float", str(actual))
 
     def test_import_data_delete(self):
 
@@ -348,19 +432,19 @@ class ModelResourceTest(TestCase):
     def test_save_instance_with_dry_run_flag(self):
         class B(BookResource):
             def before_save_instance(self, instance, using_transactions, dry_run):
-                super(B, self).before_save_instance(instance, using_transactions, dry_run)
+                super().before_save_instance(instance, using_transactions, dry_run)
                 if dry_run:
                     self.before_save_instance_dry_run = True
                 else:
                     self.before_save_instance_dry_run = False
             def save_instance(self, instance, using_transactions=True, dry_run=False):
-                super(B, self).save_instance(instance, using_transactions, dry_run)
+                super().save_instance(instance, using_transactions, dry_run)
                 if dry_run:
                     self.save_instance_dry_run = True
                 else:
                     self.save_instance_dry_run = False
             def after_save_instance(self, instance, using_transactions, dry_run):
-                super(B, self).after_save_instance(instance, using_transactions, dry_run)
+                super().after_save_instance(instance, using_transactions, dry_run)
                 if dry_run:
                     self.after_save_instance_dry_run = True
                 else:
@@ -385,21 +469,21 @@ class ModelResourceTest(TestCase):
                 return self.fields['delete'].clean(row)
 
             def before_delete_instance(self, instance, dry_run):
-                super(B, self).before_delete_instance(instance, dry_run)
+                super().before_delete_instance(instance, dry_run)
                 if dry_run:
                     self.before_delete_instance_dry_run = True
                 else:
                     self.before_delete_instance_dry_run = False
 
             def delete_instance(self, instance, using_transactions=True, dry_run=False):
-                super(B, self).delete_instance(instance, using_transactions, dry_run)
+                super().delete_instance(instance, using_transactions, dry_run)
                 if dry_run:
                     self.delete_instance_dry_run = True
                 else:
                     self.delete_instance_dry_run = False
 
             def after_delete_instance(self, instance, dry_run):
-                super(B, self).after_delete_instance(instance, dry_run)
+                super().after_delete_instance(instance, dry_run)
                 if dry_run:
                     self.after_delete_instance_dry_run = True
                 else:
@@ -513,7 +597,7 @@ class ModelResourceTest(TestCase):
     def test_m2m_import(self):
         cat1 = Category.objects.create(name='Cat 1')
         headers = ['id', 'name', 'categories']
-        row = [None, 'FooBook', "%s" % cat1.pk]
+        row = [None, 'FooBook', str(cat1.pk)]
         dataset = tablib.Dataset(row, headers=headers)
         self.resource.import_data(dataset, raise_errors=True)
 
@@ -625,7 +709,7 @@ class ModelResourceTest(TestCase):
         resource = B()
         with self.assertRaises(Exception) as cm:
             resource.import_data(self.dataset, raise_errors=True)
-        self.assertEqual(u"This is an invalid dataset", cm.exception.args[0])
+        self.assertEqual("This is an invalid dataset", cm.exception.args[0])
 
     def test_after_import_raises_error(self):
         class B(BookResource):
@@ -635,7 +719,7 @@ class ModelResourceTest(TestCase):
         resource = B()
         with self.assertRaises(Exception) as cm:
             resource.import_data(self.dataset, raise_errors=True)
-        self.assertEqual(u"This is an invalid dataset", cm.exception.args[0])
+        self.assertEqual("This is an invalid dataset", cm.exception.args[0])
 
     def test_link_to_nonexistent_field(self):
         with self.assertRaises(FieldDoesNotExist) as cm:
@@ -739,7 +823,7 @@ class ModelResourceTest(TestCase):
         result = EntryResource().import_data(
             self.dataset, raise_errors=True, dry_run=False)
         self.assertFalse(result.has_errors())
-        self.assertEquals(User.objects.get(pk=user.pk).username, 'bar')
+        self.assertEqual(User.objects.get(pk=user.pk).username, 'bar')
 
     def test_import_data_dynamic_default_callable(self):
 
@@ -778,7 +862,7 @@ class ModelResourceTransactionTest(TransactionTestCase):
         resource = BookResource()
         cat1 = Category.objects.create(name='Cat 1')
         headers = ['id', 'name', 'categories']
-        row = [None, 'FooBook', "%s" % cat1.pk]
+        row = [None, 'FooBook', str(cat1.pk)]
         dataset = tablib.Dataset(row, headers=headers)
 
         result = resource.import_data(
@@ -902,27 +986,38 @@ class PostgresTests(TransactionTestCase):
         )
         self.assertEqual(
             result.failed_dataset.headers,
-            [u'id', u'user', u'Error']
+            ['id', 'user', 'Error']
         )
         self.assertEqual(len(result.failed_dataset), 1)
         # We can't check the error message because it's package- and version-dependent
 
 
 if 'postgresql' in settings.DATABASES['default']['ENGINE']:
-    from django.contrib.postgres.fields import ArrayField
+    from django.contrib.postgres.fields import ArrayField, JSONField
     from django.db import models
+
 
     class BookWithChapters(models.Model):
         name = models.CharField('Book name', max_length=100)
         chapters = ArrayField(models.CharField(max_length=100), default=list)
+        data = JSONField(null=True)
 
-    class ArrayFieldTest(TestCase):
-        fixtures = []
 
-        def setUp(self):
-            pass
+    class BookWithChaptersResource(resources.ModelResource):
 
-        def test_arrayfield(self):
+        class Meta:
+            model = BookWithChapters
+            fields = (
+                'id',
+                'name',
+                'chapters',
+                'data',
+            )
+
+
+    class TestExportArrayField(TestCase):
+
+        def test_exports_array_field(self):
             dataset_headers = ["id", "name", "chapters"]
             chapters = ["Introduction", "Middle Chapter", "Ending"]
             dataset_row = ["1", "Book With Chapters", ",".join(chapters)]
@@ -930,9 +1025,64 @@ if 'postgresql' in settings.DATABASES['default']['ENGINE']:
             dataset.append(dataset_row)
             book_with_chapters_resource = resources.modelresource_factory(model=BookWithChapters)()
             result = book_with_chapters_resource.import_data(dataset, dry_run=False)
+
             self.assertFalse(result.has_errors())
             book_with_chapters = list(BookWithChapters.objects.all())[0]
             self.assertListEqual(book_with_chapters.chapters, chapters)
+
+    class TestImportArrayField(TestCase):
+
+        def setUp(self):
+            self.resource = BookWithChaptersResource()
+            self.chapters = ["Introduction", "Middle Chapter", "Ending"]
+            self.book = BookWithChapters.objects.create(name='foo')
+            self.dataset = tablib.Dataset(headers=['id', 'name', 'chapters'])
+            row = [self.book.id, 'Some book', ",".join(self.chapters)]
+            self.dataset.append(row)
+
+        def test_import_of_data_with_array(self):
+            self.assertListEqual(self.book.chapters, [])
+            result = self.resource.import_data(self.dataset, raise_errors=True)
+
+            self.assertFalse(result.has_errors())
+            self.assertEqual(len(result.rows), 1)
+
+            self.book.refresh_from_db()
+            self.assertEqual(self.book.chapters, self.chapters)
+
+    class TestExportJsonField(TestCase):
+
+        def setUp(self):
+            self.json_data = {"some_key": "some_value"}
+            self.book = BookWithChapters.objects.create(name='foo', data=self.json_data)
+
+        def test_export_field_with_appropriate_format(self):
+            resource = resources.modelresource_factory(model=BookWithChapters)()
+            result = resource.export(BookWithChapters.objects.all())
+
+            assert result[0][3] == json.dumps(self.json_data)
+
+
+    class TestImportJsonField(TestCase):
+
+        def setUp(self):
+            self.resource = BookWithChaptersResource()
+            self.data = {"some_key": "some_value"}
+            self.json_data = json.dumps(self.data)
+            self.book = BookWithChapters.objects.create(name='foo')
+            self.dataset = tablib.Dataset(headers=['id', 'name', 'data'])
+            row = [self.book.id, 'Some book', self.json_data]
+            self.dataset.append(row)
+
+        def test_sets_json_data_when_model_field_is_empty(self):
+            self.assertIsNone(self.book.data)
+            result = self.resource.import_data(self.dataset, raise_errors=True)
+
+            self.assertFalse(result.has_errors())
+            self.assertEqual(len(result.rows), 1)
+
+            self.book.refresh_from_db()
+            self.assertEqual(self.book.data, self.data)
 
 
 class ForeignKeyWidgetFollowRelationship(TestCase):
@@ -986,10 +1136,10 @@ class ManyRelatedManagerDiffTest(TestCase):
         export_headers = book_resource.get_export_headers()
 
         add_result = book_resource.import_data(original_dataset, dry_run=False)
-        expected_value = u'<ins style="background:#e6ffe6;">1</ins>'
+        expected_value = '<ins style="background:#e6ffe6;">1</ins>'
         self.check_value(add_result, export_headers, expected_value)
         change_result = book_resource.import_data(changed_dataset, dry_run=False)
-        expected_value = u'<del style="background:#ffe6e6;">1</del><ins style="background:#e6ffe6;">2</ins>'
+        expected_value = '<del style="background:#ffe6e6;">1</del><ins style="background:#e6ffe6;">2</ins>'
         self.check_value(change_result, export_headers, expected_value)
 
     def check_value(self, result, export_headers, expected_value):
