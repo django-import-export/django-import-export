@@ -1,5 +1,6 @@
 import ast
 import json
+import re
 from datetime import date, datetime
 from decimal import Decimal
 
@@ -277,7 +278,10 @@ class JSONWidget(Widget):
     def clean(self, value, row=None, *args, **kwargs):
         val = super().clean(value)
         if val:
-            return ast.literal_eval(val)
+            try:
+                return json.loads(val)
+            except json.decoder.JSONDecodeError:
+                return json.loads(val.replace("'", "\""))
 
     def render(self, value, obj=None):
         if value:
