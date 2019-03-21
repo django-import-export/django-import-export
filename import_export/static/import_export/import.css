@@ -27,6 +27,22 @@
   z-index: 2;
 }
 
+table.import-preview tr.skip {
+  background-color: #d2d2d2;
+}
+
+table.import-preview tr.new {
+  background-color: #bdd8b2;
+}
+
+table.import-preview tr.delete {
+  background-color: #f9bebf;
+}
+
+table.import-preview tr.update {
+  background-color: #fdfdcf;
+}
+
 .import-preview td:hover .validation-error-count {
   z-index: 3;
 }

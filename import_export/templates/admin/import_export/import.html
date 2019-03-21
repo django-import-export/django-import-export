@@ -146,7 +146,7 @@
           </tr>
         </thead>
         {% for row in result.valid_rows %}
-          <tr>
+          <tr class="{{ row.import_type }}">
             <td class="import-type">
               {% if row.import_type == 'new' %}
                 {% trans "New" %}
