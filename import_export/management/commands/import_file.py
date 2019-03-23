@@ -3,25 +3,12 @@ from __future__ import unicode_literals
 import mimetypes
 import argparse
 
-try:
-    FileNotFoundError
-except NameError:
-    FileNotFoundError = IOError
-
-try:
-    from django.apps import apps as django_apps
-except ImportError:
-    from django.db import models as django_apps
-
-try:
-    from django.utils.module_loading import import_string
-except ImportError:
-    from django.utils.module_loading import import_by_path as import_string
-
+from django.apps import apps as django_apps
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 from django.utils.encoding import force_text
 from django.utils.translation import ugettext as _
+from django.utils.module_loading import import_string
 
 from import_export.formats import base_formats
 from import_export.resources import modelresource_factory
@@ -42,6 +29,7 @@ FORMATS = {
 
 
 class Command(BaseCommand):
+
     def add_arguments(self, parser):
         parser.formatter_class = argparse.ArgumentDefaultsHelpFormatter
         resource_def = parser.add_mutually_exclusive_group(required=True)
@@ -57,7 +45,7 @@ class Command(BaseCommand):
             default=None,
             help='Resource class as dotted path,'
             'e.g.: mymodule.resources.MyResource')
-        resource_def.add_argument(
+        parser.add_argument(
             '--model-name',
             dest='model_name',
             default=None,
