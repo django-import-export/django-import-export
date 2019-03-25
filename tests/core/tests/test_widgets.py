@@ -278,10 +278,15 @@ class JSONWidgetTest(TestCase):
     def test_render(self):
         self.assertEqual(self.widget.render(self.value), '{"value": 23}')
 
+    def test_clean_single_quoted_string(self):
+        self.assertEqual(self.widget.clean("{'value': 23}"), self.value)
+        self.assertEqual(self.widget.clean("{'value': null}"), {'value': None})
+
     def test_clean_none(self):
         self.assertEqual(self.widget.clean(None), None)
-        self.assertEqual(self.widget.clean('{}'), {})
+        self.assertEqual(self.widget.clean('{"value": null}'), {'value': None})
 
     def test_render_none(self):
         self.assertEqual(self.widget.render(None), None)
         self.assertEqual(self.widget.render(dict()), None)
+        self.assertEqual(self.widget.render({"value": None}), '{"value": null}')
