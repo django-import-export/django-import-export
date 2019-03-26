@@ -5,6 +5,7 @@ from django.conf import settings
 from django.conf.urls import url
 from django.contrib import admin, messages
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION, LogEntry
+from django.contrib.admin.utils import label_for_field, lookup_field
 from django.contrib.auth import get_permission_codename
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import PermissionDenied
@@ -13,11 +14,13 @@ from django.template.response import TemplateResponse
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.encoding import force_text
+from django.utils.html import strip_tags
 from django.utils.module_loading import import_string
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_POST
+import tablib
 
-from .formats.base_formats import DEFAULT_FORMATS
+from .formats.base_formats import DEFAULT_FORMATS, HTML
 from .forms import ConfirmImportForm, ExportForm, ImportForm, export_action_form_factory
 from .resources import modelresource_factory
 from .results import RowResult
@@ -42,7 +45,7 @@ class ImportExportMixinBase:
 class ImportMixin(ImportExportMixinBase):
     """
     Import mixin.
-    
+
     This is intended to be mixed with django.contrib.admin.ModelAdmin
     https://docs.djangoproject.com/en/2.1/ref/contrib/admin/#modeladmin-objects
     """
@@ -346,7 +349,7 @@ class ImportMixin(ImportExportMixinBase):
 class ExportMixin(ImportExportMixinBase):
     """
     Export mixin.
-    
+
     This is intended to be mixed with django.contrib.admin.ModelAdmin
     https://docs.djangoproject.com/en/2.1/ref/contrib/admin/#modeladmin-objects
     """
@@ -569,6 +572,42 @@ class ExportActionMixin(ExportMixin):
 
     class Media:
         js = ['import_export/action_formats.js']
+
+
+class ExportListDisplayMixin(ExportMixin):
+
+    def get_export_headers(self, model):
+        return [label_for_field(field, model, self) for field in self.list_display]
+
+    def get_export_results(self, queryset):
+        for obj in queryset:
+            row = []
+            for field in self.list_display:
+                value = lookup_field(field, obj, self)[2]
+                value = value if value else self.get_empty_value_display()
+                row.append(value)
+            yield row
+
+    def get_export_data(self, file_format, queryset, *args, **kwargs):
+        """
+        Returns file_format representation for given queryset.
+        """
+        request = kwargs.pop("request")
+        if not self.has_export_permission(request):
+            raise PermissionDenied
+
+        headers = self.get_export_headers(queryset.model)
+        results = self.get_export_results(queryset)
+
+        data = tablib.Dataset()
+        data.headers = headers
+        for result in results:
+            if file_format.CONTENT_TYPE != HTML.CONTENT_TYPE:
+                result = [strip_tags(value) for value in result]
+            data.append(result)
+
+        export_data = file_format.export_data(data)
+        return export_data
 
 
 class ExportActionModelAdmin(ExportActionMixin, admin.ModelAdmin):
