@@ -14,20 +14,6 @@ from import_export.formats import base_formats
 from import_export.resources import modelresource_factory
 
 
-FORMATS = {
-    None: base_formats.CSV,
-    'text/csv': base_formats.CSV,
-    'application/json': base_formats.JSON,
-    'text/yaml': base_formats.YAML,
-    'text/tab-separated-values': base_formats.TSV,
-    'application/vnd.oasis.opendocument.spreadsheet': base_formats.ODS,
-    'text/html': base_formats.HTML,
-    'application/vnd.ms-excel': base_formats.XLS,
-    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
-        base_formats.XLSX,
-}
-
-
 class Command(BaseCommand):
 
     def add_arguments(self, parser):
@@ -36,8 +22,7 @@ class Command(BaseCommand):
 
         parser.add_argument(
             'file-path',
-            metavar='file-path',
-            nargs=1,
+            type=str,
             help='File path to import')
         resource_def.add_argument(
             '--resource-class',
@@ -73,39 +58,13 @@ class Command(BaseCommand):
             default=False,
             help='Show total numbers of performed actions by type')
 
-    def get_resource_class(self, resource_class, model_name):
-        if resource_class:
-            return import_string(resource_class)
-        return modelresource_factory(django_apps.get_model(model_name))
-
     @transaction.atomic
     def handle(self, **options):
-        dry_run = options.get('dry_run')
-        if dry_run:
-            self.stdout.write(self.style.NOTICE(_('Dry run')))
-        raise_errors = options.get('raise_errors', None)
-        if raise_errors is None:
-            raise_errors = not dry_run
-        import_file_name = options.get('file-path')[0]
-        mimetype = mimetypes.guess_type(import_file_name)[0]
-        input_format = FORMATS[mimetype]()
-        resource_class = self.get_resource_class(
-            options.get('resource_class'),
-            options.get('model_name')
-        )
-        resource = resource_class()
-        read_mode = input_format.get_read_mode()
-        try:
-            with open(import_file_name, read_mode) as import_file:
-                data = import_file.read()
-        except (OSError, FileNotFoundError) as e:
-            raise CommandError(str(e))
-        dataset = input_format.create_dataset(data)
-        result = resource.import_data(
-            dataset,
-            dry_run=dry_run,
-            raise_errors=raise_errors
-        )
+        file_name, dry_run, raise_errors = self.extract_options(options)
+        resource = self.get_resource(options)
+
+        result = self.import_file(file_name, resource,
+                                  dry_run=dry_run, raise_errors=raise_errors)
 
         if options.get('show_totals'):
             self.stdout.write(', '.join(
@@ -123,3 +82,40 @@ class Command(BaseCommand):
                         + force_text(error.error)))
         else:
             self.stdout.write(self.style.HTTP_REDIRECT(_('OK')))
+
+    def import_file(self, file_name, resource, dry_run, raise_errors):
+        mimetype = mimetypes.guess_type(file_name)[0]
+        input_format = (base_formats.get_format_for_content_type(mimetype)
+                        or base_formats.CSV)()
+        read_mode = input_format.get_read_mode()
+        try:
+            with open(file_name, read_mode) as import_file:
+                data = import_file.read()
+        except (OSError, FileNotFoundError) as e:
+            raise CommandError(str(e))
+        dataset = input_format.create_dataset(data)
+        result = resource.import_data(
+            dataset,
+            dry_run=dry_run,
+            raise_errors=raise_errors
+        )
+        return result
+
+    def extract_options(self, options):
+        dry_run = options.get('dry_run')
+        if dry_run:
+            self.stdout.write(self.style.NOTICE(_('Dry run')))
+        raise_errors = options.get('raise_errors', None)
+        if raise_errors is None:
+            raise_errors = not dry_run
+        file_name = options.get('file-path')
+        return file_name, dry_run, raise_errors
+
+    def get_resource(self, options):
+        if options.get('resource_class', False):
+            resource_class = import_string(options['resource_class'])
+        else:
+            model = django_apps.get_model(options.get('model_name'))
+            resource_class = modelresource_factory(model)
+        resource = resource_class()
+        return resource

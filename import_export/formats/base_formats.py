@@ -225,3 +225,10 @@ DEFAULT_FORMATS = (
     YAML,
     HTML,
 )
+
+FORMATS_BY_CONTENT_TYPE = {
+    fc().get_content_type():fc for fc in DEFAULT_FORMATS
+}
+
+def get_format_for_content_type(content_type_string):
+    return FORMATS_BY_CONTENT_TYPE.get(content_type_string, None)

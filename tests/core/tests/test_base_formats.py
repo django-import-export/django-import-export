@@ -95,3 +95,15 @@ class TSVTest(TestCase):
         with open(filename, self.format.get_read_mode()) as in_stream:
             data = force_text(in_stream.read())
         base_formats.TSV().create_dataset(data)
+
+
+class UtilsTest(TestCase):
+
+    def test_get_format_for_content_type(self):
+        self.assertEqual(
+            base_formats.get_format_for_content_type('text/csv'),
+            base_formats.CSV)
+
+    def test_get_format_for_content_type_none(self):
+        self.assertIsNone(
+            base_formats.get_format_for_content_type('idunno/wheeee'))
