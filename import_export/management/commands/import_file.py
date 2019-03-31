@@ -25,16 +25,16 @@ class Command(BaseCommand):
             type=str,
             help='File path to import')
         resource_def.add_argument(
-            '--resource-class',
-            dest='resource_class',
+            '--resource',
+            dest='resource',
             default=None,
             help='Resource class as dotted path,'
             'e.g.: mymodule.resources.MyResource')
         resource_def.add_argument(
-            '--model-name',
-            dest='model_name',
+            '--model',
+            dest='model',
             default=None,
-            help='Model name, ie: auth.User')
+            help='Model class as dotted path, e.g.: myapp.models.MyModel')
         parser.add_argument(
             '--dry-run',
             action='store_true',
@@ -112,10 +112,10 @@ class Command(BaseCommand):
         return file_name, dry_run, raise_errors
 
     def get_resource(self, options):
-        if options.get('resource_class', False):
-            resource_class = import_string(options['resource_class'])
+        if options.get('resource', False):
+            resource_class = import_string(options['resource'])
         else:
-            model = django_apps.get_model(options.get('model_name'))
+            model = django_apps.get_model(options.get('model'))
             resource_class = modelresource_factory(model)
         resource = resource_class()
         return resource

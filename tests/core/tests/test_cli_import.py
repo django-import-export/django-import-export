@@ -36,7 +36,7 @@ class CLIImportTest(TestCase):
             'import_file',
             self.books_file,
             '--dry-run',
-            '--resource-class=core.tests.test_resources.BookResource',
+            '--resource=core.tests.test_resources.BookResource',
             '--no-color',
             stdout=self.output)
         self.assertEqual(self.output.getvalue(), 'Dry run\nOK\n')
@@ -45,7 +45,7 @@ class CLIImportTest(TestCase):
         call_command(
             'import_file',
             self.books_file,
-            '--model-name=core.Book',
+            '--model=core.Book',
             '--totals',
             '--no-color',
             stdout=self.output)
@@ -56,7 +56,7 @@ class CLIImportTest(TestCase):
             call_command(
                 'import_file',
                 self.no_file,
-                '--model-name=core.Book',
+                '--model=core.Book',
                 '--no-color',
                 stdout=self.output)
 
@@ -65,7 +65,7 @@ class CLIImportTest(TestCase):
             call_command(
                 'import_file',
                 self.er_file,
-                '--model-name=core.Book',
+                '--model=core.Book',
                 '--raise-errors',
                 '--no-color',
                 stdout=self.output)
@@ -77,7 +77,7 @@ class CLIImportTest(TestCase):
         call_command(
             'import_file',
             self.er_file,
-            '--model-name=core.Book',
+            '--model=core.Book',
             '--no-raise-errors',
             '--no-color',
             stdout=self.output)
