@@ -45,7 +45,7 @@ class Command(BaseCommand):
             default=None,
             help='Resource class as dotted path,'
             'e.g.: mymodule.resources.MyResource')
-        parser.add_argument(
+        resource_def.add_argument(
             '--model-name',
             dest='model_name',
             default=None,
