@@ -308,10 +308,13 @@ mixins (:class:`~import_export.admin.ImportMixin`,
 :class:`~import_export.admin.ImportExportMixin`)::
 
     # app/admin.py
+    from .models import Book
     from import_export.admin import ImportExportModelAdmin
 
     class BookAdmin(ImportExportModelAdmin):
         resource_class = BookResource
+        
+    admin.site.register(Book, BookAdmin)
 
 .. figure:: _static/images/django-import-export-change.png
 
