@@ -192,6 +192,8 @@ class DateTimeWidget(Widget):
     def render(self, value, obj=None):
         if not value:
             return ""
+        if settings.USE_TZ:
+            value = timezone.localtime(value)
         return value.strftime(self.formats[0])
 
 
