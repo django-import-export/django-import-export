@@ -348,6 +348,17 @@ objects selected on the change list page::
 
    A screenshot of the change view with Import and Export as an admin action.
 
+Note that to use the `ExportMixin` or `ExportActionMixin`, you must declare this mixin _before_ `admin.ModelAdmin`:
+
+    # app/admin.py
+    from django.contrib import admin
+    from import_export.admin import ExportActionMixin
+
+    class BookAdmin(ExportActionMixin, admin.ModelAdmin):
+        pass
+
+Note that ExportActionMixin is declared first in the example above!
+
 
 Importing
 ---------
