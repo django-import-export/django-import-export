@@ -1,0 +1,135 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# Bram Janssen <zakelijk@bram-janssen.nl>, 2019.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2019-05-09 20:10+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: admin.py:193
+#, python-format
+msgid "%s through import_export"
+msgstr "%s door import_export"
+
+#: admin.py:199
+msgid "Import finished, with {} new and {} updated {}."
+msgstr "Import is klaar met {} nieuwe en {} geupdate {}."
+
+#: admin.py:297
+#, python-format
+msgid "<h1>Imported file has a wrong encoding: %s</h1>"
+msgstr "<h1>Het geimporteerde bestand heeft de verkeerde encoding: %s</h1>"
+
+#: admin.py:299
+#, python-format
+msgid "<h1>%s encountered while trying to read file: %s</h1>"
+msgstr "<h1>%s tegengekomen tijden het lezen van het bestand: %s</h1> "
+
+#: admin.py:330 templates/admin/import_export/change_list_import_item.html:5
+#: templates/admin/import_export/import.html:10
+msgid "Import"
+msgstr "Inport"
+
+#: admin.py:495 templates/admin/import_export/change_list_export_item.html:5
+#: templates/admin/import_export/export.html:7
+msgid "Export"
+msgstr "Export"
+
+#: admin.py:553
+msgid "You must select an export format."
+msgstr "U moet een exporteer formaat kiezen."
+
+#: admin.py:566
+#, python-format
+msgid "Export selected %(verbose_name_plural)s"
+msgstr "Export geselecteerde %(verbose_name_plural)s"
+
+#: forms.py:10
+msgid "File to import"
+msgstr "Bestand om in te voegen"
+
+#: forms.py:13 forms.py:41 forms.py:66
+msgid "Format"
+msgstr "Formaat"
+
+#: templates/admin/import_export/base.html:11
+msgid "Home"
+msgstr "Terug"
+
+#: templates/admin/import_export/export.html:31
+#: templates/admin/import_export/import.html:52
+msgid "Submit"
+msgstr "Indienen"
+
+#: templates/admin/import_export/import.html:20
+msgid ""
+"Below is a preview of data to be imported. If you are satisfied with the "
+"results, click 'Confirm import'"
+msgstr "Hieronder is een voorvertoning van de data dat geïmporteerd zal worden. Als u tevreden bent met het resultaat, klik dan op 'Accepteer de invoeging'."
+
+#: templates/admin/import_export/import.html:23
+msgid "Confirm import"
+msgstr "Accepteer de invoeging"
+
+#: templates/admin/import_export/import.html:31
+msgid "This importer will import the following fields: "
+msgstr "Deze import zal de volgende velden toevoegen"
+
+#: templates/admin/import_export/import.html:61
+#: templates/admin/import_export/import.html:90
+msgid "Errors"
+msgstr "Fouten"
+
+#: templates/admin/import_export/import.html:72
+msgid "Line number"
+msgstr "Regel nummer"
+
+#: templates/admin/import_export/import.html:82
+msgid "Some rows failed to validate"
+msgstr "Sommige regels zijn gefaald tijdens het goedkeuren"
+
+#: templates/admin/import_export/import.html:84
+msgid ""
+"Please correct these errors in your data where possible, then reupload it "
+"using the form above."
+msgstr "Verander alsublieft de volgende fouten in uw data waar mogelijk. Probeer het daarna nogmaals met het veld hierboven."
+
+#: templates/admin/import_export/import.html:89
+msgid "Row"
+msgstr "Regel"
+
+#: templates/admin/import_export/import.html:116
+msgid "Non field specific"
+msgstr "Niet veld specifiek"
+
+#: templates/admin/import_export/import.html:137
+msgid "Preview"
+msgstr "Voorbeeldweergave"
+
+#: templates/admin/import_export/import.html:152
+msgid "New"
+msgstr "Nieuw"
+
+#: templates/admin/import_export/import.html:154
+msgid "Skipped"
+msgstr "Overgeslagen"
+
+#: templates/admin/import_export/import.html:156
+msgid "Delete"
+msgstr "Verwijderen"
+
+#: templates/admin/import_export/import.html:158
+msgid "Update"
+msgstr "Bijwerken"
