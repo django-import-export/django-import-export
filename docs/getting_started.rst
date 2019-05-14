@@ -313,7 +313,7 @@ mixins (:class:`~import_export.admin.ImportMixin`,
 
     class BookAdmin(ImportExportModelAdmin):
         resource_class = BookResource
-        
+
     admin.site.register(Book, BookAdmin)
 
 .. figure:: _static/images/django-import-export-change.png
@@ -348,7 +348,7 @@ objects selected on the change list page::
 
    A screenshot of the change view with Import and Export as an admin action.
 
-Note that to use the `ExportMixin` or `ExportActionMixin`, you must declare this mixin _before_ `admin.ModelAdmin`:
+Note that to use the :class:`~import_export.admin.ExportMixin` or :class:`~import_export.admin.ExportActionMixin`, you must declare this mixin **before** ``admin.ModelAdmin``::
 
     # app/admin.py
     from django.contrib import admin
@@ -357,7 +357,7 @@ Note that to use the `ExportMixin` or `ExportActionMixin`, you must declare this
     class BookAdmin(ExportActionMixin, admin.ModelAdmin):
         pass
 
-Note that ExportActionMixin is declared first in the example above!
+Note that :class:`~import_export.admin.ExportActionMixin` is declared first in the example above!
 
 
 Importing
