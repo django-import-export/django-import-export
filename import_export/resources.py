@@ -28,7 +28,7 @@ from . import widgets
 from .fields import Field
 from .instance_loaders import ModelInstanceLoader
 from .results import Error, Result, RowResult
-from .utils import atomic_if_using_transaction
+from .utils import atomic_if_using_transaction, html_diff
 
 logger = logging.getLogger(__name__)
 # Set default logging handler to avoid "No handler found" warnings.
@@ -171,9 +171,7 @@ class Diff:
         for v1, v2 in zip(self.left, self.right):
             if v1 != v2 and self.new:
                 v1 = ""
-            diff = dmp.diff_main(force_text(v1), force_text(v2))
-            dmp.diff_cleanupSemantic(diff)
-            html = dmp.diff_prettyHtml(diff)
+            html = html_diff(v1, v2, dmp)
             html = mark_safe(html)
             data.append(html)
         return data

@@ -1,3 +1,5 @@
+# coding: utf-8
+
 import json
 import tablib
 from collections import OrderedDict
@@ -12,6 +14,7 @@ from django.db import DatabaseError, IntegrityError
 from django.db.models import Count
 from django.db.models.fields import FieldDoesNotExist
 from django.test import TestCase, TransactionTestCase, skipUnlessDBFeature
+from django.test.utils import override_settings
 from django.utils.encoding import force_text
 from django.utils.html import strip_tags
 
@@ -289,6 +292,19 @@ class ModelResourceTest(TestCase):
                          '<span>Some </span><ins style="background:#e6ffe6;">'
                          'other </ins><span>book</span>')
         self.assertFalse(html[headers.index('author_email')])
+
+    @override_settings(IMPORT_EXPORT_DIFF_BY_WORDS=True)
+    def test_get_diff_by_word(self):
+        self.book.price = Decimal('10.25')
+        diff = Diff(self.resource, self.book, False)
+        book2 = Book(price=Decimal('20.25'))
+        diff.compare_with(self.resource, book2)
+        html = diff.as_html()
+        headers = self.resource.get_export_headers()
+        self.assertEqual(
+            html[headers.index('price')],
+            '<del style="background:#ffe6e6;">10.25</del>'
+            '<ins style="background:#e6ffe6;">20.25</ins>')
 
     @skip("See: https://github.com/django-import-export/django-import-export/issues/311")
     def test_get_diff_with_callable_related_manager(self):

@@ -70,6 +70,12 @@ You can use the following directives in your settings file:
     your own permission code. Default is ``None`` which means
     everybody can execute export action.
 
+``IMPORT_EXPORT_DIFF_BY_WORDS``
+    Global setting controls diff appearance. By setting it to ``True``,
+    diffs will be detected word by word instead of char by char.
+    Default is ``False``.
+
+
 Example app
 ===========
 
