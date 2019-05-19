@@ -293,7 +293,7 @@ class ModelResourceTest(TestCase):
                          'other </ins><span>book</span>')
         self.assertFalse(html[headers.index('author_email')])
 
-    @override_settings(IMPORT_EXPORT_DIFF_BY_WORDS=True)
+    @override_settings(IMPORT_EXPORT_DIFF_BY_CHARS=False)
     def test_get_diff_by_word(self):
         self.book.price = Decimal('10.25')
         diff = Diff(self.resource, self.book, False)
