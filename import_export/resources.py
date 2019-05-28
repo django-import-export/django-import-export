@@ -345,7 +345,7 @@ class Resource(metaclass=DeclarativeMetaclass):
         """
         pass
 
-    def import_field(self, field, obj, data, is_m2m=False):
+    def import_field(self, field, obj, data, is_m2m=False, **kwargs):
         """
         Calls :meth:`import_export.fields.Field.save` if ``Field.attribute``
         and ``Field.column_name`` are found in ``data``.
@@ -356,7 +356,7 @@ class Resource(metaclass=DeclarativeMetaclass):
     def get_import_fields(self):
         return self.get_fields()
 
-    def import_obj(self, obj, data, dry_run):
+    def import_obj(self, obj, data, dry_run, **kwargs):
         """
         Traverses every field in this Resource and calls
         :meth:`~import_export.resources.Resource.import_field`. If
@@ -368,7 +368,7 @@ class Resource(metaclass=DeclarativeMetaclass):
             if isinstance(field.widget, widgets.ManyToManyWidget):
                 continue
             try:
-                self.import_field(field, obj, data)
+                self.import_field(field, obj, data, **kwargs)
             except ValueError as e:
                 errors[field.attribute] = ValidationError(
                     force_text(e), code="invalid")
@@ -503,7 +503,7 @@ class Resource(metaclass=DeclarativeMetaclass):
             else:
                 import_validation_errors = {}
                 try:
-                    self.import_obj(instance, row, dry_run)
+                    self.import_obj(instance, row, dry_run, **kwargs)
                 except ValidationError as e:
                     # Validation errors from import_obj() are passed on to
                     # validate_instance(), where they can be combined with model
