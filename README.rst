@@ -46,7 +46,7 @@ Requirements
 
 * Python 2.7+ or Python 3.3+
 * Django 1.8+
-* tablib (dev or 0.9.11)
+* tablib (0.12.1 - 0.13+ not supported)
 
 Example app
 -----------
@@ -68,6 +68,6 @@ As most projects, we try to follow PEP8_ as closely as possible. Please bear
 in mind that most pull requests will be rejected without proper unit testing.
 
 .. _`PEP8`: https://www.python.org/dev/peps/pep-0008/
-.. _`tablib`: https://github.com/kennethreitz/tablib
+.. _`tablib`: https://github.com/kennethreitz/tablib/tree/v0.12.1
 .. _`the repository`: https://github.com/django-import-export/django-import-export/
 .. _AUTHORS: https://github.com/django-import-export/django-import-export/blob/master/AUTHORS
