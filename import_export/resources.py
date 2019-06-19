@@ -351,7 +351,7 @@ class Resource(metaclass=DeclarativeMetaclass):
         and ``Field.column_name`` are found in ``data``.
         """
         if field.attribute and field.column_name in data:
-            field.save(obj, data, is_m2m)
+            field.save(obj, data, is_m2m, **kwargs)
 
     def get_import_fields(self):
         return self.get_fields()

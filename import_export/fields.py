@@ -51,7 +51,7 @@ class Field:
             return '<%s: %s>' % (path, column_name)
         return '<%s>' % path
 
-    def clean(self, data):
+    def clean(self, data, **kwargs):
         """
         Translates the value stored in the imported datasource to an
         appropriate Python object and returns it.
@@ -63,7 +63,7 @@ class Field:
                            "columns are: %s" % (self.column_name, list(data)))
 
         # If ValueError is raised here, import_obj() will handle it
-        value = self.widget.clean(value, row=data)
+        value = self.widget.clean(value, row=data, **kwargs)
 
         if value in self.empty_values and self.default != NOT_PROVIDED:
             if callable(self.default):
@@ -98,7 +98,7 @@ class Field:
             value = value()
         return value
 
-    def save(self, obj, data, is_m2m=False):
+    def save(self, obj, data, is_m2m=False, **kwargs):
         """
         If this field is not declared readonly, the object's attribute will
         be set to the value returned by :meth:`~import_export.fields.Field.clean`.
@@ -107,7 +107,7 @@ class Field:
             attrs = self.attribute.split('__')
             for attr in attrs[:-1]:
                 obj = getattr(obj, attr, None)
-            cleaned = self.clean(data)
+            cleaned = self.clean(data, **kwargs)
             if cleaned is not None or self.saves_null_values:
                 if not is_m2m:
                     setattr(obj, attrs[-1], cleaned)
