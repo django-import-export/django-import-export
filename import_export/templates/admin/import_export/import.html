@@ -17,7 +17,7 @@
     sheet.id = "table_hider";
     sheet.innerHTML = "table.import-preview { display:none; }";
     document.head.appendChild(sheet);
-    // Remove style upon finish of dom content loading (does not include img, since imgs can can load slowly)
+    // Remove style upon finish of dom content loading (does not include img, since imgs can load slowly)
     document.addEventListener('DOMContentLoaded', function() {
       document.head.removeChild(document.getElementById("table_hider"));
     }, false);
