@@ -149,7 +149,6 @@ class ImportExportAdminIntegrationTest(TestCase):
         AuthorAdmin.has_add_permission = original
 
         self.assertContains(response, _('Import'))
-        self.assertTemplateUsed(response, 'admin/import_export/change_list.html')
 
     def test_import_file_name_in_tempdir(self):
         # 65 - import_file_name form field can be use to access the filesystem
