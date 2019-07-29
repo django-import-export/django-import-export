@@ -28,7 +28,7 @@ let Django collect its static files.
 
     $ python manage.py collectstatic
 
-All prequisites are set up! See :doc:`getting_started` to learn how to use django-import-export in your project.
+All prerequisites are set up! See :doc:`getting_started` to learn how to use django-import-export in your project.
 
 
 

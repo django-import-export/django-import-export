@@ -8,7 +8,7 @@ class atomic_if_using_transaction:
 
         if using_transactions:
             with transaction.atomic():
-                return somethng()
+                return something()
         return something()
     """
     def __init__(self, using_transactions):
