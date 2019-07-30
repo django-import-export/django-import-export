@@ -451,7 +451,7 @@ Changelog
 * refactor admin integration to allow better handling of specific formats
   supported features and better handling of reading text files
 
-* include all avialable formats in Admin integration
+* include all available formats in Admin integration
 
 * bugfixes
 

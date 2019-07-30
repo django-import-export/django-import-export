@@ -7,7 +7,7 @@ from import_export.results import InvalidRow
 class InvalidRowTest(TestCase):
 
     def setUp(self):
-        # Create a ValidationEror with a mix of field-specific and non-field-specific errors
+        # Create a ValidationError with a mix of field-specific and non-field-specific errors
         self.non_field_errors = ValidationError(['Error 1', 'Error 2', 'Error 3'])
         self.field_errors = ValidationError({
             'name': ['Error 4', 'Error 5'],
