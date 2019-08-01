@@ -42,7 +42,7 @@ class ImportExportMixinBase:
 class ImportMixin(ImportExportMixinBase):
     """
     Import mixin.
-    
+
     This is intended to be mixed with django.contrib.admin.ModelAdmin
     https://docs.djangoproject.com/en/2.1/ref/contrib/admin/#modeladmin-objects
     """
@@ -346,7 +346,7 @@ class ImportMixin(ImportExportMixinBase):
 class ExportMixin(ImportExportMixinBase):
     """
     Export mixin.
-    
+
     This is intended to be mixed with django.contrib.admin.ModelAdmin
     https://docs.djangoproject.com/en/2.1/ref/contrib/admin/#modeladmin-objects
     """
@@ -406,7 +406,7 @@ class ExportMixin(ImportExportMixinBase):
         """
         return [f for f in self.formats if f().can_export()]
 
-    def get_export_filename(self, file_format):
+    def get_export_filename(self, request, queryset, file_format):
         date_str = datetime.now().strftime('%Y-%m-%d')
         filename = "%s-%s.%s" % (self.model.__name__,
                                  date_str,
@@ -481,8 +481,8 @@ class ExportMixin(ImportExportMixinBase):
             export_data = self.get_export_data(file_format, queryset, request=request)
             content_type = file_format.get_content_type()
             response = HttpResponse(export_data, content_type=content_type)
-            response['Content-Disposition'] = 'attachment; filename=%s' % (
-                self.get_export_filename(file_format),
+            response['Content-Disposition'] = 'attachment; filename="%s"' % (
+                self.get_export_filename(request, queryset, file_format),
             )
 
             post_export.send(sender=None, model=self.model)
@@ -558,8 +558,8 @@ class ExportActionMixin(ExportMixin):
             export_data = self.get_export_data(file_format, queryset, request=request)
             content_type = file_format.get_content_type()
             response = HttpResponse(export_data, content_type=content_type)
-            response['Content-Disposition'] = 'attachment; filename=%s' % (
-                self.get_export_filename(file_format),
+            response['Content-Disposition'] = 'attachment; filename="%s"' % (
+                self.get_export_filename(request, queryset, file_format),
             )
             return response
     export_admin_action.short_description = _(
