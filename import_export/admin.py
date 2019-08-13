@@ -360,6 +360,13 @@ class ExportMixin(ImportExportMixinBase):
         """
         return self.get_resource_class()
 
+    def get_export_form(self):
+        """
+        Get the form type used to export format and file. 
+        Will help in case override is required
+        """
+        return ExportForm
+
     def get_export_formats(self):
         """
         Returns available export formats.
@@ -431,7 +438,7 @@ class ExportMixin(ImportExportMixinBase):
             raise PermissionDenied
 
         formats = self.get_export_formats()
-        form = ExportForm(formats, request.POST or None)
+        form = self.get_export_form()(formats, request.POST or None)
         if form.is_valid():
             file_format = formats[
                 int(form.cleaned_data['file_format'])
