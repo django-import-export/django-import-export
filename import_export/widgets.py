@@ -1,5 +1,6 @@
 import json
 from datetime import date, datetime
+from dateutil.parser import parse
 from decimal import Decimal
 
 from django.conf import settings
@@ -178,12 +179,17 @@ class DateTimeWidget(Widget):
             return value
         for format in self.formats:
             try:
-                dt = datetime.strptime(value, format)
+                dt = parse(value)
                 if settings.USE_TZ:
                     # make datetime timezone aware so we don't compare
                     # naive datetime to an aware one
-                    dt = timezone.make_aware(dt,
-                                             timezone.get_default_timezone())
+                    # only if datetime is naive
+                    if (dt.tzinfo is None or
+                            dt.tzinfo.utcoffset(dt) is None):
+                        dt = timezone.make_aware(
+                                dt, timezone.get_default_timezone())
+                    else:
+                        dt = dt.astimezone(timezone.get_default_timezone())
                 return dt
             except (ValueError, TypeError):
                 continue
