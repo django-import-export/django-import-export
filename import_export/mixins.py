@@ -80,7 +80,7 @@ class ExportViewFormMixin(ExportViewMixin, FormView):
             response = HttpResponse(export_data, content_type=content_type)
         except TypeError:
             response = HttpResponse(export_data, mimetype=content_type)
-        response['Content-Disposition'] = 'attachment; filename=%s' % (
+        response['Content-Disposition'] = 'attachment; filename="%s"' % (
             self.get_export_filename(file_format),
         )
 
