@@ -252,8 +252,13 @@ class Resource(metaclass=DeclarativeMetaclass):
 
     def get_instance(self, instance_loader, row):
         """
-        Calls the :doc:`InstanceLoader <api_instance_loaders>`.
+        If all 'import_id_fields' are present in the dataset, calls
+        the :doc:`InstanceLoader <api_instance_loaders>`. Otherwise,
+        returns `None`.
         """
+        for field_name in self.get_import_id_fields():
+            if field_name not in row:
+                return
         return instance_loader.get_instance(row)
 
     def get_or_init_instance(self, instance_loader, row):
