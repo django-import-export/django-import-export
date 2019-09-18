@@ -4,7 +4,7 @@ from collections import OrderedDict
 from copy import deepcopy
 from datetime import date
 from decimal import Decimal
-from unittest import skip, skipUnless
+from unittest import mock, skip, skipUnless
 
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -253,17 +253,33 @@ class ModelResourceTest(TestCase):
         instance = resource.get_instance(instance_loader, self.dataset.dict[0])
         self.assertEqual(instance, self.book)
 
-    def test_get_instance_with_missing_field_data(self):
+    def test_get_instance_usually_defers_to_instance_loader(self):
+        self.resource._meta.import_id_fields = ['id']
+
         instance_loader = self.resource._meta.instance_loader_class(
             self.resource)
+
+        with mock.patch.object(instance_loader, 'get_instance') as mocked_method:
+            row = self.dataset.dict[0]
+            self.resource.get_instance(instance_loader, row)
+            # instance_loader.get_instance() should have been called
+            mocked_method.assert_called_once_with(row)
+
+    def test_get_instance_when_id_fields_not_in_dataset(self):
+        self.resource._meta.import_id_fields = ['id']
+
         # construct a dataset with a missing "id" column
         dataset = tablib.Dataset(headers=['name', 'author_email', 'price'])
         dataset.append(['Some book', 'test@example.com', "10.25"])
-        with self.assertRaises(KeyError) as cm:
-            self.resource.get_instance(instance_loader, dataset.dict[0])
-        self.assertEqual("Column 'id' not found in dataset. Available columns "
-                         "are: %s" % ['name', 'author_email', 'price'],
-                         cm.exception.args[0])
+
+        instance_loader = self.resource._meta.instance_loader_class(self.resource)
+
+        with mock.patch.object(instance_loader, 'get_instance') as mocked_method:
+            result = self.resource.get_instance(instance_loader, dataset.dict[0])
+            # Resource.get_instance() should return None
+            self.assertIs(result, None)
+            # instance_loader.get_instance() should NOT have been called
+            mocked_method.assert_not_called()
 
     def test_get_export_headers(self):
         headers = self.resource.get_export_headers()
