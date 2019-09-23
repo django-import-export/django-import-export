@@ -134,6 +134,7 @@ Changelog
 - Removed support for Django < 2.0
 - Removed support for Python < 3.5
 - feat: Support for Postgres JSONb Field (#904)
+- add row_number parameter to before_import_row(), after_import_instance() and after_import_row()
 
 1.2.0 (2019-01-10)
 ------------------
