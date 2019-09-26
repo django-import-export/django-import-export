@@ -380,17 +380,35 @@ class ModelResourceTest(TestCase):
             class Meta:
                 model = Author
                 clean_model_instances = True
+                export_order = ['id', 'name', 'birthday']
 
+        # create test dataset
+        # NOTE: column order is deliberately strange
+        dataset = tablib.Dataset(headers=['name', 'id'])
+        dataset.append(['123', '1'])
+
+        # run import_data()
         resource = TestResource()
-        dataset = tablib.Dataset(headers=['id', 'name'])
-        dataset.append(['', '123'])
-
         result = resource.import_data(dataset, raise_errors=False)
+
+        # check has_validation_errors()
         self.assertTrue(result.has_validation_errors())
-        self.assertEqual(result.invalid_rows[0].error_count, 1)
+
+        # check the invalid row itself
+        invalid_row = result.invalid_rows[0]
+        self.assertEqual(invalid_row.error_count, 1)
         self.assertEqual(
-            result.invalid_rows[0].field_specific_errors,
+            invalid_row.field_specific_errors,
             {'name': ["'123' is not a valid value"]}
+        )
+        # diff_header and invalid_row.values should match too
+        self.assertEqual(
+            result.diff_headers,
+            ['id', 'name', 'birthday']
+        )
+        self.assertEqual(
+            invalid_row.values,
+            ('1', '123', '---')
         )
 
     def test_known_invalid_fields_are_excluded_from_model_instance_cleaning(self):

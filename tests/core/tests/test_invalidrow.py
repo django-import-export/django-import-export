@@ -21,7 +21,7 @@ class InvalidRowTest(TestCase):
         self.obj = InvalidRow(
             number=1,
             validation_error=e,
-            values={'name': 'ABC', 'birthday': '123'}
+            values=['ABC', '123']
         )
 
     def test_error_count(self):
@@ -43,7 +43,7 @@ class InvalidRowTest(TestCase):
         obj = InvalidRow(
             number=1,
             validation_error=self.non_field_errors,
-            values={}
+            values=[]
         )
         self.assertIsInstance(obj.error_dict, dict)
         self.assertIn(NON_FIELD_ERRORS, obj.error_dict)
