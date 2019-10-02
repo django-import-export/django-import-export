@@ -3,6 +3,7 @@ from __future__ import with_statement
 from datetime import datetime
 
 import django
+from django import forms
 from django.contrib import admin
 from django.contrib.auth import get_permission_codename
 from django.utils import six
@@ -526,8 +527,10 @@ class ExportActionMixin(ExportMixin):
 
     actions = [export_admin_action]
 
-    class Media:
-        js = ['import_export/action_formats.js']
+    @property
+    def media(self):
+        super_media = super().media
+        return forms.Media(js=super_media._js + ['import_export/action_formats.js'], css=super_media._js)
 
 
 class ExportActionModelAdmin(ExportActionMixin, admin.ModelAdmin):
