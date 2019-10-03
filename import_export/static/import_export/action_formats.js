@@ -10,7 +10,7 @@
         $actionsSelect = $('#changelist-form select[name="action"]');
         $formatsElement = $('#changelist-form select[name="file_format"]').parent();
     }
-    $actionsSelect.on('change', function() {
+    $actionsSelect.change(function() {
       if ($(this).val() === 'export_admin_action') {
         $formatsElement.show();
       } else {

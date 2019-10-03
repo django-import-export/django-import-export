@@ -530,7 +530,7 @@ class ExportActionMixin(ExportMixin):
     @property
     def media(self):
         super_media = super().media
-        return forms.Media(js=super_media._js + ['import_export/action_formats.js'], css=super_media._js)
+        return forms.Media(js=super_media._js + ['import_export/action_formats.js'], css=super_media._css)
 
 
 class ExportActionModelAdmin(ExportActionMixin, admin.ModelAdmin):
