@@ -8,11 +8,11 @@ from datetime import date
 from decimal import Decimal
 from unittest import skip, skipUnless
 
+import django
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import IntegrityError, DatabaseError
 from django.db.models import Count
-from django.db.models.fields import FieldDoesNotExist
 from django.test import TestCase, TransactionTestCase, skipUnlessDBFeature
 from django.utils import six
 from django.utils.html import strip_tags
@@ -26,6 +26,12 @@ from ..models import (
     Author, Book, Category, Entry, Profile, WithDefault, WithDynamicDefault,
     WithFloatField, Person, Role
 )
+
+if django.VERSION[0] >= 3:
+    from django.core.exceptions import FieldDoesNotExist
+else:
+    from django.db.models.fields import FieldDoesNotExist
+
 
 
 class MyResource(resources.Resource):
