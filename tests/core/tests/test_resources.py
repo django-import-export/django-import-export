@@ -6,11 +6,11 @@ from datetime import date
 from decimal import Decimal
 from unittest import mock, skip, skipUnless
 
+import django
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import DatabaseError, IntegrityError
 from django.db.models import Count
-from django.db.models.fields import FieldDoesNotExist
 from django.test import TestCase, TransactionTestCase, skipUnlessDBFeature
 from django.utils.encoding import force_text
 from django.utils.html import strip_tags
@@ -31,6 +31,12 @@ from ..models import (
     WithDynamicDefault,
     WithFloatField
 )
+
+if django.VERSION[0] >= 3:
+    from django.core.exceptions import FieldDoesNotExist
+else:
+    from django.db.models.fields import FieldDoesNotExist
+
 
 
 class MyResource(resources.Resource):
