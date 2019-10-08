@@ -1,0 +1,141 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2019-10-05 14:40+0300\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+#: import_export/admin.py:193
+#, python-format
+msgid "%s through import_export"
+msgstr "%s vasıtasıyla import_export"
+
+#: import_export/admin.py:199
+msgid "Import finished, with {} new and {} updated {}."
+msgstr "{} yeni ve {} güncellenen {} ile içe aktarma bitti"
+
+#: import_export/admin.py:297
+#, python-format
+msgid "<h1>Imported file has a wrong encoding: %s</h1>"
+msgstr "<h1>İçe aktarılan dosyada yanlış kodlama bulunmaktadır: %s</h1>"
+
+#: import_export/admin.py:299
+#, python-format
+msgid "<h1>%s encountered while trying to read file: %s</h1>"
+msgstr "<h1>Dosya okunurken %s hatası ile karşılaşıldı, okunan dosya adı: %s</h1>"
+
+#: import_export/admin.py:330
+#: import_export/templates/admin/import_export/change_list_import_item.html:5
+#: import_export/templates/admin/import_export/import.html:10
+msgid "Import"
+msgstr "İçe aktar"
+
+#: import_export/admin.py:495
+#: import_export/templates/admin/import_export/change_list_export_item.html:5
+#: import_export/templates/admin/import_export/export.html:7
+msgid "Export"
+msgstr "Dışa aktar"
+
+#: import_export/admin.py:553
+msgid "You must select an export format."
+msgstr "Bir dosya biçimi seçmelisiniz"
+
+#: import_export/admin.py:566
+#, python-format
+msgid "Export selected %(verbose_name_plural)s"
+msgstr "Seçililenleri dışa aktar %(verbose_name_plural)s"
+
+#: import_export/forms.py:10
+msgid "File to import"
+msgstr "İçe alınacak dosya"
+
+#: import_export/forms.py:13 import_export/forms.py:41
+#: import_export/forms.py:66
+msgid "Format"
+msgstr "Dosya biçimi"
+
+#: import_export/templates/admin/import_export/base.html:11
+msgid "Home"
+msgstr "Ana sayfa"
+
+#: import_export/templates/admin/import_export/export.html:31
+#: import_export/templates/admin/import_export/import.html:52
+msgid "Submit"
+msgstr "Kaydet"
+
+#: import_export/templates/admin/import_export/import.html:20
+msgid ""
+"Below is a preview of data to be imported. If you are satisfied with the "
+"results, click 'Confirm import'"
+msgstr ""
+"Aşağıda içe aktarılacak verilerin önizlemesi verilmiştir. Sonuçlardan memnunsanız "
+"'İçe aktarmayı onayla'yı tıklayın."
+
+#: import_export/templates/admin/import_export/import.html:23
+msgid "Confirm import"
+msgstr "İçe aktarmayı onayla"
+
+#: import_export/templates/admin/import_export/import.html:31
+msgid "This importer will import the following fields: "
+msgstr "Bu içe aktarıcı aşağıdaki alanları içe aktaracaktır: "
+
+#: import_export/templates/admin/import_export/import.html:61
+#: import_export/templates/admin/import_export/import.html:90
+msgid "Errors"
+msgstr "Hatalar"
+
+#: import_export/templates/admin/import_export/import.html:72
+msgid "Line number"
+msgstr "Satır numarası"
+
+#: import_export/templates/admin/import_export/import.html:82
+msgid "Some rows failed to validate"
+msgstr "Bazı satırlar doğrulanamadı"
+
+#: import_export/templates/admin/import_export/import.html:84
+msgid ""
+"Please correct these errors in your data where possible, then reupload it "
+"using the form above."
+msgstr ""
+"Lütfen verilerinizdeki bu hataları olabildiğince düzeltin, "
+"sonra yukarıdaki formu kullanarak tekrar yükleyin."
+
+#: import_export/templates/admin/import_export/import.html:89
+msgid "Row"
+msgstr "Satır"
+
+#: import_export/templates/admin/import_export/import.html:116
+msgid "Non field specific"
+msgstr "Alan olmayana özgü"
+
+#: import_export/templates/admin/import_export/import.html:137
+msgid "Preview"
+msgstr "Ön izleme"
+
+#: import_export/templates/admin/import_export/import.html:152
+msgid "New"
+msgstr "Yeni"
+
+#: import_export/templates/admin/import_export/import.html:154
+msgid "Skipped"
+msgstr "Atlandı"
+
+#: import_export/templates/admin/import_export/import.html:156
+msgid "Delete"
+msgstr "Sil"
+
+#: import_export/templates/admin/import_export/import.html:158
+msgid "Update"
+msgstr "Güncelle"
