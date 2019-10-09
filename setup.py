@@ -34,7 +34,7 @@ with open(os.path.join(os.path.dirname(__file__), 'README.rst')) as f:
 setup(
     name="django-import-export",
     description="Django application and library for importing and exporting"
-                "data with included admin integration.",
+                " data with included admin integration.",
     long_description=readme,
     version=VERSION,
     author="Informatika Mihelac",
