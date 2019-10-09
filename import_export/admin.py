@@ -565,7 +565,7 @@ class ExportActionMixin(ExportMixin):
     export_admin_action.short_description = _(
         'Export selected %(verbose_name_plural)s')
 
-    actions = [export_admin_action]
+    actions = admin.ModelAdmin.actions + [export_admin_action]
 
     class Media:
         js = ['import_export/action_formats.js']
