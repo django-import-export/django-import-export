@@ -291,6 +291,7 @@ class ModelResourceTest(TestCase):
         headers = self.resource.get_export_headers()
         self.assertEqual(headers, ['published_date', 'id', 'name', 'author',
                                    'author_email', 'published_time', 'price',
+                                   'added',
                                    'categories', ])
 
     def test_export(self):

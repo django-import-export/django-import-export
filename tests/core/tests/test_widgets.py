@@ -1,6 +1,7 @@
 from datetime import date, datetime, time, timedelta
 from decimal import Decimal
 
+import pytz
 from core.models import Author, Category
 
 from django.test import TestCase
@@ -62,14 +63,11 @@ class DateTimeWidgetTest(TestCase):
         self.assertEqual(self.widget.clean("13.08.2012 18:00:00"),
                          self.datetime)
 
-    @override_settings(USE_TZ=True)
+    @override_settings(USE_TZ=True, TIME_ZONE='Europe/Ljubljana')
     def test_use_tz(self):
-        self.assertEqual(self.widget.render(self.datetime),
-                         "13.08.2012 18:00:00")
-        aware_dt = timezone.make_aware(self.datetime,
-                                       timezone.get_default_timezone())
-        self.assertEqual(self.widget.clean("13.08.2012 18:00:00"),
-                         aware_dt)
+        utc_dt = timezone.make_aware(self.datetime, pytz.UTC)
+        self.assertEqual(self.widget.render(utc_dt), "13.08.2012 20:00:00")
+        self.assertEqual(self.widget.clean("13.08.2012 20:00:00"), utc_dt)
 
 
 class DateWidgetBefore1900Test(TestCase):
