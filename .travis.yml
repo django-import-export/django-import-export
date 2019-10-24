@@ -22,6 +22,9 @@ env:
     - DJANGO="Django==2.1.*" IMPORT_EXPORT_TEST_TYPE=postgres
     - DJANGO="Django==2.1.*" IMPORT_EXPORT_TEST_TYPE=mysql-innodb
     - DJANGO="Django==2.1.*" IMPORT_EXPORT_TEST_TYPE=sqlite
+    - DJANGO="Django==2.2.*" IMPORT_EXPORT_TEST_TYPE=postgres
+    - DJANGO="Django==2.2.*" IMPORT_EXPORT_TEST_TYPE=mysql-innodb
+    - DJANGO="Django==2.2.*" IMPORT_EXPORT_TEST_TYPE=sqlite
     - DJANGO="https://github.com/django/django/archive/master.tar.gz" IMPORT_EXPORT_TEST_TYPE=postgres
     - DJANGO="https://github.com/django/django/archive/master.tar.gz" IMPORT_EXPORT_TEST_TYPE=mysql-innodb
     - DJANGO="https://github.com/django/django/archive/master.tar.gz" IMPORT_EXPORT_TEST_TYPE=sqlite
