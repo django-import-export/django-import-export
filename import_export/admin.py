@@ -82,8 +82,7 @@ class ImportMixin(ImportExportMixinBase):
             return True
 
         opts = self.opts
-        codename = get_permission_codename(IMPORT_PERMISSION_CODE, opts)
-        return request.user.has_perm("%s.%s" % (opts.app_label, codename))
+        return request.user.has_perm("%s.%s" % (opts.app_label, IMPORT_PERMISSION_CODE))
 
     def get_urls(self):
         urls = super().get_urls()
@@ -379,8 +378,7 @@ class ExportMixin(ImportExportMixinBase):
             return True
 
         opts = self.opts
-        codename = get_permission_codename(EXPORT_PERMISSION_CODE, opts)
-        return request.user.has_perm("%s.%s" % (opts.app_label, codename))
+        return request.user.has_perm("%s.%s" % (opts.app_label, EXPORT_PERMISSION_CODE))
 
     def get_resource_kwargs(self, request, *args, **kwargs):
         return {}
