@@ -511,6 +511,7 @@ class Resource(metaclass=DeclarativeMetaclass):
                     row_result.import_type = RowResult.IMPORT_TYPE_DELETE
                     self.delete_instance(instance, using_transactions, dry_run)
                     diff.compare_with(self, None, dry_run)
+
             else:
                 import_validation_errors = {}
                 try:
@@ -532,8 +533,11 @@ class Resource(metaclass=DeclarativeMetaclass):
                 diff.compare_with(self, instance, dry_run)
 
             row_result.diff = diff.as_html()
+            if row_result.import_type != RowResult.IMPORT_TYPE_SKIP:
+                row_result.object_id = instance.pk
+                row_result.object_repr = force_text(instance)
             self.after_import_row(row, row_result, **kwargs)
-
+            
         except ValidationError as e:
             row_result.import_type = RowResult.IMPORT_TYPE_INVALID
             row_result.validation_error = e
