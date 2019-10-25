@@ -503,6 +503,9 @@ class Resource(metaclass=DeclarativeMetaclass):
             row_result.new_record = new
             original = deepcopy(instance)
             diff = self.get_diff_class()(self, original, new)
+            if row_result.import_type != RowResult.IMPORT_TYPE_SKIP:
+                row_result.object_id = instance.pk
+                row_result.object_repr = force_text(instance)
             if self.for_delete(row, instance):
                 if new:
                     row_result.import_type = RowResult.IMPORT_TYPE_SKIP
@@ -533,9 +536,6 @@ class Resource(metaclass=DeclarativeMetaclass):
                 diff.compare_with(self, instance, dry_run)
 
             row_result.diff = diff.as_html()
-            if row_result.import_type != RowResult.IMPORT_TYPE_SKIP:
-                row_result.object_id = instance.pk
-                row_result.object_repr = force_text(instance)
             self.after_import_row(row, row_result, **kwargs)
             
         except ValidationError as e:
