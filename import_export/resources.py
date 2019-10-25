@@ -503,15 +503,14 @@ class Resource(metaclass=DeclarativeMetaclass):
             row_result.new_record = new
             original = deepcopy(instance)
             diff = self.get_diff_class()(self, original, new)
-            if row_result.import_type != RowResult.IMPORT_TYPE_SKIP:
-                row_result.object_id = instance.pk
-                row_result.object_repr = force_text(instance)
             if self.for_delete(row, instance):
                 if new:
                     row_result.import_type = RowResult.IMPORT_TYPE_SKIP
                     diff.compare_with(self, None, dry_run)
                 else:
                     row_result.import_type = RowResult.IMPORT_TYPE_DELETE
+                    row_result.object_id = instance.pk
+                    row_result.object_repr = force_text(instance)
                     self.delete_instance(instance, using_transactions, dry_run)
                     diff.compare_with(self, None, dry_run)
 
