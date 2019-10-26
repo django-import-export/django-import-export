@@ -40,25 +40,25 @@ msgstr "<h1>%s tegengekomen tijden het lezen van het bestand: %s</h1> "
 #: admin.py:330 templates/admin/import_export/change_list_import_item.html:5
 #: templates/admin/import_export/import.html:10
 msgid "Import"
-msgstr "Inport"
+msgstr "Importeren"
 
 #: admin.py:495 templates/admin/import_export/change_list_export_item.html:5
 #: templates/admin/import_export/export.html:7
 msgid "Export"
-msgstr "Export"
+msgstr "Exporteren"
 
 #: admin.py:553
 msgid "You must select an export format."
-msgstr "U moet een exporteer formaat kiezen."
+msgstr "U moet een export formaat kiezen."
 
 #: admin.py:566
 #, python-format
 msgid "Export selected %(verbose_name_plural)s"
-msgstr "Export geselecteerde %(verbose_name_plural)s"
+msgstr "Exporteer geselecteerde %(verbose_name_plural)s"
 
 #: forms.py:10
 msgid "File to import"
-msgstr "Bestand om in te voegen"
+msgstr "Bestand om te importeren"
 
 #: forms.py:13 forms.py:41 forms.py:66
 msgid "Format"
@@ -77,11 +77,11 @@ msgstr "Indienen"
 msgid ""
 "Below is a preview of data to be imported. If you are satisfied with the "
 "results, click 'Confirm import'"
-msgstr "Hieronder is een voorvertoning van de data dat geïmporteerd zal worden. Als u tevreden bent met het resultaat, klik dan op 'Accepteer de invoeging'."
+msgstr "Hieronder is een voorvertoning van de data die geïmporteerd zal worden. Als u tevreden bent met het resultaat, klik dan op 'Accepteer de import'."
 
 #: templates/admin/import_export/import.html:23
 msgid "Confirm import"
-msgstr "Accepteer de invoeging"
+msgstr "Accepteer de import"
 
 #: templates/admin/import_export/import.html:31
 msgid "This importer will import the following fields: "
@@ -98,13 +98,13 @@ msgstr "Regel nummer"
 
 #: templates/admin/import_export/import.html:82
 msgid "Some rows failed to validate"
-msgstr "Sommige regels zijn gefaald tijdens het goedkeuren"
+msgstr "Sommige regels zijn niet goedgekeurd"
 
 #: templates/admin/import_export/import.html:84
 msgid ""
 "Please correct these errors in your data where possible, then reupload it "
 "using the form above."
-msgstr "Verander alsublieft de volgende fouten in uw data waar mogelijk. Probeer het daarna nogmaals met het veld hierboven."
+msgstr "Verander alstublieft de volgende fouten in uw data waar mogelijk. Upload het bestand daarna nogmaals met het veld hierboven."
 
 #: templates/admin/import_export/import.html:89
 msgid "Row"
