@@ -866,6 +866,44 @@ class ModelResourceTest(TestCase):
         self.assertFalse(result.has_errors())
         self.assertEqual(User.objects.get(pk=user.pk).username, 'bar')
 
+    def test_follow_relationship_for_modelresource_post_save(self):
+
+        class EntryResource(resources.ModelResource):
+            username = fields.Field(attribute='user__username',
+                                    widget=widgets.DeferredSaveWidget(widgets.CharWidget()),
+                                    readonly=False)
+
+            class Meta:
+                model = Role
+                fields = ('id', )
+
+            def after_save_instance(self, instance, using_transactions, dry_run):
+                if not using_transactions and dry_run:
+                    # we don't have transactions and we want to do a dry_run
+                    pass
+                else:
+                    # create user, this would usually be done by a signal
+                    instance.user = User.objects.create(username='foo')
+
+            def after_post_save_instance(self, instance, data, using_transactions, dry_run):
+                if not using_transactions and dry_run:
+                    # we don't have transactions and we want to do a dry_run
+                    pass
+                else:
+                    instance.user.save()
+
+        # user = User.objects.create(username='foo')
+        row = [
+            None,
+            'bar',
+        ]
+        self.dataset = tablib.Dataset(headers=['id', 'username'])
+        self.dataset.append(row)
+        result = EntryResource().import_data(
+            self.dataset, raise_errors=True, dry_run=False)
+        self.assertFalse(result.has_errors())
+        self.assertEqual(User.objects.get(username='bar').username, 'bar')
+
     def test_import_data_dynamic_default_callable(self):
 
         class DynamicDefaultResource(resources.ModelResource):
