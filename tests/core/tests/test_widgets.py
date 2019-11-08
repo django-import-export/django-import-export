@@ -293,7 +293,7 @@ class JSONWidgetTest(TestCase):
 class DeferredSaveWidgetTest(TestCase):
 
     def setUp(self):
-        self.widget = widgets.DeferredSaveWidget(widgets.BooleanWidget())
+        self.widget = widgets.PostSaveWidget(widgets.BooleanWidget())
 
     def test_clean(self):
         self.assertTrue(self.widget.clean("1"))

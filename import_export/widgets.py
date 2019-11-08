@@ -438,7 +438,7 @@ class ManyToManyWidget(Widget):
         getattr(obj, attr).set(value)
 
 
-class DeferredSaveWidget(Widget):
+class PostSaveWidget(Widget):
     """
     Container widget that delays save until post_save.
     :param widget: The widget.

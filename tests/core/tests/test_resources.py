@@ -870,7 +870,7 @@ class ModelResourceTest(TestCase):
 
         class EntryResource(resources.ModelResource):
             username = fields.Field(attribute='user__username',
-                                    widget=widgets.DeferredSaveWidget(widgets.CharWidget()),
+                                    widget=widgets.PostSaveWidget(widgets.CharWidget()),
                                     readonly=False)
 
             class Meta:
