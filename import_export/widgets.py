@@ -458,4 +458,4 @@ class DeferredSaveWidget(Widget):
         pass
 
     def post_save(self, obj, attr, value):
-        super().save(obj, attr, value)
+        self.widget.save(obj, attr, value)

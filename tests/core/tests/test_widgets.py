@@ -288,3 +288,31 @@ class JSONWidgetTest(TestCase):
         self.assertEqual(self.widget.render(None), None)
         self.assertEqual(self.widget.render(dict()), None)
         self.assertEqual(self.widget.render({"value": None}), '{"value": null}')
+
+
+class DeferredSaveWidgetTest(TestCase):
+
+    def setUp(self):
+        self.widget = widgets.DeferredSaveWidget(widgets.BooleanWidget())
+
+    def test_clean(self):
+        self.assertTrue(self.widget.clean("1"))
+        self.assertTrue(self.widget.clean(1))
+        self.assertEqual(self.widget.clean(""), None)
+
+    def test_render(self):
+        self.assertEqual(self.widget.render(None), "")
+
+    def test_save(self):
+        obj = {}
+        self.widget.save(obj, "attr", "1")
+        self.assertEqual(obj, {})
+
+    def test_post_save(self):
+        class Object:
+            attr = "0"
+
+        obj = Object()
+        self.assertEqual(obj.attr, "0")
+        self.widget.post_save(obj, "attr", "1")
+        self.assertEqual(obj.attr, "1")
