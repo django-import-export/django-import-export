@@ -42,13 +42,13 @@ class Widget:
 
     def save(self, obj, attr, value):
         """
-        Set object's attribute value.
+        Sets obj's attribute value.
         """
         setattr(obj, attr, value)
 
     def post_save(self, obj, attr, value):
         """
-        Set object's attribute value.
+        Sets obj's attribute value.
         """
         pass
 
