@@ -332,6 +332,27 @@ class Resource(metaclass=DeclarativeMetaclass):
         """
         pass
 
+    def post_save_instance(self, instance, data, using_transactions, dry_run):
+        """
+        Post saves fields.
+
+        Used by model instances that need to have a primary key value before
+        save is called, e.g. ManyToMany fields.
+        """
+        if not using_transactions and dry_run:
+            # we don't have transactions and we want to do a dry_run
+            pass
+        else:
+            for field in self.get_import_fields():
+                self.post_import_field(field, instance, data)
+        self.after_post_save_instance(instance, data, using_transactions, dry_run)
+
+    def after_post_save_instance(self, obj, data, using_transactions, dry_run):
+        """
+        Override to add additional logic. Does nothing by default.
+        """
+        pass
+
     def delete_instance(self, instance, using_transactions=True, dry_run=False):
         """
         Calls :meth:`instance.delete` as long as ``dry_run`` is not set.
@@ -356,13 +377,21 @@ class Resource(metaclass=DeclarativeMetaclass):
         """
         pass
 
-    def import_field(self, field, obj, data, is_m2m=False):
+    def import_field(self, field, obj, data):
         """
         Calls :meth:`import_export.fields.Field.save` if ``Field.attribute``
         and ``Field.column_name`` are found in ``data``.
         """
         if field.attribute and field.column_name in data:
-            field.save(obj, data, is_m2m)
+            field.save(obj, data)
+
+    def post_import_field(self, field, obj, data):
+        """
+        Calls :meth:`import_export.fields.Field.save` if ``Field.attribute``
+        and ``Field.column_name`` are found in ``data``.
+        """
+        if field.attribute and field.column_name in data:
+            field.post_save(obj, data)
 
     def get_import_fields(self):
         return self.get_fields()
@@ -376,8 +405,6 @@ class Resource(metaclass=DeclarativeMetaclass):
         multi-field ValidationError."""
         errors = {}
         for field in self.get_import_fields():
-            if isinstance(field.widget, widgets.ManyToManyWidget):
-                continue
             try:
                 self.import_field(field, obj, data)
             except ValueError as e:
@@ -385,22 +412,6 @@ class Resource(metaclass=DeclarativeMetaclass):
                     force_text(e), code="invalid")
         if errors:
             raise ValidationError(errors)
-
-    def save_m2m(self, obj, data, using_transactions, dry_run):
-        """
-        Saves m2m fields.
-
-        Model instance need to have a primary key value before
-        a many-to-many relationship can be used.
-        """
-        if not using_transactions and dry_run:
-            # we don't have transactions and we want to do a dry_run
-            pass
-        else:
-            for field in self.get_import_fields():
-                if not isinstance(field.widget, widgets.ManyToManyWidget):
-                    continue
-                self.import_field(field, obj, data, True)
 
     def for_delete(self, row, instance):
         """
@@ -525,7 +536,7 @@ class Resource(metaclass=DeclarativeMetaclass):
                 else:
                     self.validate_instance(instance, import_validation_errors)
                     self.save_instance(instance, using_transactions, dry_run)
-                    self.save_m2m(instance, row, using_transactions, dry_run)
+                    self.post_save_instance(instance, row, using_transactions, dry_run)
                     # Add object info to RowResult for LogEntry
                     row_result.object_id = instance.pk
                     row_result.object_repr = force_text(instance)

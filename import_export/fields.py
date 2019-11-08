@@ -98,7 +98,7 @@ class Field:
             value = value()
         return value
 
-    def save(self, obj, data, is_m2m=False):
+    def save(self, obj, data):
         """
         If this field is not declared readonly, the object's attribute will
         be set to the value returned by :meth:`~import_export.fields.Field.clean`.
@@ -109,10 +109,20 @@ class Field:
                 obj = getattr(obj, attr, None)
             cleaned = self.clean(data)
             if cleaned is not None or self.saves_null_values:
-                if not is_m2m:
-                    setattr(obj, attrs[-1], cleaned)
-                else:
-                    getattr(obj, attrs[-1]).set(cleaned)
+                self.widget.save(obj, attrs[-1], cleaned)
+
+    def post_save(self, obj, data):
+        """
+        If this field is not declared readonly, the object's attribute will
+        be set to the value returned by :meth:`~import_export.fields.Field.clean`.
+        """
+        if not self.readonly:
+            attrs = self.attribute.split('__')
+            for attr in attrs[:-1]:
+                obj = getattr(obj, attr, None)
+            cleaned = self.clean(data)
+            if cleaned is not None or self.saves_null_values:
+                self.widget.post_save(obj, attrs[-1], cleaned)
 
     def export(self, obj):
         """

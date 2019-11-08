@@ -949,7 +949,7 @@ class ModelResourceTransactionTest(TransactionTestCase):
         # savepoint_rollback() after an IntegrityError gives
         # TransactionManagementError (#399)
         class CategoryResourceRaisesIntegrityError(CategoryResource):
-            def save_m2m(self, instance, *args, **kwargs):
+            def post_save_instance(self, instance, *args, **kwargs):
                 # force raising IntegrityError
                 Category.objects.create(name=instance.name)
 

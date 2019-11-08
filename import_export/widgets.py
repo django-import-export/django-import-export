@@ -40,6 +40,18 @@ class Widget:
         """
         return force_text(value)
 
+    def save(self, obj, attr, value):
+        """
+        Set object's attribute value.
+        """
+        setattr(obj, attr, value)
+
+    def post_save(self, obj, attr, value):
+        """
+        Set object's attribute value.
+        """
+        pass
+
 
 class NumberWidget(Widget):
     """
@@ -418,3 +430,32 @@ class ManyToManyWidget(Widget):
     def render(self, value, obj=None):
         ids = [smart_text(getattr(obj, self.field)) for obj in value.all()]
         return self.separator.join(ids)
+
+    def save(self, obj, attr, value):
+        pass
+
+    def post_save(self, obj, attr, value):
+        getattr(obj, attr).set(value)
+
+
+class DeferredSaveWidget(Widget):
+    """
+    Container widget that delays save until post_save.
+    :param widget: The widget.
+    """
+
+    def __init__(self, widget, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.widget = widget
+
+    def clean(self, value, row=None, *args, **kwargs):
+        return self.widget.clean(value, row, *args, **kwargs)
+
+    def render(self, value, obj=None):
+        return self.widget.render(value, obj)
+
+    def save(self, obj, attr, value):
+        pass
+
+    def post_save(self, obj, attr, value):
+        super().save(obj, attr, value)
