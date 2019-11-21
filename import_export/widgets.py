@@ -85,7 +85,7 @@ class DecimalWidget(NumberWidget):
     def clean(self, value, row=None, *args, **kwargs):
         if self.is_empty(value):
             return None
-        return Decimal(value)
+        return Decimal(force_text(value))
 
 
 class CharWidget(Widget):
