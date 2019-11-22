@@ -258,12 +258,13 @@ class Resource(metaclass=DeclarativeMetaclass):
 
     def get_instance(self, instance_loader, row):
         """
-        If all 'import_id_fields' are present in the dataset, calls
-        the :doc:`InstanceLoader <api_instance_loaders>`. Otherwise,
-        returns `None`.
+        If all columns corresponding to fields in the 'import_id_fields'
+        Meta attribute are present in the dataset, calls the
+        :doc:`InstanceLoader <api_instance_loaders>`. Otherwise, returns
+        `None`.
         """
-        for field_name in self.get_import_id_fields():
-            if field_name not in row:
+        for column_name in self.get_import_id_column_names():
+            if column_name not in row:
                 return
         return instance_loader.get_instance(row)
 
@@ -904,6 +905,12 @@ class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
         """
         """
         return self._meta.import_id_fields
+
+    def get_import_id_column_names(self):
+        return tuple(
+            self.fields[fieldname].column_name or fieldname
+            for fieldname in self.get_import_id_fields()
+        )
 
     def get_queryset(self):
         """
