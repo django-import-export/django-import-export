@@ -287,6 +287,28 @@ class ModelResourceTest(TestCase):
             # instance_loader.get_instance() should NOT have been called
             mocked_method.assert_not_called()
 
+    def test_get_instance_when_id_field_has_custom_column_name(self):
+
+        class TestResource(resources.ModelResource):
+            pk = fields.Field(attribute="id", column_name='PrimaryKey', widget=widgets.IntegerWidget())
+
+            class Meta:
+                model = Book
+                fields = ('pk', 'name', 'author_email', 'price')
+                import_id_fields = ('pk',)
+
+        resource = TestResource()
+
+        # construct a dataset with a "PrimaryKey" column
+        dataset = tablib.Dataset(headers=['PrimaryKey', 'name'])
+        # Use the pk of an existing object
+        dataset.append([str(self.book.pk), 'New name'])
+
+        # resource.get_instance() should return the existing object
+        instance_loader = resource._meta.instance_loader_class(resource)
+        result = resource.get_instance(instance_loader, dataset.dict[0])
+        self.assertEqual(result, self.book)
+
     def test_get_export_headers(self):
         headers = self.resource.get_export_headers()
         self.assertEqual(headers, ['published_date', 'id', 'name', 'author',
