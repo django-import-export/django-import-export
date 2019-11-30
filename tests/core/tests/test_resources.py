@@ -1205,3 +1205,62 @@ class ManyRelatedManagerDiffTest(TestCase):
         diff = result.rows[0].diff
         self.assertEqual(diff[export_headers.index("categories")],
                          expected_value)
+
+
+@mock.patch("copy.deepcopy")
+@mock.patch("import_export.resources.Diff", spec=True)
+class SkipDiffTest(TestCase):
+    """
+    Tests that the meta attribute 'skip_diff' means that no diff operations are called.
+    """
+    def setUp(self):
+        class _BookResource(resources.ModelResource):
+            class Meta:
+                model = Book
+                skip_diff = True
+        self.resource = _BookResource()
+        self.dataset = tablib.Dataset(headers=['id', 'name', 'birthday'])
+        self.dataset.append(['', 'A.A.Milne', '1882test-01-18'])
+
+    def test_skip_diff(self, mock_diff, mock_deep_copy):
+        result = self.resource.import_data(self.dataset, raise_errors=False)
+        mock_diff.return_value.compare_with.assert_not_called()
+        mock_diff.return_value.as_html.assert_not_called()
+        mock_deep_copy.assert_not_called()
+
+    def test_skip_diff_for_delete_new_resource(self, mock_diff, mock_deep_copy):
+        class BookResource(resources.ModelResource):
+
+            def for_delete(self, row, instance):
+                return True
+
+            class Meta:
+                model = Book
+                skip_diff = True
+
+        resource = BookResource()
+        result = resource.import_data(self.dataset, raise_errors=False)
+        mock_diff.return_value.compare_with.assert_not_called()
+        mock_diff.return_value.as_html.assert_not_called()
+        mock_deep_copy.assert_not_called()
+
+    def test_skip_diff_for_delete_existing_resource(self, mock_diff, mock_deep_copy):
+        book = Book.objects.create()
+        class BookResource(resources.ModelResource):
+
+            def get_or_init_instance(self, instance_loader, row):
+                return book, False
+
+            def for_delete(self, row, instance):
+                return True
+
+            class Meta:
+                model = Book
+                skip_diff = True
+
+        resource = BookResource()
+
+        result = resource.import_data(self.dataset, raise_errors=False, dry_run=True)
+        mock_diff.return_value.compare_with.assert_not_called()
+        mock_diff.return_value.as_html.assert_not_called()
+        mock_deep_copy.assert_not_called()
