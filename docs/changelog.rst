@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-2.0 (unreleased)
+2.0 (2019-12-03)
 ----------------
 
 - [django2.2] Add real support of Django 2.2 before 3.0 is out (#1021)
