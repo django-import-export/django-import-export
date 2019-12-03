@@ -5,9 +5,85 @@ Changelog
 2.0 (unreleased)
 ----------------
 
-- Removed support for Django < 2.0
-- Removed support for Python < 3.5
-- feat: Support for Postgres JSONb Field (#904)
+- [django2.2] Add real support of Django 2.2 before 3.0 is out (#1021)
+
+- fix: DateTimeWidget not timezone sensitive (#813) (#943)
+
+- Move actions definition to ExportActionMixin (#992)
+
+- Add language support: Turkish (#1013)
+
+- Fix exception import for Django 3 (#1010)
+
+- Fix potential header / row column mismatches for invalid rows in… (#995)
+
+- Assume user is importing new data if id fields not included (#996)
+
+- Fix bug with spaces in export filename, pass request and queryset (#980)
+
+- Simplify Django version in TravisCI (#970)
+
+- Merge pull request #966 from andrewgy8/bump-stale-bot-time
+
+- Align error in rtl mode (#954)
+
+- Add dutch translations (#951, #1024)
+
+- Add 3.8-dev to travis ci (#926)
+
+- Fix style in getting_started docs (#952)
+
+- Update documentation to show that mixins must be referenced before admin.ModelAdmin. (#946)
+
+- JSONWidget updated with null value fix (#928)
+
+- Import rows have background color (#929)
+
+- Use resource get_queryset in ModelInstanceLoader (#920)
+
+- Simplify coerce to text type (#887)
+
+- More flexibility in ConfirmImportForm, forms and resource kwargs  (#893)
+
+- Add JSON B type field mapping (#904)
+
+- Scale back stale bot's time-to-stale (#918)
+
+- test: explicitly order qs in ManyToManyWidget
+
+- Add mysql to travis
+
+- Expand doc strings to include Mixin superclasses (#914)
+
+- Remove python2 compatibility decorator
+
+- chore: fix Imports are incorrectly sorted.
+
+- Use global env vars for postgres
+
+- Used non-fixed id for test. Database is not torn down after each run, which means that the id is incrementing
+
+- Fix warning from assertEquals
+
+- Add psycopg2 as postgres driver to test requirements
+
+- Add django version to the matrix
+
+- Add matrix for sqlite and postgres testing
+
+- Correct mistaken assertTrue() -> assertEquals()
+
+- chore: add package long_description
+
+- chore: add python wheels to dev requirements (#890)
+
+- Add github directory with PR and issue templates
+
+- Isort all the things
+
+- Use coveralls master branch tag in the readme
+
+- Remove support for Django < 2.0 and Python < 3.5
 
 1.2.0 (2019-01-10)
 ------------------
