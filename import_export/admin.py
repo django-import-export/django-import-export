@@ -1,6 +1,7 @@
 from datetime import datetime
 
 import django
+from django import forms
 from django.conf import settings
 from django.conf.urls import url
 from django.contrib import admin, messages
@@ -567,8 +568,10 @@ class ExportActionMixin(ExportMixin):
 
     actions = admin.ModelAdmin.actions + [export_admin_action]
 
-    class Media:
-        js = ['import_export/action_formats.js']
+    @property
+    def media(self):
+        super_media = super().media
+        return forms.Media(js=super_media._js + ['import_export/action_formats.js'], css=super_media._css)
 
 
 class ExportActionModelAdmin(ExportActionMixin, admin.ModelAdmin):
