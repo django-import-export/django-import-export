@@ -11,6 +11,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import DatabaseError, IntegrityError
 from django.db.models import Count
+from django.core.paginator import Paginator
 from django.test import TestCase, TransactionTestCase, skipUnlessDBFeature
 from django.utils.encoding import force_text
 from django.utils.html import strip_tags
@@ -295,12 +296,38 @@ class ModelResourceTest(TestCase):
                                    'categories', ])
 
     def test_export(self):
-        dataset = self.resource.export(Book.objects.all())
-        self.assertEqual(len(dataset), 1)
+        with self.assertNumQueries(2):
+            dataset = self.resource.export(Book.objects.all())
+            self.assertEqual(len(dataset), 1)
 
     def test_export_iterable(self):
-        dataset = self.resource.export(list(Book.objects.all()))
-        self.assertEqual(len(dataset), 1)
+        with self.assertNumQueries(2):
+            dataset = self.resource.export(list(Book.objects.all()))
+            self.assertEqual(len(dataset), 1)
+
+    def test_export_prefetch_related(self):
+        with self.assertNumQueries(3):
+            dataset = self.resource.export(Book.objects.prefetch_related("categories").all())
+            self.assertEqual(len(dataset), 1)
+
+    def test_iter_queryset(self):
+        qs = Book.objects.all()
+        with mock.patch.object(qs, "iterator") as mocked_method:
+            list(self.resource.iter_queryset(qs))
+            mocked_method.assert_called_once_with(chunk_size=1)
+
+    def test_iter_queryset_prefetch(self):
+        paginator = "import_export.resources.Paginator"
+        qs = Book.objects.prefetch_related("categories").all()
+        with mock.patch.object(qs, "order_by") as mocked_method:
+            list(self.resource.iter_queryset(qs))
+            mocked_method.assert_called_once_with("pk")
+
+        qs = qs.order_by('pk').all()
+        with mock.patch(paginator, autospec=True) as mocked_obj:
+            mocked_obj.return_value = Paginator(qs, 1)
+            list(self.resource.iter_queryset(qs))
+            mocked_obj.assert_called_once_with(qs, 1)
 
     def test_get_diff(self):
         diff = Diff(self.resource, self.book, False)
