@@ -9,9 +9,9 @@ from unittest import mock, skip, skipUnless
 import django
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.core.paginator import Paginator
 from django.db import DatabaseError, IntegrityError
 from django.db.models import Count
-from django.core.paginator import Paginator
 from django.test import TestCase, TransactionTestCase, skipUnlessDBFeature
 from django.utils.encoding import force_text
 from django.utils.html import strip_tags
