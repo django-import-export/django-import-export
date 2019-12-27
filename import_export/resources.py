@@ -433,7 +433,12 @@ class Resource(metaclass=DeclarativeMetaclass):
         """
         Returns ``True`` if ``row`` importing should be skipped.
 
-        Default implementation returns ``False`` unless skip_unchanged == True.
+        Default implementation returns ``False`` unless skip_unchanged == True,
+        or skip_diff == True.
+
+        If skip_diff is True, then no comparisons can be made because ``original``
+        will be None.
+
         Override this method to handle skipping rows meeting certain
         conditions.
 
@@ -445,7 +450,7 @@ class Resource(metaclass=DeclarativeMetaclass):
                     return super(YourResource, self).skip_row(instance, original)
 
         """
-        if not self._meta.skip_unchanged:
+        if not self._meta.skip_unchanged or self._meta.skip_diff:
             return False
         for field in self.get_import_fields():
             try:
@@ -511,6 +516,7 @@ class Resource(metaclass=DeclarativeMetaclass):
         """
         skip_diff = self._meta.skip_diff
         row_result = self.get_row_result_class()()
+        original = None
         try:
             self.before_import_row(row, **kwargs)
             instance, new = self.get_or_init_instance(instance_loader, row)
@@ -542,7 +548,7 @@ class Resource(metaclass=DeclarativeMetaclass):
                     # validate_instance(), where they can be combined with model
                     # instance validation errors if necessary
                     import_validation_errors = e.update_error_dict(import_validation_errors)
-                if not skip_diff and self.skip_row(instance, original):
+                if self.skip_row(instance, original):
                     row_result.import_type = RowResult.IMPORT_TYPE_SKIP
                 else:
                     self.validate_instance(instance, import_validation_errors)
