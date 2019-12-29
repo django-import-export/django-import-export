@@ -6,7 +6,7 @@ from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils import datetime_safe, timezone
 from django.utils.dateparse import parse_duration
-from django.utils.encoding import force_text, smart_text
+from django.utils.encoding import force_str, smart_text
 
 
 class Widget:
@@ -38,7 +38,7 @@ class Widget:
         :meth:`~import_export.widgets.Widget.render` takes care of converting
         the object's field to a value that can be written to a spreadsheet.
         """
-        return force_text(value)
+        return force_str(value)
 
 
 class NumberWidget(Widget):
@@ -94,7 +94,7 @@ class CharWidget(Widget):
     """
 
     def render(self, value, obj=None):
-        return force_text(value)
+        return force_str(value)
 
 
 class BooleanWidget(Widget):
