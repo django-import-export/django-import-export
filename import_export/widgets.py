@@ -6,7 +6,7 @@ from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils import datetime_safe, timezone
 from django.utils.dateparse import parse_duration
-from django.utils.encoding import force_str, smart_text
+from django.utils.encoding import force_str, smart_str
 
 
 class Widget:
@@ -416,5 +416,5 @@ class ManyToManyWidget(Widget):
         })
 
     def render(self, value, obj=None):
-        ids = [smart_text(getattr(obj, self.field)) for obj in value.all()]
+        ids = [smart_str(getattr(obj, self.field)) for obj in value.all()]
         return self.separator.join(ids)
