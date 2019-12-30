@@ -25,6 +25,9 @@ env:
     - DJANGO="Django==2.2.*" IMPORT_EXPORT_TEST_TYPE=postgres
     - DJANGO="Django==2.2.*" IMPORT_EXPORT_TEST_TYPE=mysql-innodb
     - DJANGO="Django==2.2.*" IMPORT_EXPORT_TEST_TYPE=sqlite
+    - DJANGO="Django==3.0.*" IMPORT_EXPORT_TEST_TYPE=postgres
+    - DJANGO="Django==3.0.*" IMPORT_EXPORT_TEST_TYPE=mysql-innodb
+    - DJANGO="Django==3.0.*" IMPORT_EXPORT_TEST_TYPE=sqlite
     - DJANGO="https://github.com/django/django/archive/master.tar.gz" IMPORT_EXPORT_TEST_TYPE=postgres
     - DJANGO="https://github.com/django/django/archive/master.tar.gz" IMPORT_EXPORT_TEST_TYPE=mysql-innodb
     - DJANGO="https://github.com/django/django/archive/master.tar.gz" IMPORT_EXPORT_TEST_TYPE=sqlite
@@ -36,6 +39,12 @@ matrix:
       env: DJANGO="https://github.com/django/django/archive/master.tar.gz" IMPORT_EXPORT_TEST_TYPE=sqlite
     - python: "3.5"
       env: DJANGO="https://github.com/django/django/archive/master.tar.gz" IMPORT_EXPORT_TEST_TYPE=mysql-innodb
+    - python: "3.5"
+      env: DJANGO="Django==3.0.*" IMPORT_EXPORT_TEST_TYPE=postgres
+    - python: "3.5"
+      env: DJANGO="Django==3.0.*" IMPORT_EXPORT_TEST_TYPE=sqlite
+    - python: "3.5"
+      env: DJANGO="Django==3.0.*" IMPORT_EXPORT_TEST_TYPE=mysql-innodb
 install:
   - pip install -q $DJANGO
   - pip install tablib==0.12.1

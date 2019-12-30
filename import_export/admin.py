@@ -13,7 +13,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.template.response import TemplateResponse
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.encoding import force_text
+from django.utils.encoding import force_str
 from django.utils.module_loading import import_string
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_POST
@@ -143,7 +143,7 @@ class ImportMixin(ImportExportMixinBase):
             tmp_storage = self.get_tmp_storage_class()(name=confirm_form.cleaned_data['import_file_name'])
             data = tmp_storage.read(input_format.get_read_mode())
             if not input_format.is_binary() and self.from_encoding:
-                data = force_text(data, self.from_encoding)
+                data = force_str(data, self.from_encoding)
             dataset = input_format.create_dataset(data)
 
             result = self.process_dataset(dataset, confirm_form, request, *args, **kwargs)
@@ -292,7 +292,7 @@ class ImportMixin(ImportExportMixinBase):
             try:
                 data = tmp_storage.read(input_format.get_read_mode())
                 if not input_format.is_binary() and self.from_encoding:
-                    data = force_text(data, self.from_encoding)
+                    data = force_str(data, self.from_encoding)
                 dataset = input_format.create_dataset(data)
             except UnicodeDecodeError as e:
                 return HttpResponse(_(u"<h1>Imported file has a wrong encoding: %s</h1>" % e))

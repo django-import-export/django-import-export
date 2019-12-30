@@ -1,7 +1,7 @@
 import os
 
 from django.test import TestCase
-from django.utils.encoding import force_text
+from django.utils.encoding import force_str
 
 from import_export.formats import base_formats
 
@@ -65,7 +65,7 @@ class CSVTest(TestCase):
             'exports',
             'books-unicode.csv')
         with open(filename, self.format.get_read_mode()) as in_stream:
-            data = force_text(in_stream.read())
+            data = force_str(in_stream.read())
         base_formats.CSV().create_dataset(data)
 
 
@@ -93,5 +93,5 @@ class TSVTest(TestCase):
             'exports',
             'books-unicode.tsv')
         with open(filename, self.format.get_read_mode()) as in_stream:
-            data = force_text(in_stream.read())
+            data = force_str(in_stream.read())
         base_formats.TSV().create_dataset(data)
