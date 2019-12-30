@@ -76,6 +76,6 @@ class FieldTest(TestCase):
         self.assertIsNone(self.obj.name)
 
     def test_repr(self):
-        assert repr(self.field) == '<import_export.fields.Field: name>'
+        self.assertEqual(repr(self.field), '<import_export.fields.Field: name>')
         self.field.column_name = None
-        assert repr(self.field) == '<import_export.fields.Field>'
+        self.assertEqual(repr(self.field), '<import_export.fields.Field>')
