@@ -40,11 +40,11 @@ matrix:
     - python: "3.5"
       env: DJANGO="https://github.com/django/django/archive/master.tar.gz" IMPORT_EXPORT_TEST_TYPE=mysql-innodb
     - python: "3.5"
-      env: DJANGO="https://github.com/django/django/archive/master.tar.gz" IMPORT_EXPORT_TEST_TYPE=postgres
+      env: DJANGO="Django==3.0.*" IMPORT_EXPORT_TEST_TYPE=postgres
     - python: "3.5"
-      env: DJANGO="https://github.com/django/django/archive/master.tar.gz" IMPORT_EXPORT_TEST_TYPE=sqlite
+      env: DJANGO="Django==3.0.*" IMPORT_EXPORT_TEST_TYPE=sqlite
     - python: "3.5"
-      env: DJANGO="https://github.com/django/django/archive/master.tar.gz" IMPORT_EXPORT_TEST_TYPE=mysql-innodb
+      env: DJANGO="Django==3.0.*" IMPORT_EXPORT_TEST_TYPE=mysql-innodb
 install:
   - pip install -q $DJANGO
   - pip install tablib==0.12.1
