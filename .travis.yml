@@ -56,4 +56,3 @@ script:
    - isort --check-only
 after_success:
   - coveralls
-
