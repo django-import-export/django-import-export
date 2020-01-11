@@ -46,4 +46,4 @@ and exporting data with included admin integration.
    api_forms
 
 
-.. _`tablib`: https://github.com/kennethreitz/tablib
+.. _`tablib`: https://github.com/jazzband/tablib

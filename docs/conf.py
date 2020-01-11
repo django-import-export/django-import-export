@@ -230,5 +230,5 @@ texinfo_appendices = []
 
 # intersphinx documentation
 intersphinx_mapping = {
-    'tablib': ('http://docs.python-tablib.org/en/latest/', None)
+    'tablib': ('https://tablib.readthedocs.io/en/stable/', None)
 }

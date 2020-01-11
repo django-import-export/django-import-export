@@ -46,7 +46,7 @@ Requirements
 
 * Python 3.5+
 * Django 2.0+
-* tablib (dev or 0.9.11)
+* tablib 0.14+
 
 django-import-export requires Python 3.5 and Django 2.0 or newer. See the 1.x
 branch for older Python and Django versions where fixes for security issues and
@@ -74,6 +74,6 @@ As most projects, we try to follow PEP8_ as closely as possible. Please bear
 in mind that most pull requests will be rejected without proper unit testing.
 
 .. _`PEP8`: https://www.python.org/dev/peps/pep-0008/
-.. _`tablib`: https://github.com/kennethreitz/tablib
+.. _`tablib`: https://github.com/jazzband/tablib
 .. _`the repository`: https://github.com/django-import-export/django-import-export/
 .. _AUTHORS: https://github.com/django-import-export/django-import-export/blob/master/AUTHORS
