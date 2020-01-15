@@ -2,11 +2,14 @@ Changelog
 =========
 
 
-2.1 (unreleased)
-----------------
+2.0.1 (unreleased)
+------------------
 
-- Nothing changed yet.
+- Fix deprecated Django 3.0 function usage (#1054)
 
+- Pin tablib version to not use new major version (#1063)
+
+- Format field is always shown on Django 2.2 (#1007)
 
 2.0 (2019-12-03)
 ----------------
