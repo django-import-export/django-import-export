@@ -24,7 +24,7 @@ CLASSIFIERS = [
 install_requires = [
     'diff-match-patch',
     'Django>=2.0',
-    'tablib',
+    'tablib<1.0.0',
 ]
 
 
