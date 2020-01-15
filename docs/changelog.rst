@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-2.0.1 (unreleased)
+2.0.1 (2020-01-15)
 ------------------
 
 - Fix deprecated Django 3.0 function usage (#1054)
