@@ -1,4 +1,4 @@
 Django>=2.0
-tablib>=0.12,<1.0.0
+tablib[all]>=0.14
 diff-match-patch
 openpyxl>=2.4,<2.5

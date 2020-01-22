@@ -122,4 +122,4 @@ transaction and rollbacked or committed respectively.
 All methods called from inside of ``import_data`` (create / delete / update)
 receive ``False`` for ``dry_run`` argument.
 
-.. _Dataset: http://docs.python-tablib.org/en/latest/api/#dataset-object
+.. _Dataset: https://tablib.readthedocs.io/en/stable/api/#dataset-object

@@ -3,33 +3,25 @@ import warnings
 from importlib import import_module
 
 try:
-    from tablib.compat import xlrd
-
+    import xlrd
     XLS_IMPORT = True
 except ImportError:
-    try:
-        import xlrd  # NOQA
-
-        XLS_IMPORT = True
-    except ImportError:
-        xls_warning = "Installed `tablib` library does not include"
-        "import support for 'xls' format and xlrd module is not found."
-        warnings.warn(xls_warning, ImportWarning)
-        XLS_IMPORT = False
+    warnings.warn(
+        "'xls' support not available, please install the xlrd package.",
+        ImportWarning
+    )
+    XLS_IMPORT = False
 
 
 try:
     import openpyxl
     XLSX_IMPORT = True
 except ImportError:
-    try:
-        from tablib.compat import openpyxl
-        XLSX_IMPORT = hasattr(openpyxl, 'load_workbook')
-    except ImportError:
-        xlsx_warning = "Installed `tablib` library does not include"
-        "import support for 'xlsx' format and openpyxl module is not found."
-        warnings.warn(xlsx_warning, ImportWarning)
-        XLSX_IMPORT = False
+    warnings.warn(
+        "'xlsx' support not available, please install the openpyxl package.",
+        ImportWarning
+    )
+    XLSX_IMPORT = False
 
 
 class Format:
@@ -86,26 +78,24 @@ class TablibFormat(Format):
         """
         Import and returns tablib module.
         """
-        return import_module(self.TABLIB_MODULE)
+        try:
+            # Available since tablib 1.0
+            from tablib.formats import registry
+            key = self.TABLIB_MODULE.split('.')[-1].replace('_', '')
+            return registry.get_format(key)
+        except ImportError:
+            return import_module(self.TABLIB_MODULE)
 
     def get_title(self):
         return self.get_format().title
 
     def create_dataset(self, in_stream, **kwargs):
-        data = tablib.Dataset()
-        self.get_format().import_set(data, in_stream, **kwargs)
-        return data
+        return tablib.import_set(in_stream, format=self.get_title())
 
     def export_data(self, dataset, **kwargs):
-        return self.get_format().export_set(dataset, **kwargs)
+        return dataset.export(self.get_title(), **kwargs)
 
     def get_extension(self):
-        # we support both 'extentions' and 'extensions' because currently
-        # tablib's master branch uses 'extentions' (which is a typo) but it's
-        # dev branch already uses 'extension'.
-        # TODO - remove this once the typo is fixxed in tablib's master branch
-        if hasattr(self.get_format(), 'extentions'):
-            return self.get_format().extentions[0]
         return self.get_format().extensions[0]
 
     def get_content_type(self):
