@@ -172,12 +172,12 @@ Other fields that don't exist in the target model may be added::
         Available field types and options.
 
 
-Advanced data manipulation
-==========================
+Advanced data manipulation on export
+====================================
 
 Not all data can be easily extracted from an object/model attribute.
 In order to turn complicated data model into a (generally simpler) processed
-data structure, ``dehydrate_<fieldname>`` method should be defined::
+data structure on export, ``dehydrate_<fieldname>`` method should be defined::
 
     from import_export.fields import Field
 
@@ -189,6 +189,14 @@ data structure, ``dehydrate_<fieldname>`` method should be defined::
 
         def dehydrate_full_title(self, book):
             return '%s by %s' % (book.name, book.author.name)
+
+In this case, the export looks like this:
+
+    >>> from app.admin import BookResource
+    >>> dataset = BookResource().export()
+    >>> print(dataset.csv)
+    full_title,id,name,author,author_email,imported,published,price,categories
+    Some book by 1,2,Some book,1,,0,2012-12-05,8.85,1
 
 
 Customize widgets
