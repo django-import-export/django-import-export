@@ -1,27 +1,5 @@
 import tablib
-import warnings
 from importlib import import_module
-
-try:
-    import xlrd
-    XLS_IMPORT = True
-except ImportError:
-    warnings.warn(
-        "'xls' support not available, please install the xlrd package.",
-        ImportWarning
-    )
-    XLS_IMPORT = False
-
-
-try:
-    import openpyxl
-    XLSX_IMPORT = True
-except ImportError:
-    warnings.warn(
-        "'xlsx' support not available, please install the openpyxl package.",
-        ImportWarning
-    )
-    XLSX_IMPORT = False
 
 
 class Format:
@@ -170,14 +148,11 @@ class XLS(TablibFormat):
     TABLIB_MODULE = 'tablib.formats._xls'
     CONTENT_TYPE = 'application/vnd.ms-excel'
 
-    def can_import(self):
-        return XLS_IMPORT
-
     def create_dataset(self, in_stream):
         """
         Create dataset from first sheet.
         """
-        assert XLS_IMPORT
+        import xlrd
         xls_book = xlrd.open_workbook(file_contents=in_stream)
         dataset = tablib.Dataset()
         sheet = xls_book.sheets()[0]
@@ -192,15 +167,12 @@ class XLSX(TablibFormat):
     TABLIB_MODULE = 'tablib.formats._xlsx'
     CONTENT_TYPE = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 
-    def can_import(self):
-        return XLSX_IMPORT
-
     def create_dataset(self, in_stream):
         """
         Create dataset from first sheet.
         """
-        assert XLSX_IMPORT
         from io import BytesIO
+        import openpyxl
         xlsx_book = openpyxl.load_workbook(BytesIO(in_stream), read_only=True)
 
         dataset = tablib.Dataset()
