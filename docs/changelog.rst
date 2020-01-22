@@ -5,7 +5,10 @@ Changelog
 2.0.2 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Add support for tablib >= 1.0 (#1061)
+
+- Add ability to install a subset of tablib supported formats and save some
+  automatic dependency installations (needs tablib >= 1.0)
 
 
 2.0.1 (2020-01-15)

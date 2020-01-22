@@ -63,6 +63,10 @@ class Format:
         # https://www.iana.org/assignments/media-types/media-types.xhtml
         return 'application/octet-stream'
 
+    @classmethod
+    def is_available(cls):
+        return True
+
     def can_import(self):
         return False
 
@@ -81,10 +85,19 @@ class TablibFormat(Format):
         try:
             # Available since tablib 1.0
             from tablib.formats import registry
-            key = self.TABLIB_MODULE.split('.')[-1].replace('_', '')
-            return registry.get_format(key)
         except ImportError:
             return import_module(self.TABLIB_MODULE)
+        else:
+            key = self.TABLIB_MODULE.split('.')[-1].replace('_', '')
+            return registry.get_format(key)
+
+    @classmethod
+    def is_available(cls):
+        try:
+            cls().get_format()
+        except (tablib.core.UnsupportedFormat, ImportError):
+            return False
+        return True
 
     def get_title(self):
         return self.get_format().title
@@ -205,7 +218,7 @@ class XLSX(TablibFormat):
 
 #: These are the default formats for import and export. Whether they can be
 #: used or not is depending on their implementation in the tablib library.
-DEFAULT_FORMATS = (
+DEFAULT_FORMATS = [fmt for fmt in (
     CSV,
     XLS,
     XLSX,
@@ -214,4 +227,4 @@ DEFAULT_FORMATS = (
     JSON,
     YAML,
     HTML,
-)
+) if fmt.is_available()]
