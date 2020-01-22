@@ -28,7 +28,8 @@ let Django collect its static files.
 
     $ python manage.py collectstatic
 
-All prerequisites are set up! See :doc:`getting_started` to learn how to use django-import-export in your project.
+All prerequisites are set up! See :doc:`getting_started` to learn how to use
+django-import-export in your project.
 
 
 
@@ -42,38 +43,39 @@ You can use the following directives in your settings file:
     transactions. Default is ``False``.
 
 ``IMPORT_EXPORT_SKIP_ADMIN_LOG``
-    Global setting controls if creating log entries for
-    the admin changelist should be skipped when importing resource.
-    The `skip_admin_log` attribute of `ImportMixin` is checked first,
-    which defaults to ``None``. If not found, this global option is used.
-    This will speed up importing large datasets, but will lose
-    changing logs in the admin changelist view.  Default is ``False``.
+    Global setting controls if creating log entries for the admin changelist
+    should be skipped when importing resource. The `skip_admin_log` attribute
+    of `ImportMixin` is checked first, which defaults to ``None``. If not
+    found, this global option is used. This will speed up importing large
+    datasets, but will lose changing logs in the admin changelist view.
+    Default is ``False``.
 
 ``IMPORT_EXPORT_TMP_STORAGE_CLASS``
-    Global setting for the class to use to handle temporary storage
-    of the uploaded file when importing from the admin using an
-    `ImportMixin`.  The `tmp_storage_class` attribute of `ImportMixin`
-    is checked first, which defaults to ``None``. If not found, this
-    global option is used. Default is ``TempFolderStorage``.
+    Global setting for the class to use to handle temporary storage of the
+    uploaded file when importing from the admin using an `ImportMixin`.  The
+    `tmp_storage_class` attribute of `ImportMixin` is checked first, which
+    defaults to ``None``. If not found, this global option is used. Default is
+    ``TempFolderStorage``.
 
 ``IMPORT_EXPORT_IMPORT_PERMISSION_CODE``
     Global setting for defining user permission that is required for
-    users/groups to execute import action. Django builtin permissions
-    are ``change``, ``add``, and ``delete``. It is possible to add
-    your own permission code. Default is ``None`` which means
-    everybody can execute import action.
+    users/groups to execute import action. Django builtin permissions are
+    ``change``, ``add``, and ``delete``. It is possible to add your own
+    permission code. Default is ``None`` which means everybody can execute
+    import action.
 
 ``IMPORT_EXPORT_EXPORT_PERMISSION_CODE``
     Global setting for defining user permission that is required for
-    users/groups to execute export action. Django builtin permissions
-    are ``change``, ``add``, and ``delete``. It is possible to add
-    your own permission code. Default is ``None`` which means
-    everybody can execute export action.
+    users/groups to execute export action. Django builtin permissions are
+    ``change``, ``add``, and ``delete``. It is possible to add your own
+    permission code. Default is ``None`` which means everybody can execute
+    export action.
 
 Example app
 ===========
 
-There's an example application that showcases what django-import-export can do. You can run it via::
+There's an example application that showcases what django-import-export can do.
+You can run it via::
 
     cd tests
     ./manage.py runserver

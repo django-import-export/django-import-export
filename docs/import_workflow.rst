@@ -2,9 +2,10 @@
 Import data workflow
 ====================
 
-This document describes the import data workflow in detail, with hooks that enable
-customization of the import process. The central aspect of the import process is a resource's
-:meth:`~import_export.resources.Resource.import_data` method which is explained below.
+This document describes the import data workflow in detail, with hooks that
+enable customization of the import process. The central aspect of the import
+process is a resource's :meth:`~import_export.resources.Resource.import_data`
+method which is explained below.
 
 .. function:: import_data(dataset, dry_run=False, raise_errors=False)
 
@@ -28,19 +29,24 @@ This is what happens when the method is invoked:
 #. First, a new :class:`~import_export.results.Result` instance, which holds
    errors and other information gathered during the import, is initialized.
 
-   Then, an :class:`~import_export.instance_loaders.InstanceLoader` responsible for loading existing instances
-   is intitalized. A different :class:`~import_export.instance_loaders.BaseInstanceLoader` can be specified via
-   :class:`~import_export.resources.ResourceOptions`'s ``instance_loader_class`` attribute.
-   A :class:`~import_export.instance_loaders.CachedInstanceLoader` can be used to
-   reduce number of database queries.
-   See the `source <https://github.com/django-import-export/django-import-export/blob/master/import_export/instance_loaders.py>`_ for available implementations.
+   Then, an :class:`~import_export.instance_loaders.InstanceLoader` responsible
+   for loading existing instances is intitalized. A different
+   :class:`~import_export.instance_loaders.BaseInstanceLoader` can be specified
+   via :class:`~import_export.resources.ResourceOptions`'s
+   ``instance_loader_class`` attribute. A
+   :class:`~import_export.instance_loaders.CachedInstanceLoader` can be used to
+   reduce number of database queries. See the `source
+   <https://github.com/django-import-export/django-import-export/blob/master/import_export/instance_loaders.py>`_
+   for available implementations.
 
 #. The :meth:`~import_export.resources.Resource.before_import` hook is called.
    By implementing this method in your resource, you can customize the import process.
 
-#. Each row of the to-be-imported dataset is processed according to the following steps:
+#. Each row of the to-be-imported dataset is processed according to the
+   following steps:
 
-   #. The :meth:`~import_export.resources.Resource.before_import_row` hook is called to allow for row data to be modified before it is imported
+   #. The :meth:`~import_export.resources.Resource.before_import_row` hook is
+   called to allow for row data to be modified before it is imported
 
    #. :meth:`~import_export.resources.Resource.get_or_init_instance` is called
       with current :class:`~import_export.instance_loaders.BaseInstanceLoader`
@@ -55,8 +61,10 @@ This is what happens when the method is invoked:
       :meth:`~import_export.resources.Resource.init_instance` to customized
       how the new object is created (i.e. set default values).
 
-   #. :meth:`~import_export.resources.Resource.for_delete` is called to determine if the passed ``instance``
-      should be deleted. In this case, the import process for the current row is stopped at this point.
+   #. :meth:`~import_export.resources.Resource.for_delete` is called to
+      determine if the passed ``instance``
+      should be deleted. In this case, the import process for the current row
+      is stopped at this point.
 
    #. If the instance was not deleted in the previous step,
       :meth:`~import_export.resources.Resource.import_obj` is called with the
@@ -85,8 +93,8 @@ This is what happens when the method is invoked:
       :meth:`~import_export.resources.Resource.save_instance` is called and
       actually saves the instance when ``dry_run`` is not set.
 
-      There are two hook methods (that by default do nothing) giving you the option to customize the
-      import process:
+      There are two hook methods (that by default do nothing) giving you the
+      option to customize the import process:
 
         * :meth:`~import_export.resources.Resource.before_save_instance`
         * :meth:`~import_export.resources.Resource.after_save_instance`
@@ -108,7 +116,8 @@ This is what happens when the method is invoked:
 
       If either the row was not skipped or the
       :class:`~import_export.resources.Resource` is configured to report
-      skipped rows, the :class:`~import_export.results.RowResult` is appended to the :class:`~import_export.results.Result`
+      skipped rows, the :class:`~import_export.results.RowResult` is appended
+      to the :class:`~import_export.results.Result`
 
    #. The :meth:`~import_export.resources.Resource.after_import_row` hook is called
 
