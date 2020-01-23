@@ -5,8 +5,8 @@ Changelog
 2.0.2 (unreleased)
 ------------------
 
-- Nothing changed yet.
-
+- Deal with importing a BooleanField that actually has `True`, `False`, and
+  `None` values. (#1071)
 
 2.0.1 (2020-01-15)
 ------------------
