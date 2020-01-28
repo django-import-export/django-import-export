@@ -206,7 +206,7 @@ A :class:`~import_export.resources.ModelResource` creates a field with a
 default widget for a given field type. If the widget should be initialized
 with different arguments, set the ``widgets`` dict.
 
-In this example widget, the ``published`` field is overriden to use a
+In this example widget, the ``published`` field is overridden to use a
 different date format. This format will be used both for importing
 and exporting resource.
 
