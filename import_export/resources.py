@@ -465,7 +465,7 @@ class Resource(metaclass=DeclarativeMetaclass):
         """
         Override to add additional logic. Does nothing by default.
         """
-        pass
+        return row
 
     def after_import_row(self, row, row_result, **kwargs):
         """
@@ -496,7 +496,7 @@ class Resource(metaclass=DeclarativeMetaclass):
         """
         row_result = self.get_row_result_class()()
         try:
-            self.before_import_row(row, **kwargs)
+            row = self.before_import_row(row, **kwargs)
             instance, new = self.get_or_init_instance(instance_loader, row)
             self.after_import_instance(instance, new, **kwargs)
             if new:
