@@ -47,6 +47,8 @@ Requirements
 * Python 3.5+
 * Django 2.0+
 * tablib 0.14+
+* openpyxl >=2.4,<2.5
+* diff-match-patch
 
 django-import-export requires Python 3.5 and Django 2.0 or newer. See the 1.x
 branch for older Python and Django versions where fixes for security issues and
