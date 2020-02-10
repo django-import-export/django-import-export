@@ -12,6 +12,8 @@ from django.test.testcases import TestCase
 from django.test.utils import override_settings
 from django.utils.translation import gettext_lazy as _
 
+from import_export.formats.base_formats import DEFAULT_FORMATS
+
 
 class ImportExportAdminIntegrationTest(TestCase):
 
@@ -126,9 +128,11 @@ class ImportExportAdminIntegrationTest(TestCase):
         response = self.client.get('/admin/core/book/export/')
         self.assertEqual(response.status_code, 200)
 
-        data = {
-            'file_format': '2',
-            }
+        for i, f in enumerate(DEFAULT_FORMATS):
+            if f().get_title() == 'xlsx':
+                xlsx_index = i
+                break
+        data = {'file_format': str(xlsx_index)}
         response = self.client.post('/admin/core/book/export/', data)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.has_header("Content-Disposition"))

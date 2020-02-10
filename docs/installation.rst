@@ -7,6 +7,13 @@ can be installed with standard Python tools like ``pip`` or ``easy_install``::
 
     $ pip install django-import-export
 
+This will automatically install many formats supported by tablib. If you need
+additional formats like ``cli`` or ``Pandas DataFrame``, you should install the
+appropriate tablib dependencies (e.g. ``pip install tablib[pandas]``). Read
+more on the `tablib format documentation page`_.
+
+.. tablib format documentation page: https://tablib.readthedocs.io/en/stable/formats/
+
 Alternatively, you can install the git repository directly to obtain the
 development version::
 
