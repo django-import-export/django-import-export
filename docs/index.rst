@@ -2,8 +2,8 @@
 Django import / export
 ======================
 
-django-import-export is a Django application and library for importing
-and exporting data with included admin integration.
+django-import-export is a Django application and library for importing and
+exporting data with included admin integration.
 
 **Features:**
 
