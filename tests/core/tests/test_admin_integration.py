@@ -132,6 +132,8 @@ class ImportExportAdminIntegrationTest(TestCase):
             if f().get_title() == 'xlsx':
                 xlsx_index = i
                 break
+        else:
+            self.fail('Unable to find xlsx format. DEFAULT_FORMATS: %r' % DEFAULT_FORMATS)
         data = {'file_format': str(xlsx_index)}
         response = self.client.post('/admin/core/book/export/', data)
         self.assertEqual(response.status_code, 200)
