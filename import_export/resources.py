@@ -254,6 +254,10 @@ class Resource(metaclass=DeclarativeMetaclass):
             field, self.__class__))
 
     def init_instance(self, row=None):
+        """
+        Initializes an object. Implemented in
+        :meth:`import_export.resources.ModelResource.init_instance`.
+        """
         raise NotImplementedError()
 
     def get_instance(self, instance_loader, row):
