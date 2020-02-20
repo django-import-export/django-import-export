@@ -58,7 +58,7 @@ This is what happens when the method is invoked:
       initialize an object.
 
       As always, you can override the implementation of
-      :meth:`~import_export.resources.Resource.init_instance` to customized
+      :meth:`~import_export.resources.Resource.init_instance` to customize
       how the new object is created (i.e. set default values).
 
    #. :meth:`~import_export.resources.Resource.for_delete` is called to
