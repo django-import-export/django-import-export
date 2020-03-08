@@ -30,7 +30,7 @@ This is what happens when the method is invoked:
    errors and other information gathered during the import, is initialized.
 
    Then, an :class:`~import_export.instance_loaders.InstanceLoader` responsible
-   for loading existing instances is intitalized. A different
+   for loading existing instances is initialized. A different
    :class:`~import_export.instance_loaders.BaseInstanceLoader` can be specified
    via :class:`~import_export.resources.ResourceOptions`'s
    ``instance_loader_class`` attribute. A
