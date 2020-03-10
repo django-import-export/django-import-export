@@ -1,4 +1,5 @@
 import os
+import unittest
 from unittest import mock
 
 import tablib
@@ -73,18 +74,30 @@ class XLSXTest(TestCase):
 
     def setUp(self):
         self.format = base_formats.XLSX()
+        self.filename = os.path.join(
+            os.path.dirname(__file__),
+            os.path.pardir,
+            'exports',
+            'books.xlsx')
 
     def test_binary_format(self):
         self.assertTrue(self.format.is_binary())
 
     def test_import(self):
-        filename = os.path.join(
-            os.path.dirname(__file__),
-            os.path.pardir,
-            'exports',
-            'books.xlsx')
-        with open(filename, self.format.get_read_mode()) as in_stream:
-            self.format.create_dataset(in_stream.read())
+        with open(self.filename, self.format.get_read_mode()) as in_stream:
+            dataset = self.format.create_dataset(in_stream.read())
+        result = dataset.dict
+        self.assertEqual(1, len(result))
+        row = result.pop()
+        self.assertEqual(1, row["id"])
+        self.assertEqual("Some book", row["name"])
+        self.assertEqual("test@example.com", row["author_email"])
+        self.assertEqual(4, row["price"])
+
+    @mock.patch("openpyxl.load_workbook")
+    def test_that_load_workbook_called_with_required_args(self, mock_load_workbook):
+        self.format.create_dataset(b"abc")
+        mock_load_workbook.assert_called_with(unittest.mock.ANY, read_only=True, data_only=True)
 
 
 class CSVTest(TestCase):
