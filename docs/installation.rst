@@ -12,7 +12,7 @@ additional formats like ``cli`` or ``Pandas DataFrame``, you should install the
 appropriate tablib dependencies (e.g. ``pip install tablib[pandas]``). Read
 more on the `tablib format documentation page`_.
 
-.. tablib format documentation page: https://tablib.readthedocs.io/en/stable/formats/
+.. _tablib format documentation page: https://tablib.readthedocs.io/en/stable/formats/
 
 Alternatively, you can install the git repository directly to obtain the
 development version::
