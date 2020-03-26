@@ -42,7 +42,7 @@ Features:
 * PyPI: https://pypi.org/project/django-import-export/
 
 Requirements
------------
+------------
 
 * Python 3.5+
 * Django 2.0+

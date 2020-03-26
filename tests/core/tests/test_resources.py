@@ -12,7 +12,7 @@ from django.contrib.auth.models import User
 from django.db import DatabaseError, IntegrityError
 from django.db.models import Count
 from django.test import TestCase, TransactionTestCase, skipUnlessDBFeature
-from django.utils.encoding import force_text
+from django.utils.encoding import force_str
 from django.utils.html import strip_tags
 
 from import_export import fields, resources, results, widgets
@@ -921,7 +921,7 @@ class ModelResourceTransactionTest(TransactionTestCase):
 
         category_field = resource.fields['categories']
         categories_diff = row_diff[fields.index(category_field)]
-        self.assertEqual(strip_tags(categories_diff), force_text(cat1.pk))
+        self.assertEqual(strip_tags(categories_diff), force_str(cat1.pk))
 
         # check that it is really rollbacked
         self.assertFalse(Book.objects.filter(name='FooBook'))
