@@ -1,35 +1,5 @@
 import tablib
-import warnings
 from importlib import import_module
-
-try:
-    from tablib.compat import xlrd
-
-    XLS_IMPORT = True
-except ImportError:
-    try:
-        import xlrd  # NOQA
-
-        XLS_IMPORT = True
-    except ImportError:
-        xls_warning = "Installed `tablib` library does not include"
-        "import support for 'xls' format and xlrd module is not found."
-        warnings.warn(xls_warning, ImportWarning)
-        XLS_IMPORT = False
-
-
-try:
-    import openpyxl
-    XLSX_IMPORT = True
-except ImportError:
-    try:
-        from tablib.compat import openpyxl
-        XLSX_IMPORT = hasattr(openpyxl, 'load_workbook')
-    except ImportError:
-        xlsx_warning = "Installed `tablib` library does not include"
-        "import support for 'xlsx' format and openpyxl module is not found."
-        warnings.warn(xlsx_warning, ImportWarning)
-        XLSX_IMPORT = False
 
 
 class Format:
@@ -71,6 +41,10 @@ class Format:
         # https://www.iana.org/assignments/media-types/media-types.xhtml
         return 'application/octet-stream'
 
+    @classmethod
+    def is_available(cls):
+        return True
+
     def can_import(self):
         return False
 
@@ -86,26 +60,33 @@ class TablibFormat(Format):
         """
         Import and returns tablib module.
         """
-        return import_module(self.TABLIB_MODULE)
+        try:
+            # Available since tablib 1.0
+            from tablib.formats import registry
+        except ImportError:
+            return import_module(self.TABLIB_MODULE)
+        else:
+            key = self.TABLIB_MODULE.split('.')[-1].replace('_', '')
+            return registry.get_format(key)
+
+    @classmethod
+    def is_available(cls):
+        try:
+            cls().get_format()
+        except (tablib.core.UnsupportedFormat, ImportError):
+            return False
+        return True
 
     def get_title(self):
         return self.get_format().title
 
     def create_dataset(self, in_stream, **kwargs):
-        data = tablib.Dataset()
-        self.get_format().import_set(data, in_stream, **kwargs)
-        return data
+        return tablib.import_set(in_stream, format=self.get_title())
 
     def export_data(self, dataset, **kwargs):
-        return self.get_format().export_set(dataset, **kwargs)
+        return dataset.export(self.get_title(), **kwargs)
 
     def get_extension(self):
-        # we support both 'extentions' and 'extensions' because currently
-        # tablib's master branch uses 'extentions' (which is a typo) but it's
-        # dev branch already uses 'extension'.
-        # TODO - remove this once the typo is fixxed in tablib's master branch
-        if hasattr(self.get_format(), 'extentions'):
-            return self.get_format().extentions[0]
         return self.get_format().extensions[0]
 
     def get_content_type(self):
@@ -167,14 +148,11 @@ class XLS(TablibFormat):
     TABLIB_MODULE = 'tablib.formats._xls'
     CONTENT_TYPE = 'application/vnd.ms-excel'
 
-    def can_import(self):
-        return XLS_IMPORT
-
     def create_dataset(self, in_stream):
         """
         Create dataset from first sheet.
         """
-        assert XLS_IMPORT
+        import xlrd
         xls_book = xlrd.open_workbook(file_contents=in_stream)
         dataset = tablib.Dataset()
         sheet = xls_book.sheets()[0]
@@ -189,15 +167,12 @@ class XLSX(TablibFormat):
     TABLIB_MODULE = 'tablib.formats._xlsx'
     CONTENT_TYPE = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 
-    def can_import(self):
-        return XLSX_IMPORT
-
     def create_dataset(self, in_stream):
         """
         Create dataset from first sheet.
         """
-        assert XLSX_IMPORT
         from io import BytesIO
+        import openpyxl
         xlsx_book = openpyxl.load_workbook(BytesIO(in_stream), read_only=True)
 
         dataset = tablib.Dataset()
@@ -215,7 +190,7 @@ class XLSX(TablibFormat):
 
 #: These are the default formats for import and export. Whether they can be
 #: used or not is depending on their implementation in the tablib library.
-DEFAULT_FORMATS = (
+DEFAULT_FORMATS = [fmt for fmt in (
     CSV,
     XLS,
     XLSX,
@@ -224,4 +199,4 @@ DEFAULT_FORMATS = (
     JSON,
     YAML,
     HTML,
-)
+) if fmt.is_available()]

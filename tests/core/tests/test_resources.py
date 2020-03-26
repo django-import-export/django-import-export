@@ -259,6 +259,23 @@ class ModelResourceTest(TestCase):
         instance = resource.get_instance(instance_loader, self.dataset.dict[0])
         self.assertEqual(instance, self.book)
 
+    def test_get_instance_import_id_fields_with_custom_column_name(self):
+        class BookResource(resources.ModelResource):
+            name = fields.Field(attribute='name', column_name='book_name', widget=widgets.CharWidget())
+
+            class Meta:
+                model = Book
+                import_id_fields = ['name']
+
+        dataset = tablib.Dataset(headers=['id', 'book_name', 'author_email', 'price'])
+        row = [self.book.pk, 'Some book', 'test@example.com', "10.25"]
+        dataset.append(row)
+
+        resource = BookResource()
+        instance_loader = resource._meta.instance_loader_class(resource)
+        instance = resource.get_instance(instance_loader, dataset.dict[0])
+        self.assertEqual(instance, self.book)
+
     def test_get_instance_usually_defers_to_instance_loader(self):
         self.resource._meta.import_id_fields = ['id']
 

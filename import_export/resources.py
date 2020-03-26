@@ -262,8 +262,11 @@ class Resource(metaclass=DeclarativeMetaclass):
         the :doc:`InstanceLoader <api_instance_loaders>`. Otherwise,
         returns `None`.
         """
-        for field_name in self.get_import_id_fields():
-            if field_name not in row:
+        import_id_fields = [
+            self.fields[f] for f in self.get_import_id_fields()
+        ]
+        for field in import_id_fields:
+            if field.column_name not in row:
                 return
         return instance_loader.get_instance(row)
 

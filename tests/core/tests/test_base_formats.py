@@ -1,9 +1,25 @@
 import os
+from tablib.core import UnsupportedFormat
+from unittest import mock
 
 from django.test import TestCase
 from django.utils.encoding import force_str
 
 from import_export.formats import base_formats
+
+
+class FormatTest(TestCase):
+
+    @mock.patch('import_export.formats.base_formats.HTML.get_format', side_effect=ImportError)
+    def test_format_non_available1(self, mocked):
+        self.assertFalse(base_formats.HTML.is_available())
+
+    @mock.patch('import_export.formats.base_formats.HTML.get_format', side_effect=UnsupportedFormat)
+    def test_format_non_available2(self, mocked):
+        self.assertFalse(base_formats.HTML.is_available())
+
+    def test_format_available(self):
+        self.assertTrue(base_formats.CSV.is_available())
 
 
 class XLSTest(TestCase):
