@@ -510,7 +510,7 @@ class Resource(metaclass=DeclarativeMetaclass):
                 else:
                     row_result.import_type = RowResult.IMPORT_TYPE_DELETE
                     row_result.object_id = instance.pk
-                    row_result.object_repr = force_text(instance)
+                    row_result.object_repr = force_str(instance)
                     self.delete_instance(instance, using_transactions, dry_run)
                     diff.compare_with(self, None, dry_run)
 
