@@ -1,6 +1,17 @@
 Changelog
 =========
 
+- Fix for_delete generating log with inexistent row id
+
+2.0.2 (2020-02-16)
+------------------
+
+- Add support for tablib >= 1.0 (#1061)
+
+- Add ability to install a subset of tablib supported formats and save some
+  automatic dependency installations (needs tablib >= 1.0)
+
+- Use column_name when checking row for fields (#1056)
 
 2.0.1 (2020-01-15)
 ------------------
