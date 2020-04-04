@@ -12,7 +12,7 @@ from django.contrib.auth.models import User
 from django.db import DatabaseError, IntegrityError
 from django.db.models import Count
 from django.test import TestCase, TransactionTestCase, skipUnlessDBFeature
-from django.utils.encoding import force_text
+from django.utils.encoding import force_str
 from django.utils.html import strip_tags
 
 from import_export import fields, resources, results, widgets
@@ -257,6 +257,23 @@ class ModelResourceTest(TestCase):
         resource = BookResource()
         instance_loader = resource._meta.instance_loader_class(resource)
         instance = resource.get_instance(instance_loader, self.dataset.dict[0])
+        self.assertEqual(instance, self.book)
+
+    def test_get_instance_import_id_fields_with_custom_column_name(self):
+        class BookResource(resources.ModelResource):
+            name = fields.Field(attribute='name', column_name='book_name', widget=widgets.CharWidget())
+
+            class Meta:
+                model = Book
+                import_id_fields = ['name']
+
+        dataset = tablib.Dataset(headers=['id', 'book_name', 'author_email', 'price'])
+        row = [self.book.pk, 'Some book', 'test@example.com', "10.25"]
+        dataset.append(row)
+
+        resource = BookResource()
+        instance_loader = resource._meta.instance_loader_class(resource)
+        instance = resource.get_instance(instance_loader, dataset.dict[0])
         self.assertEqual(instance, self.book)
 
     def test_get_instance_usually_defers_to_instance_loader(self):
@@ -959,7 +976,7 @@ class ModelResourceTransactionTest(TransactionTestCase):
 
         category_field = resource.fields['categories']
         categories_diff = row_diff[fields.index(category_field)]
-        self.assertEqual(strip_tags(categories_diff), force_text(cat1.pk))
+        self.assertEqual(strip_tags(categories_diff), force_str(cat1.pk))
 
         # check that it is really rollbacked
         self.assertFalse(Book.objects.filter(name='FooBook'))

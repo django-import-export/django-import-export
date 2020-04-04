@@ -21,7 +21,7 @@ from django.db.transaction import (
     savepoint_commit,
     savepoint_rollback
 )
-from django.utils.encoding import force_text
+from django.utils.encoding import force_str
 from django.utils.safestring import mark_safe
 
 from . import widgets
@@ -177,7 +177,7 @@ class Diff:
         for v1, v2 in zip(self.left, self.right):
             if v1 != v2 and self.new:
                 v1 = ""
-            diff = dmp.diff_main(force_text(v1), force_text(v2))
+            diff = dmp.diff_main(force_str(v1), force_str(v2))
             dmp.diff_cleanupSemantic(diff)
             html = dmp.diff_prettyHtml(diff)
             html = mark_safe(html)
@@ -254,6 +254,10 @@ class Resource(metaclass=DeclarativeMetaclass):
             field, self.__class__))
 
     def init_instance(self, row=None):
+        """
+        Initializes an object. Implemented in
+        :meth:`import_export.resources.ModelResource.init_instance`.
+        """
         raise NotImplementedError()
 
     def get_instance(self, instance_loader, row):
@@ -262,8 +266,11 @@ class Resource(metaclass=DeclarativeMetaclass):
         the :doc:`InstanceLoader <api_instance_loaders>`. Otherwise,
         returns `None`.
         """
-        for field_name in self.get_import_id_fields():
-            if field_name not in row:
+        import_id_fields = [
+            self.fields[f] for f in self.get_import_id_fields()
+        ]
+        for field in import_id_fields:
+            if field.column_name not in row:
                 return
         return instance_loader.get_instance(row)
 
@@ -409,7 +416,7 @@ class Resource(metaclass=DeclarativeMetaclass):
                 self.import_field(field, obj, data)
             except ValueError as e:
                 errors[field.attribute] = ValidationError(
-                    force_text(e), code="invalid")
+                    force_str(e), code="invalid")
         if errors:
             raise ValidationError(errors)
 
@@ -539,7 +546,7 @@ class Resource(metaclass=DeclarativeMetaclass):
                     self.post_save_instance(instance, row, using_transactions, dry_run)
                     # Add object info to RowResult for LogEntry
                     row_result.object_id = instance.pk
-                    row_result.object_repr = force_text(instance)
+                    row_result.object_repr = force_str(instance)
                 diff.compare_with(self, instance, dry_run)
 
             row_result.diff = diff.as_html()
@@ -696,7 +703,7 @@ class Resource(metaclass=DeclarativeMetaclass):
 
     def get_export_headers(self):
         headers = [
-            force_text(field.column_name) for field in self.get_export_fields()]
+            force_str(field.column_name) for field in self.get_export_fields()]
         return headers
 
     def get_user_visible_fields(self):
