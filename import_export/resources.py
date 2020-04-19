@@ -451,7 +451,7 @@ class Resource(metaclass=DeclarativeMetaclass):
         """
         Diff representation headers.
         """
-        return self.get_export_headers()
+        return self.get_user_visible_headers()
 
     def before_import(self, dataset, using_transactions, dry_run, **kwargs):
         """
@@ -693,6 +693,11 @@ class Resource(metaclass=DeclarativeMetaclass):
     def get_export_headers(self):
         headers = [
             force_str(field.column_name) for field in self.get_export_fields()]
+        return headers
+
+    def get_user_visible_headers(self):
+        headers = [
+            force_str(field.column_name) for field in self.get_user_visible_fields()]
         return headers
 
     def get_user_visible_fields(self):
