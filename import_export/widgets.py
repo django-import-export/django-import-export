@@ -236,7 +236,7 @@ class DurationWidget(Widget):
     """
 
     def clean(self, value, row=None, *args, **kwargs):
-        if not value:
+        if value is None:
             return None
 
         try:
@@ -245,7 +245,7 @@ class DurationWidget(Widget):
             raise ValueError("Enter a valid duration.")
 
     def render(self, value, obj=None):
-        if not value:
+        if value is None:
             return ""
         return str(value)
 
