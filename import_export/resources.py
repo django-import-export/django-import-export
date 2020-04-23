@@ -122,6 +122,17 @@ class ResourceOptions:
     The default value is False.
     """
 
+    skip_diff = False
+    """
+    Controls whether or not an instance should be diffed following import.
+    By default, an instance is copied prior to insert, update or delete.
+    After each row is processed, the instance's copy is diffed against the original, and the value
+    stored in each ``RowResult``.
+    If diffing is not required, then disabling the diff operation by setting this value to ``True``
+    improves performance, because the copy and comparison operations are skipped for each row.
+    The default value is False.
+    """
+
 
 class DeclarativeMetaclass(type):
 
@@ -422,7 +433,12 @@ class Resource(metaclass=DeclarativeMetaclass):
         """
         Returns ``True`` if ``row`` importing should be skipped.
 
-        Default implementation returns ``False`` unless skip_unchanged == True.
+        Default implementation returns ``False`` unless skip_unchanged == True,
+        or skip_diff == True.
+
+        If skip_diff is True, then no comparisons can be made because ``original``
+        will be None.
+
         Override this method to handle skipping rows meeting certain
         conditions.
 
@@ -434,7 +450,7 @@ class Resource(metaclass=DeclarativeMetaclass):
                     return super(YourResource, self).skip_row(instance, original)
 
         """
-        if not self._meta.skip_unchanged:
+        if not self._meta.skip_unchanged or self._meta.skip_diff:
             return False
         for field in self.get_import_fields():
             try:
@@ -498,7 +514,9 @@ class Resource(metaclass=DeclarativeMetaclass):
         :param dry_run: If ``dry_run`` is set, or error occurs, transaction
             will be rolled back.
         """
+        skip_diff = self._meta.skip_diff
         row_result = self.get_row_result_class()()
+        original = None
         try:
             self.before_import_row(row, **kwargs)
             instance, new = self.get_or_init_instance(instance_loader, row)
@@ -508,16 +526,19 @@ class Resource(metaclass=DeclarativeMetaclass):
             else:
                 row_result.import_type = RowResult.IMPORT_TYPE_UPDATE
             row_result.new_record = new
-            original = deepcopy(instance)
-            diff = self.get_diff_class()(self, original, new)
+            if not skip_diff:
+                original = deepcopy(instance)
+                diff = self.get_diff_class()(self, original, new)
             if self.for_delete(row, instance):
                 if new:
                     row_result.import_type = RowResult.IMPORT_TYPE_SKIP
-                    diff.compare_with(self, None, dry_run)
+                    if not skip_diff:
+                        diff.compare_with(self, None, dry_run)
                 else:
                     row_result.import_type = RowResult.IMPORT_TYPE_DELETE
                     self.delete_instance(instance, using_transactions, dry_run)
-                    diff.compare_with(self, None, dry_run)
+                    if not skip_diff:
+                        diff.compare_with(self, None, dry_run)
             else:
                 import_validation_errors = {}
                 try:
@@ -536,9 +557,11 @@ class Resource(metaclass=DeclarativeMetaclass):
                     # Add object info to RowResult for LogEntry
                     row_result.object_id = instance.pk
                     row_result.object_repr = force_str(instance)
-                diff.compare_with(self, instance, dry_run)
+                if not skip_diff:
+                    diff.compare_with(self, instance, dry_run)
 
-            row_result.diff = diff.as_html()
+            if not skip_diff:
+                row_result.diff = diff.as_html()
             self.after_import_row(row, row_result, **kwargs)
 
         except ValidationError as e:
