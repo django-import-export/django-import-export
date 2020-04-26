@@ -145,6 +145,7 @@ class DecimalWidgetTest(TestCase):
 
     def test_clean(self):
         self.assertEqual(self.widget.clean("11.111"), self.value)
+        self.assertEqual(self.widget.clean(11.111), self.value)
 
     def test_render(self):
         self.assertEqual(self.widget.render(self.value), self.value)
