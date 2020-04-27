@@ -111,8 +111,17 @@ class DurationWidgetTest(TestCase):
     def test_render_none(self):
         self.assertEqual(self.widget.render(None), "")
 
+    def test_render_zero(self):
+        self.assertEqual(self.widget.render(timedelta(0)), "0:00:00")
+
     def test_clean(self):
         self.assertEqual(self.widget.clean("1:57:00"), self.duration)
+
+    def test_clean_none(self):
+        self.assertEqual(self.widget.clean(""), None)
+
+    def test_clean_zero(self):
+        self.assertEqual(self.widget.clean("0:00:00"), timedelta(0))
 
 
 class FloatWidgetTest(TestCase):
