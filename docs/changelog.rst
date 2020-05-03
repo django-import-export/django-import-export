@@ -2,10 +2,20 @@ Changelog
 =========
 
 
-2.0.3 (unreleased)
+2.1.0 (2020-05-02)
 ------------------
 
-- Nothing changed yet.
+- Fix DurationWidget handling of zero value (#1117)
+
+- Make import diff view only show headers for user visible fields (#1109)
+
+- Make confirm_form accessible in get_import_resource_kwargs and get_import_data_kwargs (#994, #1108)
+
+- Initialize Decimal with text value, fix #1035 (#1039)
+
+- Adds meta flag 'skip_diff' to enable skipping of diff operations (#1045)
+
+- Update docs (#1097, #1114, #1122, #969, #1083, #1093)
 
 
 2.0.2 (2020-02-16)
