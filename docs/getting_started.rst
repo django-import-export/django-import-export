@@ -420,7 +420,7 @@ Customize forms::
 
 Customize ``ModelAdmin``::
 
-    class CustomBookAdmin(ImportMixin, admin.ModelAdmin)
+    class CustomBookAdmin(ImportMixin, admin.ModelAdmin):
         resource_class = BookResource
 
         def get_import_form(self):
