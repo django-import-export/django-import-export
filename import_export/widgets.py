@@ -148,7 +148,7 @@ class DateWidget(Widget):
         if not value:
             return ""
         try:
-            return value.strftime(self.formats[0])
+            return self.clean(value).strftime(self.formats[0])
         except:
             return datetime_safe.new_date(value).strftime(self.formats[0])
 
