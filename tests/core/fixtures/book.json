@@ -8,6 +8,14 @@
         }
     },
     {
+        "model": "core.author",
+        "pk": 5,
+        "fields": {
+            "name": "Geo Metry",
+            "birthday": "1950-12-20"
+        }
+    },
+    {
         "model": "core.book",
         "pk": 11,
         "fields": {
@@ -19,6 +27,34 @@
             "published_time": "21:00",
             "price": 25.0,
             "categories": [1]
+        }
+    },
+    {
+        "model": "core.book",
+        "pk": 5,
+        "fields": {
+            "name": "Squares",
+            "author": 5,
+            "author_email": "geo@met.ry",
+            "imported": false,
+            "published": "1999-08-01",
+            "published_time": "21:00",
+            "price": 5.0,
+            "categories": [2]
+        }
+    },
+    {
+        "model": "core.book",
+        "pk": 6,
+        "fields": {
+            "name": "Circles",
+            "author": 11,
+            "author_email": "geo@met.ry",
+            "imported": false,
+            "published": "2020-08-01",
+            "published_time": "21:00",
+            "price": 15.0,
+            "categories": [2]
         }
     }
 ]

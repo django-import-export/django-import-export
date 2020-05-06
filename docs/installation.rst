@@ -82,9 +82,18 @@ Example app
 ===========
 
 There's an example application that showcases what django-import-export can do.
+It's assumed that you have set up a Python ``venv`` with all required dependencies
+or are otherwise able to run Django locally.
+
 You can run it via::
 
     cd tests
+    ./manage.py makemigration
+    ./manage.py migrate
+    ./manage.py createsuperuser
+    ./manage.py loaddata category.json book.json
     ./manage.py runserver
 
-Username and password for admin are ``admin`` and ``password``.
+Go to http://127.0.0.1:8000
+
+``books-sample.csv`` contains sample book data which can be imported.
