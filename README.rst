@@ -50,11 +50,13 @@ Features:
 Example app
 -----------
 
-::
+To run the demo app::
 
     cd tests
+    ./manage.py makemigration
     ./manage.py migrate
     ./manage.py createsuperuser
+    ./manage.py loaddata category.json book.json
     ./manage.py runserver
 
 Contribute
