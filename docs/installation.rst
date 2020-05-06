@@ -94,6 +94,6 @@ You can run it via::
     ./manage.py loaddata category.json book.json
     ./manage.py runserver
 
-Go to http://127.0.0.1:8000/admin/core 
+Go to http://127.0.0.1:8000
 
 ``books-sample.csv`` contains sample book data which can be imported.
