@@ -56,7 +56,7 @@ To run the demo app::
     ./manage.py makemigrations
     ./manage.py migrate
     ./manage.py createsuperuser
-    ./manage.py loaddata category.json book.json
+    ./manage.py loaddata category book
     ./manage.py runserver
 
 Contribute
