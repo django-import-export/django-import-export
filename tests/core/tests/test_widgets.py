@@ -17,12 +17,16 @@ class BooleanWidgetTest(TestCase):
         self.widget = widgets.BooleanWidget()
 
     def test_clean(self):
+        self.assertTrue(self.widget.clean(True))
         self.assertTrue(self.widget.clean("1"))
         self.assertTrue(self.widget.clean(1))
+        self.assertEqual(self.widget.clean(None), None)
         self.assertEqual(self.widget.clean(""), None)
 
     def test_render(self):
-        self.assertEqual(self.widget.render(None), "")
+        self.assertEqual(self.widget.render(""), None)
+        self.assertEqual(self.widget.render(None), None)
+        self.assertEqual(self.widget.render(True), True)
 
 
 class DateWidgetTest(TestCase):

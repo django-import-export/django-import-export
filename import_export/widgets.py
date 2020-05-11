@@ -101,18 +101,16 @@ class BooleanWidget(Widget):
     """
     Widget for converting boolean fields.
     """
-    TRUE_VALUES = ["1", 1]
-    FALSE_VALUE = "0"
-
-    def render(self, value, obj=None):
-        if value is None:
-            return ""
-        return self.TRUE_VALUES[0] if value else self.FALSE_VALUE
+    TRUE_VALUES = (True, "1", 1)
+    FALSE_VALUE = False
 
     def clean(self, value, row=None, *args, **kwargs):
-        if value == "":
-            return None
-        return True if value in self.TRUE_VALUES else False
+        if value is not None and value != "":
+            return True if value in self.TRUE_VALUES else False
+
+    def render(self, value, obj=None):
+        if value is not None and value != "":
+            return self.TRUE_VALUES[0] if value else self.FALSE_VALUE
 
 
 class DateWidget(Widget):
