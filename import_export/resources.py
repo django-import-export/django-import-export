@@ -22,7 +22,7 @@ from django.db.transaction import (
     savepoint_commit,
     savepoint_rollback
 )
-from django.utils.encoding import force_text
+from django.utils.encoding import force_str
 from django.utils.safestring import mark_safe
 
 from . import widgets
@@ -129,6 +129,17 @@ class ResourceOptions:
     Controls the chunk_size argument of Queryset.iterator or, 
     if prefetch_related is used, the per_page attribute of Paginator.
     """
+    
+    skip_diff = False
+    """
+    Controls whether or not an instance should be diffed following import.
+    By default, an instance is copied prior to insert, update or delete.
+    After each row is processed, the instance's copy is diffed against the original, and the value
+    stored in each ``RowResult``.
+    If diffing is not required, then disabling the diff operation by setting this value to ``True``
+    improves performance, because the copy and comparison operations are skipped for each row.
+    The default value is False.
+    """
 
 
 class DeclarativeMetaclass(type):
@@ -185,7 +196,7 @@ class Diff:
         for v1, v2 in zip(self.left, self.right):
             if v1 != v2 and self.new:
                 v1 = ""
-            diff = dmp.diff_main(force_text(v1), force_text(v2))
+            diff = dmp.diff_main(force_str(v1), force_str(v2))
             dmp.diff_cleanupSemantic(diff)
             html = dmp.diff_prettyHtml(diff)
             html = mark_safe(html)
@@ -268,6 +279,10 @@ class Resource(metaclass=DeclarativeMetaclass):
             field, self.__class__))
 
     def init_instance(self, row=None):
+        """
+        Initializes an object. Implemented in
+        :meth:`import_export.resources.ModelResource.init_instance`.
+        """
         raise NotImplementedError()
 
     def get_instance(self, instance_loader, row):
@@ -276,8 +291,11 @@ class Resource(metaclass=DeclarativeMetaclass):
         the :doc:`InstanceLoader <api_instance_loaders>`. Otherwise,
         returns `None`.
         """
-        for field_name in self.get_import_id_fields():
-            if field_name not in row:
+        import_id_fields = [
+            self.fields[f] for f in self.get_import_id_fields()
+        ]
+        for field in import_id_fields:
+            if field.column_name not in row:
                 return
         return instance_loader.get_instance(row)
 
@@ -396,7 +414,7 @@ class Resource(metaclass=DeclarativeMetaclass):
                 self.import_field(field, obj, data)
             except ValueError as e:
                 errors[field.attribute] = ValidationError(
-                    force_text(e), code="invalid")
+                    force_str(e), code="invalid")
         if errors:
             raise ValidationError(errors)
 
@@ -429,7 +447,12 @@ class Resource(metaclass=DeclarativeMetaclass):
         """
         Returns ``True`` if ``row`` importing should be skipped.
 
-        Default implementation returns ``False`` unless skip_unchanged == True.
+        Default implementation returns ``False`` unless skip_unchanged == True,
+        or skip_diff == True.
+
+        If skip_diff is True, then no comparisons can be made because ``original``
+        will be None.
+
         Override this method to handle skipping rows meeting certain
         conditions.
 
@@ -441,7 +464,7 @@ class Resource(metaclass=DeclarativeMetaclass):
                     return super(YourResource, self).skip_row(instance, original)
 
         """
-        if not self._meta.skip_unchanged:
+        if not self._meta.skip_unchanged or self._meta.skip_diff:
             return False
         for field in self.get_import_fields():
             try:
@@ -458,7 +481,7 @@ class Resource(metaclass=DeclarativeMetaclass):
         """
         Diff representation headers.
         """
-        return self.get_export_headers()
+        return self.get_user_visible_headers()
 
     def before_import(self, dataset, using_transactions, dry_run, **kwargs):
         """
@@ -505,7 +528,9 @@ class Resource(metaclass=DeclarativeMetaclass):
         :param dry_run: If ``dry_run`` is set, or error occurs, transaction
             will be rolled back.
         """
+        skip_diff = self._meta.skip_diff
         row_result = self.get_row_result_class()()
+        original = None
         try:
             self.before_import_row(row, **kwargs)
             instance, new = self.get_or_init_instance(instance_loader, row)
@@ -515,16 +540,19 @@ class Resource(metaclass=DeclarativeMetaclass):
             else:
                 row_result.import_type = RowResult.IMPORT_TYPE_UPDATE
             row_result.new_record = new
-            original = deepcopy(instance)
-            diff = self.get_diff_class()(self, original, new)
+            if not skip_diff:
+                original = deepcopy(instance)
+                diff = self.get_diff_class()(self, original, new)
             if self.for_delete(row, instance):
                 if new:
                     row_result.import_type = RowResult.IMPORT_TYPE_SKIP
-                    diff.compare_with(self, None, dry_run)
+                    if not skip_diff:
+                        diff.compare_with(self, None, dry_run)
                 else:
                     row_result.import_type = RowResult.IMPORT_TYPE_DELETE
                     self.delete_instance(instance, using_transactions, dry_run)
-                    diff.compare_with(self, None, dry_run)
+                    if not skip_diff:
+                        diff.compare_with(self, None, dry_run)
             else:
                 import_validation_errors = {}
                 try:
@@ -542,10 +570,12 @@ class Resource(metaclass=DeclarativeMetaclass):
                     self.save_m2m(instance, row, using_transactions, dry_run)
                     # Add object info to RowResult for LogEntry
                     row_result.object_id = instance.pk
-                    row_result.object_repr = force_text(instance)
-                diff.compare_with(self, instance, dry_run)
+                    row_result.object_repr = force_str(instance)
+                if not skip_diff:
+                    diff.compare_with(self, instance, dry_run)
 
-            row_result.diff = diff.as_html()
+            if not skip_diff:
+                row_result.diff = diff.as_html()
             self.after_import_row(row, row_result, **kwargs)
 
         except ValidationError as e:
@@ -699,7 +729,12 @@ class Resource(metaclass=DeclarativeMetaclass):
 
     def get_export_headers(self):
         headers = [
-            force_text(field.column_name) for field in self.get_export_fields()]
+            force_str(field.column_name) for field in self.get_export_fields()]
+        return headers
+
+    def get_user_visible_headers(self):
+        headers = [
+            force_str(field.column_name) for field in self.get_user_visible_fields()]
         return headers
 
     def get_user_visible_fields(self):

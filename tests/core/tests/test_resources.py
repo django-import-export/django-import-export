@@ -13,7 +13,7 @@ from django.core.paginator import Paginator
 from django.db import DatabaseError, IntegrityError
 from django.db.models import Count
 from django.test import TestCase, TransactionTestCase, skipUnlessDBFeature
-from django.utils.encoding import force_text
+from django.utils.encoding import force_str
 from django.utils.html import strip_tags
 
 from import_export import fields, resources, results, widgets
@@ -258,6 +258,23 @@ class ModelResourceTest(TestCase):
         resource = BookResource()
         instance_loader = resource._meta.instance_loader_class(resource)
         instance = resource.get_instance(instance_loader, self.dataset.dict[0])
+        self.assertEqual(instance, self.book)
+
+    def test_get_instance_import_id_fields_with_custom_column_name(self):
+        class BookResource(resources.ModelResource):
+            name = fields.Field(attribute='name', column_name='book_name', widget=widgets.CharWidget())
+
+            class Meta:
+                model = Book
+                import_id_fields = ['name']
+
+        dataset = tablib.Dataset(headers=['id', 'book_name', 'author_email', 'price'])
+        row = [self.book.pk, 'Some book', 'test@example.com', "10.25"]
+        dataset.append(row)
+
+        resource = BookResource()
+        instance_loader = resource._meta.instance_loader_class(resource)
+        instance = resource.get_instance(instance_loader, dataset.dict[0])
         self.assertEqual(instance, self.book)
 
     def test_get_instance_usually_defers_to_instance_loader(self):
@@ -961,7 +978,7 @@ class ModelResourceTransactionTest(TransactionTestCase):
 
         category_field = resource.fields['categories']
         categories_diff = row_diff[fields.index(category_field)]
-        self.assertEqual(strip_tags(categories_diff), force_text(cat1.pk))
+        self.assertEqual(strip_tags(categories_diff), force_str(cat1.pk))
 
         # check that it is really rollbacked
         self.assertFalse(Book.objects.filter(name='FooBook'))
@@ -1228,3 +1245,82 @@ class ManyRelatedManagerDiffTest(TestCase):
         diff = result.rows[0].diff
         self.assertEqual(diff[export_headers.index("categories")],
                          expected_value)
+
+
+@mock.patch("import_export.resources.Diff", spec=True)
+class SkipDiffTest(TestCase):
+    """
+    Tests that the meta attribute 'skip_diff' means that no diff operations are called.
+    'copy.deepcopy' cannot be patched at class level because it causes interferes with
+    ``resources.Resource.__init__()``.
+    """
+    def setUp(self):
+        class _BookResource(resources.ModelResource):
+
+            class Meta:
+                model = Book
+                skip_diff = True
+
+        self.resource = _BookResource()
+        self.dataset = tablib.Dataset(headers=['id', 'name', 'birthday'])
+        self.dataset.append(['', 'A.A.Milne', '1882test-01-18'])
+
+    def test_skip_diff(self, mock_diff):
+        with mock.patch("copy.deepcopy") as mock_deep_copy:
+            self.resource.import_data(self.dataset)
+            mock_diff.return_value.compare_with.assert_not_called()
+            mock_diff.return_value.as_html.assert_not_called()
+            mock_deep_copy.assert_not_called()
+
+    def test_skip_diff_for_delete_new_resource(self, mock_diff):
+        class BookResource(resources.ModelResource):
+
+            class Meta:
+                model = Book
+                skip_diff = True
+
+            def for_delete(self, row, instance):
+                return True
+
+        resource = BookResource()
+        with mock.patch("copy.deepcopy") as mock_deep_copy:
+            resource.import_data(self.dataset)
+            mock_diff.return_value.compare_with.assert_not_called()
+            mock_diff.return_value.as_html.assert_not_called()
+            mock_deep_copy.assert_not_called()
+
+    def test_skip_diff_for_delete_existing_resource(self, mock_diff):
+        book = Book.objects.create()
+        class BookResource(resources.ModelResource):
+
+            class Meta:
+                model = Book
+                skip_diff = True
+
+            def get_or_init_instance(self, instance_loader, row):
+                return book, False
+
+            def for_delete(self, row, instance):
+                return True
+
+        resource = BookResource()
+
+        with mock.patch("copy.deepcopy") as mock_deep_copy:
+            resource.import_data(self.dataset, dry_run=True)
+            mock_diff.return_value.compare_with.assert_not_called()
+            mock_diff.return_value.as_html.assert_not_called()
+            mock_deep_copy.assert_not_called()
+
+    def test_skip_row_returns_false_when_skip_diff_is_true(self, mock_diff):
+        class BookResource(resources.ModelResource):
+
+            class Meta:
+                model = Book
+                skip_unchanged = True
+                skip_diff = True
+
+        resource = BookResource()
+
+        with mock.patch('import_export.resources.Resource.get_import_fields') as mock_get_import_fields:
+            resource.import_data(self.dataset, dry_run=True)
+            self.assertEqual(2, mock_get_import_fields.call_count)

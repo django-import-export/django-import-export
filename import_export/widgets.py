@@ -6,7 +6,7 @@ from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils import datetime_safe, timezone
 from django.utils.dateparse import parse_duration
-from django.utils.encoding import force_text, smart_text
+from django.utils.encoding import force_str, smart_str
 
 
 class Widget:
@@ -38,7 +38,7 @@ class Widget:
         :meth:`~import_export.widgets.Widget.render` takes care of converting
         the object's field to a value that can be written to a spreadsheet.
         """
-        return force_text(value)
+        return force_str(value)
 
 
 class NumberWidget(Widget):
@@ -85,7 +85,7 @@ class DecimalWidget(NumberWidget):
     def clean(self, value, row=None, *args, **kwargs):
         if self.is_empty(value):
             return None
-        return Decimal(value)
+        return Decimal(force_str(value))
 
 
 class CharWidget(Widget):
@@ -94,7 +94,7 @@ class CharWidget(Widget):
     """
 
     def render(self, value, obj=None):
-        return force_text(value)
+        return force_str(value)
 
 
 class BooleanWidget(Widget):
@@ -245,7 +245,7 @@ class DurationWidget(Widget):
             raise ValueError("Enter a valid duration.")
 
     def render(self, value, obj=None):
-        if not value:
+        if value is None:
             return ""
         return str(value)
 
@@ -295,7 +295,7 @@ class JSONWidget(Widget):
 class ForeignKeyWidget(Widget):
     """
     Widget for a ``ForeignKey`` field which looks up a related model using
-    "natural keys" in both export an import.
+    "natural keys" in both export and import.
 
     The lookup field defaults to using the primary key (``pk``) as lookup
     criterion but can be customised to use any field on the related model.
@@ -416,5 +416,5 @@ class ManyToManyWidget(Widget):
         })
 
     def render(self, value, obj=None):
-        ids = [smart_text(getattr(obj, self.field)) for obj in value.all()]
+        ids = [smart_str(getattr(obj, self.field)) for obj in value.all()]
         return self.separator.join(ids)
