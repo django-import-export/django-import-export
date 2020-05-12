@@ -563,10 +563,20 @@ class ExportActionMixin(ExportMixin):
                 self.get_export_filename(request, queryset, file_format),
             )
             return response
-    export_admin_action.short_description = _(
-        'Export selected %(verbose_name_plural)s')
 
-    actions = admin.ModelAdmin.actions + [export_admin_action]
+    def get_actions(self, request):
+        """Returns the dictionary of Admin actions after adding the
+        custom action to the existing dictionary of admin actions.
+        """
+        actions = super().get_actions(request)
+        actions.update(
+            export_admin_action=(
+                self.export_admin_action,
+                "export_admin_action",
+                _("Export selected %(verbose_name_plural)s"),
+            )
+        )
+        return actions
 
     @property
     def media(self):
