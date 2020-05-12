@@ -11,6 +11,7 @@ import django
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.core.management.color import no_style
+from django.core.paginator import Paginator
 from django.db import DEFAULT_DB_ALIAS, connections
 from django.db.models.fields.related import ForeignObjectRel
 from django.db.models.query import QuerySet
@@ -41,6 +42,7 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 USE_TRANSACTIONS = getattr(settings, 'IMPORT_EXPORT_USE_TRANSACTIONS', True)
+CHUNK_SIZE = getattr(settings, 'IMPORT_EXPORT_CHUNK_SIZE', 1)
 
 
 def get_related_model(field):
@@ -122,6 +124,12 @@ class ResourceOptions:
     The default value is False.
     """
 
+    chunk_size = None
+    """
+    Controls the chunk_size argument of Queryset.iterator or, 
+    if prefetch_related is used, the per_page attribute of Paginator.
+    """
+    
     skip_diff = False
     """
     Controls whether or not an instance should be diffed following import.
@@ -246,6 +254,12 @@ class Resource(metaclass=DeclarativeMetaclass):
             return USE_TRANSACTIONS
         else:
             return self._meta.use_transactions
+
+    def get_chunk_size(self):
+        if self._meta.chunk_size is None:
+            return CHUNK_SIZE
+        else:
+            return self._meta.chunk_size
 
     def get_fields(self, **kwargs):
         """
@@ -726,6 +740,23 @@ class Resource(metaclass=DeclarativeMetaclass):
     def get_user_visible_fields(self):
         return self.get_fields()
 
+    def iter_queryset(self, queryset):
+        if not isinstance(queryset, QuerySet):
+            yield from queryset
+        elif queryset._prefetch_related_lookups:
+            # Django's queryset.iterator ignores prefetch_related which might result
+            # in an excessive amount of db calls. Therefore we use pagination
+            # as a work-around
+            if not queryset.query.order_by:
+                # Paginator() throws a warning if there is no sorting
+                # attached to the queryset
+                queryset = queryset.order_by('pk')
+            paginator = Paginator(queryset, self.get_chunk_size())
+            for index in range(paginator.num_pages):
+                yield from paginator.get_page(index + 1)
+        else:
+            yield from queryset.iterator(chunk_size=self.get_chunk_size())
+
     def export(self, queryset=None, *args, **kwargs):
         """
         Exports a resource.
@@ -738,13 +769,7 @@ class Resource(metaclass=DeclarativeMetaclass):
         headers = self.get_export_headers()
         data = tablib.Dataset(headers=headers)
 
-        if isinstance(queryset, QuerySet):
-            # Iterate without the queryset cache, to avoid wasting memory when
-            # exporting large datasets.
-            iterable = queryset.iterator()
-        else:
-            iterable = queryset
-        for obj in iterable:
+        for obj in self.iter_queryset(queryset):
             data.append(self.export_resource(obj))
 
         self.after_export(queryset, data, *args, **kwargs)

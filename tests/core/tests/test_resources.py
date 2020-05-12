@@ -9,6 +9,7 @@ from unittest import mock, skip, skipUnless
 import django
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.core.paginator import Paginator
 from django.db import DatabaseError, IntegrityError
 from django.db.models import Count
 from django.test import TestCase, TransactionTestCase, skipUnlessDBFeature
@@ -312,12 +313,51 @@ class ModelResourceTest(TestCase):
                                    'categories', ])
 
     def test_export(self):
-        dataset = self.resource.export(Book.objects.all())
-        self.assertEqual(len(dataset), 1)
+        with self.assertNumQueries(2):
+            dataset = self.resource.export(Book.objects.all())
+            self.assertEqual(len(dataset), 1)
 
     def test_export_iterable(self):
-        dataset = self.resource.export(list(Book.objects.all()))
-        self.assertEqual(len(dataset), 1)
+        with self.assertNumQueries(2):
+            dataset = self.resource.export(list(Book.objects.all()))
+            self.assertEqual(len(dataset), 1)
+
+    def test_export_prefetch_related(self):
+        with self.assertNumQueries(3):
+            dataset = self.resource.export(Book.objects.prefetch_related("categories").all())
+            self.assertEqual(len(dataset), 1)
+
+    def test_iter_queryset(self):
+        qs = Book.objects.all()
+        with mock.patch.object(qs, "iterator") as mocked_method:
+            list(self.resource.iter_queryset(qs))
+            mocked_method.assert_called_once_with(chunk_size=1)
+
+    def test_iter_queryset_prefetch_unordered(self):
+        qsu = Book.objects.prefetch_related("categories").all()
+        qso = qsu.order_by('pk').all()
+        with mock.patch.object(qsu, "order_by") as mocked_method:
+            mocked_method.return_value = qso
+            list(self.resource.iter_queryset(qsu))
+            mocked_method.assert_called_once_with("pk")
+
+    def test_iter_queryset_prefetch_ordered(self):
+        qs = Book.objects.prefetch_related("categories").order_by('pk').all()
+        with mock.patch("import_export.resources.Paginator", autospec=True) as p:
+            p.return_value = Paginator(qs, 1)
+            list(self.resource.iter_queryset(qs))
+            p.assert_called_once_with(qs, 1)
+
+    def test_iter_queryset_prefetch_chunk_size(self):
+        class B(BookResource):
+            class Meta:
+                chunk_size = 1000
+        paginator = "import_export.resources.Paginator"
+        qs = Book.objects.prefetch_related("categories").order_by('pk').all()
+        with mock.patch(paginator, autospec=True) as mocked_obj:
+            mocked_obj.return_value = Paginator(qs, 1000)
+            list(B().iter_queryset(qs))
+            mocked_obj.assert_called_once_with(qs, 1000)
 
     def test_get_diff(self):
         diff = Diff(self.resource, self.book, False)

@@ -78,6 +78,11 @@ You can use the following directives in your settings file:
     permission code. Default is ``None`` which means everybody can execute
     export action.
 
+``IMPORT_EXPORT_CHUNK_SIZE``
+    Global setting to define the bulk size in which data is exported. Useful
+    if memory consumption is of the essence. Can also be set per ``Resource``
+
+
 Example app
 ===========
 
