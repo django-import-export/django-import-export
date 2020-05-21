@@ -155,6 +155,19 @@ class BookResource(resources.ModelResource):
         exclude = ('imported', )
 
 
+class BookResourceWithLineNumberLogger(BookResource):
+    def __init__(self, *args, **kwargs):
+        self.before_lines = []
+        self.after_lines = []
+        return super().__init__(*args, **kwargs)
+
+    def before_import_row(self,row, row_number=None, **kwargs):
+        self.before_lines.append(row_number)
+
+    def after_import_row(self, row, row_result, row_number=None, **kwargs):
+        self.after_lines.append(row_number)
+
+
 class CategoryResource(resources.ModelResource):
 
     class Meta:
@@ -397,6 +410,12 @@ class ModelResourceTest(TestCase):
         instance = Book.objects.get(pk=self.book.pk)
         self.assertEqual(instance.author_email, 'test@example.com')
         self.assertEqual(instance.price, Decimal("10.25"))
+
+    def test_importing_with_line_number_logging(self):
+        resource = BookResourceWithLineNumberLogger()
+        result = resource.import_data(self.dataset, raise_errors=True)
+        self.assertEqual(resource.before_lines, [1])
+        self.assertEqual(resource.after_lines, [1])
 
     def test_import_data_raises_field_specific_validation_errors(self):
         resource = AuthorResource()

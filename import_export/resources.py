@@ -495,19 +495,19 @@ class Resource(metaclass=DeclarativeMetaclass):
         """
         pass
 
-    def before_import_row(self, row, **kwargs):
+    def before_import_row(self, row, row_number=None, **kwargs):
         """
         Override to add additional logic. Does nothing by default.
         """
         pass
 
-    def after_import_row(self, row, row_result, **kwargs):
+    def after_import_row(self, row, row_result, row_number=None, **kwargs):
         """
         Override to add additional logic. Does nothing by default.
         """
         pass
 
-    def after_import_instance(self, instance, new, **kwargs):
+    def after_import_instance(self, instance, new, row_number=None, **kwargs):
         """
         Override to add additional logic. Does nothing by default.
         """
@@ -661,6 +661,7 @@ class Resource(metaclass=DeclarativeMetaclass):
                     instance_loader,
                     using_transactions=using_transactions,
                     dry_run=dry_run,
+                    row_number=i,
                     **kwargs
                 )
             result.increment_row_result_total(row_result)
