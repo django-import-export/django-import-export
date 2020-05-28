@@ -19,9 +19,26 @@ class BooleanWidgetTest(TestCase):
     def test_clean(self):
         self.assertTrue(self.widget.clean("1"))
         self.assertTrue(self.widget.clean(1))
+        self.assertTrue(self.widget.clean("TRUE"))
+        self.assertTrue(self.widget.clean("True"))
+        self.assertTrue(self.widget.clean("true"))
+
+        self.assertFalse(self.widget.clean("0"))
+        self.assertFalse(self.widget.clean(0))
+        self.assertFalse(self.widget.clean("FALSE"))
+        self.assertFalse(self.widget.clean("False"))
+        self.assertFalse(self.widget.clean("false"))
+
         self.assertEqual(self.widget.clean(""), None)
+        self.assertEqual(self.widget.clean("NONE"), None)
+        self.assertEqual(self.widget.clean("None"), None)
+        self.assertEqual(self.widget.clean("none"), None)
+        self.assertEqual(self.widget.clean("NULL"), None)
+        self.assertEqual(self.widget.clean("null"), None)
 
     def test_render(self):
+        self.assertEqual(self.widget.render(True), "1")
+        self.assertEqual(self.widget.render(False), "0")
         self.assertEqual(self.widget.render(None), "")
 
 

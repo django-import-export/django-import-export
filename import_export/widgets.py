@@ -100,17 +100,49 @@ class CharWidget(Widget):
 class BooleanWidget(Widget):
     """
     Widget for converting boolean fields.
+
+    The widget assumes that ``True``, ``False``, and ``None`` are all valid
+    values, as to match Django's `BooleanField
+    <https://docs.djangoproject.com/en/dev/ref/models/fields/#booleanfield>`_.
+    That said, whether the database/Django will actually accept NULL values
+    will depend on if you have set ``null=True`` on that Django field.
+
+    While the BooleanWidget is set up to accept as input common variations of
+    "True" and "False" (and "None"), you may need to munge less common values
+    to ``True``/``False``/``None``. Probably the easiest way to do this is to
+    override the :func:`~import_export.resources.Resource.before_import_row`
+    function of your Resource class. A short example::
+
+        from import_export import fields, resources, widgets
+
+        class BooleanExample(resources.ModelResource):
+            warn = fields.Field(widget=widget.BooleanWidget)
+
+            def before_row_import(self, row, **kwargs):
+                if "warn" in row.keys():
+                    # munge "warn" to "True"
+                    if row["warn"] in ["warn", "WARN"]:
+                        row["warn"] = True
+
+                return super().before_import_row(row, **kwargs)
     """
-    TRUE_VALUES = ["1", 1]
-    FALSE_VALUE = "0"
+    TRUE_VALUES = ["1", 1, True, "true", "TRUE", "True"]
+    FALSE_VALUES = ["0", 0, False, "false", "FALSE", "False"]
+    NULL_VALUES = ["", None, "null", "NULL", "none", "NONE", "None"]
 
     def render(self, value, obj=None):
-        if value is None:
+        """
+        On export, ``True`` is represented as ``1``, ``False`` as ``0``, and
+        ``None``/NULL as a empty string.
+
+        Note that these values are also used on the import confirmation view.
+        """
+        if value in self.NULL_VALUES:
             return ""
-        return self.TRUE_VALUES[0] if value else self.FALSE_VALUE
+        return self.TRUE_VALUES[0] if value else self.FALSE_VALUES[0]
 
     def clean(self, value, row=None, *args, **kwargs):
-        if value == "":
+        if value in self.NULL_VALUES:
             return None
         return True if value in self.TRUE_VALUES else False
 

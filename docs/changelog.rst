@@ -5,6 +5,8 @@ Changelog
 2.1.1 (unreleased)
 ------------------
 
+- Deal with importing a BooleanField that actually has `True`, `False`, and
+  `None` values. (#1071)
 - add row_number parameter to before_import_row(), after_import_instance() and after_import_row()
 
 
