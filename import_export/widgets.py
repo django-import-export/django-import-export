@@ -85,7 +85,7 @@ class DecimalWidget(NumberWidget):
     def clean(self, value, row=None, *args, **kwargs):
         if self.is_empty(value):
             return None
-        return Decimal(value)
+        return Decimal(force_str(value))
 
 
 class CharWidget(Widget):
@@ -277,7 +277,7 @@ class DurationWidget(Widget):
             raise ValueError("Enter a valid duration.")
 
     def render(self, value, obj=None):
-        if not value:
+        if value is None:
             return ""
         return str(value)
 
@@ -327,7 +327,7 @@ class JSONWidget(Widget):
 class ForeignKeyWidget(Widget):
     """
     Widget for a ``ForeignKey`` field which looks up a related model using
-    "natural keys" in both export an import.
+    "natural keys" in both export and import.
 
     The lookup field defaults to using the primary key (``pk``) as lookup
     criterion but can be customised to use any field on the related model.

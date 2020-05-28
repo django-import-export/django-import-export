@@ -2,11 +2,39 @@ Changelog
 =========
 
 
-2.0.2 (unreleased)
+2.1.1 (unreleased)
 ------------------
 
 - Deal with importing a BooleanField that actually has `True`, `False`, and
   `None` values. (#1071)
+- add row_number parameter to before_import_row(), after_import_instance() and after_import_row()
+
+
+2.1.0 (2020-05-02)
+------------------
+
+- Fix DurationWidget handling of zero value (#1117)
+
+- Make import diff view only show headers for user visible fields (#1109)
+
+- Make confirm_form accessible in get_import_resource_kwargs and get_import_data_kwargs (#994, #1108)
+
+- Initialize Decimal with text value, fix #1035 (#1039)
+
+- Adds meta flag 'skip_diff' to enable skipping of diff operations (#1045)
+
+- Update docs (#1097, #1114, #1122, #969, #1083, #1093)
+
+
+2.0.2 (2020-02-16)
+------------------
+
+- Add support for tablib >= 1.0 (#1061)
+
+- Add ability to install a subset of tablib supported formats and save some
+  automatic dependency installations (needs tablib >= 1.0)
+
+- Use column_name when checking row for fields (#1056)
 
 2.0.1 (2020-01-15)
 ------------------
@@ -20,85 +48,9 @@ Changelog
 2.0 (2019-12-03)
 ----------------
 
-- [django2.2] Add real support of Django 2.2 before 3.0 is out (#1021)
-
-- fix: DateTimeWidget not timezone sensitive (#813) (#943)
-
-- Move actions definition to ExportActionMixin (#992)
-
-- Add language support: Turkish (#1013)
-
-- Fix exception import for Django 3 (#1010)
-
-- Fix potential header / row column mismatches for invalid rows in… (#995)
-
-- Assume user is importing new data if id fields not included (#996)
-
-- Fix bug with spaces in export filename, pass request and queryset (#980)
-
-- Simplify Django version in TravisCI (#970)
-
-- Merge pull request #966 from andrewgy8/bump-stale-bot-time
-
-- Align error in rtl mode (#954)
-
-- Add dutch translations (#951, #1024)
-
-- Add 3.8-dev to travis ci (#926)
-
-- Fix style in getting_started docs (#952)
-
-- Update documentation to show that mixins must be referenced before admin.ModelAdmin. (#946)
-
-- JSONWidget updated with null value fix (#928)
-
-- Import rows have background color (#929)
-
-- Use resource get_queryset in ModelInstanceLoader (#920)
-
-- Simplify coerce to text type (#887)
-
-- More flexibility in ConfirmImportForm, forms and resource kwargs  (#893)
-
-- Add JSON B type field mapping (#904)
-
-- Scale back stale bot's time-to-stale (#918)
-
-- test: explicitly order qs in ManyToManyWidget
-
-- Add mysql to travis
-
-- Expand doc strings to include Mixin superclasses (#914)
-
-- Remove python2 compatibility decorator
-
-- chore: fix Imports are incorrectly sorted.
-
-- Use global env vars for postgres
-
-- Used non-fixed id for test. Database is not torn down after each run, which means that the id is incrementing
-
-- Fix warning from assertEquals
-
-- Add psycopg2 as postgres driver to test requirements
-
-- Add django version to the matrix
-
-- Add matrix for sqlite and postgres testing
-
-- Correct mistaken assertTrue() -> assertEquals()
-
-- chore: add package long_description
-
-- chore: add python wheels to dev requirements (#890)
-
-- Add github directory with PR and issue templates
-
-- Isort all the things
-
-- Use coveralls master branch tag in the readme
-
-- Remove support for Django < 2.0 and Python < 3.5
+- Removed support for Django < 2.0
+- Removed support for Python < 3.5
+- feat: Support for Postgres JSONb Field (#904)
 
 1.2.0 (2019-01-10)
 ------------------

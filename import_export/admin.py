@@ -154,10 +154,10 @@ class ImportMixin(ImportExportMixinBase):
 
     def process_dataset(self, dataset, confirm_form, request, *args, **kwargs):
 
-        res_kwargs = self.get_import_resource_kwargs(request, *args, **kwargs)
+        res_kwargs = self.get_import_resource_kwargs(request, form=confirm_form, *args, **kwargs)
         resource = self.get_import_resource_class()(**res_kwargs)
 
-        imp_kwargs = self.get_import_data_kwargs(request, *args, **kwargs)
+        imp_kwargs = self.get_import_data_kwargs(request, form=confirm_form, *args, **kwargs)
         return resource.import_data(dataset,
                                     dry_run=False,
                                     raise_errors=True,

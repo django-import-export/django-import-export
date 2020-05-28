@@ -1,27 +1,5 @@
 import tablib
-import warnings
 from importlib import import_module
-
-try:
-    import xlrd
-    XLS_IMPORT = True
-except ImportError:
-    warnings.warn(
-        "'xls' support not available, please install the xlrd package.",
-        ImportWarning
-    )
-    XLS_IMPORT = False
-
-
-try:
-    import openpyxl
-    XLSX_IMPORT = True
-except ImportError:
-    warnings.warn(
-        "'xlsx' support not available, please install the openpyxl package.",
-        ImportWarning
-    )
-    XLSX_IMPORT = False
 
 
 class Format:
@@ -63,6 +41,10 @@ class Format:
         # https://www.iana.org/assignments/media-types/media-types.xhtml
         return 'application/octet-stream'
 
+    @classmethod
+    def is_available(cls):
+        return True
+
     def can_import(self):
         return False
 
@@ -81,10 +63,19 @@ class TablibFormat(Format):
         try:
             # Available since tablib 1.0
             from tablib.formats import registry
-            key = self.TABLIB_MODULE.split('.')[-1].replace('_', '')
-            return registry.get_format(key)
         except ImportError:
             return import_module(self.TABLIB_MODULE)
+        else:
+            key = self.TABLIB_MODULE.split('.')[-1].replace('_', '')
+            return registry.get_format(key)
+
+    @classmethod
+    def is_available(cls):
+        try:
+            cls().get_format()
+        except (tablib.core.UnsupportedFormat, ImportError):
+            return False
+        return True
 
     def get_title(self):
         return self.get_format().title
@@ -157,14 +148,11 @@ class XLS(TablibFormat):
     TABLIB_MODULE = 'tablib.formats._xls'
     CONTENT_TYPE = 'application/vnd.ms-excel'
 
-    def can_import(self):
-        return XLS_IMPORT
-
     def create_dataset(self, in_stream):
         """
         Create dataset from first sheet.
         """
-        assert XLS_IMPORT
+        import xlrd
         xls_book = xlrd.open_workbook(file_contents=in_stream)
         dataset = tablib.Dataset()
         sheet = xls_book.sheets()[0]
@@ -179,15 +167,12 @@ class XLSX(TablibFormat):
     TABLIB_MODULE = 'tablib.formats._xlsx'
     CONTENT_TYPE = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 
-    def can_import(self):
-        return XLSX_IMPORT
-
     def create_dataset(self, in_stream):
         """
         Create dataset from first sheet.
         """
-        assert XLSX_IMPORT
         from io import BytesIO
+        import openpyxl
         xlsx_book = openpyxl.load_workbook(BytesIO(in_stream), read_only=True)
 
         dataset = tablib.Dataset()
@@ -205,7 +190,7 @@ class XLSX(TablibFormat):
 
 #: These are the default formats for import and export. Whether they can be
 #: used or not is depending on their implementation in the tablib library.
-DEFAULT_FORMATS = (
+DEFAULT_FORMATS = [fmt for fmt in (
     CSV,
     XLS,
     XLSX,
@@ -214,4 +199,4 @@ DEFAULT_FORMATS = (
     JSON,
     YAML,
     HTML,
-)
+) if fmt.is_available()]

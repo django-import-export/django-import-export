@@ -17,6 +17,12 @@ django-import-export
     :target: https://django-import-export.readthedocs.io/en/stable/
     :alt: Documentation
 
+.. image:: https://img.shields.io/pypi/pyversions/django-import-export
+    :alt: PyPI - Python Version
+
+.. image:: https://img.shields.io/pypi/djversions/django-import-export
+    :alt: PyPI - Django Version
+
 django-import-export is a Django application and library for importing
 and exporting data with included admin integration.
 
@@ -41,26 +47,16 @@ Features:
 * Free software: BSD license
 * PyPI: https://pypi.org/project/django-import-export/
 
-Requirements
-------------
-
-* Python 3.5+
-* Django 2.0+
-* tablib 0.14+
-
-django-import-export requires Python 3.5 and Django 2.0 or newer. See the 1.x
-branch for older Python and Django versions where fixes for security issues and
-critical errors continue to be released for all officially supported Django
-versions.
-
 Example app
 -----------
 
-::
+To run the demo app::
 
     cd tests
+    ./manage.py makemigrations
     ./manage.py migrate
     ./manage.py createsuperuser
+    ./manage.py loaddata category book
     ./manage.py runserver
 
 Contribute

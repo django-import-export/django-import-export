@@ -9,6 +9,7 @@ from unittest import mock, skip, skipUnless
 import django
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.core.paginator import Paginator
 from django.db import DatabaseError, IntegrityError
 from django.db.models import Count
 from django.test import TestCase, TransactionTestCase, skipUnlessDBFeature
@@ -154,6 +155,19 @@ class BookResource(resources.ModelResource):
         exclude = ('imported', )
 
 
+class BookResourceWithLineNumberLogger(BookResource):
+    def __init__(self, *args, **kwargs):
+        self.before_lines = []
+        self.after_lines = []
+        return super().__init__(*args, **kwargs)
+
+    def before_import_row(self,row, row_number=None, **kwargs):
+        self.before_lines.append(row_number)
+
+    def after_import_row(self, row, row_result, row_number=None, **kwargs):
+        self.after_lines.append(row_number)
+
+
 class CategoryResource(resources.ModelResource):
 
     class Meta:
@@ -259,6 +273,23 @@ class ModelResourceTest(TestCase):
         instance = resource.get_instance(instance_loader, self.dataset.dict[0])
         self.assertEqual(instance, self.book)
 
+    def test_get_instance_import_id_fields_with_custom_column_name(self):
+        class BookResource(resources.ModelResource):
+            name = fields.Field(attribute='name', column_name='book_name', widget=widgets.CharWidget())
+
+            class Meta:
+                model = Book
+                import_id_fields = ['name']
+
+        dataset = tablib.Dataset(headers=['id', 'book_name', 'author_email', 'price'])
+        row = [self.book.pk, 'Some book', 'test@example.com', "10.25"]
+        dataset.append(row)
+
+        resource = BookResource()
+        instance_loader = resource._meta.instance_loader_class(resource)
+        instance = resource.get_instance(instance_loader, dataset.dict[0])
+        self.assertEqual(instance, self.book)
+
     def test_get_instance_usually_defers_to_instance_loader(self):
         self.resource._meta.import_id_fields = ['id']
 
@@ -295,12 +326,51 @@ class ModelResourceTest(TestCase):
                                    'categories', ])
 
     def test_export(self):
-        dataset = self.resource.export(Book.objects.all())
-        self.assertEqual(len(dataset), 1)
+        with self.assertNumQueries(2):
+            dataset = self.resource.export(Book.objects.all())
+            self.assertEqual(len(dataset), 1)
 
     def test_export_iterable(self):
-        dataset = self.resource.export(list(Book.objects.all()))
-        self.assertEqual(len(dataset), 1)
+        with self.assertNumQueries(2):
+            dataset = self.resource.export(list(Book.objects.all()))
+            self.assertEqual(len(dataset), 1)
+
+    def test_export_prefetch_related(self):
+        with self.assertNumQueries(3):
+            dataset = self.resource.export(Book.objects.prefetch_related("categories").all())
+            self.assertEqual(len(dataset), 1)
+
+    def test_iter_queryset(self):
+        qs = Book.objects.all()
+        with mock.patch.object(qs, "iterator") as mocked_method:
+            list(self.resource.iter_queryset(qs))
+            mocked_method.assert_called_once_with(chunk_size=1)
+
+    def test_iter_queryset_prefetch_unordered(self):
+        qsu = Book.objects.prefetch_related("categories").all()
+        qso = qsu.order_by('pk').all()
+        with mock.patch.object(qsu, "order_by") as mocked_method:
+            mocked_method.return_value = qso
+            list(self.resource.iter_queryset(qsu))
+            mocked_method.assert_called_once_with("pk")
+
+    def test_iter_queryset_prefetch_ordered(self):
+        qs = Book.objects.prefetch_related("categories").order_by('pk').all()
+        with mock.patch("import_export.resources.Paginator", autospec=True) as p:
+            p.return_value = Paginator(qs, 1)
+            list(self.resource.iter_queryset(qs))
+            p.assert_called_once_with(qs, 1)
+
+    def test_iter_queryset_prefetch_chunk_size(self):
+        class B(BookResource):
+            class Meta:
+                chunk_size = 1000
+        paginator = "import_export.resources.Paginator"
+        qs = Book.objects.prefetch_related("categories").order_by('pk').all()
+        with mock.patch(paginator, autospec=True) as mocked_obj:
+            mocked_obj.return_value = Paginator(qs, 1000)
+            list(B().iter_queryset(qs))
+            mocked_obj.assert_called_once_with(qs, 1000)
 
     def test_get_diff(self):
         diff = Diff(self.resource, self.book, False)
@@ -340,6 +410,12 @@ class ModelResourceTest(TestCase):
         instance = Book.objects.get(pk=self.book.pk)
         self.assertEqual(instance.author_email, 'test@example.com')
         self.assertEqual(instance.price, Decimal("10.25"))
+
+    def test_importing_with_line_number_logging(self):
+        resource = BookResourceWithLineNumberLogger()
+        result = resource.import_data(self.dataset, raise_errors=True)
+        self.assertEqual(resource.before_lines, [1])
+        self.assertEqual(resource.after_lines, [1])
 
     def test_import_data_raises_field_specific_validation_errors(self):
         resource = AuthorResource()
@@ -1188,3 +1264,82 @@ class ManyRelatedManagerDiffTest(TestCase):
         diff = result.rows[0].diff
         self.assertEqual(diff[export_headers.index("categories")],
                          expected_value)
+
+
+@mock.patch("import_export.resources.Diff", spec=True)
+class SkipDiffTest(TestCase):
+    """
+    Tests that the meta attribute 'skip_diff' means that no diff operations are called.
+    'copy.deepcopy' cannot be patched at class level because it causes interferes with
+    ``resources.Resource.__init__()``.
+    """
+    def setUp(self):
+        class _BookResource(resources.ModelResource):
+
+            class Meta:
+                model = Book
+                skip_diff = True
+
+        self.resource = _BookResource()
+        self.dataset = tablib.Dataset(headers=['id', 'name', 'birthday'])
+        self.dataset.append(['', 'A.A.Milne', '1882test-01-18'])
+
+    def test_skip_diff(self, mock_diff):
+        with mock.patch("copy.deepcopy") as mock_deep_copy:
+            self.resource.import_data(self.dataset)
+            mock_diff.return_value.compare_with.assert_not_called()
+            mock_diff.return_value.as_html.assert_not_called()
+            mock_deep_copy.assert_not_called()
+
+    def test_skip_diff_for_delete_new_resource(self, mock_diff):
+        class BookResource(resources.ModelResource):
+
+            class Meta:
+                model = Book
+                skip_diff = True
+
+            def for_delete(self, row, instance):
+                return True
+
+        resource = BookResource()
+        with mock.patch("copy.deepcopy") as mock_deep_copy:
+            resource.import_data(self.dataset)
+            mock_diff.return_value.compare_with.assert_not_called()
+            mock_diff.return_value.as_html.assert_not_called()
+            mock_deep_copy.assert_not_called()
+
+    def test_skip_diff_for_delete_existing_resource(self, mock_diff):
+        book = Book.objects.create()
+        class BookResource(resources.ModelResource):
+
+            class Meta:
+                model = Book
+                skip_diff = True
+
+            def get_or_init_instance(self, instance_loader, row):
+                return book, False
+
+            def for_delete(self, row, instance):
+                return True
+
+        resource = BookResource()
+
+        with mock.patch("copy.deepcopy") as mock_deep_copy:
+            resource.import_data(self.dataset, dry_run=True)
+            mock_diff.return_value.compare_with.assert_not_called()
+            mock_diff.return_value.as_html.assert_not_called()
+            mock_deep_copy.assert_not_called()
+
+    def test_skip_row_returns_false_when_skip_diff_is_true(self, mock_diff):
+        class BookResource(resources.ModelResource):
+
+            class Meta:
+                model = Book
+                skip_unchanged = True
+                skip_diff = True
+
+        resource = BookResource()
+
+        with mock.patch('import_export.resources.Resource.get_import_fields') as mock_get_import_fields:
+            resource.import_data(self.dataset, dry_run=True)
+            self.assertEqual(2, mock_get_import_fields.call_count)

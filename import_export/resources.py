@@ -11,6 +11,7 @@ import django
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.core.management.color import no_style
+from django.core.paginator import Paginator
 from django.db import DEFAULT_DB_ALIAS, connections
 from django.db.models.fields.related import ForeignObjectRel
 from django.db.models.query import QuerySet
@@ -41,6 +42,7 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 USE_TRANSACTIONS = getattr(settings, 'IMPORT_EXPORT_USE_TRANSACTIONS', True)
+CHUNK_SIZE = getattr(settings, 'IMPORT_EXPORT_CHUNK_SIZE', 1)
 
 
 def get_related_model(field):
@@ -119,6 +121,23 @@ class ResourceOptions:
     """
     Controls whether ``instance.full_clean()`` is called during the import
     process to identify potential validation errors for each (non skipped) row.
+    The default value is False.
+    """
+
+    chunk_size = None
+    """
+    Controls the chunk_size argument of Queryset.iterator or, 
+    if prefetch_related is used, the per_page attribute of Paginator.
+    """
+    
+    skip_diff = False
+    """
+    Controls whether or not an instance should be diffed following import.
+    By default, an instance is copied prior to insert, update or delete.
+    After each row is processed, the instance's copy is diffed against the original, and the value
+    stored in each ``RowResult``.
+    If diffing is not required, then disabling the diff operation by setting this value to ``True``
+    improves performance, because the copy and comparison operations are skipped for each row.
     The default value is False.
     """
 
@@ -236,6 +255,12 @@ class Resource(metaclass=DeclarativeMetaclass):
         else:
             return self._meta.use_transactions
 
+    def get_chunk_size(self):
+        if self._meta.chunk_size is None:
+            return CHUNK_SIZE
+        else:
+            return self._meta.chunk_size
+
     def get_fields(self, **kwargs):
         """
         Returns fields sorted according to
@@ -254,6 +279,10 @@ class Resource(metaclass=DeclarativeMetaclass):
             field, self.__class__))
 
     def init_instance(self, row=None):
+        """
+        Initializes an object. Implemented in
+        :meth:`import_export.resources.ModelResource.init_instance`.
+        """
         raise NotImplementedError()
 
     def get_instance(self, instance_loader, row):
@@ -262,8 +291,11 @@ class Resource(metaclass=DeclarativeMetaclass):
         the :doc:`InstanceLoader <api_instance_loaders>`. Otherwise,
         returns `None`.
         """
-        for field_name in self.get_import_id_fields():
-            if field_name not in row:
+        import_id_fields = [
+            self.fields[f] for f in self.get_import_id_fields()
+        ]
+        for field in import_id_fields:
+            if field.column_name not in row:
                 return
         return instance_loader.get_instance(row)
 
@@ -415,7 +447,12 @@ class Resource(metaclass=DeclarativeMetaclass):
         """
         Returns ``True`` if ``row`` importing should be skipped.
 
-        Default implementation returns ``False`` unless skip_unchanged == True.
+        Default implementation returns ``False`` unless skip_unchanged == True,
+        or skip_diff == True.
+
+        If skip_diff is True, then no comparisons can be made because ``original``
+        will be None.
+
         Override this method to handle skipping rows meeting certain
         conditions.
 
@@ -427,7 +464,7 @@ class Resource(metaclass=DeclarativeMetaclass):
                     return super(YourResource, self).skip_row(instance, original)
 
         """
-        if not self._meta.skip_unchanged:
+        if not self._meta.skip_unchanged or self._meta.skip_diff:
             return False
         for field in self.get_import_fields():
             try:
@@ -444,7 +481,7 @@ class Resource(metaclass=DeclarativeMetaclass):
         """
         Diff representation headers.
         """
-        return self.get_export_headers()
+        return self.get_user_visible_headers()
 
     def before_import(self, dataset, using_transactions, dry_run, **kwargs):
         """
@@ -458,19 +495,19 @@ class Resource(metaclass=DeclarativeMetaclass):
         """
         pass
 
-    def before_import_row(self, row, **kwargs):
+    def before_import_row(self, row, row_number=None, **kwargs):
         """
         Override to add additional logic. Does nothing by default.
         """
         pass
 
-    def after_import_row(self, row, row_result, **kwargs):
+    def after_import_row(self, row, row_result, row_number=None, **kwargs):
         """
         Override to add additional logic. Does nothing by default.
         """
         pass
 
-    def after_import_instance(self, instance, new, **kwargs):
+    def after_import_instance(self, instance, new, row_number=None, **kwargs):
         """
         Override to add additional logic. Does nothing by default.
         """
@@ -491,7 +528,9 @@ class Resource(metaclass=DeclarativeMetaclass):
         :param dry_run: If ``dry_run`` is set, or error occurs, transaction
             will be rolled back.
         """
+        skip_diff = self._meta.skip_diff
         row_result = self.get_row_result_class()()
+        original = None
         try:
             self.before_import_row(row, **kwargs)
             instance, new = self.get_or_init_instance(instance_loader, row)
@@ -501,16 +540,19 @@ class Resource(metaclass=DeclarativeMetaclass):
             else:
                 row_result.import_type = RowResult.IMPORT_TYPE_UPDATE
             row_result.new_record = new
-            original = deepcopy(instance)
-            diff = self.get_diff_class()(self, original, new)
+            if not skip_diff:
+                original = deepcopy(instance)
+                diff = self.get_diff_class()(self, original, new)
             if self.for_delete(row, instance):
                 if new:
                     row_result.import_type = RowResult.IMPORT_TYPE_SKIP
-                    diff.compare_with(self, None, dry_run)
+                    if not skip_diff:
+                        diff.compare_with(self, None, dry_run)
                 else:
                     row_result.import_type = RowResult.IMPORT_TYPE_DELETE
                     self.delete_instance(instance, using_transactions, dry_run)
-                    diff.compare_with(self, None, dry_run)
+                    if not skip_diff:
+                        diff.compare_with(self, None, dry_run)
             else:
                 import_validation_errors = {}
                 try:
@@ -529,9 +571,11 @@ class Resource(metaclass=DeclarativeMetaclass):
                     # Add object info to RowResult for LogEntry
                     row_result.object_id = instance.pk
                     row_result.object_repr = force_str(instance)
-                diff.compare_with(self, instance, dry_run)
+                if not skip_diff:
+                    diff.compare_with(self, instance, dry_run)
 
-            row_result.diff = diff.as_html()
+            if not skip_diff:
+                row_result.diff = diff.as_html()
             self.after_import_row(row, row_result, **kwargs)
 
         except ValidationError as e:
@@ -617,6 +661,7 @@ class Resource(metaclass=DeclarativeMetaclass):
                     instance_loader,
                     using_transactions=using_transactions,
                     dry_run=dry_run,
+                    row_number=i,
                     **kwargs
                 )
             result.increment_row_result_total(row_result)
@@ -688,8 +733,30 @@ class Resource(metaclass=DeclarativeMetaclass):
             force_str(field.column_name) for field in self.get_export_fields()]
         return headers
 
+    def get_user_visible_headers(self):
+        headers = [
+            force_str(field.column_name) for field in self.get_user_visible_fields()]
+        return headers
+
     def get_user_visible_fields(self):
         return self.get_fields()
+
+    def iter_queryset(self, queryset):
+        if not isinstance(queryset, QuerySet):
+            yield from queryset
+        elif queryset._prefetch_related_lookups:
+            # Django's queryset.iterator ignores prefetch_related which might result
+            # in an excessive amount of db calls. Therefore we use pagination
+            # as a work-around
+            if not queryset.query.order_by:
+                # Paginator() throws a warning if there is no sorting
+                # attached to the queryset
+                queryset = queryset.order_by('pk')
+            paginator = Paginator(queryset, self.get_chunk_size())
+            for index in range(paginator.num_pages):
+                yield from paginator.get_page(index + 1)
+        else:
+            yield from queryset.iterator(chunk_size=self.get_chunk_size())
 
     def export(self, queryset=None, *args, **kwargs):
         """
@@ -703,13 +770,7 @@ class Resource(metaclass=DeclarativeMetaclass):
         headers = self.get_export_headers()
         data = tablib.Dataset(headers=headers)
 
-        if isinstance(queryset, QuerySet):
-            # Iterate without the queryset cache, to avoid wasting memory when
-            # exporting large datasets.
-            iterable = queryset.iterator()
-        else:
-            iterable = queryset
-        for obj in iterable:
+        for obj in self.iter_queryset(queryset):
             data.append(self.export_resource(obj))
 
         self.after_export(queryset, data, *args, **kwargs)
