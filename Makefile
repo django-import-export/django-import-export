@@ -1,7 +1,7 @@
 .PHONY: clean-pyc clean-build release docs help
 .PHONY: lint test coverage test-codecov
 .DEFAULT_GOAL := help
-RUN_TEST_COMMAND=`PYTHONPATH=".:tests:$PYTHONPATH" django-admin.py test core --settings=settings`
+RUN_TEST_COMMAND=PYTHONPATH=".:tests:${PYTHONPATH}" django-admin.py test core --settings=settings
 help:
 	@grep '^[a-zA-Z]' $(MAKEFILE_LIST) | sort | awk -F ':.*?## ' 'NF==2 {printf "\033[36m  %-25s\033[0m %s\n", $$1, $$2}'
 
@@ -58,4 +58,3 @@ install-requirements: install-base-requirements install-test-requirements instal
 
 build-html-doc: ## builds the project documentation in HTML format
 	DJANGO_SETTINGS_MODULE=tests.settings make html -C docs
-	open docs/_build/html/index.html

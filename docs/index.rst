@@ -30,6 +30,7 @@ exporting data with included admin integration.
    installation
    getting_started
    import_workflow
+   bulk_import
    celery
    changelog
 
