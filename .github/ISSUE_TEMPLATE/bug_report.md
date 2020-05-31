@@ -17,6 +17,11 @@ Steps to reproduce the behavior:
 3. Scroll down to '....'
 4. See error
 
+**Versions (please complete the following information):**
+ - Django Import Export: [e.g. 1.2, 2.0]
+ - Python [e.g. 3.6, 3.7]
+ - Django [e.g. 1.2, 2.0]
+
 **Expected behavior**
 A clear and concise description of what you expected to happen.
 
