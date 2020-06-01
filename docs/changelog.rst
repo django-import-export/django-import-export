@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-2.1.1 (unreleased)
+2.2.0 (2020-06-01)
 ------------------
 
 - Deal with importing a BooleanField that actually has `True`, `False`, and
