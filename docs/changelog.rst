@@ -7,8 +7,8 @@ Changelog
 
 - Deal with importing a BooleanField that actually has `True`, `False`, and
   `None` values. (#1071)
-- add row_number parameter to before_import_row(), after_import_instance() and after_import_row()
-
+- Add row_number parameter to before_import_row, after_import_row and after_import_instance (#1040)
+- Paginate queryset if Queryset.prefetch_related is used (#1050)
 
 2.1.0 (2020-05-02)
 ------------------
