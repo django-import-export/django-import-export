@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-05-09 20:10+0200\n"
+"POT-Creation-Date: 2020-06-04 09:27+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,40 +18,40 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: admin.py:193
+#: admin.py:194
 #, python-format
 msgid "%s through import_export"
 msgstr "%s door import_export"
 
-#: admin.py:199
+#: admin.py:200
 msgid "Import finished, with {} new and {} updated {}."
 msgstr "Import is klaar met {} nieuwe en {} geupdate {}."
 
-#: admin.py:297
+#: admin.py:298
 #, python-format
 msgid "<h1>Imported file has a wrong encoding: %s</h1>"
 msgstr "<h1>Het geimporteerde bestand heeft de verkeerde encoding: %s</h1>"
 
-#: admin.py:299
+#: admin.py:300
 #, python-format
 msgid "<h1>%s encountered while trying to read file: %s</h1>"
 msgstr "<h1>%s tegengekomen tijden het lezen van het bestand: %s</h1> "
 
-#: admin.py:330 templates/admin/import_export/change_list_import_item.html:5
+#: admin.py:331 templates/admin/import_export/change_list_import_item.html:5
 #: templates/admin/import_export/import.html:10
 msgid "Import"
 msgstr "Importeren"
 
-#: admin.py:495 templates/admin/import_export/change_list_export_item.html:5
+#: admin.py:496 templates/admin/import_export/change_list_export_item.html:5
 #: templates/admin/import_export/export.html:7
 msgid "Export"
 msgstr "Exporteren"
 
-#: admin.py:553
+#: admin.py:554
 msgid "You must select an export format."
 msgstr "U moet een export formaat kiezen."
 
-#: admin.py:566
+#: admin.py:567
 #, python-format
 msgid "Export selected %(verbose_name_plural)s"
 msgstr "Exporteer geselecteerde %(verbose_name_plural)s"
@@ -77,7 +77,9 @@ msgstr "Indienen"
 msgid ""
 "Below is a preview of data to be imported. If you are satisfied with the "
 "results, click 'Confirm import'"
-msgstr "Hieronder is een voorvertoning van de data die geïmporteerd zal worden. Als u tevreden bent met het resultaat, klik dan op 'Accepteer de import'."
+msgstr ""
+"Hieronder is een voorvertoning van de data die geïmporteerd zal worden. Als "
+"u tevreden bent met het resultaat, klik dan op 'Accepteer de import'."
 
 #: templates/admin/import_export/import.html:23
 msgid "Confirm import"
@@ -104,7 +106,9 @@ msgstr "Sommige regels zijn niet goedgekeurd"
 msgid ""
 "Please correct these errors in your data where possible, then reupload it "
 "using the form above."
-msgstr "Verander alstublieft de volgende fouten in uw data waar mogelijk. Upload het bestand daarna nogmaals met het veld hierboven."
+msgstr ""
+"Verander alstublieft de volgende fouten in uw data waar mogelijk. Upload het "
+"bestand daarna nogmaals met het veld hierboven."
 
 #: templates/admin/import_export/import.html:89
 msgid "Row"
