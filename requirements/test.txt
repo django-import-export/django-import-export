@@ -1,3 +1,4 @@
 isort
 psycopg2
 mysqlclient
+coveralls
