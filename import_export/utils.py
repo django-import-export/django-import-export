@@ -23,3 +23,13 @@ class atomic_if_using_transaction:
     def __exit__(self, *args):
         if self.using_transactions:
             self.context_manager.__exit__(*args)
+
+
+def original(method):
+    """
+    A decorator used to mark some class methods as 'orignal',
+    making it easy to detect whether they have been overridden
+    by a subclass. Useful for method deprecation.
+    """
+    method.is_original = True
+    return method
