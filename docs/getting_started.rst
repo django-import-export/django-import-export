@@ -137,6 +137,12 @@ the import preview page::
             report_skipped = False
             fields = ('id', 'name', 'price',)
 
+To further customize the resources, you might like to consider overriding the following
+:class:`~import_export.admin.ImportMixin` methods:
+:meth:`~import_export.admin.ImportMixin.get_resource_kwargs`,
+:meth:`~import_export.admin.ImportMixin.get_resource_class`,
+:meth:`~import_export.admin.ImportMixin.get_export_resource_kwargs`,
+
 .. seealso::
 
     :doc:`/api_resources`
@@ -396,10 +402,10 @@ example, to add an additional field in the import form, subclass and extend the
 consider :class:`~import_export.forms.ConfirmImportForm` as importing is a
 two-step process).
 
-To use the customized form(s), overload
-:class:`~import_export.admin.ImportMixin` respective methods, i.e.
-:meth:`~import_export.admin.ImportMixin.get_import_form`, and also
-:meth:`~import_export.admin.ImportMixin.get_confirm_import_form` if need be.
+To use your customized form(s), change the respective attributes on your
+``ModelAdmin`` class:
+* :attr:`~import_export.admin.ImportMixin.import_form_class`
+* :attr:`~import_export.admin.ImportMixin.confirm_form_class`.
 
 For example, imagine you want to import books for a specific author. You can
 extend the import forms to include ``author`` field to select the author from.
@@ -422,33 +428,26 @@ Customize ``ModelAdmin``::
 
     class CustomBookAdmin(ImportMixin, admin.ModelAdmin):
         resource_class = BookResource
+        import_form_class = CustomImportForm
+        confirm_form_class = CustomConfirmImportForm
 
-        def get_import_form(self):
-            return CustomImportForm
-
-        def get_confirm_import_form(self):
-            return CustomConfirmImportForm
-
-        def get_form_kwargs(self, form, *args, **kwargs):
-            # pass on `author` to the kwargs for the custom confirm form
-            if isinstance(form, CustomImportForm):
-                if form.is_valid():
-                    author = form.cleaned_data['author']
-                    kwargs.update({'author': author.id})
-            return kwargs
-
+        def get_confirm_form_initial(self, request, form_class, import_form=None, **kwargs):
+            intial = super().get_confirm_form_initial(request, form_class, import_form, **kwargs)
+            # Pass on the `author` value from the import form to
+            # the confirm form (if provided)
+            if import_form:
+                initial['author'] = import_form.cleaned_data['author']
+            return initial
 
     admin.site.register(Book, CustomBookAdmin)
 
-To further customize admin imports, consider modifying the following
+To further customize the import forms, you might like to consider overriding the following
 :class:`~import_export.admin.ImportMixin` methods:
-:meth:`~import_export.admin.ImportMixin.get_form_kwargs`,
-:meth:`~import_export.admin.ImportMixin.get_import_resource_kwargs`,
-:meth:`~import_export.admin.ImportMixin.get_import_data_kwargs`.
-
-Using the above methods it is possible to customize import form initialization
-as well as importing customizations.
-
+:meth:`~import_export.admin.ImportMixin.get_import_form_class`,
+:meth:`~import_export.admin.ImportMixin.get_import_form_kwargs`,
+:meth:`~import_export.admin.ImportMixin.get_import_form_initial`,
+:meth:`~import_export.admin.ImportMixin.get_confirm_form_class`,
+:meth:`~import_export.admin.ImportMixin.get_confirm_form_kwargs`,
 
 .. seealso::
 
