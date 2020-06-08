@@ -139,7 +139,7 @@ class ImportMixin(ImportExportMixinBase):
         if not self.has_import_permission(request):
             raise PermissionDenied
 
-        form = self._get_confirm_form(request)
+        form = self.create_confirm_form(request)
         if form.is_valid():
             import_formats = self.get_import_formats()
             input_format = import_formats[int(form.cleaned_data['input_format'])]()
@@ -259,12 +259,14 @@ class ImportMixin(ImportExportMixinBase):
         )
         return kwargs
 
-    def _get_import_form(self, request, **init_kwargs):
+    def create_import_form(self, request, **init_kwargs):
         """
+        .. versionadded:: 2.3
+
         Return a form instance to use for the 'initial' import step.
-        This method is considered private, and shouldn't be overridden.
-        To modify the behaviour, you should instead look to override the
-        following methods:
+        This method can be extended to make dynamic form updates to the
+        form after it has been instantiated. You might also look to
+        override the following:
 
         * :meth:`~import_export.admin.ImportMixin.get_import_form_class`
         * :meth:`~import_export.admin.ImportMixin.get_import_form_kwargs`
@@ -328,12 +330,14 @@ class ImportMixin(ImportExportMixinBase):
         """
         return kwargs
 
-    def _get_confirm_form(self, request, import_form=None, **init_kwargs):
+    def create_confirm_form(self, request, import_form=None, **init_kwargs):
         """
-        Return a form instance to use for the 'confirm' import step.
-        This method is considered private, and shouldn't be
-        overridden. To modify the behaviour, you should instead look
-        to override the following methods:
+        .. versionadded:: 2.3
+
+        Return a form instance to use for the 'cofirm' import step.
+        This method can be extended to make dynamic form updates to the
+        form after it has been instantiated. You might also look to
+        override the following:
 
         * :meth:`~import_export.admin.ImportMixin.get_confirm_form_class`
         * :meth:`~import_export.admin.ImportMixin.get_confirm_form_kwargs`
@@ -430,7 +434,7 @@ class ImportMixin(ImportExportMixinBase):
         context = self.get_import_context_data()
 
         import_formats = self.get_import_formats()
-        form = self._get_import_form(request)
+        form = self.create_import_form(request)
 
         if request.POST and form.is_valid():
             input_format = import_formats[int(form.cleaned_data['input_format'])]()
@@ -473,7 +477,7 @@ class ImportMixin(ImportExportMixinBase):
                     "original_file_name": import_file.name,
                     "input_format": form.cleaned_data['input_format'],
                 }
-                context['confirm_form'] = self._get_confirm_form(
+                context['confirm_form'] = self.create_confirm_form(
                     request, import_form=form, initial=initial
                 )
         else:
