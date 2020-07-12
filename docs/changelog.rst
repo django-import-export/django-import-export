@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-2.3.0 (unreleased)
+2.3.0 (2020-07-12)
 ------------------
 
 - Add missing translation keys for all languages (#1144)
