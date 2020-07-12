@@ -2,11 +2,13 @@ Changelog
 =========
 
 
-2.2.1 (unreleased)
+2.3.0 (unreleased)
 ------------------
 
-- Nothing changed yet.
-
+- Add missing translation keys for all languages (#1144)
+- Added missing Portuguese translations (#1145)
+- Add kazakh translations (#1161)
+- Add bulk operations (#1149)
 
 2.2.0 (2020-06-01)
 ------------------
