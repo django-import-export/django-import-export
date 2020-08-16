@@ -5,7 +5,7 @@ Changelog
 2.3.1 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Fix deprecated Django 3.1 ``Signal(providing_args=...)`` usage.
 
 
 2.3.0 (2020-07-12)
