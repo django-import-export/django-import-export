@@ -3,7 +3,6 @@ from datetime import datetime
 import django
 from django import forms
 from django.conf import settings
-from django.conf.urls import url
 from django.contrib import admin, messages
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION, LogEntry
 from django.contrib.auth import get_permission_codename
@@ -11,7 +10,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import PermissionDenied
 from django.http import HttpResponse, HttpResponseRedirect
 from django.template.response import TemplateResponse
-from django.urls import reverse
+from django.urls import path, reverse
 from django.utils.decorators import method_decorator
 from django.utils.encoding import force_str
 from django.utils.module_loading import import_string
@@ -90,10 +89,10 @@ class ImportMixin(ImportExportMixinBase):
         urls = super().get_urls()
         info = self.get_model_info()
         my_urls = [
-            url(r'^process_import/$',
+            path('process_import/',
                 self.admin_site.admin_view(self.process_import),
                 name='%s_%s_process_import' % info),
-            url(r'^import/$',
+            path('import/',
                 self.admin_site.admin_view(self.import_action),
                 name='%s_%s_import' % info),
         ]
@@ -365,7 +364,7 @@ class ExportMixin(ImportExportMixinBase):
     def get_urls(self):
         urls = super().get_urls()
         my_urls = [
-            url(r'^export/$',
+            path('export/',
                 self.admin_site.admin_view(self.export_action),
                 name='%s_%s_export' % self.get_model_info()),
         ]
