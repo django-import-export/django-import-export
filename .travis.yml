@@ -60,6 +60,6 @@ install:
   - pip install coveralls
 script:
    - PYTHONPATH=".:tests:$PYTHONPATH" python -Wall -m coverage run --omit='setup.py' --source=. tests/manage.py test core --settings=
-   - isort --check-only
+   - if python -c 'import sys; sys.exit(1 - (sys.version_info >= (3, 6)))'; then isort --check-only import_export tests; fi
 after_success:
   - coveralls
