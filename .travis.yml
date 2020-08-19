@@ -27,6 +27,9 @@ env:
     - DJANGO="Django==3.0.*" IMPORT_EXPORT_TEST_TYPE=postgres
     - DJANGO="Django==3.0.*" IMPORT_EXPORT_TEST_TYPE=mysql-innodb
     - DJANGO="Django==3.0.*" IMPORT_EXPORT_TEST_TYPE=sqlite
+    - DJANGO="Django==3.1.*" IMPORT_EXPORT_TEST_TYPE=postgres
+    - DJANGO="Django==3.1.*" IMPORT_EXPORT_TEST_TYPE=mysql-innodb
+    - DJANGO="Django==3.1.*" IMPORT_EXPORT_TEST_TYPE=sqlite
     - DJANGO="https://github.com/django/django/archive/master.tar.gz" IMPORT_EXPORT_TEST_TYPE=postgres
     - DJANGO="https://github.com/django/django/archive/master.tar.gz" IMPORT_EXPORT_TEST_TYPE=mysql-innodb
     - DJANGO="https://github.com/django/django/archive/master.tar.gz" IMPORT_EXPORT_TEST_TYPE=sqlite
@@ -38,6 +41,12 @@ matrix:
       env: DJANGO="https://github.com/django/django/archive/master.tar.gz" IMPORT_EXPORT_TEST_TYPE=sqlite
     - python: "3.5"
       env: DJANGO="https://github.com/django/django/archive/master.tar.gz" IMPORT_EXPORT_TEST_TYPE=mysql-innodb
+    - python: "3.5"
+      env: DJANGO="Django==3.1.*" IMPORT_EXPORT_TEST_TYPE=postgres
+    - python: "3.5"
+      env: DJANGO="Django==3.1.*" IMPORT_EXPORT_TEST_TYPE=sqlite
+    - python: "3.5"
+      env: DJANGO="Django==3.1.*" IMPORT_EXPORT_TEST_TYPE=mysql-innodb
     - python: "3.5"
       env: DJANGO="Django==3.0.*" IMPORT_EXPORT_TEST_TYPE=postgres
     - python: "3.5"
@@ -51,6 +60,6 @@ install:
   - pip install coveralls
 script:
    - PYTHONPATH=".:tests:$PYTHONPATH" python -Wall -m coverage run --omit='setup.py' --source=. tests/manage.py test core --settings=
-   - isort --check-only
+   - if python -c 'import sys; sys.exit(1 - (sys.version_info >= (3, 6)))'; then isort --check-only import_export tests; fi
 after_success:
   - coveralls
