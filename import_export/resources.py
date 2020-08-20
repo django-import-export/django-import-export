@@ -1,10 +1,10 @@
 import functools
 import logging
-import tablib
 import traceback
 from collections import OrderedDict
 from copy import deepcopy
 
+import tablib
 from diff_match_patch import diff_match_patch
 
 import django
@@ -18,10 +18,10 @@ from django.db.models.query import QuerySet
 from django.db.transaction import (
     TransactionManagementError,
     atomic,
+    get_connection,
     savepoint,
     savepoint_commit,
-    savepoint_rollback,
-    get_connection
+    savepoint_rollback
 )
 from django.utils.encoding import force_str
 from django.utils.safestring import mark_safe
