@@ -824,11 +824,11 @@ class Resource(metaclass=DeclarativeMetaclass):
         if using_transactions:
             if dry_run or result.has_errors():
                 savepoint_rollback(sp1)
-                con = get_connection()
-                for sid in self.save_points:
-                    con.run_on_commit = [
-                        (sids, func) for (sids, func) in con.run_on_commit if sid not in sids
-                    ]
+                # con = get_connection()
+                # for sid in self.save_points:
+                #     con.run_on_commit = [
+                #         (sids, func) for (sids, func) in con.run_on_commit if sid not in sids
+                #     ]
             else:
                 savepoint_commit(sp1)
 
