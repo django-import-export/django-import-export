@@ -1,5 +1,4 @@
 import tablib
-
 from core.models import Book
 
 from django.test import TestCase

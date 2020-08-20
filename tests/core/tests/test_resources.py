@@ -1,10 +1,11 @@
 import json
-import tablib
 from collections import OrderedDict
 from copy import deepcopy
 from datetime import date
 from decimal import Decimal
 from unittest import mock, skip, skipIf, skipUnless
+
+import tablib
 
 import django
 from django.conf import settings

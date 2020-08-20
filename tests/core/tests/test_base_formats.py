@@ -1,6 +1,7 @@
 import os
-from tablib.core import UnsupportedFormat
 from unittest import mock
+
+from tablib.core import UnsupportedFormat
 
 from django.test import TestCase
 from django.utils.encoding import force_str
