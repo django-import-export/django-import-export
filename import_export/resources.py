@@ -20,7 +20,8 @@ from django.db.transaction import (
     atomic,
     savepoint,
     savepoint_commit,
-    savepoint_rollback
+    savepoint_rollback,
+    get_connection
 )
 from django.utils.encoding import force_str
 from django.utils.safestring import mark_safe
@@ -247,6 +248,7 @@ class Resource(metaclass=DeclarativeMetaclass):
         self.create_instances = list()
         self.update_instances = list()
         self.delete_instances = list()
+        self.save_points = list()
 
     @classmethod
     def get_result_class(self):
@@ -783,6 +785,8 @@ class Resource(metaclass=DeclarativeMetaclass):
                     raise_errors=raise_errors,
                     **kwargs
                 )
+                if using_transactions:
+                    self.save_points.append(get_connection())
             result.increment_row_result_total(row_result)
 
             if row_result.errors:
@@ -820,6 +824,11 @@ class Resource(metaclass=DeclarativeMetaclass):
         if using_transactions:
             if dry_run or result.has_errors():
                 savepoint_rollback(sp1)
+                con = get_connection()
+                for sid in self.save_points:
+                    con.run_on_commit = [
+                        (sids, func) for (sids, func) in con.run_on_commit if sid not in sids
+                    ]
             else:
                 savepoint_commit(sp1)
 
