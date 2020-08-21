@@ -1,6 +1,5 @@
-from importlib import import_module
-
 import tablib
+from importlib import import_module
 
 
 class Format:

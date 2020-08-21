@@ -1,10 +1,10 @@
 import functools
 import logging
+import tablib
 import traceback
 from collections import OrderedDict
 from copy import deepcopy
 
-import tablib
 from diff_match_patch import diff_match_patch
 
 import django
