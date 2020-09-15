@@ -1,3 +1,4 @@
+import warnings
 from datetime import datetime
 
 import django
@@ -221,21 +222,34 @@ class ImportMixin(ImportExportMixinBase):
         """
         return ConfirmImportForm
 
-    def get_form_kwargs(self, form, *args, **kwargs):
+    def get_form_kwargs(self, form_class, *args, form=None, import_form=None, **kwargs):
         """
         Prepare/returns kwargs for the import form.
 
         To distinguish between import and confirm import forms,
         the following approach may be used:
 
-            if isinstance(form, ImportForm):
+            if issubclass(form_class, ImportForm):
                 # your code here for the import form kwargs
                 # e.g. update.kwargs({...})
-            elif isinstance(form, ConfirmImportForm):
+            elif issubclass(form_class, ConfirmImportForm):
                 # your code here for the confirm import form kwargs
                 # e.g. update.kwargs({...})
             ...
+        or
+            if isinstance(import_form, ImportForm):
+                # your code here for the import form kwargs
+                # e.g. update.kwargs({...})
         """
+        if form:
+            warnings.warn(
+                (
+                    "The form argument is deprecated. Use form_class argument to pass ImortForm or "
+                    "ConfirmImportForm and import_form argument to pass instance of ImportForm"
+                ),
+                DeprecationWarning, stacklevel=2,
+            )
+            import_form = form
         return kwargs
 
     def get_import_data_kwargs(self, request, *args, **kwargs):
@@ -319,7 +333,7 @@ class ImportMixin(ImportExportMixinBase):
                     'input_format': form.cleaned_data['input_format'],
                 }
                 confirm_form = self.get_confirm_import_form()
-                initial = self.get_form_kwargs(form=form, **initial)
+                initial = self.get_form_kwargs(confirm_form, import_form=form, **initial)
                 context['confirm_form'] = confirm_form(initial=initial)
         else:
             res_kwargs = self.get_import_resource_kwargs(request, form=form, *args, **kwargs)

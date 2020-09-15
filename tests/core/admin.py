@@ -43,11 +43,11 @@ class CustomBookAdmin(BookAdmin):
     def get_confirm_import_form(self):
         return CustomConfirmImportForm
 
-    def get_form_kwargs(self, form, *args, **kwargs):
+    def get_form_kwargs(self, form_class, *args, form=None, import_form=None, **kwargs):
         # update kwargs with authors (from CustomImportForm.cleaned_data)
-        if isinstance(form, CustomImportForm):
-            if form.is_valid():
-                author = form.cleaned_data['author']
+        if isinstance(import_form, CustomImportForm):
+            if import_form.is_valid():
+                author = import_form.cleaned_data['author']
                 kwargs.update({'author': author.id})
         return kwargs
 
