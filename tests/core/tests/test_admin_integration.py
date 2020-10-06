@@ -1,4 +1,5 @@
 import os.path
+from datetime import datetime
 from tablib import Dataset
 
 from core.admin import AuthorAdmin, BookAdmin, BookResource, CustomBookAdmin
@@ -10,6 +11,8 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test.testcases import TestCase
 from django.test.utils import override_settings
 from django.utils.translation import gettext_lazy as _
+
+from import_export.formats.base_formats import DEFAULT_FORMATS
 
 
 class ImportExportAdminIntegrationTest(TestCase):
@@ -111,18 +114,27 @@ class ImportExportAdminIntegrationTest(TestCase):
         data = {
             'file_format': '0',
             }
+        date_str = datetime.now().strftime('%Y-%m-%d')
         response = self.client.post('/admin/core/book/export/', data)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.has_header("Content-Disposition"))
         self.assertEqual(response['Content-Type'], 'text/csv')
+        self.assertEqual(
+            response['Content-Disposition'],
+            'attachment; filename="Book-{}.csv"'.format(date_str)
+        )
 
     def test_returns_xlsx_export(self):
         response = self.client.get('/admin/core/book/export/')
         self.assertEqual(response.status_code, 200)
 
-        data = {
-            'file_format': '2',
-            }
+        for i, f in enumerate(DEFAULT_FORMATS):
+            if f().get_title() == 'xlsx':
+                xlsx_index = i
+                break
+        else:
+            self.fail('Unable to find xlsx format. DEFAULT_FORMATS: %r' % DEFAULT_FORMATS)
+        data = {'file_format': str(xlsx_index)}
         response = self.client.post('/admin/core/book/export/', data)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.has_header("Content-Disposition"))
@@ -342,6 +354,11 @@ class ExportActionAdminIntegrationTest(TestCase):
         self.assertContains(response, self.cat1.name, status_code=200)
         self.assertNotContains(response, self.cat2.name, status_code=200)
         self.assertTrue(response.has_header("Content-Disposition"))
+        date_str = datetime.now().strftime('%Y-%m-%d')
+        self.assertEqual(
+            response['Content-Disposition'],
+            'attachment; filename="Category-{}.csv"'.format(date_str)
+        )
 
     def test_export_no_format_selected(self):
         data = {

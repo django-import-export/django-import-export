@@ -21,6 +21,7 @@ class BookResource(ModelResource):
 
 
 class BookAdmin(ImportExportMixin, admin.ModelAdmin):
+    list_display = ('name', 'author', 'added')
     list_filter = ['categories', 'author']
     resource_class = BookResource
 

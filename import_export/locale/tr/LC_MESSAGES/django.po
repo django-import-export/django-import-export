@@ -1,0 +1,140 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2020-06-04 09:27+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+#: admin.py:194
+#, python-format
+msgid "%s through import_export"
+msgstr "%s vasıtasıyla import_export"
+
+#: admin.py:200
+msgid "Import finished, with {} new and {} updated {}."
+msgstr "{} yeni ve {} güncellenen {} ile içe aktarma bitti"
+
+#: admin.py:298
+#, python-format
+msgid "<h1>Imported file has a wrong encoding: %s</h1>"
+msgstr "<h1>İçe aktarılan dosyada yanlış kodlama bulunmaktadır: %s</h1>"
+
+#: admin.py:300
+#, python-format
+msgid "<h1>%s encountered while trying to read file: %s</h1>"
+msgstr ""
+"<h1>Dosya okunurken %s hatası ile karşılaşıldı, okunan dosya adı: %s</h1>"
+
+#: admin.py:331 templates/admin/import_export/change_list_import_item.html:5
+#: templates/admin/import_export/import.html:10
+msgid "Import"
+msgstr "İçe aktar"
+
+#: admin.py:496 templates/admin/import_export/change_list_export_item.html:5
+#: templates/admin/import_export/export.html:7
+msgid "Export"
+msgstr "Dışa aktar"
+
+#: admin.py:554
+msgid "You must select an export format."
+msgstr "Bir dosya biçimi seçmelisiniz"
+
+#: admin.py:567
+#, python-format
+msgid "Export selected %(verbose_name_plural)s"
+msgstr "Seçililenleri dışa aktar %(verbose_name_plural)s"
+
+#: forms.py:10
+msgid "File to import"
+msgstr "İçe alınacak dosya"
+
+#: forms.py:13 forms.py:41 forms.py:66
+msgid "Format"
+msgstr "Dosya biçimi"
+
+#: templates/admin/import_export/base.html:11
+msgid "Home"
+msgstr "Ana sayfa"
+
+#: templates/admin/import_export/export.html:31
+#: templates/admin/import_export/import.html:52
+msgid "Submit"
+msgstr "Kaydet"
+
+#: templates/admin/import_export/import.html:20
+msgid ""
+"Below is a preview of data to be imported. If you are satisfied with the "
+"results, click 'Confirm import'"
+msgstr ""
+"Aşağıda içe aktarılacak verilerin önizlemesi verilmiştir. Sonuçlardan "
+"memnunsanız 'İçe aktarmayı onayla'yı tıklayın."
+
+#: templates/admin/import_export/import.html:23
+msgid "Confirm import"
+msgstr "İçe aktarmayı onayla"
+
+#: templates/admin/import_export/import.html:31
+msgid "This importer will import the following fields: "
+msgstr "Bu içe aktarıcı aşağıdaki alanları içe aktaracaktır: "
+
+#: templates/admin/import_export/import.html:61
+#: templates/admin/import_export/import.html:90
+msgid "Errors"
+msgstr "Hatalar"
+
+#: templates/admin/import_export/import.html:72
+msgid "Line number"
+msgstr "Satır numarası"
+
+#: templates/admin/import_export/import.html:82
+msgid "Some rows failed to validate"
+msgstr "Bazı satırlar doğrulanamadı"
+
+#: templates/admin/import_export/import.html:84
+msgid ""
+"Please correct these errors in your data where possible, then reupload it "
+"using the form above."
+msgstr ""
+"Lütfen verilerinizdeki bu hataları olabildiğince düzeltin, sonra yukarıdaki "
+"formu kullanarak tekrar yükleyin."
+
+#: templates/admin/import_export/import.html:89
+msgid "Row"
+msgstr "Satır"
+
+#: templates/admin/import_export/import.html:116
+msgid "Non field specific"
+msgstr "Alan olmayana özgü"
+
+#: templates/admin/import_export/import.html:137
+msgid "Preview"
+msgstr "Ön izleme"
+
+#: templates/admin/import_export/import.html:152
+msgid "New"
+msgstr "Yeni"
+
+#: templates/admin/import_export/import.html:154
+msgid "Skipped"
+msgstr "Atlandı"
+
+#: templates/admin/import_export/import.html:156
+msgid "Delete"
+msgstr "Sil"
+
+#: templates/admin/import_export/import.html:158
+msgid "Update"
+msgstr "Güncelle"

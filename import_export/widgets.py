@@ -6,7 +6,7 @@ from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils import datetime_safe, timezone
 from django.utils.dateparse import parse_duration
-from django.utils.encoding import force_text, smart_text
+from django.utils.encoding import force_str, smart_str
 
 
 class Widget:
@@ -38,7 +38,7 @@ class Widget:
         :meth:`~import_export.widgets.Widget.render` takes care of converting
         the object's field to a value that can be written to a spreadsheet.
         """
-        return force_text(value)
+        return force_str(value)
 
 
 class NumberWidget(Widget):
@@ -85,7 +85,7 @@ class DecimalWidget(NumberWidget):
     def clean(self, value, row=None, *args, **kwargs):
         if self.is_empty(value):
             return None
-        return Decimal(value)
+        return Decimal(force_str(value))
 
 
 class CharWidget(Widget):
@@ -94,23 +94,55 @@ class CharWidget(Widget):
     """
 
     def render(self, value, obj=None):
-        return force_text(value)
+        return force_str(value)
 
 
 class BooleanWidget(Widget):
     """
     Widget for converting boolean fields.
+
+    The widget assumes that ``True``, ``False``, and ``None`` are all valid
+    values, as to match Django's `BooleanField
+    <https://docs.djangoproject.com/en/dev/ref/models/fields/#booleanfield>`_.
+    That said, whether the database/Django will actually accept NULL values
+    will depend on if you have set ``null=True`` on that Django field.
+
+    While the BooleanWidget is set up to accept as input common variations of
+    "True" and "False" (and "None"), you may need to munge less common values
+    to ``True``/``False``/``None``. Probably the easiest way to do this is to
+    override the :func:`~import_export.resources.Resource.before_import_row`
+    function of your Resource class. A short example::
+
+        from import_export import fields, resources, widgets
+
+        class BooleanExample(resources.ModelResource):
+            warn = fields.Field(widget=widget.BooleanWidget)
+
+            def before_row_import(self, row, **kwargs):
+                if "warn" in row.keys():
+                    # munge "warn" to "True"
+                    if row["warn"] in ["warn", "WARN"]:
+                        row["warn"] = True
+
+                return super().before_import_row(row, **kwargs)
     """
-    TRUE_VALUES = ["1", 1]
-    FALSE_VALUE = "0"
+    TRUE_VALUES = ["1", 1, True, "true", "TRUE", "True"]
+    FALSE_VALUES = ["0", 0, False, "false", "FALSE", "False"]
+    NULL_VALUES = ["", None, "null", "NULL", "none", "NONE", "None"]
 
     def render(self, value, obj=None):
-        if value is None:
+        """
+        On export, ``True`` is represented as ``1``, ``False`` as ``0``, and
+        ``None``/NULL as a empty string.
+
+        Note that these values are also used on the import confirmation view.
+        """
+        if value in self.NULL_VALUES:
             return ""
-        return self.TRUE_VALUES[0] if value else self.FALSE_VALUE
+        return self.TRUE_VALUES[0] if value else self.FALSE_VALUES[0]
 
     def clean(self, value, row=None, *args, **kwargs):
-        if value == "":
+        if value in self.NULL_VALUES:
             return None
         return True if value in self.TRUE_VALUES else False
 
@@ -192,6 +224,8 @@ class DateTimeWidget(Widget):
     def render(self, value, obj=None):
         if not value:
             return ""
+        if settings.USE_TZ:
+            value = timezone.localtime(value)
         return value.strftime(self.formats[0])
 
 
@@ -243,7 +277,7 @@ class DurationWidget(Widget):
             raise ValueError("Enter a valid duration.")
 
     def render(self, value, obj=None):
-        if not value:
+        if value is None:
             return ""
         return str(value)
 
@@ -293,7 +327,7 @@ class JSONWidget(Widget):
 class ForeignKeyWidget(Widget):
     """
     Widget for a ``ForeignKey`` field which looks up a related model using
-    "natural keys" in both export an import.
+    "natural keys" in both export and import.
 
     The lookup field defaults to using the primary key (``pk``) as lookup
     criterion but can be customised to use any field on the related model.
@@ -414,5 +448,5 @@ class ManyToManyWidget(Widget):
         })
 
     def render(self, value, obj=None):
-        ids = [smart_text(getattr(obj, self.field)) for obj in value.all()]
+        ids = [smart_str(getattr(obj, self.field)) for obj in value.all()]
         return self.separator.join(ids)

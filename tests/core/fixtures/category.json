@@ -3,14 +3,14 @@
         "model": "core.category",
         "pk": 1,
         "fields": {
-            "name": "Category1"
+            "name": "Category 1"
         }
     },
     {
         "model": "core.category",
         "pk": 2,
         "fields": {
-            "name": "Category2"
+            "name": "Category 2"
         }
     }
 ]

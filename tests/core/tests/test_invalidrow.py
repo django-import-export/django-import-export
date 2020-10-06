@@ -7,7 +7,7 @@ from import_export.results import InvalidRow
 class InvalidRowTest(TestCase):
 
     def setUp(self):
-        # Create a ValidationEror with a mix of field-specific and non-field-specific errors
+        # Create a ValidationError with a mix of field-specific and non-field-specific errors
         self.non_field_errors = ValidationError(['Error 1', 'Error 2', 'Error 3'])
         self.field_errors = ValidationError({
             'name': ['Error 4', 'Error 5'],
@@ -21,7 +21,7 @@ class InvalidRowTest(TestCase):
         self.obj = InvalidRow(
             number=1,
             validation_error=e,
-            values={'name': 'ABC', 'birthday': '123'}
+            values=['ABC', '123']
         )
 
     def test_error_count(self):
@@ -43,7 +43,7 @@ class InvalidRowTest(TestCase):
         obj = InvalidRow(
             number=1,
             validation_error=self.non_field_errors,
-            values={}
+            values=[]
         )
         self.assertIsInstance(obj.error_dict, dict)
         self.assertIn(NON_FIELD_ERRORS, obj.error_dict)

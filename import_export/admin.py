@@ -1,8 +1,8 @@
 from datetime import datetime
 
 import django
+from django import forms
 from django.conf import settings
-from django.conf.urls import url
 from django.contrib import admin, messages
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION, LogEntry
 from django.contrib.auth import get_permission_codename
@@ -10,9 +10,9 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import PermissionDenied
 from django.http import HttpResponse, HttpResponseRedirect
 from django.template.response import TemplateResponse
-from django.urls import reverse
+from django.urls import path, reverse
 from django.utils.decorators import method_decorator
-from django.utils.encoding import force_text
+from django.utils.encoding import force_str
 from django.utils.module_loading import import_string
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_POST
@@ -42,7 +42,7 @@ class ImportExportMixinBase:
 class ImportMixin(ImportExportMixinBase):
     """
     Import mixin.
-    
+
     This is intended to be mixed with django.contrib.admin.ModelAdmin
     https://docs.djangoproject.com/en/2.1/ref/contrib/admin/#modeladmin-objects
     """
@@ -89,10 +89,10 @@ class ImportMixin(ImportExportMixinBase):
         urls = super().get_urls()
         info = self.get_model_info()
         my_urls = [
-            url(r'^process_import/$',
+            path('process_import/',
                 self.admin_site.admin_view(self.process_import),
                 name='%s_%s_process_import' % info),
-            url(r'^import/$',
+            path('import/',
                 self.admin_site.admin_view(self.import_action),
                 name='%s_%s_import' % info),
         ]
@@ -142,7 +142,7 @@ class ImportMixin(ImportExportMixinBase):
             tmp_storage = self.get_tmp_storage_class()(name=confirm_form.cleaned_data['import_file_name'])
             data = tmp_storage.read(input_format.get_read_mode())
             if not input_format.is_binary() and self.from_encoding:
-                data = force_text(data, self.from_encoding)
+                data = force_str(data, self.from_encoding)
             dataset = input_format.create_dataset(data)
 
             result = self.process_dataset(dataset, confirm_form, request, *args, **kwargs)
@@ -153,10 +153,10 @@ class ImportMixin(ImportExportMixinBase):
 
     def process_dataset(self, dataset, confirm_form, request, *args, **kwargs):
 
-        res_kwargs = self.get_import_resource_kwargs(request, *args, **kwargs)
+        res_kwargs = self.get_import_resource_kwargs(request, form=confirm_form, *args, **kwargs)
         resource = self.get_import_resource_class()(**res_kwargs)
 
-        imp_kwargs = self.get_import_data_kwargs(request, *args, **kwargs)
+        imp_kwargs = self.get_import_data_kwargs(request, form=confirm_form, *args, **kwargs)
         return resource.import_data(dataset,
                                     dry_run=False,
                                     raise_errors=True,
@@ -291,7 +291,7 @@ class ImportMixin(ImportExportMixinBase):
             try:
                 data = tmp_storage.read(input_format.get_read_mode())
                 if not input_format.is_binary() and self.from_encoding:
-                    data = force_text(data, self.from_encoding)
+                    data = force_str(data, self.from_encoding)
                 dataset = input_format.create_dataset(data)
             except UnicodeDecodeError as e:
                 return HttpResponse(_(u"<h1>Imported file has a wrong encoding: %s</h1>" % e))
@@ -346,7 +346,7 @@ class ImportMixin(ImportExportMixinBase):
 class ExportMixin(ImportExportMixinBase):
     """
     Export mixin.
-    
+
     This is intended to be mixed with django.contrib.admin.ModelAdmin
     https://docs.djangoproject.com/en/2.1/ref/contrib/admin/#modeladmin-objects
     """
@@ -364,7 +364,7 @@ class ExportMixin(ImportExportMixinBase):
     def get_urls(self):
         urls = super().get_urls()
         my_urls = [
-            url(r'^export/$',
+            path('export/',
                 self.admin_site.admin_view(self.export_action),
                 name='%s_%s_export' % self.get_model_info()),
         ]
@@ -406,7 +406,7 @@ class ExportMixin(ImportExportMixinBase):
         """
         return [f for f in self.formats if f().can_export()]
 
-    def get_export_filename(self, file_format):
+    def get_export_filename(self, request, queryset, file_format):
         date_str = datetime.now().strftime('%Y-%m-%d')
         filename = "%s-%s.%s" % (self.model.__name__,
                                  date_str,
@@ -481,8 +481,8 @@ class ExportMixin(ImportExportMixinBase):
             export_data = self.get_export_data(file_format, queryset, request=request)
             content_type = file_format.get_content_type()
             response = HttpResponse(export_data, content_type=content_type)
-            response['Content-Disposition'] = 'attachment; filename=%s' % (
-                self.get_export_filename(file_format),
+            response['Content-Disposition'] = 'attachment; filename="%s"' % (
+                self.get_export_filename(request, queryset, file_format),
             )
 
             post_export.send(sender=None, model=self.model)
@@ -558,17 +558,19 @@ class ExportActionMixin(ExportMixin):
             export_data = self.get_export_data(file_format, queryset, request=request)
             content_type = file_format.get_content_type()
             response = HttpResponse(export_data, content_type=content_type)
-            response['Content-Disposition'] = 'attachment; filename=%s' % (
-                self.get_export_filename(file_format),
+            response['Content-Disposition'] = 'attachment; filename="%s"' % (
+                self.get_export_filename(request, queryset, file_format),
             )
             return response
     export_admin_action.short_description = _(
         'Export selected %(verbose_name_plural)s')
 
-    actions = [export_admin_action]
+    actions = admin.ModelAdmin.actions + [export_admin_action]
 
-    class Media:
-        js = ['import_export/action_formats.js']
+    @property
+    def media(self):
+        super_media = super().media
+        return forms.Media(js=super_media._js + ['import_export/action_formats.js'], css=super_media._css)
 
 
 class ExportActionModelAdmin(ExportActionMixin, admin.ModelAdmin):

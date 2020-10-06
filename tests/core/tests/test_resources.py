@@ -4,15 +4,17 @@ from collections import OrderedDict
 from copy import deepcopy
 from datetime import date
 from decimal import Decimal
-from unittest import skip, skipUnless
+from unittest import mock, skip, skipIf, skipUnless
 
+import django
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
+from django.core.paginator import Paginator
 from django.db import DatabaseError, IntegrityError
 from django.db.models import Count
-from django.db.models.fields import FieldDoesNotExist
 from django.test import TestCase, TransactionTestCase, skipUnlessDBFeature
-from django.utils.encoding import force_text
+from django.utils.encoding import force_str
 from django.utils.html import strip_tags
 
 from import_export import fields, resources, results, widgets
@@ -31,6 +33,11 @@ from ..models import (
     WithDynamicDefault,
     WithFloatField
 )
+
+if django.VERSION[0] >= 3:
+    from django.core.exceptions import FieldDoesNotExist
+else:
+    from django.db.models.fields import FieldDoesNotExist
 
 
 class MyResource(resources.Resource):
@@ -148,6 +155,19 @@ class BookResource(resources.ModelResource):
         exclude = ('imported', )
 
 
+class BookResourceWithLineNumberLogger(BookResource):
+    def __init__(self, *args, **kwargs):
+        self.before_lines = []
+        self.after_lines = []
+        return super().__init__(*args, **kwargs)
+
+    def before_import_row(self,row, row_number=None, **kwargs):
+        self.before_lines.append(row_number)
+
+    def after_import_row(self, row, row_result, row_number=None, **kwargs):
+        self.after_lines.append(row_number)
+
+
 class CategoryResource(resources.ModelResource):
 
     class Meta:
@@ -253,31 +273,104 @@ class ModelResourceTest(TestCase):
         instance = resource.get_instance(instance_loader, self.dataset.dict[0])
         self.assertEqual(instance, self.book)
 
-    def test_get_instance_with_missing_field_data(self):
+    def test_get_instance_import_id_fields_with_custom_column_name(self):
+        class BookResource(resources.ModelResource):
+            name = fields.Field(attribute='name', column_name='book_name', widget=widgets.CharWidget())
+
+            class Meta:
+                model = Book
+                import_id_fields = ['name']
+
+        dataset = tablib.Dataset(headers=['id', 'book_name', 'author_email', 'price'])
+        row = [self.book.pk, 'Some book', 'test@example.com', "10.25"]
+        dataset.append(row)
+
+        resource = BookResource()
+        instance_loader = resource._meta.instance_loader_class(resource)
+        instance = resource.get_instance(instance_loader, dataset.dict[0])
+        self.assertEqual(instance, self.book)
+
+    def test_get_instance_usually_defers_to_instance_loader(self):
+        self.resource._meta.import_id_fields = ['id']
+
         instance_loader = self.resource._meta.instance_loader_class(
             self.resource)
+
+        with mock.patch.object(instance_loader, 'get_instance') as mocked_method:
+            row = self.dataset.dict[0]
+            self.resource.get_instance(instance_loader, row)
+            # instance_loader.get_instance() should have been called
+            mocked_method.assert_called_once_with(row)
+
+    def test_get_instance_when_id_fields_not_in_dataset(self):
+        self.resource._meta.import_id_fields = ['id']
+
         # construct a dataset with a missing "id" column
         dataset = tablib.Dataset(headers=['name', 'author_email', 'price'])
         dataset.append(['Some book', 'test@example.com', "10.25"])
-        with self.assertRaises(KeyError) as cm:
-            self.resource.get_instance(instance_loader, dataset.dict[0])
-        self.assertEqual("Column 'id' not found in dataset. Available columns "
-                         "are: %s" % ['name', 'author_email', 'price'],
-                         cm.exception.args[0])
+
+        instance_loader = self.resource._meta.instance_loader_class(self.resource)
+
+        with mock.patch.object(instance_loader, 'get_instance') as mocked_method:
+            result = self.resource.get_instance(instance_loader, dataset.dict[0])
+            # Resource.get_instance() should return None
+            self.assertIs(result, None)
+            # instance_loader.get_instance() should NOT have been called
+            mocked_method.assert_not_called()
 
     def test_get_export_headers(self):
         headers = self.resource.get_export_headers()
         self.assertEqual(headers, ['published_date', 'id', 'name', 'author',
                                    'author_email', 'published_time', 'price',
+                                   'added',
                                    'categories', ])
 
     def test_export(self):
-        dataset = self.resource.export(Book.objects.all())
-        self.assertEqual(len(dataset), 1)
+        with self.assertNumQueries(2):
+            dataset = self.resource.export(Book.objects.all())
+            self.assertEqual(len(dataset), 1)
 
     def test_export_iterable(self):
-        dataset = self.resource.export(list(Book.objects.all()))
-        self.assertEqual(len(dataset), 1)
+        with self.assertNumQueries(2):
+            dataset = self.resource.export(list(Book.objects.all()))
+            self.assertEqual(len(dataset), 1)
+
+    def test_export_prefetch_related(self):
+        with self.assertNumQueries(3):
+            dataset = self.resource.export(Book.objects.prefetch_related("categories").all())
+            self.assertEqual(len(dataset), 1)
+
+    def test_iter_queryset(self):
+        qs = Book.objects.all()
+        with mock.patch.object(qs, "iterator") as mocked_method:
+            list(self.resource.iter_queryset(qs))
+            mocked_method.assert_called_once_with(chunk_size=1)
+
+    def test_iter_queryset_prefetch_unordered(self):
+        qsu = Book.objects.prefetch_related("categories").all()
+        qso = qsu.order_by('pk').all()
+        with mock.patch.object(qsu, "order_by") as mocked_method:
+            mocked_method.return_value = qso
+            list(self.resource.iter_queryset(qsu))
+            mocked_method.assert_called_once_with("pk")
+
+    def test_iter_queryset_prefetch_ordered(self):
+        qs = Book.objects.prefetch_related("categories").order_by('pk').all()
+        with mock.patch("import_export.resources.Paginator", autospec=True) as p:
+            p.return_value = Paginator(qs, 1)
+            list(self.resource.iter_queryset(qs))
+            p.assert_called_once_with(qs, 1)
+
+    def test_iter_queryset_prefetch_chunk_size(self):
+        class B(BookResource):
+            class Meta:
+                chunk_size = 1000
+        paginator = "import_export.resources.Paginator"
+        qs = Book.objects.prefetch_related("categories").order_by('pk').all()
+        with mock.patch(paginator, autospec=True) as mocked_obj:
+            mocked_obj.return_value = Paginator(qs, 1000)
+            list(B().iter_queryset(qs))
+            mocked_obj.assert_called_once_with(qs, 1000)
 
     def test_get_diff(self):
         diff = Diff(self.resource, self.book, False)
@@ -317,6 +410,12 @@ class ModelResourceTest(TestCase):
         instance = Book.objects.get(pk=self.book.pk)
         self.assertEqual(instance.author_email, 'test@example.com')
         self.assertEqual(instance.price, Decimal("10.25"))
+
+    def test_importing_with_line_number_logging(self):
+        resource = BookResourceWithLineNumberLogger()
+        result = resource.import_data(self.dataset, raise_errors=True)
+        self.assertEqual(resource.before_lines, [1])
+        self.assertEqual(resource.after_lines, [1])
 
     def test_import_data_raises_field_specific_validation_errors(self):
         resource = AuthorResource()
@@ -364,17 +463,35 @@ class ModelResourceTest(TestCase):
             class Meta:
                 model = Author
                 clean_model_instances = True
+                export_order = ['id', 'name', 'birthday']
 
+        # create test dataset
+        # NOTE: column order is deliberately strange
+        dataset = tablib.Dataset(headers=['name', 'id'])
+        dataset.append(['123', '1'])
+
+        # run import_data()
         resource = TestResource()
-        dataset = tablib.Dataset(headers=['id', 'name'])
-        dataset.append(['', '123'])
-
         result = resource.import_data(dataset, raise_errors=False)
+
+        # check has_validation_errors()
         self.assertTrue(result.has_validation_errors())
-        self.assertEqual(result.invalid_rows[0].error_count, 1)
+
+        # check the invalid row itself
+        invalid_row = result.invalid_rows[0]
+        self.assertEqual(invalid_row.error_count, 1)
         self.assertEqual(
-            result.invalid_rows[0].field_specific_errors,
+            invalid_row.field_specific_errors,
             {'name': ["'123' is not a valid value"]}
+        )
+        # diff_header and invalid_row.values should match too
+        self.assertEqual(
+            result.diff_headers,
+            ['id', 'name', 'birthday']
+        )
+        self.assertEqual(
+            invalid_row.values,
+            ('1', '123', '---')
         )
 
     def test_known_invalid_fields_are_excluded_from_model_instance_cleaning(self):
@@ -880,7 +997,7 @@ class ModelResourceTransactionTest(TransactionTestCase):
 
         category_field = resource.fields['categories']
         categories_diff = row_diff[fields.index(category_field)]
-        self.assertEqual(strip_tags(categories_diff), force_text(cat1.pk))
+        self.assertEqual(strip_tags(categories_diff), force_str(cat1.pk))
 
         # check that it is really rollbacked
         self.assertFalse(Book.objects.filter(name='FooBook'))
@@ -1147,3 +1264,551 @@ class ManyRelatedManagerDiffTest(TestCase):
         diff = result.rows[0].diff
         self.assertEqual(diff[export_headers.index("categories")],
                          expected_value)
+
+
+@mock.patch("import_export.resources.Diff", spec=True)
+class SkipDiffTest(TestCase):
+    """
+    Tests that the meta attribute 'skip_diff' means that no diff operations are called.
+    'copy.deepcopy' cannot be patched at class level because it causes interferes with
+    ``resources.Resource.__init__()``.
+    """
+    def setUp(self):
+        class _BookResource(resources.ModelResource):
+
+            class Meta:
+                model = Book
+                skip_diff = True
+
+        self.resource = _BookResource()
+        self.dataset = tablib.Dataset(headers=['id', 'name', 'birthday'])
+        self.dataset.append(['', 'A.A.Milne', '1882test-01-18'])
+
+    def test_skip_diff(self, mock_diff):
+        with mock.patch("copy.deepcopy") as mock_deep_copy:
+            self.resource.import_data(self.dataset)
+            mock_diff.return_value.compare_with.assert_not_called()
+            mock_diff.return_value.as_html.assert_not_called()
+            mock_deep_copy.assert_not_called()
+
+    def test_skip_diff_for_delete_new_resource(self, mock_diff):
+        class BookResource(resources.ModelResource):
+
+            class Meta:
+                model = Book
+                skip_diff = True
+
+            def for_delete(self, row, instance):
+                return True
+
+        resource = BookResource()
+        with mock.patch("copy.deepcopy") as mock_deep_copy:
+            resource.import_data(self.dataset)
+            mock_diff.return_value.compare_with.assert_not_called()
+            mock_diff.return_value.as_html.assert_not_called()
+            mock_deep_copy.assert_not_called()
+
+    def test_skip_diff_for_delete_existing_resource(self, mock_diff):
+        book = Book.objects.create()
+        class BookResource(resources.ModelResource):
+
+            class Meta:
+                model = Book
+                skip_diff = True
+
+            def get_or_init_instance(self, instance_loader, row):
+                return book, False
+
+            def for_delete(self, row, instance):
+                return True
+
+        resource = BookResource()
+
+        with mock.patch("copy.deepcopy") as mock_deep_copy:
+            resource.import_data(self.dataset, dry_run=True)
+            mock_diff.return_value.compare_with.assert_not_called()
+            mock_diff.return_value.as_html.assert_not_called()
+            mock_deep_copy.assert_not_called()
+
+    def test_skip_row_returns_false_when_skip_diff_is_true(self, mock_diff):
+        class BookResource(resources.ModelResource):
+
+            class Meta:
+                model = Book
+                skip_unchanged = True
+                skip_diff = True
+
+        resource = BookResource()
+
+        with mock.patch('import_export.resources.Resource.get_import_fields') as mock_get_import_fields:
+            resource.import_data(self.dataset, dry_run=True)
+            self.assertEqual(2, mock_get_import_fields.call_count)
+
+
+class BulkTest(TestCase):
+
+    def setUp(self):
+        class _BookResource(resources.ModelResource):
+            class Meta:
+                model = Book
+                use_bulk = True
+
+        self.resource = _BookResource()
+        rows = [('book_name',)] * 10
+        self.dataset = tablib.Dataset(*rows, headers=['name'])
+
+    def init_update_test_data(self):
+        [Book.objects.create(name='book_name') for _ in range(10)]
+        self.assertEqual(10, Book.objects.count())
+        rows = Book.objects.all().values_list('id', 'name')
+        updated_rows = [(r[0], 'UPDATED') for r in rows]
+        self.dataset = tablib.Dataset(*updated_rows, headers=['id', 'name'])
+
+
+class BulkCreateTest(BulkTest):
+
+    @mock.patch('core.models.Book.objects.bulk_create')
+    def test_bulk_create_does_not_call_object_save(self, mock_bulk_create):
+        with mock.patch('core.models.Book.save') as mock_obj_save:
+            self.resource.import_data(self.dataset)
+            mock_obj_save.assert_not_called()
+        mock_bulk_create.assert_called_with(mock.ANY, batch_size=None)
+
+    @mock.patch('core.models.Book.objects.bulk_create')
+    def test_bulk_create_batch_size_of_5(self, mock_bulk_create):
+        class _BookResource(resources.ModelResource):
+            class Meta:
+                model = Book
+                use_bulk = True
+                batch_size = 5
+
+        resource = _BookResource()
+        result = resource.import_data(self.dataset)
+        self.assertEqual(2, mock_bulk_create.call_count)
+        mock_bulk_create.assert_called_with(mock.ANY, batch_size=5)
+        self.assertEqual(10, result.total_rows)
+
+    @mock.patch('core.models.Book.objects.bulk_create')
+    def test_bulk_create_no_batch_size(self, mock_bulk_create):
+        class _BookResource(resources.ModelResource):
+            class Meta:
+                model = Book
+                use_bulk = True
+                batch_size = None
+
+        resource = _BookResource()
+        result = resource.import_data(self.dataset)
+        self.assertEqual(1, mock_bulk_create.call_count)
+        mock_bulk_create.assert_called_with(mock.ANY, batch_size=None)
+        self.assertEqual(10, result.total_rows)
+        self.assertEqual(10, result.totals["new"])
+
+    @mock.patch('core.models.Book.objects.bulk_create')
+    def test_bulk_create_called_dry_run(self, mock_bulk_create):
+        class _BookResource(resources.ModelResource):
+            class Meta:
+                model = Book
+                use_bulk = True
+                batch_size = None
+
+        resource = _BookResource()
+        result = resource.import_data(self.dataset, dry_run=True)
+        self.assertEqual(1, mock_bulk_create.call_count)
+        self.assertEqual(10, result.total_rows)
+        self.assertEqual(10, result.totals["new"])
+
+    @mock.patch('core.models.Book.objects.bulk_create')
+    def test_bulk_create_not_called_when_not_using_transactions(self, mock_bulk_create):
+        class _BookResource(resources.ModelResource):
+
+            def import_data(self, dataset, dry_run=False, raise_errors=False,
+                            use_transactions=None, collect_failed_rows=False, **kwargs):
+                # override so that we can enforce not using_transactions
+                using_transactions = False
+                return self.import_data_inner(dataset, dry_run, raise_errors, using_transactions,
+                                              collect_failed_rows, **kwargs)
+
+            class Meta:
+                model = Book
+                use_bulk = True
+
+        resource = _BookResource()
+        resource.import_data(self.dataset, dry_run=True)
+        mock_bulk_create.assert_not_called()
+
+    @mock.patch('core.models.Book.objects.bulk_create')
+    def test_bulk_create_batch_size_of_4(self, mock_bulk_create):
+        class _BookResource(resources.ModelResource):
+            class Meta:
+                model = Book
+                use_bulk = True
+                batch_size = 4
+
+        resource = _BookResource()
+        result = resource.import_data(self.dataset)
+        self.assertEqual(3, mock_bulk_create.call_count)
+        self.assertEqual(10, result.total_rows)
+        self.assertEqual(10, result.totals["new"])
+
+    def test_no_changes_for_errors_if_use_transactions_enabled(self):
+        with mock.patch('import_export.results.Result.has_errors') as mock_has_errors:
+            mock_has_errors.return_val = True
+            self.resource.import_data(self.dataset)
+        self.assertEqual(0, Book.objects.count())
+
+    @mock.patch('core.models.Book.objects.bulk_create')
+    def test_bulk_create_use_bulk_disabled(self, mock_bulk_create):
+        class _BookResource(resources.ModelResource):
+            class Meta:
+                model = Book
+                use_bulk = False
+
+        resource = _BookResource()
+        result = resource.import_data(self.dataset)
+        mock_bulk_create.assert_not_called()
+        self.assertEqual(10, Book.objects.count())
+        self.assertEqual(10, result.total_rows)
+        self.assertEqual(10, result.totals["new"])
+
+    @mock.patch('core.models.Book.objects.bulk_create')
+    def test_bulk_create_bad_batch_size_value(self, mock_bulk_create):
+        class _BookResource(resources.ModelResource):
+            class Meta:
+                model = Book
+                use_bulk = True
+                batch_size = 'a'
+
+        resource = _BookResource()
+        with self.assertRaises(ValueError):
+            resource.import_data(self.dataset)
+        mock_bulk_create.assert_not_called()
+
+    @mock.patch('core.models.Book.objects.bulk_create')
+    def test_bulk_create_negative_batch_size_value(self, mock_bulk_create):
+        class _BookResource(resources.ModelResource):
+            class Meta:
+                model = Book
+                use_bulk = True
+                batch_size = -1
+
+        resource = _BookResource()
+        with self.assertRaises(ValueError):
+            resource.import_data(self.dataset)
+        mock_bulk_create.assert_not_called()
+
+    @mock.patch('core.models.Book.objects.bulk_create')
+    def test_bulk_create_oversized_batch_size_value(self, mock_bulk_create):
+        class _BookResource(resources.ModelResource):
+            class Meta:
+                model = Book
+                use_bulk = True
+                batch_size = 100
+
+        resource = _BookResource()
+        result = resource.import_data(self.dataset)
+        self.assertEqual(1, mock_bulk_create.call_count)
+        mock_bulk_create.assert_called_with(mock.ANY, batch_size=None)
+        self.assertEqual(10, result.total_rows)
+        self.assertEqual(10, result.totals["new"])
+
+    @mock.patch('core.models.Book.objects.bulk_create')
+    def test_bulk_create_logs_exception(self, mock_bulk_create):
+        e = ValidationError("invalid field")
+        mock_bulk_create.side_effect = e
+        class _BookResource(resources.ModelResource):
+            class Meta:
+                model = Book
+                use_bulk = True
+                batch_size = 100
+        resource = _BookResource()
+        with mock.patch("logging.Logger.exception") as mock_exception:
+            resource.import_data(self.dataset)
+            mock_exception.assert_called_with(e)
+            self.assertEqual(1, mock_exception.call_count)
+
+    @mock.patch('core.models.Book.objects.bulk_create')
+    def test_bulk_create_raises_exception(self, mock_bulk_create):
+        mock_bulk_create.side_effect = ValidationError("invalid field")
+        class _BookResource(resources.ModelResource):
+            class Meta:
+                model = Book
+                use_bulk = True
+                batch_size = 100
+        resource = _BookResource()
+        with self.assertRaises(ValidationError):
+            resource.import_data(self.dataset, raise_errors=True)
+
+    def test_m2m_not_called_for_bulk(self):
+        mock_m2m_widget = mock.Mock(spec=widgets.ManyToManyWidget)
+        class BookM2MResource(resources.ModelResource):
+            categories = fields.Field(
+                attribute='categories',
+                widget=mock_m2m_widget
+            )
+            class Meta:
+                model = Book
+                use_bulk = True
+
+        resource = BookM2MResource()
+        self.dataset.append_col(["Cat 1|Cat 2"] * 10, header="categories")
+        resource.import_data(self.dataset, raise_errors=True)
+        mock_m2m_widget.assert_not_called()
+
+    def test_force_init_instance(self):
+        class _BookResource(resources.ModelResource):
+            def get_instance(self, instance_loader, row):
+                raise AssertionError("should not be called")
+
+            class Meta:
+                model = Book
+                force_init_instance = True
+
+        resource = _BookResource()
+        self.assertIsNotNone(resource.get_or_init_instance(ModelInstanceLoader(resource), self.dataset[0]))
+
+
+@skipIf(django.VERSION[0] == 2 and django.VERSION[1] < 2, "bulk_update not supported in this version of django")
+class BulkUpdateTest(BulkTest):
+    class _BookResource(resources.ModelResource):
+        class Meta:
+            model = Book
+            use_bulk = True
+            fields = ('id', 'name')
+            import_id_fields = ('id',)
+
+    def setUp(self):
+        super().setUp()
+        self.init_update_test_data()
+        self.resource = self._BookResource()
+
+    def test_bulk_update(self):
+        result = self.resource.import_data(self.dataset)
+        [self.assertEqual('UPDATED', b.name) for b in Book.objects.all()]
+        self.assertEqual(10, result.total_rows)
+        self.assertEqual(10, result.totals["update"])
+
+    @mock.patch('core.models.Book.objects.bulk_update')
+    def test_bulk_update_batch_size_of_4(self, mock_bulk_update):
+        class _BookResource(resources.ModelResource):
+            class Meta:
+                model = Book
+                use_bulk = True
+                batch_size = 4
+
+        resource = _BookResource()
+        result = resource.import_data(self.dataset)
+        self.assertEqual(3, mock_bulk_update.call_count)
+        self.assertEqual(10, result.total_rows)
+        self.assertEqual(10, result.totals["update"])
+
+    @mock.patch('core.models.Book.objects.bulk_update')
+    def test_bulk_update_batch_size_of_5(self, mock_bulk_update):
+        class _BookResource(resources.ModelResource):
+            class Meta:
+                model = Book
+                use_bulk = True
+                batch_size = 5
+
+        resource = _BookResource()
+        result = resource.import_data(self.dataset)
+        self.assertEqual(2, mock_bulk_update.call_count)
+        self.assertEqual(10, result.total_rows)
+        self.assertEqual(10, result.totals["update"])
+
+    @mock.patch('core.models.Book.objects.bulk_update')
+    def test_bulk_update_no_batch_size(self, mock_bulk_update):
+        class _BookResource(resources.ModelResource):
+            class Meta:
+                model = Book
+                use_bulk = True
+                batch_size = None
+
+        resource = _BookResource()
+        result = resource.import_data(self.dataset)
+        self.assertEqual(1, mock_bulk_update.call_count)
+        mock_bulk_update.assert_called_with(mock.ANY, mock.ANY, batch_size=None)
+        self.assertEqual(10, result.total_rows)
+        self.assertEqual(10, result.totals["update"])
+
+    @mock.patch('core.models.Book.objects.bulk_update')
+    def test_bulk_update_not_called_when_not_using_transactions(self, mock_bulk_update):
+        class _BookResource(resources.ModelResource):
+
+            def import_data(self, dataset, dry_run=False, raise_errors=False,
+                            use_transactions=None, collect_failed_rows=False, **kwargs):
+                # override so that we can enforce not using_transactions
+                using_transactions = False
+                return self.import_data_inner(dataset, dry_run, raise_errors, using_transactions,
+                                              collect_failed_rows, **kwargs)
+
+            class Meta:
+                model = Book
+                use_bulk = True
+
+        resource = _BookResource()
+        resource.import_data(self.dataset, dry_run=True)
+        mock_bulk_update.assert_not_called()
+
+    @mock.patch('core.models.Book.objects.bulk_update')
+    def test_bulk_update_called_for_dry_run(self, mock_bulk_update):
+        self.resource.import_data(self.dataset, dry_run=True)
+        self.assertEqual(1, mock_bulk_update.call_count)
+
+    @mock.patch('core.models.Book.objects.bulk_update')
+    def test_bulk_not_called_when_use_bulk_disabled(self, mock_bulk_update):
+        class _BookResource(resources.ModelResource):
+            class Meta:
+                model = Book
+                use_bulk = False
+
+        resource = _BookResource()
+        result = resource.import_data(self.dataset)
+        self.assertEqual(10, Book.objects.count())
+        self.assertEqual(10, result.total_rows)
+        self.assertEqual(10, result.totals["update"])
+        mock_bulk_update.assert_not_called()
+
+    @mock.patch('core.models.Book.objects.bulk_update')
+    def test_bulk_update_logs_exception(self, mock_bulk_update):
+        e = ValidationError("invalid field")
+        mock_bulk_update.side_effect = e
+        class _BookResource(resources.ModelResource):
+            class Meta:
+                model = Book
+                use_bulk = True
+        resource = _BookResource()
+        with mock.patch("logging.Logger.exception") as mock_exception:
+            resource.import_data(self.dataset)
+            mock_exception.assert_called_with(e)
+            self.assertEqual(1, mock_exception.call_count)
+
+    @mock.patch('core.models.Book.objects.bulk_update')
+    def test_bulk_update_raises_exception(self, mock_bulk_update):
+        e = ValidationError("invalid field")
+        mock_bulk_update.side_effect = e
+        class _BookResource(resources.ModelResource):
+            class Meta:
+                model = Book
+                use_bulk = True
+        resource = _BookResource()
+        with self.assertRaises(ValidationError) as raised_exc:
+            resource.import_data(self.dataset, raise_errors=True)
+            self.assertEqual(e, raised_exc)
+
+
+class BulkDeleteTest(BulkTest):
+    class DeleteBookResource(resources.ModelResource):
+        def for_delete(self, row, instance):
+            return True
+
+        class Meta:
+            model = Book
+            use_bulk = True
+
+    def setUp(self):
+        super().setUp()
+        self.resource = self.DeleteBookResource()
+        self.init_update_test_data()
+
+    @mock.patch("core.models.Book.delete")
+    def test_bulk_delete_use_bulk_is_false(self, mock_obj_delete):
+        class _BookResource(self.DeleteBookResource):
+            class Meta:
+                model = Book
+                use_bulk = False
+
+        self.resource = _BookResource()
+        self.resource.import_data(self.dataset)
+        self.assertEqual(10, mock_obj_delete.call_count)
+
+    @mock.patch("core.models.Book.objects")
+    def test_bulk_delete_batch_size_of_4(self, mock_obj_manager):
+        class _BookResource(self.DeleteBookResource):
+            class Meta:
+                model = Book
+                use_bulk = True
+                batch_size = 4
+
+        self.resource = _BookResource()
+        result = self.resource.import_data(self.dataset)
+        self.assertEqual(3, mock_obj_manager.filter.return_value.delete.call_count)
+        self.assertEqual(10, result.total_rows)
+        self.assertEqual(10, result.totals["delete"])
+
+    @mock.patch("core.models.Book.objects")
+    def test_bulk_delete_batch_size_of_5(self, mock_obj_manager):
+        class _BookResource(self.DeleteBookResource):
+            class Meta:
+                model = Book
+                use_bulk = True
+                batch_size = 5
+
+        self.resource = _BookResource()
+        result = self.resource.import_data(self.dataset)
+        self.assertEqual(2, mock_obj_manager.filter.return_value.delete.call_count)
+        self.assertEqual(10, result.total_rows)
+        self.assertEqual(10, result.totals["delete"])
+
+    @mock.patch("core.models.Book.objects")
+    def test_bulk_delete_batch_size_is_none(self, mock_obj_manager):
+        class _BookResource(self.DeleteBookResource):
+            class Meta:
+                model = Book
+                use_bulk = True
+                batch_size = None
+
+        self.resource = _BookResource()
+        result = self.resource.import_data(self.dataset)
+        self.assertEqual(1, mock_obj_manager.filter.return_value.delete.call_count)
+        self.assertEqual(10, result.total_rows)
+        self.assertEqual(10, result.totals["delete"])
+
+    @mock.patch("core.models.Book.objects")
+    def test_bulk_delete_not_called_when_not_using_transactions(self, mock_obj_manager):
+        class _BookResource(self.DeleteBookResource):
+            def import_data(self, dataset, dry_run=False, raise_errors=False,
+                            use_transactions=None, collect_failed_rows=False, **kwargs):
+                # override so that we can enforce not using_transactions
+                using_transactions = False
+                return self.import_data_inner(dataset, dry_run, raise_errors, using_transactions,
+                                              collect_failed_rows, **kwargs)
+
+            class Meta:
+                model = Book
+                use_bulk = True
+
+        resource = _BookResource()
+        resource.import_data(self.dataset, dry_run=True)
+        self.assertEqual(0, mock_obj_manager.filter.return_value.delete.call_count)
+
+    @mock.patch("core.models.Book.objects")
+    def test_bulk_delete_called_for_dry_run(self, mock_obj_manager):
+        self.resource.import_data(self.dataset, dry_run=True)
+        self.assertEqual(1, mock_obj_manager.filter.return_value.delete.call_count)
+
+    @mock.patch("core.models.Book.objects")
+    def test_bulk_delete_logs_exception(self, mock_obj_manager):
+        e = Exception("invalid")
+        mock_obj_manager.filter.return_value.delete.side_effect = e
+        class _BookResource(self.DeleteBookResource):
+            class Meta:
+                model = Book
+                use_bulk = True
+        resource = _BookResource()
+        with mock.patch("logging.Logger.exception") as mock_exception:
+            resource.import_data(self.dataset)
+            mock_exception.assert_called_with(e)
+            self.assertEqual(1, mock_exception.call_count)
+
+    @mock.patch("core.models.Book.objects")
+    def test_bulk_delete_raises_exception(self, mock_obj_manager):
+        e = Exception("invalid")
+        mock_obj_manager.filter.return_value.delete.side_effect = e
+        class _BookResource(self.DeleteBookResource):
+            class Meta:
+                model = Book
+                use_bulk = True
+        resource = _BookResource()
+        with self.assertRaises(Exception) as raised_exc:
+            resource.import_data(self.dataset, raise_errors=True)
+            self.assertEqual(e, raised_exc)

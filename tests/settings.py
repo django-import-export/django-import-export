@@ -100,3 +100,7 @@ LOGGING = {
     'root': {
         'handlers': ['console'],
     }}
+
+
+# USE_TZ = True
+# TIME_ZONE = 'Europe/Ljubljana'

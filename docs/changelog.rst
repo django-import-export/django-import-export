@@ -2,7 +2,71 @@ Changelog
 =========
 
 
-2.0 (unreleased)
+2.4.1 (unreleased)
+------------------
+
+- Nothing changed yet.
+
+
+2.4.0 (2020-10-05)
+------------------
+
+- Fix deprecated Django 3.1 ``Signal(providing_args=...)`` usage.
+- Fix deprecated Django 3.1 ``django.conf.urls.url()`` usage.
+
+
+2.3.0 (2020-07-12)
+------------------
+
+- Add missing translation keys for all languages (#1144)
+- Added missing Portuguese translations (#1145)
+- Add kazakh translations (#1161)
+- Add bulk operations (#1149)
+
+2.2.0 (2020-06-01)
+------------------
+
+- Deal with importing a BooleanField that actually has `True`, `False`, and
+  `None` values. (#1071)
+- Add row_number parameter to before_import_row, after_import_row and after_import_instance (#1040)
+- Paginate queryset if Queryset.prefetch_related is used (#1050)
+
+2.1.0 (2020-05-02)
+------------------
+
+- Fix DurationWidget handling of zero value (#1117)
+
+- Make import diff view only show headers for user visible fields (#1109)
+
+- Make confirm_form accessible in get_import_resource_kwargs and get_import_data_kwargs (#994, #1108)
+
+- Initialize Decimal with text value, fix #1035 (#1039)
+
+- Adds meta flag 'skip_diff' to enable skipping of diff operations (#1045)
+
+- Update docs (#1097, #1114, #1122, #969, #1083, #1093)
+
+
+2.0.2 (2020-02-16)
+------------------
+
+- Add support for tablib >= 1.0 (#1061)
+
+- Add ability to install a subset of tablib supported formats and save some
+  automatic dependency installations (needs tablib >= 1.0)
+
+- Use column_name when checking row for fields (#1056)
+
+2.0.1 (2020-01-15)
+------------------
+
+- Fix deprecated Django 3.0 function usage (#1054)
+
+- Pin tablib version to not use new major version (#1063)
+
+- Format field is always shown on Django 2.2 (#1007)
+
+2.0 (2019-12-03)
 ----------------
 
 - Removed support for Django < 2.0
@@ -451,7 +515,7 @@ Changelog
 * refactor admin integration to allow better handling of specific formats
   supported features and better handling of reading text files
 
-* include all avialable formats in Admin integration
+* include all available formats in Admin integration
 
 * bugfixes
 
