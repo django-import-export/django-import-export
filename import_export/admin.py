@@ -244,7 +244,7 @@ class ImportMixin(ImportExportMixinBase):
         if form:
             warnings.warn(
                 (
-                    "The form argument is deprecated. Use form_class argument to pass ImortForm or "
+                    "The form argument is deprecated. Use form_class argument to pass ImportForm or "
                     "ConfirmImportForm and import_form argument to pass instance of ImportForm"
                 ),
                 DeprecationWarning, stacklevel=2,
