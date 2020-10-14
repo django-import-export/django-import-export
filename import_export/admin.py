@@ -140,7 +140,7 @@ class ImportMixin(ImportExportMixinBase):
                 int(confirm_form.cleaned_data['input_format'])
             ]()
             tmp_storage = self.get_tmp_storage_class()(name=confirm_form.cleaned_data['import_file_name'])
-            data = tmp_storage.read(input_format.get_read_mode())
+            data = tmp_storage.read(input_format.get_read_mode(), self.from_encoding)
             if not input_format.is_binary() and self.from_encoding:
                 data = force_str(data, self.from_encoding)
             dataset = input_format.create_dataset(data)
@@ -289,7 +289,7 @@ class ImportMixin(ImportExportMixinBase):
             # then read the file, using the proper format-specific mode
             # warning, big files may exceed memory
             try:
-                data = tmp_storage.read(input_format.get_read_mode())
+                data = tmp_storage.read(input_format.get_read_mode(), self.from_encoding)
                 if not input_format.is_binary() and self.from_encoding:
                     data = force_str(data, self.from_encoding)
                 dataset = input_format.create_dataset(data)
