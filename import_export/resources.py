@@ -41,9 +41,6 @@ logger = logging.getLogger(__name__)
 # Set default logging handler to avoid "No handler found" warnings.
 logger.addHandler(logging.NullHandler())
 
-USE_TRANSACTIONS = getattr(settings, 'IMPORT_EXPORT_USE_TRANSACTIONS', True)
-CHUNK_SIZE = getattr(settings, 'IMPORT_EXPORT_CHUNK_SIZE', 1)
-
 
 def get_related_model(field):
     if hasattr(field, 'related_model'):
@@ -126,10 +123,10 @@ class ResourceOptions:
 
     chunk_size = None
     """
-    Controls the chunk_size argument of Queryset.iterator or, 
+    Controls the chunk_size argument of Queryset.iterator or,
     if prefetch_related is used, the per_page attribute of Paginator.
     """
-    
+
     skip_diff = False
     """
     Controls whether or not an instance should be diffed following import.
@@ -159,8 +156,8 @@ class ResourceOptions:
     force_init_instance = False
     """
     If True, this parameter will prevent imports from checking the database for existing instances.
-    Enabling this parameter is a performance enhancement if your import dataset is guaranteed to 
-    contain new instances. 
+    Enabling this parameter is a performance enhancement if your import dataset is guaranteed to
+    contain new instances.
     """
 
 
@@ -278,13 +275,13 @@ class Resource(metaclass=DeclarativeMetaclass):
 
     def get_use_transactions(self):
         if self._meta.use_transactions is None:
-            return USE_TRANSACTIONS
+            return getattr(settings, 'IMPORT_EXPORT_USE_TRANSACTIONS', True)
         else:
             return self._meta.use_transactions
 
     def get_chunk_size(self):
         if self._meta.chunk_size is None:
-            return CHUNK_SIZE
+            return getattr(settings, 'IMPORT_EXPORT_CHUNK_SIZE', 100)
         else:
             return self._meta.chunk_size
 

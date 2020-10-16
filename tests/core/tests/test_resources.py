@@ -344,7 +344,7 @@ class ModelResourceTest(TestCase):
         qs = Book.objects.all()
         with mock.patch.object(qs, "iterator") as mocked_method:
             list(self.resource.iter_queryset(qs))
-            mocked_method.assert_called_once_with(chunk_size=1)
+            mocked_method.assert_called_once_with(chunk_size=100)
 
     def test_iter_queryset_prefetch_unordered(self):
         qsu = Book.objects.prefetch_related("categories").all()
@@ -357,9 +357,9 @@ class ModelResourceTest(TestCase):
     def test_iter_queryset_prefetch_ordered(self):
         qs = Book.objects.prefetch_related("categories").order_by('pk').all()
         with mock.patch("import_export.resources.Paginator", autospec=True) as p:
-            p.return_value = Paginator(qs, 1)
+            p.return_value = Paginator(qs, 100)
             list(self.resource.iter_queryset(qs))
-            p.assert_called_once_with(qs, 1)
+            p.assert_called_once_with(qs, 100)
 
     def test_iter_queryset_prefetch_chunk_size(self):
         class B(BookResource):
