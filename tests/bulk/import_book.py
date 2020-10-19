@@ -10,13 +10,12 @@ Each run is profiled for duration and peak memory usage.
 When testing deletes, duration and memory usage has to be tested separately.
 This can be done by simply commenting out the relevant call in profile()
 """
-import tablib
 import time
 from functools import wraps
 
-from memory_profiler import memory_usage
-
 import django
+import tablib
+from memory_profiler import memory_usage
 
 from import_export import resources
 from import_export.instance_loaders import CachedInstanceLoader
