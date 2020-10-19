@@ -43,44 +43,66 @@ django-import-export in your project.
 Settings
 ========
 
-You can use the following directives in your settings file:
+You can configure the following in your settings file:
 
 ``IMPORT_EXPORT_USE_TRANSACTIONS``
-    Global setting controls if resource importing should use database
-    transactions. Default is ``False``.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Controls if resource importing should use database transactions. Defaults to
+``False``. Using transactions makes imports safer as a failure during import
+won’t import only part of the data set.
+
+Can be overridden on a ``Resource`` class by setting the
+``use_transactions`` class attribute.
 
 ``IMPORT_EXPORT_SKIP_ADMIN_LOG``
-    Global setting controls if creating log entries for the admin changelist
-    should be skipped when importing resource. The `skip_admin_log` attribute
-    of `ImportMixin` is checked first, which defaults to ``None``. If not
-    found, this global option is used. This will speed up importing large
-    datasets, but will lose changing logs in the admin changelist view.
-    Default is ``False``.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If set to ``True``, skips the creation of amdin log entries when importing.
+Defaults to ``False``. This can speed up importing large data sets, at the cost
+of losing an audit trail.
+
+Can be overridden on a ``ModelAdmin`` class inheriting from ``ImportMixin`` by
+setting the ``skip_admin_log`` class attribute.
 
 ``IMPORT_EXPORT_TMP_STORAGE_CLASS``
-    Global setting for the class to use to handle temporary storage of the
-    uploaded file when importing from the admin using an `ImportMixin`.  The
-    `tmp_storage_class` attribute of `ImportMixin` is checked first, which
-    defaults to ``None``. If not found, this global option is used. Default is
-    ``TempFolderStorage``.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Controls which storage class to use for storing the temporary uploaded file
+during imports. Defaults to ``import_export.tmp_storages.TempFolderStorage``.
+
+Can be overridden on a ``ModelAdmin`` class inheriting from ``ImportMixin`` by
+setting the ``tmp_storage_class`` class attribute.
 
 ``IMPORT_EXPORT_IMPORT_PERMISSION_CODE``
-    Global setting for defining user permission that is required for
-    users/groups to execute import action. Django builtin permissions are
-    ``change``, ``add``, and ``delete``. It is possible to add your own
-    permission code. Default is ``None`` which means everybody can execute
-    import action.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If set, lists the permission code that is required for users to perform the
+“import” action. Defaults to ``None``, which means everybody can perform
+imports.
+
+Django’s built-in permissions have the codes ``add``, ``change``, ``delete``,
+and ``view``. You can also add your own permissions.
 
 ``IMPORT_EXPORT_EXPORT_PERMISSION_CODE``
-    Global setting for defining user permission that is required for
-    users/groups to execute export action. Django builtin permissions are
-    ``change``, ``add``, and ``delete``. It is possible to add your own
-    permission code. Default is ``None`` which means everybody can execute
-    export action.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If set, lists the permission code that is required for users to perform the
+“export” action. Defaults to ``None``, which means everybody can perform
+exports.
+
+Django’s built-in permissions have the codes ``add``, ``change``, ``delete``,
+and ``view``. You can also add your own permissions.
 
 ``IMPORT_EXPORT_CHUNK_SIZE``
-    Global setting to define the bulk size in which data is exported. Useful
-    if memory consumption is of the essence. Can also be set per ``Resource``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+An integer that defines the size of chunks when iterating a QuerySet for data
+exports. Defaults to ``100``. You may be able to save memory usage by
+decreasing it, or speed up exports by increasing it.
+
+Can be overridden on a ``Resource`` class by setting the ``chunk_size`` class
+attribute.
 
 
 Example app
