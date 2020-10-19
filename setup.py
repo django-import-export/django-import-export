@@ -45,6 +45,10 @@ setup(
     license='BSD License',
     platforms=['OS Independent'],
     url="https://github.com/django-import-export/django-import-export",
+    project_urls={
+        "Documentation": "https://django-import-export.readthedocs.io/en/stable/",
+        "Changelog": "https://django-import-export.readthedocs.io/en/stable/changelog.html",
+    },
     packages=find_packages(exclude=["tests"]),
     include_package_data=True,
     install_requires=install_requires,
