@@ -9,6 +9,7 @@ dist/
 *.egg-info/
 .tox/
 .idea/
+.vscode/
 *.python-version
 .coverage
 *.sw[po]
