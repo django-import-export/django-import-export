@@ -46,12 +46,15 @@ class ExportViewMixin:
         export_data = file_format.export_data(data)
         return export_data
 
-    def get_export_filename(self, file_format):
+    def get_export_filename(self, file_format, *args, **kwargs):
         date_str = now().strftime('%Y-%m-%d')
         filename = "%s-%s.%s" % (self.model.__name__,
                                  date_str,
                                  file_format.get_extension())
         return filename
+
+    def get_content_disposition(self, filename, *args, **kwargs):
+        return 'attachment; filename="%s"' % filename
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -69,19 +72,27 @@ class ExportViewFormMixin(ExportViewMixin, FormView):
         file_format = formats[
             int(form.cleaned_data['file_format'])
         ]()
+        kwargs = {'form': form}
+
         if hasattr(self, 'get_filterset'):
-            queryset = self.get_filterset(self.get_filterset_class()).qs
+            filterset = self.get_filterset(self.get_filterset_class())
+            kwargs.update(filterset=filterset)
+            queryset = filterset.qs
         else:
             queryset = self.get_queryset()
-        export_data = self.get_export_data(file_format, queryset)
+
+        export_data = self.get_export_data(file_format, queryset, **kwargs)
         content_type = file_format.get_content_type()
+
         # Django 1.7 uses the content_type kwarg instead of mimetype
         try:
             response = HttpResponse(export_data, content_type=content_type)
         except TypeError:
             response = HttpResponse(export_data, mimetype=content_type)
-        response['Content-Disposition'] = 'attachment; filename="%s"' % (
-            self.get_export_filename(file_format),
+
+        filename = self.get_export_filename(file_format, **kwargs)
+        response['Content-Disposition'] = self.get_content_disposition(
+            filename, **kwargs
         )
 
         post_export.send(sender=None, model=self.model)

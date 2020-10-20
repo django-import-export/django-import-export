@@ -11,6 +11,11 @@ urlpatterns = [
     path('', RedirectView.as_view(url='/admin/'), name="admin-site"),
     path('admin/', admin.site.urls),
     path('export/category/', views.CategoryExportView.as_view(), name='export-category'),
+    path(
+        'export/category-custom/',
+        views.CategoryExportCustomMethodsView.as_view(),
+        name='export-category-custom',
+    ),
 ]
 
 urlpatterns += staticfiles_urlpatterns()
