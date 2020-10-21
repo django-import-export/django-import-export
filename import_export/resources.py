@@ -1089,8 +1089,11 @@ class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
         Returns a queryset of all objects for this model. Override this if you
         want to limit the returned queryset.
         """
-        return self._meta.model.objects.all()
+        if self._meta.fields is not None:
+            return self._meta.model.objects.only(*self._meta.fields)
 
+        return self._meta.model.objects.all()
+        
     def init_instance(self, row=None):
         """
         Initializes a new Django model.
