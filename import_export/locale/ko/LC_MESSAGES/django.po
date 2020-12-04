@@ -1,0 +1,136 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# Jinmyeong Cho <britzegs@gmail.com>, 2020.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2020-12-03 22:48+0900\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: Jinmyeong Cho <britzegs@gmail.com>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: admin.py:191
+#, python-format
+msgid "%s through import_export"
+msgstr ""
+
+#: admin.py:197
+msgid "Import finished, with {} new and {} updated {}."
+msgstr ""
+
+#: admin.py:295
+#, python-format
+msgid "<h1>Imported file has a wrong encoding: %s</h1>"
+msgstr ""
+
+#: admin.py:297
+#, python-format
+msgid "<h1>%s encountered while trying to read file: %s</h1>"
+msgstr ""
+
+#: admin.py:328 templates/admin/import_export/change_list_import_item.html:5
+#: templates/admin/import_export/import.html:10
+msgid "Import"
+msgstr "가져오기"
+
+#: admin.py:493 templates/admin/import_export/change_list_export_item.html:5
+#: templates/admin/import_export/export.html:7
+msgid "Export"
+msgstr "내보내기"
+
+#: admin.py:551
+msgid "You must select an export format."
+msgstr "내보낼 형식을 선택해주세요."
+
+#: admin.py:564
+#, python-format
+msgid "Export selected %(verbose_name_plural)s"
+msgstr ""
+
+#: forms.py:10
+msgid "File to import"
+msgstr "파일"
+
+#: forms.py:13 forms.py:41 forms.py:66
+msgid "Format"
+msgstr "형식"
+
+#: templates/admin/import_export/base.html:11
+msgid "Home"
+msgstr ""
+
+#: templates/admin/import_export/export.html:31
+#: templates/admin/import_export/import.html:52
+msgid "Submit"
+msgstr "제출"
+
+#: templates/admin/import_export/import.html:20
+msgid ""
+"Below is a preview of data to be imported. If you are satisfied with the "
+"results, click 'Confirm import'"
+msgstr "다음은 불러올 데이터의 미리보기 입니다."
+"데이터에 문제가 없다면 확인을 눌러 가져오기를 진행하세요."
+
+#: templates/admin/import_export/import.html:23
+msgid "Confirm import"
+msgstr "확인"
+
+#: templates/admin/import_export/import.html:31
+msgid "This importer will import the following fields: "
+msgstr "다음의 필드를 가져옵니다: "
+
+#: templates/admin/import_export/import.html:61
+#: templates/admin/import_export/import.html:90
+msgid "Errors"
+msgstr "에러"
+
+#: templates/admin/import_export/import.html:72
+msgid "Line number"
+msgstr "행 번호"
+
+#: templates/admin/import_export/import.html:82
+msgid "Some rows failed to validate"
+msgstr "유효성 검증에 실패한 행이 있습니다."
+
+#: templates/admin/import_export/import.html:84
+msgid ""
+"Please correct these errors in your data where possible, then reupload it "
+"using the form above."
+msgstr "에러를 수정한 후 파일을 다시 업로드 해주세요."
+
+#: templates/admin/import_export/import.html:89
+msgid "Row"
+msgstr ""
+
+#: templates/admin/import_export/import.html:116
+msgid "Non field specific"
+msgstr ""
+
+#: templates/admin/import_export/import.html:137
+msgid "Preview"
+msgstr "미리보기"
+
+#: templates/admin/import_export/import.html:152
+msgid "New"
+msgstr "생성"
+
+#: templates/admin/import_export/import.html:154
+msgid "Skipped"
+msgstr "넘어감"
+
+#: templates/admin/import_export/import.html:156
+msgid "Delete"
+msgstr "삭제"
+
+#: templates/admin/import_export/import.html:158
+msgid "Update"
+msgstr "갱신"
