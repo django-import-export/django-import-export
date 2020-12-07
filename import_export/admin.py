@@ -545,7 +545,14 @@ class ExportActionMixin(ExportMixin):
         """
         Exports the selected rows using file_format.
         """
-        export_format = request.POST.get('file_format')
+        # There can be multiple action forms on the page (at the top
+        # and bottom of the change list, for example). Get the action
+        # whose button was pushed.
+        try:
+            action_index = int(request.POST.get('index', 0))
+            export_format = request.POST.getlist('file_format')[action_index]
+        except (IndexError, ValueError):
+            export_format = None
 
         if not export_format:
             messages.warning(request, _('You must select an export format.'))
