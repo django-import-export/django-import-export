@@ -179,17 +179,24 @@ class ImportMixin(ImportExportMixinBase):
                 RowResult.IMPORT_TYPE_UPDATE: CHANGE,
                 RowResult.IMPORT_TYPE_DELETE: DELETION,
             }
+            new_logs = []
             content_type_id = ContentType.objects.get_for_model(self.model).pk
             for row in result:
                 if row.import_type != row.IMPORT_TYPE_ERROR and row.import_type != row.IMPORT_TYPE_SKIP:
-                    LogEntry.objects.log_action(
-                        user_id=request.user.pk,
-                        content_type_id=content_type_id,
-                        object_id=row.object_id,
-                        object_repr=row.object_repr,
-                        action_flag=logentry_map[row.import_type],
-                        change_message=_("%s through import_export" % row.import_type),
+                    new_logs.append(
+                        LogEntry(
+                            user_id=request.user.pk,
+                            content_type_id=content_type_id,
+                            object_id=row.object_id,
+                            object_repr=row.object_repr,
+                            action_flag=logentry_map[row.import_type],
+                            change_message=_(
+                                "%s through import_export" % row.import_type
+                            ),
+                        )
                     )
+            if new_logs:
+                LogEntry.objects.bulk_create(new_logs)
 
     def add_success_message(self, result, request):
         opts = self.model._meta
