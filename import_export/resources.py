@@ -1,13 +1,12 @@
 import functools
 import logging
-import tablib
 import traceback
 from collections import OrderedDict
 from copy import deepcopy
 
-from diff_match_patch import diff_match_patch
-
 import django
+import tablib
+from diff_match_patch import diff_match_patch
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.core.management.color import no_style
@@ -20,7 +19,7 @@ from django.db.transaction import (
     atomic,
     savepoint,
     savepoint_commit,
-    savepoint_rollback
+    savepoint_rollback,
 )
 from django.utils.encoding import force_str
 from django.utils.safestring import mark_safe
