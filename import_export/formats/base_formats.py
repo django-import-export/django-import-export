@@ -1,5 +1,6 @@
-import tablib
 from importlib import import_module
+
+import tablib
 
 
 class Format:

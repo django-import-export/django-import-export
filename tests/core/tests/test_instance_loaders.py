@@ -1,7 +1,5 @@
 import tablib
-
 from core.models import Book
-
 from django.test import TestCase
 
 from import_export import instance_loaders, resources

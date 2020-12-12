@@ -1,5 +1,4 @@
 import json
-import tablib
 from collections import OrderedDict
 from copy import deepcopy
 from datetime import date
@@ -7,6 +6,7 @@ from decimal import Decimal
 from unittest import mock, skip, skipIf, skipUnless
 
 import django
+import tablib
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
@@ -31,7 +31,7 @@ from ..models import (
     Role,
     WithDefault,
     WithDynamicDefault,
-    WithFloatField
+    WithFloatField,
 )
 
 if django.VERSION[0] >= 3:

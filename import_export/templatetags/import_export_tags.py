@@ -1,5 +1,4 @@
 from diff_match_patch import diff_match_patch
-
 from django import template
 
 register = template.Library()
