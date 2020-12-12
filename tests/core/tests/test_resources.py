@@ -264,6 +264,20 @@ class ModelResourceTest(TestCase):
         self.assertIsInstance(widget, widgets.ForeignKeyWidget)
         self.assertEqual(widget.model, Author)
 
+    def test_get_display_name(self):
+        display_name = self.resource.get_display_name()
+        self.assertEqual(display_name, 'BookResource')
+
+        class BookResource(resources.ModelResource):
+            class Meta:
+                name = 'Foo Name'
+                model = Book
+                import_id_fields = ['name']
+
+        resource = BookResource()
+        display_name = resource.get_display_name()
+        self.assertEqual(display_name, 'Foo Name')
+
     def test_fields_m2m(self):
         fields = self.resource.fields
         self.assertIn('categories', fields)

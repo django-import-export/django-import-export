@@ -20,10 +20,18 @@ class BookResource(ModelResource):
         return self.fields['name'].clean(row) == ''
 
 
+class BookNameResource(ModelResource):
+
+    class Meta:
+        model = Book
+        fields = ['id', 'name']
+        name = "Export/Import only book names"
+
+
 class BookAdmin(ImportExportMixin, admin.ModelAdmin):
     list_display = ('name', 'author', 'added')
     list_filter = ['categories', 'author']
-    resource_class = BookResource
+    resource_classes = [BookResource, BookNameResource]
 
 
 class CategoryAdmin(ExportActionModelAdmin):
