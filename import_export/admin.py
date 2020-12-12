@@ -172,6 +172,9 @@ class ImportMixin(ImportExportMixinBase):
         return HttpResponseRedirect(url)
 
     def generate_log_entries(self, result, request):
+        """
+        generate admin log entries for imported rows
+        """
         if not self.get_skip_admin_log():
             # Add imported objects to LogEntry
             logentry_map = {
