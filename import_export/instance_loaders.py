@@ -67,3 +67,4 @@ class CachedInstanceLoader(ModelInstanceLoader):
     def get_instance(self, row):
         if self.all_instances:
             return self.all_instances.get(self.pk_field.clean(row))
+        return None
