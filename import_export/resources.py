@@ -11,7 +11,7 @@ from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.core.management.color import no_style
 from django.core.paginator import Paginator
-from django.db import DEFAULT_DB_ALIAS, connections
+from django.db import DEFAULT_DB_ALIAS, connections, router
 from django.db.models.fields.related import ForeignObjectRel
 from django.db.models.query import QuerySet
 from django.db.transaction import (
@@ -159,6 +159,13 @@ class ResourceOptions:
     contain new instances.
     """
 
+    using_db = None
+    """
+    DB Connection name to use for db transactions. If not provided,
+    ``router.db_for_write(model)`` will be evaluated and if it's missing,
+    DEFAULT_DB_ALIAS constant ("default") is used.
+    """
+
 
 class DeclarativeMetaclass(type):
 
@@ -283,6 +290,12 @@ class Resource(metaclass=DeclarativeMetaclass):
             return getattr(settings, 'IMPORT_EXPORT_CHUNK_SIZE', 100)
         else:
             return self._meta.chunk_size
+
+    def get_db_connection_name(self):
+        if self._meta.using_db is None:
+            return router.db_for_write(self._meta.model)
+        else:
+            return self._meta.using_db
 
     def get_fields(self, **kwargs):
         """
@@ -725,8 +738,9 @@ class Resource(metaclass=DeclarativeMetaclass):
 
         if use_transactions is None:
             use_transactions = self.get_use_transactions()
+        db_connection = self.get_db_connection_name()
 
-        connection = connections[DEFAULT_DB_ALIAS]
+        connection = connections[db_connection]
         supports_transactions = getattr(connection.features, "supports_transactions", False)
 
         if use_transactions and not supports_transactions:
@@ -737,10 +751,11 @@ class Resource(metaclass=DeclarativeMetaclass):
         if self._meta.batch_size is not None and (not isinstance(self._meta.batch_size, int) or self._meta.batch_size < 0):
             raise ValueError("Batch size must be a positive integer")
 
-        with atomic_if_using_transaction(using_transactions):
+        with atomic_if_using_transaction(using_transactions, using=db_connection):
             return self.import_data_inner(dataset, dry_run, raise_errors, using_transactions, collect_failed_rows, **kwargs)
 
     def import_data_inner(self, dataset, dry_run, raise_errors, using_transactions, collect_failed_rows, **kwargs):
+        db_connection = self.get_db_connection_name()
         result = self.get_result_class()()
         result.diff_headers = self.get_diff_headers()
         result.total_rows = len(dataset)
@@ -748,10 +763,10 @@ class Resource(metaclass=DeclarativeMetaclass):
         if using_transactions:
             # when transactions are used we want to create/update/delete object
             # as transaction will be rolled back if dry_run is set
-            sp1 = savepoint()
+            sp1 = savepoint(using=db_connection)
 
         try:
-            with atomic_if_using_transaction(using_transactions):
+            with atomic_if_using_transaction(using_transactions, using=db_connection):
                 self.before_import(dataset, using_transactions, dry_run, **kwargs)
         except Exception as e:
             logger.debug(e, exc_info=e)
@@ -769,7 +784,7 @@ class Resource(metaclass=DeclarativeMetaclass):
             result.add_dataset_headers(dataset.headers)
 
         for i, row in enumerate(dataset.dict, 1):
-            with atomic_if_using_transaction(using_transactions):
+            with atomic_if_using_transaction(using_transactions, using=db_connection):
                 row_result = self.import_row(
                     row,
                     instance_loader,
@@ -798,13 +813,13 @@ class Resource(metaclass=DeclarativeMetaclass):
 
         if self._meta.use_bulk:
             # bulk persist any instances which are still pending
-            with atomic_if_using_transaction(using_transactions):
+            with atomic_if_using_transaction(using_transactions, using=db_connection):
                 self.bulk_create(using_transactions, dry_run, raise_errors)
                 self.bulk_update(using_transactions, dry_run, raise_errors)
                 self.bulk_delete(using_transactions, dry_run, raise_errors)
 
         try:
-            with atomic_if_using_transaction(using_transactions):
+            with atomic_if_using_transaction(using_transactions, using=db_connection):
                 self.after_import(dataset, result, using_transactions, dry_run, **kwargs)
         except Exception as e:
             logger.debug(e, exc_info=e)
@@ -815,9 +830,9 @@ class Resource(metaclass=DeclarativeMetaclass):
 
         if using_transactions:
             if dry_run or result.has_errors():
-                savepoint_rollback(sp1)
+                savepoint_rollback(sp1, using=db_connection)
             else:
-                savepoint_commit(sp1)
+                savepoint_commit(sp1, using=db_connection)
 
         return result
 
@@ -1102,7 +1117,8 @@ class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
         """
         # Adapted from django's loaddata
         if not dry_run and any(r.import_type == RowResult.IMPORT_TYPE_NEW for r in result.rows):
-            connection = connections[DEFAULT_DB_ALIAS]
+            db_connection = self.get_db_connection_name()
+            connection = connections[db_connection]
             sequence_sql = connection.ops.sequence_reset_sql(no_style(), [self._meta.model])
             if sequence_sql:
                 cursor = connection.cursor()
