@@ -2,10 +2,12 @@ Changelog
 =========
 
 
-2.4.1 (unreleased)
+2.5.0 (2020-12-30)
 ------------------
 
-- Changed the default value for ``IMPORT_EXPORT_CHUNK_SIZE`` to 100.
+- Changed the default value for ``IMPORT_EXPORT_CHUNK_SIZE`` to 100. (#1196)
+- Add translation for Korean (#1218)
+- Update linting, CI, and docs.
 
 
 2.4.0 (2020-10-05)
