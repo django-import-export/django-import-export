@@ -2,6 +2,10 @@
 {% load i18n %}
 {% load admin_urls %}
 {% load import_export_tags %}
+{% block extrahead %}{{ block.super }}
+<script type="text/javascript" src="{% url 'admin:jsi18n' %}"></script>
+{{ form.media }}
+{% endblock %}
 
 {% block breadcrumbs_last %}
 {% trans "Export" %}
