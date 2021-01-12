@@ -115,7 +115,7 @@ or are otherwise able to run Django locally.
 You can run it via::
 
     cd tests
-    ./manage.py makemigration
+    ./manage.py makemigrations
     ./manage.py migrate
     ./manage.py createsuperuser
     ./manage.py loaddata category.json book.json
