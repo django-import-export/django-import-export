@@ -1,13 +1,12 @@
 import functools
 import logging
-import tablib
 import traceback
 from collections import OrderedDict
 from copy import deepcopy
 
-from diff_match_patch import diff_match_patch
-
 import django
+import tablib
+from diff_match_patch import diff_match_patch
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.core.management.color import no_style
@@ -20,7 +19,7 @@ from django.db.transaction import (
     atomic,
     savepoint,
     savepoint_commit,
-    savepoint_rollback
+    savepoint_rollback,
 )
 from django.utils.encoding import force_str
 from django.utils.safestring import mark_safe
@@ -40,9 +39,6 @@ else:
 logger = logging.getLogger(__name__)
 # Set default logging handler to avoid "No handler found" warnings.
 logger.addHandler(logging.NullHandler())
-
-USE_TRANSACTIONS = getattr(settings, 'IMPORT_EXPORT_USE_TRANSACTIONS', True)
-CHUNK_SIZE = getattr(settings, 'IMPORT_EXPORT_CHUNK_SIZE', 1)
 
 
 def get_related_model(field):
@@ -126,10 +122,10 @@ class ResourceOptions:
 
     chunk_size = None
     """
-    Controls the chunk_size argument of Queryset.iterator or, 
+    Controls the chunk_size argument of Queryset.iterator or,
     if prefetch_related is used, the per_page attribute of Paginator.
     """
-    
+
     skip_diff = False
     """
     Controls whether or not an instance should be diffed following import.
@@ -139,6 +135,28 @@ class ResourceOptions:
     If diffing is not required, then disabling the diff operation by setting this value to ``True``
     improves performance, because the copy and comparison operations are skipped for each row.
     The default value is False.
+    """
+
+    use_bulk = False
+    """
+    Controls whether import operations should be performed in bulk.
+    By default, an object's save() method is called for each row in a data set.
+    When bulk is enabled, objects are saved using bulk operations.
+    """
+
+    batch_size = 1000
+    """
+    The batch_size parameter controls how many objects are created in a single query.
+    The default is to create objects in batches of 1000.
+    See `bulk_create() <https://docs.djangoproject.com/en/dev/ref/models/querysets/#bulk-create>`_.
+    This parameter is only used if ``use_bulk`` is True.
+    """
+
+    force_init_instance = False
+    """
+    If True, this parameter will prevent imports from checking the database for existing instances.
+    Enabling this parameter is a performance enhancement if your import dataset is guaranteed to
+    contain new instances.
     """
 
 
@@ -221,6 +239,11 @@ class Resource(metaclass=DeclarativeMetaclass):
         # cls.fields.
         self.fields = deepcopy(self.fields)
 
+        # lists to hold model instances in memory when bulk operations are enabled
+        self.create_instances = list()
+        self.update_instances = list()
+        self.delete_instances = list()
+
     @classmethod
     def get_result_class(self):
         """
@@ -251,13 +274,13 @@ class Resource(metaclass=DeclarativeMetaclass):
 
     def get_use_transactions(self):
         if self._meta.use_transactions is None:
-            return USE_TRANSACTIONS
+            return getattr(settings, 'IMPORT_EXPORT_USE_TRANSACTIONS', True)
         else:
             return self._meta.use_transactions
 
     def get_chunk_size(self):
         if self._meta.chunk_size is None:
-            return CHUNK_SIZE
+            return getattr(settings, 'IMPORT_EXPORT_CHUNK_SIZE', 100)
         else:
             return self._meta.chunk_size
 
@@ -303,11 +326,77 @@ class Resource(metaclass=DeclarativeMetaclass):
         """
         Either fetches an already existing instance or initializes a new one.
         """
-        instance = self.get_instance(instance_loader, row)
-        if instance:
-            return (instance, False)
-        else:
-            return (self.init_instance(row), True)
+        if not self._meta.force_init_instance:
+            instance = self.get_instance(instance_loader, row)
+            if instance:
+                return (instance, False)
+        return (self.init_instance(row), True)
+
+    def get_import_id_fields(self):
+        """
+        """
+        return self._meta.import_id_fields
+
+    def get_bulk_update_fields(self):
+        """
+        Returns the fields to be included in calls to bulk_update().
+        ``import_id_fields`` are removed because `id` fields cannot be supplied to bulk_update().
+        """
+        return [f for f in self.fields if f not in self._meta.import_id_fields]
+
+    def bulk_create(self, using_transactions, dry_run, raise_errors, batch_size=None):
+        """
+        Creates objects by calling ``bulk_create``.
+        """
+        try:
+            if len(self.create_instances) > 0:
+                if not using_transactions and dry_run:
+                    pass
+                else:
+                    self._meta.model.objects.bulk_create(self.create_instances, batch_size=batch_size)
+        except Exception as e:
+            logger.exception(e)
+            if raise_errors:
+                raise e
+        finally:
+            self.create_instances.clear()
+
+    def bulk_update(self, using_transactions, dry_run, raise_errors, batch_size=None):
+        """
+        Updates objects by calling ``bulk_update``.
+        """
+        try:
+            if len(self.update_instances) > 0:
+                if not using_transactions and dry_run:
+                    pass
+                else:
+                    self._meta.model.objects.bulk_update(self.update_instances, self.get_bulk_update_fields(),
+                                                         batch_size=batch_size)
+        except Exception as e:
+            logger.exception(e)
+            if raise_errors:
+                raise e
+        finally:
+            self.update_instances.clear()
+
+    def bulk_delete(self, using_transactions, dry_run, raise_errors):
+        """
+        Deletes objects by filtering on a list of instances to be deleted,
+        then calling ``delete()`` on the entire queryset.
+        """
+        try:
+            if len(self.delete_instances) > 0:
+                if not using_transactions and dry_run:
+                    pass
+                else:
+                    delete_ids = [o.pk for o in self.delete_instances]
+                    self._meta.model.objects.filter(pk__in=delete_ids).delete()
+        except Exception as e:
+            logger.exception(e)
+            if raise_errors:
+                raise e
+        finally:
+            self.delete_instances.clear()
 
     def validate_instance(self, instance, import_validation_errors=None, validate_unique=True):
         """
@@ -341,15 +430,20 @@ class Resource(metaclass=DeclarativeMetaclass):
         """
         Takes care of saving the object to the database.
 
-        Keep in mind that this is done by calling ``instance.save()``, so
-        objects are not created in bulk!
+        Objects can be created in bulk if ``use_bulk`` is enabled.
         """
         self.before_save_instance(instance, using_transactions, dry_run)
-        if not using_transactions and dry_run:
-            # we don't have transactions and we want to do a dry_run
-            pass
+        if self._meta.use_bulk:
+            if instance.pk:
+                self.update_instances.append(instance)
+            else:
+                self.create_instances.append(instance)
         else:
-            instance.save()
+            if not using_transactions and dry_run:
+                # we don't have transactions and we want to do a dry_run
+                pass
+            else:
+                instance.save()
         self.after_save_instance(instance, using_transactions, dry_run)
 
     def before_save_instance(self, instance, using_transactions, dry_run):
@@ -367,13 +461,17 @@ class Resource(metaclass=DeclarativeMetaclass):
     def delete_instance(self, instance, using_transactions=True, dry_run=False):
         """
         Calls :meth:`instance.delete` as long as ``dry_run`` is not set.
+        If ``use_bulk`` then instances are appended to a list for bulk import.
         """
         self.before_delete_instance(instance, dry_run)
-        if not using_transactions and dry_run:
-            # we don't have transactions and we want to do a dry_run
-            pass
+        if self._meta.use_bulk:
+            self.delete_instances.append(instance)
         else:
-            instance.delete()
+            if not using_transactions and dry_run:
+                # we don't have transactions and we want to do a dry_run
+                pass
+            else:
+                instance.delete()
         self.after_delete_instance(instance, dry_run)
 
     def before_delete_instance(self, instance, dry_run):
@@ -425,8 +523,9 @@ class Resource(metaclass=DeclarativeMetaclass):
         Model instance need to have a primary key value before
         a many-to-many relationship can be used.
         """
-        if not using_transactions and dry_run:
+        if (not using_transactions and dry_run) or self._meta.use_bulk:
             # we don't have transactions and we want to do a dry_run
+            # OR use_bulk is enabled (m2m operations are not supported for bulk operations)
             pass
         else:
             for field in self.get_import_fields():
@@ -495,25 +594,25 @@ class Resource(metaclass=DeclarativeMetaclass):
         """
         pass
 
-    def before_import_row(self, row, **kwargs):
+    def before_import_row(self, row, row_number=None, **kwargs):
         """
         Override to add additional logic. Does nothing by default.
         """
         pass
 
-    def after_import_row(self, row, row_result, **kwargs):
+    def after_import_row(self, row, row_result, row_number=None, **kwargs):
         """
         Override to add additional logic. Does nothing by default.
         """
         pass
 
-    def after_import_instance(self, instance, new, **kwargs):
+    def after_import_instance(self, instance, new, row_number=None, **kwargs):
         """
         Override to add additional logic. Does nothing by default.
         """
         pass
 
-    def import_row(self, row, instance_loader, using_transactions=True, dry_run=False, **kwargs):
+    def import_row(self, row, instance_loader, using_transactions=True, dry_run=False, raise_errors=False, **kwargs):
         """
         Imports data from ``tablib.Dataset``. Refer to :doc:`import_workflow`
         for a more complete description of the whole import process.
@@ -589,6 +688,18 @@ class Resource(metaclass=DeclarativeMetaclass):
                 logger.debug(e, exc_info=e)
             tb_info = traceback.format_exc()
             row_result.errors.append(self.get_error_result_class()(e, tb_info, row))
+
+        if self._meta.use_bulk:
+            # persist a batch of rows
+            # because this is a batch, any exceptions are logged and not associated
+            # with a specific row
+            if len(self.create_instances) == self._meta.batch_size:
+                self.bulk_create(using_transactions, dry_run, raise_errors, batch_size=self._meta.batch_size)
+            if len(self.update_instances) == self._meta.batch_size:
+                self.bulk_update(using_transactions, dry_run, raise_errors, batch_size=self._meta.batch_size)
+            if len(self.delete_instances) == self._meta.batch_size:
+                self.bulk_delete(using_transactions, dry_run, raise_errors)
+
         return row_result
 
     def import_data(self, dataset, dry_run=False, raise_errors=False,
@@ -622,6 +733,9 @@ class Resource(metaclass=DeclarativeMetaclass):
             raise ImproperlyConfigured
 
         using_transactions = (use_transactions or dry_run) and supports_transactions
+
+        if self._meta.batch_size is not None and (not isinstance(self._meta.batch_size, int) or self._meta.batch_size < 0):
+            raise ValueError("Batch size must be a positive integer")
 
         with atomic_if_using_transaction(using_transactions):
             return self.import_data_inner(dataset, dry_run, raise_errors, using_transactions, collect_failed_rows, **kwargs)
@@ -661,6 +775,8 @@ class Resource(metaclass=DeclarativeMetaclass):
                     instance_loader,
                     using_transactions=using_transactions,
                     dry_run=dry_run,
+                    row_number=i,
+                    raise_errors=raise_errors,
                     **kwargs
                 )
             result.increment_row_result_total(row_result)
@@ -679,6 +795,13 @@ class Resource(metaclass=DeclarativeMetaclass):
             if (row_result.import_type != RowResult.IMPORT_TYPE_SKIP or
                     self._meta.report_skipped):
                 result.append_row_result(row_result)
+
+        if self._meta.use_bulk:
+            # bulk persist any instances which are still pending
+            with atomic_if_using_transaction(using_transactions):
+                self.bulk_create(using_transactions, dry_run, raise_errors)
+                self.bulk_update(using_transactions, dry_run, raise_errors)
+                self.bulk_delete(using_transactions, dry_run, raise_errors)
 
         try:
             with atomic_if_using_transaction(using_transactions):
@@ -959,11 +1082,6 @@ class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
             default=django_field.default,
         )
         return field
-
-    def get_import_id_fields(self):
-        """
-        """
-        return self._meta.import_id_fields
 
     def get_queryset(self):
         """

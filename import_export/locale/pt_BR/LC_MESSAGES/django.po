@@ -1,76 +1,86 @@
-# SOME DESCRIPTIVE TITLE.
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the PACKAGE package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
+# Dan <pluthd@gmail.com>, 2020.
 msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-07-13 19:12-0300\n"
-"PO-Revision-Date: 2015-07-13 19:13-0300\n"
+"POT-Creation-Date: 2020-06-04 09:27+0200\n"
+"PO-Revision-Date: 2020-06-06 10:30-0500\n"
+"Last-Translator: Daniel Pluth <pluthd@gmail.com>\n"
+"Language-Team: \n"
 "Language: pt_BR\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"Last-Translator: \n"
-"Language-Team: \n"
-"X-Generator: Poedit 1.8.1\n"
+"X-Generator: Lokalize 20.04.1\n"
 
-#: admin.py:179
-msgid "Import finished"
-msgstr "Importação finalizada"
+#: admin.py:194
+#, python-format
+msgid "%s through import_export"
+msgstr "%s através import_export "
 
-#: admin.py:412
+#: admin.py:200
+msgid "Import finished, with {} new and {} updated {}."
+msgstr "A importação foi completada com {} novas e {} atualizadas {}"
+
+#: admin.py:298
+#, python-format
+msgid "<h1>Imported file has a wrong encoding: %s</h1>"
+msgstr "<h1>O arquivo importado tem uma codificação errada: %s</h1>"
+
+#: admin.py:300
+#, python-format
+msgid "<h1>%s encountered while trying to read file: %s</h1>"
+msgstr "<h1>%s encontrado durante a leitura do arquivo: %s</h1>"
+
+#: admin.py:331 templates/admin/import_export/change_list_import_item.html:5
+#: templates/admin/import_export/import.html:10
+msgid "Import"
+msgstr "Importar"
+
+#: admin.py:496 templates/admin/import_export/change_list_export_item.html:5
+#: templates/admin/import_export/export.html:7
+msgid "Export"
+msgstr "Exportar"
+
+#: admin.py:554
 msgid "You must select an export format."
 msgstr "Você tem que selecionar um formato de exportação."
 
-#: admin.py:429
+#: admin.py:567
 #, python-format
 msgid "Export selected %(verbose_name_plural)s"
 msgstr "Exportar %(verbose_name_plural)s selecionados"
 
-#: forms.py:12
+#: forms.py:10
 msgid "File to import"
 msgstr "Arquivo a ser importado"
 
-#: forms.py:15 forms.py:43 forms.py:68
+#: forms.py:13 forms.py:41 forms.py:66
 msgid "Format"
 msgstr "Formato"
 
 #: templates/admin/import_export/base.html:11
 msgid "Home"
-msgstr "Home"
+msgstr "Início"
 
-#: templates/admin/import_export/change_list_export.html:5
-#: templates/admin/import_export/change_list_import_export.html:6
-#: templates/admin/import_export/export.html:8
-#: templates/admin/import_export/export.html:12
-msgid "Export"
-msgstr "Exportar"
-
-#: templates/admin/import_export/change_list_import.html:5
-#: templates/admin/import_export/change_list_import_export.html:5
-#: templates/admin/import_export/import.html:8
-#: templates/admin/import_export/import.html:12
-msgid "Import"
-msgstr "Importar"
-
-#: templates/admin/import_export/export.html:34
-#: templates/admin/import_export/import.html:57
+#: templates/admin/import_export/export.html:31
+#: templates/admin/import_export/import.html:52
 msgid "Submit"
 msgstr "Enviar"
 
-#: templates/admin/import_export/import.html:19
+#: templates/admin/import_export/import.html:20
 msgid ""
 "Below is a preview of data to be imported. If you are satisfied with the "
 "results, click 'Confirm import'"
 msgstr ""
-"Abaixo é uma prévia dos dados a serem importados. Se você esta satisfeito "
+"Ver abaixo uma prévia dos dados a serem importados. Se você esta satisfeito "
 "com os resultados, clique em 'Confirmar importação'"
 
-#: templates/admin/import_export/import.html:22
+#: templates/admin/import_export/import.html:23
 msgid "Confirm import"
 msgstr "Confirmar importação"
 
@@ -78,30 +88,54 @@ msgstr "Confirmar importação"
 msgid "This importer will import the following fields: "
 msgstr "Este importador vai importar os seguintes campos:"
 
-#: templates/admin/import_export/import.html:65
+#: templates/admin/import_export/import.html:61
+#: templates/admin/import_export/import.html:90
 msgid "Errors"
 msgstr "Erros"
 
-#: templates/admin/import_export/import.html:76
+#: templates/admin/import_export/import.html:72
 msgid "Line number"
 msgstr "Número da linha"
 
-#: templates/admin/import_export/import.html:86
+#: templates/admin/import_export/import.html:82
+msgid "Some rows failed to validate"
+msgstr "Algumas linhas não foram validadas"
+
+#: templates/admin/import_export/import.html:84
+msgid ""
+"Please correct these errors in your data where possible, then reupload it "
+"using the form above."
+msgstr ""
+"Por favor corrigir os erros nos dados onde possível e recarregar os dados "
+"com o formato acima."
+
+#: templates/admin/import_export/import.html:89
+msgid "Row"
+msgstr "Linha"
+
+#: templates/admin/import_export/import.html:116
+msgid "Non field specific"
+msgstr "Campo não é específico"
+
+#: templates/admin/import_export/import.html:137
 msgid "Preview"
 msgstr "Prévia"
 
-#: templates/admin/import_export/import.html:101
+#: templates/admin/import_export/import.html:152
 msgid "New"
 msgstr "Novo"
 
-#: templates/admin/import_export/import.html:103
+#: templates/admin/import_export/import.html:154
 msgid "Skipped"
 msgstr "Não usados"
 
-#: templates/admin/import_export/import.html:105
+#: templates/admin/import_export/import.html:156
 msgid "Delete"
 msgstr "Remover"
 
-#: templates/admin/import_export/import.html:107
+#: templates/admin/import_export/import.html:158
 msgid "Update"
 msgstr "Atualizar"
+
+#~ msgid "Import finished"
+#~ msgstr "Importação finalizada"

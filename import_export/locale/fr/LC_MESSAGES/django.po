@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-09-06 19:25-0500\n"
+"POT-Creation-Date: 2020-06-04 09:27+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,56 +18,62 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
-#: import_export/admin.py:247
+#: admin.py:194
+#, python-format
+msgid "%s through import_export"
+msgstr ""
+
+#: admin.py:200
+msgid "Import finished, with {} new and {} updated {}."
+msgstr ""
+
+#: admin.py:298
 #, python-format
 msgid "<h1>Imported file has a wrong encoding: %s</h1>"
 msgstr "<h1>Le fichier importé a un encodage erroné: %s</h1>"
 
-#: import_export/admin.py:249
+#: admin.py:300
 #, python-format
 msgid "<h1>%s encountered while trying to read file: %s</h1>"
 msgstr "<h1>%s rencontré en essayant de lire le fichier: %s</h1>"
 
-#: import_export/admin.py:449
+#: admin.py:331 templates/admin/import_export/change_list_import_item.html:5
+#: templates/admin/import_export/import.html:10
+msgid "Import"
+msgstr "Importer"
+
+#: admin.py:496 templates/admin/import_export/change_list_export_item.html:5
+#: templates/admin/import_export/export.html:7
+msgid "Export"
+msgstr "Exporter"
+
+#: admin.py:554
 msgid "You must select an export format."
 msgstr "Vous devez sélectionner un format d'exportation."
 
-#: import_export/admin.py:466
+#: admin.py:567
 #, python-format
 msgid "Export selected %(verbose_name_plural)s"
 msgstr "Exporter %(verbose_name_plural)s selectionnés"
 
-#: import_export/forms.py:12
+#: forms.py:10
 msgid "File to import"
 msgstr "Fichier à importer"
 
-#: import_export/forms.py:15 import_export/forms.py:43
-#: import_export/forms.py:68
+#: forms.py:13 forms.py:41 forms.py:66
 msgid "Format"
 msgstr "Format"
 
-#: import_export/templates/admin/import_export/base.html:10
+#: templates/admin/import_export/base.html:11
 msgid "Home"
 msgstr "Accueil"
 
-#: import_export/templates/admin/import_export/change_list_export_item.html:4
-#: import_export/templates/admin/import_export/export.html:7
-#: import_export/templates/admin/import_export/export.html:11
-msgid "Export"
-msgstr "Exporter"
-
-#: import_export/templates/admin/import_export/change_list_import_item.html:4
-#: import_export/templates/admin/import_export/import.html:7
-#: import_export/templates/admin/import_export/import.html:11
-msgid "Import"
-msgstr "Importer"
-
-#: import_export/templates/admin/import_export/export.html:33
-#: import_export/templates/admin/import_export/import.html:51
+#: templates/admin/import_export/export.html:31
+#: templates/admin/import_export/import.html:52
 msgid "Submit"
 msgstr "Soumettre"
 
-#: import_export/templates/admin/import_export/import.html:18
+#: templates/admin/import_export/import.html:20
 msgid ""
 "Below is a preview of data to be imported. If you are satisfied with the "
 "results, click 'Confirm import'"
@@ -75,38 +81,57 @@ msgstr ""
 "Voici un aperçu des données à importer. Si vous êtes satisfait des "
 "résultats, cliquez sur 'Confirmer l'importation'"
 
-#: import_export/templates/admin/import_export/import.html:21
+#: templates/admin/import_export/import.html:23
 msgid "Confirm import"
 msgstr "Confirmer l'importation"
 
-#: import_export/templates/admin/import_export/import.html:30
+#: templates/admin/import_export/import.html:31
 msgid "This importer will import the following fields: "
 msgstr "Cet importateur va importer les champs suivants: "
 
-#: import_export/templates/admin/import_export/import.html:59
+#: templates/admin/import_export/import.html:61
+#: templates/admin/import_export/import.html:90
 msgid "Errors"
 msgstr "Erreurs"
 
-#: import_export/templates/admin/import_export/import.html:70
+#: templates/admin/import_export/import.html:72
 msgid "Line number"
 msgstr "Numéro de ligne"
 
-#: import_export/templates/admin/import_export/import.html:80
+#: templates/admin/import_export/import.html:82
+msgid "Some rows failed to validate"
+msgstr ""
+
+#: templates/admin/import_export/import.html:84
+msgid ""
+"Please correct these errors in your data where possible, then reupload it "
+"using the form above."
+msgstr ""
+
+#: templates/admin/import_export/import.html:89
+msgid "Row"
+msgstr ""
+
+#: templates/admin/import_export/import.html:116
+msgid "Non field specific"
+msgstr ""
+
+#: templates/admin/import_export/import.html:137
 msgid "Preview"
 msgstr "Aperçu"
 
-#: import_export/templates/admin/import_export/import.html:95
+#: templates/admin/import_export/import.html:152
 msgid "New"
 msgstr "Nouveau"
 
-#: import_export/templates/admin/import_export/import.html:97
+#: templates/admin/import_export/import.html:154
 msgid "Skipped"
 msgstr "Ignoré"
 
-#: import_export/templates/admin/import_export/import.html:99
+#: templates/admin/import_export/import.html:156
 msgid "Delete"
 msgstr "Supprimer"
 
-#: import_export/templates/admin/import_export/import.html:101
+#: templates/admin/import_export/import.html:158
 msgid "Update"
 msgstr "Mettre à jour"

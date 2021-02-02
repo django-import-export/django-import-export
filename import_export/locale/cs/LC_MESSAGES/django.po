@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-05-02 19:17+0200\n"
+"POT-Creation-Date: 2020-06-04 09:27+0200\n"
 "PO-Revision-Date: 2017-05-02 19:17+0200\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -18,65 +18,62 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
 "X-Generator: Poedit 2.0.1\n"
 
-#: import_export/admin.py:206
+#: admin.py:194
 #, python-format
 msgid "%s through import_export"
 msgstr "%s skrz import_export"
 
-#: import_export/admin.py:212
+#: admin.py:200
 msgid "Import finished, with {} new and {} updated {}."
 msgstr "Import dokončen, {} nové a {} aktualizované {}."
 
-#: import_export/admin.py:263
+#: admin.py:298
 #, python-format
 msgid "<h1>Imported file has a wrong encoding: %s</h1>"
 msgstr "<h1>Importovaný soubor má nesprávné kódování: %s</h1>"
 
-#: import_export/admin.py:265
+#: admin.py:300
 #, python-format
 msgid "<h1>%s encountered while trying to read file: %s</h1>"
 msgstr "<h1>Při zpracování souboru nastala chyba %s (soubor %s)</h1>"
 
-#: import_export/admin.py:285
-#: import_export/templates/admin/import_export/change_list_import_item.html:4
-#: import_export/templates/admin/import_export/import.html:7
+#: admin.py:331 templates/admin/import_export/change_list_import_item.html:5
+#: templates/admin/import_export/import.html:10
 msgid "Import"
 msgstr "Import"
 
-#: import_export/admin.py:420
-#: import_export/templates/admin/import_export/change_list_export_item.html:4
-#: import_export/templates/admin/import_export/export.html:7
+#: admin.py:496 templates/admin/import_export/change_list_export_item.html:5
+#: templates/admin/import_export/export.html:7
 msgid "Export"
 msgstr "Export"
 
-#: import_export/admin.py:473
+#: admin.py:554
 msgid "You must select an export format."
 msgstr "Musíte vybrat formát pro export."
 
-#: import_export/admin.py:490
+#: admin.py:567
 #, python-format
 msgid "Export selected %(verbose_name_plural)s"
 msgstr "Vybrán export %(verbose_name_plural)s"
 
-#: import_export/forms.py:12
+#: forms.py:10
 msgid "File to import"
 msgstr "Soubor k importu"
 
-#: import_export/forms.py:15 import_export/forms.py:43
-#: import_export/forms.py:68
+#: forms.py:13 forms.py:41 forms.py:66
 msgid "Format"
 msgstr "Formát"
 
-#: import_export/templates/admin/import_export/base.html:10
+#: templates/admin/import_export/base.html:11
 msgid "Home"
 msgstr "Domů"
 
-#: import_export/templates/admin/import_export/export.html:31
-#: import_export/templates/admin/import_export/import.html:49
+#: templates/admin/import_export/export.html:31
+#: templates/admin/import_export/import.html:52
 msgid "Submit"
 msgstr "Odeslat"
 
-#: import_export/templates/admin/import_export/import.html:16
+#: templates/admin/import_export/import.html:20
 msgid ""
 "Below is a preview of data to be imported. If you are satisfied with the "
 "results, click 'Confirm import'"
@@ -84,38 +81,57 @@ msgstr ""
 "Níže je zobrazen náhled importovaných dat. Pokud je vše v pořádku, stiskněte "
 "tlačítko „Provést import”"
 
-#: import_export/templates/admin/import_export/import.html:19
+#: templates/admin/import_export/import.html:23
 msgid "Confirm import"
 msgstr "Provést import"
 
-#: import_export/templates/admin/import_export/import.html:28
+#: templates/admin/import_export/import.html:31
 msgid "This importer will import the following fields: "
 msgstr "Budou importována následující pole: "
 
-#: import_export/templates/admin/import_export/import.html:57
+#: templates/admin/import_export/import.html:61
+#: templates/admin/import_export/import.html:90
 msgid "Errors"
 msgstr "Chyby"
 
-#: import_export/templates/admin/import_export/import.html:68
+#: templates/admin/import_export/import.html:72
 msgid "Line number"
 msgstr "Číslo řádku"
 
-#: import_export/templates/admin/import_export/import.html:78
+#: templates/admin/import_export/import.html:82
+msgid "Some rows failed to validate"
+msgstr ""
+
+#: templates/admin/import_export/import.html:84
+msgid ""
+"Please correct these errors in your data where possible, then reupload it "
+"using the form above."
+msgstr ""
+
+#: templates/admin/import_export/import.html:89
+msgid "Row"
+msgstr ""
+
+#: templates/admin/import_export/import.html:116
+msgid "Non field specific"
+msgstr ""
+
+#: templates/admin/import_export/import.html:137
 msgid "Preview"
 msgstr "Náhled"
 
-#: import_export/templates/admin/import_export/import.html:93
+#: templates/admin/import_export/import.html:152
 msgid "New"
 msgstr "Nové"
 
-#: import_export/templates/admin/import_export/import.html:95
+#: templates/admin/import_export/import.html:154
 msgid "Skipped"
 msgstr "Přeskočené"
 
-#: import_export/templates/admin/import_export/import.html:97
+#: templates/admin/import_export/import.html:156
 msgid "Delete"
 msgstr "Smazání"
 
-#: import_export/templates/admin/import_export/import.html:99
+#: templates/admin/import_export/import.html:158
 msgid "Update"
 msgstr "Aktualizace"

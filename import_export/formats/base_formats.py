@@ -1,5 +1,6 @@
-import tablib
 from importlib import import_module
+
+import tablib
 
 
 class Format:
@@ -172,6 +173,7 @@ class XLSX(TablibFormat):
         Create dataset from first sheet.
         """
         from io import BytesIO
+
         import openpyxl
         xlsx_book = openpyxl.load_workbook(BytesIO(in_stream), read_only=True)
 
