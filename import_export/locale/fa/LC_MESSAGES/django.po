@@ -1,0 +1,139 @@
+# Copyright (C) 2021 THE django-import-export
+# This file is distributed under the same license as the django-import-export package.
+#
+# Yazdan Ranjbar <Yazdan_ra@icloud.com>, 2021.
+msgid ""
+msgstr ""
+"Project-Id-Version: 0.0.1\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2021-03-09 00:29+0030\n"
+"PO-Revision-Date: 2021-03-09 00:29+0030\n"
+"Last-Translator: Yazdan Ranjbar <Yazdan_ra@icloud.com>\n"
+"Language-Team: Persain/Farsi <kde-i18n-it@kde.org>\n"
+"Language: Farsi/Persian\n"
+"MIME-Version: 0.1\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 1.5.4\n"
+
+#: admin.py:194
+#, python-format
+msgid "%s through import_export"
+msgstr "%s یه وسیله ورودی-خروجی"
+
+#: admin.py:200
+msgid "Import finished, with {} new and {} updated {}."
+msgstr "بارگذاری تمام شد، با {} مورد جدید و {} مورد به روز شده."
+
+#: admin.py:298
+#, python-format
+msgid "<h1>Imported file has a wrong encoding: %s</h1>"
+msgstr "<h1>فایل بارگذاری شده encode اشتباهی دارد: %s</h1>"
+
+#: admin.py:300
+#, python-format
+msgid "<h1>%s encountered while trying to read file: %s</h1>"
+msgstr "<h1>در هنگام خواندن فایل %s با %s مواجه شد</h1>"
+
+#: admin.py:331 templates/admin/import_export/change_list_import_item.html:5
+#: templates/admin/import_export/import.html:10
+msgid "Import"
+msgstr "بارگذاری"
+
+#: admin.py:496 templates/admin/import_export/change_list_export_item.html:5
+#: templates/admin/import_export/export.html:7
+msgid "Export"
+msgstr "خروجی"
+
+#: admin.py:554
+msgid "You must select an export format."
+msgstr "شما باید یک فرمت خروجی انتخاب کنید"
+
+#: admin.py:567
+#, python-format
+msgid "Export selected %(verbose_name_plural)s"
+msgstr "خروجی %(verbose_name_plural)s انتخاب شده"
+
+#: forms.py:10
+msgid "File to import"
+msgstr "قایل برای بارگذاری"
+
+#: forms.py:13 forms.py:41 forms.py:66
+msgid "Format"
+msgstr "فرمت"
+
+#: templates/admin/import_export/base.html:11
+msgid "Home"
+msgstr "خانه"
+
+#: templates/admin/import_export/export.html:31
+#: templates/admin/import_export/import.html:52
+msgid "Submit"
+msgstr "ارسال"
+
+#: templates/admin/import_export/import.html:20
+msgid ""
+"Below is a preview of data to be imported. If you are satisfied with the "
+"results, click 'Confirm import'"
+msgstr ""
+"پایین یک پیش‌نمایش از دیتا‌هایی است که بارگذاری خواهند شد اگر این موارد درست هست"
+"روی 'تایید بارگذاری' گلیگ گنید"
+
+#: templates/admin/import_export/import.html:23
+msgid "Confirm import"
+msgstr "تایید بارگذاری"
+
+#: templates/admin/import_export/import.html:31
+msgid "This importer will import the following fields: "
+msgstr "این بارگذاری شامل این فیلد‌ها هست:"
+
+#: templates/admin/import_export/import.html:61
+#: templates/admin/import_export/import.html:90
+msgid "Errors"
+msgstr "خطاها"
+
+#: templates/admin/import_export/import.html:72
+msgid "Line number"
+msgstr "شماره خط"
+
+#: templates/admin/import_export/import.html:82
+msgid "Some rows failed to validate"
+msgstr "برخی از سطر‌ها معتبر نبودند"
+
+#: templates/admin/import_export/import.html:84
+msgid ""
+"Please correct these errors in your data where possible, then reupload it "
+"using the form above."
+msgstr "لطفا این خطا را تصحیح کنید و سپس مجدد فایل را بارگذاری کنید"
+
+#: templates/admin/import_export/import.html:89
+msgid "Row"
+msgstr "سظر"
+
+#: templates/admin/import_export/import.html:116
+msgid "Non field specific"
+msgstr "فیلد‌های غیر اختصاصی"
+
+#: templates/admin/import_export/import.html:137
+msgid "Preview"
+msgstr "نمایش"
+
+#: templates/admin/import_export/import.html:152
+msgid "New"
+msgstr "جدید"
+
+#: templates/admin/import_export/import.html:154
+msgid "Skipped"
+msgstr "در شد"
+
+#: templates/admin/import_export/import.html:156
+msgid "Delete"
+msgstr "حذف"
+
+#: templates/admin/import_export/import.html:158
+msgid "Update"
+msgstr "بروزرسانی"
+
+#~ msgid "Import finished"
+#~ msgstr "بارگذاری به اتمام رسید"
