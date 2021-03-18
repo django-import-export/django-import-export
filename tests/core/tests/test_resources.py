@@ -11,8 +11,9 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
-from django.db import DatabaseError, IntegrityError
+from django.db import IntegrityError
 from django.db.models import Count
+from django.db.utils import ConnectionDoesNotExist
 from django.test import TestCase, TransactionTestCase, skipUnlessDBFeature
 from django.utils.encoding import force_str
 from django.utils.html import strip_tags
@@ -93,7 +94,7 @@ class ResourceTestCase(TestCase):
         self.assertIsInstance(self.my_resource._meta,
                               resources.ResourceOptions)
 
-    def test_get_export_order(self):
+    def test_get_export_orderget_export_order(self):
         self.assertEqual(self.my_resource.get_export_headers(),
                          ['email', 'name', 'extra'])
 
@@ -972,6 +973,22 @@ class ModelResourceTest(TestCase):
         self.assertEqual(WithFloatField.objects.all()[0].f, None)
         self.assertEqual(WithFloatField.objects.all()[1].f, None)
 
+    def test_get_db_connection_name(self):
+        class BookResource(resources.ModelResource):
+            class Meta:
+                using_db = 'other_db'
+
+        self.assertEqual(BookResource().get_db_connection_name(), 'other_db')
+        self.assertEqual(CategoryResource().get_db_connection_name(), 'default')
+
+    def test_import_data_raises_field_for_wrong_db(self):
+        class BookResource(resources.ModelResource):
+            class Meta:
+                using_db = 'wrong_db'
+
+        with self.assertRaises(ConnectionDoesNotExist):
+            BookResource().import_data(self.dataset)
+
 
 class ModelResourceTransactionTest(TransactionTestCase):
     @skipUnlessDBFeature('supports_transactions')
@@ -1030,29 +1047,6 @@ class ModelResourceTransactionTest(TransactionTestCase):
                 Category.objects.create(name=instance.name)
 
         resource = CategoryResourceRaisesIntegrityError()
-        headers = ['id', 'name']
-        rows = [
-            [None, 'foo'],
-        ]
-        dataset = tablib.Dataset(*rows, headers=headers)
-        result = resource.import_data(
-            dataset,
-            use_transactions=True,
-        )
-        self.assertTrue(result.has_errors())
-
-    @skipUnlessDBFeature('supports_transactions')
-    def test_multiple_database_errors(self):
-
-        class CategoryResourceDbErrorsResource(CategoryResource):
-
-            def before_import(self, *args, **kwargs):
-                raise DatabaseError()
-
-            def save_instance(self):
-                raise DatabaseError()
-
-        resource = CategoryResourceDbErrorsResource()
         headers = ['id', 'name']
         rows = [
             [None, 'foo'],
