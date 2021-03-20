@@ -558,8 +558,8 @@ class Resource(metaclass=DeclarativeMetaclass):
         """
         Returns ``True`` if ``row`` importing should be skipped.
 
-        Default implementation returns ``False`` unless skip_unchanged == True,
-        or skip_diff == True.
+        Default implementation returns ``False`` unless skip_unchanged == True
+        and skip_diff == False.
 
         If skip_diff is True, then no comparisons can be made because ``original``
         will be None.
