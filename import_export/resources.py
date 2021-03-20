@@ -501,7 +501,7 @@ class Resource(metaclass=DeclarativeMetaclass):
     def import_field(self, field, obj, data, is_m2m=False):
         """
         Calls :meth:`import_export.fields.Field.save` if ``Field.attribute``
-        and ``Field.column_name`` are found in ``data``.
+        is specified, and ``Field.column_name`` is found in ``data``.
         """
         if field.attribute and field.column_name in data:
             field.save(obj, data, is_m2m)
