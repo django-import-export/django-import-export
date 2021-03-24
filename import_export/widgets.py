@@ -116,7 +116,7 @@ class BooleanWidget(Widget):
         from import_export import fields, resources, widgets
 
         class BooleanExample(resources.ModelResource):
-            warn = fields.Field(widget=widget.BooleanWidget)
+            warn = fields.Field(widget=widgets.BooleanWidget())
 
             def before_row_import(self, row, **kwargs):
                 if "warn" in row.keys():

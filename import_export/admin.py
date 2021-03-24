@@ -24,14 +24,6 @@ from .results import RowResult
 from .signals import post_export, post_import
 from .tmp_storages import TempFolderStorage
 
-SKIP_ADMIN_LOG = getattr(settings, 'IMPORT_EXPORT_SKIP_ADMIN_LOG', False)
-TMP_STORAGE_CLASS = getattr(settings, 'IMPORT_EXPORT_TMP_STORAGE_CLASS',
-                            TempFolderStorage)
-
-
-if isinstance(TMP_STORAGE_CLASS, str):
-    TMP_STORAGE_CLASS = import_string(TMP_STORAGE_CLASS)
-
 
 class ImportExportMixinBase:
     def get_model_info(self):
@@ -63,15 +55,21 @@ class ImportMixin(ImportExportMixinBase):
 
     def get_skip_admin_log(self):
         if self.skip_admin_log is None:
-            return SKIP_ADMIN_LOG
+            return getattr(settings, 'IMPORT_EXPORT_SKIP_ADMIN_LOG', False)
         else:
             return self.skip_admin_log
 
     def get_tmp_storage_class(self):
         if self.tmp_storage_class is None:
-            return TMP_STORAGE_CLASS
+            tmp_storage_class = getattr(
+                settings, 'IMPORT_EXPORT_TMP_STORAGE_CLASS', TempFolderStorage,
+            )
         else:
-            return self.tmp_storage_class
+            tmp_storage_class = self.tmp_storage_class
+
+        if isinstance(tmp_storage_class, str):
+            tmp_storage_class = import_string(tmp_storage_class)
+        return tmp_storage_class
 
     def has_import_permission(self, request):
         """

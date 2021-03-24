@@ -1,5 +1,4 @@
 from core.models import Category
-
 from django.test.testcases import TestCase
 from django.urls import reverse
 
