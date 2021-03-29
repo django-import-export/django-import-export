@@ -40,31 +40,31 @@ class CachedInstanceLoader(ModelInstanceLoader):
     Loads all possible model instances in dataset avoid hitting database for
     every ``get_instance`` call.
 
-    This instance loader work only when there is one ``import_id_fields``
-    field.
+    Note: When there is more than one field in `import_id_fields`, may load
+    instances not present in dataset (loads cartesian product of all values
+    in dataset across all `import_id_fields`), so the cache memory usage may
+    be unexpectedly large.
     """
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-        pk_field_name = self.resource.get_import_id_fields()[0]
-        self.pk_field = self.resource.fields[pk_field_name]
-
-        # If the pk field is missing, all instances in dataset are new
-        # and cache is empty.
+        
         self.all_instances = {}
-        if self.dataset.dict and self.pk_field.column_name in self.dataset.dict[0]:
-            ids = [self.pk_field.clean(row) for row in self.dataset.dict]
+        self.pk_fields = [self.resource.fields[key] for key in self.resource.get_import_id_fields()]
+        # If the pk fields are missing, all instances in dataset are new
+        # and cache is empty.
+        if self.dataset.dict and all(field.column_name in self.dataset.dict[0] for field in self.pk_fields):
+            ids = [{field.clean(row) for row in self.dataset.dict} for field in self.pk_fields]
             qs = self.get_queryset().filter(**{
-                "%s__in" % self.pk_field.attribute: ids
+                "%s__in" % field.attribute: ids[i] for i, field in enumerate(self.pk_fields)
                 })
 
             self.all_instances = {
-                self.pk_field.get_value(instance): instance
+                tuple(field.get_value(instance) for field in self.pk_fields): instance
                 for instance in qs
             }
 
     def get_instance(self, row):
         if self.all_instances:
-            return self.all_instances.get(self.pk_field.clean(row))
+            return self.all_instances.get(tuple(field.clean(row) for field in self.pk_fields))
         return None
