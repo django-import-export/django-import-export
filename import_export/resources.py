@@ -997,7 +997,9 @@ class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
         'BigIntegerField': widgets.IntegerWidget,
         'PositiveSmallIntegerField': widgets.IntegerWidget,
         'SmallIntegerField': widgets.IntegerWidget,
+        'SmallAutoField': widgets.IntegerWidget,
         'AutoField': widgets.IntegerWidget,
+        'BigAutoField': widgets.IntegerWidget,
         'NullBooleanField': widgets.BooleanWidget,
         'BooleanField': widgets.BooleanWidget,
     }
