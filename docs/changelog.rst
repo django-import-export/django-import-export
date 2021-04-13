@@ -5,7 +5,8 @@ Changelog
 2.5.1 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Support Django 3.2.
+- Correctly select widget for ``SmallAutoField`` and ``BigAutoField``.
 
 
 2.5.0 (2020-12-30)
