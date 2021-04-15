@@ -1400,6 +1400,74 @@ class ManyRelatedManagerDiffTest(TestCase):
                          expected_value)
 
 
+class ManyToManyWidgetDiffTest(TestCase):
+    # issue #1270 - ensure ManyToMany fields are correctly checked for
+    # changes when skip_unchanged=True
+    fixtures = ["category", "book"]
+
+    def setUp(self):
+        pass
+
+    def test_many_to_many_widget_create(self):
+        # the book is associated with 0 categories
+        # when we import a book with category 1, the book
+        # should be updated, not skipped
+        book = Book.objects.first()
+        book.categories.clear()
+        dataset_headers = ["id", "name", "categories"]
+        dataset_row = [book.id, book.name, "1"]
+        dataset = tablib.Dataset(headers=dataset_headers)
+        dataset.append(dataset_row)
+
+        book_resource = BookResource()
+        book_resource._meta.skip_unchanged = True
+        self.assertEqual(0, book.categories.count())
+
+        result = book_resource.import_data(dataset, dry_run=False)
+
+        book.refresh_from_db()
+        self.assertEqual(1, book.categories.count())
+        self.assertEqual(result.rows[0].import_type, results.RowResult.IMPORT_TYPE_UPDATE)
+        self.assertEqual(Category.objects.first(), book.categories.first())
+
+    def test_many_to_many_widget_update(self):
+        # the book is associated with 1 category ('Category 2')
+        # when we import a book with category 1, the book
+        # should be updated, not skipped, so that Category 2 is replaced by Category 1
+        book = Book.objects.first()
+        dataset_headers = ["id", "name", "categories"]
+        dataset_row = [book.id, book.name, "1"]
+        dataset = tablib.Dataset(headers=dataset_headers)
+        dataset.append(dataset_row)
+
+        book_resource = BookResource()
+        book_resource._meta.skip_unchanged = True
+        self.assertEqual(1, book.categories.count())
+
+        result = book_resource.import_data(dataset, dry_run=False)
+        self.assertEqual(result.rows[0].import_type, results.RowResult.IMPORT_TYPE_UPDATE)
+        self.assertEqual(1, book.categories.count())
+        self.assertEqual(Category.objects.first(), book.categories.first())
+
+    def test_many_to_many_widget_no_changes(self):
+        # the book is associated with 1 category ('Category 2')
+        # when we import a row with a book with category 1, the book
+        # should be skipped, because there is no change
+        book = Book.objects.first()
+        dataset_headers = ["id", "name", "categories"]
+        dataset_row = [book.id, book.name, book.categories.all()]
+        dataset = tablib.Dataset(headers=dataset_headers)
+        dataset.append(dataset_row)
+
+        book_resource = BookResource()
+        book_resource._meta.skip_unchanged = True
+
+        self.assertEqual(1, book.categories.count())
+        result = book_resource.import_data(dataset, dry_run=False)
+        self.assertEqual(result.rows[0].import_type, results.RowResult.IMPORT_TYPE_SKIP)
+        self.assertEqual(1, book.categories.count())
+
+
 @mock.patch("import_export.resources.Diff", spec=True)
 class SkipDiffTest(TestCase):
     """
