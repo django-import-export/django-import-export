@@ -10,6 +10,12 @@ Breaking changes
 This release makes the following changes to the API.  You may need to update your implementation to
 accommodate these changes.
 
+- Check value of ManyToManyField in skip_row() (#1271)
+   - This fixes an issue where ManyToMany fields are not checked correctly in `skip_row()`.
+     This means that `skip_row()` now takes `row` as a mandatory arg.
+     If you have overridden `skip_row()` in your own implementation, you will need to add `row`
+     as an arg.
+
 - Use 'create' flag instead of instance.pk (#1362)
    - ``import_export.resources.save_instance()`` now takes an additional mandatory argument: `is_create`.
      If you have over-ridden `save_instance()` in your own code, you will need to add this new argument.
