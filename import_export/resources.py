@@ -564,6 +564,9 @@ class Resource(metaclass=DeclarativeMetaclass):
         If skip_diff is True, then no comparisons can be made because ``original``
         will be None.
 
+        When left unspecified, skip_diff and skip_unchanged both default to ``False``, 
+        and rows are never skipped. 
+
         Override this method to handle skipping rows meeting certain
         conditions.
 
