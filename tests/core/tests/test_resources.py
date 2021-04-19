@@ -1110,8 +1110,12 @@ class PostgresTests(TransactionTestCase):
 
 
 if 'postgresql' in settings.DATABASES['default']['ENGINE']:
-    from django.contrib.postgres.fields import ArrayField, JSONField
+    from django.contrib.postgres.fields import ArrayField
     from django.db import models
+    try:
+        from django.db.models import JSONField
+    except ImportError:
+        from django.contrib.postgres.fields import JSONField
 
 
     class BookWithChapters(models.Model):

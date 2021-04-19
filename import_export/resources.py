@@ -1043,7 +1043,11 @@ class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
                 result = getattr(cls, result)(f)
         else:
             try:
-                from django.contrib.postgres.fields import ArrayField, JSONField
+                from django.contrib.postgres.fields import ArrayField
+                try:
+                    from django.db.models import JSONField
+                except ImportError:
+                    from django.contrib.postgres.fields import JSONField
             except ImportError:
                 # ImportError: No module named psycopg2.extras
                 class ArrayField:
