@@ -562,8 +562,8 @@ class ExportActionMixin(ExportMixin):
             return response
 
     def get_actions(self, request):
-        """Returns the dictionary of Admin actions after adding the
-        custom action to the existing dictionary of admin actions.
+        """
+        Adds the export action to the list of available actions.
         """
 
         actions = super().get_actions(request)
