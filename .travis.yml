@@ -8,6 +8,8 @@ python:
   - "3.7"
   - "3.8"
   - "3.9"
+addons:
+  postgresql: "10"
 env:
   global:
     - IMPORT_EXPORT_POSTGRESQL_USER=postgres
