@@ -94,7 +94,7 @@ class ResourceTestCase(TestCase):
         self.assertIsInstance(self.my_resource._meta,
                               resources.ResourceOptions)
 
-    def test_get_export_orderget_export_order(self):
+    def test_get_export_order(self):
         self.assertEqual(self.my_resource.get_export_headers(),
                          ['email', 'name', 'extra'])
 
