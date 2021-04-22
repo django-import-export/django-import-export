@@ -118,13 +118,13 @@ class BooleanWidget(Widget):
         class BooleanExample(resources.ModelResource):
             warn = fields.Field(widget=widgets.BooleanWidget())
 
-            def before_row_import(self, row, **kwargs):
+            def before_import_row(self, row, row_number=None, **kwargs):
                 if "warn" in row.keys():
                     # munge "warn" to "True"
                     if row["warn"] in ["warn", "WARN"]:
                         row["warn"] = True
 
-                return super().before_import_row(row, **kwargs)
+                return super().before_import_row(row, row_number, **kwargs)
     """
     TRUE_VALUES = ["1", 1, True, "true", "TRUE", "True"]
     FALSE_VALUES = ["0", 0, False, "false", "FALSE", "False"]
