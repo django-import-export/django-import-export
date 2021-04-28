@@ -1,5 +1,17 @@
 ## Bulk import testing
 
+This scripts outlines the steps used to profile bulk loading.
+The `bulk_import.py` script is used to profile run duration and memory during bulk load testing.
+
+### Pre-requisites
+
+- [Docker](https://docker.com)
+- [virtualenvwrapper](https://virtualenvwrapper.readthedocs.io/en/latest/command_ref.html)
+
+### Test environment
+
+The following tests were run on the following platform:
+
 - Thinkpad T470 i5 processor (Ubuntu 18.04)
 - python 3.8.1
 - Postgres 10 (docker container)
@@ -8,7 +20,9 @@
 
 ```bash
 # create venv and install django-import-export dependencies
-pip install memory-profiler
+cd <PROJECT_HOME>
+mkvirtualenv -p python3 djangoimportexport
+pip install -r requirements/base.txt -r requirements/test.txt
 ```
 
 ### Create Postgres DB
@@ -19,12 +33,11 @@ export IMPORT_EXPORT_POSTGRESQL_USER=pguser
 export IMPORT_EXPORT_POSTGRESQL_PASSWORD=pguserpass
 export DJANGO_SETTINGS_MODULE=settings
 
-cd ~/Projects/django-import-export/tests/bulk
+cd <PROJECT_HOME>/tests
 
 # start a local postgres instance
-docker-compose up -d db 
+docker-compose -f bulk/docker-compose.yml up -d 
 
-cd ..
 ./manage.py migrate
 ./manage.py test
 
@@ -32,15 +45,19 @@ cd ..
 ./manage.py createsuperuser --username admin  --email=email@example.com
 ```
 
-### bulk_create
+### Running script
 
 ```bash
-python3 import_book.py
+# run creates, updates, and deletes
+./manage.py runscript bulk_import
+
+# pass 'create', 'update' or 'delete' to run the single test
+./manage.py runscript bulk_import --script-args create
 ```
 
 ### Results
 
-- 20k book entries
+- Used 20k book entries
 - Memory is reported as the peak memory value whilst running the test script
 
 #### bulk_create
@@ -78,6 +95,10 @@ def get_or_init_instance(self, instance_loader, row):
 
 #### bulk_update
 
+```bash
+./manage.py runscript bulk_import --script-args update
+```
+
 ##### Default settings
 
 - `skip_diff = False`
@@ -101,7 +122,20 @@ def get_or_init_instance(self, instance_loader, row):
 | `use_bulk=True, batch_size=1000`   | 21.56       |  21.25        |
 
 
+- `skip_diff = False`
+
+| Condition                                | Time (secs) |  Memory (MB)  |
+| ---------------------------------------- | ----------- | ------------- |
+| `use_bulk=True, batch_size=1000`         | 9.26        |  8.51         |
+| `skip_html_diff=True, batch_size=1000`   | 8.69        |  7.50         |
+| `skip_unchanged=True, batch_size=1000`   | 5.42        |  7.34         |
+
+
 #### bulk delete
+
+```bash
+./manage.py runscript bulk_import --script-args delete
+```
 
 ##### Default settings
 
@@ -125,15 +159,28 @@ def get_or_init_instance(self, instance_loader, row):
 | `use_bulk=True, batch_size=None`   | 14.08       | 39.40         |
 | `use_bulk=True, batch_size=1000`   | 15.37       | 32.70         |
 
-### Clearing DB
+### Checking DB
 
-(set environment variables before running)
+Note that the db is cleared down after each test run.
+You need to uncomment the `delete()` calls to be able to view data.
 
 ```bash
-./manage.py shell
+./manage.py shell_plus
 
-from core.models import Book
-Book.objects.all().delete()
+Book.objects.all().count()
+```
+
+### Clear down
+
+Optional clear down of resources:
+
+```bash
+# remove the test db container
+docker-compose -f bulk/docker-compose.yml down -v
+
+# remove venv
+deactivate
+rmvirtualenv djangoimportexport
 ```
 
 ### References
