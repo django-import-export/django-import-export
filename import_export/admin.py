@@ -232,6 +232,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         if not self.has_import_permission(request):
             raise PermissionDenied
 
+        resource = None
         context = self.get_import_context_data()
 
         import_formats = self.get_import_formats()
@@ -259,33 +260,40 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
                     data = force_str(data, self.from_encoding)
                 dataset = input_format.create_dataset(data)
             except UnicodeDecodeError as e:
-                return HttpResponse(_(u"<h1>Imported file has a wrong encoding: %s</h1>" % e))
+                form.add_error('import_file', _(f"imported file has a wrong encoding: {str(e)}"))
             except Exception as e:
-                return HttpResponse(_(u"<h1>%s encountered while trying to read file: %s</h1>" % (type(e).__name__, import_file.name)))
+                form.add_error('import_file',
+                               _(f"'{type(e).__name__}' encountered while trying to read file. "
+                                 "Ensure you have chosen the correct format for the file. "
+                                 f"{str(e)}"))
 
-            # prepare kwargs for import data, if needed
-            res_kwargs = self.get_import_resource_kwargs(request, form=form, *args, **kwargs)
-            resource = self.get_import_resource_class()(**res_kwargs)
+            if not form.errors and not dataset.headers:
+                form.add_error('import_file', _("the import file does not contain a valid header on row 1"))
 
-            # prepare additional kwargs for import_data, if needed
-            imp_kwargs = self.get_import_data_kwargs(request, form=form, *args, **kwargs)
-            result = resource.import_data(dataset, dry_run=True,
-                                          raise_errors=False,
-                                          file_name=import_file.name,
-                                          user=request.user,
-                                          **imp_kwargs)
+            if not form.errors:
+                # prepare kwargs for import data, if needed
+                res_kwargs = self.get_import_resource_kwargs(request, form=form, *args, **kwargs)
+                resource = self.get_import_resource_class()(**res_kwargs)
 
-            context['result'] = result
+                # prepare additional kwargs for import_data, if needed
+                imp_kwargs = self.get_import_data_kwargs(request, form=form, *args, **kwargs)
+                result = resource.import_data(dataset, dry_run=True,
+                                              raise_errors=False,
+                                              file_name=import_file.name,
+                                              user=request.user,
+                                              **imp_kwargs)
 
-            if not result.has_errors() and not result.has_validation_errors():
-                initial = {
-                    'import_file_name': tmp_storage.name,
-                    'original_file_name': import_file.name,
-                    'input_format': form.cleaned_data['input_format'],
-                }
-                confirm_form = self.get_confirm_import_form()
-                initial = self.get_form_kwargs(form=form, **initial)
-                context['confirm_form'] = confirm_form(initial=initial)
+                context['result'] = result
+
+                if not result.has_errors() and not result.has_validation_errors():
+                    initial = {
+                        'import_file_name': tmp_storage.name,
+                        'original_file_name': import_file.name,
+                        'input_format': form.cleaned_data['input_format'],
+                    }
+                    confirm_form = self.get_confirm_import_form()
+                    initial = self.get_form_kwargs(form=form, **initial)
+                    context['confirm_form'] = confirm_form(initial=initial)
         else:
             res_kwargs = self.get_import_resource_kwargs(request, form=form, *args, **kwargs)
             resource = self.get_import_resource_class()(**res_kwargs)
@@ -295,7 +303,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         context['title'] = _("Import")
         context['form'] = form
         context['opts'] = self.model._meta
-        context['fields'] = [f.column_name for f in resource.get_user_visible_fields()]
+        context['fields'] = [f.column_name for f in resource.get_user_visible_fields()] if resource else []
 
         request.current_app = self.admin_site.name
         return TemplateResponse(request, [self.import_template_name],

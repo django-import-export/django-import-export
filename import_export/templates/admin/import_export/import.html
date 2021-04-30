@@ -28,8 +28,10 @@
       {% csrf_token %}
 
       <p>
-        {% trans "This importer will import the following fields: " %}
-        <code>{{ fields|join:", " }}</code>
+        {% if fields %}
+          {% trans "This importer will import the following fields: " %}
+          <code>{{ fields|join:", " }}</code>
+        {% endif %}
       </p>
 
       <fieldset class="module aligned">
