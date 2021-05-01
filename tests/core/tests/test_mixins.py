@@ -135,8 +135,7 @@ class BaseExportMixinTest(TestCase):
 
     def test_get_export_formats(self):
         class Format(object):
-            def __init__(self, id, can_export):
-                self.id = id
+            def __init__(self, can_export):
                 self.val = can_export
 
             def can_export(self):
@@ -144,11 +143,11 @@ class BaseExportMixinTest(TestCase):
 
         class CanExportFormat(Format):
             def __init__(self):
-                super().__init__(1, True)
+                super().__init__(True)
 
         class CannotExportFormat(Format):
             def __init__(self):
-                super().__init__(2, False)
+                super().__init__(False)
 
         m = mixins.BaseExportMixin()
         m.formats = [CanExportFormat, CannotExportFormat]
