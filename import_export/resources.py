@@ -501,7 +501,7 @@ class Resource(metaclass=DeclarativeMetaclass):
     def import_field(self, field, obj, data, is_m2m=False):
         """
         Calls :meth:`import_export.fields.Field.save` if ``Field.attribute``
-        and ``Field.column_name`` are found in ``data``.
+        is specified, and ``Field.column_name`` is found in ``data``.
         """
         if field.attribute and field.column_name in data:
             field.save(obj, data, is_m2m)
@@ -558,11 +558,14 @@ class Resource(metaclass=DeclarativeMetaclass):
         """
         Returns ``True`` if ``row`` importing should be skipped.
 
-        Default implementation returns ``False`` unless skip_unchanged == True,
-        or skip_diff == True.
+        Default implementation returns ``False`` unless skip_unchanged == True
+        and skip_diff == False.
 
         If skip_diff is True, then no comparisons can be made because ``original``
         will be None.
+
+        When left unspecified, skip_diff and skip_unchanged both default to ``False``, 
+        and rows are never skipped. 
 
         Override this method to handle skipping rows meeting certain
         conditions.
