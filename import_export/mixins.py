@@ -8,7 +8,7 @@ from .resources import modelresource_factory
 from .signals import post_export
 
 
-class ImportExportMixin:
+class BaseImportExportMixin:
     formats = base_formats.DEFAULT_FORMATS
     resource_class = None
 
@@ -20,11 +20,8 @@ class ImportExportMixin:
     def get_resource_kwargs(self, request, *args, **kwargs):
         return {}
 
-    def get_formats(self):
-        return [f for f in self.formats if f().can_import()]
 
-
-class BaseImportMixin(ImportExportMixin):
+class BaseImportMixin(BaseImportExportMixin):
     def get_import_resource_class(self):
         """
         Returns ResourceClass to use for import.
@@ -35,20 +32,20 @@ class BaseImportMixin(ImportExportMixin):
         """
         Returns available import formats.
         """
-        return super().get_formats()
+        return [f for f in self.formats if f().can_import()]
 
     def get_import_resource_kwargs(self, request, *args, **kwargs):
         return super().get_resource_kwargs(request, *args, **kwargs)
 
 
-class BaseExportMixin(ImportExportMixin):
+class BaseExportMixin(BaseImportExportMixin):
     model = None
 
     def get_export_formats(self):
         """
         Returns available export formats.
         """
-        return super().get_formats()
+        return [f for f in self.formats if f().can_export()]
 
     def get_export_resource_class(self):
         """

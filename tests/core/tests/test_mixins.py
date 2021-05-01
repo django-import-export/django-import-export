@@ -86,8 +86,33 @@ class ExportViewMixinTest(TestCase):
         self.assertEqual(1, m.mock_get_filterset_class_call_count)
 
 
-class BaseExportMixinTest(TestCase):
+class BaseImportMixinTest(TestCase):
+    def test_get_import_formats(self):
+        class Format(object):
+            def __init__(self, id, can_import):
+                self.id = id
+                self.val = can_import
 
+            def can_import(self):
+                return self.val
+
+        class CanImportFormat(Format):
+            def __init__(self):
+                super().__init__(1, True)
+
+        class CannotImportFormat(Format):
+            def __init__(self):
+                super().__init__(2, False)
+
+        m = mixins.BaseImportMixin()
+        m.formats = [CanImportFormat, CannotImportFormat]
+
+        formats = m.get_import_formats()
+        self.assertEqual(1, len(formats))
+        self.assertEqual('CanImportFormat', formats[0].__name__)
+
+
+class BaseExportMixinTest(TestCase):
     class TestBaseExportMixin(mixins.BaseExportMixin):
         def get_export_resource_kwargs(self, request, *args, **kwargs):
             self.args = args
@@ -107,3 +132,27 @@ class BaseExportMixinTest(TestCase):
         m.get_data_for_export(request, Book.objects.none(), *target_args, **target_kwargs)
         self.assertEqual(m.args, target_args)
         self.assertEqual(m.kwargs, target_kwargs)
+
+    def test_get_export_formats(self):
+        class Format(object):
+            def __init__(self, id, can_export):
+                self.id = id
+                self.val = can_export
+
+            def can_export(self):
+                return self.val
+
+        class CanExportFormat(Format):
+            def __init__(self):
+                super().__init__(1, True)
+
+        class CannotExportFormat(Format):
+            def __init__(self):
+                super().__init__(2, False)
+
+        m = mixins.BaseExportMixin()
+        m.formats = [CanExportFormat, CannotExportFormat]
+
+        formats = m.get_export_formats()
+        self.assertEqual(1, len(formats))
+        self.assertEqual('CanExportFormat', formats[0].__name__)
