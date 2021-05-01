@@ -1,5 +1,3 @@
-from datetime import datetime
-
 import django
 from django import forms
 from django.conf import settings
@@ -17,9 +15,8 @@ from django.utils.module_loading import import_string
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_POST
 
-from .formats.base_formats import DEFAULT_FORMATS
 from .forms import ConfirmImportForm, ExportForm, ImportForm, export_action_form_factory
-from .resources import modelresource_factory
+from .mixins import BaseExportMixin, BaseImportMixin
 from .results import RowResult
 from .signals import post_export, post_import
 from .tmp_storages import TempFolderStorage
@@ -31,22 +28,18 @@ class ImportExportMixinBase:
         return (app_label, self.model._meta.model_name)
 
 
-class ImportMixin(ImportExportMixinBase):
+class ImportMixin(BaseImportMixin, ImportExportMixinBase):
     """
     Import mixin.
 
     This is intended to be mixed with django.contrib.admin.ModelAdmin
-    https://docs.djangoproject.com/en/2.1/ref/contrib/admin/#modeladmin-objects
+    https://docs.djangoproject.com/en/dev/ref/contrib/admin/
     """
 
     #: template for change_list view
     change_list_template = 'admin/import_export/change_list_import.html'
     #: template for import view
     import_template_name = 'admin/import_export/import.html'
-    #: resource class
-    resource_class = None
-    #: available import formats
-    formats = DEFAULT_FORMATS
     #: import data encoding
     from_encoding = "utf-8"
     skip_admin_log = None
@@ -95,32 +88,6 @@ class ImportMixin(ImportExportMixinBase):
                 name='%s_%s_import' % info),
         ]
         return my_urls + urls
-
-    def get_resource_kwargs(self, request, *args, **kwargs):
-        return {}
-
-    def get_import_resource_kwargs(self, request, *args, **kwargs):
-        """Prepares/returns kwargs used when initializing Resource"""
-        return self.get_resource_kwargs(request, *args, **kwargs)
-
-    def get_resource_class(self):
-        """Returns ResourceClass"""
-        if not self.resource_class:
-            return modelresource_factory(self.model)
-        else:
-            return self.resource_class
-
-    def get_import_resource_class(self):
-        """
-        Returns ResourceClass to use for import.
-        """
-        return self.get_resource_class()
-
-    def get_import_formats(self):
-        """
-        Returns available import formats.
-        """
-        return [f for f in self.formats if f().can_import()]
 
     @method_decorator(require_POST)
     def process_import(self, request, *args, **kwargs):
@@ -341,21 +308,17 @@ class ImportMixin(ImportExportMixinBase):
         return super().changelist_view(request, extra_context)
 
 
-class ExportMixin(ImportExportMixinBase):
+class ExportMixin(BaseExportMixin, ImportExportMixinBase):
     """
     Export mixin.
 
     This is intended to be mixed with django.contrib.admin.ModelAdmin
-    https://docs.djangoproject.com/en/2.1/ref/contrib/admin/#modeladmin-objects
+    https://docs.djangoproject.com/en/dev/ref/contrib/admin/
     """
-    #: resource class
-    resource_class = None
     #: template for change_list view
     change_list_template = 'admin/import_export/change_list_export.html'
     #: template for export view
     export_template_name = 'admin/import_export/export.html'
-    #: available export formats
-    formats = DEFAULT_FORMATS
     #: export data encoding
     to_encoding = "utf-8"
 
@@ -379,37 +342,6 @@ class ExportMixin(ImportExportMixinBase):
         opts = self.opts
         codename = get_permission_codename(EXPORT_PERMISSION_CODE, opts)
         return request.user.has_perm("%s.%s" % (opts.app_label, codename))
-
-    def get_resource_kwargs(self, request, *args, **kwargs):
-        return {}
-
-    def get_export_resource_kwargs(self, request, *args, **kwargs):
-        return self.get_resource_kwargs(request, *args, **kwargs)
-
-    def get_resource_class(self):
-        if not self.resource_class:
-            return modelresource_factory(self.model)
-        else:
-            return self.resource_class
-
-    def get_export_resource_class(self):
-        """
-        Returns ResourceClass to use for export.
-        """
-        return self.get_resource_class()
-
-    def get_export_formats(self):
-        """
-        Returns available export formats.
-        """
-        return [f for f in self.formats if f().can_export()]
-
-    def get_export_filename(self, request, queryset, file_format):
-        date_str = datetime.now().strftime('%Y-%m-%d')
-        filename = "%s-%s.%s" % (self.model.__name__,
-                                 date_str,
-                                 file_format.get_extension())
-        return filename
 
     def get_export_queryset(self, request):
         """
@@ -453,8 +385,7 @@ class ExportMixin(ImportExportMixinBase):
         if not self.has_export_permission(request):
             raise PermissionDenied
 
-        resource_class = self.get_export_resource_class()
-        data = resource_class(**self.get_export_resource_kwargs(request)).export(queryset, *args, **kwargs)
+        data = self.get_data_for_export(request, queryset, *args, **kwargs)
         export_data = file_format.export_data(data)
         return export_data
 
@@ -502,6 +433,9 @@ class ExportMixin(ImportExportMixinBase):
             extra_context = {}
         extra_context['has_export_permission'] = self.has_export_permission(request)
         return super().changelist_view(request, extra_context)
+
+    def get_export_filename(self, request, queryset, file_format):
+        return super().get_filename(file_format)
 
 
 class ImportExportMixin(ImportMixin, ExportMixin):

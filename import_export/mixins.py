@@ -8,10 +8,38 @@ from .resources import modelresource_factory
 from .signals import post_export
 
 
-class ExportViewMixin:
+class BaseImportExportMixin:
     formats = base_formats.DEFAULT_FORMATS
-    form_class = ExportForm
     resource_class = None
+
+    def get_resource_class(self):
+        if not self.resource_class:
+            return modelresource_factory(self.model)
+        return self.resource_class
+
+    def get_resource_kwargs(self, request, *args, **kwargs):
+        return {}
+
+
+class BaseImportMixin(BaseImportExportMixin):
+    def get_import_resource_class(self):
+        """
+        Returns ResourceClass to use for import.
+        """
+        return super().get_resource_class()
+
+    def get_import_formats(self):
+        """
+        Returns available import formats.
+        """
+        return [f for f in self.formats if f().can_import()]
+
+    def get_import_resource_kwargs(self, request, *args, **kwargs):
+        return super().get_resource_kwargs(request, *args, **kwargs)
+
+
+class BaseExportMixin(BaseImportExportMixin):
+    model = None
 
     def get_export_formats(self):
         """
@@ -19,39 +47,38 @@ class ExportViewMixin:
         """
         return [f for f in self.formats if f().can_export()]
 
-    def get_resource_class(self):
-        if not self.resource_class:
-            return modelresource_factory(self.model)
-        return self.resource_class
-
     def get_export_resource_class(self):
         """
         Returns ResourceClass to use for export.
         """
-        return self.get_resource_class()
-
-    def get_resource_kwargs(self, request, *args, **kwargs):
-        return {}
+        return super().get_resource_class()
 
     def get_export_resource_kwargs(self, request, *args, **kwargs):
-        return self.get_resource_kwargs(request, *args, **kwargs)
+        return super().get_resource_kwargs(request, *args, **kwargs)
 
-    def get_export_data(self, file_format, queryset, *args, **kwargs):
-        """
-        Returns file_format representation for given queryset.
-        """
+    def get_data_for_export(self, request, queryset, *args, **kwargs):
         resource_class = self.get_export_resource_class()
-        data = resource_class(**self.get_export_resource_kwargs(self.request))\
+        return resource_class(**self.get_export_resource_kwargs(request, *args, **kwargs))\
             .export(queryset, *args, **kwargs)
-        export_data = file_format.export_data(data)
-        return export_data
 
-    def get_export_filename(self, file_format):
+    def get_filename(self, file_format):
         date_str = now().strftime('%Y-%m-%d')
         filename = "%s-%s.%s" % (self.model.__name__,
                                  date_str,
                                  file_format.get_extension())
         return filename
+
+
+class ExportViewMixin(BaseExportMixin):
+    form_class = ExportForm
+
+    def get_export_data(self, file_format, queryset, *args, **kwargs):
+        """
+        Returns file_format representation for given queryset.
+        """
+        data = self.get_data_for_export(self.request, queryset, *args, **kwargs)
+        export_data = file_format.export_data(data)
+        return export_data
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -86,3 +113,6 @@ class ExportViewFormMixin(ExportViewMixin, FormView):
 
         post_export.send(sender=None, model=self.model)
         return response
+
+    def get_export_filename(self, file_format):
+        return super().get_filename(file_format)
