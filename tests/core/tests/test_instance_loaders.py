@@ -5,6 +5,27 @@ from django.test import TestCase
 from import_export import instance_loaders, resources
 
 
+class BaseInstanceLoaderTest(TestCase):
+
+    def test_get_instance(self):
+        instance_loader = instance_loaders.BaseInstanceLoader(None)
+        with self.assertRaises(NotImplementedError):
+            instance_loader.get_instance(None)
+
+
+class ModelInstanceLoaderTest(TestCase):
+
+    def setUp(self):
+        self.resource = resources.modelresource_factory(Book)()
+
+    def test_get_instance_returns_None_when_params_is_empty(self):
+        # setting an empty array of import_id_fields will mean
+        # that 'params' is never set
+        self.resource._meta.import_id_fields = []
+        instance_loader = instance_loaders.ModelInstanceLoader(self.resource)
+        self.assertIsNone(instance_loader.get_instance([]))
+
+
 class CachedInstanceLoaderTest(TestCase):
 
     def setUp(self):
@@ -26,7 +47,6 @@ class CachedInstanceLoaderTest(TestCase):
     def test_get_instance(self):
         obj = self.instance_loader.get_instance(self.dataset.dict[0])
         self.assertEqual(obj, self.book)
-
 
 
 class CachedInstanceLoaderWithAbsentImportIdFieldTest(TestCase):

@@ -9,7 +9,7 @@ import django
 import tablib
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.core.paginator import Paginator
 from django.db import IntegrityError
 from django.db.models import Count
@@ -133,6 +133,22 @@ class ResourceTestCase(TestCase):
 
         resource = B()
         self.assertEqual(resource._meta.custom_attribute, True)
+
+    def test_get_use_transactions_defined_in_resource(self):
+        class A(MyResource):
+            class Meta:
+                use_transactions = True
+        resource = A()
+        self.assertTrue(resource.get_use_transactions())
+
+    def test_get_field_name_raises_AttributeError(self):
+        err = "Field x does not exists in <class 'core.tests.test_resources.MyResource'> resource"
+        with self.assertRaisesRegex(AttributeError, err):
+            self.my_resource.get_field_name('x')
+
+    def test_init_instance_raises_NotImplementedError(self):
+        with self.assertRaises(NotImplementedError):
+            self.my_resource.init_instance([])
 
 
 class AuthorResource(resources.ModelResource):
@@ -412,6 +428,21 @@ class ModelResourceTest(TestCase):
         self.assertEqual(instance.author_email, 'test@example.com')
         self.assertEqual(instance.price, Decimal("10.25"))
 
+    @mock.patch("import_export.resources.connections")
+    def test_raised_ImproperlyConfigured_if_use_transactions_set_when_transactions_not_supported(self, mock_db_connections):
+        class Features(object):
+            supports_transactions = False
+        class DummyConnection(object):
+            features = Features()
+
+        dummy_connection = DummyConnection()
+        mock_db_connections.__getitem__.return_value = dummy_connection
+        with self.assertRaises(ImproperlyConfigured):
+            self.resource.import_data(
+                self.dataset,
+                use_transactions=True,
+            )
+
     def test_importing_with_line_number_logging(self):
         resource = BookResourceWithLineNumberLogger()
         result = resource.import_data(self.dataset, raise_errors=True)
@@ -428,6 +459,63 @@ class ModelResourceTest(TestCase):
         self.assertTrue(result.has_validation_errors())
         self.assertIs(result.rows[0].import_type, results.RowResult.IMPORT_TYPE_INVALID)
         self.assertIn('birthday', result.invalid_rows[0].field_specific_errors)
+
+    def test_collect_failed_rows(self):
+        resource = ProfileResource()
+        headers = ['id', 'user']
+        # 'user' is a required field, the database will raise an error.
+        row = [None, None]
+        dataset = tablib.Dataset(row, headers=headers)
+        result = resource.import_data(
+            dataset, dry_run=True, use_transactions=True,
+            collect_failed_rows=True,
+        )
+        self.assertEqual(
+            result.failed_dataset.headers,
+            ['id', 'user', 'Error']
+        )
+        self.assertEqual(len(result.failed_dataset), 1)
+        # We can't check the error message because it's package- and version-dependent
+
+    def test_row_result_raise_errors(self):
+        resource = ProfileResource()
+        headers = ['id', 'user']
+        # 'user' is a required field, the database will raise an error.
+        row = [None, None]
+        dataset = tablib.Dataset(row, headers=headers)
+        with self.assertRaises(IntegrityError):
+            resource.import_data(
+                dataset, dry_run=True, use_transactions=True,
+                raise_errors=True,
+            )
+
+    def test_collect_failed_rows_validation_error(self):
+        resource = ProfileResource()
+        row = ['1']
+        dataset = tablib.Dataset(row, headers=['id'])
+        with mock.patch("import_export.resources.Field.save", side_effect=ValidationError("fail!")):
+            result = resource.import_data(
+                dataset, dry_run=True, use_transactions=True,
+                collect_failed_rows=True,
+            )
+        self.assertEqual(
+            result.failed_dataset.headers,
+            ['id', 'Error']
+        )
+        self.assertEqual(1, len(result.failed_dataset), )
+        self.assertEqual('1', result.failed_dataset.dict[0]['id'])
+        self.assertEqual("{'__all__': ['fail!']}", result.failed_dataset.dict[0]['Error'])
+
+    def test_row_result_raise_ValidationError(self):
+        resource = ProfileResource()
+        row = ['1']
+        dataset = tablib.Dataset(row, headers=['id'])
+        with mock.patch("import_export.resources.Field.save", side_effect=ValidationError("fail!")):
+            with self.assertRaisesRegex(ValidationError, "{'__all__': \\['fail!'\\]}") :
+                resource.import_data(
+                    dataset, dry_run=True, use_transactions=True,
+                    raise_errors=True,
+                )
 
     def test_import_data_handles_widget_valueerrors_with_unicode_messages(self):
         resource = AuthorResourceWithCustomWidget()
@@ -578,6 +666,18 @@ class ModelResourceTest(TestCase):
         self.assertFalse(resource.before_save_instance_dry_run)
         self.assertFalse(resource.save_instance_dry_run)
         self.assertFalse(resource.after_save_instance_dry_run)
+
+    @mock.patch("core.models.Book.save")
+    def test_save_instance_noop(self, mock_book):
+        book = Book.objects.first()
+        self.resource.save_instance(book, using_transactions=False, dry_run=True)
+        self.assertEqual(0, mock_book.call_count)
+
+    @mock.patch("core.models.Book.save")
+    def test_delete_instance_noop(self, mock_book):
+        book = Book.objects.first()
+        self.resource.delete_instance(book, using_transactions=False, dry_run=True)
+        self.assertEqual(0, mock_book.call_count)
 
     def test_delete_instance_with_dry_run_flag(self):
         class B(BookResource):
@@ -1085,24 +1185,6 @@ class PostgresTests(TransactionTestCase):
         except IntegrityError:
             self.fail('IntegrityError was raised.')
 
-    def test_collect_failed_rows(self):
-        resource = ProfileResource()
-        headers = ['id', 'user']
-        # 'user' is a required field, the database will raise an error.
-        row = [None, None]
-        dataset = tablib.Dataset(row, headers=headers)
-        result = resource.import_data(
-            dataset, dry_run=True, use_transactions=True,
-            collect_failed_rows=True,
-        )
-        self.assertEqual(
-            result.failed_dataset.headers,
-            ['id', 'user', 'Error']
-        )
-        self.assertEqual(len(result.failed_dataset), 1)
-        # We can't check the error message because it's package- and version-dependent
-
-
 if 'postgresql' in settings.DATABASES['default']['ENGINE']:
     from django.contrib.postgres.fields import ArrayField
     from django.db import models
@@ -1283,7 +1365,7 @@ class SkipDiffTest(TestCase):
         self.dataset.append(['', 'A.A.Milne', '1882test-01-18'])
 
     def test_skip_diff(self, mock_diff):
-        with mock.patch("copy.deepcopy") as mock_deep_copy:
+        with mock.patch("import_export.resources.deepcopy") as mock_deep_copy:
             self.resource.import_data(self.dataset)
             mock_diff.return_value.compare_with.assert_not_called()
             mock_diff.return_value.as_html.assert_not_called()
@@ -1300,7 +1382,7 @@ class SkipDiffTest(TestCase):
                 return True
 
         resource = BookResource()
-        with mock.patch("copy.deepcopy") as mock_deep_copy:
+        with mock.patch("import_export.resources.deepcopy") as mock_deep_copy:
             resource.import_data(self.dataset)
             mock_diff.return_value.compare_with.assert_not_called()
             mock_diff.return_value.as_html.assert_not_called()
@@ -1322,11 +1404,28 @@ class SkipDiffTest(TestCase):
 
         resource = BookResource()
 
-        with mock.patch("copy.deepcopy") as mock_deep_copy:
+        with mock.patch("import_export.resources.deepcopy") as mock_deep_copy:
             resource.import_data(self.dataset, dry_run=True)
             mock_diff.return_value.compare_with.assert_not_called()
             mock_diff.return_value.as_html.assert_not_called()
             mock_deep_copy.assert_not_called()
+
+    def test_skip_diff_for_delete_skip_row_not_enabled_new_object(self, mock_diff):
+        class BookResource(resources.ModelResource):
+
+            class Meta:
+                model = Book
+                skip_diff = False
+
+            def for_delete(self, row, instance):
+                return True
+
+        resource = BookResource()
+
+        with mock.patch("import_export.resources.deepcopy") as mock_deep_copy:
+            resource.import_data(self.dataset, dry_run=True)
+            self.assertEqual(1, mock_diff.return_value.compare_with.call_count)
+            self.assertEqual(1, mock_deep_copy.call_count)
 
     def test_skip_row_returns_false_when_skip_diff_is_true(self, mock_diff):
         class BookResource(resources.ModelResource):
