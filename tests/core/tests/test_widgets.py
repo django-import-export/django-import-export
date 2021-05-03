@@ -1,5 +1,6 @@
 from datetime import date, datetime, time, timedelta
 from decimal import Decimal
+from unittest import mock
 
 import pytz
 from core.models import Author, Category
@@ -53,13 +54,34 @@ class DateWidgetTest(TestCase):
     def test_render_none(self):
         self.assertEqual(self.widget.render(None), "")
 
+    def test_render_datetime_safe(self):
+        """datetime_safe is supposed to be used to support dates older than 1000"""
+        self.date = date(10, 8, 2)
+        self.assertEqual(self.widget.render(self.date), "02.08.0010")
+
     def test_clean(self):
         self.assertEqual(self.widget.clean("13.08.2012"), self.date)
+
+    def test_clean_returns_None_for_empty_value(self):
+        self.assertIsNone(self.widget.clean(None))
+
+    def test_clean_returns_date_when_date_passed(self):
+        self.assertEqual(self.date, self.widget.clean(self.date))
+
+    def test_clean_raises_ValueError(self):
+        self.widget = widgets.DateWidget('x')
+        with self.assertRaisesRegex(ValueError, "Enter a valid date."):
+            self.widget.clean('2021-05-01')
 
     @override_settings(USE_TZ=True)
     def test_use_tz(self):
         self.assertEqual(self.widget.render(self.date), "13.08.2012")
         self.assertEqual(self.widget.clean("13.08.2012"), self.date)
+
+    @override_settings(DATE_INPUT_FORMATS=None)
+    def test_default_format(self):
+        self.widget = widgets.DateWidget()
+        self.assertEqual(("%Y-%m-%d",), self.widget.formats)
 
 
 class DateTimeWidgetTest(TestCase):
@@ -85,9 +107,22 @@ class DateTimeWidgetTest(TestCase):
         self.assertEqual(self.widget.render(utc_dt), "13.08.2012 20:00:00")
         self.assertEqual(self.widget.clean("13.08.2012 20:00:00"), utc_dt)
 
+    @override_settings(DATETIME_INPUT_FORMATS=None)
+    def test_default_format(self):
+        self.widget = widgets.DateTimeWidget()
+        self.assertEqual(("%Y-%m-%d %H:%M:%S",), self.widget.formats)
+
+    def test_clean_returns_datetime_when_datetime_passed(self):
+        self.assertEqual(self.datetime, self.widget.clean(self.datetime))
+
+    def test_render_datetime_safe(self):
+        """datetime_safe is supposed to be used to support dates older than 1000"""
+        self.datetime = datetime(10, 8, 2)
+        self.assertEqual(self.widget.render(self.datetime), "02.08.0010 00:00:00")
+
 
 class DateWidgetBefore1900Test(TestCase):
-
+    """https://github.com/django-import-export/django-import-export/pull/94"""
     def setUp(self):
         self.date = date(1868, 8, 13)
         self.widget = widgets.DateWidget('%d.%m.%Y')
@@ -97,6 +132,19 @@ class DateWidgetBefore1900Test(TestCase):
 
     def test_clean(self):
         self.assertEqual(self.widget.clean("13.08.1868"), self.date)
+
+
+class DateTimeWidgetBefore1900Test(TestCase):
+
+    def setUp(self):
+        self.datetime = datetime(1868, 8, 13)
+        self.widget = widgets.DateTimeWidget('%d.%m.%Y')
+
+    def test_render(self):
+        self.assertEqual("13.08.1868", self.widget.render(self.datetime))
+
+    def test_clean(self):
+        self.assertEqual(self.datetime, self.widget.clean("13.08.1868"))
 
 
 class TimeWidgetTest(TestCase):
@@ -113,6 +161,16 @@ class TimeWidgetTest(TestCase):
 
     def test_clean(self):
         self.assertEqual(self.widget.clean("20:15:00"), self.time)
+
+    @override_settings(TIME_INPUT_FORMATS=None)
+    def test_default_format(self):
+        self.widget = widgets.TimeWidget()
+        self.assertEqual(("%H:%M:%S",), self.widget.formats)
+
+    def test_clean_raises_ValueError(self):
+        self.widget = widgets.TimeWidget('x')
+        with self.assertRaisesRegex(ValueError, "Enter a valid time."):
+            self.widget.clean("20:15:00")
 
 
 class DurationWidgetTest(TestCase):
@@ -138,6 +196,11 @@ class DurationWidgetTest(TestCase):
 
     def test_clean_zero(self):
         self.assertEqual(self.widget.clean("0:00:00"), timedelta(0))
+
+    @mock.patch("import_export.widgets.parse_duration", side_effect=ValueError("err"))
+    def test_clean_raises_ValueError(self, _):
+        with self.assertRaisesRegex(ValueError, "Enter a valid duration."):
+            self.widget.clean("x")
 
 
 class FloatWidgetTest(TestCase):
@@ -235,6 +298,17 @@ class ForeignKeyWidgetTest(TestCase):
         row = {'name': "Foo", 'birthday': author2.birthday}
         self.assertEqual(birthday_widget.clean("Foo", row), author2)
 
+    def test_render_handles_value_error(self):
+        class TestObj(object):
+            @property
+            def attr(self):
+                raise ValueError("some error")
+
+        t = TestObj()
+        self.widget = widgets.ForeignKeyWidget(mock.Mock(), "attr")
+        self.assertIsNone(self.widget.render(t))
+
+
 
 class ManyToManyWidget(TestCase):
 
@@ -270,6 +344,11 @@ class ManyToManyWidget(TestCase):
         cleaned_data = self.widget.clean(value)
         self.assertEqual(len(cleaned_data), 1)
         self.assertIn(self.cat1, cleaned_data)
+
+    @mock.patch("core.models.Category.objects.none")
+    def test_clean_handles_None_value(self, mock_none):
+        self.widget.clean(None)
+        self.assertEqual(1, mock_none.call_count)
 
     def test_int(self):
         value = self.cat1.pk
@@ -314,3 +393,30 @@ class JSONWidgetTest(TestCase):
         self.assertEqual(self.widget.render(None), None)
         self.assertEqual(self.widget.render(dict()), None)
         self.assertEqual(self.widget.render({"value": None}), '{"value": null}')
+
+
+class SimpleArrayWidgetTest(TestCase):
+
+    def setUp(self):
+        self.value = {"value": 23}
+        self.widget = widgets.SimpleArrayWidget()
+
+    def test_default_separator(self):
+        self.assertEqual(',', self.widget.separator)
+
+    def test_arg_separator(self):
+        self.widget = widgets.SimpleArrayWidget('|')
+        self.assertEqual('|', self.widget.separator)
+
+    def test_clean_splits_str(self):
+        s = "a,b,c"
+        self.assertEqual(["a", "b", "c"], self.widget.clean(s))
+
+    def test_clean_returns_empty_list_for_empty_arg(self):
+        s = ''
+        self.assertEqual([], self.widget.clean(s))
+
+    def test_render(self):
+        v = ["a", "b", "c"]
+        s = "a,b,c"
+        self.assertEqual(s, self.widget.render(v))
