@@ -179,10 +179,7 @@ class DateWidget(Widget):
     def render(self, value, obj=None):
         if not value:
             return ""
-        try:
-            return value.strftime(self.formats[0])
-        except:
-            return datetime_safe.new_date(value).strftime(self.formats[0])
+        return datetime_safe.new_date(value).strftime(self.formats[0])
 
 
 class DateTimeWidget(Widget):
@@ -226,7 +223,7 @@ class DateTimeWidget(Widget):
             return ""
         if settings.USE_TZ:
             value = timezone.localtime(value)
-        return value.strftime(self.formats[0])
+        return datetime_safe.new_datetime(value).strftime(self.formats[0])
 
 
 class TimeWidget(Widget):
