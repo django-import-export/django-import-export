@@ -25,6 +25,11 @@ class FieldTest(TestCase):
         self.assertEqual(self.field.clean(self.row),
                          self.row['name'])
 
+    def test_clean_raises_KeyError(self):
+        self.field.column_name = 'x'
+        with self.assertRaisesRegex(KeyError, "Column 'x' not found in dataset. Available columns are: \\['name'\\]"):
+            self.field.clean(self.row)
+
     def test_export(self):
         self.assertEqual(self.field.export(self.obj),
                          self.row['name'])
