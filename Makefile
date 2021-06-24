@@ -29,7 +29,7 @@ test: ## run tests quickly with the default Python
 	$(RUN_TEST_COMMAND)
 
 messages: ## generate locale file translations
-	cd import_export && django-admin.py makemessages && cd ..
+	cd import_export && django-admin makemessages -a && django-admin compilemessages && cd ..
 
 coverage: ## generates codecov report
 	coverage run --omit='setup.py,tests/*' --source=. tests/manage.py test core --settings=

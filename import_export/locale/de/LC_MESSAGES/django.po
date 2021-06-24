@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-06-04 09:27+0200\n"
+"POT-Creation-Date: 2021-10-18 20:53+0100\n"
 "PO-Revision-Date: 2016-02-01 17:33+0100\n"
 "Last-Translator: Jannis <jvajen@gmail.com>\n"
 "Language-Team: \n"
@@ -18,42 +18,42 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Poedit 1.8.4\n"
 
-#: admin.py:194
+#: admin.py:158
 #, python-format
 msgid "%s through import_export"
 msgstr ""
 
-#: admin.py:200
+#: admin.py:164
 msgid "Import finished, with {} new and {} updated {}."
 msgstr ""
 
-#: admin.py:298
+#: admin.py:262
 #, fuzzy, python-format
 #| msgid "<h1>Imported file is not in unicode: %s</h1>"
 msgid "<h1>Imported file has a wrong encoding: %s</h1>"
 msgstr "<h1>Importierte Datei hat die falsche Zeichenkodierung: %s</h1>"
 
-#: admin.py:300
+#: admin.py:264
 #, fuzzy, python-format
 #| msgid "<h1>%s encountred while trying to read file: %s</h1>"
 msgid "<h1>%s encountered while trying to read file: %s</h1>"
 msgstr "<h1>%s trat auf beim Versuch die Datei zu lesen: %s</h1>"
 
-#: admin.py:331 templates/admin/import_export/change_list_import_item.html:5
+#: admin.py:295 templates/admin/import_export/change_list_import_item.html:5
 #: templates/admin/import_export/import.html:10
 msgid "Import"
 msgstr "Importieren"
 
-#: admin.py:496 templates/admin/import_export/change_list_export_item.html:5
+#: admin.py:429 templates/admin/import_export/change_list_export_item.html:5
 #: templates/admin/import_export/export.html:7
 msgid "Export"
 msgstr "Exportieren"
 
-#: admin.py:554
+#: admin.py:490
 msgid "You must select an export format."
 msgstr "Es muss ein Exportformat ausgewählt werden."
 
-#: admin.py:567
+#: admin.py:513
 #, python-format
 msgid "Export selected %(verbose_name_plural)s"
 msgstr "Ausgewählte %(verbose_name_plural)s exportieren"

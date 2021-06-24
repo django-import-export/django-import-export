@@ -4,6 +4,7 @@ Changelog
 2.6.2-dev
 ---------
 
+- Run compilemessages command to keep .mo files in sync (#1299)
 - Fix missing migration on example app (#1346)
 
 2.6.1 (2021-09-30)

@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 0.0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-03-09 00:29+0030\n"
+"POT-Creation-Date: 2021-10-18 20:53+0100\n"
 "PO-Revision-Date: 2021-03-09 00:29+0030\n"
 "Last-Translator: Yazdan Ranjbar <Yazdan_ra@icloud.com>\n"
 "Language-Team: Persain/Farsi <kde-i18n-it@kde.org>\n"
@@ -17,40 +17,40 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Poedit 1.5.4\n"
 
-#: admin.py:194
+#: admin.py:158
 #, python-format
 msgid "%s through import_export"
 msgstr "%s یه وسیله ورودی-خروجی"
 
-#: admin.py:200
+#: admin.py:164
 msgid "Import finished, with {} new and {} updated {}."
 msgstr "بارگذاری تمام شد، با {} مورد جدید و {} مورد به روز شده."
 
-#: admin.py:298
+#: admin.py:262
 #, python-format
 msgid "<h1>Imported file has a wrong encoding: %s</h1>"
 msgstr "<h1>فایل بارگذاری شده encode اشتباهی دارد: %s</h1>"
 
-#: admin.py:300
+#: admin.py:264
 #, python-format
 msgid "<h1>%s encountered while trying to read file: %s</h1>"
 msgstr "<h1>در هنگام خواندن فایل %s با %s مواجه شد</h1>"
 
-#: admin.py:331 templates/admin/import_export/change_list_import_item.html:5
+#: admin.py:295 templates/admin/import_export/change_list_import_item.html:5
 #: templates/admin/import_export/import.html:10
 msgid "Import"
 msgstr "بارگذاری"
 
-#: admin.py:496 templates/admin/import_export/change_list_export_item.html:5
+#: admin.py:429 templates/admin/import_export/change_list_export_item.html:5
 #: templates/admin/import_export/export.html:7
 msgid "Export"
 msgstr "خروجی"
 
-#: admin.py:554
+#: admin.py:490
 msgid "You must select an export format."
 msgstr "شما باید یک فرمت خروجی انتخاب کنید"
 
-#: admin.py:567
+#: admin.py:513
 #, python-format
 msgid "Export selected %(verbose_name_plural)s"
 msgstr "خروجی %(verbose_name_plural)s انتخاب شده"
@@ -77,8 +77,8 @@ msgid ""
 "Below is a preview of data to be imported. If you are satisfied with the "
 "results, click 'Confirm import'"
 msgstr ""
-"پایین یک پیش‌نمایش از دیتا‌هایی است که بارگذاری خواهند شد اگر این موارد درست هست"
-"روی 'تایید بارگذاری' گلیگ گنید"
+"پایین یک پیش‌نمایش از دیتا‌هایی است که بارگذاری خواهند شد اگر این موارد درست "
+"هستروی 'تایید بارگذاری' گلیگ گنید"
 
 #: templates/admin/import_export/import.html:23
 msgid "Confirm import"
