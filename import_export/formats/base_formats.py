@@ -160,7 +160,9 @@ class XLS(TablibFormat):
 
         dataset.headers = sheet.row_values(0)
         for i in range(1, sheet.nrows):
-            dataset.append(sheet.row_values(i))
+            values = sheet.row_values(i)
+            if any(i for i in values):
+                dataset.append(values)
         return dataset
 
 
@@ -186,7 +188,8 @@ class XLSX(TablibFormat):
 
         for row in rows:
             row_values = [cell.value for cell in row]
-            dataset.append(row_values)
+            if any(i for i in row_values):
+                dataset.append(row_values)
         return dataset
 
 

@@ -1,6 +1,5 @@
-import os
-
 from setuptools import find_packages, setup
+from pathlib import Path
 
 VERSION = __import__("import_export").__version__
 
@@ -31,8 +30,7 @@ install_requires = [
 ]
 
 
-with open(os.path.join(os.path.dirname(__file__), 'README.rst')) as f:
-    readme = f.read()
+readme = Path(__file__).parent.joinpath('README.rst').read_text()
 
 
 setup(
