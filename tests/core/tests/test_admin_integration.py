@@ -255,9 +255,9 @@ class ImportExportAdminIntegrationTest(TestCase):
         # Cause an exception in import_row, but only after import is confirmed,
         # so a failure only occurs when ImportMixin.process_import is called.
         class R(BookResource):
-            def import_obj(self, obj, data, dry_run):
+            def import_obj(self, obj, data, dry_run, **kwargs):
                 if dry_run:
-                    super().import_obj(obj, data, dry_run)
+                    super().import_obj(obj, data, dry_run, **kwargs)
                 else:
                     raise Exception
 
