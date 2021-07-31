@@ -1,7 +1,7 @@
 import os.path
 from datetime import datetime
 from unittest import mock
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import chardet
 import tablib
@@ -30,6 +30,7 @@ from import_export.admin import (
     ExportMixin,
     ImportExportActionModelAdmin,
 )
+from import_export.formats import base_formats
 from import_export.formats.base_formats import DEFAULT_FORMATS
 from import_export.tmp_storages import TempFolderStorage
 
@@ -438,20 +439,20 @@ class ImportActionDecodeErrorTest(TestCase):
         b_arr = b'\x00\x00'
         m = TestImportExportActionModelAdmin(self.mock_model, self.mock_site,
                                                   UnicodeDecodeError('codec', b_arr, 1, 2, 'fail!'))
-        res = m.import_action(self.mock_request)
-        self.assertEqual(
-            "<h1>Imported file has a wrong encoding: \'codec\' codec can\'t decode byte 0x00 in position 1: fail!</h1>",
-            res.content.decode())
+        with self.assertRaises(UnicodeDecodeError):
+            m.import_action(self.mock_request)
 
-    @mock.patch("import_export.admin.ImportForm")
-    def test_import_action_handles_error(self, mock_form):
-        mock_form.is_valid.return_value = True
-        m = TestImportExportActionModelAdmin(self.mock_model, self.mock_site,
-                                                  ValueError("fail"))
-        res = m.import_action(self.mock_request)
-        self.assertRegex(
-            res.content.decode(),
-            r"<h1>ValueError encountered while trying to read file: .*</h1>")
+    def test_read_from_tmp_storage_binary_file_format(self):
+        m = TestImportExportActionModelAdmin(self.mock_model, self.mock_site, None)
+        with patch("import_export.admin.TempFolderStorage") as mock_tmp_storage:
+            m.read_from_tmp_storage(mock_tmp_storage, base_formats.XLS())
+            mock_tmp_storage.read.assert_called_with('rb')
+
+    def test_read_from_tmp_storage_text_file_format(self):
+        m = TestImportExportActionModelAdmin(self.mock_model, self.mock_site, None)
+        with patch("import_export.admin.TempFolderStorage") as mock_tmp_storage:
+            m.read_from_tmp_storage(mock_tmp_storage, base_formats.CSV())
+            mock_tmp_storage.read.assert_called_with('r', encoding='utf-8-sig')
 
 
 class ExportActionAdminIntegrationTest(TestCase):

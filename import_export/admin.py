@@ -10,7 +10,6 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.template.response import TemplateResponse
 from django.urls import path, reverse
 from django.utils.decorators import method_decorator
-from django.utils.encoding import force_str
 from django.utils.module_loading import import_string
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_POST
@@ -41,7 +40,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
     #: template for import view
     import_template_name = 'admin/import_export/import.html'
     #: import data encoding
-    from_encoding = "utf-8"
+    from_encoding = "utf-8-sig"
     skip_admin_log = None
     # storage class for saving temporary files
     tmp_storage_class = None
@@ -105,11 +104,9 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
                 int(confirm_form.cleaned_data['input_format'])
             ]()
             tmp_storage = self.get_tmp_storage_class()(name=confirm_form.cleaned_data['import_file_name'])
-            data = tmp_storage.read(input_format.get_read_mode())
-            if not input_format.is_binary() and self.from_encoding:
-                data = force_str(data, self.from_encoding)
-            dataset = input_format.create_dataset(data)
 
+            data = self.read_from_tmp_storage(tmp_storage, input_format)
+            dataset = input_format.create_dataset(data)
             result = self.process_dataset(dataset, confirm_form, request, *args, **kwargs)
 
             tmp_storage.remove()
@@ -213,6 +210,12 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
             return kwargs
         return {}
 
+    def read_from_tmp_storage(self, tmp_storage, input_format):
+        if input_format.is_binary():
+            return tmp_storage.read(input_format.get_read_mode())
+        else:
+            return tmp_storage.read(input_format.get_read_mode(), encoding=self.from_encoding)
+
     def write_to_tmp_storage(self, import_file, input_format):
         tmp_storage = self.get_tmp_storage_class()()
         data = bytes()
@@ -253,15 +256,8 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
 
             # then read the file, using the proper format-specific mode
             # warning, big files may exceed memory
-            try:
-                data = tmp_storage.read(input_format.get_read_mode())
-                if not input_format.is_binary() and self.from_encoding:
-                    data = force_str(data, self.from_encoding)
-                dataset = input_format.create_dataset(data)
-            except UnicodeDecodeError as e:
-                return HttpResponse(_(u"<h1>Imported file has a wrong encoding: %s</h1>" % e))
-            except Exception as e:
-                return HttpResponse(_(u"<h1>%s encountered while trying to read file: %s</h1>" % (type(e).__name__, import_file.name)))
+            data = self.read_from_tmp_storage(tmp_storage, input_format)
+            dataset = input_format.create_dataset(data)
 
             # prepare kwargs for import data, if needed
             res_kwargs = self.get_import_resource_kwargs(request, form=form, *args, **kwargs)
