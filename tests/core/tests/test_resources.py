@@ -752,7 +752,7 @@ class ModelResourceTest(TestCase):
         self.assertEqual(full_title, '%s by %s' % (self.book.name,
                                                    self.book.author.name))
 
-    def test_widget_fomat_in_fk_field(self):
+    def test_widget_format_in_fk_field(self):
         class B(resources.ModelResource):
 
             class Meta:
