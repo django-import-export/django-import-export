@@ -2,11 +2,22 @@ import json
 from datetime import date, datetime
 from decimal import Decimal
 
+import django
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
-from django.utils import datetime_safe, timezone
+from django.utils import timezone
 from django.utils.dateparse import parse_duration
 from django.utils.encoding import force_str, smart_str
+
+
+def format_datetime(value, datetime_format):
+    # conditional logic to handle correct formatting of dates
+    # see https://code.djangoproject.com/ticket/32738
+    if django.VERSION[0] >= 4:
+        format = django.utils.formats.sanitize_strftime_format(datetime_format)
+        return value.strftime(format)
+    else:
+        return django.utils.datetime_safe.new_datetime(value).strftime(datetime_format)
 
 
 class Widget:
@@ -179,7 +190,7 @@ class DateWidget(Widget):
     def render(self, value, obj=None):
         if not value:
             return ""
-        return datetime_safe.new_date(value).strftime(self.formats[0])
+        return format_datetime(value, self.formats[0])
 
 
 class DateTimeWidget(Widget):
@@ -223,7 +234,7 @@ class DateTimeWidget(Widget):
             return ""
         if settings.USE_TZ:
             value = timezone.localtime(value)
-        return datetime_safe.new_datetime(value).strftime(self.formats[0])
+        return format_datetime(value, self.formats[0])
 
 
 class TimeWidget(Widget):

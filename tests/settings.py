@@ -108,5 +108,4 @@ LOGGING = {
     }}
 
 
-# USE_TZ = True
-# TIME_ZONE = 'Europe/Ljubljana'
+USE_TZ = False

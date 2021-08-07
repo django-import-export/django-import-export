@@ -373,6 +373,8 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
         }
         if django.VERSION >= (2, 1):
             changelist_kwargs['sortable_by'] = self.sortable_by
+        if django.VERSION >= (4, 0):
+            changelist_kwargs['search_help_text'] = self.search_help_text
         cl = ChangeList(**changelist_kwargs)
 
         return cl.get_queryset(request)

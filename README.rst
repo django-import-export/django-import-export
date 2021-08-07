@@ -2,12 +2,12 @@
 django-import-export
 ====================
 
-.. image:: https://travis-ci.org/django-import-export/django-import-export.svg?branch=master
-    :target: https://travis-ci.org/django-import-export/django-import-export
-    :alt: Build status on Travis-CI
+.. image:: https://github.com/django-import-export/django-import-export/actions/workflows/django-import-export-ci.yml/badge.svg
+    :target: https://github.com/django-import-export/django-import-export/actions/workflows/django-import-export-ci.yml
+    :alt: Build status on Github
 
-.. image:: https://coveralls.io/repos/github/django-import-export/django-import-export/badge.svg?branch=master
-    :target: https://coveralls.io/github/django-import-export/django-import-export?branch=master
+.. image:: https://coveralls.io/repos/github/django-import-export/django-import-export/badge.svg?branch=main
+    :target: https://coveralls.io/github/django-import-export/django-import-export?branch=main
 
 .. image:: https://img.shields.io/pypi/v/django-import-export.svg
     :target: https://pypi.org/project/django-import-export/

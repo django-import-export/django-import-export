@@ -6,10 +6,7 @@ VERSION = __import__("import_export").__version__
 
 CLASSIFIERS = [
     'Framework :: Django',
-    'Framework :: Django :: 2.0',
-    'Framework :: Django :: 2.1',
     'Framework :: Django :: 2.2',
-    'Framework :: Django :: 3.0',
     'Framework :: Django :: 3.1',
     'Framework :: Django :: 3.2',
     'Intended Audience :: Developers',
@@ -20,14 +17,15 @@ CLASSIFIERS = [
     'Programming Language :: Python :: 3.6',
     'Programming Language :: Python :: 3.7',
     'Programming Language :: Python :: 3.8',
+    'Programming Language :: Python :: 3.9',
     'Programming Language :: Python :: 3 :: Only',
     'Topic :: Software Development',
 ]
 
 install_requires = [
     'diff-match-patch',
-    'Django>=2.0',
-    'tablib[html,ods,xls,xlsx,yaml]>=0.14.0',
+    'Django>=2.2',
+    'tablib[html,ods,xls,xlsx,yaml]>=3.0.0',
 ]
 
 
