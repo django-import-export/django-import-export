@@ -61,7 +61,7 @@ class BaseExportMixin(BaseImportExportMixin):
         return resource_class(**self.get_export_resource_kwargs(request, *args, **kwargs))\
             .export(queryset, *args, **kwargs)
 
-    def get_filename(self, file_format):
+    def get_export_filename(self, file_format):
         date_str = now().strftime('%Y-%m-%d')
         filename = "%s-%s.%s" % (self.model.__name__,
                                  date_str,
@@ -113,6 +113,3 @@ class ExportViewFormMixin(ExportViewMixin, FormView):
 
         post_export.send(sender=None, model=self.model)
         return response
-
-    def get_export_filename(self, file_format):
-        return super().get_filename(file_format)

@@ -437,7 +437,7 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
         return super().changelist_view(request, extra_context)
 
     def get_export_filename(self, request, queryset, file_format):
-        return super().get_filename(file_format)
+        return super().get_export_filename(file_format)
 
 
 class ImportExportMixin(ImportMixin, ExportMixin):
