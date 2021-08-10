@@ -320,7 +320,7 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
     #: template for export view
     export_template_name = 'admin/import_export/export.html'
     #: export data encoding
-    to_encoding = "utf-8"
+    to_encoding = None
 
     def get_urls(self):
         urls = super().get_urls()
@@ -389,6 +389,9 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
 
         data = self.get_data_for_export(request, queryset, *args, **kwargs)
         export_data = file_format.export_data(data)
+        encoding = kwargs.get("encoding")
+        if not file_format.is_binary() and encoding:
+            export_data = export_data.encode(encoding)
         return export_data
 
     def get_export_context_data(self, **kwargs):
@@ -409,7 +412,7 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
             ]()
 
             queryset = self.get_export_queryset(request)
-            export_data = self.get_export_data(file_format, queryset, request=request)
+            export_data = self.get_export_data(file_format, queryset, request=request, encoding=self.to_encoding)
             content_type = file_format.get_content_type()
             response = HttpResponse(export_data, content_type=content_type)
             response['Content-Disposition'] = 'attachment; filename="%s"' % (
@@ -489,7 +492,7 @@ class ExportActionMixin(ExportMixin):
             formats = self.get_export_formats()
             file_format = formats[int(export_format)]()
 
-            export_data = self.get_export_data(file_format, queryset, request=request)
+            export_data = self.get_export_data(file_format, queryset, request=request, encoding=self.to_encoding)
             content_type = file_format.get_content_type()
             response = HttpResponse(export_data, content_type=content_type)
             response['Content-Disposition'] = 'attachment; filename="%s"' % (
