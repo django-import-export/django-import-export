@@ -15,7 +15,7 @@ class BaseStorage:
     def save(self, data, mode='w'):
         raise NotImplementedError
 
-    def read(self, read_mode='r'):
+    def read(self, read_mode='r', encoding=None):
         raise NotImplementedError
 
     def remove(self):
@@ -62,7 +62,7 @@ class CacheStorage(BaseStorage):
             self.name = uuid4().hex
         cache.set(self.CACHE_PREFIX + self.name, data, self.CACHE_LIFETIME)
 
-    def read(self, read_mode='r'):
+    def read(self, read_mode='r', encoding=None):
         return cache.get(self.CACHE_PREFIX + self.name)
 
     def remove(self):
@@ -77,7 +77,7 @@ class MediaStorage(BaseStorage):
             self.name = uuid4().hex
         default_storage.save(self.get_full_path(), ContentFile(data))
 
-    def read(self, read_mode='rb'):
+    def read(self, read_mode='rb', encoding=None):
         with default_storage.open(self.get_full_path(), mode=read_mode) as f:
             return f.read()
 

@@ -36,6 +36,11 @@ class TestTempFolderStorage(TempFolderStorage):
         return '/tmp/f'
 
 
+class TestMediaStorage(MediaStorage):
+    def get_full_path(self):
+        return 'f'
+
+
 class TempStoragesTest(TestCase):
 
     def setUp(self):
@@ -77,6 +82,13 @@ id,name,author,author_email,imported,published,price,categories
         tmp_storage.remove()
         self.assertEqual(cache.get(tmp_storage.name), None)
 
+    def test_cache_storage_read_with_encoding(self):
+        tmp_storage = CacheStorage()
+        tmp_storage.name = 'f'
+        cache.set("django-import-export-f", 101)
+        res = tmp_storage.read(encoding='utf-8')
+        self.assertEqual(101, res)
+
     def test_media_storage(self):
         tmp_storage = MediaStorage()
         tmp_storage.save(self.test_string)
@@ -100,3 +112,10 @@ id,name,author,author_email,imported,published,price,categories
         tmp_storage = MediaStorage(name=name)
         self.assertEqual(self.test_string.decode(),
                          tmp_storage.read(read_mode='r'))
+
+    def test_media_storage_read_with_encoding(self):
+        tmp_storage = TestMediaStorage()
+        tmp_storage.name = 'f'
+        with patch("import_export.tmp_storages.default_storage.open") as mock_open:
+            tmp_storage.read(encoding=None)
+            mock_open.assert_called_with("f", mode='rb')

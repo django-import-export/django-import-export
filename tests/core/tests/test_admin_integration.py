@@ -483,7 +483,7 @@ class ImportActionDecodeErrorTest(TestCase):
             m.read_from_tmp_storage(mock_tmp_storage, base_formats.XLS())
             mock_tmp_storage.read.assert_called_with('rb')
 
-    def test_read_from_tmp_storage_text_file_format(self):
+    def test_read_from_tmp_storage_text_file_format_using_TempFolderStorage(self):
         m = TestImportExportActionModelAdmin(self.mock_model, self.mock_site, None)
         with patch("import_export.admin.TempFolderStorage") as mock_tmp_storage:
             m.read_from_tmp_storage(mock_tmp_storage, base_formats.CSV())
