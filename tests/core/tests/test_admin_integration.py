@@ -477,15 +477,6 @@ class ImportActionDecodeErrorTest(TestCase):
     mock_request.POST = {'a': 1}
     mock_request.FILES = {}
 
-    @mock.patch("import_export.admin.ImportForm")
-    def test_import_action_handles_UnicodeDecodeError(self, mock_form):
-        mock_form.is_valid.return_value = True
-        b_arr = b'\x00\x00'
-        m = TestImportExportActionModelAdmin(self.mock_model, self.mock_site,
-                                                  UnicodeDecodeError('codec', b_arr, 1, 2, 'fail!'))
-        with self.assertRaises(UnicodeDecodeError):
-            m.import_action(self.mock_request)
-
     def test_read_from_tmp_storage_binary_file_format(self):
         m = TestImportExportActionModelAdmin(self.mock_model, self.mock_site, None)
         with patch("import_export.admin.TempFolderStorage") as mock_tmp_storage:
