@@ -10,6 +10,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.template.response import TemplateResponse
 from django.urls import path, reverse
 from django.utils.decorators import method_decorator
+from django.utils.encoding import force_str
 from django.utils.module_loading import import_string
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_POST
@@ -212,9 +213,15 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
 
     def read_from_tmp_storage(self, tmp_storage, input_format):
         if input_format.is_binary():
-            return tmp_storage.read(input_format.get_read_mode())
+            data = tmp_storage.read(input_format.get_read_mode())
         else:
-            return tmp_storage.read(input_format.get_read_mode(), encoding=self.from_encoding)
+            data = tmp_storage.read(input_format.get_read_mode(), encoding=self.from_encoding)
+
+            # if the object is being read from a cache, then it might be binary
+            # if so, decode before returning
+            if isinstance(data, bytes):
+                data = force_str(data, encoding=self.from_encoding)
+        return data
 
     def write_to_tmp_storage(self, import_file, input_format):
         tmp_storage = self.get_tmp_storage_class()()
