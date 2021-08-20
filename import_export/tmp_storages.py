@@ -63,7 +63,10 @@ class CacheStorage(BaseStorage):
         cache.set(self.CACHE_PREFIX + self.name, data, self.CACHE_LIFETIME)
 
     def read(self, read_mode='r', encoding=None):
-        return cache.get(self.CACHE_PREFIX + self.name)
+        data = cache.get(self.CACHE_PREFIX + self.name)
+        if isinstance(data, bytes) and encoding is not None:
+            data = data.decode(encoding)
+        return data
 
     def remove(self):
         cache.delete(self.name)
@@ -79,7 +82,10 @@ class MediaStorage(BaseStorage):
 
     def read(self, read_mode='rb', encoding=None):
         with default_storage.open(self.get_full_path(), mode=read_mode) as f:
-            return f.read()
+            data = f.read()
+            if isinstance(data, bytes) and encoding is not None:
+                data = data.decode(encoding)
+            return data
 
     def remove(self):
         default_storage.delete(self.get_full_path())

@@ -102,7 +102,7 @@ id,name,author,author_email,imported,published,price,categories
         name = tmp_storage.name
 
         tmp_storage = MediaStorage(name=name)
-        self.assertEqual(self.test_string, tmp_storage.read())
+        self.assertEqual(self.test_string.decode(), tmp_storage.read(encoding='utf-8'))
 
         self.assertTrue(default_storage.exists(tmp_storage.get_full_path()))
         tmp_storage.remove()

@@ -217,10 +217,6 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         else:
             data = tmp_storage.read(input_format.get_read_mode(), encoding=self.from_encoding)
 
-            # if the object is being read from a cache, then it might be binary
-            # if so, decode before returning
-            if isinstance(data, bytes):
-                data = force_str(data, encoding=self.from_encoding)
         return data
 
     def write_to_tmp_storage(self, import_file, input_format):

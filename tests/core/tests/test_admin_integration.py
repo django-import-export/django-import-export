@@ -172,6 +172,25 @@ class ImportExportAdminIntegrationTest(TestCase):
         self.assertFalse(response.context['result'].has_errors())
         self.assertContains(response, 'test@example.com')
 
+    @override_settings(IMPORT_EXPORT_TMP_STORAGE_CLASS='import_export.tmp_storages.CacheStorage')
+    def test_import_action_handles_CacheStorage_read_binary(self):
+        input_format = '1'
+        filename = os.path.join(
+            os.path.dirname(__file__),
+            os.path.pardir,
+            'exports',
+            'books.xls')
+        with open(filename, "rb") as f:
+            data = {
+                'input_format': input_format,
+                'import_file': f,
+            }
+            response = self.client.post('/admin/core/book/import/', data)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('result', response.context)
+        self.assertFalse(response.context['result'].has_errors())
+        self.assertContains(response, 'test@example.com')
+
     @override_settings(TEMPLATE_STRING_IF_INVALID='INVALID_VARIABLE')
     def test_import_mac(self):
         # GET the import form
