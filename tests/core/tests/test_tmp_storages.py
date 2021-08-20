@@ -85,9 +85,16 @@ id,name,author,author_email,imported,published,price,categories
     def test_cache_storage_read_with_encoding(self):
         tmp_storage = CacheStorage()
         tmp_storage.name = 'f'
-        cache.set("django-import-export-f", 101)
+        tmp_storage.save(101)
         res = tmp_storage.read(encoding='utf-8')
         self.assertEqual(101, res)
+
+    def test_cache_storage_read_with_encoding_unicode_chars(self):
+        tmp_storage = CacheStorage()
+        tmp_storage.name = 'f'
+        tmp_storage.save("àèìòùçñ")
+        res = tmp_storage.read(encoding='utf-8')
+        self.assertEqual("àèìòùçñ", res)
 
     def test_media_storage(self):
         tmp_storage = MediaStorage()
