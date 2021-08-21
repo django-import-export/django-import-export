@@ -87,6 +87,7 @@ class ExportViewMixinTest(TestCase):
 
 
 class BaseImportMixinTest(TestCase):
+
     def test_get_import_formats(self):
         class Format(object):
             def __init__(self, id, can_import):
@@ -110,6 +111,53 @@ class BaseImportMixinTest(TestCase):
         formats = m.get_import_formats()
         self.assertEqual(1, len(formats))
         self.assertEqual('CanImportFormat', formats[0].__name__)
+
+
+class MixinModelAdminTest(TestCase):
+    """
+    Tests for regression where methods in ModelAdmin with BaseImportMixin / BaseExportMixin
+    do not get called.
+    see #1315.
+    """
+    request = MagicMock(spec=HttpRequest)
+
+    class BaseImportModelAdminTest(mixins.BaseImportMixin):
+        call_count = 0
+
+        def get_resource_class(self):
+            self.call_count += 1
+
+        def get_resource_kwargs(self, request, *args, **kwargs):
+            self.call_count += 1
+
+    class BaseExportModelAdminTest(mixins.BaseExportMixin):
+        call_count = 0
+
+        def get_resource_class(self):
+            self.call_count += 1
+
+        def get_resource_kwargs(self, request, *args, **kwargs):
+            self.call_count += 1
+
+    def test_get_import_resource_class_calls_self_get_resource_class(self):
+        admin = self.BaseImportModelAdminTest()
+        admin.get_import_resource_class()
+        self.assertEqual(1, admin.call_count)
+
+    def test_get_import_resource_kwargs_calls_self_get_resource_kwargs(self):
+        admin = self.BaseImportModelAdminTest()
+        admin.get_import_resource_kwargs(self.request)
+        self.assertEqual(1, admin.call_count)
+
+    def test_get_export_resource_class_calls_self_get_resource_class(self):
+        admin = self.BaseExportModelAdminTest()
+        admin.get_export_resource_class()
+        self.assertEqual(1, admin.call_count)
+
+    def test_get_export_resource_kwargs_calls_self_get_resource_kwargs(self):
+        admin = self.BaseExportModelAdminTest()
+        admin.get_export_resource_kwargs(self.request)
+        self.assertEqual(1, admin.call_count)
 
 
 class BaseExportMixinTest(TestCase):
