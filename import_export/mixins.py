@@ -26,7 +26,7 @@ class BaseImportMixin(BaseImportExportMixin):
         """
         Returns ResourceClass to use for import.
         """
-        return super().get_resource_class()
+        return self.get_resource_class()
 
     def get_import_formats(self):
         """
@@ -35,7 +35,7 @@ class BaseImportMixin(BaseImportExportMixin):
         return [f for f in self.formats if f().can_import()]
 
     def get_import_resource_kwargs(self, request, *args, **kwargs):
-        return super().get_resource_kwargs(request, *args, **kwargs)
+        return self.get_resource_kwargs(request, *args, **kwargs)
 
 
 class BaseExportMixin(BaseImportExportMixin):
@@ -51,10 +51,10 @@ class BaseExportMixin(BaseImportExportMixin):
         """
         Returns ResourceClass to use for export.
         """
-        return super().get_resource_class()
+        return self.get_resource_class()
 
     def get_export_resource_kwargs(self, request, *args, **kwargs):
-        return super().get_resource_kwargs(request, *args, **kwargs)
+        return self.get_resource_kwargs(request, *args, **kwargs)
 
     def get_data_for_export(self, request, queryset, *args, **kwargs):
         resource_class = self.get_export_resource_class()
