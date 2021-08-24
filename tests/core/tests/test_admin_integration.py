@@ -303,6 +303,25 @@ class ImportExportAdminIntegrationTest(TestCase):
             response, _("Import finished, with {} new and {} updated {}.").format(1, 0, EBook._meta.verbose_name_plural)
         )
 
+    def test_import_without_show_confirm_form(self):
+        """
+        Test if process work without show the confirm form to import file
+        """
+        with mock.patch.dict("os.environ", {"PROCESS_WITHOUT_SHOW_CONFIRM_FORM": "True"}):
+            Author.objects.create(id=11, name="Test Author")
+
+            input_format = "0"
+            filename = os.path.join(os.path.dirname(__file__), os.path.pardir, "exports", "books.csv")
+            with open(filename, "rb") as fobj:
+                data = {"author": 11, "input_format": input_format, "import_file": fobj}
+                response = self.client.post("/admin/core/ebook/import/", data, follow=True)
+
+            self.assertEqual(response.status_code, 200)
+            self.assertContains(
+                response,
+                _("Import finished, with {} new and {} updated {}.").format(1, 0, EBook._meta.verbose_name_plural),
+            )
+
     def test_get_skip_admin_log_attribute(self):
         m = ImportMixin()
         m.skip_admin_log = True
