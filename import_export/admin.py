@@ -278,8 +278,8 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
 
             if not result.has_errors() and not result.has_validation_errors():
                 confirm_form = self.get_confirm_import_form()
-                # If that flag is true, the file has sent will be processed otherwise the
-                # app must run like it's ran nowadays (returning a screen to review the csv's data)
+                # If that flag is true, the file has sent will be processed without show the confirmation form
+                # In multi-container architecture, it's impossible to ensure where the file will be saved to be imported after data confirmation.
                 if os.getenv("PROCESS_WITHOUT_SHOW_CONFIRM_FORM", False):
                     result = self.process_dataset(
                         dataset, confirm_form, request, *args, original_file_name=import_file.name
