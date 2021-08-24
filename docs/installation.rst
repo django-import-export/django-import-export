@@ -104,6 +104,10 @@ decreasing it, or speed up exports by increasing it.
 Can be overridden on a ``Resource`` class by setting the ``chunk_size`` class
 attribute.
 
+``PROCESS_WITHOUT_SHOW_CONFIRM_FORM``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+It's a boolean parameter. If that parameter is true, the form to confirm 
+data inside the file to import won´t be shown and the file will be imported.
 
 Example app
 ===========
