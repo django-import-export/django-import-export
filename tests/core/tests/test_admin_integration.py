@@ -36,120 +36,137 @@ from import_export.tmp_storages import TempFolderStorage
 
 class ImportExportAdminIntegrationTest(TestCase):
     def setUp(self):
-        user = User.objects.create_user("admin", "admin@example.com", "password")
+        user = User.objects.create_user('admin', 'admin@example.com', 
+                                        'password')
         user.is_staff = True
         user.is_superuser = True
         user.save()
-        self.client.login(username="admin", password="password")
+        self.client.login(username='admin', password='password')
 
     def test_import_export_template(self):
-        response = self.client.get("/admin/core/book/")
+        response = self.client.get('/admin/core/book/')
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "admin/import_export/change_list_import_export.html")
-        self.assertContains(response, _("Import"))
-        self.assertContains(response, _("Export"))
+        self.assertTemplateUsed(response, 
+                'admin/import_export/change_list_import_export.html')
+        self.assertContains(response, _('Import'))
+        self.assertContains(response, _('Export'))
 
-    @override_settings(TEMPLATE_STRING_IF_INVALID="INVALID_VARIABLE")
+    @override_settings(TEMPLATE_STRING_IF_INVALID='INVALID_VARIABLE')
     def test_import(self):
         # GET the import form
-        response = self.client.get("/admin/core/book/import/")
+        response = self.client.get('/admin/core/book/import/')
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "admin/import_export/import.html")
+        self.assertTemplateUsed(response, 'admin/import_export/import.html')
         self.assertContains(response, 'form action=""')
 
         # POST the import form
         input_format = "0"
-        filename = os.path.join(os.path.dirname(__file__), os.path.pardir, "exports", "books.csv")
+        filename = os.path.join(
+            os.path.dirname(__file__), 
+            os.path.pardir, 
+            'exports', 
+            'books.csv')
         with open(filename, "rb") as f:
             data = {
-                "input_format": input_format,
-                "import_file": f,
+                'input_format': input_format,
+                'import_file': f,
             }
-            response = self.client.post("/admin/core/book/import/", data)
+            response = self.client.post('/admin/core/book/import/', data)
         self.assertEqual(response.status_code, 200)
-        self.assertIn("result", response.context)
-        self.assertFalse(response.context["result"].has_errors())
-        self.assertIn("confirm_form", response.context)
-        confirm_form = response.context["confirm_form"]
+        self.assertIn('result', response.context)
+        self.assertFalse(response.context['result'].has_errors())
+        self.assertIn('confirm_form', response.context)
+        confirm_form = response.context['confirm_form']
 
         data = confirm_form.initial
-        self.assertEqual(data["original_file_name"], "books.csv")
-        response = self.client.post("/admin/core/book/process_import/", data, follow=True)
+        self.assertEqual(data['original_file_name'], 'books.csv')
+        response = self.client.post('/admin/core/book/process_import/', data, 
+                                    follow=True)
         self.assertEqual(response.status_code, 200)
-        self.assertContains(
-            response, _("Import finished, with {} new and {} updated {}.").format(1, 0, Book._meta.verbose_name_plural)
+        self.assertContains(response, 
+            _('Import finished, with {} new and {} updated {}.').format(
+                1, 0, Book._meta.verbose_name_plural)
         )
 
-    @override_settings(TEMPLATE_STRING_IF_INVALID="INVALID_VARIABLE")
+    @override_settings(TEMPLATE_STRING_IF_INVALID='INVALID_VARIABLE')
     def test_import_mac(self):
         # GET the import form
-        response = self.client.get("/admin/core/book/import/")
+        response = self.client.get('/admin/core/book/import/')
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "admin/import_export/import.html")
+        self.assertTemplateUsed(response, 'admin/import_export/import.html')
         self.assertContains(response, 'form action=""')
 
         # POST the import form
-        input_format = "0"
-        filename = os.path.join(os.path.dirname(__file__), os.path.pardir, "exports", "books-mac.csv")
-        with open(filename, "rb") as f:
+        input_format = '0'
+        filename = os.path.join(
+            os.path.dirname(__file__), 
+            os.path.pardir, 
+            'exports', 
+            'books-mac.csv')
+        with open(filename, 'rb') as f:
             data = {
-                "input_format": input_format,
-                "import_file": f,
+                'input_format': input_format,
+                'import_file': f,
             }
-            response = self.client.post("/admin/core/book/import/", data)
+            response = self.client.post('/admin/core/book/import/', data)
         self.assertEqual(response.status_code, 200)
-        self.assertIn("result", response.context)
-        self.assertFalse(response.context["result"].has_errors())
-        self.assertIn("confirm_form", response.context)
-        confirm_form = response.context["confirm_form"]
+        self.assertIn('result', response.context)
+        self.assertFalse(response.context['result'].has_errors())
+        self.assertIn('confirm_form', response.context)
+        confirm_form = response.context['confirm_form']
 
         data = confirm_form.initial
-        self.assertEqual(data["original_file_name"], "books-mac.csv")
-        response = self.client.post("/admin/core/book/process_import/", data, follow=True)
+        self.assertEqual(data['original_file_name'], 'books-mac.csv')
+        response = self.client.post('/admin/core/book/process_import/', data, 
+                                    follow=True)
         self.assertEqual(response.status_code, 200)
-        self.assertContains(
-            response, _("Import finished, with {} new and {} updated {}.").format(1, 0, Book._meta.verbose_name_plural)
+        self.assertContains(response, 
+            _('Import finished, with {} new and {} updated {}.').format(
+                1, 0, Book._meta.verbose_name_plural)
         )
 
     def test_export(self):
-        response = self.client.get("/admin/core/book/export/")
+        response = self.client.get('/admin/core/book/export/')
         self.assertEqual(response.status_code, 200)
 
         data = {
-            "file_format": "0",
+            'file_format': '0',
         }
-        date_str = datetime.now().strftime("%Y-%m-%d")
-        response = self.client.post("/admin/core/book/export/", data)
+        date_str = datetime.now().strftime('%Y-%m-%d')
+        response = self.client.post('/admin/core/book/export/', data)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.has_header("Content-Disposition"))
-        self.assertEqual(response["Content-Type"], "text/csv")
-        self.assertEqual(response["Content-Disposition"], 'attachment; filename="Book-{}.csv"'.format(date_str))
+        self.assertEqual(response['Content-Type'], 'text/csv')
+        self.assertEqual(
+            response['Content-Disposition'], 
+            'attachment; filename="Book-{}.csv"'.format(date_str))
 
     def test_returns_xlsx_export(self):
-        response = self.client.get("/admin/core/book/export/")
+        response = self.client.get('/admin/core/book/export/')
         self.assertEqual(response.status_code, 200)
 
         for i, f in enumerate(DEFAULT_FORMATS):
-            if f().get_title() == "xlsx":
+            if f().get_title() == 'xlsx':
                 xlsx_index = i
                 break
         else:
-            self.fail("Unable to find xlsx format. DEFAULT_FORMATS: %r" % DEFAULT_FORMATS)
-        data = {"file_format": str(xlsx_index)}
-        response = self.client.post("/admin/core/book/export/", data)
+            self.fail('Unable to find xlsx format. DEFAULT_FORMATS: %r' % DEFAULT_FORMATS)
+        data = {'file_format': str(xlsx_index)}
+        response = self.client.post('/admin/core/book/export/', data)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.has_header("Content-Disposition"))
-        self.assertEqual(response["Content-Type"], "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+        self.assertEqual(response['Content-Type'], 
+                        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
 
     def test_import_export_buttons_visible_without_add_permission(self):
         # issue 38 - Export button not visible when no add permission
         original = BookAdmin.has_add_permission
         BookAdmin.has_add_permission = lambda self, request: False
-        response = self.client.get("/admin/core/book/")
+        response = self.client.get('/admin/core/book/')
         BookAdmin.has_add_permission = original
 
-        self.assertContains(response, _("Export"))
-        self.assertContains(response, _("Import"))
+        self.assertContains(response, _('Export'))
+        self.assertContains(response, _('Import'))
 
     def test_import_buttons_visible_without_add_permission(self):
         # When using ImportMixin, users should be able to see the import button
@@ -157,58 +174,73 @@ class ImportExportAdminIntegrationTest(TestCase):
 
         original = AuthorAdmin.has_add_permission
         AuthorAdmin.has_add_permission = lambda self, request: False
-        response = self.client.get("/admin/core/author/")
+        response = self.client.get('/admin/core/author/')
         AuthorAdmin.has_add_permission = original
 
-        self.assertContains(response, _("Import"))
-        self.assertTemplateUsed(response, "admin/import_export/change_list.html")
+        self.assertContains(response, _('Import'))
+        self.assertTemplateUsed(response, 'admin/import_export/change_list.html')
 
     def test_import_file_name_in_tempdir(self):
         # 65 - import_file_name form field can be use to access the filesystem
-        import_file_name = os.path.join(os.path.dirname(__file__), os.path.pardir, "exports", "books.csv")
-        data = {"input_format": "0", "import_file_name": import_file_name, "original_file_name": "books.csv"}
+        import_file_name = os.path.join(
+            os.path.dirname(__file__), 
+            os.path.pardir, 
+            'exports', 
+            'books.csv')
+        data = {
+            'input_format': '0', 
+            'import_file_name': import_file_name, 
+            'original_file_name': 'books.csv'}
         with self.assertRaises(FileNotFoundError):
-            self.client.post("/admin/core/book/process_import/", data)
+            self.client.post('/admin/core/book/process_import/', data)
 
     def test_csrf(self):
-        response = self.client.get("/admin/core/book/process_import/")
+        response = self.client.get('/admin/core/book/process_import/')
         self.assertEqual(response.status_code, 405)
 
     def test_import_log_entry(self):
-        input_format = "0"
-        filename = os.path.join(os.path.dirname(__file__), os.path.pardir, "exports", "books.csv")
-        with open(filename, "rb") as f:
+        input_format = '0'
+        filename = os.path.join(
+            os.path.dirname(__file__), 
+            os.path.pardir, 
+            'exports', 
+            'books.csv')
+        with open(filename, 'rb') as f:
             data = {
-                "input_format": input_format,
-                "import_file": f,
+                'input_format': input_format,
+                'import_file': f,
             }
-            response = self.client.post("/admin/core/book/import/", data)
+            response = self.client.post('/admin/core/book/import/', data)
         self.assertEqual(response.status_code, 200)
-        confirm_form = response.context["confirm_form"]
+        confirm_form = response.context['confirm_form']
         data = confirm_form.initial
-        response = self.client.post("/admin/core/book/process_import/", data, follow=True)
+        response = self.client.post('/admin/core/book/process_import/', data, 
+                                    follow=True)
         self.assertEqual(response.status_code, 200)
-        book = LogEntry.objects.latest("id")
+        book = LogEntry.objects.latest('id')
         self.assertEqual(book.object_repr, "Some book")
         self.assertEqual(book.object_id, str(1))
 
     def test_import_log_entry_with_fk(self):
-        Parent.objects.create(id=1234, name="Some Parent")
-        input_format = "0"
-        filename = os.path.join(os.path.dirname(__file__), os.path.pardir, "exports", "child.csv")
+        Parent.objects.create(id=1234, name='Some Parent')
+        input_format = '0'
+        filename = os.path.join(
+            os.path.dirname(__file__), 
+            os.path.pardir, 'exports', 'child.csv')
         with open(filename, "rb") as f:
             data = {
-                "input_format": input_format,
-                "import_file": f,
+                'input_format': input_format,
+                'import_file': f,
             }
-            response = self.client.post("/admin/core/child/import/", data)
+            response = self.client.post('/admin/core/child/import/', data)
         self.assertEqual(response.status_code, 200)
-        confirm_form = response.context["confirm_form"]
+        confirm_form = response.context['confirm_form']
         data = confirm_form.initial
-        response = self.client.post("/admin/core/child/process_import/", data, follow=True)
+        response = self.client.post('/admin/core/child/process_import/', data, 
+                                    follow=True)
         self.assertEqual(response.status_code, 200)
-        child = LogEntry.objects.latest("id")
-        self.assertEqual(child.object_repr, "Some - child of Some Parent")
+        child = LogEntry.objects.latest('id')
+        self.assertEqual(child.object_repr, 'Some - child of Some Parent')
         self.assertEqual(child.object_id, str(1))
 
     def test_logentry_creation_with_import_obj_exception(self):
@@ -217,7 +249,6 @@ class ImportExportAdminIntegrationTest(TestCase):
             def decorator(func):
                 setattr(cls, func.__name__, func)
                 return func
-
             return decorator
 
         # Cause an exception in import_row, but only after import is confirmed,
@@ -239,29 +270,28 @@ class ImportExportAdminIntegrationTest(TestCase):
         @monkeypatch_method(BookAdmin)
         def process_dataset(self, dataset, confirm_form, request, *args, **kwargs):
             resource = self.get_import_resource_class()(**self.get_import_resource_kwargs(request, *args, **kwargs))
-            return resource.import_data(
-                dataset,
-                dry_run=False,
-                raise_errors=False,
-                file_name=confirm_form.cleaned_data["original_file_name"],
-                user=request.user,
-                **kwargs
-            )
+            return resource.import_data(dataset,
+                                        dry_run=False,
+                                        raise_errors=False,
+                                        file_name=confirm_form.cleaned_data["original_file_name"],
+                                        user=request.user,
+                                        **kwargs)
 
         dataset = Dataset(headers=["id", "name", "author_email"])
         dataset.append([1, "Test 1", "test@example.com"])
-        input_format = "0"
+        input_format = '0'
         content = dataset.csv
         f = SimpleUploadedFile("data.csv", content.encode(), content_type="text/csv")
         data = {
             "input_format": input_format,
             "import_file": f,
         }
-        response = self.client.post("/admin/core/book/import/", data)
+        response = self.client.post('/admin/core/book/import/', data)
         self.assertEqual(response.status_code, 200)
-        confirm_form = response.context["confirm_form"]
+        confirm_form = response.context['confirm_form']
         data = confirm_form.initial
-        response = self.client.post("/admin/core/book/process_import/", data, follow=True)
+        response = self.client.post('/admin/core/book/process_import/', data, 
+                                    follow=True)
         self.assertEqual(response.status_code, 200)
 
     def test_import_with_customized_forms(self):
@@ -273,34 +303,44 @@ class ImportExportAdminIntegrationTest(TestCase):
 
         # We need at least a single author in the db to select from in the
         # admin import custom forms
-        Author.objects.create(id=11, name="Test Author")
+        Author.objects.create(id=11, name='Test Author')
 
         # GET the import form
-        response = self.client.get("/admin/core/ebook/import/")
+        response = self.client.get('/admin/core/ebook/import/')
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "admin/import_export/import.html")
+        self.assertTemplateUsed(response, 'admin/import_export/import.html')
         self.assertContains(response, 'form action=""')
 
         # POST the import form
-        input_format = "0"
-        filename = os.path.join(os.path.dirname(__file__), os.path.pardir, "exports", "books.csv")
+        input_format = '0'
+        filename = os.path.join(os.path.dirname(__file__), 
+                                os.path.pardir,
+                                'exports',
+                                'books.csv')
         with open(filename, "rb") as fobj:
-            data = {"author": 11, "input_format": input_format, "import_file": fobj}
-            response = self.client.post("/admin/core/ebook/import/", data)
+            data = {'author': 11, 
+                    'input_format': input_format, 
+                    'import_file': fobj}
+            response = self.client.post('/admin/core/ebook/import/', data)
 
         self.assertEqual(response.status_code, 200)
-        self.assertIn("result", response.context)
-        self.assertFalse(response.context["result"].has_errors())
-        self.assertIn("confirm_form", response.context)
-        confirm_form = response.context["confirm_form"]
-        self.assertIsInstance(confirm_form, CustomBookAdmin(EBook, "ebook/import").get_confirm_import_form())
+        self.assertIn('result', response.context)
+        self.assertFalse(response.context['result'].has_errors())
+        self.assertIn('confirm_form', response.context)
+        confirm_form = response.context['confirm_form']
+        self.assertIsInstance(confirm_form, 
+                              CustomBookAdmin(EBook, 'ebook/import')
+                              .get_confirm_import_form())
 
         data = confirm_form.initial
-        self.assertEqual(data["original_file_name"], "books.csv")
-        response = self.client.post("/admin/core/ebook/process_import/", data, follow=True)
+        self.assertEqual(data['original_file_name'], 'books.csv')
+        response = self.client.post('/admin/core/ebook/process_import/',
+                                    data, follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertContains(
-            response, _("Import finished, with {} new and {} updated {}.").format(1, 0, EBook._meta.verbose_name_plural)
+            response, 
+            _('Import finished, with {} new and {} updated {}.').format(
+                1, 0, EBook._meta.verbose_name_plural)
         )
 
     @override_settings(PROCESS_WITHOUT_SHOW_CONFIRM_FORM=True)
@@ -308,18 +348,21 @@ class ImportExportAdminIntegrationTest(TestCase):
         """
         Test if process work without show the confirm form to import file
         """
-        Author.objects.create(id=11, name="Test Author")
+        Author.objects.create(id=11, name='Test Author')
 
-        input_format = "0"
-        filename = os.path.join(os.path.dirname(__file__), os.path.pardir, "exports", "books.csv")
+        input_format = '0'
+        filename = os.path.join(os.path.dirname(__file__), os.path.pardir, 'exports', 'books.csv')
         with open(filename, "rb") as fobj:
-            data = {"author": 11, "input_format": input_format, "import_file": fobj}
-            response = self.client.post("/admin/core/ebook/import/", data, follow=True)
+            data = {'author': 11, 
+                    'input_format': input_format, 
+                    'import_file': fobj}
+            response = self.client.post('/admin/core/ebook/import/', data, follow=True)
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(
             response,
-            _("Import finished, with {} new and {} updated {}.").format(1, 0, EBook._meta.verbose_name_plural),
+            _('Import finished, with {} new and {} updated {}.').format(
+                1, 0, EBook._meta.verbose_name_plural),
         )
 
     def test_get_skip_admin_log_attribute(self):
@@ -343,8 +386,13 @@ class ImportExportAdminIntegrationTest(TestCase):
         """
         request = MagicMock(spec=HttpRequest)
         m = ImportMixin()
-        kw = {"a": 1, "form": "some_form"}
-        target = {"a": 1}
+        kw = {
+            "a": 1, 
+            "form": "some_form"
+        }
+        target = {
+            "a": 1
+        }
         self.assertEqual(target, m.get_import_data_kwargs(request, **kw))
 
     def test_get_import_data_kwargs_with_no_form_kwarg_returns_empty_dict(self):
@@ -378,7 +426,7 @@ class ImportExportAdminIntegrationTest(TestCase):
 
         m = TestExportActionModelAdmin()
         target_media = m.media
-        self.assertEqual("import_export/action_formats.js", target_media._js[-1])
+        self.assertEqual('import_export/action_formats.js', target_media._js[-1])
 
 
 class TestImportExportActionModelAdmin(ImportExportActionModelAdmin):
@@ -398,61 +446,67 @@ class ImportActionDecodeErrorTest(TestCase):
     mock_model.__name__ = "mockModel"
     mock_site = mock.MagicMock()
     mock_request = MagicMock(spec=HttpRequest)
-    mock_request.POST = {"a": 1}
+    mock_request.POST = {'a': 1}
     mock_request.FILES = {}
 
     @mock.patch("import_export.admin.ImportForm")
     def test_import_action_handles_UnicodeDecodeError(self, mock_form):
         mock_form.is_valid.return_value = True
-        b_arr = b"\x00\x00"
-        m = TestImportExportActionModelAdmin(
-            self.mock_model, self.mock_site, UnicodeDecodeError("codec", b_arr, 1, 2, "fail!")
+        b_arr = b'\x00\x00'
+        m = TestImportExportActionModelAdmin(self.mock_model, self.mock_site, 
+                                                  UnicodeDecodeError('codec', b_arr, 1, 2, 'fail!')
         )
         res = m.import_action(self.mock_request)
         self.assertEqual(
             "<h1>Imported file has a wrong encoding: 'codec' codec can't decode byte 0x00 in position 1: fail!</h1>",
-            res.content.decode(),
-        )
+            res.content.decode())
 
     @mock.patch("import_export.admin.ImportForm")
     def test_import_action_handles_error(self, mock_form):
         mock_form.is_valid.return_value = True
-        m = TestImportExportActionModelAdmin(self.mock_model, self.mock_site, ValueError("fail"))
+        m = TestImportExportActionModelAdmin(self.mock_model, self.mock_site, 
+                                                  ValueError("fail"))
         res = m.import_action(self.mock_request)
-        self.assertRegex(res.content.decode(), r"<h1>ValueError encountered while trying to read file: .*</h1>")
+        self.assertRegex(
+            res.content.decode(),
+            r"<h1>ValueError encountered while trying to read file: .*</h1>")
 
 
 class ExportActionAdminIntegrationTest(TestCase):
     def setUp(self):
-        user = User.objects.create_user("admin", "admin@example.com", "password")
+        user = User.objects.create_user('admin', 'admin@example.com', 
+                                        'password')
         user.is_staff = True
         user.is_superuser = True
         user.save()
 
-        self.cat1 = Category.objects.create(name="Cat 1")
-        self.cat2 = Category.objects.create(name="Cat 2")
+        self.cat1 = Category.objects.create(name='Cat 1')
+        self.cat2 = Category.objects.create(name='Cat 2')
 
-        self.client.login(username="admin", password="password")
+        self.client.login(username='admin', password='password')
 
     def test_export(self):
         data = {
-            "action": ["export_admin_action"],
-            "file_format": "0",
-            "_selected_action": [str(self.cat1.id)],
+            'action': ['export_admin_action'],
+            'file_format': '0',
+            '_selected_action': [str(self.cat1.id)],
         }
-        response = self.client.post("/admin/core/category/", data)
+        response = self.client.post('/admin/core/category/', data)
         self.assertContains(response, self.cat1.name, status_code=200)
         self.assertNotContains(response, self.cat2.name, status_code=200)
         self.assertTrue(response.has_header("Content-Disposition"))
-        date_str = datetime.now().strftime("%Y-%m-%d")
-        self.assertEqual(response["Content-Disposition"], 'attachment; filename="Category-{}.csv"'.format(date_str))
+        date_str = datetime.now().strftime('%Y-%m-%d')
+        self.assertEqual(
+            response['Content-Disposition'], 
+            'attachment; filename="Category-{}.csv"'.format(date_str)
+        )
 
     def test_export_no_format_selected(self):
         data = {
-            "action": ["export_admin_action"],
-            "_selected_action": [str(self.cat1.id)],
+            'action': ['export_admin_action'],
+            '_selected_action': [str(self.cat1.id)],
         }
-        response = self.client.post("/admin/core/category/", data)
+        response = self.client.post('/admin/core/category/', data)
         self.assertEqual(response.status_code, 302)
 
     def test_get_export_data_raises_PermissionDenied_when_no_export_permission_assigned(self):
@@ -466,12 +520,12 @@ class ExportActionAdminIntegrationTest(TestCase):
 
         m = TestMixin()
         with self.assertRaises(PermissionDenied):
-            m.get_export_data("0", Book.objects.none(), request=request)
+            m.get_export_data('0', Book.objects.none(), request=request)
 
 
 class TestExportEncoding(TestCase):
     mock_request = MagicMock(spec=HttpRequest)
-    mock_request.POST = {"file_format": 0}
+    mock_request.POST = {'file_format': 0}
 
     class TestMixin(ExportMixin):
         def __init__(self, test_str=None):
@@ -500,18 +554,14 @@ class TestExportEncoding(TestCase):
 
     def test_to_encoding_set(self):
         self.export_mixin = self.TestMixin(test_str="ハローワールド")
-        data = self.export_mixin.get_export_data(
-            self.file_format, list(), request=self.mock_request, encoding="shift-jis"
-        )
+        data = self.export_mixin.get_export_data(self.file_format, list(), request=self.mock_request, encoding="shift-jis")
         encoding = chardet.detect(bytes(data))["encoding"]
         self.assertEqual("SHIFT_JIS", encoding)
 
     def test_to_encoding_set_incorrect(self):
         self.export_mixin = self.TestMixin()
         with self.assertRaises(LookupError):
-            self.export_mixin.get_export_data(
-                self.file_format, list(), request=self.mock_request, encoding="bad-encoding"
-            )
+            self.export_mixin.get_export_data(self.file_format, list(), request=self.mock_request, encoding="bad-encoding")
 
     def test_to_encoding_not_set_for_binary_file(self):
         self.export_mixin = self.TestMixin(test_str="teststr")
@@ -535,7 +585,7 @@ class TestExportEncoding(TestCase):
             def get_export_filename(self, request, queryset, file_format):
                 return "f"
 
-        self.mock_request.POST = {"file_format": "1"}
+        self.mock_request.POST = {'file_format': '1'}
 
         self.export_mixin = TestExportActionMixin()
         self.export_mixin.to_encoding = "utf-8"
@@ -544,3 +594,4 @@ class TestExportEncoding(TestCase):
             self.export_mixin.export_admin_action(self.mock_request, list())
             encoding_kwarg = mock_get_export_data.call_args_list[0][1]["encoding"]
             self.assertEqual("utf-8", encoding_kwarg)
+
