@@ -41,7 +41,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
     #: template for import view
     import_template_name = 'admin/import_export/import.html'
     #: import data encoding
-    from_encoding = 'utf-8'
+    from_encoding = "utf-8"
     skip_admin_log = None
     # storage class for saving temporary files
     tmp_storage_class = None
@@ -54,11 +54,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
 
     def get_tmp_storage_class(self):
         if self.tmp_storage_class is None:
-            tmp_storage_class = getattr(
-                settings,
-                'IMPORT_EXPORT_TMP_STORAGE_CLASS',
-                TempFolderStorage,
-            )
+            tmp_storage_class = getattr(settings, 'IMPORT_EXPORT_TMP_STORAGE_CLASS', TempFolderStorage,)
         else:
             tmp_storage_class = self.tmp_storage_class
 
@@ -84,8 +80,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         my_urls = [
             path('process_import/', 
                 self.admin_site.admin_view(self.process_import), 
-                name='%s_%s_process_import' % info
-            ),
+                name='%s_%s_process_import' % info),
             path('import/', 
                 self.admin_site.admin_view(self.import_action), 
                 name='%s_%s_import' % info),
@@ -125,24 +120,22 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         resource = self.get_import_resource_class()(**res_kwargs)
 
         imp_kwargs = self.get_import_data_kwargs(request, form=confirm_form, *args, **kwargs)
-        return resource.import_data(
-            dataset,
-            dry_run=False,
-            raise_errors=True,
-            file_name=confirm_form.cleaned_data['original_file_name']
-            if kwargs.get('original_file_name') is None
-            else kwargs.get('original_file_name'),
-            user=request.user,
-            **imp_kwargs
-        )
+        return resource.import_data(dataset,
+                                    dry_run=False,
+                                    raise_errors=True,
+                                    file_name=confirm_form.cleaned_data['original_file_name']
+                                    if kwargs.get('original_file_name') is None
+                                    else kwargs.get('original_file_name'),
+                                    user=request.user,
+                                    **imp_kwargs)
 
     def process_result(self, result, request):
         self.generate_log_entries(result, request)
         self.add_success_message(result, request)
         post_import.send(sender=None, model=self.model)
 
-        url = reverse('admin:%s_%s_changelist' % self.get_model_info(), 
-                       current_app=self.admin_site.name)
+        url = reverse('admin:%s_%s_changelist' % self.get_model_info(),
+                      current_app=self.admin_site.name)
         return HttpResponseRedirect(url)
 
     def generate_log_entries(self, result, request):
@@ -244,9 +237,9 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         import_formats = self.get_import_formats()
         form_type = self.get_import_form()
         form_kwargs = self.get_form_kwargs(form_type, *args, **kwargs)
-        form = form_type(import_formats, 
-                         request.POST or None, 
-                         request.FILES or None, 
+        form = form_type(import_formats,
+                         request.POST or None,
+                         request.FILES or None,
                          **form_kwargs)
 
         if request.POST and form.is_valid():
@@ -276,9 +269,11 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
 
             # prepare additional kwargs for import_data, if needed
             imp_kwargs = self.get_import_data_kwargs(request, form=form, *args, **kwargs)
-            result = resource.import_data(
-                dataset, dry_run=True, raise_errors=False, file_name=import_file.name, user=request.user, **imp_kwargs
-            )
+            result = resource.import_data(dataset, dry_run=True,
+                                          raise_errors=False,
+                                          file_name=import_file.name,
+                                          user=request.user,
+                                          **imp_kwargs)
 
             context['result'] = result
 
@@ -308,7 +303,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
 
         context.update(self.admin_site.each_context(request))
 
-        context['title'] = _('Import')
+        context['title'] = _("Import")
         context['form'] = form
         context['opts'] = self.model._meta
         context['fields'] = [f.column_name for f in resource.get_user_visible_fields()]
@@ -331,7 +326,6 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
     This is intended to be mixed with django.contrib.admin.ModelAdmin
     https://docs.djangoproject.com/en/dev/ref/contrib/admin/
     """
-
     #: template for change_list view
     change_list_template = 'admin/import_export/change_list_export.html'
     #: template for export view
@@ -342,11 +336,9 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
     def get_urls(self):
         urls = super().get_urls()
         my_urls = [
-            path(
-                'export/', 
-                self.admin_site.admin_view(self.export_action), 
-                name='%s_%s_export' % self.get_model_info()
-            ),
+            path('export/',
+                self.admin_site.admin_view(self.export_action),
+                name='%s_%s_export' % self.get_model_info()),
         ]
         return my_urls + urls
 
@@ -445,11 +437,12 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
 
         context.update(self.admin_site.each_context(request))
 
-        context['title'] = _('Export')
+        context['title'] = _("Export")
         context['form'] = form
         context['opts'] = self.model._meta
         request.current_app = self.admin_site.name
-        return TemplateResponse(request, [self.export_template_name], context)
+        return TemplateResponse(request, [self.export_template_name],
+                                context)
 
     def changelist_view(self, request, extra_context=None):
         if extra_context is None:
@@ -465,7 +458,6 @@ class ImportExportMixin(ImportMixin, ExportMixin):
     """
     Import and export mixin.
     """
-
     #: template for change_list view
     change_list_template = 'admin/import_export/change_list_import_export.html'
 
