@@ -190,7 +190,7 @@ class ImportExportAdminIntegrationTest(TestCase):
             'exports',
             'books.csv')
         data = {
-            'input_format': "0",
+            'input_format': "0", 
             'import_file_name': import_file_name,
             'original_file_name': 'books.csv'
         }
@@ -346,6 +346,28 @@ class ImportExportAdminIntegrationTest(TestCase):
             response,
             _('Import finished, with {} new and {} updated {}.').format(
                 1, 0, EBook._meta.verbose_name_plural)
+        )
+
+    @override_settings(PROCESS_WITHOUT_SHOW_CONFIRM_FORM=True)
+    def test_import_without_show_confirm_form(self):
+        """
+        Test if process work without show the confirm form to import file
+        """
+        Author.objects.create(id=11, name='Test Author')
+
+        input_format = '0'
+        filename = os.path.join(os.path.dirname(__file__), os.path.pardir, 'exports', 'books.csv')
+        with open(filename, "rb") as fobj:
+            data = {'author': 11, 
+                    'input_format': input_format, 
+                    'import_file': fobj}
+            response = self.client.post('/admin/core/ebook/import/', data, follow=True)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response,
+            _('Import finished, with {} new and {} updated {}.').format(
+                1, 0, EBook._meta.verbose_name_plural),
         )
 
     def test_get_skip_admin_log_attribute(self):
@@ -576,3 +598,4 @@ class TestExportEncoding(TestCase):
             self.export_mixin.export_admin_action(self.mock_request, list())
             encoding_kwarg = mock_get_export_data.call_args_list[0][1]["encoding"]
             self.assertEqual("utf-8", encoding_kwarg)
+

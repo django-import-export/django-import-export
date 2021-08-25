@@ -125,7 +125,9 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         return resource.import_data(dataset,
                                     dry_run=False,
                                     raise_errors=True,
-                                    file_name=confirm_form.cleaned_data['original_file_name'],
+                                    file_name=confirm_form.cleaned_data['original_file_name']
+                                    if kwargs.get('original_file_name') is None
+                                    else kwargs.get('original_file_name'),
                                     user=request.user,
                                     **imp_kwargs)
 
@@ -278,12 +280,23 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
             context['result'] = result
 
             if not result.has_errors() and not result.has_validation_errors():
+                confirm_form = self.get_confirm_import_form()
+                # If that flag is true, the file has sent will be processed without show the confirmation form
+                # In multi-container architecture, it's impossible to ensure where the file will be saved to be imported after data confirmation.
+                if getattr(settings, 'PROCESS_WITHOUT_SHOW_CONFIRM_FORM', False):
+                    result = self.process_dataset(
+                        dataset, confirm_form, request, *args, original_file_name=import_file.name
+                    )
+
+                    tmp_storage.remove()
+
+                    return self.process_result(result, request)
+
                 initial = {
                     'import_file_name': tmp_storage.name,
                     'original_file_name': import_file.name,
                     'input_format': form.cleaned_data['input_format'],
                 }
-                confirm_form = self.get_confirm_import_form()
                 initial = self.get_form_kwargs(form=form, **initial)
                 context['confirm_form'] = confirm_form(initial=initial)
         else:

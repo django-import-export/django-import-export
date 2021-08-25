@@ -14,3 +14,5 @@ dist/
 *.sw[po]
 
 tests/database.db
+.vscode/settings.json
+venv/
