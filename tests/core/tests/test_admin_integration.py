@@ -35,6 +35,7 @@ from import_export.tmp_storages import TempFolderStorage
 
 
 class ImportExportAdminIntegrationTest(TestCase):
+
     def setUp(self):
         user = User.objects.create_user('admin', 'admin@example.com',
                                         'password')
@@ -101,7 +102,7 @@ class ImportExportAdminIntegrationTest(TestCase):
         filename = os.path.join(
             os.path.dirname(__file__),
             os.path.pardir,
-            'exports', 
+            'exports',
             'books-mac.csv')
         with open(filename, "rb") as f:
             data = {
@@ -138,7 +139,7 @@ class ImportExportAdminIntegrationTest(TestCase):
         self.assertTrue(response.has_header("Content-Disposition"))
         self.assertEqual(response['Content-Type'], 'text/csv')
         self.assertEqual(
-            response['Content-Disposition'], 
+            response['Content-Disposition'],
             'attachment; filename="Book-{}.csv"'.format(date_str)
         )
 
@@ -189,8 +190,8 @@ class ImportExportAdminIntegrationTest(TestCase):
             'exports',
             'books.csv')
         data = {
-            'input_format': '0', 
-            'import_file_name': import_file_name, 
+            'input_format': "0", 
+            'import_file_name': import_file_name,
             'original_file_name': 'books.csv'
         }
         with self.assertRaises(FileNotFoundError):
@@ -457,7 +458,7 @@ class ImportActionDecodeErrorTest(TestCase):
     def test_import_action_handles_UnicodeDecodeError(self, mock_form):
         mock_form.is_valid.return_value = True
         b_arr = b'\x00\x00'
-        m = TestImportExportActionModelAdmin(self.mock_model, self.mock_site, 
+        m = TestImportExportActionModelAdmin(self.mock_model, self.mock_site,
                                                   UnicodeDecodeError('codec', b_arr, 1, 2, 'fail!'))
         res = m.import_action(self.mock_request)
         self.assertEqual(
@@ -597,5 +598,4 @@ class TestExportEncoding(TestCase):
             self.export_mixin.export_admin_action(self.mock_request, list())
             encoding_kwarg = mock_get_export_data.call_args_list[0][1]["encoding"]
             self.assertEqual("utf-8", encoding_kwarg)
-
 

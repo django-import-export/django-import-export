@@ -54,7 +54,9 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
 
     def get_tmp_storage_class(self):
         if self.tmp_storage_class is None:
-            tmp_storage_class = getattr(settings, 'IMPORT_EXPORT_TMP_STORAGE_CLASS', TempFolderStorage,)
+            tmp_storage_class = getattr(
+                settings, 'IMPORT_EXPORT_TMP_STORAGE_CLASS', TempFolderStorage,
+            )
         else:
             tmp_storage_class = self.tmp_storage_class
 
@@ -78,11 +80,11 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         urls = super().get_urls()
         info = self.get_model_info()
         my_urls = [
-            path('process_import/', 
-                self.admin_site.admin_view(self.process_import), 
+            path('process_import/',
+                self.admin_site.admin_view(self.process_import),
                 name='%s_%s_process_import' % info),
-            path('import/', 
-                self.admin_site.admin_view(self.import_action), 
+            path('import/',
+                self.admin_site.admin_view(self.import_action),
                 name='%s_%s_import' % info),
         ]
         return my_urls + urls
