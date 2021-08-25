@@ -106,7 +106,8 @@ attribute.
 
 ``PROCESS_WITHOUT_SHOW_CONFIRM_FORM``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-It's a boolean parameter. If that parameter is true, the form to confirm 
+
+If that environment variable is true, the form to confirm 
 data inside the file to import won´t be shown and the file will be imported.
 
 Example app
