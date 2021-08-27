@@ -348,7 +348,7 @@ class ImportExportAdminIntegrationTest(TestCase):
                 1, 0, EBook._meta.verbose_name_plural)
         )
 
-    @override_settings(PROCESS_WITHOUT_SHOW_CONFIRM_FORM=True)
+    @override_settings(IMPORT_EXPORT_SKIP_ADMIN_CONFIRM_FORM=True)
     def test_import_without_show_confirm_form(self):
         """
         Test if process work without show the confirm form to import file

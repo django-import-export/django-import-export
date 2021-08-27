@@ -283,7 +283,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
                 confirm_form = self.get_confirm_import_form()
                 # If that flag is true, the file has sent will be processed without show the confirmation form
                 # In multi-container architecture, it's impossible to ensure where the file will be saved to be imported after data confirmation.
-                if getattr(settings, 'PROCESS_WITHOUT_SHOW_CONFIRM_FORM', False):
+                if getattr(settings, 'IMPORT_EXPORT_SKIP_ADMIN_CONFIRM_FORM', False):
                     result = self.process_dataset(
                         dataset, confirm_form, request, *args, original_file_name=import_file.name
                     )

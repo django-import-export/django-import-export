@@ -65,6 +65,12 @@ of losing an audit trail.
 Can be overridden on a ``ModelAdmin`` class inheriting from ``ImportMixin`` by
 setting the ``skip_admin_log`` class attribute.
 
+``IMPORT_EXPORT_SKIP_ADMIN_CONFIRM_FORM``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If that environment variable is true, the form to confirm 
+data inside the file to import won´t be shown and the file will be imported.
+
 ``IMPORT_EXPORT_TMP_STORAGE_CLASS``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -103,12 +109,6 @@ decreasing it, or speed up exports by increasing it.
 
 Can be overridden on a ``Resource`` class by setting the ``chunk_size`` class
 attribute.
-
-``PROCESS_WITHOUT_SHOW_CONFIRM_FORM``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-If that environment variable is true, the form to confirm 
-data inside the file to import won´t be shown and the file will be imported.
 
 Example app
 ===========
