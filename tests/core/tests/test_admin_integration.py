@@ -190,7 +190,7 @@ class ImportExportAdminIntegrationTest(TestCase):
             'exports',
             'books.csv')
         data = {
-            'input_format': "0", 
+            'input_format': "0",
             'import_file_name': import_file_name,
             'original_file_name': 'books.csv'
         }
