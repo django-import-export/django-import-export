@@ -172,6 +172,8 @@ class TimeWidgetTest(TestCase):
         with self.assertRaisesRegex(ValueError, "Enter a valid time."):
             self.widget.clean("20:15:00")
 
+    def test_clean_returns_time_when_time_passed(self):
+        self.assertEqual(self.time, self.widget.clean(self.time))
 
 class DurationWidgetTest(TestCase):
 

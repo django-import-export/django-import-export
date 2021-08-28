@@ -1,5 +1,5 @@
 import json
-from datetime import date, datetime
+from datetime import date, datetime, time
 from decimal import Decimal
 
 import django
@@ -257,6 +257,8 @@ class TimeWidget(Widget):
     def clean(self, value, row=None, *args, **kwargs):
         if not value:
             return None
+        if isinstance(value, time):
+            return value
         for format in self.formats:
             try:
                 return datetime.strptime(value, format).time()
