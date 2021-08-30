@@ -94,6 +94,15 @@ class ResourceTestCase(TestCase):
         self.assertIsInstance(self.my_resource._meta,
                               resources.ResourceOptions)
 
+    @mock.patch("builtins.dir")
+    def test_new_handles_null_options(self, mock_dir):
+        # #1163 - simulates a call to dir() returning additional attributes
+        mock_dir.return_value = ['attrs']
+        class A(MyResource):
+            pass
+
+        A()
+
     def test_get_export_order(self):
         self.assertEqual(self.my_resource.get_export_headers(),
                          ['email', 'name', 'extra'])
