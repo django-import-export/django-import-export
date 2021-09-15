@@ -1,12 +1,35 @@
 Changelog
 =========
 
-
-2.5.1 (unreleased)
+2.6.0 (2021-09-15)
 ------------------
 
-- Support Django 3.2.
-- Correctly select widget for ``SmallAutoField`` and ``BigAutoField``.
+- Added guard for null 'options' to fix crash (#1325)
+- Updated import.css to support dark mode (#1323)
+- Fixed regression where overridden mixin methods are not called (#1315)
+- Fix xls/xlsx import of Time fields (#1314)
+- Added support for 'to_encoding' attribute (#1311)
+- Removed travis and replaced with github actions for CI (#1307)
+- Increased test coverage (#1286)
+- Fix minor date formatting issue for date with years < 1000 (#1285)
+- Translate the zh_Hans missing part (#1279)
+- Remove code duplication from mixins.py and admin.py (#1277)
+- Fix example in BooleanWidget docs (#1276)
+- Better support for Django main (#1272)
+- don't test Django main branch with python36,37 (#1269)
+- Support Django 3.2 (#1265)
+- Correct typo in Readme (#1258)
+- Rephrase logical clauses in docstrings (#1255)
+- Support multiple databases (#1254)
+- Update django master to django main (#1251)
+- Add Farsi translated messages in the locale (#1249)
+- Update Russian translations (#1244)
+- Append export admin action using ModelAdmin.get_actions (#1241)
+- Fix minor mistake in makemigrations command (#1233)
+- Remove EOL Python 3.5 from CI (#1228)
+- CachedInstanceLoader defaults to empty when import_id is missing (#1225)
+- Add kwargs to import_row, import_object and import_field (#1190)
+- Call load_workbook() with data_only flag (#1095)
 
 
 2.5.0 (2020-12-30)

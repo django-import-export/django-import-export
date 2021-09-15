@@ -95,13 +95,6 @@ jobs:
         echo "Python ${{ matrix.python-version }} -> Django ${{ matrix.django-version }}"
         python --version
         echo "Django `django-admin --version`"
-    - name: Run Migrations
-      env:
-        DB: ${{ matrix.db }}
-        DB_HOST: 127.0.0.1
-        DB_PORT: ${{ matrix.db_port }}
-        DB_PASSWORD: ${{ env.PASSWD }}
-      run: python tests/manage.py migrate --settings=settings
     - name: Run Tests
       env:
         DB: ${{ matrix.db }}
