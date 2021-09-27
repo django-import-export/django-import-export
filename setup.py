@@ -2,8 +2,6 @@ import os
 
 from setuptools import find_packages, setup
 
-VERSION = __import__("import_export").__version__
-
 CLASSIFIERS = [
     'Framework :: Django',
     'Framework :: Django :: 2.2',
@@ -33,12 +31,19 @@ with open(os.path.join(os.path.dirname(__file__), 'README.rst')) as f:
     readme = f.read()
 
 
+def local_scheme(_):
+    """Enables a version format so that upload to TestPyPI is successful.
+     For example: 2.6.2.dev8
+     See https://github.com/pypa/setuptools_scm/issues/342.
+     """
+    return ""
+
+
 setup(
     name="django-import-export",
     description="Django application and library for importing and exporting"
                 " data with included admin integration.",
     long_description=readme,
-    version=VERSION,
     author="Informatika Mihelac",
     author_email="bmihelac@mihelac.org",
     license='BSD License',
@@ -54,4 +59,6 @@ setup(
     python_requires=">=3.6",
     classifiers=CLASSIFIERS,
     zip_safe=False,
+    use_scm_version={"local_scheme": local_scheme},
+    setup_requires=['setuptools_scm'],
 )

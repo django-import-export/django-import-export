@@ -1,6 +1,12 @@
 Changelog
 =========
 
+2.6.2 (unreleased)
+------------------
+
+- Add an ability to rollback the import on validation error (#1339)
+- Added 'build-n-release' step to Github CI workflow (#1332)
+
 2.6.1 (2021-09-30)
 ------------------
 
