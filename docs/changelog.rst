@@ -7,6 +7,7 @@ Changelog
 - Big integer support for Integer widget (#788)
 - Run compilemessages command to keep .mo files in sync (#1299)
 - Added `skip_html_diff` meta attribute (#1329)
+- Added python3.10 to tox and CI environment list (#1336)
 - Add ability to rollback the import on validation error (#1339)
 - Fix missing migration on example app (#1346)
 - Fix crash when deleting via admin site (#1347)
