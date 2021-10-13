@@ -1167,6 +1167,51 @@ class ModelResourceTransactionTest(TransactionTestCase):
         )
         self.assertTrue(result.has_errors())
 
+    def test_rollback_on_validation_errors_false(self):
+        """ Should create only one instance as the second one raises a ``ValidationError`` """
+        resource = AuthorResource()
+        headers = ['id', 'name', 'birthday']
+        rows = [
+            ['', 'A.A.Milne', ''],
+            ['', '123', '1992test-01-18'],  # raises ValidationError
+        ]
+        dataset = tablib.Dataset(*rows, headers=headers)
+        result = resource.import_data(
+            dataset,
+            use_transactions=True,
+            rollback_on_validation_errors=False,
+        )
+
+        # Ensure the validation error raised by the database has been saved.
+        self.assertTrue(result.has_validation_errors())
+
+        # Ensure that valid row resulted in an instance created.
+        self.assertEqual(Author.objects.count(), 1)
+
+    def test_rollback_on_validation_errors_true(self):
+        """
+        Should not create any instances as the second one raises a ``ValidationError``
+        and ``rollback_on_validation_errors`` flag is set
+        """
+        resource = AuthorResource()
+        headers = ['id', 'name', 'birthday']
+        rows = [
+            ['', 'A.A.Milne', ''],
+            ['', '123', '1992test-01-18'],  # raises ValidationError
+        ]
+        dataset = tablib.Dataset(*rows, headers=headers)
+        result = resource.import_data(
+            dataset,
+            use_transactions=True,
+            rollback_on_validation_errors=True,
+        )
+
+        # Ensure the validation error raised by the database has been saved.
+        self.assertTrue(result.has_validation_errors())
+
+        # Ensure the rollback has worked properly, no instances were created.
+        self.assertFalse(Author.objects.exists())
+
 
 class ModelResourceFactoryTest(TestCase):
 
