@@ -1,6 +1,11 @@
 Changelog
 =========
 
+2.6.2 (unreleased)
+------------------
+
+- Add missing fa locale django.mo file (#1337)
+
 2.6.1 (2021-09-30)
 ------------------
 

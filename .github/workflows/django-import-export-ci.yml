@@ -104,7 +104,8 @@ jobs:
       run: >-
         PYTHONPATH=".:tests:$PYTHONPATH" python
         -W error::DeprecationWarning -W error::PendingDeprecationWarning
-        -m coverage run --omit='setup.py,./tests/*' --source=. tests/manage.py test core --settings=
+        -m coverage run --omit='setup.py,./tests/*,./import_export/locale/*'
+        --source=. tests/manage.py test core --settings=
     - name: Upload coverage data to coveralls.io
       run: coveralls --service=github
       env:
