@@ -718,7 +718,8 @@ class Resource(metaclass=DeclarativeMetaclass):
         return row_result
 
     def import_data(self, dataset, dry_run=False, raise_errors=False,
-                    use_transactions=None, collect_failed_rows=False, **kwargs):
+                    use_transactions=None, collect_failed_rows=False,
+                    rollback_on_validation_errors=False, **kwargs):
         """
         Imports data from ``tablib.Dataset``. Refer to :doc:`import_workflow`
         for a more complete description of the whole import process.
@@ -733,6 +734,9 @@ class Resource(metaclass=DeclarativeMetaclass):
 
         :param collect_failed_rows: If ``True`` the import process will collect
             failed rows.
+
+        :param rollback_on_validation_errors: If both ``use_transactions`` and ``rollback_on_validation_errors``
+            are set to ``True``, the import process will be rolled back in case of ValidationError.
 
         :param dry_run: If ``dry_run`` is set, or an error occurs, if a transaction
             is being used, it will be rolled back.
@@ -754,9 +758,13 @@ class Resource(metaclass=DeclarativeMetaclass):
             raise ValueError("Batch size must be a positive integer")
 
         with atomic_if_using_transaction(using_transactions, using=db_connection):
-            return self.import_data_inner(dataset, dry_run, raise_errors, using_transactions, collect_failed_rows, **kwargs)
+            return self.import_data_inner(
+                dataset, dry_run, raise_errors, using_transactions, collect_failed_rows,
+                rollback_on_validation_errors, **kwargs)
 
-    def import_data_inner(self, dataset, dry_run, raise_errors, using_transactions, collect_failed_rows, **kwargs):
+    def import_data_inner(
+            self, dataset, dry_run, raise_errors, using_transactions,
+            collect_failed_rows, rollback_on_validation_errors=False, **kwargs):
         result = self.get_result_class()()
         result.diff_headers = self.get_diff_headers()
         result.total_rows = len(dataset)
@@ -831,7 +839,9 @@ class Resource(metaclass=DeclarativeMetaclass):
                 raise
 
         if using_transactions:
-            if dry_run or result.has_errors():
+            if dry_run or \
+                    result.has_errors() or \
+                    (rollback_on_validation_errors and result.has_validation_errors()):
                 savepoint_rollback(sp1, using=db_connection)
             else:
                 savepoint_commit(sp1, using=db_connection)
