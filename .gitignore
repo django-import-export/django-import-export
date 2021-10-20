@@ -2,6 +2,7 @@
 *.pot
 *.pyc
 local_settings.py
+_version.py
 docs/_build
 build/
 dist/
