@@ -59,6 +59,6 @@ setup(
     python_requires=">=3.6",
     classifiers=CLASSIFIERS,
     zip_safe=False,
-    use_scm_version={"local_scheme": local_scheme},
+    use_scm_version={"local_scheme": local_scheme, "write_to": "import-export/_version.py"},
     setup_requires=['setuptools_scm'],
 )

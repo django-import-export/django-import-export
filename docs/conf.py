@@ -34,18 +34,17 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'django-import-export'
-copyright = '2012–2020, Bojan Mihelac'
+copyright = '2012–2021, Bojan Mihelac'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
-#
+# https://github.com/pypa/setuptools_scm#usage-from-sphinx
 try:
-    from import_export import __version__
-    # The short X.Y version.
-    version = '.'.join(__version__.split('.')[:2])
-    # The full version, including alpha/beta/rc tags.
-    release = __version__
+    from importlib.metadata import version
+    release = version('import-export')
+    # for example take major/minor
+    version = '.'.join(release.split('.')[:2])
 except ImportError:
     version = release = 'dev'
 
