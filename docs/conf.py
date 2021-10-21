@@ -1,4 +1,5 @@
-import sys, os
+import os
+import sys
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -9,6 +10,7 @@ sys.path.append(os.path.abspath('../tests'))
 os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
 
 import django
+
 django.setup()
 
 # -- General configuration -----------------------------------------------------
