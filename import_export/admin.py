@@ -81,11 +81,11 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         info = self.get_model_info()
         my_urls = [
             path('process_import/',
-                self.admin_site.admin_view(self.process_import),
-                name='%s_%s_process_import' % info),
+                 self.admin_site.admin_view(self.process_import),
+                 name='%s_%s_process_import' % info),
             path('import/',
-                self.admin_site.admin_view(self.import_action),
-                name='%s_%s_import' % info),
+                 self.admin_site.admin_view(self.import_action),
+                 name='%s_%s_import' % info),
         ]
         return my_urls + urls
 
@@ -115,6 +115,21 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
             tmp_storage.remove()
 
             return self.process_result(result, request)
+
+        res_kwargs = self.get_import_resource_kwargs(request, form=confirm_form, *args, **kwargs)
+        resource = self.get_import_resource_class()(**res_kwargs)
+
+        context = self.get_import_context_data()
+        context.update(self.admin_site.each_context(request))
+
+        context['title'] = _("Import confirmation")
+        context['confirm_form'] = confirm_form
+        context['opts'] = self.model._meta
+        context['fields'] = [f.column_name for f in resource.get_user_visible_fields()]
+
+        request.current_app = self.admin_site.name
+        return TemplateResponse(request, [self.import_template_name],
+                                context)
 
     def process_dataset(self, dataset, confirm_form, request, *args, **kwargs):
 
@@ -163,8 +178,8 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
 
         success_message = _('Import finished, with {} new and ' \
                             '{} updated {}.').format(result.totals[RowResult.IMPORT_TYPE_NEW],
-                                                      result.totals[RowResult.IMPORT_TYPE_UPDATE],
-                                                      opts.verbose_name_plural)
+                                                     result.totals[RowResult.IMPORT_TYPE_UPDATE],
+                                                     opts.verbose_name_plural)
 
         messages.success(request, success_message)
 
@@ -261,7 +276,8 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
             except UnicodeDecodeError as e:
                 return HttpResponse(_(u"<h1>Imported file has a wrong encoding: %s</h1>" % e))
             except Exception as e:
-                return HttpResponse(_(u"<h1>%s encountered while trying to read file: %s</h1>" % (type(e).__name__, import_file.name)))
+                return HttpResponse(
+                    _(u"<h1>%s encountered while trying to read file: %s</h1>" % (type(e).__name__, import_file.name)))
 
             # prepare kwargs for import data, if needed
             res_kwargs = self.get_import_resource_kwargs(request, form=form, *args, **kwargs)
@@ -326,8 +342,8 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
         urls = super().get_urls()
         my_urls = [
             path('export/',
-                self.admin_site.admin_view(self.export_action),
-                name='%s_%s_export' % self.get_model_info()),
+                 self.admin_site.admin_view(self.export_action),
+                 name='%s_%s_export' % self.get_model_info()),
         ]
         return my_urls + urls
 
