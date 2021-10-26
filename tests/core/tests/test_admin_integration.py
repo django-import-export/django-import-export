@@ -490,36 +490,6 @@ class TestImportExportActionModelAdmin(ImportExportActionModelAdmin):
         return mock_storage
 
 
-class ImportActionDecodeErrorTest(TestCase):
-    mock_model = mock.Mock(spec=Book)
-    mock_model.__name__ = "mockModel"
-    mock_site = mock.MagicMock()
-    mock_request = MagicMock(spec=HttpRequest)
-    mock_request.POST = {'a': 1}
-    mock_request.FILES = {}
-
-    @mock.patch("import_export.admin.ImportForm")
-    def test_import_action_handles_UnicodeDecodeError(self, mock_form):
-        mock_form.is_valid.return_value = True
-        b_arr = b'\x00\x00'
-        m = TestImportExportActionModelAdmin(self.mock_model, self.mock_site,
-                                                  UnicodeDecodeError('codec', b_arr, 1, 2, 'fail!'))
-        res = m.import_action(self.mock_request)
-        self.assertEqual(
-            "<h1>Imported file has a wrong encoding: \'codec\' codec can\'t decode byte 0x00 in position 1: fail!</h1>",
-            res.content.decode())
-
-    @mock.patch("import_export.admin.ImportForm")
-    def test_import_action_handles_error(self, mock_form):
-        mock_form.is_valid.return_value = True
-        m = TestImportExportActionModelAdmin(self.mock_model, self.mock_site,
-                                                  ValueError("fail"))
-        res = m.import_action(self.mock_request)
-        self.assertRegex(
-            res.content.decode(),
-            r"<h1>ValueError encountered while trying to read file: .*</h1>")
-
-
 class ExportActionAdminIntegrationTest(TestCase):
 
     def setUp(self):
