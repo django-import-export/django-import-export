@@ -110,9 +110,9 @@ Example app
 
 There's an example application that showcases what django-import-export can do.
 It's assumed that you have set up a Python ``venv`` with all required dependencies
-or are otherwise able to run Django locally.
+(from ``test.txt`` requirements file) and are able to run Django locally.
 
-You can run it via::
+You can run the example application as follows::
 
     cd tests
     ./manage.py makemigrations
