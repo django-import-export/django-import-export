@@ -1,6 +1,11 @@
 Changelog
 =========
 
+2.6.2-dev
+---------
+
+- Fix missing migration on example app (#1346)
+
 2.6.1 (2021-09-30)
 ------------------
 
