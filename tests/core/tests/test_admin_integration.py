@@ -13,7 +13,7 @@ from core.admin import (
     ImportMixin,
 )
 from core.models import Author, Book, Category, EBook, Parent
-from django.contrib.admin.models import LogEntry
+from django.contrib.admin.models import DELETION, LogEntry
 from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -88,6 +88,38 @@ class ImportExportAdminIntegrationTest(TestCase):
             _('Import finished, with {} new and {} updated {}.').format(
                 1, 0, Book._meta.verbose_name_plural)
         )
+
+    def test_delete_from_admin(self):
+        # test delete from admin site (see #432)
+
+        # create a book which can be deleted
+        b = Book.objects.create(id=1)
+
+        input_format = '0'
+        filename = os.path.join(
+            os.path.dirname(__file__),
+            os.path.pardir,
+            'exports',
+            'books-for-delete.csv')
+        with open(filename, "rb") as f:
+            data = {
+                'input_format': input_format,
+                'import_file': f,
+            }
+            response = self.client.post('/admin/core/book/import/', data)
+        self.assertEqual(response.status_code, 200)
+        confirm_form = response.context['confirm_form']
+        data = confirm_form.initial
+        response = self.client.post('/admin/core/book/process_import/', data,
+                                    follow=True)
+        self.assertEqual(response.status_code, 200)
+
+        # check the LogEntry was created as expected
+        deleted_entry = LogEntry.objects.latest('id')
+        self.assertEqual("delete through import_export", deleted_entry.change_message)
+        self.assertEqual(DELETION, deleted_entry.action_flag)
+        self.assertEqual(b.id, int(deleted_entry.object_id))
+        self.assertEqual("", deleted_entry.object_repr)
 
     @override_settings(TEMPLATE_STRING_IF_INVALID='INVALID_VARIABLE')
     def test_import_mac(self):

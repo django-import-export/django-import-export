@@ -1,3 +1,4 @@
+from core.models import Book
 from django.core.exceptions import ValidationError
 from django.test.testcases import TestCase
 from tablib import Dataset
@@ -30,3 +31,25 @@ class ResultTest(TestCase):
         row_result.errors = [error]
         self.result.append_failed_row(self.dataset.dict[0], row_result.errors[0])
         self.assertEqual(target, self.result.failed_dataset.dict)
+
+    def test_add_instance_info_null_instance(self):
+        row_result = RowResult()
+        row_result.add_instance_info(None)
+        self.assertEqual(None, row_result.object_id)
+        self.assertEqual(None, row_result.object_repr)
+
+    def test_add_instance_info_no_instance_pk(self):
+        row_result = RowResult()
+        row_result.add_instance_info(Book())
+        self.assertEqual(None, row_result.object_id)
+        self.assertEqual("", row_result.object_repr)
+
+    def test_add_instance_info(self):
+        class BookWithObjectRepr(Book):
+            def __str__(self):
+                return self.name
+
+        row_result = RowResult()
+        row_result.add_instance_info(BookWithObjectRepr(pk=1, name="some book"))
+        self.assertEqual(1, row_result.object_id)
+        self.assertEqual("some book", row_result.object_repr)

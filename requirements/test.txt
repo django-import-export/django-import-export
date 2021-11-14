@@ -3,3 +3,4 @@ psycopg2-binary
 mysqlclient
 coveralls
 chardet
+pytz
