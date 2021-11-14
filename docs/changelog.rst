@@ -1,10 +1,11 @@
 Changelog
 =========
 
-2.6.2-dev
+2.7.0-dev (unreleased)
 ---------
 
 - Run compilemessages command to keep .mo files in sync (#1299)
+- Add ability to rollback the import on validation error (#1339)
 - Fix missing migration on example app (#1346)
 
 2.6.1 (2021-09-30)
