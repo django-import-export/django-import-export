@@ -9,6 +9,7 @@ Changelog
 - Add ability to rollback the import on validation error (#1339)
 - Fix missing migration on example app (#1346)
 - Fix crash when deleting via admin site (#1347)
+- Use Github secret in CI script instead of hard-coded password (#1348)
 - Documentation: correct error in example application which leads to crash (#1353)
 
 2.6.1 (2021-09-30)

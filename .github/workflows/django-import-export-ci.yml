@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       USERNAME: testuser
-      PASSWD: somepass
+      PASSWD: ${{ secrets.TEST_PASSWD }}
     strategy:
       max-parallel: 4
       matrix:
