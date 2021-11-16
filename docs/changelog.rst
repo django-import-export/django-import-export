@@ -7,6 +7,7 @@ Changelog
 - Run compilemessages command to keep .mo files in sync (#1299)
 - Add ability to rollback the import on validation error (#1339)
 - Fix missing migration on example app (#1346)
+- Fix crash when deleting via admin site (#1347)
 
 2.6.1 (2021-09-30)
 ------------------

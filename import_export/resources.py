@@ -664,6 +664,7 @@ class Resource(metaclass=DeclarativeMetaclass):
                         diff.compare_with(self, None, dry_run)
                 else:
                     row_result.import_type = RowResult.IMPORT_TYPE_DELETE
+                    row_result.add_instance_info(instance)
                     self.delete_instance(instance, using_transactions, dry_run)
                     if not skip_diff:
                         diff.compare_with(self, None, dry_run)
@@ -682,9 +683,7 @@ class Resource(metaclass=DeclarativeMetaclass):
                     self.validate_instance(instance, import_validation_errors)
                     self.save_instance(instance, using_transactions, dry_run)
                     self.save_m2m(instance, row, using_transactions, dry_run)
-                    # Add object info to RowResult for LogEntry
-                    row_result.object_id = instance.pk
-                    row_result.object_repr = force_str(instance)
+                    row_result.add_instance_info(instance)
                 if not skip_diff:
                     diff.compare_with(self, instance, dry_run)
 
