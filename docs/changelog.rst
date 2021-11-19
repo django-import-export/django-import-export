@@ -4,6 +4,7 @@ Changelog
 2.7.0-dev (unreleased)
 ---------
 
+- Big integer support for Integer widget (#788)
 - Run compilemessages command to keep .mo files in sync (#1299)
 - Add ability to rollback the import on validation error (#1339)
 - Fix missing migration on example app (#1346)

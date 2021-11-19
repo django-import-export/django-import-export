@@ -2,7 +2,7 @@ import json
 from collections import OrderedDict
 from copy import deepcopy
 from datetime import date
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from unittest import mock, skip, skipIf, skipUnless
 
 import django
@@ -625,8 +625,8 @@ class ModelResourceTest(TestCase):
         self.assertTrue(result.has_errors())
         self.assertTrue(result.rows[0].errors)
         actual = result.rows[0].errors[0].error
-        self.assertIsInstance(actual, ValueError)
-        self.assertIn("could not convert string to float", str(actual))
+        self.assertIsInstance(actual, (ValueError, InvalidOperation))
+        self.assertIn(str(actual), {"could not convert string to float", "[<class 'decimal.ConversionSyntax'>]"})
 
     def test_import_data_delete(self):
 
