@@ -255,9 +255,13 @@ class IntegerWidgetTest(TestCase):
     def setUp(self):
         self.value = 0
         self.widget = widgets.IntegerWidget()
+        self.bigintvalue = 163371428940853127
 
     def test_clean_integer_zero(self):
         self.assertEqual(self.widget.clean(0), self.value)
+
+    def test_clean_big_integer(self):
+        self.assertEqual(self.widget.clean(163371428940853127), self.bigintvalue)
 
     def test_clean_string_zero(self):
         self.assertEqual(self.widget.clean("0"), self.value)
