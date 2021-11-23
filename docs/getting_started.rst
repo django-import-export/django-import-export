@@ -2,6 +2,14 @@
 Getting started
 ===============
 
+Test data
+=========
+
+There are test data files which can be used for importing in the `test/core/exports` directory.
+
+The test models
+===============
+
 For example purposes, we'll use a simplified book app. Here is our
 ``models.py``::
 
@@ -188,7 +196,9 @@ data structure on export, ``dehydrate_<fieldname>`` method should be defined::
             model = Book
 
         def dehydrate_full_title(self, book):
-            return '%s by %s' % (book.name, book.author.name)
+            book_name = getattr(book, "name", "unknown")
+            author_name = getattr(book.author, "name", "unknown")
+            return '%s by %s' % (book_name, author_name)
 
 In this case, the export looks like this:
 
