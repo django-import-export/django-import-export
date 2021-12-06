@@ -109,7 +109,7 @@ class ResourceOptions:
 
     report_skipped = True
     """
-    Controls if the result reports skipped rows Default value is True
+    Controls if the result reports skipped rows. Default value is True
     """
 
     clean_model_instances = False
@@ -133,6 +133,23 @@ class ResourceOptions:
     stored in each ``RowResult``.
     If diffing is not required, then disabling the diff operation by setting this value to ``True``
     improves performance, because the copy and comparison operations are skipped for each row.
+    If enabled, then ``skip_row()`` checks do not execute, because 'skip' logic requires
+    comparison between the stored and imported versions of a row.
+    If enabled, then HTML row reports are also not generated (see ``skip_html_diff``).
+    The default value is False.
+    """
+
+    skip_html_diff = False
+    """
+    Controls whether or not a HTML report is generated after each row.
+    By default, the difference between a stored copy and an imported instance
+    is generated in HTML form and stored in each ``RowResult``.
+    The HTML report is used to present changes on the confirmation screen in the admin site,
+    hence when this value is ``True``, then changes will not be presented on the confirmation
+    screen.
+    If the HTML report is not required, then setting this value to ``True`` improves performance,
+    because the HTML generation is skipped for each row.
+    This is a useful optimization when importing large datasets.
     The default value is False.
     """
 
@@ -687,7 +704,7 @@ class Resource(metaclass=DeclarativeMetaclass):
                 if not skip_diff:
                     diff.compare_with(self, instance, dry_run)
 
-            if not skip_diff:
+            if not skip_diff and not self._meta.skip_html_diff:
                 row_result.diff = diff.as_html()
             self.after_import_row(row, row_result, **kwargs)
 

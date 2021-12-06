@@ -1496,6 +1496,24 @@ class SkipDiffTest(TestCase):
             self.assertEqual(2, mock_get_import_fields.call_count)
 
 
+class SkipHtmlDiffTest(TestCase):
+
+    def test_skip_html_diff(self):
+        class BookResource(resources.ModelResource):
+
+            class Meta:
+                model = Book
+                skip_html_diff = True
+
+        resource = BookResource()
+        self.dataset = tablib.Dataset(headers=['id', 'name', 'birthday'])
+        self.dataset.append(['', 'A.A.Milne', '1882test-01-18'])
+
+        with mock.patch('import_export.resources.Diff.as_html') as mock_as_html:
+            resource.import_data(self.dataset, dry_run=True)
+            mock_as_html.assert_not_called()
+
+
 class BulkTest(TestCase):
 
     def setUp(self):

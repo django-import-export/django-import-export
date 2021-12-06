@@ -4,3 +4,5 @@ mysqlclient
 coveralls
 chardet
 pytz
+memory-profiler
+django-extensions
