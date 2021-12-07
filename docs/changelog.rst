@@ -1,8 +1,8 @@
 Changelog
 =========
 
-2.7.0-dev (unreleased)
----------
+2.7.0 (2021-12-07)
+------------------
 
 - Big integer support for Integer widget (#788)
 - Run compilemessages command to keep .mo files in sync (#1299)
