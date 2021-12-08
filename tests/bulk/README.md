@@ -45,6 +45,10 @@ docker-compose -f bulk/docker-compose.yml up -d
 ./manage.py createsuperuser --username admin  --email=email@example.com
 ```
 
+### Update settings
+
+In order to use the `runscript` command, add `django_extensions` to `settings.py` (`INSTALLED_APPS`).
+
 ### Running script
 
 ```bash
