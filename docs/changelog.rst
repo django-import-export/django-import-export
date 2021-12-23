@@ -4,7 +4,7 @@ Changelog
 2.7.2 (unreleased)
 ------------------
 
-- Drop support for python3.6
+- Drop support for python3.6 (#1364)
 
 
 2.7.1 (2021-12-23)
