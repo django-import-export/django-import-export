@@ -19,7 +19,7 @@ jobs:
       matrix:
         db: [ sqlite, postgres, mysql ]
         python-version: [ 3.6, 3.7, 3.8, 3.9, "3.10" ]
-        django-version: [ 2.2, 3.0, 3.1, 3.2, main ]
+        django-version: [ 2.2, 3.0, 3.1, 3.2, 4.0, main ]
         include:
           - db: postgres
             db_port: 5432
@@ -29,6 +29,10 @@ jobs:
           - django-version: main
             python-version: 3.6
           - django-version: main
+            python-version: 3.7
+          - django-version: 4.0
+            python-version: 3.6
+          - django-version: 4.0
             python-version: 3.7
           - django-version: 2.2
             python-version: "3.10"
