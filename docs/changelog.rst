@@ -1,7 +1,7 @@
 Changelog
 =========
 
-2.7.1 (unreleased)
+2.7.1 (2021-12-23)
 ------------------
 
 - Removed `django_extensions` from example app settings (#1356)
