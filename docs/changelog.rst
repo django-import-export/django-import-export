@@ -5,7 +5,7 @@ Changelog
 ------------------
 
 - Removed `django_extensions` from example app settings (#1356)
-- Added support for Django 4.0
+- Added support for Django 4.0 (#1357)
 
 2.7.0 (2021-12-07)
 ------------------
