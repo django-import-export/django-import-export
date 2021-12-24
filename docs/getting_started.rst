@@ -439,8 +439,9 @@ Customize ``ModelAdmin``::
         def get_confirm_import_form(self):
             return CustomConfirmImportForm
 
-        def get_form_kwargs(self, form, *args, **kwargs):
+        def get_import_data_kwargs(self, request, *args, **kwargs):
             # pass on `author` to the kwargs for the custom confirm form
+            form = kwargs.pop('form')
             if isinstance(form, CustomImportForm):
                 if form.is_valid():
                     author = form.cleaned_data['author']
