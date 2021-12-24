@@ -12,5 +12,7 @@ dist/
 *.python-version
 .coverage
 *.sw[po]
+.venv
+.vscode
 
 tests/database.db
