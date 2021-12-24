@@ -1,6 +1,15 @@
 Changelog
 =========
 
+3.0.0 (unreleased)
+------------------
+
+Enhancements
+############
+
+- Updated import.css to support dark mode (#1370)
+
+
 2.7.1 (2021-12-23)
 ------------------
 
