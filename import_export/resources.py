@@ -455,18 +455,24 @@ class Resource(metaclass=DeclarativeMetaclass):
         if errors:
             raise ValidationError(errors)
 
-    def save_instance(self, instance, using_transactions=True, dry_run=False):
+    def save_instance(self, instance, is_create, using_transactions=True, dry_run=False):
         """
         Takes care of saving the object to the database.
 
         Objects can be created in bulk if ``use_bulk`` is enabled.
+
+        :param instance: The instance of the object to be persisted.
+        :param is_create: A boolean flag to indicate whether this is a new object
+        to be created, or an existing object to be updated.
+        :param using_transactions: A flag to indicate whether db transactions are used.
+        :param dry_run: A flag to indicate dry-run mode.
         """
         self.before_save_instance(instance, using_transactions, dry_run)
         if self._meta.use_bulk:
-            if instance.pk:
-                self.update_instances.append(instance)
-            else:
+            if is_create:
                 self.create_instances.append(instance)
+            else:
+                self.update_instances.append(instance)
         else:
             if not using_transactions and dry_run:
                 # we don't have transactions and we want to do a dry_run
@@ -698,7 +704,7 @@ class Resource(metaclass=DeclarativeMetaclass):
                     row_result.import_type = RowResult.IMPORT_TYPE_SKIP
                 else:
                     self.validate_instance(instance, import_validation_errors)
-                    self.save_instance(instance, using_transactions, dry_run)
+                    self.save_instance(instance, new, using_transactions, dry_run)
                     self.save_m2m(instance, row, using_transactions, dry_run)
                     row_result.add_instance_info(instance)
                 if not skip_diff:

@@ -1,11 +1,18 @@
 Changelog
 =========
 
-2.7.2 (unreleased)
+3.0.0 (unreleased)
 ------------------
 
-- Nothing changed yet.
+Breaking changes
+################
 
+This release makes the following changes to the API.  You may need to update your implementation to
+accommodate these changes.
+
+- Use 'create' flag instead of instance.pk (#1362)
+   - ``import_export.resources.save_instance()`` now takes an additional mandatory argument: `is_create`.
+     If you have over-ridden `save_instance()` in your own code, you will need to add this new argument.
 
 2.7.1 (2021-12-23)
 ------------------
