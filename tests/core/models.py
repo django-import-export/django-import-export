@@ -1,5 +1,6 @@
 import random
 import string
+import uuid
 
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -104,3 +105,9 @@ class EBook(Book):
     """Book proxy model to have a separate admin url access and name"""
     class Meta:
         proxy = True
+
+
+class UUIDBook(models.Model):
+    """A model which uses a UUID pk (issue 1274)"""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField('Book name', max_length=100)

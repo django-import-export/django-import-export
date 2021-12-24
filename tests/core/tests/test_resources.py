@@ -30,6 +30,7 @@ from ..models import (
     Person,
     Profile,
     Role,
+    UUIDBook,
     WithDefault,
     WithDynamicDefault,
     WithFloatField,
@@ -652,8 +653,8 @@ class ModelResourceTest(TestCase):
                     self.before_save_instance_dry_run = True
                 else:
                     self.before_save_instance_dry_run = False
-            def save_instance(self, instance, using_transactions=True, dry_run=False):
-                super().save_instance(instance, using_transactions, dry_run)
+            def save_instance(self, instance, new, using_transactions=True, dry_run=False):
+                super().save_instance(instance, new, using_transactions, dry_run)
                 if dry_run:
                     self.save_instance_dry_run = True
                 else:
@@ -679,7 +680,7 @@ class ModelResourceTest(TestCase):
     @mock.patch("core.models.Book.save")
     def test_save_instance_noop(self, mock_book):
         book = Book.objects.first()
-        self.resource.save_instance(book, using_transactions=False, dry_run=True)
+        self.resource.save_instance(book, is_create=False, using_transactions=False, dry_run=True)
         self.assertEqual(0, mock_book.call_count)
 
     @mock.patch("core.models.Book.save")
@@ -1400,6 +1401,74 @@ class ManyRelatedManagerDiffTest(TestCase):
                          expected_value)
 
 
+class ManyToManyWidgetDiffTest(TestCase):
+    # issue #1270 - ensure ManyToMany fields are correctly checked for
+    # changes when skip_unchanged=True
+    fixtures = ["category", "book"]
+
+    def setUp(self):
+        pass
+
+    def test_many_to_many_widget_create(self):
+        # the book is associated with 0 categories
+        # when we import a book with category 1, the book
+        # should be updated, not skipped
+        book = Book.objects.first()
+        book.categories.clear()
+        dataset_headers = ["id", "name", "categories"]
+        dataset_row = [book.id, book.name, "1"]
+        dataset = tablib.Dataset(headers=dataset_headers)
+        dataset.append(dataset_row)
+
+        book_resource = BookResource()
+        book_resource._meta.skip_unchanged = True
+        self.assertEqual(0, book.categories.count())
+
+        result = book_resource.import_data(dataset, dry_run=False)
+
+        book.refresh_from_db()
+        self.assertEqual(1, book.categories.count())
+        self.assertEqual(result.rows[0].import_type, results.RowResult.IMPORT_TYPE_UPDATE)
+        self.assertEqual(Category.objects.first(), book.categories.first())
+
+    def test_many_to_many_widget_update(self):
+        # the book is associated with 1 category ('Category 2')
+        # when we import a book with category 1, the book
+        # should be updated, not skipped, so that Category 2 is replaced by Category 1
+        book = Book.objects.first()
+        dataset_headers = ["id", "name", "categories"]
+        dataset_row = [book.id, book.name, "1"]
+        dataset = tablib.Dataset(headers=dataset_headers)
+        dataset.append(dataset_row)
+
+        book_resource = BookResource()
+        book_resource._meta.skip_unchanged = True
+        self.assertEqual(1, book.categories.count())
+
+        result = book_resource.import_data(dataset, dry_run=False)
+        self.assertEqual(result.rows[0].import_type, results.RowResult.IMPORT_TYPE_UPDATE)
+        self.assertEqual(1, book.categories.count())
+        self.assertEqual(Category.objects.first(), book.categories.first())
+
+    def test_many_to_many_widget_no_changes(self):
+        # the book is associated with 1 category ('Category 2')
+        # when we import a row with a book with category 1, the book
+        # should be skipped, because there is no change
+        book = Book.objects.first()
+        dataset_headers = ["id", "name", "categories"]
+        dataset_row = [book.id, book.name, book.categories.all()]
+        dataset = tablib.Dataset(headers=dataset_headers)
+        dataset.append(dataset_row)
+
+        book_resource = BookResource()
+        book_resource._meta.skip_unchanged = True
+
+        self.assertEqual(1, book.categories.count())
+        result = book_resource.import_data(dataset, dry_run=False)
+        self.assertEqual(result.rows[0].import_type, results.RowResult.IMPORT_TYPE_SKIP)
+        self.assertEqual(1, book.categories.count())
+
+
 @mock.patch("import_export.resources.Diff", spec=True)
 class SkipDiffTest(TestCase):
     """
@@ -1526,10 +1595,10 @@ class BulkTest(TestCase):
         rows = [('book_name',)] * 10
         self.dataset = tablib.Dataset(*rows, headers=['name'])
 
-    def init_update_test_data(self):
-        [Book.objects.create(name='book_name') for _ in range(10)]
-        self.assertEqual(10, Book.objects.count())
-        rows = Book.objects.all().values_list('id', 'name')
+    def init_update_test_data(self, model=Book):
+        [model.objects.create(name='book_name') for _ in range(10)]
+        self.assertEqual(10, model.objects.count())
+        rows = model.objects.all().values_list('id', 'name')
         updated_rows = [(r[0], 'UPDATED') for r in rows]
         self.dataset = tablib.Dataset(*updated_rows, headers=['id', 'name'])
 
@@ -1552,6 +1621,25 @@ class BulkCreateTest(BulkTest):
                 batch_size = 5
 
         resource = _BookResource()
+        result = resource.import_data(self.dataset)
+        self.assertEqual(2, mock_bulk_create.call_count)
+        mock_bulk_create.assert_called_with(mock.ANY, batch_size=5)
+        self.assertEqual(10, result.total_rows)
+
+    @mock.patch('core.models.UUIDBook.objects.bulk_create')
+    def test_bulk_create_uuid_model(self, mock_bulk_create):
+        """Test create of a Model which defines uuid not pk (issue #1274)"""
+        class _UUIDBookResource(resources.ModelResource):
+            class Meta:
+                model = UUIDBook
+                use_bulk = True
+                batch_size = 5
+                fields = (
+                    'id',
+                    'name',
+                )
+
+        resource = _UUIDBookResource()
         result = resource.import_data(self.dataset)
         self.assertEqual(2, mock_bulk_create.call_count)
         mock_bulk_create.assert_called_with(mock.ANY, batch_size=5)
@@ -1865,6 +1953,33 @@ class BulkUpdateTest(BulkTest):
             self.assertEqual(e, raised_exc)
 
 
+@skipIf(django.VERSION[0] == 2 and django.VERSION[1] < 2, "bulk_update not supported in this version of django")
+class BulkUUIDBookUpdateTest(BulkTest):
+
+    def setUp(self):
+        super().setUp()
+        self.init_update_test_data(model=UUIDBook)
+
+    @mock.patch('core.models.UUIDBook.objects.bulk_update')
+    def test_bulk_update_uuid_model(self, mock_bulk_update):
+        """Test update of a Model which defines uuid not pk (issue #1274)"""
+        class _UUIDBookResource(resources.ModelResource):
+            class Meta:
+                model = UUIDBook
+                use_bulk = True
+                batch_size = 5
+                fields = (
+                    'id',
+                    'name',
+                )
+
+        resource = _UUIDBookResource()
+        result = resource.import_data(self.dataset)
+        self.assertEqual(2, mock_bulk_update.call_count)
+        self.assertEqual(10, result.total_rows)
+        self.assertEqual(10, result.totals["update"])
+
+
 class BulkDeleteTest(BulkTest):
     class DeleteBookResource(resources.ModelResource):
         def for_delete(self, row, instance):
@@ -1981,3 +2096,25 @@ class BulkDeleteTest(BulkTest):
         with self.assertRaises(Exception) as raised_exc:
             resource.import_data(self.dataset, raise_errors=True)
             self.assertEqual(e, raised_exc)
+
+
+class BulkUUIDBookDeleteTest(BulkTest):
+    class DeleteBookResource(resources.ModelResource):
+        def for_delete(self, row, instance):
+            return True
+
+        class Meta:
+            model = UUIDBook
+            use_bulk = True
+            batch_size = 5
+
+    def setUp(self):
+        super().setUp()
+        self.resource = self.DeleteBookResource()
+        self.init_update_test_data(model=UUIDBook)
+
+    def test_bulk_delete_batch_size_of_5(self):
+        self.assertEqual(10, UUIDBook.objects.count())
+        self.resource.import_data(self.dataset)
+        self.assertEqual(0, UUIDBook.objects.count())
+

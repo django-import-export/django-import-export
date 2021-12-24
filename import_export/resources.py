@@ -455,18 +455,24 @@ class Resource(metaclass=DeclarativeMetaclass):
         if errors:
             raise ValidationError(errors)
 
-    def save_instance(self, instance, using_transactions=True, dry_run=False):
+    def save_instance(self, instance, is_create, using_transactions=True, dry_run=False):
         """
         Takes care of saving the object to the database.
 
         Objects can be created in bulk if ``use_bulk`` is enabled.
+
+        :param instance: The instance of the object to be persisted.
+        :param is_create: A boolean flag to indicate whether this is a new object
+        to be created, or an existing object to be updated.
+        :param using_transactions: A flag to indicate whether db transactions are used.
+        :param dry_run: A flag to indicate dry-run mode.
         """
         self.before_save_instance(instance, using_transactions, dry_run)
         if self._meta.use_bulk:
-            if instance.pk:
-                self.update_instances.append(instance)
-            else:
+            if is_create:
                 self.create_instances.append(instance)
+            else:
+                self.update_instances.append(instance)
         else:
             if not using_transactions and dry_run:
                 # we don't have transactions and we want to do a dry_run
@@ -571,7 +577,7 @@ class Resource(metaclass=DeclarativeMetaclass):
         """
         return False
 
-    def skip_row(self, instance, original):
+    def skip_row(self, instance, original, row):
         """
         Returns ``True`` if ``row`` importing should be skipped.
 
@@ -601,7 +607,13 @@ class Resource(metaclass=DeclarativeMetaclass):
             try:
                 # For fields that are models.fields.related.ManyRelatedManager
                 # we need to compare the results
-                if list(field.get_value(instance).all()) != list(field.get_value(original).all()):
+                if isinstance(field.widget, widgets.ManyToManyWidget):
+                    # compare with the future value to detect changes
+                    instance_value = list(field.clean(row))
+                else:
+                    instance_value = list(field.get_value(instance).all())
+
+                if instance_value != list(field.get_value(original).all()):
                     return False
             except AttributeError:
                 if field.get_value(instance) != field.get_value(original):
@@ -694,11 +706,11 @@ class Resource(metaclass=DeclarativeMetaclass):
                     # validate_instance(), where they can be combined with model
                     # instance validation errors if necessary
                     import_validation_errors = e.update_error_dict(import_validation_errors)
-                if self.skip_row(instance, original):
+                if self.skip_row(instance, original, row):
                     row_result.import_type = RowResult.IMPORT_TYPE_SKIP
                 else:
                     self.validate_instance(instance, import_validation_errors)
-                    self.save_instance(instance, using_transactions, dry_run)
+                    self.save_instance(instance, new, using_transactions, dry_run)
                     self.save_m2m(instance, row, using_transactions, dry_run)
                     row_result.add_instance_info(instance)
                 if not skip_diff:
