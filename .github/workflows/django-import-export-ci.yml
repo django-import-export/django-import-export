@@ -137,3 +137,14 @@ jobs:
           coveralls --service=github --finish
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install
+        run: pip install flake8 black
+      - name: Running Flake8
+        run: flake8
+      - name: Running Black
+        run: black . --check
