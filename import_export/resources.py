@@ -577,7 +577,7 @@ class Resource(metaclass=DeclarativeMetaclass):
         """
         return False
 
-    def skip_row(self, instance, original):
+    def skip_row(self, instance, original, row):
         """
         Returns ``True`` if ``row`` importing should be skipped.
 
@@ -607,7 +607,13 @@ class Resource(metaclass=DeclarativeMetaclass):
             try:
                 # For fields that are models.fields.related.ManyRelatedManager
                 # we need to compare the results
-                if list(field.get_value(instance).all()) != list(field.get_value(original).all()):
+                if isinstance(field.widget, widgets.ManyToManyWidget):
+                    # compare with the future value to detect changes
+                    instance_value = list(field.clean(row))
+                else:
+                    instance_value = list(field.get_value(instance).all())
+
+                if instance_value != list(field.get_value(original).all()):
                     return False
             except AttributeError:
                 if field.get_value(instance) != field.get_value(original):
@@ -700,7 +706,7 @@ class Resource(metaclass=DeclarativeMetaclass):
                     # validate_instance(), where they can be combined with model
                     # instance validation errors if necessary
                     import_validation_errors = e.update_error_dict(import_validation_errors)
-                if self.skip_row(instance, original):
+                if self.skip_row(instance, original, row):
                     row_result.import_type = RowResult.IMPORT_TYPE_SKIP
                 else:
                     self.validate_instance(instance, import_validation_errors)
