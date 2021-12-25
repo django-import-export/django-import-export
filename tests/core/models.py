@@ -5,9 +5,28 @@ from django.core.exceptions import ValidationError
 from django.db import models
 
 
+class AuthorManager(models.Manager):
+    """
+    Used to enable the get_by_natural_key method.
+    """
+
+    def get_by_natural_key(self, name):
+        """
+        Django pattern function for finding an author by its name
+        """
+        return self.get(name=name)
 class Author(models.Model):
+
+    objects = AuthorManager()
+
     name = models.CharField(max_length=100)
     birthday = models.DateTimeField(auto_now_add=True)
+
+    def natural_key(self):
+        """
+        Django pattern function for serializing a model by its natural key
+        """
+        return (self.name,)
 
     def __str__(self):
         return self.name
@@ -31,8 +50,21 @@ class Category(models.Model):
     def __str__(self):
         return self.name
 
+class BookManager(models.Manager):
+    """
+    Added to enable get_by_natural_key method
+    """
+
+    def get_by_natural_key(self, name, author):
+        """
+        Django pattern function for returning a book by its natural key
+        """
+        return self.get(name=name, author=Author.objects.get_by_natural_key(author))
 
 class Book(models.Model):
+
+    objects = BookManager()
+
     name = models.CharField('Book name', max_length=100)
     author = models.ForeignKey(Author, blank=True, null=True, on_delete=models.CASCADE)
     author_email = models.EmailField('Author email', max_length=75, blank=True)
@@ -43,6 +75,14 @@ class Book(models.Model):
     added = models.DateTimeField(blank=True, null=True)
 
     categories = models.ManyToManyField(Category, blank=True)
+
+    def natural_key(self):
+        """
+        Django pattern function for serializing a book by its natural key
+        """
+        return (self.name,) +  self.author.natural_key()
+
+    natural_key.dependencies = ['core.Author']
 
     def __str__(self):
         return self.name
@@ -61,7 +101,6 @@ class Child(models.Model):
 
     def __str__(self):
         return '%s - child of %s' % (self.name, self.parent.name)
-
 
 class Profile(models.Model):
     user = models.OneToOneField('auth.User', on_delete=models.CASCADE)
