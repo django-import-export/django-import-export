@@ -316,7 +316,7 @@ class ForeignKeyWidgetTest(TestCase):
 
         t = TestObj()
         self.widget = widgets.ForeignKeyWidget(mock.Mock(), "attr")
-        self.assertIsNone(self.widget.render(t))\
+        self.assertIsNone(self.widget.render(t))
     
     def test_author_natural_key_clean(self):
         """
