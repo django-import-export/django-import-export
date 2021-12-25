@@ -408,7 +408,11 @@ class ForeignKeyWidget(Widget):
             if self.use_natural_foreign_keys:
                 # natural keys will always be a tuple, which ends up as a json list.
                 value = json.loads(value) 
-                return self.model.objects.get_by_natural_key(*value)
+                try:
+                    return self.model.objects.get_by_natural_key(*value)
+                except (ObjectDoesNotExist):
+                    # If we can't find it, we can't assign it.
+                    return None
             else:
                 return self.get_queryset(value, row, *args, **kwargs).get(**{self.field: val})
         else:
