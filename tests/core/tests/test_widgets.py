@@ -1,9 +1,10 @@
 from datetime import date, datetime, time, timedelta
 from decimal import Decimal
+import json
 from unittest import mock
 
 import pytz
-from core.models import Author, Category
+from core.models import Author, Book, Category
 from django.test import TestCase
 from django.test.utils import override_settings
 from django.utils import timezone
@@ -277,7 +278,10 @@ class ForeignKeyWidgetTest(TestCase):
 
     def setUp(self):
         self.widget = widgets.ForeignKeyWidget(Author)
+        self.natural_key_author_widget = widgets.ForeignKeyWidget(Author, use_natural_foreign_keys=True)
+        self.natural_key_book_widget = widgets.ForeignKeyWidget(Book, use_natural_foreign_keys=True )
         self.author = Author.objects.create(name='Foo')
+        self.book = Book.objects.create(name="Bar", author=self.author)
 
     def test_clean(self):
         self.assertEqual(self.widget.clean(self.author.id), self.author)
@@ -312,9 +316,42 @@ class ForeignKeyWidgetTest(TestCase):
 
         t = TestObj()
         self.widget = widgets.ForeignKeyWidget(mock.Mock(), "attr")
-        self.assertIsNone(self.widget.render(t))
+        self.assertIsNone(self.widget.render(t))\
+    
+    def test_author_natural_key_clean(self):
+        """
+        Ensure that we can import an author by its natural key. Note that
+        this will always need to be an iterable.
+        Generally this will be rendered as a list.
+        """
+        self.assertEqual(
+            self.natural_key_author_widget.clean( json.dumps(self.author.natural_key()) ), self.author )
 
+    def test_author_natural_key_render(self):
+        """
+        Ensure we can render an author by its natural key. Natural keys will always be
+        tuples. 
+        """
+        self.assertEqual(
+            self.natural_key_author_widget.render(self.author), json.dumps(self.author.natural_key()) )    
+    
+    def test_book_natural_key_clean(self):
+        """
+        Use the book case to validate a composite natural key of book name and author
+        can be cleaned.
+        """
+        self.assertEqual(
+            self.natural_key_book_widget.clean( json.dumps(self.book.natural_key())), self.book
+        )
 
+    def test_book_natural_key_render(self):
+        """
+        Use the book case to validate a composite natural key of book name and author
+        can be rendered
+        """
+        self.assertEqual(
+            self.natural_key_book_widget.render(self.book), json.dumps(self.book.natural_key())
+        )
 
 class ManyToManyWidget(TestCase):
 
