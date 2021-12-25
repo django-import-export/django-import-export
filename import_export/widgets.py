@@ -422,7 +422,7 @@ class ForeignKeyWidget(Widget):
         for attr in attrs:
             try:
                 if self.use_natural_foreign_keys:
-                    # inbound natural keys must load as an interable.
+                    # inbound natural keys must be a json list.
                     return json.dumps(value.natural_key())
                 else:
                     value = getattr(value, attr, None)
