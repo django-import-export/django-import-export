@@ -1078,7 +1078,7 @@ class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
         Returns the widget that would likely be associated with each
         Django type.
 
-        Includes mapping of Postgres Array and JSON fields. In the case that
+        Includes mapping of Postgres Array field. In the case that
         psycopg2 is not installed, we consume the error and process the field
         regardless.
         """
