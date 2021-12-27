@@ -19,6 +19,11 @@ accommodate these changes.
 - Use 'create' flag instead of instance.pk (#1362)
    - ``import_export.resources.save_instance()`` now takes an additional mandatory argument: `is_create`.
      If you have over-ridden `save_instance()` in your own code, you will need to add this new argument.#
+
+- Add support for multiple resources in ModelAdmin. (#1223)
+  - The `*Mixin.resource_class` accepting single resource has been deprecated (will work for few next versions) and
+    the new `*Mixin.resource_classes` accepting subscriptable type (list, tuple, ...) has been added.
+  - Same applies to all of the `get_resource_class`, `get_import_resource_class` and `get_export_resource_class` methods.
      
 Enhancements
 ############

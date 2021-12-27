@@ -1174,6 +1174,12 @@ class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
                 finally:
                     cursor.close()
 
+    @classmethod
+    def get_display_name(cls):
+        if hasattr(cls._meta, 'name'):
+            return cls._meta.name
+        return cls.__name__
+
 
 def modelresource_factory(model, resource_class=ModelResource):
     """
