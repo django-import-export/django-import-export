@@ -3,13 +3,16 @@ from collections import OrderedDict
 from copy import deepcopy
 from datetime import date
 from decimal import Decimal, InvalidOperation
-from unittest import mock, skip, skipIf, skipUnless
+from unittest import mock, skip, skipUnless
 
-import django
 import tablib
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.core.exceptions import ImproperlyConfigured, ValidationError
+from django.core.exceptions import (
+    FieldDoesNotExist,
+    ImproperlyConfigured,
+    ValidationError,
+)
 from django.core.paginator import Paginator
 from django.db import IntegrityError
 from django.db.models import Count
@@ -35,11 +38,6 @@ from ..models import (
     WithDynamicDefault,
     WithFloatField,
 )
-
-if django.VERSION[0] >= 3:
-    from django.core.exceptions import FieldDoesNotExist
-else:
-    from django.db.models.fields import FieldDoesNotExist
 
 
 class MyResource(resources.Resource):
@@ -423,21 +421,6 @@ class ModelResourceTest(TestCase):
                          '<span>Some </span><ins style="background:#e6ffe6;">'
                          'other </ins><span>book</span>')
         self.assertFalse(html[headers.index('author_email')])
-
-    @skip("See: https://github.com/django-import-export/django-import-export/issues/311")
-    def test_get_diff_with_callable_related_manager(self):
-        resource = AuthorResource()
-        author = Author(name="Some author")
-        author.save()
-        author2 = Author(name="Some author")
-        self.book.author = author
-        self.book.save()
-        diff = Diff(self.resource, author, False)
-        diff.compare_with(self.resource, author2)
-        html = diff.as_html()
-        headers = resource.get_export_headers()
-        self.assertEqual(html[headers.index('books')],
-                         '<span>core.Book.None</span>')
 
     def test_import_data(self):
         result = self.resource.import_data(self.dataset, raise_errors=True)
@@ -1257,16 +1240,11 @@ class PostgresTests(TransactionTestCase):
 if 'postgresql' in settings.DATABASES['default']['ENGINE']:
     from django.contrib.postgres.fields import ArrayField
     from django.db import models
-    try:
-        from django.db.models import JSONField
-    except ImportError:
-        from django.contrib.postgres.fields import JSONField
-
 
     class BookWithChapters(models.Model):
         name = models.CharField('Book name', max_length=100)
         chapters = ArrayField(models.CharField(max_length=100), default=list)
-        data = JSONField(null=True)
+        data = models.JSONField(null=True)
 
 
     class BookWithChaptersResource(resources.ModelResource):
@@ -1838,7 +1816,6 @@ class BulkCreateTest(BulkTest):
         self.assertIsNotNone(resource.get_or_init_instance(ModelInstanceLoader(resource), self.dataset[0]))
 
 
-@skipIf(django.VERSION[0] == 2 and django.VERSION[1] < 2, "bulk_update not supported in this version of django")
 class BulkUpdateTest(BulkTest):
     class _BookResource(resources.ModelResource):
         class Meta:
@@ -1967,7 +1944,6 @@ class BulkUpdateTest(BulkTest):
             self.assertEqual(e, raised_exc)
 
 
-@skipIf(django.VERSION[0] == 2 and django.VERSION[1] < 2, "bulk_update not supported in this version of django")
 class BulkUUIDBookUpdateTest(BulkTest):
 
     def setUp(self):

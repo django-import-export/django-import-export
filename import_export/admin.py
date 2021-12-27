@@ -378,8 +378,7 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
             'list_editable': self.list_editable,
             'model_admin': self,
         }
-        if django.VERSION >= (2, 1):
-            changelist_kwargs['sortable_by'] = self.sortable_by
+        changelist_kwargs['sortable_by'] = self.sortable_by
         if django.VERSION >= (4, 0):
             changelist_kwargs['search_help_text'] = self.search_help_text
         cl = ChangeList(**changelist_kwargs)
