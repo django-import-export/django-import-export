@@ -369,10 +369,18 @@ class ForeignKeyWidget(Widget):
 
             class Meta:
                 fields = ('author',)
+    
+    Additionally, if the model of the foreign key field has natural key and
+    its manager has get_by_natural_key defined per the Django capability,
+    use_natural_foreign_keys can be passed which will cause those functions
+    to be used to identify the related field for export and import respectively
+    See: https://docs.djangoproject.com/en/4.0/topics/serialization/
 
     :param model: The Model the ForeignKey refers to (required).
-    :param field: A field on the related model used for looking up a particular object.
-    :param use_natural_foreign_keys: Boolean for whether to use Django natural key functions, default False
+    :param field: A field on the related model used for looking up a particular
+        object.
+    :param use_natural_foreign_keys: Use natural key functions to identify 
+        related object, default to False
     """
     def __init__(self, model, field='pk', use_natural_foreign_keys=False, *args, **kwargs):
         self.model = model
