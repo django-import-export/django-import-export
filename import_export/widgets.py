@@ -337,7 +337,8 @@ class JSONWidget(Widget):
 class ForeignKeyWidget(Widget):
     """
     Widget for a ``ForeignKey`` field which looks up a related model using
-    "natural keys" in both export and import.
+    either the PK or a user specified field that uniquely identifies the
+    instance in both export and import.
 
     The lookup field defaults to using the primary key (``pk``) as lookup
     criterion but can be customised to use any field on the related model.
