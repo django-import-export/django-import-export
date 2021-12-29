@@ -1,9 +1,11 @@
 import json
+import sys
 from collections import OrderedDict
 from copy import deepcopy
 from datetime import date
 from decimal import Decimal, InvalidOperation
-from unittest import mock, skip, skipUnless
+from unittest import mock, skipUnless
+from unittest.mock import patch
 
 import tablib
 from django.conf import settings
@@ -15,7 +17,7 @@ from django.core.exceptions import (
 )
 from django.core.paginator import Paginator
 from django.db import IntegrityError
-from django.db.models import Count
+from django.db.models import CharField, Count
 from django.db.utils import ConnectionDoesNotExist
 from django.test import TestCase, TransactionTestCase, skipUnlessDBFeature
 from django.utils.encoding import force_str
@@ -106,6 +108,9 @@ class ResourceTestCase(TestCase):
         self.assertEqual(self.my_resource.get_export_headers(),
                          ['email', 'name', 'extra'])
 
+    def test_default_after_import(self):
+        self.assertIsNone(self.my_resource.after_import(tablib.Dataset(), results.Result(), False, False))
+
     # Issue 140 Attributes aren't inherited by subclasses
     def test_inheritance(self):
         class A(MyResource):
@@ -157,6 +162,18 @@ class ResourceTestCase(TestCase):
     def test_init_instance_raises_NotImplementedError(self):
         with self.assertRaises(NotImplementedError):
             self.my_resource.init_instance([])
+
+    @patch("core.models.Book.full_clean")
+    def test_validate_instance_called_with_import_validation_errors_as_None_creates_empty_dict(self, full_clean_mock):
+        # validate_instance() import_validation_errors is an optional kwarg
+        # If not provided, it defaults to an empty dict
+        # this tests that scenario by ensuring that an empty dict is passed
+        # to the model instance full_clean() method.
+        book = Book()
+        self.my_resource._meta.clean_model_instances = True
+        self.my_resource.validate_instance(book)
+        target = dict()
+        full_clean_mock.assert_called_once_with(exclude=target.keys(), validate_unique=True)
 
 
 class AuthorResource(resources.ModelResource):
@@ -232,6 +249,36 @@ class AuthorResourceWithCustomWidget(resources.ModelResource):
             if isinstance(result, str):
                 result = getattr(cls, result)(f)
         return result
+
+
+class ModelResourcePostgresModuleLoadTest(TestCase):
+    pg_module_name = 'django.contrib.postgres.fields'
+
+    class ImportRaiser:
+        def find_spec(self, fullname, path, target=None):
+            if fullname == ModelResourcePostgresModuleLoadTest.pg_module_name:
+                # we get here if the module is not loaded and not in sys.modules
+                raise ImportError()
+
+    def setUp(self):
+        super().setUp()
+        self.resource = BookResource()
+        if self.pg_module_name in sys.modules:
+            self.pg_modules = sys.modules[self.pg_module_name]
+            del sys.modules[self.pg_module_name]
+
+    def tearDown(self):
+        super().tearDown()
+        sys.modules[self.pg_module_name] = self.pg_modules
+
+    def test_widget_from_django_field_cannot_import_postgres(self):
+        # test that default widget is returned if postgres extensions
+        # are not present
+        sys.meta_path.insert(0, self.ImportRaiser())
+
+        f = fields.Field()
+        res = self.resource.widget_from_django_field(f)
+        self.assertEqual(widgets.Widget, res)
 
 
 class ModelResourceTest(TestCase):
@@ -759,6 +806,21 @@ class ModelResourceTest(TestCase):
         self.assertEqual(full_title, '%s by %s' % (self.book.name,
                                                    self.book.author.name))
 
+    def test_invalid_relation_field_name(self):
+
+        class B(resources.ModelResource):
+            full_title = fields.Field(column_name="Full title")
+
+            class Meta:
+                model = Book
+                # author_name is not a valid field or relation,
+                # so should be ignored
+                fields = ("author_name", "full_title")
+
+        resource = B()
+        self.assertEqual(1, len(resource.fields))
+        self.assertEqual("full_title", list(resource.fields.keys())[0])
+
     def test_widget_format_in_fk_field(self):
         class B(resources.ModelResource):
 
@@ -1236,6 +1298,12 @@ class PostgresTests(TransactionTestCase):
             Book.objects.create(name='Some other book')
         except IntegrityError:
             self.fail('IntegrityError was raised.')
+
+    def test_widget_from_django_field_for_ArrayField_returns_SimpleArrayWidget(self):
+        f = ArrayField(CharField)
+        resource = BookResource()
+        res = resource.widget_from_django_field(f)
+        self.assertEqual(widgets.SimpleArrayWidget, res)
 
 if 'postgresql' in settings.DATABASES['default']['ENGINE']:
     from django.contrib.postgres.fields import ArrayField

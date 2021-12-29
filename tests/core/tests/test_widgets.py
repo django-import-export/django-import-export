@@ -1,7 +1,8 @@
 from datetime import date, datetime, time, timedelta
 from decimal import Decimal
-from unittest import mock
+from unittest import mock, skipUnless
 
+import django
 import pytz
 from core.models import Author, Category
 from django.test import TestCase
@@ -40,6 +41,20 @@ class BooleanWidgetTest(TestCase):
         self.assertEqual(self.widget.render(True), "1")
         self.assertEqual(self.widget.render(False), "0")
         self.assertEqual(self.widget.render(None), "")
+
+
+class FormatDatetimeTest(TestCase):
+    date = date(10, 8, 2)
+    target_dt = "02.08.0010"
+    format = "%d.%m.%Y"
+
+    @skipUnless(django.VERSION[0] < 4, f"skipping django {django.VERSION} version specific test")
+    def test_format_datetime_lt_django4(self):
+        self.assertEqual(self.target_dt, widgets.format_datetime(self.date, self.format))
+
+    @skipUnless(django.VERSION[0] >= 4, f"running django {django.VERSION} version specific test")
+    def test_format_datetime_gte_django4(self):
+        self.assertEqual(self.target_dt, widgets.format_datetime(self.date, self.format))
 
 
 class DateWidgetTest(TestCase):
