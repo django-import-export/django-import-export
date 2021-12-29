@@ -9,8 +9,9 @@ from django.core.files.storage import default_storage
 
 class BaseStorage:
 
-    def __init__(self, name=None):
+    def __init__(self, name=None, encoding=None):
         self.name = name
+        self.encoding = encoding
 
     def save(self, data, mode='w'):
         raise NotImplementedError
@@ -26,7 +27,7 @@ class TempFolderStorage(BaseStorage):
 
     def open(self, mode='r'):
         if self.name:
-            return open(self.get_full_path(), mode)
+            return open(self.get_full_path(), mode, encoding=self.encoding)
         else:
             tmp_file = tempfile.NamedTemporaryFile(delete=False)
             self.name = tmp_file.name
@@ -63,7 +64,10 @@ class CacheStorage(BaseStorage):
         cache.set(self.CACHE_PREFIX + self.name, data, self.CACHE_LIFETIME)
 
     def read(self, read_mode='r'):
-        return cache.get(self.CACHE_PREFIX + self.name)
+        data = cache.get(self.CACHE_PREFIX + self.name)
+        if isinstance(data, bytes) and self.encoding is not None:
+            data = data.decode(self.encoding)
+        return data
 
     def remove(self):
         cache.delete(self.name)
@@ -75,6 +79,8 @@ class MediaStorage(BaseStorage):
     def save(self, data, mode=None):
         if not self.name:
             self.name = uuid4().hex
+        # data is stored in correct encoding within ContentFile
+        # so it doesn't have to be decoded in read()
         default_storage.save(self.get_full_path(), ContentFile(data))
 
     def read(self, read_mode='rb'):

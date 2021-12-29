@@ -10,15 +10,16 @@ Breaking changes
 This release makes the following changes to the API.  You may need to update your implementation to accommodate these changes.
 
 - Check value of ManyToManyField in skip_row() (#1271)
-    - This fixes an issue where ManyToMany fields are not checked correctly in `skip_row()`.  This means that `skip_row()` now takes `row` as a mandatory arg.  If you have overridden `skip_row()` in your own implementation, you will need to add `row` as an arg.
+    - This fixes an issue where ManyToMany fields are not checked correctly in `skip_row()`. This means that `skip_row()` now takes `row` as a mandatory arg. If you have overridden `skip_row()` in your own implementation, you will need to add `row` as an arg.
+
+- Refactor admin import to include encoding param (#1306)
+    - Admin user interface: If an exception is thrown when attempting to read a file then this error is presented as a form error, instead of being written directly back in the response HTML.  If you have any code or process which checks the HTML response for the error (i.e. wrapped in H1 HTML tags) then this will need to be updated to handle the errors which are now returned as form errors.
 
 - Use 'create' flag instead of instance.pk (#1362)
-    - `import_export.resources.save_instance()` now takes an additional mandatory argument: `is_create`.  If you have over-ridden `save_instance()` in your own code, you will need to add this new argument.
+    - ``import_export.resources.save_instance()`` now takes an additional mandatory argument: `is_create`. If you have over-ridden `save_instance()` in your own code, you will need to add this new argument.
 
 - Add support for multiple resources in ModelAdmin. (#1223)
-
    - The `*Mixin.resource_class` accepting single resource has been deprecated (will work for few next versions) and the new `*Mixin.resource_classes` accepting subscriptable type (list, tuple, ...) has been added.
-
    - Same applies to all of the `get_resource_class`, `get_import_resource_class` and `get_export_resource_class` methods.
 
 - Deprecated `exceptions.py` - this module will be removed in a future release (#1372)
@@ -27,6 +28,7 @@ Enhancements
 ############
 
 - Updated import.css to support dark mode (#1370)
+- Admin site: Refactored reading bytes from temporary storage to address decoding issues (#1306)
 
 Development
 ###########

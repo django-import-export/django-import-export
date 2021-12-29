@@ -30,6 +30,7 @@ from import_export.admin import (
     ExportMixin,
     ImportExportActionModelAdmin,
 )
+from import_export.formats import base_formats
 from import_export.formats.base_formats import DEFAULT_FORMATS
 from import_export.tmp_storages import TempFolderStorage
 
@@ -133,6 +134,126 @@ class ImportExportAdminIntegrationTest(TestCase):
         )
         # Check, that we really use second resource - author_email didn't get imported
         self.assertEqual(Book.objects.get(id=1).author_email, "")
+
+    def test_import_action_handles_UnicodeDecodeError_as_form_error(self):
+        # POST the import form
+        input_format = '0'
+        filename = os.path.join(
+            os.path.dirname(__file__),
+            os.path.pardir,
+            'exports',
+            'books.csv')
+        with open(filename, "rb") as f:
+            data = {
+                'input_format': input_format,
+                'import_file': f,
+            }
+            with mock.patch("import_export.admin.TempFolderStorage.read") as mock_tmp_folder_storage:
+                b_arr = b'\x00'
+                mock_tmp_folder_storage.side_effect = UnicodeDecodeError('codec', b_arr, 1, 2, 'fail!')
+                response = self.client.post('/admin/core/book/import/', data)
+        self.assertEqual(response.status_code, 200)
+        self.assertFormError(response, 'form', 'import_file',
+                             '\'UnicodeDecodeError\' encountered while trying to read file. '
+                             'Ensure you have chosen the correct format for the file. '
+                             '\'codec\' codec can\'t decode bytes in position 1-1: fail!')
+
+    def test_import_action_handles_ValueError_as_form_error(self):
+        # POST the import form
+        input_format = '0'
+        filename = os.path.join(
+            os.path.dirname(__file__),
+            os.path.pardir,
+            'exports',
+            'books.csv')
+        with open(filename, "rb") as f:
+            data = {
+                'input_format': input_format,
+                'import_file': f,
+            }
+            with mock.patch("import_export.admin.TempFolderStorage.read") as mock_tmp_folder_storage:
+                mock_tmp_folder_storage.side_effect = ValueError('some unknown error')
+                response = self.client.post('/admin/core/book/import/', data)
+        self.assertEqual(response.status_code, 200)
+        self.assertFormError(response, 'form', 'import_file', '\'ValueError\' encountered while trying to read file. '
+                                                              'Ensure you have chosen the correct format for the file. '
+                                                              'some unknown error')
+
+    @override_settings(IMPORT_EXPORT_TMP_STORAGE_CLASS='import_export.tmp_storages.MediaStorage')
+    def test_import_action_handles_MediaStorage_read(self):
+        input_format = '0'
+        filename = os.path.join(
+            os.path.dirname(__file__),
+            os.path.pardir,
+            'exports',
+            'books.csv')
+        with open(filename, "rb") as f:
+            data = {
+                'input_format': input_format,
+                'import_file': f,
+            }
+            response = self.client.post('/admin/core/book/import/', data)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('result', response.context)
+        self.assertFalse(response.context['result'].has_errors())
+        self.assertContains(response, 'test@example.com')
+
+    @override_settings(IMPORT_EXPORT_TMP_STORAGE_CLASS='import_export.tmp_storages.MediaStorage')
+    def test_import_action_handles_MediaStorage_read_binary(self):
+        input_format = '1'
+        filename = os.path.join(
+            os.path.dirname(__file__),
+            os.path.pardir,
+            'exports',
+            'books.xls')
+        with open(filename, "rb") as f:
+            data = {
+                'input_format': input_format,
+                'import_file': f,
+            }
+            response = self.client.post('/admin/core/book/import/', data)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('result', response.context)
+        self.assertFalse(response.context['result'].has_errors())
+        self.assertContains(response, 'test@example.com')
+
+    @override_settings(IMPORT_EXPORT_TMP_STORAGE_CLASS='import_export.tmp_storages.CacheStorage')
+    def test_import_action_handles_CacheStorage_read(self):
+        input_format = '0'
+        filename = os.path.join(
+            os.path.dirname(__file__),
+            os.path.pardir,
+            'exports',
+            'books.csv')
+        with open(filename, "rb") as f:
+            data = {
+                'input_format': input_format,
+                'import_file': f,
+            }
+            response = self.client.post('/admin/core/book/import/', data)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('result', response.context)
+        self.assertFalse(response.context['result'].has_errors())
+        self.assertContains(response, 'test@example.com')
+
+    @override_settings(IMPORT_EXPORT_TMP_STORAGE_CLASS='import_export.tmp_storages.CacheStorage')
+    def test_import_action_handles_CacheStorage_read_binary(self):
+        input_format = '1'
+        filename = os.path.join(
+            os.path.dirname(__file__),
+            os.path.pardir,
+            'exports',
+            'books.xls')
+        with open(filename, "rb") as f:
+            data = {
+                'input_format': input_format,
+                'import_file': f,
+            }
+            response = self.client.post('/admin/core/book/import/', data)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('result', response.context)
+        self.assertFalse(response.context['result'].has_errors())
+        self.assertContains(response, 'test@example.com')
 
     def test_delete_from_admin(self):
         # test delete from admin site (see #432)
@@ -524,37 +645,6 @@ class TestImportExportActionModelAdmin(ImportExportActionModelAdmin):
 
         mock_storage.read.side_effect = self.error_instance
         return mock_storage
-
-
-class ImportActionDecodeErrorTest(TestCase):
-    mock_model = mock.Mock(spec=Book)
-    mock_model.__name__ = "mockModel"
-    mock_model._meta = mock.Mock(fields=[], many_to_many=[])
-    mock_site = mock.MagicMock()
-    mock_request = MagicMock(spec=HttpRequest)
-    mock_request.POST = {'a': 1}
-    mock_request.FILES = {}
-
-    @mock.patch("import_export.admin.ImportForm")
-    def test_import_action_handles_UnicodeDecodeError(self, mock_form):
-        mock_form.is_valid.return_value = True
-        b_arr = b'\x00\x00'
-        m = TestImportExportActionModelAdmin(self.mock_model, self.mock_site,
-                                                  UnicodeDecodeError('codec', b_arr, 1, 2, 'fail!'))
-        res = m.import_action(self.mock_request)
-        self.assertEqual(
-            "<h1>Imported file has a wrong encoding: \'codec\' codec can\'t decode byte 0x00 in position 1: fail!</h1>",
-            res.content.decode())
-
-    @mock.patch("import_export.admin.ImportForm")
-    def test_import_action_handles_error(self, mock_form):
-        mock_form.is_valid.return_value = True
-        m = TestImportExportActionModelAdmin(self.mock_model, self.mock_site,
-                                                  ValueError("fail"))
-        res = m.import_action(self.mock_request)
-        self.assertRegex(
-            res.content.decode(),
-            r"<h1>ValueError encountered while trying to read file: .*</h1>")
 
 
 class ExportActionAdminIntegrationTest(TestCase):
