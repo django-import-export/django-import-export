@@ -261,7 +261,6 @@ on the Author model and modelmanager.
     class AuthorManager(models.Manager):
 
         def get_by_natural_key(self, name):
-
             return self.get(name=name)
 
     class Author(models.Model):
@@ -272,7 +271,6 @@ on the Author model and modelmanager.
         birthday = models.DateTimeField(auto_now_add=True)
 
         def natural_key(self):
-  
             return (self.name,)
 
     class BookResource(resources.ModelResource):
