@@ -255,10 +255,25 @@ on the Author model and modelmanager.
 
 ::
 
-    from core.models import Author, Book
-    from import_export import resources
     from import_export.fields import Field
     from import_export.widgets import ForeignKeyWidget
+
+    class AuthorManager(models.Manager):
+
+        def get_by_natural_key(self, name):
+
+            return self.get(name=name)
+
+    class Author(models.Model):
+
+        objects = AuthorManager()
+
+        name = models.CharField(max_length=100)
+        birthday = models.DateTimeField(auto_now_add=True)
+
+        def natural_key(self):
+  
+            return (self.name,)
 
     class BookResource(resources.ModelResource):
 
