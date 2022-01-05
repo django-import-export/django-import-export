@@ -11,9 +11,8 @@ from memory_profiler import memory_usage
 
 from import_export import resources
 from import_export.instance_loaders import CachedInstanceLoader
-from .bulk_import import _BookResource
+
 from core.models import Book    # isort:skip
-# from .bulk_import import _BookResource
 
 # The number of rows to be created on each profile run.
 # Increase this value for greater load testing.
