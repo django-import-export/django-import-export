@@ -1,7 +1,10 @@
 from django.db import migrations, models
 
 can_use_postgres_fields = False
-chapters_field = models.Field()  # Dummy field
+
+# Dummy fields
+chapters_field = models.Field()
+data_field = models.Field()
 
 try:
     from django.contrib.postgres.fields import ArrayField, JSONField
@@ -10,7 +13,7 @@ try:
     data_field = JSONField(null=True)
     can_use_postgres_fields = True
 except ImportError:
-    # We can't use ArrayField if psycopg2 is not installed
+    # We can't use ArrayField if psycopg2 is not installed - issue #1125
     pass
 
 

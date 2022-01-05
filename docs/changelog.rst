@@ -1,11 +1,73 @@
 Changelog
 =========
 
-
-2.4.1 (unreleased)
+2.7.2 (unreleased)
 ------------------
 
-- Changed the default value for ``IMPORT_EXPORT_CHUNK_SIZE`` to 100.
+- Nothing changed yet.
+
+
+2.7.1 (2021-12-23)
+------------------
+
+- Removed `django_extensions` from example app settings (#1356)
+- Added support for Django 4.0 (#1357)
+
+2.7.0 (2021-12-07)
+------------------
+
+- Big integer support for Integer widget (#788)
+- Run compilemessages command to keep .mo files in sync (#1299)
+- Added `skip_html_diff` meta attribute (#1329)
+- Added python3.10 to tox and CI environment list (#1336)
+- Add ability to rollback the import on validation error (#1339)
+- Fix missing migration on example app (#1346)
+- Fix crash when deleting via admin site (#1347)
+- Use Github secret in CI script instead of hard-coded password (#1348)
+- Documentation: correct error in example application which leads to crash (#1353)
+
+2.6.1 (2021-09-30)
+------------------
+
+- Revert 'dark mode' css: causes issues in django2.2 (#1330)
+
+2.6.0 (2021-09-15)
+------------------
+
+- Added guard for null 'options' to fix crash (#1325)
+- Updated import.css to support dark mode (#1323)
+- Fixed regression where overridden mixin methods are not called (#1315)
+- Fix xls/xlsx import of Time fields (#1314)
+- Added support for 'to_encoding' attribute (#1311)
+- Removed travis and replaced with github actions for CI (#1307)
+- Increased test coverage (#1286)
+- Fix minor date formatting issue for date with years < 1000 (#1285)
+- Translate the zh_Hans missing part (#1279)
+- Remove code duplication from mixins.py and admin.py (#1277)
+- Fix example in BooleanWidget docs (#1276)
+- Better support for Django main (#1272)
+- don't test Django main branch with python36,37 (#1269)
+- Support Django 3.2 (#1265)
+- Correct typo in Readme (#1258)
+- Rephrase logical clauses in docstrings (#1255)
+- Support multiple databases (#1254)
+- Update django master to django main (#1251)
+- Add Farsi translated messages in the locale (#1249)
+- Update Russian translations (#1244)
+- Append export admin action using ModelAdmin.get_actions (#1241)
+- Fix minor mistake in makemigrations command (#1233)
+- Remove EOL Python 3.5 from CI (#1228)
+- CachedInstanceLoader defaults to empty when import_id is missing (#1225)
+- Add kwargs to import_row, import_object and import_field (#1190)
+- Call load_workbook() with data_only flag (#1095)
+
+
+2.5.0 (2020-12-30)
+------------------
+
+- Changed the default value for ``IMPORT_EXPORT_CHUNK_SIZE`` to 100. (#1196)
+- Add translation for Korean (#1218)
+- Update linting, CI, and docs.
 
 
 2.4.0 (2020-10-05)

@@ -1,12 +1,23 @@
 import json
-from datetime import date, datetime
+from datetime import date, datetime, time
 from decimal import Decimal
 
+import django
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
-from django.utils import datetime_safe, timezone
+from django.utils import timezone
 from django.utils.dateparse import parse_duration
 from django.utils.encoding import force_str, smart_str
+
+
+def format_datetime(value, datetime_format):
+    # conditional logic to handle correct formatting of dates
+    # see https://code.djangoproject.com/ticket/32738
+    if django.VERSION[0] >= 4:
+        format = django.utils.formats.sanitize_strftime_format(datetime_format)
+        return value.strftime(format)
+    else:
+        return django.utils.datetime_safe.new_datetime(value).strftime(datetime_format)
 
 
 class Widget:
@@ -74,7 +85,7 @@ class IntegerWidget(NumberWidget):
     def clean(self, value, row=None, *args, **kwargs):
         if self.is_empty(value):
             return None
-        return int(float(value))
+        return int(Decimal(value))
 
 
 class DecimalWidget(NumberWidget):
@@ -118,13 +129,13 @@ class BooleanWidget(Widget):
         class BooleanExample(resources.ModelResource):
             warn = fields.Field(widget=widgets.BooleanWidget())
 
-            def before_row_import(self, row, **kwargs):
+            def before_import_row(self, row, row_number=None, **kwargs):
                 if "warn" in row.keys():
                     # munge "warn" to "True"
                     if row["warn"] in ["warn", "WARN"]:
                         row["warn"] = True
 
-                return super().before_import_row(row, **kwargs)
+                return super().before_import_row(row, row_number, **kwargs)
     """
     TRUE_VALUES = ["1", 1, True, "true", "TRUE", "True"]
     FALSE_VALUES = ["0", 0, False, "false", "FALSE", "False"]
@@ -179,10 +190,7 @@ class DateWidget(Widget):
     def render(self, value, obj=None):
         if not value:
             return ""
-        try:
-            return value.strftime(self.formats[0])
-        except:
-            return datetime_safe.new_date(value).strftime(self.formats[0])
+        return format_datetime(value, self.formats[0])
 
 
 class DateTimeWidget(Widget):
@@ -226,7 +234,7 @@ class DateTimeWidget(Widget):
             return ""
         if settings.USE_TZ:
             value = timezone.localtime(value)
-        return value.strftime(self.formats[0])
+        return format_datetime(value, self.formats[0])
 
 
 class TimeWidget(Widget):
@@ -249,6 +257,8 @@ class TimeWidget(Widget):
     def clean(self, value, row=None, *args, **kwargs):
         if not value:
             return None
+        if isinstance(value, time):
+            return value
         for format in self.formats:
             try:
                 return datetime.strptime(value, format).time()

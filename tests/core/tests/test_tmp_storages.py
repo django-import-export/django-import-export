@@ -4,7 +4,31 @@ from django.core.cache import cache
 from django.core.files.storage import default_storage
 from django.test import TestCase
 
-from import_export.tmp_storages import CacheStorage, MediaStorage, TempFolderStorage
+from import_export.tmp_storages import (
+    BaseStorage,
+    CacheStorage,
+    MediaStorage,
+    TempFolderStorage,
+)
+
+
+class TestBaseStorage(TestCase):
+
+    def setUp(self):
+        self.storage = BaseStorage()
+
+    def test_save(self):
+        with self.assertRaises(NotImplementedError):
+            self.storage.save(None)
+
+    def test_read(self):
+        with self.assertRaises(NotImplementedError):
+            self.storage.read()
+
+    def test_remove(self):
+        with self.assertRaises(NotImplementedError):
+            self.storage.remove()
+
 
 
 class TempStoragesTest(TestCase):

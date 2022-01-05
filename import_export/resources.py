@@ -1,26 +1,24 @@
 import functools
 import logging
-import tablib
 import traceback
 from collections import OrderedDict
 from copy import deepcopy
 
-from diff_match_patch import diff_match_patch
-
 import django
+import tablib
+from diff_match_patch import diff_match_patch
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.core.management.color import no_style
 from django.core.paginator import Paginator
-from django.db import DEFAULT_DB_ALIAS, connections
+from django.db import connections, router
 from django.db.models.fields.related import ForeignObjectRel
 from django.db.models.query import QuerySet
 from django.db.transaction import (
     TransactionManagementError,
-    atomic,
     savepoint,
     savepoint_commit,
-    savepoint_rollback
+    savepoint_rollback,
 )
 from django.utils.encoding import force_str
 from django.utils.safestring import mark_safe
@@ -111,7 +109,7 @@ class ResourceOptions:
 
     report_skipped = True
     """
-    Controls if the result reports skipped rows Default value is True
+    Controls if the result reports skipped rows. Default value is True
     """
 
     clean_model_instances = False
@@ -135,6 +133,23 @@ class ResourceOptions:
     stored in each ``RowResult``.
     If diffing is not required, then disabling the diff operation by setting this value to ``True``
     improves performance, because the copy and comparison operations are skipped for each row.
+    If enabled, then ``skip_row()`` checks do not execute, because 'skip' logic requires
+    comparison between the stored and imported versions of a row.
+    If enabled, then HTML row reports are also not generated (see ``skip_html_diff``).
+    The default value is False.
+    """
+
+    skip_html_diff = False
+    """
+    Controls whether or not a HTML report is generated after each row.
+    By default, the difference between a stored copy and an imported instance
+    is generated in HTML form and stored in each ``RowResult``.
+    The HTML report is used to present changes on the confirmation screen in the admin site,
+    hence when this value is ``True``, then changes will not be presented on the confirmation
+    screen.
+    If the HTML report is not required, then setting this value to ``True`` improves performance,
+    because the HTML generation is skipped for each row.
+    This is a useful optimization when importing large datasets.
     The default value is False.
     """
 
@@ -160,6 +175,13 @@ class ResourceOptions:
     contain new instances.
     """
 
+    using_db = None
+    """
+    DB Connection name to use for db transactions. If not provided,
+    ``router.db_for_write(model)`` will be evaluated and if it's missing,
+    DEFAULT_DB_ALIAS constant ("default") is used.
+    """
+
 
 class DeclarativeMetaclass(type):
 
@@ -176,7 +198,7 @@ class DeclarativeMetaclass(type):
                 # Collect the Meta options
                 options = getattr(base, 'Meta', None)
                 for option in [option for option in dir(options)
-                               if not option.startswith('_')]:
+                               if not option.startswith('_') and hasattr(options, option)]:
                     setattr(meta, option, getattr(options, option))
 
         # Add direct fields
@@ -193,7 +215,7 @@ class DeclarativeMetaclass(type):
         # Add direct options
         options = getattr(new_class, 'Meta', None)
         for option in [option for option in dir(options)
-                       if not option.startswith('_')]:
+                       if not option.startswith('_') and hasattr(options, option)]:
             setattr(meta, option, getattr(options, option))
         new_class._meta = meta
 
@@ -272,6 +294,12 @@ class Resource(metaclass=DeclarativeMetaclass):
         Returns the class used to display the diff for an imported instance.
         """
         return Diff
+
+    def get_db_connection_name(self):
+        if self._meta.using_db is None:
+            return router.db_for_write(self._meta.model)
+        else:
+            return self._meta.using_db
 
     def get_use_transactions(self):
         if self._meta.use_transactions is None:
@@ -487,18 +515,18 @@ class Resource(metaclass=DeclarativeMetaclass):
         """
         pass
 
-    def import_field(self, field, obj, data, is_m2m=False):
+    def import_field(self, field, obj, data, is_m2m=False, **kwargs):
         """
         Calls :meth:`import_export.fields.Field.save` if ``Field.attribute``
-        and ``Field.column_name`` are found in ``data``.
+        is specified, and ``Field.column_name`` is found in ``data``.
         """
         if field.attribute and field.column_name in data:
-            field.save(obj, data, is_m2m)
+            field.save(obj, data, is_m2m, **kwargs)
 
     def get_import_fields(self):
         return self.get_fields()
 
-    def import_obj(self, obj, data, dry_run):
+    def import_obj(self, obj, data, dry_run, **kwargs):
         """
         Traverses every field in this Resource and calls
         :meth:`~import_export.resources.Resource.import_field`. If
@@ -510,7 +538,7 @@ class Resource(metaclass=DeclarativeMetaclass):
             if isinstance(field.widget, widgets.ManyToManyWidget):
                 continue
             try:
-                self.import_field(field, obj, data)
+                self.import_field(field, obj, data, **kwargs)
             except ValueError as e:
                 errors[field.attribute] = ValidationError(
                     force_str(e), code="invalid")
@@ -547,11 +575,14 @@ class Resource(metaclass=DeclarativeMetaclass):
         """
         Returns ``True`` if ``row`` importing should be skipped.
 
-        Default implementation returns ``False`` unless skip_unchanged == True,
-        or skip_diff == True.
+        Default implementation returns ``False`` unless skip_unchanged == True
+        and skip_diff == False.
 
         If skip_diff is True, then no comparisons can be made because ``original``
         will be None.
+
+        When left unspecified, skip_diff and skip_unchanged both default to ``False``, 
+        and rows are never skipped. 
 
         Override this method to handle skipping rows meeting certain
         conditions.
@@ -650,13 +681,14 @@ class Resource(metaclass=DeclarativeMetaclass):
                         diff.compare_with(self, None, dry_run)
                 else:
                     row_result.import_type = RowResult.IMPORT_TYPE_DELETE
+                    row_result.add_instance_info(instance)
                     self.delete_instance(instance, using_transactions, dry_run)
                     if not skip_diff:
                         diff.compare_with(self, None, dry_run)
             else:
                 import_validation_errors = {}
                 try:
-                    self.import_obj(instance, row, dry_run)
+                    self.import_obj(instance, row, dry_run, **kwargs)
                 except ValidationError as e:
                     # Validation errors from import_obj() are passed on to
                     # validate_instance(), where they can be combined with model
@@ -668,13 +700,11 @@ class Resource(metaclass=DeclarativeMetaclass):
                     self.validate_instance(instance, import_validation_errors)
                     self.save_instance(instance, using_transactions, dry_run)
                     self.save_m2m(instance, row, using_transactions, dry_run)
-                    # Add object info to RowResult for LogEntry
-                    row_result.object_id = instance.pk
-                    row_result.object_repr = force_str(instance)
+                    row_result.add_instance_info(instance)
                 if not skip_diff:
                     diff.compare_with(self, instance, dry_run)
 
-            if not skip_diff:
+            if not skip_diff and not self._meta.skip_html_diff:
                 row_result.diff = diff.as_html()
             self.after_import_row(row, row_result, **kwargs)
 
@@ -704,7 +734,8 @@ class Resource(metaclass=DeclarativeMetaclass):
         return row_result
 
     def import_data(self, dataset, dry_run=False, raise_errors=False,
-                    use_transactions=None, collect_failed_rows=False, **kwargs):
+                    use_transactions=None, collect_failed_rows=False,
+                    rollback_on_validation_errors=False, **kwargs):
         """
         Imports data from ``tablib.Dataset``. Refer to :doc:`import_workflow`
         for a more complete description of the whole import process.
@@ -720,6 +751,9 @@ class Resource(metaclass=DeclarativeMetaclass):
         :param collect_failed_rows: If ``True`` the import process will collect
             failed rows.
 
+        :param rollback_on_validation_errors: If both ``use_transactions`` and ``rollback_on_validation_errors``
+            are set to ``True``, the import process will be rolled back in case of ValidationError.
+
         :param dry_run: If ``dry_run`` is set, or an error occurs, if a transaction
             is being used, it will be rolled back.
         """
@@ -727,7 +761,8 @@ class Resource(metaclass=DeclarativeMetaclass):
         if use_transactions is None:
             use_transactions = self.get_use_transactions()
 
-        connection = connections[DEFAULT_DB_ALIAS]
+        db_connection = self.get_db_connection_name()
+        connection = connections[db_connection]
         supports_transactions = getattr(connection.features, "supports_transactions", False)
 
         if use_transactions and not supports_transactions:
@@ -738,21 +773,26 @@ class Resource(metaclass=DeclarativeMetaclass):
         if self._meta.batch_size is not None and (not isinstance(self._meta.batch_size, int) or self._meta.batch_size < 0):
             raise ValueError("Batch size must be a positive integer")
 
-        with atomic_if_using_transaction(using_transactions):
-            return self.import_data_inner(dataset, dry_run, raise_errors, using_transactions, collect_failed_rows, **kwargs)
+        with atomic_if_using_transaction(using_transactions, using=db_connection):
+            return self.import_data_inner(
+                dataset, dry_run, raise_errors, using_transactions, collect_failed_rows,
+                rollback_on_validation_errors, **kwargs)
 
-    def import_data_inner(self, dataset, dry_run, raise_errors, using_transactions, collect_failed_rows, **kwargs):
+    def import_data_inner(
+            self, dataset, dry_run, raise_errors, using_transactions,
+            collect_failed_rows, rollback_on_validation_errors=False, **kwargs):
         result = self.get_result_class()()
         result.diff_headers = self.get_diff_headers()
         result.total_rows = len(dataset)
+        db_connection = self.get_db_connection_name()
 
         if using_transactions:
             # when transactions are used we want to create/update/delete object
             # as transaction will be rolled back if dry_run is set
-            sp1 = savepoint()
+            sp1 = savepoint(using=db_connection)
 
         try:
-            with atomic_if_using_transaction(using_transactions):
+            with atomic_if_using_transaction(using_transactions, using=db_connection):
                 self.before_import(dataset, using_transactions, dry_run, **kwargs)
         except Exception as e:
             logger.debug(e, exc_info=e)
@@ -770,7 +810,7 @@ class Resource(metaclass=DeclarativeMetaclass):
             result.add_dataset_headers(dataset.headers)
 
         for i, row in enumerate(dataset.dict, 1):
-            with atomic_if_using_transaction(using_transactions):
+            with atomic_if_using_transaction(using_transactions, using=db_connection):
                 row_result = self.import_row(
                     row,
                     instance_loader,
@@ -799,13 +839,13 @@ class Resource(metaclass=DeclarativeMetaclass):
 
         if self._meta.use_bulk:
             # bulk persist any instances which are still pending
-            with atomic_if_using_transaction(using_transactions):
+            with atomic_if_using_transaction(using_transactions, using=db_connection):
                 self.bulk_create(using_transactions, dry_run, raise_errors)
                 self.bulk_update(using_transactions, dry_run, raise_errors)
                 self.bulk_delete(using_transactions, dry_run, raise_errors)
 
         try:
-            with atomic_if_using_transaction(using_transactions):
+            with atomic_if_using_transaction(using_transactions, using=db_connection):
                 self.after_import(dataset, result, using_transactions, dry_run, **kwargs)
         except Exception as e:
             logger.debug(e, exc_info=e)
@@ -815,10 +855,12 @@ class Resource(metaclass=DeclarativeMetaclass):
                 raise
 
         if using_transactions:
-            if dry_run or result.has_errors():
-                savepoint_rollback(sp1)
+            if dry_run or \
+                    result.has_errors() or \
+                    (rollback_on_validation_errors and result.has_validation_errors()):
+                savepoint_rollback(sp1, using=db_connection)
             else:
-                savepoint_commit(sp1)
+                savepoint_commit(sp1, using=db_connection)
 
         return result
 
@@ -998,7 +1040,9 @@ class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
         'BigIntegerField': widgets.IntegerWidget,
         'PositiveSmallIntegerField': widgets.IntegerWidget,
         'SmallIntegerField': widgets.IntegerWidget,
+        'SmallAutoField': widgets.IntegerWidget,
         'AutoField': widgets.IntegerWidget,
+        'BigAutoField': widgets.IntegerWidget,
         'NullBooleanField': widgets.BooleanWidget,
         'BooleanField': widgets.BooleanWidget,
     }
@@ -1042,7 +1086,11 @@ class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
                 result = getattr(cls, result)(f)
         else:
             try:
-                from django.contrib.postgres.fields import ArrayField, JSONField
+                from django.contrib.postgres.fields import ArrayField
+                try:
+                    from django.db.models import JSONField
+                except ImportError:
+                    from django.contrib.postgres.fields import JSONField
             except ImportError:
                 # ImportError: No module named psycopg2.extras
                 class ArrayField:
@@ -1106,7 +1154,8 @@ class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
         """
         # Adapted from django's loaddata
         if not dry_run and any(r.import_type == RowResult.IMPORT_TYPE_NEW for r in result.rows):
-            connection = connections[DEFAULT_DB_ALIAS]
+            db_connection = self.get_db_connection_name()
+            connection = connections[db_connection]
             sequence_sql = connection.ops.sequence_reset_sql(no_style(), [self._meta.model])
             if sequence_sql:
                 cursor = connection.cursor()

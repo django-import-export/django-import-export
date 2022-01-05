@@ -1,18 +1,19 @@
 import json
-import tablib
 from collections import OrderedDict
 from copy import deepcopy
 from datetime import date
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from unittest import mock, skip, skipIf, skipUnless
 
 import django
+import tablib
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.core.paginator import Paginator
-from django.db import DatabaseError, IntegrityError
+from django.db import IntegrityError
 from django.db.models import Count
+from django.db.utils import ConnectionDoesNotExist
 from django.test import TestCase, TransactionTestCase, skipUnlessDBFeature
 from django.utils.encoding import force_str
 from django.utils.html import strip_tags
@@ -31,7 +32,7 @@ from ..models import (
     Role,
     WithDefault,
     WithDynamicDefault,
-    WithFloatField
+    WithFloatField,
 )
 
 if django.VERSION[0] >= 3:
@@ -93,6 +94,15 @@ class ResourceTestCase(TestCase):
         self.assertIsInstance(self.my_resource._meta,
                               resources.ResourceOptions)
 
+    @mock.patch("builtins.dir")
+    def test_new_handles_null_options(self, mock_dir):
+        # #1163 - simulates a call to dir() returning additional attributes
+        mock_dir.return_value = ['attrs']
+        class A(MyResource):
+            pass
+
+        A()
+
     def test_get_export_order(self):
         self.assertEqual(self.my_resource.get_export_headers(),
                          ['email', 'name', 'extra'])
@@ -132,6 +142,22 @@ class ResourceTestCase(TestCase):
 
         resource = B()
         self.assertEqual(resource._meta.custom_attribute, True)
+
+    def test_get_use_transactions_defined_in_resource(self):
+        class A(MyResource):
+            class Meta:
+                use_transactions = True
+        resource = A()
+        self.assertTrue(resource.get_use_transactions())
+
+    def test_get_field_name_raises_AttributeError(self):
+        err = "Field x does not exists in <class 'core.tests.test_resources.MyResource'> resource"
+        with self.assertRaisesRegex(AttributeError, err):
+            self.my_resource.get_field_name('x')
+
+    def test_init_instance_raises_NotImplementedError(self):
+        with self.assertRaises(NotImplementedError):
+            self.my_resource.init_instance([])
 
 
 class AuthorResource(resources.ModelResource):
@@ -411,6 +437,21 @@ class ModelResourceTest(TestCase):
         self.assertEqual(instance.author_email, 'test@example.com')
         self.assertEqual(instance.price, Decimal("10.25"))
 
+    @mock.patch("import_export.resources.connections")
+    def test_raised_ImproperlyConfigured_if_use_transactions_set_when_transactions_not_supported(self, mock_db_connections):
+        class Features(object):
+            supports_transactions = False
+        class DummyConnection(object):
+            features = Features()
+
+        dummy_connection = DummyConnection()
+        mock_db_connections.__getitem__.return_value = dummy_connection
+        with self.assertRaises(ImproperlyConfigured):
+            self.resource.import_data(
+                self.dataset,
+                use_transactions=True,
+            )
+
     def test_importing_with_line_number_logging(self):
         resource = BookResourceWithLineNumberLogger()
         result = resource.import_data(self.dataset, raise_errors=True)
@@ -427,6 +468,63 @@ class ModelResourceTest(TestCase):
         self.assertTrue(result.has_validation_errors())
         self.assertIs(result.rows[0].import_type, results.RowResult.IMPORT_TYPE_INVALID)
         self.assertIn('birthday', result.invalid_rows[0].field_specific_errors)
+
+    def test_collect_failed_rows(self):
+        resource = ProfileResource()
+        headers = ['id', 'user']
+        # 'user' is a required field, the database will raise an error.
+        row = [None, None]
+        dataset = tablib.Dataset(row, headers=headers)
+        result = resource.import_data(
+            dataset, dry_run=True, use_transactions=True,
+            collect_failed_rows=True,
+        )
+        self.assertEqual(
+            result.failed_dataset.headers,
+            ['id', 'user', 'Error']
+        )
+        self.assertEqual(len(result.failed_dataset), 1)
+        # We can't check the error message because it's package- and version-dependent
+
+    def test_row_result_raise_errors(self):
+        resource = ProfileResource()
+        headers = ['id', 'user']
+        # 'user' is a required field, the database will raise an error.
+        row = [None, None]
+        dataset = tablib.Dataset(row, headers=headers)
+        with self.assertRaises(IntegrityError):
+            resource.import_data(
+                dataset, dry_run=True, use_transactions=True,
+                raise_errors=True,
+            )
+
+    def test_collect_failed_rows_validation_error(self):
+        resource = ProfileResource()
+        row = ['1']
+        dataset = tablib.Dataset(row, headers=['id'])
+        with mock.patch("import_export.resources.Field.save", side_effect=ValidationError("fail!")):
+            result = resource.import_data(
+                dataset, dry_run=True, use_transactions=True,
+                collect_failed_rows=True,
+            )
+        self.assertEqual(
+            result.failed_dataset.headers,
+            ['id', 'Error']
+        )
+        self.assertEqual(1, len(result.failed_dataset), )
+        self.assertEqual('1', result.failed_dataset.dict[0]['id'])
+        self.assertEqual("{'__all__': ['fail!']}", result.failed_dataset.dict[0]['Error'])
+
+    def test_row_result_raise_ValidationError(self):
+        resource = ProfileResource()
+        row = ['1']
+        dataset = tablib.Dataset(row, headers=['id'])
+        with mock.patch("import_export.resources.Field.save", side_effect=ValidationError("fail!")):
+            with self.assertRaisesRegex(ValidationError, "{'__all__': \\['fail!'\\]}") :
+                resource.import_data(
+                    dataset, dry_run=True, use_transactions=True,
+                    raise_errors=True,
+                )
 
     def test_import_data_handles_widget_valueerrors_with_unicode_messages(self):
         resource = AuthorResourceWithCustomWidget()
@@ -527,8 +625,8 @@ class ModelResourceTest(TestCase):
         self.assertTrue(result.has_errors())
         self.assertTrue(result.rows[0].errors)
         actual = result.rows[0].errors[0].error
-        self.assertIsInstance(actual, ValueError)
-        self.assertIn("could not convert string to float", str(actual))
+        self.assertIsInstance(actual, (ValueError, InvalidOperation))
+        self.assertIn(str(actual), {"could not convert string to float", "[<class 'decimal.ConversionSyntax'>]"})
 
     def test_import_data_delete(self):
 
@@ -577,6 +675,18 @@ class ModelResourceTest(TestCase):
         self.assertFalse(resource.before_save_instance_dry_run)
         self.assertFalse(resource.save_instance_dry_run)
         self.assertFalse(resource.after_save_instance_dry_run)
+
+    @mock.patch("core.models.Book.save")
+    def test_save_instance_noop(self, mock_book):
+        book = Book.objects.first()
+        self.resource.save_instance(book, using_transactions=False, dry_run=True)
+        self.assertEqual(0, mock_book.call_count)
+
+    @mock.patch("core.models.Book.save")
+    def test_delete_instance_noop(self, mock_book):
+        book = Book.objects.first()
+        self.resource.delete_instance(book, using_transactions=False, dry_run=True)
+        self.assertEqual(0, mock_book.call_count)
 
     def test_delete_instance_with_dry_run_flag(self):
         class B(BookResource):
@@ -651,7 +761,7 @@ class ModelResourceTest(TestCase):
         self.assertEqual(full_title, '%s by %s' % (self.book.name,
                                                    self.book.author.name))
 
-    def test_widget_fomat_in_fk_field(self):
+    def test_widget_format_in_fk_field(self):
         class B(resources.ModelResource):
 
             class Meta:
@@ -972,6 +1082,22 @@ class ModelResourceTest(TestCase):
         self.assertEqual(WithFloatField.objects.all()[0].f, None)
         self.assertEqual(WithFloatField.objects.all()[1].f, None)
 
+    def test_get_db_connection_name(self):
+        class BookResource(resources.ModelResource):
+            class Meta:
+                using_db = 'other_db'
+
+        self.assertEqual(BookResource().get_db_connection_name(), 'other_db')
+        self.assertEqual(CategoryResource().get_db_connection_name(), 'default')
+
+    def test_import_data_raises_field_for_wrong_db(self):
+        class BookResource(resources.ModelResource):
+            class Meta:
+                using_db = 'wrong_db'
+
+        with self.assertRaises(ConnectionDoesNotExist):
+            BookResource().import_data(self.dataset)
+
 
 class ModelResourceTransactionTest(TransactionTestCase):
     @skipUnlessDBFeature('supports_transactions')
@@ -1041,28 +1167,50 @@ class ModelResourceTransactionTest(TransactionTestCase):
         )
         self.assertTrue(result.has_errors())
 
-    @skipUnlessDBFeature('supports_transactions')
-    def test_multiple_database_errors(self):
-
-        class CategoryResourceDbErrorsResource(CategoryResource):
-
-            def before_import(self, *args, **kwargs):
-                raise DatabaseError()
-
-            def save_instance(self):
-                raise DatabaseError()
-
-        resource = CategoryResourceDbErrorsResource()
-        headers = ['id', 'name']
+    def test_rollback_on_validation_errors_false(self):
+        """ Should create only one instance as the second one raises a ``ValidationError`` """
+        resource = AuthorResource()
+        headers = ['id', 'name', 'birthday']
         rows = [
-            [None, 'foo'],
+            ['', 'A.A.Milne', ''],
+            ['', '123', '1992test-01-18'],  # raises ValidationError
         ]
         dataset = tablib.Dataset(*rows, headers=headers)
         result = resource.import_data(
             dataset,
             use_transactions=True,
+            rollback_on_validation_errors=False,
         )
-        self.assertTrue(result.has_errors())
+
+        # Ensure the validation error raised by the database has been saved.
+        self.assertTrue(result.has_validation_errors())
+
+        # Ensure that valid row resulted in an instance created.
+        self.assertEqual(Author.objects.count(), 1)
+
+    def test_rollback_on_validation_errors_true(self):
+        """
+        Should not create any instances as the second one raises a ``ValidationError``
+        and ``rollback_on_validation_errors`` flag is set
+        """
+        resource = AuthorResource()
+        headers = ['id', 'name', 'birthday']
+        rows = [
+            ['', 'A.A.Milne', ''],
+            ['', '123', '1992test-01-18'],  # raises ValidationError
+        ]
+        dataset = tablib.Dataset(*rows, headers=headers)
+        result = resource.import_data(
+            dataset,
+            use_transactions=True,
+            rollback_on_validation_errors=True,
+        )
+
+        # Ensure the validation error raised by the database has been saved.
+        self.assertTrue(result.has_validation_errors())
+
+        # Ensure the rollback has worked properly, no instances were created.
+        self.assertFalse(Author.objects.exists())
 
 
 class ModelResourceFactoryTest(TestCase):
@@ -1091,27 +1239,13 @@ class PostgresTests(TransactionTestCase):
         except IntegrityError:
             self.fail('IntegrityError was raised.')
 
-    def test_collect_failed_rows(self):
-        resource = ProfileResource()
-        headers = ['id', 'user']
-        # 'user' is a required field, the database will raise an error.
-        row = [None, None]
-        dataset = tablib.Dataset(row, headers=headers)
-        result = resource.import_data(
-            dataset, dry_run=True, use_transactions=True,
-            collect_failed_rows=True,
-        )
-        self.assertEqual(
-            result.failed_dataset.headers,
-            ['id', 'user', 'Error']
-        )
-        self.assertEqual(len(result.failed_dataset), 1)
-        # We can't check the error message because it's package- and version-dependent
-
-
 if 'postgresql' in settings.DATABASES['default']['ENGINE']:
-    from django.contrib.postgres.fields import ArrayField, JSONField
+    from django.contrib.postgres.fields import ArrayField
     from django.db import models
+    try:
+        from django.db.models import JSONField
+    except ImportError:
+        from django.contrib.postgres.fields import JSONField
 
 
     class BookWithChapters(models.Model):
@@ -1285,7 +1419,7 @@ class SkipDiffTest(TestCase):
         self.dataset.append(['', 'A.A.Milne', '1882test-01-18'])
 
     def test_skip_diff(self, mock_diff):
-        with mock.patch("copy.deepcopy") as mock_deep_copy:
+        with mock.patch("import_export.resources.deepcopy") as mock_deep_copy:
             self.resource.import_data(self.dataset)
             mock_diff.return_value.compare_with.assert_not_called()
             mock_diff.return_value.as_html.assert_not_called()
@@ -1302,7 +1436,7 @@ class SkipDiffTest(TestCase):
                 return True
 
         resource = BookResource()
-        with mock.patch("copy.deepcopy") as mock_deep_copy:
+        with mock.patch("import_export.resources.deepcopy") as mock_deep_copy:
             resource.import_data(self.dataset)
             mock_diff.return_value.compare_with.assert_not_called()
             mock_diff.return_value.as_html.assert_not_called()
@@ -1324,11 +1458,28 @@ class SkipDiffTest(TestCase):
 
         resource = BookResource()
 
-        with mock.patch("copy.deepcopy") as mock_deep_copy:
+        with mock.patch("import_export.resources.deepcopy") as mock_deep_copy:
             resource.import_data(self.dataset, dry_run=True)
             mock_diff.return_value.compare_with.assert_not_called()
             mock_diff.return_value.as_html.assert_not_called()
             mock_deep_copy.assert_not_called()
+
+    def test_skip_diff_for_delete_skip_row_not_enabled_new_object(self, mock_diff):
+        class BookResource(resources.ModelResource):
+
+            class Meta:
+                model = Book
+                skip_diff = False
+
+            def for_delete(self, row, instance):
+                return True
+
+        resource = BookResource()
+
+        with mock.patch("import_export.resources.deepcopy") as mock_deep_copy:
+            resource.import_data(self.dataset, dry_run=True)
+            self.assertEqual(1, mock_diff.return_value.compare_with.call_count)
+            self.assertEqual(1, mock_deep_copy.call_count)
 
     def test_skip_row_returns_false_when_skip_diff_is_true(self, mock_diff):
         class BookResource(resources.ModelResource):
@@ -1343,6 +1494,24 @@ class SkipDiffTest(TestCase):
         with mock.patch('import_export.resources.Resource.get_import_fields') as mock_get_import_fields:
             resource.import_data(self.dataset, dry_run=True)
             self.assertEqual(2, mock_get_import_fields.call_count)
+
+
+class SkipHtmlDiffTest(TestCase):
+
+    def test_skip_html_diff(self):
+        class BookResource(resources.ModelResource):
+
+            class Meta:
+                model = Book
+                skip_html_diff = True
+
+        resource = BookResource()
+        self.dataset = tablib.Dataset(headers=['id', 'name', 'birthday'])
+        self.dataset.append(['', 'A.A.Milne', '1882test-01-18'])
+
+        with mock.patch('import_export.resources.Diff.as_html') as mock_as_html:
+            resource.import_data(self.dataset, dry_run=True)
+            mock_as_html.assert_not_called()
 
 
 class BulkTest(TestCase):

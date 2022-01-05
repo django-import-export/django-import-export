@@ -1,7 +1,7 @@
 .PHONY: clean-pyc clean-build release docs help
 .PHONY: lint test coverage test-codecov
 .DEFAULT_GOAL := help
-RUN_TEST_COMMAND=PYTHONPATH=".:tests:${PYTHONPATH}" django-admin.py test core --settings=settings
+RUN_TEST_COMMAND=PYTHONPATH=".:tests:${PYTHONPATH}" django-admin test core --settings=settings
 help:
 	@grep '^[a-zA-Z]' $(MAKEFILE_LIST) | sort | awk -F ':.*?## ' 'NF==2 {printf "\033[36m  %-25s\033[0m %s\n", $$1, $$2}'
 
@@ -23,13 +23,13 @@ clean-tests: ## remove pytest artifacts
 	rm -fr django-import-export/
 
 lint: ## check style with isort
-	isort --check-only
+	isort --check-only .
 
 test: ## run tests quickly with the default Python
 	$(RUN_TEST_COMMAND)
 
 messages: ## generate locale file translations
-	cd import_export && django-admin.py makemessages && cd ..
+	cd import_export && django-admin makemessages -a && django-admin compilemessages && cd ..
 
 coverage: ## generates codecov report
 	coverage run --omit='setup.py,tests/*' --source=. tests/manage.py test core --settings=

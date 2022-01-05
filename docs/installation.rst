@@ -58,7 +58,7 @@ Can be overridden on a ``Resource`` class by setting the
 ``IMPORT_EXPORT_SKIP_ADMIN_LOG``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If set to ``True``, skips the creation of amdin log entries when importing.
+If set to ``True``, skips the creation of admin log entries when importing.
 Defaults to ``False``. This can speed up importing large data sets, at the cost
 of losing an audit trail.
 
@@ -110,12 +110,12 @@ Example app
 
 There's an example application that showcases what django-import-export can do.
 It's assumed that you have set up a Python ``venv`` with all required dependencies
-or are otherwise able to run Django locally.
+(from ``test.txt`` requirements file) and are able to run Django locally.
 
-You can run it via::
+You can run the example application as follows::
 
     cd tests
-    ./manage.py makemigration
+    ./manage.py makemigrations
     ./manage.py migrate
     ./manage.py createsuperuser
     ./manage.py loaddata category.json book.json
