@@ -49,6 +49,20 @@ class MyResource(resources.Resource):
     class Meta:
         export_order = ('email', 'name')
 
+class MyLimitedResource(resources.ModelResource):
+    class Meta:
+        model = Book
+        fields = ('name','author')
+
+
+class LimitedResourceTestCase(TestCase):
+    def setUp(self):
+        self.my_resource = MyLimitedResource()
+        self.book = Book.objects.create(name="Some book")
+
+    def test_export(self):
+        # Make sure the query defers the loading of fields not mentioned in the Resource 
+        self.assertEqual(self.my_resource.get_queryset().query.deferred_loading[0], {'name', 'author'})
 
 class ResourceTestCase(TestCase):
 
