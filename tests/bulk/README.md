@@ -163,6 +163,19 @@ def get_or_init_instance(self, instance_loader, row):
 | `use_bulk=True, batch_size=None`   | 14.08       | 39.40         |
 | `use_bulk=True, batch_size=1000`   | 15.37       | 32.70         |
 
+#### bulk export
+
+Should show a clear difference in performance depending on the number of fields selected.
+
+```bash
+./manage.py runscript bulk_export
+```
+
+| Condition      | Time (secs) | Memory (MB) |
+| -------------- | ----------- | ----------- |
+| limited export | 0.2999      | 0.0273      |
+| normal export  | 0.0625      | 0.0625      |
+
 ### Checking DB
 
 Note that the db is cleared down after each test run.
@@ -186,6 +199,7 @@ docker-compose -f bulk/docker-compose.yml down -v
 deactivate
 rmvirtualenv djangoimportexport
 ```
+
 
 ### References
 
