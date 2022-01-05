@@ -11,13 +11,28 @@ from memory_profiler import memory_usage
 
 from import_export import resources
 from import_export.instance_loaders import CachedInstanceLoader
-
+from .bulk_import import _BookResource
 from core.models import Book    # isort:skip
 # from .bulk_import import _BookResource
 
 # The number of rows to be created on each profile run.
 # Increase this value for greater load testing.
 NUM_ROWS = 10000
+
+
+class _BookResource(resources.ModelResource):
+
+    class Meta:
+        model = Book
+        fields = ('id', 'name', 'author_email', 'price', 'imported', 'published', 'published_time', 'added')
+        use_bulk = True
+        batch_size = 1000
+        skip_unchanged = True
+        #skip_diff = True
+        # This flag can speed up imports
+        # Cannot be used when performing updates
+        # force_init_instance = True
+        instance_loader_class = CachedInstanceLoader
 
 
 class _LimitedBookResource(resources.ModelResource):
