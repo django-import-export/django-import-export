@@ -56,6 +56,9 @@ class TablibFormat(Format):
     TABLIB_MODULE = None
     CONTENT_TYPE = 'application/octet-stream'
 
+    def __init__(self, encoding=None):
+        self.encoding = encoding
+
     def get_format(self):
         """
         Import and returns tablib module.
@@ -96,6 +99,12 @@ class TablibFormat(Format):
 
 
 class TextFormat(TablibFormat):
+
+    def create_dataset(self, in_stream, **kwargs):
+        if isinstance(in_stream, bytes) and self.encoding:
+            in_stream = in_stream.decode(self.encoding)
+        return super().create_dataset(in_stream, **kwargs)
+
     def get_read_mode(self):
         return 'r'
 
@@ -106,9 +115,6 @@ class TextFormat(TablibFormat):
 class CSV(TextFormat):
     TABLIB_MODULE = 'tablib.formats._csv'
     CONTENT_TYPE = 'text/csv'
-
-    def create_dataset(self, in_stream, **kwargs):
-        return super().create_dataset(in_stream, **kwargs)
 
 
 class JSON(TextFormat):

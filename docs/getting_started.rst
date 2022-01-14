@@ -340,9 +340,13 @@ mixins (:class:`~import_export.admin.ImportMixin`,
 
     admin.site.register(Book, BookAdmin)
 
+.. _change-screen-figure:
+
 .. figure:: _static/images/django-import-export-change.png
 
    A screenshot of the change view with Import and Export buttons.
+
+.. _confirm-import-figure:
 
 .. figure:: _static/images/django-import-export-import.png
 
@@ -477,6 +481,29 @@ as well as importing customizations.
 
     :doc:`/api_admin`
         available mixins and options.
+
+Import confirmation
+~~~~~~~~~~~~~~~~~~~
+
+Importing in the Admin site is a two step process.
+
+#. Choose the file to import (:ref:`screenshot<change-screen-figure>`).
+#. Review changes and confirm import (:ref:`screenshot<confirm-import-figure>`).
+
+To support this, uploaded data is written to temporary storage after step 1, and read
+back for final import after step 2.
+
+There are three mechanisms for temporary storage.
+
+#. Temporary file storage on the host server (default).  This is suitable for development only.
+   Use of temporary filesystem storage is not recommended for production sites.
+
+#. The `Django cache <https://docs.djangoproject.com/en/dev/topics/cache/>`_.
+
+#. `Django storage <https://docs.djangoproject.com/en/dev/ref/files/storage/>`_.
+
+To modify which storage mechanism is used, please refer to :ref:`IMPORT_EXPORT_TMP_STORAGE_CLASS`.
+
 
 Using multiple resources
 ------------------------

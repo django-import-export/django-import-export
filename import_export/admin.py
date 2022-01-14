@@ -18,7 +18,7 @@ from .forms import ConfirmImportForm, ExportForm, ImportForm, export_action_form
 from .mixins import BaseExportMixin, BaseImportMixin
 from .results import RowResult
 from .signals import post_export, post_import
-from .tmp_storages import TempFolderStorage
+from .tmp_storages import MediaStorage, TempFolderStorage
 
 
 class ImportExportMixinBase:
@@ -102,14 +102,14 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
             import_formats = self.get_import_formats()
             input_format = import_formats[
                 int(confirm_form.cleaned_data['input_format'])
-            ]()
+            ](encoding=self.from_encoding)
             encoding = None if input_format.is_binary() else self.from_encoding
             tmp_storage = self.get_tmp_storage_class()(
                 name=confirm_form.cleaned_data['import_file_name'],
                 encoding=encoding
             )
 
-            data = tmp_storage.read(input_format.get_read_mode())
+            data = tmp_storage.read()
             dataset = input_format.create_dataset(data)
             result = self.process_dataset(dataset, confirm_form, request, *args, **kwargs)
 
@@ -215,13 +215,22 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         return {}
 
     def write_to_tmp_storage(self, import_file, input_format):
-        encoding = None if input_format.is_binary() else self.from_encoding
-        tmp_storage = self.get_tmp_storage_class()(encoding=encoding)
+        encoding = None
+        read_mode = 'rb'
+        if not input_format.is_binary():
+            encoding = self.from_encoding
+            read_mode = 'r'
+
+        tmp_storage_cls = self.get_tmp_storage_class()
+        if tmp_storage_cls == MediaStorage:
+            # files are always persisted to MediaStorage as binary
+            read_mode = 'rb'
+        tmp_storage = tmp_storage_cls(encoding=encoding, read_mode=read_mode)
         data = bytes()
         for chunk in import_file.chunks():
             data += chunk
 
-        tmp_storage.save(data, input_format.get_read_mode())
+        tmp_storage.save(data)
         return tmp_storage
 
     def import_action(self, request, *args, **kwargs):
@@ -250,6 +259,9 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
             input_format = import_formats[
                 int(form.cleaned_data['input_format'])
             ]()
+            if not input_format.is_binary():
+                input_format.encoding = self.from_encoding
+
             import_file = form.cleaned_data['import_file']
             # first always write the uploaded file to disk as it may be a
             # memory file or else based on settings upload handlers
@@ -258,7 +270,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
             try:
                 # then read the file, using the proper format-specific mode
                 # warning, big files may exceed memory
-                data = tmp_storage.read(input_format.get_read_mode())
+                data = tmp_storage.read()
                 dataset = input_format.create_dataset(data)
             except Exception as e:
                 form.add_error('import_file',

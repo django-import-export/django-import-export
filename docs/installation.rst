@@ -65,6 +65,8 @@ of losing an audit trail.
 Can be overridden on a ``ModelAdmin`` class inheriting from ``ImportMixin`` by
 setting the ``skip_admin_log`` class attribute.
 
+.. _IMPORT_EXPORT_TMP_STORAGE_CLASS:
+
 ``IMPORT_EXPORT_TMP_STORAGE_CLASS``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

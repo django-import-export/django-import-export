@@ -110,15 +110,16 @@ id,name,author,author_email,imported,published,price,categories
 
     def test_media_storage_read_mode(self):
         # issue 416 - MediaStorage does not respect the read_mode parameter.
+        # tests that platform specific line endings are converted when reading in text mode
+        # see https://docs.python.org/3/tutorial/inputoutput.html#reading-and-writing-files
         test_string = self.test_string.replace(b'\n', b'\r')
 
         tmp_storage = MediaStorage()
         tmp_storage.save(test_string)
         name = tmp_storage.name
 
-        tmp_storage = MediaStorage(name=name)
-        self.assertEqual(self.test_string.decode(),
-                         tmp_storage.read(read_mode='r'))
+        tmp_storage = MediaStorage(name=name, read_mode='r')
+        self.assertEqual(self.test_string.decode(), tmp_storage.read())
 
     def test_media_storage_read_with_encoding(self):
         tmp_storage = TestMediaStorage()
