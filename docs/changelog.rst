@@ -14,7 +14,7 @@ This release makes the following changes to the API.  You may need to update you
 
 - Refactor admin import to include encoding param (#1306)
     - Admin user interface: If an exception is thrown when attempting to read a file then this error is presented as a form error, instead of being written directly back in the response HTML.  If you have any code or process which checks the HTML response for the error (i.e. wrapped in H1 HTML tags) then this will need to be updated to handle the errors which are now returned as form errors.
-    - This change also refactors the `tmp_storages` interface.  If you have made any changes which call the `tmp_storages` interface, then these will need to be updated.
+    - This change also refactors the `tmp_storages` interface.  If you have added any custom code which calls the `tmp_storages` interface, then these changes will need to be updated.
 
 - Use 'create' flag instead of instance.pk (#1362)
     - ``import_export.resources.save_instance()`` now takes an additional mandatory argument: `is_create`. If you have over-ridden `save_instance()` in your own code, you will need to add this new argument.
@@ -29,13 +29,18 @@ Enhancements
 ############
 
 - Updated import.css to support dark mode (#1370)
-- Admin site: Refactored reading bytes from temporary storage to address decoding issues (#1306)
 
 Development
 ###########
 
 - Drop support for python3.6, django 2.2, 3.0, 3.1 (#1366)
 - Increased test coverage, refactored CI build to use tox (#1372)
+
+Documentation
+#############
+
+- Usage of multiple resources (#1223)
+- Clarified issues around the usage of temporary storage (#1306)
 
 2.7.1 (2021-12-23)
 ------------------

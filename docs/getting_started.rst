@@ -502,7 +502,23 @@ There are three mechanisms for temporary storage.
 
 #. `Django storage <https://docs.djangoproject.com/en/dev/ref/files/storage/>`_.
 
-To modify which storage mechanism is used, please refer to :ref:`IMPORT_EXPORT_TMP_STORAGE_CLASS`.
+To modify which storage mechanism is used, please refer to the setting :ref:`IMPORT_EXPORT_TMP_STORAGE_CLASS`.
+
+Temporary resources are removed when data is successfully imported after the confirmation step.
+
+Your choice of temporary storage will be influenced by the following factors:
+
+* Sensitivity of the data being imported.
+* Volume and frequency of uploads.
+* File upload size.
+* Use of containers or load-balanced servers.
+
+.. warning::
+
+    If users do not complete the confirmation step of the workflow,
+    or if there are errors during import, then temporary resources may not be deleted.
+    This will need to be understood and managed in production settings.
+    For example, using a cache expiration policy or cron job to clear stale resources.
 
 
 Using multiple resources
