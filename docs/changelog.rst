@@ -4,7 +4,7 @@ Changelog
 2.7.2 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Fix crash when import_data() called with empty Dataset and `collect_failed_rows=True` (#1381)
 
 
 2.7.1 (2021-12-23)
