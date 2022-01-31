@@ -29,7 +29,7 @@ class BaseImportExportMixin:
                 "Please implement the new 'get_resource_classes()' method",
                 DeprecationWarning,
             )
-            return self.get_resource_class()
+            return [self.get_resource_class()]
         if self.resource_class:
             warnings.warn(
                 "The 'resource_class' field has been deprecated. "
