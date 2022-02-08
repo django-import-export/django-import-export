@@ -661,6 +661,7 @@ class Resource(metaclass=DeclarativeMetaclass):
         """
         skip_diff = self._meta.skip_diff
         row_result = self.get_row_result_class()()
+        row_result.raw_values = row
         original = None
         try:
             self.before_import_row(row, **kwargs)
