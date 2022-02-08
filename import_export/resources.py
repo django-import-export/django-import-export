@@ -607,7 +607,12 @@ class Resource(metaclass=DeclarativeMetaclass):
                 else:
                     instance_value = list(field.get_value(instance).all())
 
-                if instance_value != list(field.get_value(original).all()):
+                original_value = list(field.get_value(original).all())
+
+                instance_value.sort(key=lambda x: x.pk)
+                original_value.sort(key=lambda x: x.pk)
+
+                if instance_value != original_value:
                     return False
             except AttributeError:
                 if field.get_value(instance) != field.get_value(original):
