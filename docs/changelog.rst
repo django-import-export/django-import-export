@@ -1,11 +1,38 @@
 Changelog
 =========
 
-2.7.2 (unreleased)
+3.0.0 (unreleased)
 ------------------
 
-- Nothing changed yet.
+Breaking changes
+################
 
+This release makes the following changes to the API.  You may need to update your implementation to accommodate these changes.
+
+- Check value of ManyToManyField in skip_row() (#1271)
+    - This fixes an issue where ManyToMany fields are not checked correctly in `skip_row()`.  This means that `skip_row()` now takes `row` as a mandatory arg.  If you have overridden `skip_row()` in your own implementation, you will need to add `row` as an arg.
+
+- Use 'create' flag instead of instance.pk (#1362)
+    - `import_export.resources.save_instance()` now takes an additional mandatory argument: `is_create`.  If you have over-ridden `save_instance()` in your own code, you will need to add this new argument.
+
+- Add support for multiple resources in ModelAdmin. (#1223)
+
+   - The `*Mixin.resource_class` accepting single resource has been deprecated (will work for few next versions) and the new `*Mixin.resource_classes` accepting subscriptable type (list, tuple, ...) has been added.
+
+   - Same applies to all of the `get_resource_class`, `get_import_resource_class` and `get_export_resource_class` methods.
+
+- Deprecated `exceptions.py` - this module will be removed in a future release (#1372)
+
+Enhancements
+############
+
+- Updated import.css to support dark mode (#1370)
+
+Development
+###########
+
+- Drop support for python3.6, django 2.2, 3.0, 3.1 (#1366)
+- Increased test coverage, refactored CI build to use tox (#1372)
 
 2.7.1 (2021-12-23)
 ------------------
