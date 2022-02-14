@@ -2184,7 +2184,7 @@ class RawValueTest(TestCase):
         class _BookResource(resources.ModelResource):
             class Meta:
                 model = Book
-                store_raw_values = True
+                store_row_values = True
 
         self.resource = _BookResource()
 
