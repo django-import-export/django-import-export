@@ -477,8 +477,8 @@ class ModelResourceTest(TestCase):
         self.assertTrue(result.rows[0].diff)
         self.assertEqual(result.rows[0].import_type,
                          results.RowResult.IMPORT_TYPE_UPDATE)
-        self.assertEqual(result.rows[0].raw_values.get('name'), None)
-        self.assertEqual(result.rows[0].raw_values.get('author_email'), None)
+        self.assertEqual(result.rows[0].row_values.get('name'), None)
+        self.assertEqual(result.rows[0].row_values.get('author_email'), None)
 
         instance = Book.objects.get(pk=self.book.pk)
         self.assertEqual(instance.author_email, 'test@example.com')
@@ -2202,6 +2202,6 @@ class RawValueTest(TestCase):
         self.assertTrue(result.rows[0].diff)
         self.assertEqual(result.rows[0].import_type,
                          results.RowResult.IMPORT_TYPE_UPDATE)
-        self.assertEqual(result.rows[0].raw_values.get('name'), 'Some book')
-        self.assertEqual(result.rows[0].raw_values.get('author_email'), 'test@example.com')
-        self.assertEqual(result.rows[0].raw_values.get('price'), '10.25')
+        self.assertEqual(result.rows[0].row_values.get('name'), 'Some book')
+        self.assertEqual(result.rows[0].row_values.get('author_email'), 'test@example.com')
+        self.assertEqual(result.rows[0].row_values.get('price'), '10.25')
