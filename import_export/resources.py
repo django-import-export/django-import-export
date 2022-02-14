@@ -179,7 +179,8 @@ class ResourceOptions:
     store_row_values = False
     """
     If True, each row's raw data will be stored in each row result.
-    Enabling this parameter will increase the memory usage during import which should be considered when importing large datasets.
+    Enabling this parameter will increase the memory usage during import
+    which should be considered when importing large datasets.
     """
 
 
