@@ -516,6 +516,21 @@ class ModelResourceTest(TestCase):
         self.assertIs(result.rows[0].import_type, results.RowResult.IMPORT_TYPE_INVALID)
         self.assertIn('birthday', result.invalid_rows[0].field_specific_errors)
 
+    def test_import_data_raises_field_specific_validation_errors_with_skip_unchanged(self):
+        resource = AuthorResource()
+        resource._meta.skip_unchanged = True
+
+        author = Author.objects.create(name="Some author")
+
+        dataset = tablib.Dataset(headers=['id', 'birthday'])
+        dataset.append([author.id, '1882test-01-18'])
+
+        result = resource.import_data(dataset, raise_errors=False)
+
+        self.assertTrue(result.has_validation_errors())
+        self.assertIs(result.rows[0].import_type, results.RowResult.IMPORT_TYPE_INVALID)
+        self.assertIn('birthday', result.invalid_rows[0].field_specific_errors)
+
     def test_collect_failed_rows(self):
         resource = ProfileResource()
         headers = ['id', 'user']

@@ -577,7 +577,7 @@ class Resource(metaclass=DeclarativeMetaclass):
         """
         return False
 
-    def skip_row(self, instance, original, row):
+    def skip_row(self, instance, original, row, import_validation_errors=None):
         """
         Returns ``True`` if ``row`` importing should be skipped.
 
@@ -588,7 +588,11 @@ class Resource(metaclass=DeclarativeMetaclass):
         will be None.
 
         When left unspecified, skip_diff and skip_unchanged both default to ``False``, 
-        and rows are never skipped. 
+        and rows are never skipped.
+
+        By default, rows are not skipped if validation errors have been detected
+        during import.  You can change this behavior and choose to ignore validation
+        errors by overriding this method.
 
         Override this method to handle skipping rows meeting certain
         conditions.
@@ -596,12 +600,12 @@ class Resource(metaclass=DeclarativeMetaclass):
         Use ``super`` if you want to preserve default handling while overriding
         ::
             class YourResource(ModelResource):
-                def skip_row(self, instance, original):
+                def skip_row(self, instance, original, row, import_validation_errors=None):
                     # Add code here
-                    return super(YourResource, self).skip_row(instance, original)
+                    return super().skip_row(instance, original, row, import_validation_errors=import_validation_errors)
 
         """
-        if not self._meta.skip_unchanged or self._meta.skip_diff:
+        if not self._meta.skip_unchanged or self._meta.skip_diff or import_validation_errors:
             return False
         for field in self.get_import_fields():
             try:
@@ -708,7 +712,7 @@ class Resource(metaclass=DeclarativeMetaclass):
                     # validate_instance(), where they can be combined with model
                     # instance validation errors if necessary
                     import_validation_errors = e.update_error_dict(import_validation_errors)
-                if self.skip_row(instance, original, row):
+                if self.skip_row(instance, original, row, import_validation_errors):
                     row_result.import_type = RowResult.IMPORT_TYPE_SKIP
                 else:
                     self.validate_instance(instance, import_validation_errors)
