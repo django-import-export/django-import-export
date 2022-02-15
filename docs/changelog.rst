@@ -31,6 +31,7 @@ Enhancements
 
 - Updated import.css to support dark mode (#1370)
 - Default format selections set correctly for export action (#1389)
+- Added option to store raw row values in each row's `RowResult` (#1393)
 
 Development
 ###########

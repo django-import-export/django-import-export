@@ -176,6 +176,13 @@ class ResourceOptions:
     DEFAULT_DB_ALIAS constant ("default") is used.
     """
 
+    store_row_values = False
+    """
+    If True, each row's raw data will be stored in each row result.
+    Enabling this parameter will increase the memory usage during import
+    which should be considered when importing large datasets.
+    """
+
 
 class DeclarativeMetaclass(type):
 
@@ -671,6 +678,8 @@ class Resource(metaclass=DeclarativeMetaclass):
         """
         skip_diff = self._meta.skip_diff
         row_result = self.get_row_result_class()()
+        if self._meta.store_row_values:
+            row_result.row_values = row
         original = None
         try:
             self.before_import_row(row, **kwargs)
