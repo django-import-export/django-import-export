@@ -7,7 +7,7 @@ Changelog
 Breaking changes
 ################
 
-This release makes the following changes to the API.  You may need to update your implementation to accommodate these changes.
+This release makes some minor changes to the public API.  If you have overridden any methods from the `resources` module, you may need to update your implementation to accommodate these changes.
 
 - Check value of ManyToManyField in skip_row() (#1271)
     - This fixes an issue where ManyToMany fields are not checked correctly in `skip_row()`.  This means that `skip_row()` now takes `row` as a mandatory arg.  If you have overridden `skip_row()` in your own implementation, you will need to add `row` as an arg.
@@ -16,15 +16,20 @@ This release makes the following changes to the API.  You may need to update you
   - If you have overridden `skip_row()` you can choose whether or not to skip rows if validation errors are present.  The default behavior is to not to skip rows if there are validation errors during import.
 
 - Use 'create' flag instead of instance.pk (#1362)
-    - `import_export.resources.save_instance()` now takes an additional mandatory argument: `is_create`.  If you have over-ridden `save_instance()` in your own code, you will need to add this new argument.
+    - `import_export.resources.save_instance()` now takes an additional mandatory argument: `is_create`.  If you have overridden `save_instance()` in your own code, you will need to add this new argument.
+
+Deprecations
+############
+
+This release adds some deprecations which will be removed in the 3.1 release.
 
 - Add support for multiple resources in ModelAdmin. (#1223)
 
-   - The `*Mixin.resource_class` accepting single resource has been deprecated (will work for few next versions) and the new `*Mixin.resource_classes` accepting subscriptable type (list, tuple, ...) has been added.
+   - The `*Mixin.resource_class` accepting single resource has been deprecated and the new `*Mixin.resource_classes` accepting subscriptable type (list, tuple, ...) has been added.
 
    - Same applies to all of the `get_resource_class`, `get_import_resource_class` and `get_export_resource_class` methods.
 
-- Deprecated `exceptions.py` - this module will be removed in a future release (#1372)
+- Deprecated `exceptions.py` (#1372)
 
 Enhancements
 ############
@@ -38,6 +43,11 @@ Development
 
 - Drop support for python3.6, django 2.2, 3.0, 3.1 (#1366)
 - Increased test coverage, refactored CI build to use tox (#1372)
+
+Documentation
+=============
+
+- Corrected docstring for ForeignKeyWidget.get_queryset() (#1385)
 
 2.7.1 (2021-12-23)
 ------------------
