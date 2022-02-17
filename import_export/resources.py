@@ -4,11 +4,14 @@ import traceback
 from collections import OrderedDict
 from copy import deepcopy
 
-import django
 import tablib
 from diff_match_patch import diff_match_patch
 from django.conf import settings
-from django.core.exceptions import ImproperlyConfigured, ValidationError
+from django.core.exceptions import (
+    FieldDoesNotExist,
+    ImproperlyConfigured,
+    ValidationError,
+)
 from django.core.management.color import no_style
 from django.core.paginator import Paginator
 from django.db import connections, router
@@ -29,12 +32,6 @@ from .instance_loaders import ModelInstanceLoader
 from .results import Error, Result, RowResult
 from .utils import atomic_if_using_transaction
 
-if django.VERSION[0] >= 3:
-    from django.core.exceptions import FieldDoesNotExist
-else:
-    from django.db.models.fields import FieldDoesNotExist
-
-
 logger = logging.getLogger(__name__)
 # Set default logging handler to avoid "No handler found" warnings.
 logger.addHandler(logging.NullHandler())
@@ -43,9 +40,6 @@ logger.addHandler(logging.NullHandler())
 def get_related_model(field):
     if hasattr(field, 'related_model'):
         return field.related_model
-    # Django 1.6, 1.7
-    if field.rel:
-        return field.rel.to
 
 
 class ResourceOptions:
@@ -180,6 +174,13 @@ class ResourceOptions:
     DB Connection name to use for db transactions. If not provided,
     ``router.db_for_write(model)`` will be evaluated and if it's missing,
     DEFAULT_DB_ALIAS constant ("default") is used.
+    """
+
+    store_row_values = False
+    """
+    If True, each row's raw data will be stored in each row result.
+    Enabling this parameter will increase the memory usage during import
+    which should be considered when importing large datasets.
     """
 
 
@@ -455,18 +456,24 @@ class Resource(metaclass=DeclarativeMetaclass):
         if errors:
             raise ValidationError(errors)
 
-    def save_instance(self, instance, using_transactions=True, dry_run=False):
+    def save_instance(self, instance, is_create, using_transactions=True, dry_run=False):
         """
         Takes care of saving the object to the database.
 
         Objects can be created in bulk if ``use_bulk`` is enabled.
+
+        :param instance: The instance of the object to be persisted.
+        :param is_create: A boolean flag to indicate whether this is a new object
+        to be created, or an existing object to be updated.
+        :param using_transactions: A flag to indicate whether db transactions are used.
+        :param dry_run: A flag to indicate dry-run mode.
         """
         self.before_save_instance(instance, using_transactions, dry_run)
         if self._meta.use_bulk:
-            if instance.pk:
-                self.update_instances.append(instance)
-            else:
+            if is_create:
                 self.create_instances.append(instance)
+            else:
+                self.update_instances.append(instance)
         else:
             if not using_transactions and dry_run:
                 # we don't have transactions and we want to do a dry_run
@@ -571,7 +578,7 @@ class Resource(metaclass=DeclarativeMetaclass):
         """
         return False
 
-    def skip_row(self, instance, original):
+    def skip_row(self, instance, original, row, import_validation_errors=None):
         """
         Returns ``True`` if ``row`` importing should be skipped.
 
@@ -582,7 +589,11 @@ class Resource(metaclass=DeclarativeMetaclass):
         will be None.
 
         When left unspecified, skip_diff and skip_unchanged both default to ``False``, 
-        and rows are never skipped. 
+        and rows are never skipped.
+
+        By default, rows are not skipped if validation errors have been detected
+        during import.  You can change this behavior and choose to ignore validation
+        errors by overriding this method.
 
         Override this method to handle skipping rows meeting certain
         conditions.
@@ -590,18 +601,24 @@ class Resource(metaclass=DeclarativeMetaclass):
         Use ``super`` if you want to preserve default handling while overriding
         ::
             class YourResource(ModelResource):
-                def skip_row(self, instance, original):
+                def skip_row(self, instance, original, row, import_validation_errors=None):
                     # Add code here
-                    return super(YourResource, self).skip_row(instance, original)
+                    return super().skip_row(instance, original, row, import_validation_errors=import_validation_errors)
 
         """
-        if not self._meta.skip_unchanged or self._meta.skip_diff:
+        if not self._meta.skip_unchanged or self._meta.skip_diff or import_validation_errors:
             return False
         for field in self.get_import_fields():
             try:
                 # For fields that are models.fields.related.ManyRelatedManager
                 # we need to compare the results
-                if list(field.get_value(instance).all()) != list(field.get_value(original).all()):
+                if isinstance(field.widget, widgets.ManyToManyWidget):
+                    # compare with the future value to detect changes
+                    instance_value = list(field.clean(row))
+                else:
+                    instance_value = list(field.get_value(instance).all())
+
+                if instance_value != list(field.get_value(original).all()):
                     return False
             except AttributeError:
                 if field.get_value(instance) != field.get_value(original):
@@ -661,6 +678,8 @@ class Resource(metaclass=DeclarativeMetaclass):
         """
         skip_diff = self._meta.skip_diff
         row_result = self.get_row_result_class()()
+        if self._meta.store_row_values:
+            row_result.row_values = row
         original = None
         try:
             self.before_import_row(row, **kwargs)
@@ -694,11 +713,11 @@ class Resource(metaclass=DeclarativeMetaclass):
                     # validate_instance(), where they can be combined with model
                     # instance validation errors if necessary
                     import_validation_errors = e.update_error_dict(import_validation_errors)
-                if self.skip_row(instance, original):
+                if self.skip_row(instance, original, row, import_validation_errors):
                     row_result.import_type = RowResult.IMPORT_TYPE_SKIP
                 else:
                     self.validate_instance(instance, import_validation_errors)
-                    self.save_instance(instance, using_transactions, dry_run)
+                    self.save_instance(instance, new, using_transactions, dry_run)
                     self.save_m2m(instance, row, using_transactions, dry_run)
                     row_result.add_instance_info(instance)
                 if not skip_diff:
@@ -1045,6 +1064,7 @@ class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
         'BigAutoField': widgets.IntegerWidget,
         'NullBooleanField': widgets.BooleanWidget,
         'BooleanField': widgets.BooleanWidget,
+        'JSONField': widgets.JSONWidget,
     }
 
     @classmethod
@@ -1071,7 +1091,7 @@ class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
         Returns the widget that would likely be associated with each
         Django type.
 
-        Includes mapping of Postgres Array and JSON fields. In the case that
+        Includes mapping of Postgres Array field. In the case that
         psycopg2 is not installed, we consume the error and process the field
         regardless.
         """
@@ -1087,22 +1107,13 @@ class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
         else:
             try:
                 from django.contrib.postgres.fields import ArrayField
-                try:
-                    from django.db.models import JSONField
-                except ImportError:
-                    from django.contrib.postgres.fields import JSONField
             except ImportError:
                 # ImportError: No module named psycopg2.extras
                 class ArrayField:
                     pass
 
-                class JSONField:
-                    pass
-
             if isinstance(f, ArrayField):
                 return widgets.SimpleArrayWidget
-            elif isinstance(f, JSONField):
-                return widgets.JSONWidget
 
         return result
 
@@ -1161,6 +1172,12 @@ class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
                         cursor.execute(line)
                 finally:
                     cursor.close()
+
+    @classmethod
+    def get_display_name(cls):
+        if hasattr(cls._meta, 'name'):
+            return cls._meta.name
+        return cls.__name__
 
 
 def modelresource_factory(model, resource_class=ModelResource):

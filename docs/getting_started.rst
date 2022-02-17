@@ -388,7 +388,7 @@ mixins (:class:`~import_export.admin.ImportMixin`,
     from import_export.admin import ImportExportModelAdmin
 
     class BookAdmin(ImportExportModelAdmin):
-        resource_class = BookResource
+        resource_classes = [BookResource]
 
     admin.site.register(Book, BookAdmin)
 
@@ -403,6 +403,13 @@ mixins (:class:`~import_export.admin.ImportMixin`,
 .. figure:: _static/images/django-import-export-import-confirm.png
 
    A screenshot of the confirm import view.
+
+
+.. warning::
+
+    The `resource_class` parameter was deprecated in `django-import-export` 3.0.
+    Assign list or tuple with Resource(s) to `resource_classes` parameter now.
+
 
 
 Exporting via admin action
@@ -483,7 +490,7 @@ Customize forms::
 Customize ``ModelAdmin``::
 
     class CustomBookAdmin(ImportMixin, admin.ModelAdmin):
-        resource_class = BookResource
+        resource_classes = [BookResource]
 
         def get_import_form(self):
             return CustomImportForm
@@ -512,7 +519,49 @@ Using the above methods it is possible to customize import form initialization
 as well as importing customizations.
 
 
+.. warning::
+
+    The `resource_class` parameter was deprecated in `django-import-export` 3.0.
+    Assign list or tuple with Resource(s) to `resource_classes` parameter now.
+
+
 .. seealso::
 
     :doc:`/api_admin`
         available mixins and options.
+
+Using multiple resources
+------------------------
+
+It is possible to set multiple resources both to import and export `ModelAdmin` classes.
+The `ImportMixin`, `ExportMixin`, `ImportExportMixin` and `ImportExportModelAdmin` classes accepts
+subscriptable type (list, tuple, ...) as `resource_classes` parameter.
+The subscriptable could also be returned from one of the
+`get_resource_classes()`, `get_import_resource_classes()`, `get_export_resource_classes()` classes.
+
+If there are multiple resources, the resource chooser appears in import/export admin form.
+The displayed name of the resource can be changed through the `name` parameter of the `Meta` class.
+
+
+Use multiple resources::
+
+    from import_export import resources
+    from core.models import Book
+
+
+    class BookResource(resources.ModelResource):
+
+        class Meta:
+            model = Book
+
+
+    class BookNameResource(resources.ModelResource):
+
+        class Meta:
+            model = Book
+            fields = ['id', 'name']
+            name = "Export/Import only book names"
+
+
+    class CustomBookAdmin(ImportMixin, admin.ModelAdmin):
+        resource_classes = [BookResource, BookNameResource]

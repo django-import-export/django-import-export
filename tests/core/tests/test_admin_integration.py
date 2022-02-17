@@ -30,6 +30,7 @@ from import_export.admin import (
     ExportMixin,
     ImportExportActionModelAdmin,
 )
+from import_export.formats import base_formats
 from import_export.formats.base_formats import DEFAULT_FORMATS
 from import_export.tmp_storages import TempFolderStorage
 
@@ -88,6 +89,51 @@ class ImportExportAdminIntegrationTest(TestCase):
             _('Import finished, with {} new and {} updated {}.').format(
                 1, 0, Book._meta.verbose_name_plural)
         )
+
+    @override_settings(TEMPLATE_STRING_IF_INVALID='INVALID_VARIABLE')
+    def test_import_second_resource(self):
+        Book.objects.create(id=1)
+
+        # GET the import form
+        response = self.client.get('/admin/core/book/import/')
+        self.assertContains(response, "Export/Import only book names")
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'admin/import_export/import.html')
+        self.assertContains(response, 'form action=""')
+
+        # POST the import form
+        input_format = '0'
+        filename = os.path.join(
+            os.path.dirname(__file__),
+            os.path.pardir,
+            'exports',
+            'books.csv')
+        with open(filename, "rb") as f:
+            data = {
+                'input_format': input_format,
+                'import_file': f,
+                'resource': 1,
+            }
+            response = self.client.post('/admin/core/book/import/', data)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('result', response.context)
+        with open("response.html", "wb") as f:
+            f.write(response.content)
+        self.assertFalse(response.context['result'].has_errors())
+        self.assertIn('confirm_form', response.context)
+        confirm_form = response.context['confirm_form']
+
+        data = confirm_form.initial
+        self.assertEqual(data['original_file_name'], 'books.csv')
+        response = self.client.post('/admin/core/book/process_import/', data,
+                                    follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response,
+            _('Import finished, with {} new and {} updated {}.').format(
+                0, 1, Book._meta.verbose_name_plural)
+        )
+        # Check, that we really use second resource - author_email didn't get imported
+        self.assertEqual(Book.objects.get(id=1).author_email, "")
 
     def test_delete_from_admin(self):
         # test delete from admin site (see #432)
@@ -174,6 +220,31 @@ class ImportExportAdminIntegrationTest(TestCase):
             response['Content-Disposition'],
             'attachment; filename="Book-{}.csv"'.format(date_str)
         )
+        self.assertEqual(
+            b"id,name,author,author_email,imported,published,"
+            b"published_time,price,added,categories\r\n",
+            response.content,
+        )
+
+    def test_export_second_resource(self):
+        response = self.client.get('/admin/core/book/export/')
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Export/Import only book names")
+
+        data = {
+            'file_format': '0',
+            'resource': 1,
+            }
+        date_str = datetime.now().strftime('%Y-%m-%d')
+        response = self.client.post('/admin/core/book/export/', data)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.has_header("Content-Disposition"))
+        self.assertEqual(response['Content-Type'], 'text/csv')
+        self.assertEqual(
+            response['Content-Disposition'],
+            'attachment; filename="Book-{}.csv"'.format(date_str)
+        )
+        self.assertEqual(b"id,name\r\n", response.content)
 
     def test_returns_xlsx_export(self):
         response = self.client.get('/admin/core/book/export/')
@@ -298,15 +369,15 @@ class ImportExportAdminIntegrationTest(TestCase):
                     raise Exception
 
         @monkeypatch_method(BookAdmin)
-        def get_resource_class(self):
-            return R
+        def get_resource_classes(self):
+            return [R]
 
         # Verify that when an exception occurs in import_row, when raise_errors is False,
         # the returned row result has a correct import_type value,
         # so generating log entries does not fail.
         @monkeypatch_method(BookAdmin)
         def process_dataset(self, dataset, confirm_form, request, *args, **kwargs):
-            resource = self.get_import_resource_class()(**self.get_import_resource_kwargs(request, *args, **kwargs))
+            resource = self.get_import_resource_classes()[0](**self.get_import_resource_kwargs(request, *args, **kwargs))
             return resource.import_data(dataset,
                                         dry_run=False,
                                         raise_errors=False,
@@ -459,6 +530,7 @@ class TestImportExportActionModelAdmin(ImportExportActionModelAdmin):
 class ImportActionDecodeErrorTest(TestCase):
     mock_model = mock.Mock(spec=Book)
     mock_model.__name__ = "mockModel"
+    mock_model._meta = mock.Mock(fields=[], many_to_many=[])
     mock_site = mock.MagicMock()
     mock_request = MagicMock(spec=HttpRequest)
     mock_request.POST = {'a': 1}
@@ -536,12 +608,72 @@ class ExportActionAdminIntegrationTest(TestCase):
         with self.assertRaises(PermissionDenied):
             m.get_export_data('0', Book.objects.none(), request=request)
 
+    def test_export_admin_action_one_formats(self):
+        mock_model = mock.MagicMock()
+        mock_site = mock.MagicMock()
+
+        class TestCategoryAdmin(ExportActionModelAdmin):
+            def __init__(self):
+                super().__init__(mock_model, mock_site)
+
+            formats = [base_formats.CSV]
+
+        m = TestCategoryAdmin()
+        action_form = m.action_form
+ 
+        items = list(action_form.base_fields.items())
+        file_format = items[len(items)-1][1]
+        choices = file_format.choices
+
+        self.assertNotEqual(choices[0][0], '---')
+        self.assertEqual(choices[0][1], "csv")
+
+    def test_export_admin_action_formats(self):
+
+        mock_model = mock.MagicMock()
+        mock_site = mock.MagicMock()
+
+        class TestCategoryAdmin(ExportActionModelAdmin):
+            def __init__(self):
+                super().__init__(mock_model, mock_site)
+
+        class TestFormatsCategoryAdmin(ExportActionModelAdmin):
+            def __init__(self):
+                super().__init__(mock_model, mock_site)
+
+            formats = [base_formats.CSV, base_formats.JSON]
+
+        m = TestCategoryAdmin()
+        action_form = m.action_form
+ 
+        items = list(action_form.base_fields.items())
+        file_format = items[len(items)-1][1]
+        choices = file_format.choices
+
+        self.assertEqual(choices[0][1], "---")
+        self.assertEqual(len(choices), 9)
+
+        m = TestFormatsCategoryAdmin()
+        action_form = m.action_form
+ 
+        items = list(action_form.base_fields.items())
+        file_format = items[len(items)-1][1]
+        choices = file_format.choices
+
+        self.assertEqual(choices[0][1], "---")
+        self.assertEqual(len(m.formats) + 1, len(choices))
+
+        self.assertIn('csv', [c[1] for c in choices])
+        self.assertIn('json', [c[1] for c in choices])
+
 
 class TestExportEncoding(TestCase):
     mock_request = MagicMock(spec=HttpRequest)
     mock_request.POST = {'file_format': 0}
 
     class TestMixin(ExportMixin):
+        model = Book
+
         def __init__(self, test_str=None):
             self.test_str = test_str
 

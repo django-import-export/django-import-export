@@ -1,6 +1,5 @@
-from importlib import import_module
-
 import tablib
+from tablib.formats import registry
 
 
 class Format:
@@ -61,14 +60,10 @@ class TablibFormat(Format):
         """
         Import and returns tablib module.
         """
-        try:
-            # Available since tablib 1.0
-            from tablib.formats import registry
-        except ImportError:
-            return import_module(self.TABLIB_MODULE)
-        else:
-            key = self.TABLIB_MODULE.split('.')[-1].replace('_', '')
-            return registry.get_format(key)
+        if not self.TABLIB_MODULE:
+            raise AttributeError("TABLIB_MODULE must be defined")
+        key = self.TABLIB_MODULE.split('.')[-1].replace('_', '')
+        return registry.get_format(key)
 
     @classmethod
     def is_available(cls):
