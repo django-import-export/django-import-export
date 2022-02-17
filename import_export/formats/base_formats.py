@@ -191,6 +191,10 @@ class XLSX(TablibFormat):
             dataset.append(row_values)
         return dataset
 
+    def export_data(self, dataset, column_width = "adaptive", **kwargs):
+        """column_width is adaptive by default"""
+        return dataset.export(self.get_title(), column_width, **kwargs)
+
 
 #: These are the default formats for import and export. Whether they can be
 #: used or not is depending on their implementation in the tablib library.
