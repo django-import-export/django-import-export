@@ -260,6 +260,29 @@ class MixinModelAdminTest(TestCase):
         form.cleaned_data = {'resource': 1}
         self.assertEqual(admin.choose_import_resource_class(form), FooResource)
 
+    class BaseModelResourceClassOldTest(mixins.BaseImportMixin, mixins.BaseExportMixin):
+
+        def get_resource_class(self):
+            return FooResource
+
+    def test_get_resource_class_old(self):
+        """
+        Test that if only the old get_resource_class() method is defined,
+        the get_export_resource_classes() and get_import_resource_classes()
+        still return list of resources.
+        """
+        admin = self.BaseModelResourceClassOldTest()
+        with self.assertWarnsRegex(
+                DeprecationWarning,
+                r"^The 'get_resource_class\(\)' method has been deprecated. "
+                r"Please implement the new 'get_resource_classes\(\)' method$"):
+            self.assertEqual(admin.get_export_resource_classes(), [FooResource])
+        with self.assertWarnsRegex(
+                DeprecationWarning,
+                r"^The 'get_resource_class\(\)' method has been deprecated. "
+                r"Please implement the new 'get_resource_classes\(\)' method$"):
+            self.assertEqual(admin.get_import_resource_classes(), [FooResource])
+
 
 class BaseExportMixinTest(TestCase):
     class TestBaseExportMixin(mixins.BaseExportMixin):

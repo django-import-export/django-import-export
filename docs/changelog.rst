@@ -7,28 +7,39 @@ Changelog
 Breaking changes
 ################
 
-This release makes the following changes to the API.  You may need to update your implementation to accommodate these changes.
+This release makes some minor changes to the public API.  If you have overridden any methods from the `resources` module, you may need to update your implementation to accommodate these changes.
 
 - Check value of ManyToManyField in skip_row() (#1271)
     - This fixes an issue where ManyToMany fields are not checked correctly in `skip_row()`. This means that `skip_row()` now takes `row` as a mandatory arg. If you have overridden `skip_row()` in your own implementation, you will need to add `row` as an arg.
+
+- Bug fix: validation errors were being ignored when `skip_unchanged` is set (#1378)
+  - If you have overridden `skip_row()` you can choose whether or not to skip rows if validation errors are present.  The default behavior is to not to skip rows if there are validation errors during import.
 
 - Refactor admin import to include encoding param (#1306)
     - Admin user interface: If an exception is thrown when attempting to read a file then this error is presented as a form error, instead of being written directly back in the response HTML.  If you have any code or process which checks the HTML response for the error (i.e. wrapped in H1 HTML tags) then this will need to be updated to handle the errors which are now returned as form errors.
     - This change also refactors the `tmp_storages` interface.  If you have added any custom code which calls the `tmp_storages` interface, then these changes will need to be updated.
 
 - Use 'create' flag instead of instance.pk (#1362)
-    - ``import_export.resources.save_instance()`` now takes an additional mandatory argument: `is_create`. If you have over-ridden `save_instance()` in your own code, you will need to add this new argument.
+    - `import_export.resources.save_instance()` now takes an additional mandatory argument: `is_create`.  If you have over-ridden `save_instance()` in your own code, you will need to add this new argument.
+
+Deprecations
+############
+
+This release adds some deprecations which will be removed in the 3.1 release.
 
 - Add support for multiple resources in ModelAdmin. (#1223)
-   - The `*Mixin.resource_class` accepting single resource has been deprecated (will work for few next versions) and the new `*Mixin.resource_classes` accepting subscriptable type (list, tuple, ...) has been added.
+
+   - The `*Mixin.resource_class` accepting single resource has been deprecated and the new `*Mixin.resource_classes` accepting subscriptable type (list, tuple, ...) has been added.
    - Same applies to all of the `get_resource_class`, `get_import_resource_class` and `get_export_resource_class` methods.
 
-- Deprecated `exceptions.py` - this module will be removed in a future release (#1372)
+- Deprecated `exceptions.py` (#1372)
 
 Enhancements
 ############
 
 - Updated import.css to support dark mode (#1370)
+- Default format selections set correctly for export action (#1389)
+- Added option to store raw row values in each row's `RowResult` (#1393)
 
 Development
 ###########

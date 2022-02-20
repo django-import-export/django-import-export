@@ -673,6 +673,64 @@ class ExportActionAdminIntegrationTest(TestCase):
         with self.assertRaises(PermissionDenied):
             m.get_export_data('0', Book.objects.none(), request=request)
 
+    def test_export_admin_action_one_formats(self):
+        mock_model = mock.MagicMock()
+        mock_site = mock.MagicMock()
+
+        class TestCategoryAdmin(ExportActionModelAdmin):
+            def __init__(self):
+                super().__init__(mock_model, mock_site)
+
+            formats = [base_formats.CSV]
+
+        m = TestCategoryAdmin()
+        action_form = m.action_form
+ 
+        items = list(action_form.base_fields.items())
+        file_format = items[len(items)-1][1]
+        choices = file_format.choices
+
+        self.assertNotEqual(choices[0][0], '---')
+        self.assertEqual(choices[0][1], "csv")
+
+    def test_export_admin_action_formats(self):
+
+        mock_model = mock.MagicMock()
+        mock_site = mock.MagicMock()
+
+        class TestCategoryAdmin(ExportActionModelAdmin):
+            def __init__(self):
+                super().__init__(mock_model, mock_site)
+
+        class TestFormatsCategoryAdmin(ExportActionModelAdmin):
+            def __init__(self):
+                super().__init__(mock_model, mock_site)
+
+            formats = [base_formats.CSV, base_formats.JSON]
+
+        m = TestCategoryAdmin()
+        action_form = m.action_form
+ 
+        items = list(action_form.base_fields.items())
+        file_format = items[len(items)-1][1]
+        choices = file_format.choices
+
+        self.assertEqual(choices[0][1], "---")
+        self.assertEqual(len(choices), 9)
+
+        m = TestFormatsCategoryAdmin()
+        action_form = m.action_form
+ 
+        items = list(action_form.base_fields.items())
+        file_format = items[len(items)-1][1]
+        choices = file_format.choices
+
+        self.assertEqual(choices[0][1], "---")
+        self.assertEqual(len(m.formats) + 1, len(choices))
+
+        self.assertIn('csv', [c[1] for c in choices])
+        self.assertIn('json', [c[1] for c in choices])
+
 
 class TestExportEncoding(TestCase):
     mock_request = MagicMock(spec=HttpRequest)

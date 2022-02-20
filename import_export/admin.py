@@ -496,9 +496,11 @@ class ExportActionMixin(ExportMixin):
         choices = []
         formats = self.get_export_formats()
         if formats:
-            choices.append(('', '---'))
             for i, f in enumerate(formats):
                 choices.append((str(i), f().get_title()))
+
+        if len(formats) > 1:
+            choices.insert(0, ('', '---'))
 
         self.action_form = export_action_form_factory(choices)
         super().__init__(*args, **kwargs)

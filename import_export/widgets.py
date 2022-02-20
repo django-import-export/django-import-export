@@ -392,7 +392,7 @@ class ForeignKeyWidget(Widget):
         like so::
 
             class FullNameForeignKeyWidget(ForeignKeyWidget):
-                def get_queryset(self, value, row):
+                def get_queryset(self, value, row, *args, **kwargs):
                     return self.model.objects.filter(
                         first_name__iexact=row["first_name"],
                         last_name__iexact=row["last_name"]
