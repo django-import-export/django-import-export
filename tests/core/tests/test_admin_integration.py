@@ -611,6 +611,173 @@ class ImportExportAdminIntegrationTest(TestCase):
         self.assertEqual('import_export/action_formats.js', target_media._js[-1])
 
 
+class ConfirmImportEncodingTest(TestCase):
+    """Test handling 'confirm import' step using different file encodings
+    and storage types.
+    """
+
+    def setUp(self):
+        user = User.objects.create_user('admin', 'admin@example.com',
+                                        'password')
+        user.is_staff = True
+        user.is_superuser = True
+        user.save()
+        self.client.login(username='admin', password='password')
+
+    def assert_string_in_response(self, filename, input_format, encoding=None):
+        input_format = input_format
+        filename = os.path.join(
+            os.path.dirname(__file__),
+            os.path.pardir,
+            'exports',
+            filename)
+        with open(filename, "rb") as f:
+            data = {
+                'input_format': input_format,
+                'import_file': f,
+            }
+            if encoding:
+                BookAdmin.from_encoding = encoding
+            response = self.client.post('/admin/core/book/import/', data)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('result', response.context)
+        self.assertFalse(response.context['result'].has_errors())
+        self.assertContains(response, 'test@example.com')
+
+    @override_settings(IMPORT_EXPORT_TMP_STORAGE_CLASS='import_export.tmp_storages.TempFolderStorage')
+    def test_import_action_handles_TempFolderStorage_read(self):
+        self.assert_string_in_response('books.csv', '0')
+
+    @override_settings(IMPORT_EXPORT_TMP_STORAGE_CLASS='import_export.tmp_storages.TempFolderStorage')
+    def test_import_action_handles_TempFolderStorage_read_mac(self):
+        self.assert_string_in_response('books-mac.csv', '0')
+
+    @override_settings(IMPORT_EXPORT_TMP_STORAGE_CLASS='import_export.tmp_storages.TempFolderStorage')
+    def test_import_action_handles_TempFolderStorage_read_iso_8859_1(self):
+        self.assert_string_in_response('books-ISO-8859-1.csv', '0', 'ISO-8859-1')
+
+    @override_settings(IMPORT_EXPORT_TMP_STORAGE_CLASS='import_export.tmp_storages.TempFolderStorage')
+    def test_import_action_handles_TempFolderStorage_read_binary(self):
+        self.assert_string_in_response('books.xls', '1')
+
+    @override_settings(IMPORT_EXPORT_TMP_STORAGE_CLASS='import_export.tmp_storages.CacheStorage')
+    def test_import_action_handles_CacheStorage_read(self):
+        self.assert_string_in_response('books.csv', '0')
+
+    @override_settings(IMPORT_EXPORT_TMP_STORAGE_CLASS='import_export.tmp_storages.CacheStorage')
+    def test_import_action_handles_CacheStorage_read_mac(self):
+        self.assert_string_in_response('books-mac.csv', '0')
+
+    @override_settings(IMPORT_EXPORT_TMP_STORAGE_CLASS='import_export.tmp_storages.CacheStorage')
+    def test_import_action_handles_CacheStorage_read_iso_8859_1(self):
+        self.assert_string_in_response('books-ISO-8859-1.csv', '0', 'ISO-8859-1')
+
+    @override_settings(IMPORT_EXPORT_TMP_STORAGE_CLASS='import_export.tmp_storages.CacheStorage')
+    def test_import_action_handles_CacheStorage_read_binary(self):
+        self.assert_string_in_response('books.xls', '1')
+
+    @override_settings(IMPORT_EXPORT_TMP_STORAGE_CLASS='import_export.tmp_storages.MediaStorage')
+    def test_import_action_handles_MediaStorage_read(self):
+        self.assert_string_in_response('books.csv', '0')
+
+    @override_settings(IMPORT_EXPORT_TMP_STORAGE_CLASS='import_export.tmp_storages.MediaStorage')
+    def test_import_action_handles_MediaStorage_read_mac(self):
+        self.assert_string_in_response('books-mac.csv', '0')
+
+    @override_settings(IMPORT_EXPORT_TMP_STORAGE_CLASS='import_export.tmp_storages.MediaStorage')
+    def test_import_action_handles_MediaStorage_read_iso_8859_1(self):
+        self.assert_string_in_response('books-ISO-8859-1.csv', '0', 'ISO-8859-1')
+
+    @override_settings(IMPORT_EXPORT_TMP_STORAGE_CLASS='import_export.tmp_storages.MediaStorage')
+    def test_import_action_handles_MediaStorage_read_binary(self):
+        self.assert_string_in_response('books.xls', '1')
+
+
+class CompleteImportEncodingTest(TestCase):
+    """Test handling 'complete import' step using different file encodings
+    and storage types.
+    """
+
+    def setUp(self):
+        user = User.objects.create_user('admin', 'admin@example.com',
+                                        'password')
+        user.is_staff = True
+        user.is_superuser = True
+        user.save()
+        self.client.login(username='admin', password='password')
+
+    def assert_string_in_response(self, filename, input_format, encoding=None):
+        input_format = input_format
+        filename = os.path.join(
+            os.path.dirname(__file__),
+            os.path.pardir,
+            'exports',
+            filename)
+        with open(filename, "rb") as f:
+            data = {
+                'input_format': input_format,
+                'import_file': f,
+            }
+            if encoding:
+                BookAdmin.from_encoding = encoding
+            response = self.client.post('/admin/core/book/import/', data)
+
+        confirm_form = response.context['confirm_form']
+        data = confirm_form.initial
+        response = self.client.post('/admin/core/book/process_import/', data, follow=True)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Import finished, with 1 new and 0 updated books.')
+
+    @override_settings(IMPORT_EXPORT_TMP_STORAGE_CLASS='import_export.tmp_storages.TempFolderStorage')
+    def test_import_action_handles_TempFolderStorage_read(self):
+        self.assert_string_in_response('books.csv', '0')
+
+    @override_settings(IMPORT_EXPORT_TMP_STORAGE_CLASS='import_export.tmp_storages.TempFolderStorage')
+    def test_import_action_handles_TempFolderStorage_read_mac(self):
+        self.assert_string_in_response('books-mac.csv', '0')
+
+    @override_settings(IMPORT_EXPORT_TMP_STORAGE_CLASS='import_export.tmp_storages.TempFolderStorage')
+    def test_import_action_handles_TempFolderStorage_read_iso_8859_1(self):
+        self.assert_string_in_response('books-ISO-8859-1.csv', '0', 'ISO-8859-1')
+
+    @override_settings(IMPORT_EXPORT_TMP_STORAGE_CLASS='import_export.tmp_storages.TempFolderStorage')
+    def test_import_action_handles_TempFolderStorage_read_binary(self):
+        self.assert_string_in_response('books.xls', '1')
+
+    @override_settings(IMPORT_EXPORT_TMP_STORAGE_CLASS='import_export.tmp_storages.CacheStorage')
+    def test_import_action_handles_CacheStorage_read(self):
+        self.assert_string_in_response('books.csv', '0')
+
+    @override_settings(IMPORT_EXPORT_TMP_STORAGE_CLASS='import_export.tmp_storages.CacheStorage')
+    def test_import_action_handles_CacheStorage_read_mac(self):
+        self.assert_string_in_response('books-mac.csv', '0')
+
+    @override_settings(IMPORT_EXPORT_TMP_STORAGE_CLASS='import_export.tmp_storages.CacheStorage')
+    def test_import_action_handles_CacheStorage_read_iso_8859_1(self):
+        self.assert_string_in_response('books-ISO-8859-1.csv', '0', 'ISO-8859-1')
+
+    @override_settings(IMPORT_EXPORT_TMP_STORAGE_CLASS='import_export.tmp_storages.CacheStorage')
+    def test_import_action_handles_CacheStorage_read_binary(self):
+        self.assert_string_in_response('books.xls', '1')
+
+    @override_settings(IMPORT_EXPORT_TMP_STORAGE_CLASS='import_export.tmp_storages.MediaStorage')
+    def test_import_action_handles_MediaStorage_read(self):
+        self.assert_string_in_response('books.csv', '0')
+
+    @override_settings(IMPORT_EXPORT_TMP_STORAGE_CLASS='import_export.tmp_storages.MediaStorage')
+    def test_import_action_handles_MediaStorage_read_mac(self):
+        self.assert_string_in_response('books-mac.csv', '0')
+
+    @override_settings(IMPORT_EXPORT_TMP_STORAGE_CLASS='import_export.tmp_storages.MediaStorage')
+    def test_import_action_handles_MediaStorage_read_iso_8859_1(self):
+        self.assert_string_in_response('books-ISO-8859-1.csv', '0', 'ISO-8859-1')
+
+    @override_settings(IMPORT_EXPORT_TMP_STORAGE_CLASS='import_export.tmp_storages.MediaStorage')
+    def test_import_action_handles_MediaStorage_read_binary(self):
+        self.assert_string_in_response('books.xls', '1')
+
+
 class TestImportExportActionModelAdmin(ImportExportActionModelAdmin):
     def __init__(self, mock_model, mock_site, error_instance):
         self.error_instance = error_instance

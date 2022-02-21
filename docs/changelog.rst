@@ -7,13 +7,13 @@ Changelog
 Breaking changes
 ################
 
-This release makes some minor changes to the public API.  If you have overridden any methods from the `resources` module, you may need to update your implementation to accommodate these changes.
+This release makes some minor changes to the public API.  If you have overridden any methods from the core modules, you may need to update your implementation to accommodate these changes.  The changes are as follows:
 
 - Check value of ManyToManyField in skip_row() (#1271)
     - This fixes an issue where ManyToMany fields are not checked correctly in `skip_row()`. This means that `skip_row()` now takes `row` as a mandatory arg. If you have overridden `skip_row()` in your own implementation, you will need to add `row` as an arg.
 
 - Bug fix: validation errors were being ignored when `skip_unchanged` is set (#1378)
-  - If you have overridden `skip_row()` you can choose whether or not to skip rows if validation errors are present.  The default behavior is to not to skip rows if there are validation errors during import.
+    - If you have overridden `skip_row()` you can choose whether or not to skip rows if validation errors are present.  The default behavior is to not to skip rows if there are validation errors during import.
 
 - Refactor admin import to include encoding param (#1306)
     - Admin user interface: If an exception is thrown when attempting to read a file then this error is presented as a form error, instead of being written directly back in the response HTML.  If you have any code or process which checks the HTML response for the error (i.e. wrapped in H1 HTML tags) then this will need to be updated to handle the errors which are now returned as form errors.
