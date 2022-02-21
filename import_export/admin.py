@@ -109,7 +109,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
             tmp_storage = tmp_storage_cls(
                 name=confirm_form.cleaned_data['import_file_name'],
                 encoding=encoding,
-                read_mode=self.get_read_mode(tmp_storage_cls, input_format)
+                read_mode=input_format.get_read_mode()
             )
 
             data = tmp_storage.read()
@@ -223,20 +223,16 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
             encoding = self.from_encoding
 
         tmp_storage_cls = self.get_tmp_storage_class()
-        tmp_storage = tmp_storage_cls(encoding=encoding, read_mode=self.get_read_mode(tmp_storage_cls, input_format))
+        tmp_storage = tmp_storage_cls(encoding=encoding, read_mode=input_format.get_read_mode())
         data = bytes()
         for chunk in import_file.chunks():
             data += chunk
 
+        if tmp_storage_cls == MediaStorage and not input_format.is_binary():
+            data = data.decode(self.from_encoding)
+
         tmp_storage.save(data)
         return tmp_storage
-
-    def get_read_mode(self, tmp_storage_cls, input_format):
-        read_mode = input_format.get_read_mode()
-        # if tmp_storage_cls == MediaStorage:
-        #     # files are always persisted to MediaStorage as binary
-        #     read_mode = 'rb'
-        return read_mode
 
     def import_action(self, request, *args, **kwargs):
         """
