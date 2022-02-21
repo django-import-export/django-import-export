@@ -41,7 +41,6 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
     import_template_name = 'admin/import_export/import.html'
     #: import data encoding
     from_encoding = "utf-8-sig"
-    #from_encoding = "ISO-8859-1"
     skip_admin_log = None
     # storage class for saving temporary files
     tmp_storage_class = None
