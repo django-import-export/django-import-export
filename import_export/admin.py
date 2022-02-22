@@ -18,7 +18,7 @@ from .forms import ConfirmImportForm, ExportForm, ImportForm, export_action_form
 from .mixins import BaseExportMixin, BaseImportMixin
 from .results import RowResult
 from .signals import post_export, post_import
-from .tmp_storages import MediaStorage, TempFolderStorage, CacheStorage
+from .tmp_storages import MediaStorage, TempFolderStorage
 
 
 class ImportExportMixinBase:
