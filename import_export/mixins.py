@@ -59,7 +59,7 @@ class BaseExportMixin(BaseImportExportMixin):
     def get_data_for_export(self, request, queryset, *args, **kwargs):
         resource_class = self.get_export_resource_class()
         return resource_class(**self.get_export_resource_kwargs(request, *args, **kwargs))\
-            .export(queryset, *args, **kwargs)
+            .export(queryset, request, *args, **kwargs)
 
     def get_export_filename(self, file_format):
         date_str = now().strftime('%Y-%m-%d')

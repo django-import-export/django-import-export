@@ -868,13 +868,13 @@ class Resource(metaclass=DeclarativeMetaclass):
         order = tuple(self._meta.export_order or ())
         return order + tuple(k for k in self.fields if k not in order)
 
-    def before_export(self, queryset, *args, **kwargs):
+    def before_export(self, queryset, request, *args, **kwargs):
         """
         Override to add additional logic. Does nothing by default.
         """
         pass
 
-    def after_export(self, queryset, data, *args, **kwargs):
+    def after_export(self, queryset, data, request, *args, **kwargs):
         """
         Override to add additional logic. Does nothing by default.
         """
@@ -923,12 +923,12 @@ class Resource(metaclass=DeclarativeMetaclass):
         else:
             yield from queryset.iterator(chunk_size=self.get_chunk_size())
 
-    def export(self, queryset=None, *args, **kwargs):
+    def export(self, queryset=None, request=None, *args, **kwargs):
         """
         Exports a resource.
         """
 
-        self.before_export(queryset, *args, **kwargs)
+        self.before_export(queryset, request, *args, **kwargs)
 
         if queryset is None:
             queryset = self.get_queryset()
@@ -938,7 +938,7 @@ class Resource(metaclass=DeclarativeMetaclass):
         for obj in self.iter_queryset(queryset):
             data.append(self.export_resource(obj))
 
-        self.after_export(queryset, data, *args, **kwargs)
+        self.after_export(queryset, data, request, *args, **kwargs)
 
         return data
 

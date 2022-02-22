@@ -34,12 +34,12 @@ from ..models import (
     WithDynamicDefault,
     WithFloatField,
 )
+from django.test.client import RequestFactory
 
 if django.VERSION[0] >= 3:
     from django.core.exceptions import FieldDoesNotExist
 else:
     from django.db.models.fields import FieldDoesNotExist
-
 
 class MyResource(resources.Resource):
     name = fields.Field()
@@ -179,6 +179,12 @@ class BookResource(resources.ModelResource):
     class Meta:
         model = Book
         exclude = ('imported', )
+
+    def before_export(self, queryset, request, *args, **kwargs):
+        pass
+
+    def after_export(self, queryset, data, request, *args, **kwargs):
+        pass
 
 
 class BookResourceWithLineNumberLogger(BookResource):
@@ -1097,6 +1103,20 @@ class ModelResourceTest(TestCase):
 
         with self.assertRaises(ConnectionDoesNotExist):
             BookResource().import_data(self.dataset)
+
+    def test_user_passed_in_export_hooks(self):
+        request = RequestFactory()
+        request.user = User.objects.create_user(
+            username="example-user", email="example@mail.ru"
+        )
+        qs = Book.objects.all()
+        with mock.patch.multiple(BookResource,
+                                 before_export=mock.DEFAULT,
+                                 after_export=mock.DEFAULT) as patched:
+            self.resource.export(qs, request)
+
+            self.assertIn(request, patched['before_export'].call_args[0])
+            self.assertIn(request, patched['after_export'].call_args[0])
 
 
 class ModelResourceTransactionTest(TransactionTestCase):
