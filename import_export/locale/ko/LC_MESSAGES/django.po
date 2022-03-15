@@ -10,7 +10,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2021-10-18 20:53+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: Jinmyeong Cho <britzegs@gmail.com>\n"
+"Last-Translator: Yeongkwang Yang <immutable000@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
 "MIME-Version: 1.0\n"
@@ -21,21 +21,21 @@ msgstr ""
 #: admin.py:158
 #, python-format
 msgid "%s through import_export"
-msgstr ""
+msgstr "%s은(는) django-import-export를 통해 가져왔습니다."
 
 #: admin.py:164
 msgid "Import finished, with {} new and {} updated {}."
-msgstr ""
+msgstr "가져오기 성공, {} 행 추가, {} 행 업데이트"
 
 #: admin.py:262
 #, python-format
 msgid "<h1>Imported file has a wrong encoding: %s</h1>"
-msgstr ""
+msgstr "<h1>가져온 파일 인코딩이 잘못되었습니다: %s</h1>"
 
 #: admin.py:264
 #, python-format
 msgid "<h1>%s encountered while trying to read file: %s</h1>"
-msgstr ""
+msgstr "<h1>%s 파일을 읽는 동안 충돌이 발생했습니다: %s</h1>"
 
 #: admin.py:295 templates/admin/import_export/change_list_import_item.html:5
 #: templates/admin/import_export/import.html:10
@@ -54,7 +54,7 @@ msgstr "내보낼 형식을 선택해주세요."
 #: admin.py:513
 #, python-format
 msgid "Export selected %(verbose_name_plural)s"
-msgstr ""
+msgstr "선택한 %(verbose_name_plural)s 내보내기"
 
 #: forms.py:10
 msgid "File to import"
@@ -114,7 +114,7 @@ msgstr ""
 
 #: templates/admin/import_export/import.html:116
 msgid "Non field specific"
-msgstr ""
+msgstr "지정된 필드 없음"
 
 #: templates/admin/import_export/import.html:137
 msgid "Preview"
