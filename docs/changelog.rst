@@ -4,8 +4,9 @@ Changelog
 2.7.2 (unreleased)
 ------------------
 
+- Updated import.css to support dark mode (#1318)
 - Fix crash when import_data() called with empty Dataset and `collect_failed_rows=True` (#1381)
-
+- Improve korean translation (#1402)
 
 2.7.1 (2021-12-23)
 ------------------
