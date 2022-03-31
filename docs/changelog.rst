@@ -1,7 +1,7 @@
 Changelog
 =========
 
-2.8.0 (unreleased)
+2.8.0 (2022-03-31)
 ------------------
 
 - Updated import.css to support dark mode (#1318)
