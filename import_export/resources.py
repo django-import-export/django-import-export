@@ -4,11 +4,14 @@ import traceback
 from collections import OrderedDict
 from copy import deepcopy
 
-import django
 import tablib
 from diff_match_patch import diff_match_patch
 from django.conf import settings
-from django.core.exceptions import ImproperlyConfigured, ValidationError
+from django.core.exceptions import (
+    FieldDoesNotExist,
+    ImproperlyConfigured,
+    ValidationError,
+)
 from django.core.management.color import no_style
 from django.core.paginator import Paginator
 from django.db import connections, router
@@ -29,12 +32,6 @@ from .instance_loaders import ModelInstanceLoader
 from .results import Error, Result, RowResult
 from .utils import atomic_if_using_transaction
 
-if django.VERSION[0] >= 3:
-    from django.core.exceptions import FieldDoesNotExist
-else:
-    from django.db.models.fields import FieldDoesNotExist
-
-
 logger = logging.getLogger(__name__)
 # Set default logging handler to avoid "No handler found" warnings.
 logger.addHandler(logging.NullHandler())
@@ -43,9 +40,6 @@ logger.addHandler(logging.NullHandler())
 def get_related_model(field):
     if hasattr(field, 'related_model'):
         return field.related_model
-    # Django 1.6, 1.7
-    if field.rel:
-        return field.rel.to
 
 
 class ResourceOptions:
@@ -1045,6 +1039,7 @@ class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
         'BigAutoField': widgets.IntegerWidget,
         'NullBooleanField': widgets.BooleanWidget,
         'BooleanField': widgets.BooleanWidget,
+        'JSONField': widgets.JSONWidget,
     }
 
     @classmethod
@@ -1087,22 +1082,13 @@ class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
         else:
             try:
                 from django.contrib.postgres.fields import ArrayField
-                try:
-                    from django.db.models import JSONField
-                except ImportError:
-                    from django.contrib.postgres.fields import JSONField
             except ImportError:
                 # ImportError: No module named psycopg2.extras
                 class ArrayField:
                     pass
 
-                class JSONField:
-                    pass
-
             if isinstance(f, ArrayField):
                 return widgets.SimpleArrayWidget
-            elif isinstance(f, JSONField):
-                return widgets.JSONWidget
 
         return result
 
