@@ -9,6 +9,7 @@ Changelog
 - Improve Korean translation (#1402)
 - Update example subclass widget code (#1407)
 - Drop support for python3.6, django 2.2, 3.0, 3.1 (#1408)
+- Add get_export_form() to ExportMixin (#1409)
 
 2.7.1 (2021-12-23)
 ------------------
