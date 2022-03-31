@@ -50,8 +50,7 @@ TEMPLATES = [
     },
 ]
 
-if django.VERSION >= (3, 2):
-    DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 if os.environ.get('IMPORT_EXPORT_TEST_TYPE') == 'mysql-innodb':
     IMPORT_EXPORT_USE_TRANSACTIONS = True

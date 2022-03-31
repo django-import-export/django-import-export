@@ -6,8 +6,6 @@ VERSION = __import__("import_export").__version__
 
 CLASSIFIERS = [
     'Framework :: Django',
-    'Framework :: Django :: 2.2',
-    'Framework :: Django :: 3.1',
     'Framework :: Django :: 3.2',
     'Framework :: Django :: 4.0',
     'Intended Audience :: Developers',
@@ -26,7 +24,7 @@ CLASSIFIERS = [
 
 install_requires = [
     'diff-match-patch',
-    'Django>=2.2',
+    'Django>=3.2',
     'tablib[html,ods,xls,xlsx,yaml]>=3.0.0',
 ]
 
@@ -53,7 +51,7 @@ setup(
     packages=find_packages(exclude=["tests"]),
     include_package_data=True,
     install_requires=install_requires,
-    python_requires=">=3.6",
+    python_requires=">=3.7",
     classifiers=CLASSIFIERS,
     zip_safe=False,
 )
