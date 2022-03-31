@@ -7,6 +7,7 @@ Changelog
 - Updated import.css to support dark mode (#1318)
 - Fix crash when import_data() called with empty Dataset and `collect_failed_rows=True` (#1381)
 - Improve Korean translation (#1402)
+- Update example subclass widget code (#1407)
 - Drop support for python3.6, django 2.2, 3.0, 3.1 (#1408)
 
 2.7.1 (2021-12-23)
