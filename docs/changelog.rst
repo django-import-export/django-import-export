@@ -34,20 +34,19 @@ This release adds some deprecations which will be removed in the 3.1 release.
 Enhancements
 ############
 
-- Updated import.css to support dark mode (#1370)
 - Default format selections set correctly for export action (#1389)
 - Added option to store raw row values in each row's `RowResult` (#1393)
 
 Development
 ###########
 
-- Drop support for python3.6, django 2.2, 3.0, 3.1 (#1366)
 - Increased test coverage, refactored CI build to use tox (#1372)
 
 Documentation
 #############
 
 - Corrected docstring for ForeignKeyWidget.get_queryset() (#1385)
+
 2.8.0 (2022-03-31)
 ------------------
 
