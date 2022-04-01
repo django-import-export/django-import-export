@@ -42,11 +42,6 @@ Development
 
 - Increased test coverage, refactored CI build to use tox (#1372)
 
-Documentation
-#############
-
-- Corrected docstring for ForeignKeyWidget.get_queryset() (#1385)
-
 2.8.0 (2022-03-31)
 ------------------
 
