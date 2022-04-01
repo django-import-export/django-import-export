@@ -15,8 +15,18 @@ class ResultTest(TestCase):
         self.dataset = Dataset(*rows, headers=headers)
 
     def test_add_dataset_headers(self):
+        target = ['some_header', 'Error']
+        self.result.add_dataset_headers(['some_header'])
+        self.assertEqual(target, self.result.failed_dataset.headers)
+
+    def test_add_dataset_headers_empty_list(self):
         target = ['Error']
         self.result.add_dataset_headers([])
+        self.assertEqual(target, self.result.failed_dataset.headers)
+
+    def test_add_dataset_headers_None(self):
+        target = ['Error']
+        self.result.add_dataset_headers(None)
         self.assertEqual(target, self.result.failed_dataset.headers)
 
     def test_result_append_failed_row_with_ValidationError(self):

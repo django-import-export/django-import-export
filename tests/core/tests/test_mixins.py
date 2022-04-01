@@ -6,7 +6,7 @@ from django.http import HttpRequest
 from django.test.testcases import TestCase
 from django.urls import reverse
 
-from import_export import formats, forms, mixins, resources
+from import_export import admin, formats, forms, mixins, resources
 
 
 class ExportViewMixinTest(TestCase):
@@ -327,3 +327,24 @@ class BaseExportMixinTest(TestCase):
         formats = m.get_export_formats()
         self.assertEqual(1, len(formats))
         self.assertEqual('CanExportFormat', formats[0].__name__)
+
+
+class ExportMixinTest(TestCase):
+    class TestExportMixin(admin.ExportMixin):
+        def __init__(self, export_form) -> None:
+            super().__init__()
+            self.export_form = export_form
+
+        def get_export_form(self):
+            return self.export_form
+
+    class TestExportForm(forms.ExportForm):
+        pass
+
+    def test_get_export_form(self):
+        m = admin.ExportMixin()
+        self.assertEqual(forms.ExportForm, m.get_export_form())
+
+    def test_get_export_form_with_custom_form(self):
+        m = self.TestExportMixin(self.TestExportForm)
+        self.assertEqual(self.TestExportForm, m.get_export_form())
