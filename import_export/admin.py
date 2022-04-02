@@ -45,6 +45,8 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
     skip_admin_log = None
     # storage class for saving temporary files
     tmp_storage_class = None
+    import_title = _('Import')
+    import_button_text = _('Import')
 
     def get_skip_admin_log(self):
         if self.skip_admin_log is None:
@@ -171,6 +173,12 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
     def get_import_context_data(self, **kwargs):
         return self.get_context_data(**kwargs)
 
+    def get_import_title(self):
+        return self.import_title
+
+    def get_import_button_text(self):
+        return self.import_button_text
+
     def get_context_data(self, **kwargs):
         return {}
 
@@ -292,7 +300,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
 
         context.update(self.admin_site.each_context(request))
 
-        context['title'] = _("Import")
+        context['title'] = self.get_import_title()
         context['form'] = form
         context['opts'] = self.model._meta
         context['fields'] = [f.column_name for f in resource.get_user_visible_fields()]
@@ -305,6 +313,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         if extra_context is None:
             extra_context = {}
         extra_context['has_import_permission'] = self.has_import_permission(request)
+        extra_context['import_button_text'] = self.get_import_button_text()
         return super().changelist_view(request, extra_context)
 
 

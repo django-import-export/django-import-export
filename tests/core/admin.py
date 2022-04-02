@@ -31,7 +31,8 @@ class CategoryAdmin(ExportActionModelAdmin):
 
 
 class AuthorAdmin(ImportMixin, admin.ModelAdmin):
-    pass
+    import_button_text = 'Upload Bulk Author'
+    import_title = 'Upload Bulk Author'
 
 
 class CustomBookAdmin(BookAdmin):
