@@ -312,7 +312,7 @@ class ForeignKeyWidgetTest(TestCase):
 
     def test_clean_multi_column(self):
         class BirthdayWidget(widgets.ForeignKeyWidget):
-            def get_queryset(self, value, row):
+            def get_queryset(self, value, row, *args, **kwargs):
                 return self.model.objects.filter(
                     birthday=row['birthday']
                 )
@@ -322,6 +322,18 @@ class ForeignKeyWidgetTest(TestCase):
         birthday_widget = BirthdayWidget(Author, 'name')
         row = {'name': "Foo", 'birthday': author2.birthday}
         self.assertEqual(birthday_widget.clean("Foo", row), author2)
+
+    def test_invalid_get_queryset(self):
+        class BirthdayWidget(widgets.ForeignKeyWidget):
+            def get_queryset(self, value, row):
+                return self.model.objects.filter(
+                    birthday=row['birthday']
+                )
+
+        birthday_widget = BirthdayWidget(Author, 'name')
+        row = {'name': "Foo", 'age': 38}
+        with self.assertRaises(TypeError):
+            birthday_widget.clean("Foo", row, row_number=1)
 
     def test_render_handles_value_error(self):
         class TestObj(object):
