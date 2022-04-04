@@ -36,6 +36,7 @@ Enhancements
 
 - Default format selections set correctly for export action (#1389)
 - Added option to store raw row values in each row's `RowResult` (#1393)
+- Add natural key support to ForeignKeyWidget (#1371)
 
 Development
 ###########
