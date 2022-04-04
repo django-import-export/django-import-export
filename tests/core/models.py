@@ -10,7 +10,7 @@ class AuthorManager(models.Manager):
     """
     Used to enable the get_by_natural_key method.
     NOTE: Manager classes are only required to enable
-    using the natural key functionakity of ForeignKeyWidget
+    using the natural key functionality of ForeignKeyWidget
     """
 
     def get_by_natural_key(self, name):
@@ -28,7 +28,7 @@ class Author(models.Model):
     def natural_key(self):
         """
         Django pattern function for serializing a model by its natural key
-        Used only by the ForeignKeyWidet using use_natural_foreign_keys.    
+        Used only by the ForeignKeyWidget using use_natural_foreign_keys.    
         """
         return (self.name,)
 
@@ -58,7 +58,7 @@ class BookManager(models.Manager):
     """
     Added to enable get_by_natural_key method
     NOTE: Manager classes are only required to enable
-    using the natural key functionakity of ForeignKeyWidget
+    using the natural key functionality of ForeignKeyWidget
     """
 
     def get_by_natural_key(self, name, author):
@@ -85,7 +85,7 @@ class Book(models.Model):
     def natural_key(self):
         """
         Django pattern function for serializing a book by its natural key. 
-        Used only by the ForeignKeyWidet using use_natural_foreign_keys.
+        Used only by the ForeignKeyWidget using use_natural_foreign_keys.
         """
         return (self.name,) +  self.author.natural_key()
 
