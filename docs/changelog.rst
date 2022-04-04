@@ -44,13 +44,8 @@ Development
 ###########
 
 - Increased test coverage, refactored CI build to use tox (#1372)
-
-Documentation
-#############
-
 - Usage of multiple resources (#1223)
 - Clarified issues around the usage of temporary storage (#1306)
-
 
 2.8.0 (2022-03-31)
 ------------------
