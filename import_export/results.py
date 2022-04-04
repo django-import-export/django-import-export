@@ -106,6 +106,7 @@ class Result:
         self.base_errors.append(error)
 
     def add_dataset_headers(self, headers):
+        headers = list() if not headers else headers
         self.failed_dataset.headers = headers + ["Error"]
 
     def append_failed_row(self, row, error):

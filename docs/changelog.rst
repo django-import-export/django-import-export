@@ -37,21 +37,25 @@ This release adds some deprecations which will be removed in the 3.1 release.
 Enhancements
 ############
 
-- Updated import.css to support dark mode (#1370)
 - Default format selections set correctly for export action (#1389)
 - Added option to store raw row values in each row's `RowResult` (#1393)
 
 Development
 ###########
 
-- Drop support for python3.6, django 2.2, 3.0, 3.1 (#1366)
 - Increased test coverage, refactored CI build to use tox (#1372)
-
-Documentation
-#############
-
 - Usage of multiple resources (#1223)
 - Clarified issues around the usage of temporary storage (#1306)
+
+2.8.0 (2022-03-31)
+------------------
+
+- Updated import.css to support dark mode (#1318)
+- Fix crash when import_data() called with empty Dataset and `collect_failed_rows=True` (#1381)
+- Improve Korean translation (#1402)
+- Update example subclass widget code (#1407)
+- Drop support for python3.6, django 2.2, 3.0, 3.1 (#1408)
+- Add get_export_form() to ExportMixin (#1409)
 
 2.7.1 (2021-12-23)
 ------------------
