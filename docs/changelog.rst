@@ -20,7 +20,7 @@ This release makes some minor changes to the public API.  If you have overridden
     - This change also refactors the `tmp_storages` interface.  If you have added any custom code which calls the `tmp_storages` interface, then these changes will need to be updated.
 
 - Use 'create' flag instead of instance.pk (#1362)
-    - `import_export.resources.save_instance()` now takes an additional mandatory argument: `is_create`.  If you have over-ridden `save_instance()` in your own code, you will need to add this new argument.
+    - `import_export.resources.save_instance()` now takes an additional mandatory argument: `is_create`.  If you have overridden `save_instance()` in your own code, you will need to add this new argument.
 
 Deprecations
 ############
