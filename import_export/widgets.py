@@ -337,7 +337,8 @@ class JSONWidget(Widget):
 class ForeignKeyWidget(Widget):
     """
     Widget for a ``ForeignKey`` field which looks up a related model using
-    "natural keys" in both export and import.
+    either the PK or a user specified field that uniquely identifies the
+    instance in both export and import.
 
     The lookup field defaults to using the primary key (``pk``) as lookup
     criterion but can be customised to use any field on the related model.
@@ -368,13 +369,17 @@ class ForeignKeyWidget(Widget):
 
             class Meta:
                 fields = ('author',)
-
+    
     :param model: The Model the ForeignKey refers to (required).
-    :param field: A field on the related model used for looking up a particular object.
+    :param field: A field on the related model used for looking up a particular
+        object.
+    :param use_natural_foreign_keys: Use natural key functions to identify 
+        related object, default to False
     """
-    def __init__(self, model, field='pk', *args, **kwargs):
+    def __init__(self, model, field='pk', use_natural_foreign_keys=False, *args, **kwargs):
         self.model = model
         self.field = field
+        self.use_natural_foreign_keys = use_natural_foreign_keys
         super().__init__(*args, **kwargs)
 
     def get_queryset(self, value, row, *args, **kwargs):
@@ -403,7 +408,12 @@ class ForeignKeyWidget(Widget):
     def clean(self, value, row=None, *args, **kwargs):
         val = super().clean(value)
         if val:
-            return self.get_queryset(value, row, *args, **kwargs).get(**{self.field: val})
+            if self.use_natural_foreign_keys:
+                # natural keys will always be a tuple, which ends up as a json list.
+                value = json.loads(value) 
+                return self.model.objects.get_by_natural_key(*value)
+            else:
+                return self.get_queryset(value, row, *args, **kwargs).get(**{self.field: val})
         else:
             return None
 
@@ -414,7 +424,11 @@ class ForeignKeyWidget(Widget):
         attrs = self.field.split('__')
         for attr in attrs:
             try:
-                value = getattr(value, attr, None)
+                if self.use_natural_foreign_keys:
+                    # inbound natural keys must be a json list.
+                    return json.dumps(value.natural_key())
+                else:
+                    value = getattr(value, attr, None)
             except (ValueError, ObjectDoesNotExist):
                 # needs to have a primary key value before a many-to-many
                 # relationship can be used.

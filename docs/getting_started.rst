@@ -235,6 +235,58 @@ and exporting resource.
     :doc:`/api_widgets`
         available widget types and options.
 
+Django Natural Keys
+===================
+
+The ForeignKeyWidget also supports using Django's natural key functions. A
+manager class with the get_by_natural_key function is require for importing
+foreign key relationships by the field model's natural key, and the model must
+have a natural_key function that can be serialized as a JSON list in order to
+export data. 
+
+The primary utility for natural key functionality is to enable exporting data
+that can be imported into other Django environments with different numerical
+primary key sequences. The natural key functionality enables handling more
+complex data than specifying either a single field or the PK. 
+
+The example below illustrates how to create a field on the BookResource that
+imports and exports its author relationships using the natural key functions
+on the Author model and modelmanager. 
+
+::
+
+    from import_export.fields import Field
+    from import_export.widgets import ForeignKeyWidget
+
+    class AuthorManager(models.Manager):
+
+        def get_by_natural_key(self, name):
+            return self.get(name=name)
+
+    class Author(models.Model):
+
+        objects = AuthorManager()
+
+        name = models.CharField(max_length=100)
+        birthday = models.DateTimeField(auto_now_add=True)
+
+        def natural_key(self):
+            return (self.name,)
+
+    class BookResource(resources.ModelResource):
+
+        author = Field(
+            column_name = "author",
+            attribute = "author",
+            widget = ForeignKeyWidget(Author, use_natural_foreign_keys=True)
+        )
+
+        class Meta:
+            model = Book
+
+Read more at `Django Serialization <https://docs.djangoproject.com/en/4.0/topics/serialization>`_
+
+
 Importing data
 ==============
 
