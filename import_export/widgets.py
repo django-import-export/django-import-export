@@ -28,7 +28,7 @@ class Widget:
     :meth:`~import_export.widgets.Widget.clean` and
     :meth:`~import_export.widgets.Widget.render`.
     """
-    def clean(self, value, row=None, *args, **kwargs):
+    def clean(self, value, row=None, **kwargs):
         """
         Returns an appropriate Python object for an imported value.
 
@@ -71,7 +71,7 @@ class FloatWidget(NumberWidget):
     Widget for converting floats fields.
     """
 
-    def clean(self, value, row=None, *args, **kwargs):
+    def clean(self, value, row=None, **kwargs):
         if self.is_empty(value):
             return None
         return float(value)
@@ -82,7 +82,7 @@ class IntegerWidget(NumberWidget):
     Widget for converting integer fields.
     """
 
-    def clean(self, value, row=None, *args, **kwargs):
+    def clean(self, value, row=None, **kwargs):
         if self.is_empty(value):
             return None
         return int(Decimal(value))
@@ -93,7 +93,7 @@ class DecimalWidget(NumberWidget):
     Widget for converting decimal fields.
     """
 
-    def clean(self, value, row=None, *args, **kwargs):
+    def clean(self, value, row=None, **kwargs):
         if self.is_empty(value):
             return None
         return Decimal(force_str(value))
@@ -152,7 +152,7 @@ class BooleanWidget(Widget):
             return ""
         return self.TRUE_VALUES[0] if value else self.FALSE_VALUES[0]
 
-    def clean(self, value, row=None, *args, **kwargs):
+    def clean(self, value, row=None, **kwargs):
         if value in self.NULL_VALUES:
             return None
         return True if value in self.TRUE_VALUES else False
@@ -175,7 +175,7 @@ class DateWidget(Widget):
             formats = (format,)
         self.formats = formats
 
-    def clean(self, value, row=None, *args, **kwargs):
+    def clean(self, value, row=None, **kwargs):
         if not value:
             return None
         if isinstance(value, date):
@@ -211,7 +211,7 @@ class DateTimeWidget(Widget):
             formats = (format,)
         self.formats = formats
 
-    def clean(self, value, row=None, *args, **kwargs):
+    def clean(self, value, row=None, **kwargs):
         if not value:
             return None
         if isinstance(value, datetime):
@@ -254,7 +254,7 @@ class TimeWidget(Widget):
             formats = (format,)
         self.formats = formats
 
-    def clean(self, value, row=None, *args, **kwargs):
+    def clean(self, value, row=None, **kwargs):
         if not value:
             return None
         if isinstance(value, time):
@@ -277,7 +277,7 @@ class DurationWidget(Widget):
     Widget for converting time duration fields.
     """
 
-    def clean(self, value, row=None, *args, **kwargs):
+    def clean(self, value, row=None, **kwargs):
         if not value:
             return None
 
@@ -305,7 +305,7 @@ class SimpleArrayWidget(Widget):
         self.separator = separator
         super().__init__()
 
-    def clean(self, value, row=None, *args, **kwargs):
+    def clean(self, value, row=None, **kwargs):
         return value.split(self.separator) if value else []
 
     def render(self, value, obj=None):
@@ -321,7 +321,7 @@ class JSONWidget(Widget):
     tries to use single quotes and then convert it to proper JSON.
     """
 
-    def clean(self, value, row=None, *args, **kwargs):
+    def clean(self, value, row=None, **kwargs):
         val = super().clean(value)
         if val:
             try:
@@ -376,11 +376,11 @@ class ForeignKeyWidget(Widget):
     :param use_natural_foreign_keys: Use natural key functions to identify 
         related object, default to False
     """
-    def __init__(self, model, field='pk', use_natural_foreign_keys=False, *args, **kwargs):
+    def __init__(self, model, field='pk', use_natural_foreign_keys=False, **kwargs):
         self.model = model
         self.field = field
         self.use_natural_foreign_keys = use_natural_foreign_keys
-        super().__init__(*args, **kwargs)
+        super().__init__(**kwargs)
 
     def get_queryset(self, value, row, *args, **kwargs):
         """
@@ -405,7 +405,7 @@ class ForeignKeyWidget(Widget):
         """
         return self.model.objects.all()
 
-    def clean(self, value, row=None, *args, **kwargs):
+    def clean(self, value, row=None, **kwargs):
         val = super().clean(value)
         if val:
             if self.use_natural_foreign_keys:
@@ -413,7 +413,7 @@ class ForeignKeyWidget(Widget):
                 value = json.loads(value) 
                 return self.model.objects.get_by_natural_key(*value)
             else:
-                return self.get_queryset(value, row, *args, **kwargs).get(**{self.field: val})
+                return self.get_queryset(value, row, **kwargs).get(**{self.field: val})
         else:
             return None
 
@@ -449,7 +449,7 @@ class ManyToManyWidget(Widget):
     :param field: A field on the related model. Default is ``pk``.
     """
 
-    def __init__(self, model, separator=None, field=None, *args, **kwargs):
+    def __init__(self, model, separator=None, field=None, **kwargs):
         if separator is None:
             separator = ','
         if field is None:
@@ -457,9 +457,9 @@ class ManyToManyWidget(Widget):
         self.model = model
         self.separator = separator
         self.field = field
-        super().__init__(*args, **kwargs)
+        super().__init__(**kwargs)
 
-    def clean(self, value, row=None, *args, **kwargs):
+    def clean(self, value, row=None, **kwargs):
         if not value:
             return self.model.objects.none()
         if isinstance(value, (float, int)):
