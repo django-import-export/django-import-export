@@ -25,7 +25,7 @@ This release makes some minor changes to the public API.  If you have overridden
 
   - If you have overridden `clean()` then you will need to update your method definition to reflect this change.
 
-  - `widgets.ForeignKeyWidget` / `widgets.ManyToManyWidget`: The unused `*args` param has been removed from `__init__()`.  If you have overridden `ForeignKeyWidget` you may need to update your implementation to reflect this change.
+  - `widgets.ForeignKeyWidget` / `widgets.ManyToManyWidget`: The unused `*args` param has been removed from `__init__()`.  If you have overridden `ForeignKeyWidget` or `ManyToManyWidget` you may need to update your implementation to reflect this change.
 
 Deprecations
 ############
