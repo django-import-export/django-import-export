@@ -21,7 +21,7 @@ This release makes some minor changes to the public API.  If you have overridden
 
     - `import_export.resources.save_instance()` now takes an additional mandatory argument: `is_create`.  If you have overridden `save_instance()` in your own code, you will need to add this new argument.
 
-- `widgets`: Unused `*args` params have been removed from method definitions. (#1412)
+- `widgets`: Unused `*args` params have been removed from method definitions. (#1413)
 
   - If you have overridden `clean()` then you will need to update your method definition to reflect this change.
 
