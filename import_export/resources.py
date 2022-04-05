@@ -1048,6 +1048,7 @@ class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
         'ManyToManyField': 'get_m2m_widget',
         'OneToOneField': 'get_fk_widget',
         'ForeignKey': 'get_fk_widget',
+        'CharField': widgets.CharWidget,
         'DecimalField': widgets.DecimalWidget,
         'DateTimeField': widgets.DateTimeWidget,
         'DateField': widgets.DateWidget,

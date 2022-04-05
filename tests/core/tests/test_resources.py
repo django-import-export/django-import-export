@@ -1303,6 +1303,15 @@ class ModelResourceFactoryTest(TestCase):
         self.assertEqual(BookResource._meta.model, Book)
 
 
+class WidgetFromDjangoFieldTest(TestCase):
+
+    def test_widget_from_django_field_for_CharField_returns_CharWidget(self):
+        f = CharField()
+        resource = BookResource()
+        w = resource.widget_from_django_field(f)
+        self.assertEqual(widgets.CharWidget, w)
+
+
 @skipUnless(
     'postgresql' in settings.DATABASES['default']['ENGINE'],
     'Run only against Postgres')
@@ -1326,6 +1335,7 @@ class PostgresTests(TransactionTestCase):
         resource = BookResource()
         res = resource.widget_from_django_field(f)
         self.assertEqual(widgets.SimpleArrayWidget, res)
+
 
 if 'postgresql' in settings.DATABASES['default']['ENGINE']:
     from django.contrib.postgres.fields import ArrayField

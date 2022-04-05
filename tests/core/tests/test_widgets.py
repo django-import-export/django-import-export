@@ -13,6 +13,28 @@ from django.utils import timezone
 from import_export import widgets
 
 
+class WidgetTest(TestCase):
+    def setUp(self):
+        self.widget = widgets.Widget()
+
+    def test_clean(self):
+        self.assertEqual("a", self.widget.clean("a"))
+
+    def test_render(self):
+        self.assertEqual("1", self.widget.render(1))
+
+
+class CharWidgetTest(TestCase):
+    def setUp(self):
+        self.widget = widgets.CharWidget()
+
+    def test_clean(self):
+        self.assertEqual("a", self.widget.clean("a"))
+
+    def test_render(self):
+        self.assertEqual("1", self.widget.render(1))
+
+
 class BooleanWidgetTest(TestCase):
 
     def setUp(self):
