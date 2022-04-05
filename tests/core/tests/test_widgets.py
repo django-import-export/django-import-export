@@ -320,8 +320,8 @@ class ForeignKeyWidgetTest(TestCase):
         author2.birthday = "2016-01-01"
         author2.save()
         birthday_widget = BirthdayWidget(Author, 'name')
-        row = {'name': "Foo", 'birthday': author2.birthday}
-        self.assertEqual(birthday_widget.clean("Foo", row), author2)
+        row_dict = {'name': "Foo", 'birthday': author2.birthday}
+        self.assertEqual(birthday_widget.clean("Foo", row=row_dict), author2)
 
     def test_invalid_get_queryset(self):
         class BirthdayWidget(widgets.ForeignKeyWidget):
@@ -331,9 +331,9 @@ class ForeignKeyWidgetTest(TestCase):
                 )
 
         birthday_widget = BirthdayWidget(Author, 'name')
-        row = {'name': "Foo", 'age': 38}
+        row_dict = {'name': "Foo", 'age': 38}
         with self.assertRaises(TypeError):
-            birthday_widget.clean("Foo", row, row_number=1)
+            birthday_widget.clean("Foo", row=row_dict, row_number=1)
 
     def test_render_handles_value_error(self):
         class TestObj(object):
