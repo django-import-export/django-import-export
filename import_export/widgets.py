@@ -103,9 +103,7 @@ class CharWidget(Widget):
     """
     Widget for converting text fields.
     """
-
-    def render(self, value, obj=None):
-        return force_str(value)
+    pass
 
 
 class BooleanWidget(Widget):

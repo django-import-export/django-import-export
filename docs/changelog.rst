@@ -9,7 +9,7 @@ Breaking changes
 
 This release makes some minor changes to the public API.  If you have overridden any methods from the `resources` or `widgets` modules, you may need to update your implementation to accommodate these changes.
 
-- Check value of ManyToManyField in skip_row() (#1271)
+- Check value of `ManyToManyField` in skip_row() (#1271)
 
     - This fixes an issue where ManyToMany fields are not checked correctly in `skip_row()`.  This means that `skip_row()` now takes `row` as a mandatory arg.  If you have overridden `skip_row()` in your own implementation, you will need to add `row` as an arg.
 
@@ -45,7 +45,8 @@ Enhancements
 
 - Default format selections set correctly for export action (#1389)
 - Added option to store raw row values in each row's `RowResult` (#1393)
-- Add natural key support to ForeignKeyWidget (#1371)
+- Add natural key support to `ForeignKeyWidget` (#1371)
+- Optimised default instantiation of `CharWidget` (#1414)
 
 Development
 ###########
