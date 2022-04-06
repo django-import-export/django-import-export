@@ -1,4 +1,5 @@
 import os.path
+import warnings
 from datetime import datetime
 from unittest import mock, skip
 from unittest.mock import MagicMock
@@ -159,8 +160,15 @@ class ImportExportAdminIntegrationTest(TestCase):
             'Ensure you have chosen the correct format for the file. '
             '\'codec\' codec can\'t decode bytes in position 1-1: fail!'
         )
+        # required for testing via tox
+        # remove after django 5.0 released
         if django.VERSION >= (4, 0):
-            self.assertFormError(response.context['form'], 'import_file', target_msg)
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", category=DeprecationWarning)
+                try:
+                    self.assertFormError(response.context['form'], 'import_file', target_msg)
+                except TypeError:
+                    self.assertFormError(response, 'form', 'import_file', target_msg)
         else:
             self.assertFormError(response, 'form', 'import_file', target_msg)
 
@@ -187,8 +195,15 @@ class ImportExportAdminIntegrationTest(TestCase):
             'some unknown error'
         )
 
+        # required for testing via tox
+        # remove after django 5.0 released
         if django.VERSION >= (4, 0):
-            self.assertFormError(response.context['form'], 'import_file', target_msg)
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", category=DeprecationWarning)
+                try:
+                    self.assertFormError(response.context['form'], 'import_file', target_msg)
+                except TypeError:
+                    self.assertFormError(response, 'form', 'import_file', target_msg)
         else:
             self.assertFormError(response, 'form', 'import_file', target_msg)
 
