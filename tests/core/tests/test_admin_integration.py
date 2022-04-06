@@ -1,9 +1,11 @@
 import os.path
+import warnings
 from datetime import datetime
-from unittest import mock
+from unittest import mock, skip
 from unittest.mock import MagicMock
 
 import chardet
+import django
 import tablib
 from core.admin import (
     AuthorAdmin,
@@ -134,6 +136,128 @@ class ImportExportAdminIntegrationTest(TestCase):
         )
         # Check, that we really use second resource - author_email didn't get imported
         self.assertEqual(Book.objects.get(id=1).author_email, "")
+
+    def test_import_action_handles_UnicodeDecodeError_as_form_error(self):
+        # POST the import form
+        input_format = '0'
+        filename = os.path.join(
+            os.path.dirname(__file__),
+            os.path.pardir,
+            'exports',
+            'books.csv')
+        with open(filename, "rb") as f:
+            data = {
+                'input_format': input_format,
+                'import_file': f,
+            }
+            with mock.patch("import_export.admin.TempFolderStorage.read") as mock_tmp_folder_storage:
+                b_arr = b'\x00'
+                mock_tmp_folder_storage.side_effect = UnicodeDecodeError('codec', b_arr, 1, 2, 'fail!')
+                response = self.client.post('/admin/core/book/import/', data)
+        self.assertEqual(response.status_code, 200)
+        target_msg = (
+            '\'UnicodeDecodeError\' encountered while trying to read file. '
+            'Ensure you have chosen the correct format for the file. '
+            '\'codec\' codec can\'t decode bytes in position 1-1: fail!'
+        )
+        # required for testing via tox
+        # remove after django 5.0 released
+        if django.VERSION >= (4, 0):
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", category=DeprecationWarning)
+                try:
+                    self.assertFormError(response.context['form'], 'import_file', target_msg)
+                except TypeError:
+                    self.assertFormError(response, 'form', 'import_file', target_msg)
+        else:
+            self.assertFormError(response, 'form', 'import_file', target_msg)
+
+    def test_import_action_handles_ValueError_as_form_error(self):
+        # POST the import form
+        input_format = '0'
+        filename = os.path.join(
+            os.path.dirname(__file__),
+            os.path.pardir,
+            'exports',
+            'books.csv')
+        with open(filename, "rb") as f:
+            data = {
+                'input_format': input_format,
+                'import_file': f,
+            }
+            with mock.patch("import_export.admin.TempFolderStorage.read") as mock_tmp_folder_storage:
+                mock_tmp_folder_storage.side_effect = ValueError('some unknown error')
+                response = self.client.post('/admin/core/book/import/', data)
+        self.assertEqual(response.status_code, 200)
+        target_msg = (
+            '\'ValueError\' encountered while trying to read file. '
+            'Ensure you have chosen the correct format for the file. '
+            'some unknown error'
+        )
+
+        # required for testing via tox
+        # remove after django 5.0 released
+        if django.VERSION >= (4, 0):
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", category=DeprecationWarning)
+                try:
+                    self.assertFormError(response.context['form'], 'import_file', target_msg)
+                except TypeError:
+                    self.assertFormError(response, 'form', 'import_file', target_msg)
+        else:
+            self.assertFormError(response, 'form', 'import_file', target_msg)
+
+    def assert_string_in_response(self, filename, input_format, encoding=None):
+        input_format = input_format
+        filename = os.path.join(
+            os.path.dirname(__file__),
+            os.path.pardir,
+            'exports',
+            filename)
+        with open(filename, "rb") as f:
+            data = {
+                'input_format': input_format,
+                'import_file': f,
+            }
+            if encoding:
+                BookAdmin.from_encoding = encoding
+            response = self.client.post('/admin/core/book/import/', data)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('result', response.context)
+        self.assertFalse(response.context['result'].has_errors())
+        self.assertContains(response, 'test@example.com')
+
+    @override_settings(IMPORT_EXPORT_TMP_STORAGE_CLASS='import_export.tmp_storages.TempFolderStorage')
+    def test_import_action_handles_TempFolderStorage_read(self):
+        self.assert_string_in_response('books.csv', '0')
+
+    @override_settings(IMPORT_EXPORT_TMP_STORAGE_CLASS='import_export.tmp_storages.TempFolderStorage')
+    def test_import_action_handles_TempFolderStorage_read_iso_8859_1(self):
+        self.assert_string_in_response('books-ISO-8859-1.csv', '0', 'ISO-8859-1')
+
+    @override_settings(IMPORT_EXPORT_TMP_STORAGE_CLASS='import_export.tmp_storages.CacheStorage')
+    def test_import_action_handles_CacheStorage_read(self):
+        self.assert_string_in_response('books.csv', '0')
+
+    @override_settings(IMPORT_EXPORT_TMP_STORAGE_CLASS='import_export.tmp_storages.CacheStorage')
+    def test_import_action_handles_CacheStorage_read_iso_8859_1(self):
+        self.assert_string_in_response('books-ISO-8859-1.csv', '0', 'ISO-8859-1')
+
+    @override_settings(IMPORT_EXPORT_TMP_STORAGE_CLASS='import_export.tmp_storages.CacheStorage')
+    def test_import_action_handles_CacheStorage_read_binary(self):
+        self.assert_string_in_response('books.xls', '1')
+
+    @override_settings(IMPORT_EXPORT_TMP_STORAGE_CLASS='import_export.tmp_storages.MediaStorage')
+    def test_import_action_handles_MediaStorage_read(self):
+        self.assert_string_in_response('books.csv', '0')
+
+    @override_settings(IMPORT_EXPORT_TMP_STORAGE_CLASS='import_export.tmp_storages.MediaStorage')
+    def test_import_action_handles_MediaStorage_read_iso_8859_1(self):
+        self.assert_string_in_response('books-ISO-8859-1.csv', '0', 'ISO-8859-1')
+
+    @override_settings(IMPORT_EXPORT_TMP_STORAGE_CLASS='import_export.tmp_storages.MediaStorage')
+    def test_import_action_handles_MediaStorage_read_binary(self):
+        self.assert_string_in_response('books.xls', '1')
 
     def test_delete_from_admin(self):
         # test delete from admin site (see #432)
@@ -515,6 +639,175 @@ class ImportExportAdminIntegrationTest(TestCase):
         self.assertEqual('import_export/action_formats.js', target_media._js[-1])
 
 
+class ConfirmImportEncodingTest(TestCase):
+    """Test handling 'confirm import' step using different file encodings
+    and storage types.
+    """
+
+    def setUp(self):
+        user = User.objects.create_user('admin', 'admin@example.com',
+                                        'password')
+        user.is_staff = True
+        user.is_superuser = True
+        user.save()
+        self.client.login(username='admin', password='password')
+
+    def assert_string_in_response(self, filename, input_format, encoding=None):
+        input_format = input_format
+        filename = os.path.join(
+            os.path.dirname(__file__),
+            os.path.pardir,
+            'exports',
+            filename)
+        with open(filename, "rb") as f:
+            data = {
+                'input_format': input_format,
+                'import_file': f,
+            }
+            if encoding:
+                BookAdmin.from_encoding = encoding
+            response = self.client.post('/admin/core/book/import/', data)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('result', response.context)
+        self.assertFalse(response.context['result'].has_errors())
+        self.assertContains(response, 'test@example.com')
+
+    @override_settings(IMPORT_EXPORT_TMP_STORAGE_CLASS='import_export.tmp_storages.TempFolderStorage')
+    def test_import_action_handles_TempFolderStorage_read(self):
+        self.assert_string_in_response('books.csv', '0')
+
+    @override_settings(IMPORT_EXPORT_TMP_STORAGE_CLASS='import_export.tmp_storages.TempFolderStorage')
+    def test_import_action_handles_TempFolderStorage_read_mac(self):
+        self.assert_string_in_response('books-mac.csv', '0')
+
+    @override_settings(IMPORT_EXPORT_TMP_STORAGE_CLASS='import_export.tmp_storages.TempFolderStorage')
+    def test_import_action_handles_TempFolderStorage_read_iso_8859_1(self):
+        self.assert_string_in_response('books-ISO-8859-1.csv', '0', 'ISO-8859-1')
+
+    @override_settings(IMPORT_EXPORT_TMP_STORAGE_CLASS='import_export.tmp_storages.TempFolderStorage')
+    def test_import_action_handles_TempFolderStorage_read_binary(self):
+        self.assert_string_in_response('books.xls', '1')
+
+    @override_settings(IMPORT_EXPORT_TMP_STORAGE_CLASS='import_export.tmp_storages.CacheStorage')
+    def test_import_action_handles_CacheStorage_read(self):
+        self.assert_string_in_response('books.csv', '0')
+
+    @skip("waiting for fix in tablib - see #1397")
+    @override_settings(IMPORT_EXPORT_TMP_STORAGE_CLASS='import_export.tmp_storages.CacheStorage')
+    def test_import_action_handles_CacheStorage_read_mac(self):
+        self.assert_string_in_response('books-mac.csv', '0')
+
+    @override_settings(IMPORT_EXPORT_TMP_STORAGE_CLASS='import_export.tmp_storages.CacheStorage')
+    def test_import_action_handles_CacheStorage_read_iso_8859_1(self):
+        self.assert_string_in_response('books-ISO-8859-1.csv', '0', 'ISO-8859-1')
+
+    @override_settings(IMPORT_EXPORT_TMP_STORAGE_CLASS='import_export.tmp_storages.CacheStorage')
+    def test_import_action_handles_CacheStorage_read_binary(self):
+        self.assert_string_in_response('books.xls', '1')
+
+    @override_settings(IMPORT_EXPORT_TMP_STORAGE_CLASS='import_export.tmp_storages.MediaStorage')
+    def test_import_action_handles_MediaStorage_read(self):
+        self.assert_string_in_response('books.csv', '0')
+
+    @override_settings(IMPORT_EXPORT_TMP_STORAGE_CLASS='import_export.tmp_storages.MediaStorage')
+    def test_import_action_handles_MediaStorage_read_mac(self):
+        self.assert_string_in_response('books-mac.csv', '0')
+
+    @override_settings(IMPORT_EXPORT_TMP_STORAGE_CLASS='import_export.tmp_storages.MediaStorage')
+    def test_import_action_handles_MediaStorage_read_iso_8859_1(self):
+        self.assert_string_in_response('books-ISO-8859-1.csv', '0', 'ISO-8859-1')
+
+    @override_settings(IMPORT_EXPORT_TMP_STORAGE_CLASS='import_export.tmp_storages.MediaStorage')
+    def test_import_action_handles_MediaStorage_read_binary(self):
+        self.assert_string_in_response('books.xls', '1')
+
+
+class CompleteImportEncodingTest(TestCase):
+    """Test handling 'complete import' step using different file encodings
+    and storage types.
+    """
+
+    def setUp(self):
+        user = User.objects.create_user('admin', 'admin@example.com',
+                                        'password')
+        user.is_staff = True
+        user.is_superuser = True
+        user.save()
+        self.client.login(username='admin', password='password')
+
+    def assert_string_in_response(self, filename, input_format, encoding=None):
+        input_format = input_format
+        filename = os.path.join(
+            os.path.dirname(__file__),
+            os.path.pardir,
+            'exports',
+            filename)
+        with open(filename, "rb") as f:
+            data = {
+                'input_format': input_format,
+                'import_file': f,
+            }
+            if encoding:
+                BookAdmin.from_encoding = encoding
+            response = self.client.post('/admin/core/book/import/', data)
+
+        confirm_form = response.context['confirm_form']
+        data = confirm_form.initial
+        response = self.client.post('/admin/core/book/process_import/', data, follow=True)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Import finished, with 1 new and 0 updated books.')
+
+    @override_settings(IMPORT_EXPORT_TMP_STORAGE_CLASS='import_export.tmp_storages.TempFolderStorage')
+    def test_import_action_handles_TempFolderStorage_read(self):
+        self.assert_string_in_response('books.csv', '0')
+
+    @override_settings(IMPORT_EXPORT_TMP_STORAGE_CLASS='import_export.tmp_storages.TempFolderStorage')
+    def test_import_action_handles_TempFolderStorage_read_mac(self):
+        self.assert_string_in_response('books-mac.csv', '0')
+
+    @override_settings(IMPORT_EXPORT_TMP_STORAGE_CLASS='import_export.tmp_storages.TempFolderStorage')
+    def test_import_action_handles_TempFolderStorage_read_iso_8859_1(self):
+        self.assert_string_in_response('books-ISO-8859-1.csv', '0', 'ISO-8859-1')
+
+    @override_settings(IMPORT_EXPORT_TMP_STORAGE_CLASS='import_export.tmp_storages.TempFolderStorage')
+    def test_import_action_handles_TempFolderStorage_read_binary(self):
+        self.assert_string_in_response('books.xls', '1')
+
+    @override_settings(IMPORT_EXPORT_TMP_STORAGE_CLASS='import_export.tmp_storages.CacheStorage')
+    def test_import_action_handles_CacheStorage_read(self):
+        self.assert_string_in_response('books.csv', '0')
+
+    @skip("waiting for fix in tablib - see #1397")
+    @override_settings(IMPORT_EXPORT_TMP_STORAGE_CLASS='import_export.tmp_storages.CacheStorage')
+    def test_import_action_handles_CacheStorage_read_mac(self):
+        self.assert_string_in_response('books-mac.csv', '0')
+
+    @override_settings(IMPORT_EXPORT_TMP_STORAGE_CLASS='import_export.tmp_storages.CacheStorage')
+    def test_import_action_handles_CacheStorage_read_iso_8859_1(self):
+        self.assert_string_in_response('books-ISO-8859-1.csv', '0', 'ISO-8859-1')
+
+    @override_settings(IMPORT_EXPORT_TMP_STORAGE_CLASS='import_export.tmp_storages.CacheStorage')
+    def test_import_action_handles_CacheStorage_read_binary(self):
+        self.assert_string_in_response('books.xls', '1')
+
+    @override_settings(IMPORT_EXPORT_TMP_STORAGE_CLASS='import_export.tmp_storages.MediaStorage')
+    def test_import_action_handles_MediaStorage_read(self):
+        self.assert_string_in_response('books.csv', '0')
+
+    @override_settings(IMPORT_EXPORT_TMP_STORAGE_CLASS='import_export.tmp_storages.MediaStorage')
+    def test_import_action_handles_MediaStorage_read_mac(self):
+        self.assert_string_in_response('books-mac.csv', '0')
+
+    @override_settings(IMPORT_EXPORT_TMP_STORAGE_CLASS='import_export.tmp_storages.MediaStorage')
+    def test_import_action_handles_MediaStorage_read_iso_8859_1(self):
+        self.assert_string_in_response('books-ISO-8859-1.csv', '0', 'ISO-8859-1')
+
+    @override_settings(IMPORT_EXPORT_TMP_STORAGE_CLASS='import_export.tmp_storages.MediaStorage')
+    def test_import_action_handles_MediaStorage_read_binary(self):
+        self.assert_string_in_response('books.xls', '1')
+
+
 class TestImportExportActionModelAdmin(ImportExportActionModelAdmin):
     def __init__(self, mock_model, mock_site, error_instance):
         self.error_instance = error_instance
@@ -525,37 +818,6 @@ class TestImportExportActionModelAdmin(ImportExportActionModelAdmin):
 
         mock_storage.read.side_effect = self.error_instance
         return mock_storage
-
-
-class ImportActionDecodeErrorTest(TestCase):
-    mock_model = mock.Mock(spec=Book)
-    mock_model.__name__ = "mockModel"
-    mock_model._meta = mock.Mock(fields=[], many_to_many=[])
-    mock_site = mock.MagicMock()
-    mock_request = MagicMock(spec=HttpRequest)
-    mock_request.POST = {'a': 1}
-    mock_request.FILES = {}
-
-    @mock.patch("import_export.admin.ImportForm")
-    def test_import_action_handles_UnicodeDecodeError(self, mock_form):
-        mock_form.is_valid.return_value = True
-        b_arr = b'\x00\x00'
-        m = TestImportExportActionModelAdmin(self.mock_model, self.mock_site,
-                                                  UnicodeDecodeError('codec', b_arr, 1, 2, 'fail!'))
-        res = m.import_action(self.mock_request)
-        self.assertEqual(
-            "<h1>Imported file has a wrong encoding: \'codec\' codec can\'t decode byte 0x00 in position 1: fail!</h1>",
-            res.content.decode())
-
-    @mock.patch("import_export.admin.ImportForm")
-    def test_import_action_handles_error(self, mock_form):
-        mock_form.is_valid.return_value = True
-        m = TestImportExportActionModelAdmin(self.mock_model, self.mock_site,
-                                                  ValueError("fail"))
-        res = m.import_action(self.mock_request)
-        self.assertRegex(
-            res.content.decode(),
-            r"<h1>ValueError encountered while trying to read file: .*</h1>")
 
 
 class ExportActionAdminIntegrationTest(TestCase):

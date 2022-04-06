@@ -392,9 +392,13 @@ mixins (:class:`~import_export.admin.ImportMixin`,
 
     admin.site.register(Book, BookAdmin)
 
+.. _change-screen-figure:
+
 .. figure:: _static/images/django-import-export-change.png
 
    A screenshot of the change view with Import and Export buttons.
+
+.. _confirm-import-figure:
 
 .. figure:: _static/images/django-import-export-import.png
 
@@ -529,6 +533,45 @@ as well as importing customizations.
 
     :doc:`/api_admin`
         available mixins and options.
+
+Import confirmation
+~~~~~~~~~~~~~~~~~~~
+
+Importing in the Admin site is a two step process.
+
+#. Choose the file to import (:ref:`screenshot<change-screen-figure>`).
+#. Review changes and confirm import (:ref:`screenshot<confirm-import-figure>`).
+
+To support this, uploaded data is written to temporary storage after step 1, and read
+back for final import after step 2.
+
+There are three mechanisms for temporary storage.
+
+#. Temporary file storage on the host server (default).  This is suitable for development only.
+   Use of temporary filesystem storage is not recommended for production sites.
+
+#. The `Django cache <https://docs.djangoproject.com/en/dev/topics/cache/>`_.
+
+#. `Django storage <https://docs.djangoproject.com/en/dev/ref/files/storage/>`_.
+
+To modify which storage mechanism is used, please refer to the setting :ref:`IMPORT_EXPORT_TMP_STORAGE_CLASS`.
+
+Temporary resources are removed when data is successfully imported after the confirmation step.
+
+Your choice of temporary storage will be influenced by the following factors:
+
+* Sensitivity of the data being imported.
+* Volume and frequency of uploads.
+* File upload size.
+* Use of containers or load-balanced servers.
+
+.. warning::
+
+    If users do not complete the confirmation step of the workflow,
+    or if there are errors during import, then temporary resources may not be deleted.
+    This will need to be understood and managed in production settings.
+    For example, using a cache expiration policy or cron job to clear stale resources.
+
 
 Using multiple resources
 ------------------------

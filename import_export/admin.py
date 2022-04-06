@@ -10,7 +10,6 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.template.response import TemplateResponse
 from django.urls import path, reverse
 from django.utils.decorators import method_decorator
-from django.utils.encoding import force_str
 from django.utils.module_loading import import_string
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_POST
@@ -19,7 +18,7 @@ from .forms import ConfirmImportForm, ExportForm, ImportForm, export_action_form
 from .mixins import BaseExportMixin, BaseImportMixin
 from .results import RowResult
 from .signals import post_export, post_import
-from .tmp_storages import TempFolderStorage
+from .tmp_storages import MediaStorage, TempFolderStorage
 
 
 class ImportExportMixinBase:
@@ -41,7 +40,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
     #: template for import view
     import_template_name = 'admin/import_export/import.html'
     #: import data encoding
-    from_encoding = "utf-8"
+    from_encoding = "utf-8-sig"
     skip_admin_log = None
     # storage class for saving temporary files
     tmp_storage_class = None
@@ -103,13 +102,17 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
             import_formats = self.get_import_formats()
             input_format = import_formats[
                 int(confirm_form.cleaned_data['input_format'])
-            ]()
-            tmp_storage = self.get_tmp_storage_class()(name=confirm_form.cleaned_data['import_file_name'])
-            data = tmp_storage.read(input_format.get_read_mode())
-            if not input_format.is_binary() and self.from_encoding:
-                data = force_str(data, self.from_encoding)
-            dataset = input_format.create_dataset(data)
+            ](encoding=self.from_encoding)
+            encoding = None if input_format.is_binary() else self.from_encoding
+            tmp_storage_cls = self.get_tmp_storage_class()
+            tmp_storage = tmp_storage_cls(
+                name=confirm_form.cleaned_data['import_file_name'],
+                encoding=encoding,
+                read_mode=input_format.get_read_mode()
+            )
 
+            data = tmp_storage.read()
+            dataset = input_format.create_dataset(data)
             result = self.process_dataset(dataset, confirm_form, request, *args, **kwargs)
 
             tmp_storage.remove()
@@ -214,18 +217,26 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         return {}
 
     def write_to_tmp_storage(self, import_file, input_format):
-        tmp_storage = self.get_tmp_storage_class()()
+        encoding = None
+        if not input_format.is_binary():
+            encoding = self.from_encoding
+
+        tmp_storage_cls = self.get_tmp_storage_class()
+        tmp_storage = tmp_storage_cls(encoding=encoding, read_mode=input_format.get_read_mode())
         data = bytes()
         for chunk in import_file.chunks():
             data += chunk
 
-        tmp_storage.save(data, input_format.get_read_mode())
+        if tmp_storage_cls == MediaStorage and not input_format.is_binary():
+            data = data.decode(self.from_encoding)
+
+        tmp_storage.save(data)
         return tmp_storage
 
     def import_action(self, request, *args, **kwargs):
         """
         Perform a dry_run of the import to make sure the import will not
-        result in errors.  If there where no error, save the user
+        result in errors.  If there are no errors, save the user
         uploaded file to a local temp file that will be used by
         'process_import' for the actual import.
         """
@@ -243,52 +254,56 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
                          request.FILES or None,
                          **form_kwargs)
 
+        resources = list()
         if request.POST and form.is_valid():
             input_format = import_formats[
                 int(form.cleaned_data['input_format'])
             ]()
+            if not input_format.is_binary():
+                input_format.encoding = self.from_encoding
+
             import_file = form.cleaned_data['import_file']
             # first always write the uploaded file to disk as it may be a
             # memory file or else based on settings upload handlers
             tmp_storage = self.write_to_tmp_storage(import_file, input_format)
 
-            # then read the file, using the proper format-specific mode
-            # warning, big files may exceed memory
             try:
-                data = tmp_storage.read(input_format.get_read_mode())
-                if not input_format.is_binary() and self.from_encoding:
-                    data = force_str(data, self.from_encoding)
+                # then read the file, using the proper format-specific mode
+                # warning, big files may exceed memory
+                data = tmp_storage.read()
                 dataset = input_format.create_dataset(data)
-            except UnicodeDecodeError as e:
-                return HttpResponse(_(u"<h1>Imported file has a wrong encoding: %s</h1>" % e))
             except Exception as e:
-                return HttpResponse(_(u"<h1>%s encountered while trying to read file: %s</h1>" % (type(e).__name__, import_file.name)))
+                form.add_error('import_file',
+                               _(f"'{type(e).__name__}' encountered while trying to read file. "
+                                 "Ensure you have chosen the correct format for the file. "
+                                 f"{str(e)}"))
 
-            # prepare kwargs for import data, if needed
-            res_kwargs = self.get_import_resource_kwargs(request, form=form, *args, **kwargs)
-            resource = self.choose_import_resource_class(form)(**res_kwargs)
-            resources = [resource]
+            if not form.errors:
+                # prepare kwargs for import data, if needed
+                res_kwargs = self.get_import_resource_kwargs(request, form=form, *args, **kwargs)
+                resource = self.choose_import_resource_class(form)(**res_kwargs)
+                resources = [resource]
 
-            # prepare additional kwargs for import_data, if needed
-            imp_kwargs = self.get_import_data_kwargs(request, form=form, *args, **kwargs)
-            result = resource.import_data(dataset, dry_run=True,
-                                          raise_errors=False,
-                                          file_name=import_file.name,
-                                          user=request.user,
-                                          **imp_kwargs)
+                # prepare additional kwargs for import_data, if needed
+                imp_kwargs = self.get_import_data_kwargs(request, form=form, *args, **kwargs)
+                result = resource.import_data(dataset, dry_run=True,
+                                              raise_errors=False,
+                                              file_name=import_file.name,
+                                              user=request.user,
+                                              **imp_kwargs)
 
-            context['result'] = result
+                context['result'] = result
 
-            if not result.has_errors() and not result.has_validation_errors():
-                initial = {
-                    'import_file_name': tmp_storage.name,
-                    'original_file_name': import_file.name,
-                    'input_format': form.cleaned_data['input_format'],
-                    'resource': request.POST.get('resource', ''),
-                }
-                confirm_form = self.get_confirm_import_form()
-                initial = self.get_form_kwargs(form=form, **initial)
-                context['confirm_form'] = confirm_form(initial=initial)
+                if not result.has_errors() and not result.has_validation_errors():
+                    initial = {
+                        'import_file_name': tmp_storage.name,
+                        'original_file_name': import_file.name,
+                        'input_format': form.cleaned_data['input_format'],
+                        'resource': request.POST.get('resource', ''),
+                    }
+                    confirm_form = self.get_confirm_import_form()
+                    initial = self.get_form_kwargs(form=form, **initial)
+                    context['confirm_form'] = confirm_form(initial=initial)
         else:
             res_kwargs = self.get_import_resource_kwargs(request, form=form, *args, **kwargs)
             resource_classes = self.get_import_resource_classes()

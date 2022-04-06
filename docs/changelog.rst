@@ -10,22 +10,20 @@ Breaking changes
 This release makes some minor changes to the public API.  If you have overridden any methods from the `resources` or `widgets` modules, you may need to update your implementation to accommodate these changes.
 
 - Check value of `ManyToManyField` in skip_row() (#1271)
-
     - This fixes an issue where ManyToMany fields are not checked correctly in `skip_row()`.  This means that `skip_row()` now takes `row` as a mandatory arg.  If you have overridden `skip_row()` in your own implementation, you will need to add `row` as an arg.
 
 - Bug fix: validation errors were being ignored when `skip_unchanged` is set (#1378)
-
     - If you have overridden `skip_row()` you can choose whether or not to skip rows if validation errors are present.  The default behavior is to not to skip rows if there are validation errors during import.
 
 - Use 'create' flag instead of instance.pk (#1362)
-
     - `import_export.resources.save_instance()` now takes an additional mandatory argument: `is_create`.  If you have overridden `save_instance()` in your own code, you will need to add this new argument.
 
 - `widgets`: Unused `*args` params have been removed from method definitions. (#1413)
+    - If you have overridden `clean()` then you should update your method definition to reflect this change.
+    - `widgets.ForeignKeyWidget` / `widgets.ManyToManyWidget`: The unused `*args` param has been removed from `__init__()`.  If you have overridden `ForeignKeyWidget` or `ManyToManyWidget` you may need to update your implementation to reflect this change.
 
-  - If you have overridden `clean()` then you will need to update your method definition to reflect this change.
-
-  - `widgets.ForeignKeyWidget` / `widgets.ManyToManyWidget`: The unused `*args` param has been removed from `__init__()`.  If you have overridden `ForeignKeyWidget` or `ManyToManyWidget` you may need to update your implementation to reflect this change.
+- Admin interface: Modified handling of import errors (#1306)
+    - Exceptions raised during the import process are now presented as form errors, instead of being wrapped in a \<H1\> tag in the response.  If you have any custom logic which uses the error written directly into the response, then this may need to be changed.
 
 Deprecations
 ############
@@ -33,10 +31,8 @@ Deprecations
 This release adds some deprecations which will be removed in the 3.1 release.
 
 - Add support for multiple resources in ModelAdmin. (#1223)
-
-  - The `*Mixin.resource_class` accepting single resource has been deprecated and the new `*Mixin.resource_classes` accepting subscriptable type (list, tuple, ...) has been added.
-
-  - Same applies to all of the `get_resource_class`, `get_import_resource_class` and `get_export_resource_class` methods.
+    - The `*Mixin.resource_class` accepting single resource has been deprecated and the new `*Mixin.resource_classes` accepting subscriptable type (list, tuple, ...) has been added.
+    - Same applies to all of the `get_resource_class`, `get_import_resource_class` and `get_export_resource_class` methods.
 
 - Deprecated `exceptions.py` (#1372)
 
@@ -52,6 +48,11 @@ Development
 ###########
 
 - Increased test coverage, refactored CI build to use tox (#1372)
+
+Documentation
+#############
+
+- Clarified issues around the usage of temporary storage (#1306)
 
 2.8.0 (2022-03-31)
 ------------------
