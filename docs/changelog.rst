@@ -1,21 +1,67 @@
 Changelog
 =========
 
-2.7.2 (unreleased)
+3.0.0 (unreleased)
 ------------------
 
-This release makes the following changes to the API.  You may need to update your implementation to
-accommodate these changes.
+Breaking changes
+################
 
-- Check value of ManyToManyField in skip_row() (#1271)
-   - This fixes an issue where ManyToMany fields are not checked correctly in `skip_row()`.
-     This means that `skip_row()` now takes `row` as a mandatory arg.
-     If you have overridden `skip_row()` in your own implementation, you will need to add `row`
-     as an arg.
+This release makes some minor changes to the public API.  If you have overridden any methods from the `resources` or `widgets` modules, you may need to update your implementation to accommodate these changes.
+
+- Check value of `ManyToManyField` in skip_row() (#1271)
+
+    - This fixes an issue where ManyToMany fields are not checked correctly in `skip_row()`.  This means that `skip_row()` now takes `row` as a mandatory arg.  If you have overridden `skip_row()` in your own implementation, you will need to add `row` as an arg.
+
+- Bug fix: validation errors were being ignored when `skip_unchanged` is set (#1378)
+
+    - If you have overridden `skip_row()` you can choose whether or not to skip rows if validation errors are present.  The default behavior is to not to skip rows if there are validation errors during import.
 
 - Use 'create' flag instead of instance.pk (#1362)
-   - ``import_export.resources.save_instance()`` now takes an additional mandatory argument: `is_create`.
-     If you have over-ridden `save_instance()` in your own code, you will need to add this new argument.
+
+    - `import_export.resources.save_instance()` now takes an additional mandatory argument: `is_create`.  If you have overridden `save_instance()` in your own code, you will need to add this new argument.
+
+- `widgets`: Unused `*args` params have been removed from method definitions. (#1413)
+
+  - If you have overridden `clean()` then you will need to update your method definition to reflect this change.
+
+  - `widgets.ForeignKeyWidget` / `widgets.ManyToManyWidget`: The unused `*args` param has been removed from `__init__()`.  If you have overridden `ForeignKeyWidget` or `ManyToManyWidget` you may need to update your implementation to reflect this change.
+
+Deprecations
+############
+
+This release adds some deprecations which will be removed in the 3.1 release.
+
+- Add support for multiple resources in ModelAdmin. (#1223)
+
+  - The `*Mixin.resource_class` accepting single resource has been deprecated and the new `*Mixin.resource_classes` accepting subscriptable type (list, tuple, ...) has been added.
+
+  - Same applies to all of the `get_resource_class`, `get_import_resource_class` and `get_export_resource_class` methods.
+
+- Deprecated `exceptions.py` (#1372)
+
+Enhancements
+############
+
+- Default format selections set correctly for export action (#1389)
+- Added option to store raw row values in each row's `RowResult` (#1393)
+- Add natural key support to `ForeignKeyWidget` (#1371)
+- Optimised default instantiation of `CharWidget` (#1414)
+
+Development
+###########
+
+- Increased test coverage, refactored CI build to use tox (#1372)
+
+2.8.0 (2022-03-31)
+------------------
+
+- Updated import.css to support dark mode (#1318)
+- Fix crash when import_data() called with empty Dataset and `collect_failed_rows=True` (#1381)
+- Improve Korean translation (#1402)
+- Update example subclass widget code (#1407)
+- Drop support for python3.6, django 2.2, 3.0, 3.1 (#1408)
+- Add get_export_form() to ExportMixin (#1409)
 
 2.7.1 (2021-12-23)
 ------------------

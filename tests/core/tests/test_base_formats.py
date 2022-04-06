@@ -52,6 +52,16 @@ class FormatTest(TestCase):
     def test_can_export_default(self):
         self.assertFalse(self.format.can_export())
 
+
+class TablibFormatTest(TestCase):
+    def setUp(self):
+        self.format = base_formats.TablibFormat()
+
+    def test_get_format_for_undefined_TABLIB_MODULE_raises_AttributeError(self):
+        with self.assertRaises(AttributeError):
+            self.format.get_format()
+
+
 class XLSTest(TestCase):
 
     def setUp(self):

@@ -1,7 +1,7 @@
 """
 Helper module for testing bulk imports.
 
-See tests/bulk/README.md
+See testing.rst
 """
 import time
 from functools import wraps

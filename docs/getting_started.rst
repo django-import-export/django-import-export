@@ -235,6 +235,58 @@ and exporting resource.
     :doc:`/api_widgets`
         available widget types and options.
 
+Django Natural Keys
+===================
+
+The ForeignKeyWidget also supports using Django's natural key functions. A
+manager class with the get_by_natural_key function is require for importing
+foreign key relationships by the field model's natural key, and the model must
+have a natural_key function that can be serialized as a JSON list in order to
+export data. 
+
+The primary utility for natural key functionality is to enable exporting data
+that can be imported into other Django environments with different numerical
+primary key sequences. The natural key functionality enables handling more
+complex data than specifying either a single field or the PK. 
+
+The example below illustrates how to create a field on the BookResource that
+imports and exports its author relationships using the natural key functions
+on the Author model and modelmanager. 
+
+::
+
+    from import_export.fields import Field
+    from import_export.widgets import ForeignKeyWidget
+
+    class AuthorManager(models.Manager):
+
+        def get_by_natural_key(self, name):
+            return self.get(name=name)
+
+    class Author(models.Model):
+
+        objects = AuthorManager()
+
+        name = models.CharField(max_length=100)
+        birthday = models.DateTimeField(auto_now_add=True)
+
+        def natural_key(self):
+            return (self.name,)
+
+    class BookResource(resources.ModelResource):
+
+        author = Field(
+            column_name = "author",
+            attribute = "author",
+            widget = ForeignKeyWidget(Author, use_natural_foreign_keys=True)
+        )
+
+        class Meta:
+            model = Book
+
+Read more at `Django Serialization <https://docs.djangoproject.com/en/4.0/topics/serialization>`_
+
+
 Importing data
 ==============
 
@@ -336,7 +388,7 @@ mixins (:class:`~import_export.admin.ImportMixin`,
     from import_export.admin import ImportExportModelAdmin
 
     class BookAdmin(ImportExportModelAdmin):
-        resource_class = BookResource
+        resource_classes = [BookResource]
 
     admin.site.register(Book, BookAdmin)
 
@@ -351,6 +403,13 @@ mixins (:class:`~import_export.admin.ImportMixin`,
 .. figure:: _static/images/django-import-export-import-confirm.png
 
    A screenshot of the confirm import view.
+
+
+.. warning::
+
+    The `resource_class` parameter was deprecated in `django-import-export` 3.0.
+    Assign list or tuple with Resource(s) to `resource_classes` parameter now.
+
 
 
 Exporting via admin action
@@ -431,7 +490,7 @@ Customize forms::
 Customize ``ModelAdmin``::
 
     class CustomBookAdmin(ImportMixin, admin.ModelAdmin):
-        resource_class = BookResource
+        resource_classes = [BookResource]
 
         def get_import_form(self):
             return CustomImportForm
@@ -460,7 +519,49 @@ Using the above methods it is possible to customize import form initialization
 as well as importing customizations.
 
 
+.. warning::
+
+    The `resource_class` parameter was deprecated in `django-import-export` 3.0.
+    Assign list or tuple with Resource(s) to `resource_classes` parameter now.
+
+
 .. seealso::
 
     :doc:`/api_admin`
         available mixins and options.
+
+Using multiple resources
+------------------------
+
+It is possible to set multiple resources both to import and export `ModelAdmin` classes.
+The `ImportMixin`, `ExportMixin`, `ImportExportMixin` and `ImportExportModelAdmin` classes accepts
+subscriptable type (list, tuple, ...) as `resource_classes` parameter.
+The subscriptable could also be returned from one of the
+`get_resource_classes()`, `get_import_resource_classes()`, `get_export_resource_classes()` classes.
+
+If there are multiple resources, the resource chooser appears in import/export admin form.
+The displayed name of the resource can be changed through the `name` parameter of the `Meta` class.
+
+
+Use multiple resources::
+
+    from import_export import resources
+    from core.models import Book
+
+
+    class BookResource(resources.ModelResource):
+
+        class Meta:
+            model = Book
+
+
+    class BookNameResource(resources.ModelResource):
+
+        class Meta:
+            model = Book
+            fields = ['id', 'name']
+            name = "Export/Import only book names"
+
+
+    class CustomBookAdmin(ImportMixin, admin.ModelAdmin):
+        resource_classes = [BookResource, BookNameResource]

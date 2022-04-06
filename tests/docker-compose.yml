@@ -1,0 +1,39 @@
+version: '3.3'
+services:
+  postgresdb:
+    container_name: importexport_pgdb
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: import_export
+      IMPORT_EXPORT_POSTGRESQL_USER: ${IMPORT_EXPORT_POSTGRESQL_USER}
+      IMPORT_EXPORT_POSTGRESQL_PASSWORD: ${IMPORT_EXPORT_POSTGRESQL_PASSWORD}
+      POSTGRES_PASSWORD: ${IMPORT_EXPORT_POSTGRESQL_PASSWORD}
+    image: postgres:10
+    restart: "no"
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./docker/db/:/docker-entrypoint-initdb.d/
+      - postgres-db-data:/var/lib/postgresql/data
+  mysqldb:
+    container_name: importexport_mysqldb
+    image: mysql:5.7
+    restart: "no"
+    environment:
+      MYSQL_DATABASE: import_export
+      MYSQL_USER: ${IMPORT_EXPORT_MYSQL_USER}
+      MYSQL_PASSWORD: ${IMPORT_EXPORT_MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${IMPORT_EXPORT_MYSQL_PASSWORD}
+    ports:
+      - "3306:3306"
+    expose:
+      - '3306'
+    volumes:
+      - mysql-db-data:/var/lib/mysql
+
+volumes:
+  postgres-db-data:
+    driver: local
+  mysql-db-data:
+    driver: local
