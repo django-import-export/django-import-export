@@ -578,7 +578,6 @@ class Resource(metaclass=DeclarativeMetaclass):
         """
         return False
 
-
     def skip_row(self, instance, original, row, import_validation_errors=None):
         """
         Returns ``True`` if ``row`` importing should be skipped.
@@ -610,23 +609,17 @@ class Resource(metaclass=DeclarativeMetaclass):
         if not self._meta.skip_unchanged or self._meta.skip_diff or import_validation_errors:
             return False
         for field in self.get_import_fields():
-            try:
-                # For fields that are models.fields.related.ManyRelatedManager
-                # we need to compare the results
-                if isinstance(field.widget, widgets.ManyToManyWidget):
-                    # compare with the future value to detect changes
-                    instance_value = list(field.clean(row))
-                else:
-                    instance_value = list(field.get_value(instance).all())
-
-                original_value = list(field.get_value(original).all())
-
-                instance_value.sort(key=lambda x: x.pk)
-                original_value.sort(key=lambda x: x.pk)
-
-                if instance_value != original_value:
+            # For fields that are models.fields.related.ManyRelatedManager
+            # we need to compare the results
+            if isinstance(field.widget, widgets.ManyToManyWidget):
+                instance_values = list(field.clean(row))
+                original_values = list(field.get_value(original).all())
+                if len(instance_values) != len(original_values):
                     return False
-            except AttributeError:
+
+                if sorted([v.id for v in instance_values]) != sorted([v.id for v in original_values]):
+                    return False
+            else:
                 if field.get_value(instance) != field.get_value(original):
                     return False
         return True
