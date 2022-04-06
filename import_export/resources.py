@@ -609,18 +609,17 @@ class Resource(metaclass=DeclarativeMetaclass):
         if not self._meta.skip_unchanged or self._meta.skip_diff or import_validation_errors:
             return False
         for field in self.get_import_fields():
-            try:
-                # For fields that are models.fields.related.ManyRelatedManager
-                # we need to compare the results
-                if isinstance(field.widget, widgets.ManyToManyWidget):
-                    # compare with the future value to detect changes
-                    instance_value = list(field.clean(row))
-                else:
-                    instance_value = list(field.get_value(instance).all())
-
-                if instance_value != list(field.get_value(original).all()):
+            # For fields that are models.fields.related.ManyRelatedManager
+            # we need to compare the results
+            if isinstance(field.widget, widgets.ManyToManyWidget):
+                instance_values = list(field.clean(row))
+                original_values = list(field.get_value(original).all())
+                if len(instance_values) != len(original_values):
                     return False
-            except AttributeError:
+
+                if sorted(v.id for v in instance_values) != sorted(v.id for v in original_values):
+                    return False
+            else:
                 if field.get_value(instance) != field.get_value(original):
                     return False
         return True
@@ -713,6 +712,7 @@ class Resource(metaclass=DeclarativeMetaclass):
                     # validate_instance(), where they can be combined with model
                     # instance validation errors if necessary
                     import_validation_errors = e.update_error_dict(import_validation_errors)
+
                 if self.skip_row(instance, original, row, import_validation_errors):
                     row_result.import_type = RowResult.IMPORT_TYPE_SKIP
                 else:

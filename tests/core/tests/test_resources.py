@@ -1548,7 +1548,7 @@ class ManyToManyWidgetDiffTest(TestCase):
         # should be skipped, because there is no change
         book = Book.objects.first()
         dataset_headers = ["id", "name", "categories"]
-        dataset_row = [book.id, book.name, book.categories.all()]
+        dataset_row = [book.id, book.name, book.categories.first().id]
         dataset = tablib.Dataset(headers=dataset_headers)
         dataset.append(dataset_row)
 
@@ -1559,6 +1559,40 @@ class ManyToManyWidgetDiffTest(TestCase):
         result = book_resource.import_data(dataset, dry_run=False)
         self.assertEqual(result.rows[0].import_type, results.RowResult.IMPORT_TYPE_SKIP)
         self.assertEqual(1, book.categories.count())
+
+    def test_many_to_many_widget_handles_ordering(self):
+        # the book is associated with 2 categories ('Category 1', 'Category 2')
+        # when we import a row with a book with both categories (in any order), the book
+        # should be skipped, because there is no change
+        book = Book.objects.first()
+        self.assertEqual(1, book.categories.count())
+        cat1 = Category.objects.get(name="Category 1")
+        cat2 = Category.objects.get(name="Category 2")
+        book.categories.add(cat1)
+        book.save()
+        self.assertEqual(2, book.categories.count())
+        dataset_headers = ["id", "name", "categories"]
+
+        book_resource = BookResource()
+        book_resource._meta.skip_unchanged = True
+
+        # import with natural order
+        dataset_row = [book.id, book.name, f"{cat1.id},{cat2.id}"]
+        dataset = tablib.Dataset(headers=dataset_headers)
+        dataset.append(dataset_row)
+
+        result = book_resource.import_data(dataset, dry_run=False)
+        self.assertEqual(result.rows[0].import_type, results.RowResult.IMPORT_TYPE_SKIP)
+
+        # import with reverse order
+        dataset_row = [book.id, book.name, f"{cat2.id},{cat1.id}"]
+        dataset = tablib.Dataset(headers=dataset_headers)
+        dataset.append(dataset_row)
+
+        result = book_resource.import_data(dataset, dry_run=False)
+        self.assertEqual(result.rows[0].import_type, results.RowResult.IMPORT_TYPE_SKIP)
+
+        self.assertEqual(2, book.categories.count())
 
 
 @mock.patch("import_export.resources.Diff", spec=True)
