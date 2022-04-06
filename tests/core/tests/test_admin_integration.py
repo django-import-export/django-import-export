@@ -153,7 +153,7 @@ class ImportExportAdminIntegrationTest(TestCase):
                 mock_tmp_folder_storage.side_effect = UnicodeDecodeError('codec', b_arr, 1, 2, 'fail!')
                 response = self.client.post('/admin/core/book/import/', data)
         self.assertEqual(response.status_code, 200)
-        self.assertFormError(response, 'form', 'import_file',
+        self.assertFormError(response.context['form'], 'import_file',
                              '\'UnicodeDecodeError\' encountered while trying to read file. '
                              'Ensure you have chosen the correct format for the file. '
                              '\'codec\' codec can\'t decode bytes in position 1-1: fail!')
@@ -175,7 +175,7 @@ class ImportExportAdminIntegrationTest(TestCase):
                 mock_tmp_folder_storage.side_effect = ValueError('some unknown error')
                 response = self.client.post('/admin/core/book/import/', data)
         self.assertEqual(response.status_code, 200)
-        self.assertFormError(response, 'form', 'import_file', '\'ValueError\' encountered while trying to read file. '
+        self.assertFormError(response.context['form'], 'import_file', '\'ValueError\' encountered while trying to read file. '
                                                               'Ensure you have chosen the correct format for the file. '
                                                               'some unknown error')
 
