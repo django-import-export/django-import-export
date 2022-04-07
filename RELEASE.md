@@ -17,6 +17,9 @@ git clone git@github.com:django-import-export/django-import-export.git django-im
 
 cd django-import-export-rel
 
+# checkout any feature branch at this point
+# git checkout develop
+
 python3 -m venv relenv
 source relenv/bin/activate
 
