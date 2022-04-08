@@ -20,8 +20,9 @@ cd django-import-export-rel
 # checkout any feature branch at this point
 # git checkout develop
 
-python3 -m venv relenv
-source relenv/bin/activate
+python3 -m venv venv
+source venv/bin/activate
+pip install -U pip setuptools wheel
 
 pip install -r requirements/deploy.txt
 
