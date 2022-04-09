@@ -43,6 +43,7 @@ Enhancements
 - Added option to store raw row values in each row's `RowResult` (#1393)
 - Add natural key support to `ForeignKeyWidget` (#1371)
 - Optimised default instantiation of `CharWidget` (#1414)
+- Fixed handling of LF character when using `CacheStorage` (#)
 
 Development
 ###########

@@ -1,7 +1,7 @@
 import os.path
 import warnings
 from datetime import datetime
-from unittest import mock, skip
+from unittest import mock
 from unittest.mock import MagicMock
 
 import chardet
@@ -692,7 +692,6 @@ class ConfirmImportEncodingTest(TestCase):
     def test_import_action_handles_CacheStorage_read(self):
         self.assert_string_in_response('books.csv', '0')
 
-    @skip("waiting for fix in tablib - see #1397")
     @override_settings(IMPORT_EXPORT_TMP_STORAGE_CLASS='import_export.tmp_storages.CacheStorage')
     def test_import_action_handles_CacheStorage_read_mac(self):
         self.assert_string_in_response('books-mac.csv', '0')
@@ -778,7 +777,6 @@ class CompleteImportEncodingTest(TestCase):
     def test_import_action_handles_CacheStorage_read(self):
         self.assert_string_in_response('books.csv', '0')
 
-    @skip("waiting for fix in tablib - see #1397")
     @override_settings(IMPORT_EXPORT_TMP_STORAGE_CLASS='import_export.tmp_storages.CacheStorage')
     def test_import_action_handles_CacheStorage_read_mac(self):
         self.assert_string_in_response('books-mac.csv', '0')
