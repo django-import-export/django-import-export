@@ -1,7 +1,12 @@
 Changelog
 =========
 
-3.0.0 (unreleased)
+3.0.0-beta.1 (2022-04-09)
+------------------
+
+- Fixed handling of LF character when using `CacheStorage` (#1417)
+
+3.0.0-beta (2022-04-09)
 ------------------
 
 Breaking changes
@@ -43,7 +48,6 @@ Enhancements
 - Added option to store raw row values in each row's `RowResult` (#1393)
 - Add natural key support to `ForeignKeyWidget` (#1371)
 - Optimised default instantiation of `CharWidget` (#1414)
-- Fixed handling of LF character when using `CacheStorage` (#1417)
 
 Development
 ###########
