@@ -1,7 +1,7 @@
 Changelog
 =========
 
-3.0.0-beta.1 (2022-04-09)
+3.0.0-beta.1 (2022-04-11)
 ------------------
 
 - Fixed handling of LF character when using `CacheStorage` (#1417)
