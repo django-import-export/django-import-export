@@ -1,13 +1,19 @@
 Changelog
 =========
 
+3.0.0-beta.2 (unreleased)
+-------------------------
+
+- fix broken link to tablib formats page (#1418)
+- fix broken image ref in `README.rst`
+
 3.0.0-beta.1 (2022-04-11)
-------------------
+-------------------------
 
 - Fixed handling of LF character when using `CacheStorage` (#1417)
 
 3.0.0-beta (2022-04-09)
-------------------
+-----------------------
 
 Breaking changes
 ################
