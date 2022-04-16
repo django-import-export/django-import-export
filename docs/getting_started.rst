@@ -253,6 +253,9 @@ The example below illustrates how to create a field on the BookResource that
 imports and exports its author relationships using the natural key functions
 on the Author model and modelmanager. 
 
+The resource _meta option "use_natural_foreign_keys" can enable detecting
+this setting for all Models that support it.
+
 ::
 
     from import_export.fields import Field
@@ -273,6 +276,7 @@ on the Author model and modelmanager.
         def natural_key(self):
             return (self.name,)
 
+    # Only the author field uses natural foreign keys.
     class BookResource(resources.ModelResource):
 
         author = Field(
@@ -283,6 +287,13 @@ on the Author model and modelmanager.
 
         class Meta:
             model = Book
+    
+    # All widgets with foreign key functions use them.
+    class BookResource(resources.ModelResource):
+
+        class Meta:
+            model = Book
+            use_natural_foreign_keys = True
 
 Read more at `Django Serialization <https://docs.djangoproject.com/en/4.0/topics/serialization>`_
 

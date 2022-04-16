@@ -41,6 +41,11 @@ def get_related_model(field):
     if hasattr(field, 'related_model'):
         return field.related_model
 
+def has_natural_foreign_key(model):
+    """
+    Determine if a model has natural foreign key functions
+    """
+    return (hasattr(model, "natural_key") and hasattr(model.objects, "get_by_natural_key"))
 
 class ResourceOptions:
     """
@@ -181,6 +186,14 @@ class ResourceOptions:
     If True, each row's raw data will be stored in each row result.
     Enabling this parameter will increase the memory usage during import
     which should be considered when importing large datasets.
+    """
+
+    use_natural_foreign_keys = False
+    """
+    If True, use_natural_foreign_keys = True will be passed to all foreign
+    key widget fields whose models support natural foreign keys. That is,
+    the model has a natural_key function and the manager has a
+    get_by_natural_key function. 
     """
 
 
@@ -1082,9 +1095,17 @@ class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
         """
         Prepare widget for fk and o2o fields
         """
+
+        model = get_related_model(field)
+
+        use_natural_foreign_keys = ( 
+            has_natural_foreign_key(model) and cls._meta.use_natural_foreign_keys
+        )
+
         return functools.partial(
             widgets.ForeignKeyWidget,
-            model=get_related_model(field))
+            model=model,
+            use_natural_foreign_keys=use_natural_foreign_keys)
 
     @classmethod
     def widget_from_django_field(cls, f, default=widgets.Widget):
