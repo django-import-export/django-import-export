@@ -239,7 +239,7 @@ Django Natural Keys
 ===================
 
 The ForeignKeyWidget also supports using Django's natural key functions. A
-manager class with the get_by_natural_key function is require for importing
+manager class with the get_by_natural_key function is required for importing
 foreign key relationships by the field model's natural key, and the model must
 have a natural_key function that can be serialized as a JSON list in order to
 export data. 
@@ -253,8 +253,8 @@ The example below illustrates how to create a field on the BookResource that
 imports and exports its author relationships using the natural key functions
 on the Author model and modelmanager. 
 
-The resource _meta option "use_natural_foreign_keys" can enable detecting
-this setting for all Models that support it.
+The resource _meta option ``use_natural_foreign_keys`` enables this setting
+for all Models that support it.
 
 ::
 
