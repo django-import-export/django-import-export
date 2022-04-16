@@ -238,10 +238,10 @@ and exporting resource.
 Django Natural Keys
 ===================
 
-The ForeignKeyWidget also supports using Django's natural key functions. A
-manager class with the get_by_natural_key function is require for importing
+The ``ForeignKeyWidget`` also supports using Django's natural key functions. A
+manager class with the ``get_by_natural_key`` function is required for importing
 foreign key relationships by the field model's natural key, and the model must
-have a natural_key function that can be serialized as a JSON list in order to
+have a ``natural_key`` function that can be serialized as a JSON list in order to
 export data. 
 
 The primary utility for natural key functionality is to enable exporting data
@@ -249,9 +249,12 @@ that can be imported into other Django environments with different numerical
 primary key sequences. The natural key functionality enables handling more
 complex data than specifying either a single field or the PK. 
 
-The example below illustrates how to create a field on the BookResource that
+The example below illustrates how to create a field on the ``BookResource`` that
 imports and exports its author relationships using the natural key functions
-on the Author model and modelmanager. 
+on the ``Author`` model and modelmanager. 
+
+The resource _meta option ``use_natural_foreign_keys`` enables this setting
+for all Models that support it.
 
 ::
 
@@ -273,6 +276,7 @@ on the Author model and modelmanager.
         def natural_key(self):
             return (self.name,)
 
+    # Only the author field uses natural foreign keys.
     class BookResource(resources.ModelResource):
 
         author = Field(
@@ -283,6 +287,13 @@ on the Author model and modelmanager.
 
         class Meta:
             model = Book
+    
+    # All widgets with foreign key functions use them.
+    class BookResource(resources.ModelResource):
+
+        class Meta:
+            model = Book
+            use_natural_foreign_keys = True
 
 Read more at `Django Serialization <https://docs.djangoproject.com/en/4.0/topics/serialization>`_
 

@@ -1181,6 +1181,65 @@ class ModelResourceTest(TestCase):
             BookResource().import_data(self.dataset)
 
 
+    def test_natural_foreign_key_detection(self):
+        """
+        Test that when the _meta option for use_natural_foreign_keys
+        is set on a resource that foreign key widgets are created
+        with that flag, and when it's off they are not. 
+        """
+
+        # For future proof testing, we have one resource with natural
+        # foreign keys on, and one off. If the default ever changes
+        # this should still work. 
+        class _BookResource_Unfk(resources.ModelResource):
+            class Meta:
+                use_natural_foreign_keys = True
+                model = Book
+
+        class _BookResource(resources.ModelResource):
+            
+            class Meta:
+                use_natural_foreign_keys = False
+                model = Book     
+        
+        resource_with_nfks = _BookResource_Unfk()
+        author_field_widget = resource_with_nfks.fields["author"].widget
+        self.assertTrue(author_field_widget.use_natural_foreign_keys)
+
+        resource_without_nfks = _BookResource()
+        author_field_widget = resource_without_nfks.fields["author"].widget
+        self.assertFalse(author_field_widget.use_natural_foreign_keys)
+
+    def test_natural_foreign_key_false_positives(self):
+        """
+        Ensure that if the field's model does not have natural foreign
+        key functions, it is not set to use natural foreign keys.
+        """
+        from django.db import models
+        class RelatedModel(models.Model):
+            name = models.CharField()
+            class Meta:
+                app_label = "Test"
+
+        class TestModel(models.Model):
+            related_field = models.ForeignKey(RelatedModel, on_delete=models.PROTECT)
+            
+            class Meta:
+                app_label = "Test"
+
+        class TestModelResource(resources.ModelResource):
+            class Meta:
+                model = TestModel
+                fields = (
+                    'id',
+                    'related_field'
+                )
+                use_natural_foreign_keys = True
+    
+        resource = TestModelResource()
+        related_field_widget = resource.fields["related_field"].widget
+        self.assertFalse(related_field_widget.use_natural_foreign_keys)
+
 class ModelResourceTransactionTest(TransactionTestCase):
     @skipUnlessDBFeature('supports_transactions')
     def test_m2m_import_with_transactions(self):
@@ -2269,3 +2328,25 @@ class RawValueTest(TestCase):
         self.assertEqual(result.rows[0].row_values.get('name'), 'Some book')
         self.assertEqual(result.rows[0].row_values.get('author_email'), 'test@example.com')
         self.assertEqual(result.rows[0].row_values.get('price'), '10.25')
+
+class ResourcesHelperFunctionsTest(TestCase):
+    """
+    Test the helper functions in resources.
+    """
+
+    def test_has_natural_foreign_key(self):
+        """
+        Ensure that resources.has_natural_foreign_key detects correctly
+        whether a model has a natural foreign key
+        """
+        cases = {
+            Book: True,
+            Author: True,
+            Category: False
+        }
+
+        for model, expected_result in cases.items():
+            self.assertEqual(
+                resources.has_natural_foreign_key(model),
+                expected_result
+            )
