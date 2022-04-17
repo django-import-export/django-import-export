@@ -1,4 +1,5 @@
-import sys, os
+import os
+import sys
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -9,6 +10,7 @@ sys.path.append(os.path.abspath('../tests'))
 os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
 
 import django
+
 django.setup()
 
 # -- General configuration -----------------------------------------------------
@@ -34,7 +36,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'django-import-export'
-copyright = '2012–2019, Bojan Mihelac'
+copyright = '2012–2022, Bojan Mihelac'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -42,6 +44,7 @@ copyright = '2012–2019, Bojan Mihelac'
 #
 try:
     from import_export import __version__
+
     # The short X.Y version.
     version = '.'.join(__version__.split('.')[:2])
     # The full version, including alpha/beta/rc tags.
@@ -230,5 +233,5 @@ texinfo_appendices = []
 
 # intersphinx documentation
 intersphinx_mapping = {
-    'tablib': ('http://docs.python-tablib.org/en/latest/', None)
+    'tablib': ('https://tablib.readthedocs.io/en/stable/', None)
 }

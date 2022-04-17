@@ -2,12 +2,12 @@
 django-import-export
 ====================
 
-.. image:: https://travis-ci.org/django-import-export/django-import-export.svg?branch=master
-    :target: https://travis-ci.org/django-import-export/django-import-export
-    :alt: Build status on Travis-CI
+.. image:: https://github.com/django-import-export/django-import-export/actions/workflows/django-import-export-ci.yml/badge.svg
+    :target: https://github.com/django-import-export/django-import-export/actions/workflows/django-import-export-ci.yml
+    :alt: Build status on Github
 
-.. image:: https://coveralls.io/repos/github/django-import-export/django-import-export/badge.svg?branch=master
-    :target: https://coveralls.io/github/django-import-export/django-import-export?branch=master
+.. image:: https://coveralls.io/repos/github/django-import-export/django-import-export/badge.svg?branch=main
+    :target: https://coveralls.io/github/django-import-export/django-import-export?branch=main
 
 .. image:: https://img.shields.io/pypi/v/django-import-export.svg
     :target: https://pypi.org/project/django-import-export/
@@ -17,13 +17,19 @@ django-import-export
     :target: https://django-import-export.readthedocs.io/en/stable/
     :alt: Documentation
 
+.. image:: https://img.shields.io/pypi/pyversions/django-import-export
+    :alt: PyPI - Python Version
+
+.. image:: https://img.shields.io/pypi/djversions/django-import-export
+    :alt: PyPI - Django Version
+
 django-import-export is a Django application and library for importing
 and exporting data with included admin integration.
 
 Features:
 
 * support multiple formats (Excel, CSV, JSON, ...
-  and everything else that `tablib`_ support)
+  and everything else that `tablib`_ supports)
 
 * admin integration for importing
 
@@ -33,7 +39,7 @@ Features:
 
 * export data respecting admin filters
 
-.. image:: docs/_static/images/django-import-export-change.png
+.. image:: https://raw.githubusercontent.com/django-import-export/django-import-export/main/docs/_static/images/django-import-export-change.png
 
 
 * Documentation: https://django-import-export.readthedocs.io/en/stable/
@@ -41,26 +47,16 @@ Features:
 * Free software: BSD license
 * PyPI: https://pypi.org/project/django-import-export/
 
-Requirements
------------
-
-* Python 3.5+
-* Django 2.0+
-* tablib (dev or 0.9.11)
-
-django-import-export requires Python 3.5 and Django 2.0 or newer. See the 1.x
-branch for older Python and Django versions where fixes for security issues and
-critical errors continue to be released for all officially supported Django
-versions.
-
 Example app
 -----------
 
-::
+To run the demo app::
 
     cd tests
+    ./manage.py makemigrations
     ./manage.py migrate
     ./manage.py createsuperuser
+    ./manage.py loaddata category book
     ./manage.py runserver
 
 Contribute
@@ -74,6 +70,6 @@ As most projects, we try to follow PEP8_ as closely as possible. Please bear
 in mind that most pull requests will be rejected without proper unit testing.
 
 .. _`PEP8`: https://www.python.org/dev/peps/pep-0008/
-.. _`tablib`: https://github.com/kennethreitz/tablib
+.. _`tablib`: https://github.com/jazzband/tablib
 .. _`the repository`: https://github.com/django-import-export/django-import-export/
 .. _AUTHORS: https://github.com/django-import-export/django-import-export/blob/master/AUTHORS

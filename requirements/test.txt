@@ -1,3 +1,8 @@
 isort
-psycopg2
+psycopg2-binary
 mysqlclient
+chardet
+pytz
+memory-profiler
+django-extensions
+coverage

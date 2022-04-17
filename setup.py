@@ -6,25 +6,25 @@ VERSION = __import__("import_export").__version__
 
 CLASSIFIERS = [
     'Framework :: Django',
-    'Framework :: Django :: 2.0',
-    'Framework :: Django :: 2.1',
-    'Framework :: Django :: 2.2',
+    'Framework :: Django :: 3.2',
+    'Framework :: Django :: 4.0',
     'Intended Audience :: Developers',
     'License :: OSI Approved :: BSD License',
     'Operating System :: OS Independent',
     'Programming Language :: Python',
     'Programming Language :: Python :: 3',
-    'Programming Language :: Python :: 3.5',
-    'Programming Language :: Python :: 3.6',
     'Programming Language :: Python :: 3.7',
+    'Programming Language :: Python :: 3.8',
+    'Programming Language :: Python :: 3.9',
+    'Programming Language :: Python :: 3.10',
     'Programming Language :: Python :: 3 :: Only',
     'Topic :: Software Development',
 ]
 
 install_requires = [
     'diff-match-patch',
-    'Django>=2.0',
-    'tablib',
+    'Django>=3.2',
+    'tablib[html,ods,xls,xlsx,yaml]>=3.2.1',
 ]
 
 
@@ -43,10 +43,14 @@ setup(
     license='BSD License',
     platforms=['OS Independent'],
     url="https://github.com/django-import-export/django-import-export",
+    project_urls={
+        "Documentation": "https://django-import-export.readthedocs.io/en/stable/",
+        "Changelog": "https://django-import-export.readthedocs.io/en/stable/changelog.html",
+    },
     packages=find_packages(exclude=["tests"]),
     include_package_data=True,
     install_requires=install_requires,
-    python_requires=">=3.5",
+    python_requires=">=3.7",
     classifiers=CLASSIFIERS,
     zip_safe=False,
 )

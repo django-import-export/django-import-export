@@ -18,12 +18,17 @@ class FieldTest(TestCase):
         self.field = fields.Field(column_name='name', attribute='name')
         self.row = {
             'name': 'Foo',
-            }
+        }
         self.obj = Obj(name='Foo', date=date(2012, 8, 13))
 
     def test_clean(self):
         self.assertEqual(self.field.clean(self.row),
                          self.row['name'])
+
+    def test_clean_raises_KeyError(self):
+        self.field.column_name = 'x'
+        with self.assertRaisesRegex(KeyError, "Column 'x' not found in dataset. Available columns are: \\['name'\\]"):
+            self.field.clean(self.row)
 
     def test_export(self):
         self.assertEqual(self.field.export(self.obj),
@@ -39,6 +44,7 @@ class FieldTest(TestCase):
             class name:
                 class follow:
                     me = 'bar'
+
         test = Test()
         field = fields.Field(column_name='name', attribute='name__follow__me')
         row = {'name': 'foo'}
@@ -73,3 +79,8 @@ class FieldTest(TestCase):
 
         self.field.save(self.obj, row)
         self.assertIsNone(self.obj.name)
+
+    def test_repr(self):
+        self.assertEqual(repr(self.field), '<import_export.fields.Field: name>')
+        self.field.column_name = None
+        self.assertEqual(repr(self.field), '<import_export.fields.Field>')
