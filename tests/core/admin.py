@@ -3,7 +3,7 @@ from django.contrib import admin
 from import_export.admin import ExportActionModelAdmin, ImportExportMixin, ImportMixin
 from import_export.resources import ModelResource
 
-from .forms import CustomConfirmImportForm, CustomImportForm
+from .forms import CustomConfirmImportForm, CustomImportForm, CustomExportForm
 from .models import Author, Book, Category, Child, EBook
 
 
@@ -50,6 +50,9 @@ class CustomBookAdmin(BookAdmin):
 
     def get_confirm_import_form(self):
         return CustomConfirmImportForm
+
+    def get_export_form(self):
+        return CustomExportForm
 
     def get_form_kwargs(self, form, *args, **kwargs):
         # update kwargs with authors (from CustomImportForm.cleaned_data)
