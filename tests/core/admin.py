@@ -1,6 +1,7 @@
 from django.contrib import admin
 
-from import_export import widgets, fields
+from import_export.widgets import ResourceWidget
+from import_export.fields import Field
 from import_export.admin import ExportActionModelAdmin, ImportExportMixin, ImportMixin
 from import_export.resources import ModelResource
 
@@ -13,33 +14,43 @@ class ChildAdmin(ImportMixin, admin.ModelAdmin):
     pass
 
 
-class CategoryResource(ModelResource):
+class CategoryNestedResource(ModelResource):
 
     class Meta:
         model = Category
 
-class AuthorResource(ModelResource):
+class AuthorNestedResource(ModelResource):
 
     class Meta:
         model = Author
 
-class BookResource(ModelResource):
 
-    categories = fields.Field(
+class BookNestedResource(ModelResource):
+
+    categories = Field(
         attribute="categories",
         column_name="categories",
-        widget=widgets.ResourceWidget(
-            model=Category, resource_class=CategoryResource, is_m2m=True
+        widget=ResourceWidget(
+            model=Category, resource_class=CategoryNestedResource, is_m2m=True
         )
     )
 
-    author = fields.Field(
+    author = Field(
         attribute="author",
         column_name="author",
-        widget=widgets.ResourceWidget(
-            model=Author, resource_class=AuthorResource
+        widget=ResourceWidget(
+            model=Author, resource_class=AuthorNestedResource
         )
     )
+
+    class Meta:
+        model = Book
+
+    def for_delete(self, row, instance):
+        return self.fields['name'].clean(row) == ''
+
+
+class BookResource(ModelResource):
 
     class Meta:
         model = Book
@@ -58,7 +69,7 @@ class BookNameResource(ModelResource):
 class BookAdmin(ImportExportMixin, admin.ModelAdmin):
     list_display = ('name', 'author', 'added')
     list_filter = ['categories', 'author']
-    resource_classes = [BookResource, BookNameResource]
+    resource_classes = [BookResource, BookNameResource, BookNestedResource]
 
 
 class CategoryAdmin(ExportActionModelAdmin):
