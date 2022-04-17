@@ -4,8 +4,9 @@ Changelog
 3.0.0-beta.2 (unreleased)
 -------------------------
 
-- fix broken link to tablib formats page (#1418)
-- fix broken image ref in `README.rst`
+- Fix broken link to tablib formats page (#1418)
+- Fix broken image ref in `README.rst`
+- Include custom form media in templates (#1038)
 
 3.0.0-beta.1 (2022-04-11)
 -------------------------
