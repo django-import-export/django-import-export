@@ -8,6 +8,9 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.utils import timezone
 from django.utils.dateparse import parse_duration
 from django.utils.encoding import force_str, smart_str
+import tablib
+
+from import_export.formats.base_formats import JSON
 
 
 def format_datetime(value, datetime_format):
@@ -472,3 +475,76 @@ class ManyToManyWidget(Widget):
     def render(self, value, obj=None):
         ids = [smart_str(getattr(obj, self.field)) for obj in value.all()]
         return self.separator.join(ids)
+
+class ResourceWidget(ManyToManyWidget):
+    """
+    Widget that fully serializes many to many or foreign key relationships
+    using the related model's resource, with support for deserialization.
+    Due to limitations with non-JSON parsers, only supports the Json format
+    for the serialized sub-resource. 
+    :param model: The model the ManyToMany field refers to (required).
+    :param resource_class: Resource class used to serialize/deserialize
+    the related model(s)
+    :param is_m2m: related field is m2m. set False for ForeignKey fields.
+    """
+    # DESIGN DECISION: Only support JSON for this type of nested datastructure.
+    # This simplifies testing and support to such a degree, and the only real
+    # use case for using this over Dehydrate is to move between Django
+    # environments.
+    __format = JSON()
+
+    def __init__(self, model, resource_class, is_m2m=False, **kwargs):
+        self.model = model
+        # Note that this is instantiated once here.
+        self.resource = resource_class()
+        self.is_m2m = is_m2m
+        super().__init__(model, **kwargs)
+    
+    def clean(self, value, row=None, **kwargs):
+        """
+        Deserialize the incoming data, creating models via
+        the resource specified in self.resource. 
+        """
+
+        # for reasons unknown, the Json parser can't handle
+        # an empty string, so we make a blank dataset.
+
+        if not value:
+            dataset = tablib.Dataset()
+        else:
+            dataset = self.__format.create_dataset(value)
+
+        results = self.resource.import_data(dataset)
+        
+        # TODO: This is a little bit of a hack that could be eliminated with
+        # some minor changes to results to include a queryset of everything
+        # it created, which would be useful on its own.
+
+        created_pks = [result.object_id for result in results]
+        created_queryset = self.model.objects.filter(pk__in=created_pks)
+
+    
+        # m2m fields expect a queryset. foreignkeys expect an
+        # instance of the model created. 
+        if self.is_m2m:
+            return created_queryset
+    
+        return created_queryset.first()
+    
+    def render(self, value, obj=None):
+        """
+        Use the resource class to render the entire related field via
+        the resource specified in self.resource
+
+        :param value: The incoming models we need to serialize
+        :param obj: the parent object
+        """
+        # To handle ForeignKey field
+        if isinstance(value, self.model):
+            # Export expects an iterable
+            dataset = self.resource.export([value])
+        else:
+            dataset = self.resource.export(value.all())
+        
+        return self.__format.export_data(dataset)
+

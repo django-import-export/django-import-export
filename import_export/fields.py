@@ -109,7 +109,8 @@ class Field:
                 obj = getattr(obj, attr, None)
             cleaned = self.clean(data, **kwargs)
             if cleaned is not None or self.saves_null_values:
-                if not is_m2m:
+                # Changed to the isinstance manager check which is just smarter.
+                if not isinstance(getattr(obj, attrs[-1]), Manager):
                     setattr(obj, attrs[-1], cleaned)
                 else:
                     getattr(obj, attrs[-1]).set(cleaned)
