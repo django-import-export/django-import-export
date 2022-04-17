@@ -109,11 +109,16 @@ class Field:
                 obj = getattr(obj, attr, None)
             cleaned = self.clean(data, **kwargs)
             if cleaned is not None or self.saves_null_values:
-                # Changed to the isinstance manager check which is just smarter.
-                if not isinstance(getattr(obj, attrs[-1]), Manager):
+                if not is_m2m:
                     setattr(obj, attrs[-1], cleaned)
                 else:
-                    getattr(obj, attrs[-1]).set(cleaned)
+                    # Ensures M2M inheriting widgets always use the
+                    # correct mechanism for assigning a field (.set or setattr)
+                    if isinstance(getattr(obj, attrs[-1]), Manager):
+                        getattr(obj, attrs[-1]).set(cleaned)
+                    else:
+                        setattr(obj, attrs[-1], cleaned)
+
 
     def export(self, obj):
         """
