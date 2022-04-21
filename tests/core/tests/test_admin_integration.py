@@ -119,8 +119,6 @@ class ImportExportAdminIntegrationTest(TestCase):
             response = self.client.post('/admin/core/book/import/', data)
         self.assertEqual(response.status_code, 200)
         self.assertIn('result', response.context)
-        with open("response.html", "wb") as f:
-            f.write(response.content)
         self.assertFalse(response.context['result'].has_errors())
         self.assertIn('confirm_form', response.context)
         confirm_form = response.context['confirm_form']

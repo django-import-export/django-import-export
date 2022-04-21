@@ -7,6 +7,7 @@ Changelog
 - Fix broken link to tablib formats page (#1418)
 - Fix broken image ref in `README.rst`
 - Include custom form media in templates (#1038)
+- Remove unnecessary files generated when running tox locally (#1426)
 
 3.0.0-beta.1 (2022-04-11)
 -------------------------
