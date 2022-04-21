@@ -1,7 +1,7 @@
 Changelog
 =========
 
-3.0.0-beta.2 (unreleased)
+3.0.0-beta.3 (unreleased)
 -------------------------
 
 3.0.0-beta.2 (2022-04-21)
