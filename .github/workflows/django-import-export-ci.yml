@@ -20,7 +20,7 @@ jobs:
           python-version: 3.9
       - uses: jamescurtin/isort-action@master
         with:
-          requirementsFiles: "requirements.txt test.txt"
+          requirementsFiles: "requirements/base.txt requirements/test.txt"
   test:
     runs-on: ubuntu-latest
     env:
