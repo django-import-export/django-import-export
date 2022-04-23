@@ -58,8 +58,6 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: isort
       uses: jamescurtin/isort-action@master
-      with:
-        requirementsFiles: "requirements/base.txt requirements/test.txt"
     - uses: actions/cache@v2
       with:
         path: ~/.cache/pip
