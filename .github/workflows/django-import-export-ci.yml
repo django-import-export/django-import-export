@@ -21,6 +21,7 @@ jobs:
       IMPORT_EXPORT_MYSQL_PASSWORD: root
       COVERAGE: 1
     strategy:
+      fail-fast: true
       matrix:
         python-version:
           - '3.7'
