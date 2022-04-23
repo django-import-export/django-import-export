@@ -189,11 +189,11 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
     @original
     def get_import_form(self):
         """
-        .. deprecated:: 2.3
+        .. deprecated:: 3.0
             Use :meth:`~import_export.admin.ImportMixin.get_import_form_class` or set the new
             :attr:`~import_export.admin.ImportMixin.import_form_class` attribute.
         """
-        # TODO: Remove method in v2.5
+        # TODO: Remove method in v3.2
         warnings.warn(
             "ImportMixin.get_import_form() is deprecated. Please use "
             "get_import_form_class() instead.",
@@ -204,11 +204,11 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
     @original
     def get_confirm_import_form(self):
         """
-        .. deprecated:: 2.3
+        .. deprecated:: 3.0
             Use :func:`~import_export.admin.ImportMixin.get_confirm_form_class` or set the new
             :attr:`~import_export.admin.ImportMixin.confirm_form_class` attribute.
         """
-        # TODO: Remove method in v2.5
+        # TODO: Remove method in v3.2
         warnings.warn(
             "ImportMixin.get_confirm_import_form() is deprecated. Please "
             "use get_confirm_form_class() instead.",
@@ -219,7 +219,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
     @original
     def get_form_kwargs(self, form, *args, **kwargs):
         """
-        .. deprecated:: 2.3
+        .. deprecated:: 3.0
             Use :meth:`~import_export.admin.ImportMixin.get_import_form_kwargs` or
             :meth:`~import_export.admin.ImportMixin.get_confirm_form_kwargs`
             instead, depending on which form you wish to customise.
@@ -234,7 +234,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
 
     def create_import_form(self, request, **init_kwargs):
         """
-        .. versionadded:: 2.3
+        .. versionadded:: 3.0
 
         Return a form instance to use for the 'initial' import step.
         This method can be extended to make dynamic form updates to the
@@ -253,13 +253,13 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
 
     def get_import_form_class(self, request):
         """
-        .. versionadded:: 2.3
+        .. versionadded:: 3.0
 
         Return the form class to use for the 'import' step. If you only have
         a single custom form class, you can set the ``import_form_class``
         attribute to change this for your subclass.
         """
-        # TODO: Remove following conditional in v2.5 (when
+        # TODO: Remove following conditional in v3.2 (when
         # get_import_form() is removed)
         if not getattr(self.get_import_form, 'is_original', False):
             warnings.warn(
@@ -273,7 +273,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
 
     def get_import_form_kwargs(self, request, form_class, **kwargs):
         """
-        .. versionadded:: 2.3
+        .. versionadded:: 3.0
 
         Return a dictionary of values with which to initialize the 'import'
         form (including the initial values returned by
@@ -286,7 +286,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
             files=request.FILES or None,
             initial=self.get_import_form_initial(request, form_class, **kwargs.pop('initial', {})),
         )
-        # TODO: Remove following conditional in v2.5 (when
+        # TODO: Remove following conditional in v3.2 (when
         # get_form_kwargs() is removed)
         if not getattr(self.get_form_kwargs, 'is_original', False):
             kwargs = self.get_form_kwargs(
@@ -297,7 +297,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
 
     def get_import_form_initial(self, request, form_class, **kwargs):
         """
-        .. versionadded:: 2.3
+        .. versionadded:: 3.0
 
         Return a dictionary of initial field values to be provided to the
         'import' form.
@@ -306,7 +306,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
 
     def create_confirm_form(self, request, import_form=None, **init_kwargs):
         """
-        .. versionadded:: 2.3
+        .. versionadded:: 3.0
 
         Return a form instance to use for the 'confirm' import step.
         This method can be extended to make dynamic form updates to the
@@ -323,13 +323,13 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
 
     def get_confirm_form_class(self, request, import_form=None):
         """
-        .. versionadded:: 2.3
+        .. versionadded:: 3.0
 
         Return the form class to use for the 'confirm' import step. If you only
         have a single custom form class, you can set the ``confirm_form_class``
         attribute to change this for your subclass.
         """
-        # TODO: Remove following conditional in v2.5 (when
+        # TODO: Remove following conditional in v3.2 (when
         # get_confirm_import_form() is removed)
         if not getattr(self.get_confirm_import_form, 'is_original', False):
             warnings.warn(
@@ -343,7 +343,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
 
     def get_confirm_form_kwargs(self, request, form_class, import_form=None, **kwargs):
         """
-        .. versionadded:: 2.3
+        .. versionadded:: 3.0
 
         Return a dictionary of values with which to initialize the 'confirm'
         form (including the initial values returned by
@@ -361,13 +361,13 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
 
     def get_confirm_form_initial(self, request, form_class, import_form=None, **kwargs):
         """
-        .. versionadded:: 2.3
+        .. versionadded:: 3.0
 
         Return a dictionary of initial field values to be provided to the
         'confirm' form.
         """
         initial = kwargs
-        # TODO: Remove following conditional in v2.5 (when
+        # TODO: Remove following conditional in v3.2 (when
         # get_form_kwargs() is removed)
         if not getattr(self.get_form_kwargs, 'is_original', False):
             # The deprecated method has been overridden, so
