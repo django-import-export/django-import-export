@@ -1,12 +1,23 @@
 import json
-from datetime import date, datetime
+from datetime import date, datetime, time
 from decimal import Decimal
 
+import django
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
-from django.utils import datetime_safe, timezone
+from django.utils import timezone
 from django.utils.dateparse import parse_duration
 from django.utils.encoding import force_str, smart_str
+
+
+def format_datetime(value, datetime_format):
+    # conditional logic to handle correct formatting of dates
+    # see https://code.djangoproject.com/ticket/32738
+    if django.VERSION[0] >= 4:
+        format = django.utils.formats.sanitize_strftime_format(datetime_format)
+        return value.strftime(format)
+    else:
+        return django.utils.datetime_safe.new_datetime(value).strftime(datetime_format)
 
 
 class Widget:
@@ -17,7 +28,7 @@ class Widget:
     :meth:`~import_export.widgets.Widget.clean` and
     :meth:`~import_export.widgets.Widget.render`.
     """
-    def clean(self, value, row=None, *args, **kwargs):
+    def clean(self, value, row=None, **kwargs):
         """
         Returns an appropriate Python object for an imported value.
 
@@ -60,7 +71,7 @@ class FloatWidget(NumberWidget):
     Widget for converting floats fields.
     """
 
-    def clean(self, value, row=None, *args, **kwargs):
+    def clean(self, value, row=None, **kwargs):
         if self.is_empty(value):
             return None
         return float(value)
@@ -71,10 +82,10 @@ class IntegerWidget(NumberWidget):
     Widget for converting integer fields.
     """
 
-    def clean(self, value, row=None, *args, **kwargs):
+    def clean(self, value, row=None, **kwargs):
         if self.is_empty(value):
             return None
-        return int(float(value))
+        return int(Decimal(value))
 
 
 class DecimalWidget(NumberWidget):
@@ -82,7 +93,7 @@ class DecimalWidget(NumberWidget):
     Widget for converting decimal fields.
     """
 
-    def clean(self, value, row=None, *args, **kwargs):
+    def clean(self, value, row=None, **kwargs):
         if self.is_empty(value):
             return None
         return Decimal(force_str(value))
@@ -92,9 +103,7 @@ class CharWidget(Widget):
     """
     Widget for converting text fields.
     """
-
-    def render(self, value, obj=None):
-        return force_str(value)
+    pass
 
 
 class BooleanWidget(Widget):
@@ -116,15 +125,15 @@ class BooleanWidget(Widget):
         from import_export import fields, resources, widgets
 
         class BooleanExample(resources.ModelResource):
-            warn = fields.Field(widget=widget.BooleanWidget)
+            warn = fields.Field(widget=widgets.BooleanWidget())
 
-            def before_row_import(self, row, **kwargs):
+            def before_import_row(self, row, row_number=None, **kwargs):
                 if "warn" in row.keys():
                     # munge "warn" to "True"
                     if row["warn"] in ["warn", "WARN"]:
                         row["warn"] = True
 
-                return super().before_import_row(row, **kwargs)
+                return super().before_import_row(row, row_number, **kwargs)
     """
     TRUE_VALUES = ["1", 1, True, "true", "TRUE", "True"]
     FALSE_VALUES = ["0", 0, False, "false", "FALSE", "False"]
@@ -141,7 +150,7 @@ class BooleanWidget(Widget):
             return ""
         return self.TRUE_VALUES[0] if value else self.FALSE_VALUES[0]
 
-    def clean(self, value, row=None, *args, **kwargs):
+    def clean(self, value, row=None, **kwargs):
         if value in self.NULL_VALUES:
             return None
         return True if value in self.TRUE_VALUES else False
@@ -164,7 +173,7 @@ class DateWidget(Widget):
             formats = (format,)
         self.formats = formats
 
-    def clean(self, value, row=None, *args, **kwargs):
+    def clean(self, value, row=None, **kwargs):
         if not value:
             return None
         if isinstance(value, date):
@@ -179,10 +188,7 @@ class DateWidget(Widget):
     def render(self, value, obj=None):
         if not value:
             return ""
-        try:
-            return value.strftime(self.formats[0])
-        except:
-            return datetime_safe.new_date(value).strftime(self.formats[0])
+        return format_datetime(value, self.formats[0])
 
 
 class DateTimeWidget(Widget):
@@ -203,7 +209,7 @@ class DateTimeWidget(Widget):
             formats = (format,)
         self.formats = formats
 
-    def clean(self, value, row=None, *args, **kwargs):
+    def clean(self, value, row=None, **kwargs):
         if not value:
             return None
         if isinstance(value, datetime):
@@ -226,7 +232,7 @@ class DateTimeWidget(Widget):
             return ""
         if settings.USE_TZ:
             value = timezone.localtime(value)
-        return value.strftime(self.formats[0])
+        return format_datetime(value, self.formats[0])
 
 
 class TimeWidget(Widget):
@@ -246,9 +252,11 @@ class TimeWidget(Widget):
             formats = (format,)
         self.formats = formats
 
-    def clean(self, value, row=None, *args, **kwargs):
+    def clean(self, value, row=None, **kwargs):
         if not value:
             return None
+        if isinstance(value, time):
+            return value
         for format in self.formats:
             try:
                 return datetime.strptime(value, format).time()
@@ -267,7 +275,7 @@ class DurationWidget(Widget):
     Widget for converting time duration fields.
     """
 
-    def clean(self, value, row=None, *args, **kwargs):
+    def clean(self, value, row=None, **kwargs):
         if not value:
             return None
 
@@ -295,7 +303,7 @@ class SimpleArrayWidget(Widget):
         self.separator = separator
         super().__init__()
 
-    def clean(self, value, row=None, *args, **kwargs):
+    def clean(self, value, row=None, **kwargs):
         return value.split(self.separator) if value else []
 
     def render(self, value, obj=None):
@@ -311,7 +319,7 @@ class JSONWidget(Widget):
     tries to use single quotes and then convert it to proper JSON.
     """
 
-    def clean(self, value, row=None, *args, **kwargs):
+    def clean(self, value, row=None, **kwargs):
         val = super().clean(value)
         if val:
             try:
@@ -327,7 +335,8 @@ class JSONWidget(Widget):
 class ForeignKeyWidget(Widget):
     """
     Widget for a ``ForeignKey`` field which looks up a related model using
-    "natural keys" in both export and import.
+    either the PK or a user specified field that uniquely identifies the
+    instance in both export and import.
 
     The lookup field defaults to using the primary key (``pk``) as lookup
     criterion but can be customised to use any field on the related model.
@@ -358,14 +367,18 @@ class ForeignKeyWidget(Widget):
 
             class Meta:
                 fields = ('author',)
-
+    
     :param model: The Model the ForeignKey refers to (required).
-    :param field: A field on the related model used for looking up a particular object.
+    :param field: A field on the related model used for looking up a particular
+        object.
+    :param use_natural_foreign_keys: Use natural key functions to identify 
+        related object, default to False
     """
-    def __init__(self, model, field='pk', *args, **kwargs):
+    def __init__(self, model, field='pk', use_natural_foreign_keys=False, **kwargs):
         self.model = model
         self.field = field
-        super().__init__(*args, **kwargs)
+        self.use_natural_foreign_keys = use_natural_foreign_keys
+        super().__init__(**kwargs)
 
     def get_queryset(self, value, row, *args, **kwargs):
         """
@@ -382,7 +395,7 @@ class ForeignKeyWidget(Widget):
         like so::
 
             class FullNameForeignKeyWidget(ForeignKeyWidget):
-                def get_queryset(self, value, row):
+                def get_queryset(self, value, row, *args, **kwargs):
                     return self.model.objects.filter(
                         first_name__iexact=row["first_name"],
                         last_name__iexact=row["last_name"]
@@ -390,10 +403,15 @@ class ForeignKeyWidget(Widget):
         """
         return self.model.objects.all()
 
-    def clean(self, value, row=None, *args, **kwargs):
+    def clean(self, value, row=None, **kwargs):
         val = super().clean(value)
         if val:
-            return self.get_queryset(value, row, *args, **kwargs).get(**{self.field: val})
+            if self.use_natural_foreign_keys:
+                # natural keys will always be a tuple, which ends up as a json list.
+                value = json.loads(value) 
+                return self.model.objects.get_by_natural_key(*value)
+            else:
+                return self.get_queryset(value, row, **kwargs).get(**{self.field: val})
         else:
             return None
 
@@ -404,7 +422,11 @@ class ForeignKeyWidget(Widget):
         attrs = self.field.split('__')
         for attr in attrs:
             try:
-                value = getattr(value, attr, None)
+                if self.use_natural_foreign_keys:
+                    # inbound natural keys must be a json list.
+                    return json.dumps(value.natural_key())
+                else:
+                    value = getattr(value, attr, None)
             except (ValueError, ObjectDoesNotExist):
                 # needs to have a primary key value before a many-to-many
                 # relationship can be used.
@@ -425,7 +447,7 @@ class ManyToManyWidget(Widget):
     :param field: A field on the related model. Default is ``pk``.
     """
 
-    def __init__(self, model, separator=None, field=None, *args, **kwargs):
+    def __init__(self, model, separator=None, field=None, **kwargs):
         if separator is None:
             separator = ','
         if field is None:
@@ -433,9 +455,9 @@ class ManyToManyWidget(Widget):
         self.model = model
         self.separator = separator
         self.field = field
-        super().__init__(*args, **kwargs)
+        super().__init__(**kwargs)
 
-    def clean(self, value, row=None, *args, **kwargs):
+    def clean(self, value, row=None, **kwargs):
         if not value:
             return self.model.objects.none()
         if isinstance(value, (float, int)):

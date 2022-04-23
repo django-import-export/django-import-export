@@ -8,9 +8,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-06-04 09:27+0200\n"
+"POT-Creation-Date: 2021-10-18 20:53+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Last-Translator: hao wang <173300430@qq.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
 "MIME-Version: 1.0\n"
@@ -18,40 +18,40 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: admin.py:194
+#: admin.py:158
 #, python-format
 msgid "%s through import_export"
-msgstr ""
+msgstr "%s 通过 django-import-export导入"
 
-#: admin.py:200
+#: admin.py:164
 msgid "Import finished, with {} new and {} updated {}."
-msgstr ""
+msgstr "导入成功，新增{}条记录，更新{}条记录。"
 
-#: admin.py:298
+#: admin.py:262
 #, python-format
 msgid "<h1>Imported file has a wrong encoding: %s</h1>"
-msgstr ""
+msgstr "<h1>导入的文件编码有误:%s</h1>"
 
-#: admin.py:300
+#: admin.py:264
 #, python-format
 msgid "<h1>%s encountered while trying to read file: %s</h1>"
-msgstr ""
+msgstr "<h1>%s 读取文件时遇到了冲突: %s</h1>"
 
-#: admin.py:331 templates/admin/import_export/change_list_import_item.html:5
+#: admin.py:295 templates/admin/import_export/change_list_import_item.html:5
 #: templates/admin/import_export/import.html:10
 msgid "Import"
 msgstr "导入"
 
-#: admin.py:496 templates/admin/import_export/change_list_export_item.html:5
+#: admin.py:429 templates/admin/import_export/change_list_export_item.html:5
 #: templates/admin/import_export/export.html:7
 msgid "Export"
 msgstr "导出"
 
-#: admin.py:554
+#: admin.py:490
 msgid "You must select an export format."
 msgstr "您必须选择一个导出格式。"
 
-#: admin.py:567
+#: admin.py:513
 #, python-format
 msgid "Export selected %(verbose_name_plural)s"
 msgstr "导出选中的 %(verbose_name_plural)s"
@@ -98,21 +98,21 @@ msgstr "行号"
 
 #: templates/admin/import_export/import.html:82
 msgid "Some rows failed to validate"
-msgstr ""
+msgstr "某些行验数据证失败"
 
 #: templates/admin/import_export/import.html:84
 msgid ""
 "Please correct these errors in your data where possible, then reupload it "
 "using the form above."
-msgstr ""
+msgstr "请使用上面的表单，纠正这些提示有错误的数据，并重新上传"
 
 #: templates/admin/import_export/import.html:89
 msgid "Row"
-msgstr ""
+msgstr "行"
 
 #: templates/admin/import_export/import.html:116
 msgid "Non field specific"
-msgstr ""
+msgstr "没有指定的字段"
 
 #: templates/admin/import_export/import.html:137
 msgid "Preview"

@@ -1,0 +1,98 @@
+name: django-import-export CI
+
+on:
+  push:
+    branches:
+    - main
+  pull_request:
+    branches:
+    - main
+    # this is a temporary addition - can be removed after 3.0 release
+    - release-3-x
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      DB_NAME: import_export
+      IMPORT_EXPORT_POSTGRESQL_USER: postgres
+      IMPORT_EXPORT_POSTGRESQL_PASSWORD: somepass
+      IMPORT_EXPORT_MYSQL_USER: root
+      IMPORT_EXPORT_MYSQL_PASSWORD: root
+      COVERAGE: 1
+    strategy:
+      matrix:
+        python-version:
+          - '3.7'
+          - '3.8'
+          - '3.9'
+          - '3.10'
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_USER: ${{ env.IMPORT_EXPORT_POSTGRESQL_USER }}
+          POSTGRES_PASSWORD: ${{ env.IMPORT_EXPORT_POSTGRESQL_PASSWORD }}
+          POSTGRES_DB: ${{ env.DB_NAME }}
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+    - name: Set up MySQL
+      run: >
+        sudo /etc/init.d/mysql start
+        
+        mysql -e 'CREATE DATABASE ${{ env.DB_NAME }};' 
+        -u${{ env.IMPORT_EXPORT_MYSQL_USER }}
+        -p${{ env.IMPORT_EXPORT_MYSQL_PASSWORD }}
+    - name: Check out repository code
+      uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+    - uses: actions/cache@v2
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('requirements/*.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+    - name: Install Dependencies
+      run: |
+        python -m pip install --upgrade pip 
+        pip install tox tox-py coverage coveralls
+    - name: Run tox targets for ${{ matrix.python-version }} (sqlite)
+      run: tox --py current
+    - name: Run tox targets for ${{ matrix.python-version }} (postgres)
+      run: tox --py current
+      env:
+        IMPORT_EXPORT_TEST_TYPE: postgres
+    - name: Run tox targets for ${{ matrix.python-version }} (mysql)
+      run: tox --py current
+      env:
+        IMPORT_EXPORT_TEST_TYPE: mysql-innodb
+    - name: Combine test coverage
+      run: coverage combine
+    - name: Upload coverage data to coveralls.io
+      run: coveralls --service=github
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        COVERALLS_FLAG_NAME: ${{ matrix.python-version }}
+        COVERALLS_PARALLEL: true
+
+  coveralls:
+    name: Indicate completion to coveralls.io
+    needs: test
+    runs-on: ubuntu-latest
+    container: python:3-slim
+    steps:
+      - name: Finished
+        run: |
+          pip3 install --upgrade coveralls
+          coveralls --service=github --finish
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

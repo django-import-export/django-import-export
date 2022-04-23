@@ -1,12 +1,162 @@
 Changelog
 =========
 
+3.0.0-beta.3 (unreleased)
+-------------------------
 
-2.2.1 (unreleased)
+3.0.0-beta.2 (2022-04-21)
+-------------------------
+
+- Fix broken link to tablib formats page (#1418)
+- Fix broken image ref in `README.rst`
+- Include custom form media in templates (#1038)
+- Remove unnecessary files generated when running tox locally (#1426)
+
+3.0.0-beta.1 (2022-04-11)
+-------------------------
+
+- Fixed handling of LF character when using `CacheStorage` (#1417)
+
+3.0.0-beta (2022-04-09)
+-----------------------
+
+Breaking changes
+################
+
+This release makes some minor changes to the public API.  If you have overridden any methods from the `resources` or `widgets` modules, you may need to update your implementation to accommodate these changes.
+
+- Check value of `ManyToManyField` in `skip_row()` (#1271)
+    - This fixes an issue where ManyToMany fields are not checked correctly in `skip_row()`.  This means that `skip_row()` now takes `row` as a mandatory arg.  If you have overridden `skip_row()` in your own implementation, you will need to add `row` as an arg.
+
+- Bug fix: validation errors were being ignored when `skip_unchanged` is set (#1378)
+    - If you have overridden `skip_row()` you can choose whether or not to skip rows if validation errors are present.  The default behavior is to not to skip rows if there are validation errors during import.
+
+- Use 'create' flag instead of instance.pk (#1362)
+    - `import_export.resources.save_instance()` now takes an additional mandatory argument: `is_create`.  If you have overridden `save_instance()` in your own code, you will need to add this new argument.
+
+- `widgets`: Unused `*args` params have been removed from method definitions. (#1413)
+    - If you have overridden `clean()` then you should update your method definition to reflect this change.
+    - `widgets.ForeignKeyWidget` / `widgets.ManyToManyWidget`: The unused `*args` param has been removed from `__init__()`.  If you have overridden `ForeignKeyWidget` or `ManyToManyWidget` you may need to update your implementation to reflect this change.
+
+- Admin interface: Modified handling of import errors (#1306)
+    - Exceptions raised during the import process are now presented as form errors, instead of being wrapped in a \<H1\> tag in the response.  If you have any custom logic which uses the error written directly into the response, then this may need to be changed.
+
+Deprecations
+############
+
+This release adds some deprecations which will be removed in the 3.1 release.
+
+- Add support for multiple resources in ModelAdmin. (#1223)
+    - The `*Mixin.resource_class` accepting single resource has been deprecated and the new `*Mixin.resource_classes` accepting subscriptable type (list, tuple, ...) has been added.
+    - Same applies to all of the `get_resource_class`, `get_import_resource_class` and `get_export_resource_class` methods.
+
+- Deprecated `exceptions.py` (#1372)
+
+Enhancements
+############
+
+- Default format selections set correctly for export action (#1389)
+- Added option to store raw row values in each row's `RowResult` (#1393)
+- Add natural key support to `ForeignKeyWidget` (#1371)
+- Optimised default instantiation of `CharWidget` (#1414)
+
+Development
+###########
+
+- Increased test coverage, refactored CI build to use tox (#1372)
+
+Documentation
+#############
+
+- Clarified issues around the usage of temporary storage (#1306)
+
+2.8.0 (2022-03-31)
 ------------------
 
-- Nothing changed yet.
+- Updated import.css to support dark mode (#1318)
+- Fix crash when import_data() called with empty Dataset and `collect_failed_rows=True` (#1381)
+- Improve Korean translation (#1402)
+- Update example subclass widget code (#1407)
+- Drop support for python3.6, django 2.2, 3.0, 3.1 (#1408)
+- Add get_export_form() to ExportMixin (#1409)
 
+2.7.1 (2021-12-23)
+------------------
+
+- Removed `django_extensions` from example app settings (#1356)
+- Added support for Django 4.0 (#1357)
+
+2.7.0 (2021-12-07)
+------------------
+
+- Big integer support for Integer widget (#788)
+- Run compilemessages command to keep .mo files in sync (#1299)
+- Added `skip_html_diff` meta attribute (#1329)
+- Added python3.10 to tox and CI environment list (#1336)
+- Add ability to rollback the import on validation error (#1339)
+- Fix missing migration on example app (#1346)
+- Fix crash when deleting via admin site (#1347)
+- Use Github secret in CI script instead of hard-coded password (#1348)
+- Documentation: correct error in example application which leads to crash (#1353)
+
+2.6.1 (2021-09-30)
+------------------
+
+- Revert 'dark mode' css: causes issues in django2.2 (#1330)
+
+2.6.0 (2021-09-15)
+------------------
+
+- Added guard for null 'options' to fix crash (#1325)
+- Updated import.css to support dark mode (#1323)
+- Fixed regression where overridden mixin methods are not called (#1315)
+- Fix xls/xlsx import of Time fields (#1314)
+- Added support for 'to_encoding' attribute (#1311)
+- Removed travis and replaced with github actions for CI (#1307)
+- Increased test coverage (#1286)
+- Fix minor date formatting issue for date with years < 1000 (#1285)
+- Translate the zh_Hans missing part (#1279)
+- Remove code duplication from mixins.py and admin.py (#1277)
+- Fix example in BooleanWidget docs (#1276)
+- Better support for Django main (#1272)
+- don't test Django main branch with python36,37 (#1269)
+- Support Django 3.2 (#1265)
+- Correct typo in Readme (#1258)
+- Rephrase logical clauses in docstrings (#1255)
+- Support multiple databases (#1254)
+- Update django master to django main (#1251)
+- Add Farsi translated messages in the locale (#1249)
+- Update Russian translations (#1244)
+- Append export admin action using ModelAdmin.get_actions (#1241)
+- Fix minor mistake in makemigrations command (#1233)
+- Remove EOL Python 3.5 from CI (#1228)
+- CachedInstanceLoader defaults to empty when import_id is missing (#1225)
+- Add kwargs to import_row, import_object and import_field (#1190)
+- Call load_workbook() with data_only flag (#1095)
+
+
+2.5.0 (2020-12-30)
+------------------
+
+- Changed the default value for ``IMPORT_EXPORT_CHUNK_SIZE`` to 100. (#1196)
+- Add translation for Korean (#1218)
+- Update linting, CI, and docs.
+
+
+2.4.0 (2020-10-05)
+------------------
+
+- Fix deprecated Django 3.1 ``Signal(providing_args=...)`` usage.
+- Fix deprecated Django 3.1 ``django.conf.urls.url()`` usage.
+
+
+2.3.0 (2020-07-12)
+------------------
+
+- Add missing translation keys for all languages (#1144)
+- Added missing Portuguese translations (#1145)
+- Add kazakh translations (#1161)
+- Add bulk operations (#1149)
 
 2.2.0 (2020-06-01)
 ------------------

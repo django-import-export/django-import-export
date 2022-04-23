@@ -2,12 +2,12 @@
 django-import-export
 ====================
 
-.. image:: https://travis-ci.org/django-import-export/django-import-export.svg?branch=master
-    :target: https://travis-ci.org/django-import-export/django-import-export
-    :alt: Build status on Travis-CI
+.. image:: https://github.com/django-import-export/django-import-export/actions/workflows/django-import-export-ci.yml/badge.svg
+    :target: https://github.com/django-import-export/django-import-export/actions/workflows/django-import-export-ci.yml
+    :alt: Build status on Github
 
-.. image:: https://coveralls.io/repos/github/django-import-export/django-import-export/badge.svg?branch=master
-    :target: https://coveralls.io/github/django-import-export/django-import-export?branch=master
+.. image:: https://coveralls.io/repos/github/django-import-export/django-import-export/badge.svg?branch=main
+    :target: https://coveralls.io/github/django-import-export/django-import-export?branch=main
 
 .. image:: https://img.shields.io/pypi/v/django-import-export.svg
     :target: https://pypi.org/project/django-import-export/
@@ -29,7 +29,7 @@ and exporting data with included admin integration.
 Features:
 
 * support multiple formats (Excel, CSV, JSON, ...
-  and everything else that `tablib`_ support)
+  and everything else that `tablib`_ supports)
 
 * admin integration for importing
 
@@ -39,7 +39,7 @@ Features:
 
 * export data respecting admin filters
 
-.. image:: docs/_static/images/django-import-export-change.png
+.. image:: https://raw.githubusercontent.com/django-import-export/django-import-export/main/docs/_static/images/django-import-export-change.png
 
 
 * Documentation: https://django-import-export.readthedocs.io/en/stable/

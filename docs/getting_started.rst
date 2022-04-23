@@ -2,6 +2,14 @@
 Getting started
 ===============
 
+Test data
+=========
+
+There are test data files which can be used for importing in the `test/core/exports` directory.
+
+The test models
+===============
+
 For example purposes, we'll use a simplified book app. Here is our
 ``models.py``::
 
@@ -194,7 +202,9 @@ data structure on export, ``dehydrate_<fieldname>`` method should be defined::
             model = Book
 
         def dehydrate_full_title(self, book):
-            return '%s by %s' % (book.name, book.author.name)
+            book_name = getattr(book, "name", "unknown")
+            author_name = getattr(book.author, "name", "unknown")
+            return '%s by %s' % (book_name, author_name)
 
 In this case, the export looks like this:
 
@@ -230,6 +240,69 @@ and exporting resource.
 
     :doc:`/api_widgets`
         available widget types and options.
+
+Django Natural Keys
+===================
+
+The ``ForeignKeyWidget`` also supports using Django's natural key functions. A
+manager class with the ``get_by_natural_key`` function is required for importing
+foreign key relationships by the field model's natural key, and the model must
+have a ``natural_key`` function that can be serialized as a JSON list in order to
+export data.
+
+The primary utility for natural key functionality is to enable exporting data
+that can be imported into other Django environments with different numerical
+primary key sequences. The natural key functionality enables handling more
+complex data than specifying either a single field or the PK.
+
+The example below illustrates how to create a field on the ``BookResource`` that
+imports and exports its author relationships using the natural key functions
+on the ``Author`` model and modelmanager.
+
+The resource _meta option ``use_natural_foreign_keys`` enables this setting
+for all Models that support it.
+
+::
+
+    from import_export.fields import Field
+    from import_export.widgets import ForeignKeyWidget
+
+    class AuthorManager(models.Manager):
+
+        def get_by_natural_key(self, name):
+            return self.get(name=name)
+
+    class Author(models.Model):
+
+        objects = AuthorManager()
+
+        name = models.CharField(max_length=100)
+        birthday = models.DateTimeField(auto_now_add=True)
+
+        def natural_key(self):
+            return (self.name,)
+
+    # Only the author field uses natural foreign keys.
+    class BookResource(resources.ModelResource):
+
+        author = Field(
+            column_name = "author",
+            attribute = "author",
+            widget = ForeignKeyWidget(Author, use_natural_foreign_keys=True)
+        )
+
+        class Meta:
+            model = Book
+
+    # All widgets with foreign key functions use them.
+    class BookResource(resources.ModelResource):
+
+        class Meta:
+            model = Book
+            use_natural_foreign_keys = True
+
+Read more at `Django Serialization <https://docs.djangoproject.com/en/4.0/topics/serialization>`_
+
 
 Importing data
 ==============
@@ -332,13 +405,17 @@ mixins (:class:`~import_export.admin.ImportMixin`,
     from import_export.admin import ImportExportModelAdmin
 
     class BookAdmin(ImportExportModelAdmin):
-        resource_class = BookResource
+        resource_classes = [BookResource]
 
     admin.site.register(Book, BookAdmin)
+
+.. _change-screen-figure:
 
 .. figure:: _static/images/django-import-export-change.png
 
    A screenshot of the change view with Import and Export buttons.
+
+.. _confirm-import-figure:
 
 .. figure:: _static/images/django-import-export-import.png
 
@@ -347,6 +424,13 @@ mixins (:class:`~import_export.admin.ImportMixin`,
 .. figure:: _static/images/django-import-export-import-confirm.png
 
    A screenshot of the confirm import view.
+
+
+.. warning::
+
+    The `resource_class` parameter was deprecated in `django-import-export` 3.0.
+    Assign list or tuple with Resource(s) to `resource_classes` parameter now.
+
 
 
 Exporting via admin action
@@ -427,12 +511,12 @@ Customize forms::
 Customize ``ModelAdmin``::
 
     class CustomBookAdmin(ImportMixin, admin.ModelAdmin):
-        resource_class = BookResource
+        resource_classes = [BookResource]
         import_form_class = CustomImportForm
         confirm_form_class = CustomConfirmImportForm
 
         def get_confirm_form_initial(self, request, form_class, import_form=None, **kwargs):
-            intial = super().get_confirm_form_initial(request, form_class, import_form, **kwargs)
+            initial = super().get_confirm_form_initial(request, form_class, import_form, **kwargs)
             # Pass on the `author` value from the import form to
             # the confirm form (if provided)
             if import_form:
@@ -449,7 +533,88 @@ To further customize the import forms, you might like to consider overriding the
 :meth:`~import_export.admin.ImportMixin.get_confirm_form_class`,
 :meth:`~import_export.admin.ImportMixin.get_confirm_form_kwargs`,
 
+.. warning::
+
+    The `resource_class` parameter was deprecated in `django-import-export` 3.0.
+    Assign list or tuple with Resource(s) to `resource_classes` parameter now.
+
+
 .. seealso::
 
     :doc:`/api_admin`
         available mixins and options.
+
+Import confirmation
+~~~~~~~~~~~~~~~~~~~
+
+Importing in the Admin site is a two step process.
+
+#. Choose the file to import (:ref:`screenshot<change-screen-figure>`).
+#. Review changes and confirm import (:ref:`screenshot<confirm-import-figure>`).
+
+To support this, uploaded data is written to temporary storage after step 1, and read
+back for final import after step 2.
+
+There are three mechanisms for temporary storage.
+
+#. Temporary file storage on the host server (default).  This is suitable for development only.
+   Use of temporary filesystem storage is not recommended for production sites.
+
+#. The `Django cache <https://docs.djangoproject.com/en/dev/topics/cache/>`_.
+
+#. `Django storage <https://docs.djangoproject.com/en/dev/ref/files/storage/>`_.
+
+To modify which storage mechanism is used, please refer to the setting :ref:`IMPORT_EXPORT_TMP_STORAGE_CLASS`.
+
+Temporary resources are removed when data is successfully imported after the confirmation step.
+
+Your choice of temporary storage will be influenced by the following factors:
+
+* Sensitivity of the data being imported.
+* Volume and frequency of uploads.
+* File upload size.
+* Use of containers or load-balanced servers.
+
+.. warning::
+
+    If users do not complete the confirmation step of the workflow,
+    or if there are errors during import, then temporary resources may not be deleted.
+    This will need to be understood and managed in production settings.
+    For example, using a cache expiration policy or cron job to clear stale resources.
+
+
+Using multiple resources
+------------------------
+
+It is possible to set multiple resources both to import and export `ModelAdmin` classes.
+The `ImportMixin`, `ExportMixin`, `ImportExportMixin` and `ImportExportModelAdmin` classes accepts
+subscriptable type (list, tuple, ...) as `resource_classes` parameter.
+The subscriptable could also be returned from one of the
+`get_resource_classes()`, `get_import_resource_classes()`, `get_export_resource_classes()` classes.
+
+If there are multiple resources, the resource chooser appears in import/export admin form.
+The displayed name of the resource can be changed through the `name` parameter of the `Meta` class.
+
+
+Use multiple resources::
+
+    from import_export import resources
+    from core.models import Book
+
+
+    class BookResource(resources.ModelResource):
+
+        class Meta:
+            model = Book
+
+
+    class BookNameResource(resources.ModelResource):
+
+        class Meta:
+            model = Book
+            fields = ['id', 'name']
+            name = "Export/Import only book names"
+
+
+    class CustomBookAdmin(ImportMixin, admin.ModelAdmin):
+        resource_classes = [BookResource, BookNameResource]

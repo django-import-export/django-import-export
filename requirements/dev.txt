@@ -1,6 +1,0 @@
--r base.txt
-sphinx
-sphinx-rtd-theme
-mysqlclient
-psycopg2
-wheel
