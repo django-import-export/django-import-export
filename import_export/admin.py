@@ -459,9 +459,9 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
 
                 if not result.has_errors() and not result.has_validation_errors():
                     initial = {
-                        "import_file_name": tmp_storage.name,
-                        "original_file_name": import_file.name,
-                        "input_format": form.cleaned_data['input_format'],
+                        'import_file_name': tmp_storage.name,
+                        'original_file_name': import_file.name,
+                        'input_format': form.cleaned_data['input_format'],
                         'resource': request.POST.get('resource', ''),
                     }
                     context['confirm_form'] = self.create_confirm_form(
