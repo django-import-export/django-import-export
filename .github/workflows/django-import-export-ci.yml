@@ -11,16 +11,6 @@ on:
     - release-3-x
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
-        with:
-          python-version: 3.9
-      - uses: jamescurtin/isort-action@master
-        with:
-          requirementsFiles: "requirements/base.txt requirements/test.txt"
   test:
     runs-on: ubuntu-latest
     env:
@@ -52,6 +42,14 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     steps:
+    - name: isort
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+      with:
+        python-version: 3.9
+    - uses: jamescurtin/isort-action@master
+      with:
+        requirementsFiles: "requirements/base.txt requirements/test.txt"
     - name: Set up MySQL
       run: >
         sudo /etc/init.d/mysql start
