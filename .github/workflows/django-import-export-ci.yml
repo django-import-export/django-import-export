@@ -58,7 +58,7 @@ jobs:
     - name: isort
       uses: jamescurtin/isort-action@master
       with:
-        requirementsFiles: "requirements.txt"
+        requirementsFiles: "requirements.txt test.txt"
     - uses: actions/cache@v2
       with:
         path: ~/.cache/pip
