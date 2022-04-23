@@ -1,6 +1,6 @@
 from django import forms
 
-from import_export.forms import ConfirmImportForm, ImportForm, ExportForm
+from import_export.forms import ConfirmImportForm, ExportForm, ImportForm
 
 from .models import Author
 
