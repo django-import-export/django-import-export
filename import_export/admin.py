@@ -193,10 +193,9 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
             Use :meth:`~import_export.admin.ImportMixin.get_import_form_class` or set the new
             :attr:`~import_export.admin.ImportMixin.import_form_class` attribute.
         """
-        # TODO: Remove method in v3.2
         warnings.warn(
             "ImportMixin.get_import_form() is deprecated and will be removed in "
-            "v3.2. Please use get_import_form_class() instead.",
+            "a future release. Please use get_import_form_class() instead.",
             category=DeprecationWarning
         )
         return self.import_form_class
@@ -208,10 +207,9 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
             Use :func:`~import_export.admin.ImportMixin.get_confirm_form_class` or set the new
             :attr:`~import_export.admin.ImportMixin.confirm_form_class` attribute.
         """
-        # TODO: Remove method in v3.2
         warnings.warn(
             "ImportMixin.get_confirm_import_form() is deprecated and will be removed in "
-            "v3.2. Please use get_confirm_form_class() instead.",
+            "a future release. Please use get_confirm_form_class() instead.",
             category=DeprecationWarning
         )
         return self.confirm_form_class
@@ -226,7 +224,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         """
         warnings.warn(
             "ImportMixin.get_form_kwargs() is deprecated and will be removed "
-            "in v3.2. Please use get_import_form_kwargs() or "
+            "in a future release. Please use get_import_form_kwargs() or "
             "get_confirm_form_kwargs() instead.",
             category=DeprecationWarning
         )
@@ -259,15 +257,15 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         a single custom form class, you can set the ``import_form_class``
         attribute to change this for your subclass.
         """
-        # TODO: Remove following conditional in v3.2 (when
-        # get_import_form() is removed)
+        # TODO: Remove following conditional when get_import_form() is removed
         if not getattr(self.get_import_form, 'is_original', False):
             warnings.warn(
                 "ImportMixin.get_import_form() is deprecated and will be "
-                "removed in v3.2. Please use the new 'import_form_class' "
-                "attribute to specify a custom form class, or override the "
-                "get_import_form_class() method if your requirements are more "
-                "complex.", category=DeprecationWarning
+                "removed in a future release. Please use the new "
+                "'import_form_class' attribute to specify a custom form "
+                "class, or override the get_import_form_class() method if "
+                "your requirements are more complex.",
+                category=DeprecationWarning
             )
             return self.get_import_form()
         # Return the class attribute value
@@ -288,8 +286,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
             files=request.FILES or None,
             initial=self.get_import_form_initial(request, form_class, **kwargs.pop('initial', {})),
         )
-        # TODO: Remove following conditional in v3.2 (when
-        # get_form_kwargs() is removed)
+        # TODO: Remove following conditional when get_form_kwargs() is removed
         if not getattr(self.get_form_kwargs, 'is_original', False):
             kwargs = self.get_form_kwargs(
                 self.get_import_form_class(request), **kwargs
@@ -331,15 +328,15 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         have a single custom form class, you can set the ``confirm_form_class``
         attribute to change this for your subclass.
         """
-        # TODO: Remove following conditional in v3.2 (when
-        # get_confirm_import_form() is removed)
+        # TODO: Remove following conditional when get_confirm_import_form() is removed
         if not getattr(self.get_confirm_import_form, 'is_original', False):
             warnings.warn(
                 "ImportMixin.get_confirm_import_form() is deprecated and will "
-                "be removed in v3.2. Please use the new `confirm_form_class` "
-                "attribute to specify a custom form class, or override the "
-                "get_confirm_form_class() method if your requirements are "
-                "more complex.", category=DeprecationWarning
+                "be removed in a future release. Please use the new "
+                "`confirm_form_class` attribute to specify a custom form "
+                "class, or override the get_confirm_form_class() method if "
+                "your requirements are more complex.",
+                category=DeprecationWarning
             )
             return self.get_confirm_import_form()
         # Return the class attribute value
@@ -371,8 +368,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         'confirm' form.
         """
         initial = kwargs
-        # TODO: Remove following conditional in v3.2 (when
-        # get_form_kwargs() is removed)
+        # TODO: Remove following conditional when get_form_kwargs() is removed
         if not getattr(self.get_form_kwargs, 'is_original', False):
             # The deprecated method has been overridden, so
             # replicate how get_form_kwargs() was previously
