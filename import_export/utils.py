@@ -27,7 +27,7 @@ class atomic_if_using_transaction:
 
 def original(method):
     """
-    A decorator used to mark some class methods as 'orignal',
+    A decorator used to mark some class methods as 'original',
     making it easy to detect whether they have been overridden
     by a subclass. Useful for method deprecation.
     """

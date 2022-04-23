@@ -343,7 +343,7 @@ class ExportMixinTest(TestCase):
 
     def test_get_export_form(self):
         m = admin.ExportMixin()
-        self.assertEqual(forms.ExportForm, m.get_export_form())
+        self.assertEqual(forms.ExportForm, m.get_export_form_class())
 
     def test_get_export_form_with_custom_form(self):
         m = self.TestExportMixin(self.TestExportForm)

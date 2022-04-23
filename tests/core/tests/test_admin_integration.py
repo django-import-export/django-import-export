@@ -560,7 +560,7 @@ class ImportExportAdminIntegrationTest(TestCase):
         confirm_form = response.context['confirm_form']
         self.assertIsInstance(confirm_form,
                               CustomBookAdmin(EBook, 'ebook/import')
-                              .get_confirm_import_form())
+                              .get_confirm_form_class(None))
 
         data = confirm_form.initial
         self.assertEqual(data['original_file_name'], 'books.csv')

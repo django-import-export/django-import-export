@@ -44,13 +44,15 @@ This release makes some minor changes to the public API.  If you have overridden
 Deprecations
 ############
 
-This release adds some deprecations which will be removed in the 3.1 release.
+This release adds some deprecations which will be removed in a future release.
 
 - Add support for multiple resources in ModelAdmin. (#1223)
     - The `*Mixin.resource_class` accepting single resource has been deprecated and the new `*Mixin.resource_classes` accepting subscriptable type (list, tuple, ...) has been added.
     - Same applies to all of the `get_resource_class`, `get_import_resource_class` and `get_export_resource_class` methods.
 
 - Deprecated `exceptions.py` (#1372)
+
+- Refactored form-related methods on ImportMixin (#1147)
 
 Enhancements
 ############

@@ -1,7 +1,6 @@
-import django
 import warnings
-from datetime import datetime
 
+import django
 from django import forms
 from django.conf import settings
 from django.contrib import admin, messages
@@ -17,19 +16,13 @@ from django.utils.module_loading import import_string
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_POST
 
+from .formats.base_formats import DEFAULT_FORMATS
 from .forms import ConfirmImportForm, ExportForm, ImportForm, export_action_form_factory
 from .mixins import BaseExportMixin, BaseImportMixin
 from .results import RowResult
 from .signals import post_export, post_import
 from .tmp_storages import MediaStorage, TempFolderStorage
-
-SKIP_ADMIN_LOG = getattr(settings, 'IMPORT_EXPORT_SKIP_ADMIN_LOG', False)
-TMP_STORAGE_CLASS = getattr(settings, 'IMPORT_EXPORT_TMP_STORAGE_CLASS',
-                            TempFolderStorage)
-
-
-if isinstance(TMP_STORAGE_CLASS, str):
-    TMP_STORAGE_CLASS = import_string(TMP_STORAGE_CLASS)
+from .utils import original
 
 
 class ImportExportMixinBase:
@@ -50,8 +43,6 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
     change_list_template = 'admin/import_export/change_list_import.html'
     #: template for import view
     import_template_name = 'admin/import_export/import.html'
-    #: resource class
-    resource_class = None
     #: available import formats
     formats = DEFAULT_FORMATS
     #: form class to use for the initial import step
@@ -131,7 +122,6 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
 
             data = tmp_storage.read()
             dataset = input_format.create_dataset(data)
-
             result = self.process_dataset(dataset, form, request, *args, **kwargs)
 
             tmp_storage.remove()
@@ -254,11 +244,12 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         * :meth:`~import_export.admin.ImportMixin.get_import_form_class`
         * :meth:`~import_export.admin.ImportMixin.get_import_form_kwargs`
         * :meth:`~import_export.admin.ImportMixin.get_import_form_initial`
+        * :meth:`~import_export.mixins.BaseImportMixin.get_import_resource_classes`
         """
         formats = self.get_import_formats()
         form_class = self.get_import_form_class(request)
         init_kwargs = self.get_import_form_kwargs(request, form_class, **init_kwargs)
-        return form_class(formats, **init_kwargs)
+        return form_class(formats, self.get_import_resource_classes(), **init_kwargs)
 
     def get_import_form_class(self, request):
         """
@@ -317,7 +308,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         """
         .. versionadded:: 2.3
 
-        Return a form instance to use for the 'cofirm' import step.
+        Return a form instance to use for the 'confirm' import step.
         This method can be extended to make dynamic form updates to the
         form after it has been instantiated. You might also look to
         override the following:
@@ -430,6 +421,8 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         resources = list()
         if request.POST and form.is_valid():
             input_format = import_formats[int(form.cleaned_data['input_format'])]()
+            if not input_format.is_binary():
+                input_format.encoding = self.from_encoding
             import_file = form.cleaned_data['import_file']
             # first always write the uploaded file to disk as it may be a
             # memory file or else based on settings upload handlers
@@ -464,15 +457,16 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
 
                 context['result'] = result
 
-            if not result.has_errors() and not result.has_validation_errors():
-                initial = {
-                    "import_file_name": tmp_storage.name,
-                    "original_file_name": import_file.name,
-                    "input_format": form.cleaned_data['input_format'],
-                }
-                context['confirm_form'] = self.create_confirm_form(
-                    request, import_form=form, initial=initial
-                )
+                if not result.has_errors() and not result.has_validation_errors():
+                    initial = {
+                        "import_file_name": tmp_storage.name,
+                        "original_file_name": import_file.name,
+                        "input_format": form.cleaned_data['input_format'],
+                        'resource': request.POST.get('resource', ''),
+                    }
+                    context['confirm_form'] = self.create_confirm_form(
+                        request, import_form=form, initial=initial
+                    )
         else:
             res_kwargs = self.get_import_resource_kwargs(request, form=form, *args, **kwargs)
             resource_classes = self.get_import_resource_classes()
@@ -512,6 +506,8 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
     export_template_name = 'admin/import_export/export.html'
     #: export data encoding
     to_encoding = None
+    #: form class to use for the initial import step
+    export_form_class = ExportForm
 
     def get_urls(self):
         urls = super().get_urls()
@@ -590,18 +586,18 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
     def get_context_data(self, **kwargs):
         return {}
 
-    def get_export_form(self):
+    def get_export_form_class(self):
         """
-        Get the form type used to read the export format.
+        Get the form class used to read the export format.
         """
-        return ExportForm
+        return self.export_form_class
 
     def export_action(self, request, *args, **kwargs):
         if not self.has_export_permission(request):
             raise PermissionDenied
 
         formats = self.get_export_formats()
-        form_type = self.get_export_form()
+        form_type = self.get_export_form_class()
         form = form_type(formats, self.get_export_resource_classes(), request.POST or None)
         if form.is_valid():
             file_format = formats[
