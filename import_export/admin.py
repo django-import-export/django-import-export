@@ -106,7 +106,12 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         if not self.has_import_permission(request):
             raise PermissionDenied
 
-        form = self.create_confirm_form(request)
+        if getattr(self.get_confirm_import_form, 'is_original', False):
+            form = self.create_confirm_form(request)
+        else:
+            form_type = self.get_confirm_import_form()
+            form = form_type(request.POST)
+
         if form.is_valid():
             import_formats = self.get_import_formats()
             input_format = import_formats[
@@ -230,7 +235,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         )
         return kwargs
 
-    def create_import_form(self, request, **init_kwargs):
+    def create_import_form(self, request):
         """
         .. versionadded:: 3.0
 
@@ -246,8 +251,8 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         """
         formats = self.get_import_formats()
         form_class = self.get_import_form_class(request)
-        init_kwargs = self.get_import_form_kwargs(request, form_class, **init_kwargs)
-        return form_class(formats, self.get_import_resource_classes(), **init_kwargs)
+        kwargs = self.get_import_form_kwargs(request)
+        return form_class(formats, self.get_import_resource_classes(), **kwargs)
 
     def get_import_form_class(self, request):
         """
@@ -271,39 +276,30 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         # Return the class attribute value
         return self.import_form_class
 
-    def get_import_form_kwargs(self, request, form_class, **kwargs):
+    def get_import_form_kwargs(self, request):
         """
         .. versionadded:: 3.0
 
         Return a dictionary of values with which to initialize the 'import'
         form (including the initial values returned by
         :meth:`~import_export.admin.ImportMixin.get_import_form_initial`).
-        Default values can be overridden by passing them as ``kwargs`` to
-        this method.
         """
-        value = dict(
-            data=request.POST or None,
-            files=request.FILES or None,
-            initial=self.get_import_form_initial(request, form_class, **kwargs.pop('initial', {})),
-        )
-        # TODO: Remove following conditional when get_form_kwargs() is removed
-        if not getattr(self.get_form_kwargs, 'is_original', False):
-            kwargs = self.get_form_kwargs(
-                self.get_import_form_class(request), **kwargs
-            )
-        value.update(**kwargs)
-        return value
+        return {
+            "data": request.POST or None,
+            "files": request.FILES or None,
+            "initial": self.get_import_form_initial(request),
+        }
 
-    def get_import_form_initial(self, request, form_class, **kwargs):
+    def get_import_form_initial(self, request):
         """
         .. versionadded:: 3.0
 
         Return a dictionary of initial field values to be provided to the
         'import' form.
         """
-        return kwargs
+        return {}
 
-    def create_confirm_form(self, request, import_form=None, **init_kwargs):
+    def create_confirm_form(self, request, import_form=None):
         """
         .. versionadded:: 3.0
 
@@ -316,11 +312,11 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         * :meth:`~import_export.admin.ImportMixin.get_confirm_form_kwargs`
         * :meth:`~import_export.admin.ImportMixin.get_confirm_form_initial`
         """
-        form_class = self.get_confirm_form_class(request, import_form)
-        init_kwargs = self.get_confirm_form_kwargs(request, form_class, import_form, **init_kwargs)
-        return form_class(**init_kwargs)
+        form_class = self.get_confirm_form_class(request)
+        kwargs = self.get_confirm_form_kwargs(request, import_form)
+        return form_class(**kwargs)
 
-    def get_confirm_form_class(self, request, import_form=None):
+    def get_confirm_form_class(self, request):
         """
         .. versionadded:: 3.0
 
@@ -342,39 +338,35 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         # Return the class attribute value
         return self.confirm_form_class
 
-    def get_confirm_form_kwargs(self, request, form_class, import_form=None, **kwargs):
+    def get_confirm_form_kwargs(self, request, import_form=None):
         """
         .. versionadded:: 3.0
 
         Return a dictionary of values with which to initialize the 'confirm'
         form (including the initial values returned by
         :meth:`~import_export.admin.ImportMixin.get_confirm_form_initial`).
-        Default values can be overridden by passing them as ``kwargs`` to
-        this method.
         """
-        value = dict(
-            data=request.POST or None,
-            files=request.FILES or None,
-            initial=self.get_confirm_form_initial(request, form_class, import_form, **kwargs.pop('initial', {}))
-        )
-        value.update(kwargs)
-        return value
+        return {
+            "data": request.POST or None,
+            "files": request.FILES or None,
+            "initial": self.get_confirm_form_initial(request, import_form),
+        }
 
-    def get_confirm_form_initial(self, request, form_class, import_form=None, **kwargs):
+    def get_confirm_form_initial(self, request, import_form):
         """
         .. versionadded:: 3.0
 
         Return a dictionary of initial field values to be provided to the
         'confirm' form.
         """
-        initial = kwargs
-        # TODO: Remove following conditional when get_form_kwargs() is removed
-        if not getattr(self.get_form_kwargs, 'is_original', False):
-            # The deprecated method has been overridden, so
-            # replicate how get_form_kwargs() was previously
-            # used in import_action()
-            return self.get_form_kwargs(form=import_form, **initial)
-        return initial
+        if import_form is None:
+            return {}
+        return {
+            'import_file_name': import_form.cleaned_data["import_file"].tmp_storage_name,
+            'original_file_name': import_form.cleaned_data["import_file"].name,
+            'input_format': import_form.cleaned_data["input_format"],
+            'resource':import_form.cleaned_data.get("resource", ""),
+        }
 
     def get_import_data_kwargs(self, request, *args, **kwargs):
         """
