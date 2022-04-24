@@ -44,15 +44,9 @@ class AuthorAdmin(ImportMixin, admin.ModelAdmin):
 
 class CustomBookAdmin(BookAdmin):
     """BookAdmin with custom import forms"""
-
-    def get_import_form_class(self, request):
-        return CustomImportForm
-
-    def get_confirm_form_class(self, request):
-        return CustomConfirmImportForm
-
-    def get_export_form_class(self):
-        return CustomExportForm
+    import_form_class = CustomImportForm
+    confirm_form_class = CustomConfirmImportForm
+    export_form_class = CustomExportForm
 
     def get_confirm_form_initial(self, request, import_form):
         init_kwargs = dict()
