@@ -49,12 +49,12 @@ class CustomBookAdmin(BookAdmin):
     export_form_class = CustomExportForm
 
     def get_confirm_form_initial(self, request, import_form):
-        init_kwargs = dict()
+        initial = super().get_confirm_form_initial(request, import_form)
+        # Pass on the `author` value from the import form to
+        # the confirm form (if provided)
         if import_form:
-            init_kwargs = super().get_confirm_form_initial(request, import_form)
-            author = import_form.cleaned_data['author']
-            init_kwargs.update({'author': author.id})
-        return init_kwargs
+            initial['author'] = import_form.cleaned_data['author']
+        return initial
 
 
 admin.site.register(Book, BookAdmin)
