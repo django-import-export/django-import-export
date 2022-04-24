@@ -408,7 +408,19 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         context = self.get_import_context_data()
 
         import_formats = self.get_import_formats()
-        form = self.create_import_form(request)
+        if getattr(self.get_form_kwargs, "is_original", False):
+            # Use new API
+            form = self.create_import_form(request)
+        else:
+            form_class = self.get_import_form_class(request)
+            form_kwargs = self.get_form_kwargs(form_class, *args, **kwargs)
+            form = form_class(
+                import_formats,
+                self.get_import_resource_classes(),
+                request.POST or None,
+                request.FILES or None,
+                **form_kwargs
+            )
 
         resources = list()
         if request.POST and form.is_valid():
@@ -419,6 +431,9 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
             # first always write the uploaded file to disk as it may be a
             # memory file or else based on settings upload handlers
             tmp_storage = self.write_to_tmp_storage(import_file, input_format)
+            # allows get_confirm_form_initial() to include both the
+            # original and saved file names from form.cleaned_data
+            import_file.tmp_storage_name = tmp_storage.name
 
             try:
                 # then read the file, using the proper format-specific mode
@@ -448,15 +463,17 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
                 context['result'] = result
 
                 if not result.has_errors() and not result.has_validation_errors():
-                    initial = {
-                        'import_file_name': tmp_storage.name,
-                        'original_file_name': import_file.name,
-                        'input_format': form.cleaned_data['input_format'],
-                        'resource': request.POST.get('resource', ''),
-                    }
-                    context['confirm_form'] = self.create_confirm_form(
-                        request, import_form=form, initial=initial
-                    )
+                    if getattr(self.get_form_kwargs, "is_original", True):
+                        # Use new API
+                        context["confirm_form"] = self.create_confirm_form(
+                            request, import_form=form
+                        )
+                    else:
+                        confirm_form_class = self.get_confirm_form_class(request)
+                        initial = self.get_confirm_form_initial(request, form)
+                        context["confirm_form"] = confirm_form_class(
+                            initial=self.get_form_kwargs(form=form, **initial)
+                        )
         else:
             res_kwargs = self.get_import_resource_kwargs(request, form=form, *args, **kwargs)
             resource_classes = self.get_import_resource_classes()
