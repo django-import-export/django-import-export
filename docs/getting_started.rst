@@ -515,8 +515,8 @@ Customize ``ModelAdmin``::
         import_form_class = CustomImportForm
         confirm_form_class = CustomConfirmImportForm
 
-        def get_confirm_form_initial(self, request, form_class, import_form=None, **kwargs):
-            initial = super().get_confirm_form_initial(request, form_class, import_form, **kwargs)
+        def get_confirm_form_initial(self, request, import_form):
+            initial = super().get_confirm_form_initial(request, import_form)
             # Pass on the `author` value from the import form to
             # the confirm form (if provided)
             if import_form:
