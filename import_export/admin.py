@@ -600,17 +600,22 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
             Use :meth:`~import_export.admin.ExportMixin.get_export_form_class` or set the new
             :attr:`~import_export.admin.ExportMixin.export_form_class` attribute.
         """
-        warnings.warn(
-            "ExportMixin.get_export_form() is deprecated and will be removed in "
-            "a future release. Please use get_export_form_class() instead.",
-            category=DeprecationWarning
-        )
         return self.export_form_class
 
     def get_export_form_class(self):
         """
         Get the form class used to read the export format.
         """
+        if not getattr(self.get_export_form, 'is_original', False):
+            warnings.warn(
+                "ExportMixin.get_export_form() is deprecated and will "
+                "be removed in a future release. Please use the new "
+                "'export_form_class' attribute to specify a custom form "
+                "class, or override the get_export_form_class() method if "
+                "your requirements are more complex.",
+                category=DeprecationWarning
+            )
+            return self.get_export_form()
         return self.export_form_class
 
     def export_action(self, request, *args, **kwargs):

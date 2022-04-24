@@ -1084,11 +1084,14 @@ class TestExportMixinDeprecationWarnings(TestCase):
         super().setUp()
         self.export_mixin = self.TestMixin()
 
-    def test_get_export_form_warning(self):
+    def test_get_export_form_class_warning(self):
         target_msg = (
-            "ExportMixin.get_export_form() is deprecated and will be removed in a future release. "
-            "Please use get_export_form_class() instead."
+            "ExportMixin.get_export_form() is deprecated and will "
+            "be removed in a future release. Please use the new "
+            "'export_form_class' attribute to specify a custom form "
+            "class, or override the get_export_form_class() method if "
+            "your requirements are more complex."
         )
         with self.assertWarns(DeprecationWarning) as w:
-            self.export_mixin.get_export_form()
+            self.export_mixin.get_export_form_class()
             self.assertEqual(target_msg, str(w.warnings[0].message))
