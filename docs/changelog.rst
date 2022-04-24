@@ -52,7 +52,7 @@ This release adds some deprecations which will be removed in a future release.
 
 - Deprecated `exceptions.py` (#1372)
 
-- Refactored form-related methods on ImportMixin (#1147)
+- Refactored form-related methods on `ImportMixin` / `ExportMixin` (#1147)
 
 Enhancements
 ############

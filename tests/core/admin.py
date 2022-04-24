@@ -48,19 +48,19 @@ class CustomBookAdmin(BookAdmin):
     def get_import_form_class(self, request):
         return CustomImportForm
 
-    def get_confirm_form_class(self, request, import_form=None):
+    def get_confirm_form_class(self, request):
         return CustomConfirmImportForm
 
-    def get_export_form(self):
+    def get_export_form_class(self):
         return CustomExportForm
 
-    def get_form_kwargs(self, form, *args, **kwargs):
-        # update kwargs with authors (from CustomImportForm.cleaned_data)
-        if isinstance(form, CustomImportForm):
-            if form.is_valid():
-                author = form.cleaned_data['author']
-                kwargs.update({'author': author.id})
-        return kwargs
+    def get_confirm_form_initial(self, request, import_form):
+        init_kwargs = dict()
+        if import_form:
+            init_kwargs = super().get_confirm_form_initial(request, import_form)
+            author = import_form.cleaned_data['author']
+            init_kwargs.update({'author': author.id})
+        return init_kwargs
 
 
 admin.site.register(Book, BookAdmin)
