@@ -107,27 +107,27 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
             raise PermissionDenied
 
         if getattr(self.get_confirm_import_form, 'is_original', False):
-            form = self.create_confirm_form(request)
+            confirm_form = self.create_confirm_form(request)
         else:
             form_type = self.get_confirm_import_form()
-            form = form_type(request.POST)
+            confirm_form = form_type(request.POST)
 
-        if form.is_valid():
+        if confirm_form.is_valid():
             import_formats = self.get_import_formats()
             input_format = import_formats[
-                int(form.cleaned_data['input_format'])
+                int(confirm_form.cleaned_data['input_format'])
             ](encoding=self.from_encoding)
             encoding = None if input_format.is_binary() else self.from_encoding
             tmp_storage_cls = self.get_tmp_storage_class()
             tmp_storage = tmp_storage_cls(
-                name=form.cleaned_data['import_file_name'],
+                name=confirm_form.cleaned_data['import_file_name'],
                 encoding=encoding,
                 read_mode=input_format.get_read_mode()
             )
 
             data = tmp_storage.read()
             dataset = input_format.create_dataset(data)
-            result = self.process_dataset(dataset, form, request, *args, **kwargs)
+            result = self.process_dataset(dataset, confirm_form, request, *args, **kwargs)
 
             tmp_storage.remove()
 
@@ -410,11 +410,11 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         import_formats = self.get_import_formats()
         if getattr(self.get_form_kwargs, "is_original", False):
             # Use new API
-            form = self.create_import_form(request)
+            import_form = self.create_import_form(request)
         else:
             form_class = self.get_import_form_class(request)
             form_kwargs = self.get_form_kwargs(form_class, *args, **kwargs)
-            form = form_class(
+            import_form = form_class(
                 import_formats,
                 self.get_import_resource_classes(),
                 request.POST or None,
@@ -423,11 +423,11 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
             )
 
         resources = list()
-        if request.POST and form.is_valid():
-            input_format = import_formats[int(form.cleaned_data['input_format'])]()
+        if request.POST and import_form.is_valid():
+            input_format = import_formats[int(import_form.cleaned_data['input_format'])]()
             if not input_format.is_binary():
                 input_format.encoding = self.from_encoding
-            import_file = form.cleaned_data['import_file']
+            import_file = import_form.cleaned_data['import_file']
             # first always write the uploaded file to disk as it may be a
             # memory file or else based on settings upload handlers
             tmp_storage = self.write_to_tmp_storage(import_file, input_format)
@@ -441,19 +441,19 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
                 data = tmp_storage.read()
                 dataset = input_format.create_dataset(data)
             except Exception as e:
-                form.add_error('import_file',
+                import_form.add_error('import_file',
                                _(f"'{type(e).__name__}' encountered while trying to read file. "
                                  "Ensure you have chosen the correct format for the file. "
                                  f"{str(e)}"))
 
-            if not form.errors:
+            if not import_form.errors:
                 # prepare kwargs for import data, if needed
-                res_kwargs = self.get_import_resource_kwargs(request, form=form, *args, **kwargs)
-                resource = self.choose_import_resource_class(form)(**res_kwargs)
+                res_kwargs = self.get_import_resource_kwargs(request, form=import_form, *args, **kwargs)
+                resource = self.choose_import_resource_class(import_form)(**res_kwargs)
                 resources = [resource]
 
                 # prepare additional kwargs for import_data, if needed
-                imp_kwargs = self.get_import_data_kwargs(request, form=form, *args, **kwargs)
+                imp_kwargs = self.get_import_data_kwargs(request, form=import_form, *args, **kwargs)
                 result = resource.import_data(dataset, dry_run=True,
                                               raise_errors=False,
                                               file_name=import_file.name,
@@ -466,23 +466,23 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
                     if getattr(self.get_form_kwargs, "is_original", True):
                         # Use new API
                         context["confirm_form"] = self.create_confirm_form(
-                            request, import_form=form
+                            request, import_form=import_form
                         )
                     else:
                         confirm_form_class = self.get_confirm_form_class(request)
-                        initial = self.get_confirm_form_initial(request, form)
+                        initial = self.get_confirm_form_initial(request, import_form)
                         context["confirm_form"] = confirm_form_class(
-                            initial=self.get_form_kwargs(form=form, **initial)
+                            initial=self.get_form_kwargs(form=import_form, **initial)
                         )
         else:
-            res_kwargs = self.get_import_resource_kwargs(request, form=form, *args, **kwargs)
+            res_kwargs = self.get_import_resource_kwargs(request, form=import_form, *args, **kwargs)
             resource_classes = self.get_import_resource_classes()
             resources = [resource_class(**res_kwargs) for resource_class in resource_classes]
 
         context.update(self.admin_site.each_context(request))
 
         context['title'] = _("Import")
-        context['form'] = form
+        context['form'] = import_form
         context['opts'] = self.model._meta
         context['fields_list'] = [
             (resource.get_display_name(), [f.column_name for f in resource.get_user_visible_fields()])
