@@ -346,9 +346,18 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         form (including the initial values returned by
         :meth:`~import_export.admin.ImportMixin.get_confirm_form_initial`).
         """
+        if import_form:
+            # When initiated from `import_action()`, the 'posted' data
+            # is for the 'import' form, not this one.
+            data = None
+            files = None
+        else:
+            data = request.POST or None
+            files = request.FILES or None
+
         return {
-            "data": request.POST or None,
-            "files": request.FILES or None,
+            "data": data,
+            "files": files,
             "initial": self.get_confirm_form_initial(request, import_form),
         }
 
