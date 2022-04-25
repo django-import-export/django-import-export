@@ -10,11 +10,14 @@ import os
 def main():
     coverage_args = "-m coverage run" if os.environ.get("COVERAGE") else ""
 
-    os.system(
+    retval = os.system(
         "python -W error::DeprecationWarning -W error::PendingDeprecationWarning "
         f"{coverage_args} "
         "./tests/manage.py test core --settings=settings"
     )
+    if retval != 0:
+        exit(1)
+    exit(0)
 
 
 if __name__ == "__main__":
