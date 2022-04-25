@@ -120,7 +120,7 @@ class ExportViewFormMixin(ExportViewMixin, FormView):
         return response
 
 
-class ExportModelDRFMixin(BaseExportMixin):
+class ExportModelDRFMixin(ExportViewMixin):
     """
     Export a queryset.
     """
