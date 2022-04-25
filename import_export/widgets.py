@@ -3,12 +3,12 @@ from datetime import date, datetime, time
 from decimal import Decimal
 
 import django
+import tablib
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils import timezone
 from django.utils.dateparse import parse_duration
 from django.utils.encoding import force_str, smart_str
-import tablib
 
 from import_export.formats.base_formats import JSON
 
