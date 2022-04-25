@@ -1,4 +1,4 @@
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.utils.timezone import now
 from django.views.generic.edit import FormView
 
@@ -6,6 +6,11 @@ from .formats import base_formats
 from .forms import ExportForm
 from .resources import modelresource_factory
 from .signals import post_export
+
+try:
+    from rest_framework.decorators import action
+except Exception:
+    pass
 
 
 class BaseImportExportMixin:
@@ -58,7 +63,7 @@ class BaseExportMixin(BaseImportExportMixin):
 
     def get_data_for_export(self, request, queryset, *args, **kwargs):
         resource_class = self.get_export_resource_class()
-        return resource_class(**self.get_export_resource_kwargs(request, *args, **kwargs))\
+        return resource_class(**self.get_export_resource_kwargs(request, *args, **kwargs)) \
             .export(queryset, *args, **kwargs)
 
     def get_export_filename(self, file_format):
@@ -112,4 +117,37 @@ class ExportViewFormMixin(ExportViewMixin, FormView):
         )
 
         post_export.send(sender=None, model=self.model)
+        return response
+
+
+class ExportModelDRFMixin(BaseExportMixin):
+    """
+    Export a queryset.
+    """
+
+    def get_allowed_export_formats(self):
+        """
+        Returns allowed export formats.
+        """
+        return [f().get_title() for f in self.formats if f().can_export()]
+
+    @action(methods=['GET'], detail=False)
+    def export(self, request, *args, **kwargs):
+        formats = self.get_export_formats()
+        try:
+            index = self.get_allowed_export_formats().index(request.GET.get('format', 'csv'))
+        except ValueError:
+            return JsonResponse(data={'message': 'format is not supported'}, status=400)
+        file_format = formats[index]()
+        content_type = file_format.get_content_type()
+        queryset = self.filter_queryset(self.get_queryset())
+        export_data = self.get_export_data(file_format, queryset)
+        # Django 1.7 uses the content_type kwarg instead of mimetype
+        try:
+            response = HttpResponse(export_data, content_type=content_type)
+        except TypeError:
+            response = HttpResponse(export_data, mimetype=content_type)
+        response['Content-Disposition'] = 'attachment; filename="%s"' % (
+            self.get_export_filename(file_format),
+        )
         return response
