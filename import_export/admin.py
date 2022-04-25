@@ -610,8 +610,11 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
             :attr:`~import_export.admin.ExportMixin.export_form_class` attribute.
         """
         warnings.warn(
-            "ExportMixin.get_export_form() is deprecated and will be removed in "
-            "a future release. Please use get_export_form_class() instead.",
+            "ExportMixin.get_export_form() is deprecated and will "
+            "be removed in a future release. Please use the new "
+            "'export_form_class' attribute to specify a custom form "
+            "class, or override the get_export_form_class() method if "
+            "your requirements are more complex.",
             category=DeprecationWarning
         )
         return self.export_form_class
