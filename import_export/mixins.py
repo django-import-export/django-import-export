@@ -68,7 +68,7 @@ class BaseExportMixin(BaseImportExportMixin):
 
     def get_export_filename(self, file_format):
         date_str = now().strftime('%Y-%m-%d')
-        filename = "%s-%s.%s" % (self.model.__name__,
+        filename = "%s-%s.%s" % (self.resource_class.Meta.model.__name__,
                                  date_str,
                                  file_format.get_extension())
         return filename
