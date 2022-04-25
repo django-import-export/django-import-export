@@ -1,11 +1,16 @@
 Changelog
 =========
 
-3.0.0-beta.2 (unreleased)
+3.0.0-beta.3 (unreleased)
 -------------------------
 
-- fix broken link to tablib formats page (#1418)
-- fix broken image ref in `README.rst`
+3.0.0-beta.2 (2022-04-21)
+-------------------------
+
+- Fix broken link to tablib formats page (#1418)
+- Fix broken image ref in `README.rst`
+- Include custom form media in templates (#1038)
+- Remove unnecessary files generated when running tox locally (#1426)
 
 3.0.0-beta.1 (2022-04-11)
 -------------------------
@@ -20,7 +25,7 @@ Breaking changes
 
 This release makes some minor changes to the public API.  If you have overridden any methods from the `resources` or `widgets` modules, you may need to update your implementation to accommodate these changes.
 
-- Check value of `ManyToManyField` in skip_row() (#1271)
+- Check value of `ManyToManyField` in `skip_row()` (#1271)
     - This fixes an issue where ManyToMany fields are not checked correctly in `skip_row()`.  This means that `skip_row()` now takes `row` as a mandatory arg.  If you have overridden `skip_row()` in your own implementation, you will need to add `row` as an arg.
 
 - Bug fix: validation errors were being ignored when `skip_unchanged` is set (#1378)

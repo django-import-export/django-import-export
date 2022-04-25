@@ -19,7 +19,9 @@ jobs:
       IMPORT_EXPORT_POSTGRESQL_PASSWORD: somepass
       IMPORT_EXPORT_MYSQL_USER: root
       IMPORT_EXPORT_MYSQL_PASSWORD: root
+      COVERAGE: 1
     strategy:
+      fail-fast: true
       matrix:
         python-version:
           - '3.7'
@@ -54,6 +56,8 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
+    - name: isort
+      uses: jamescurtin/isort-action@master
     - uses: actions/cache@v2
       with:
         path: ~/.cache/pip
