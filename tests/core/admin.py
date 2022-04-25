@@ -1,9 +1,9 @@
 from django.contrib import admin
 
-from import_export.widgets import ResourceWidget
-from import_export.fields import Field
 from import_export.admin import ExportActionModelAdmin, ImportExportMixin, ImportMixin
+from import_export.fields import Field
 from import_export.resources import ModelResource
+from import_export.widgets import ResourceWidget
 
 from .forms import CustomConfirmImportForm, CustomExportForm, CustomImportForm
 from .models import Author, Book, Category, Child, EBook
