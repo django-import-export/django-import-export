@@ -14,7 +14,7 @@ from core.admin import (
     CustomBookAdmin,
     ImportMixin,
 )
-from core.models import Author, Book, Category, EBook, Parent
+from core.models import Author, Book, Category, EBook, Parent, LegacyBook
 from django.contrib.admin.models import DELETION, LogEntry
 from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied
@@ -134,6 +134,48 @@ class ImportExportAdminIntegrationTest(TestCase):
         )
         # Check, that we really use second resource - author_email didn't get imported
         self.assertEqual(Book.objects.get(id=1).author_email, "")
+
+    def test_import_legacy_book(self):
+        """
+        This test exists solely to test import works correctly using the deprecated
+        functions.
+        This test can be removed when the deprecated code is removed.
+        """
+        warnings.filterwarnings("ignore", category=DeprecationWarning)
+        Book.objects.create(id=1)
+
+        # GET the import form
+        response = self.client.get('/admin/core/legacybook/import/')
+        self.assertContains(response, "Export/Import only book names")
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'admin/import_export/import.html')
+        self.assertContains(response, 'form action=""')
+
+        # POST the import form
+        input_format = '0'
+        filename = os.path.join(
+            os.path.dirname(__file__),
+            os.path.pardir,
+            'exports',
+            'books.csv')
+        with open(filename, "rb") as f:
+            data = {
+                'input_format': input_format,
+                'import_file': f,
+                'resource': 1,
+            }
+            response = self.client.post('/admin/core/legacybook/import/', data)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('result', response.context)
+        self.assertFalse(response.context['result'].has_errors())
+        self.assertIn('confirm_form', response.context)
+        confirm_form = response.context['confirm_form']
+
+        data = confirm_form.initial
+        self.assertEqual(data['original_file_name'], 'books.csv')
+        response = self.client.post('/admin/core/legacybook/process_import/', data, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Import finished, with 0 new and 1 updated legacy books.')
 
     def test_import_action_handles_UnicodeDecodeError_as_form_error(self):
         # POST the import form
@@ -365,6 +407,32 @@ class ImportExportAdminIntegrationTest(TestCase):
         self.assertEqual(
             response['Content-Disposition'],
             'attachment; filename="Book-{}.csv"'.format(date_str)
+        )
+        self.assertEqual(b"id,name\r\n", response.content)
+
+    def test_export_legacy_resource(self):
+        """
+        This test exists solely to test import works correctly using the deprecated
+        functions.
+        This test can be removed when the deprecated code is removed.
+        """
+        warnings.filterwarnings("ignore", category=DeprecationWarning)
+        response = self.client.get('/admin/core/legacybook/export/')
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Export/Import only book names")
+
+        data = {
+            'file_format': '0',
+            'resource': 1,
+            }
+        date_str = datetime.now().strftime('%Y-%m-%d')
+        response = self.client.post('/admin/core/legacybook/export/', data)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.has_header("Content-Disposition"))
+        self.assertEqual(response['Content-Type'], 'text/csv')
+        self.assertEqual(
+            response['Content-Disposition'],
+            'attachment; filename="LegacyBook-{}.csv"'.format(date_str)
         )
         self.assertEqual(b"id,name\r\n", response.content)
 

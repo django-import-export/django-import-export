@@ -629,8 +629,11 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
         if not self.has_export_permission(request):
             raise PermissionDenied
 
+        if getattr(self.get_export_form, 'is_original', False):
+            form_type = self.get_export_form_class()
+        else:
+            form_type = self.get_export_form()
         formats = self.get_export_formats()
-        form_type = self.get_export_form_class()
         form = form_type(formats, self.get_export_resource_classes(), request.POST or None)
         if form.is_valid():
             file_format = formats[
