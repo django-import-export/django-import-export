@@ -14,7 +14,7 @@ from core.admin import (
     CustomBookAdmin,
     ImportMixin,
 )
-from core.models import Author, Book, Category, EBook, Parent, LegacyBook
+from core.models import Author, Book, Category, EBook, LegacyBook, Parent
 from django.contrib.admin.models import DELETION, LogEntry
 from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied
