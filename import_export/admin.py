@@ -472,7 +472,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
                 context['result'] = result
 
                 if not result.has_errors() and not result.has_validation_errors():
-                    if getattr(self.get_form_kwargs, "is_original", True):
+                    if getattr(self.get_form_kwargs, "is_original", False):
                         # Use new API
                         context["confirm_form"] = self.create_confirm_form(
                             request, import_form=import_form
