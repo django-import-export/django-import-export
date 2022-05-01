@@ -4,6 +4,8 @@ Changelog
 3.0.0-beta.3 (unreleased)
 -------------------------
 
+- Refactored form-related methods on `ImportMixin` / `ExportMixin` (#1147)
+
 3.0.0-beta.2 (2022-04-21)
 -------------------------
 
@@ -53,6 +55,7 @@ This release adds some deprecations which will be removed in a future release.
 - Deprecated `exceptions.py` (#1372)
 
 - Refactored form-related methods on `ImportMixin` / `ExportMixin` (#1147)
+    - The following are deprecated: `get_import_form()`, `get_confirm_import_form()`, `get_form_kwargs()`, `get_export_form()`
 
 Enhancements
 ############
