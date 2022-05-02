@@ -14,7 +14,7 @@ from core.admin import (
     CustomBookAdmin,
     ImportMixin,
 )
-from core.models import Author, Book, Category, EBook, Parent
+from core.models import Author, Book, Category, EBook, LegacyBook, Parent
 from django.contrib.admin.models import DELETION, LogEntry
 from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied
@@ -134,6 +134,48 @@ class ImportExportAdminIntegrationTest(TestCase):
         )
         # Check, that we really use second resource - author_email didn't get imported
         self.assertEqual(Book.objects.get(id=1).author_email, "")
+
+    def test_import_legacy_book(self):
+        """
+        This test exists solely to test import works correctly using the deprecated
+        functions.
+        This test can be removed when the deprecated code is removed.
+        """
+        warnings.filterwarnings("ignore", category=DeprecationWarning)
+        Book.objects.create(id=1)
+
+        # GET the import form
+        response = self.client.get('/admin/core/legacybook/import/')
+        self.assertContains(response, "Export/Import only book names")
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'admin/import_export/import.html')
+        self.assertContains(response, 'form action=""')
+
+        # POST the import form
+        input_format = '0'
+        filename = os.path.join(
+            os.path.dirname(__file__),
+            os.path.pardir,
+            'exports',
+            'books.csv')
+        with open(filename, "rb") as f:
+            data = {
+                'input_format': input_format,
+                'import_file': f,
+                'resource': 1,
+            }
+            response = self.client.post('/admin/core/legacybook/import/', data)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('result', response.context)
+        self.assertFalse(response.context['result'].has_errors())
+        self.assertIn('confirm_form', response.context)
+        confirm_form = response.context['confirm_form']
+
+        data = confirm_form.initial
+        self.assertEqual(data['original_file_name'], 'books.csv')
+        response = self.client.post('/admin/core/legacybook/process_import/', data, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Import finished, with 0 new and 1 updated legacy books.')
 
     def test_import_action_handles_UnicodeDecodeError_as_form_error(self):
         # POST the import form
@@ -368,6 +410,32 @@ class ImportExportAdminIntegrationTest(TestCase):
         )
         self.assertEqual(b"id,name\r\n", response.content)
 
+    def test_export_legacy_resource(self):
+        """
+        This test exists solely to test import works correctly using the deprecated
+        functions.
+        This test can be removed when the deprecated code is removed.
+        """
+        warnings.filterwarnings("ignore", category=DeprecationWarning)
+        response = self.client.get('/admin/core/legacybook/export/')
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Export/Import only book names")
+
+        data = {
+            'file_format': '0',
+            'resource': 1,
+            }
+        date_str = datetime.now().strftime('%Y-%m-%d')
+        response = self.client.post('/admin/core/legacybook/export/', data)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.has_header("Content-Disposition"))
+        self.assertEqual(response['Content-Type'], 'text/csv')
+        self.assertEqual(
+            response['Content-Disposition'],
+            'attachment; filename="LegacyBook-{}.csv"'.format(date_str)
+        )
+        self.assertEqual(b"id,name\r\n", response.content)
+
     def test_returns_xlsx_export(self):
         response = self.client.get('/admin/core/book/export/')
         self.assertEqual(response.status_code, 200)
@@ -560,7 +628,7 @@ class ImportExportAdminIntegrationTest(TestCase):
         confirm_form = response.context['confirm_form']
         self.assertIsInstance(confirm_form,
                               CustomBookAdmin(EBook, 'ebook/import')
-                              .get_confirm_import_form())
+                              .get_confirm_form_class(None))
 
         data = confirm_form.initial
         self.assertEqual(data['original_file_name'], 'books.csv')
@@ -998,3 +1066,100 @@ class TestExportEncoding(TestCase):
             self.export_mixin.export_admin_action(self.mock_request, list())
             encoding_kwarg = mock_get_export_data.call_args_list[0][1]["encoding"]
             self.assertEqual("utf-8", encoding_kwarg)
+
+
+class TestImportMixinDeprecationWarnings(TestCase):
+    class TestMixin(ImportMixin):
+        """
+        TestMixin is a subclass which mimics a
+        class which the user may have created
+        """
+
+        def get_import_form(self):
+            return super().get_import_form()
+
+        def get_confirm_import_form(self):
+            return super().get_confirm_import_form()
+
+        def get_form_kwargs(self, form_class, **kwargs):
+            return super().get_form_kwargs(form_class, **kwargs)
+
+    def setUp(self):
+        super().setUp()
+        self.import_mixin = ImportMixin()
+
+    def test_get_import_form_warning(self):
+        target_msg = (
+            "ImportMixin.get_import_form() is deprecated and will be removed in a future release. "
+            "Please use get_import_form_class() instead."
+        )
+        with self.assertWarns(DeprecationWarning) as w:
+            self.import_mixin.get_import_form()
+            self.assertEqual(target_msg, str(w.warnings[0].message))
+
+    def test_get_confirm_import_form_warning(self):
+        target_msg = (
+            "ImportMixin.get_confirm_import_form() is deprecated and will be removed in a future release. "
+            "Please use get_confirm_form_class() instead."
+        )
+        with self.assertWarns(DeprecationWarning) as w:
+            self.import_mixin.get_confirm_import_form()
+            self.assertEqual(target_msg, str(w.warnings[0].message))
+
+    def test_get_form_kwargs_warning(self):
+        target_msg = (
+            "ImportMixin.get_form_kwargs() is deprecated and will be removed in a future release. "
+            "Please use get_import_form_kwargs() or get_confirm_form_kwargs() instead."
+        )
+        with self.assertWarns(DeprecationWarning) as w:
+            self.import_mixin.get_form_kwargs(None)
+            self.assertEqual(target_msg, str(w.warnings[0].message))
+
+    def test_get_import_form_class_warning(self):
+        self.import_mixin = self.TestMixin()
+        target_msg = (
+            "ImportMixin.get_import_form() is deprecated and will be removed in a future release. "
+            "Please use the new 'import_form_class' attribute to specify a custom form class, "
+            "or override the get_import_form_class() method if your requirements are more complex."
+        )
+        with self.assertWarns(DeprecationWarning) as w:
+            self.import_mixin.get_import_form_class(None)
+            self.assertEqual(target_msg, str(w.warnings[0].message))
+
+    def test_get_confirm_form_class_warning(self):
+        self.import_mixin = self.TestMixin()
+        target_msg = (
+            "ImportMixin.get_confirm_import_form() is deprecated and will be removed in a future release. "
+            "Please use the new 'confirm_form_class' attribute to specify a custom form class, "
+            "or override the get_confirm_form_class() method if your requirements are more complex."
+        )
+        with self.assertWarns(DeprecationWarning) as w:
+            self.import_mixin.get_confirm_form_class(None)
+            self.assertEqual(target_msg, str(w.warnings[0].message))
+
+
+class TestExportMixinDeprecationWarnings(TestCase):
+    class TestMixin(ExportMixin):
+        """
+        TestMixin is a subclass which mimics a
+        class which the user may have created
+        """
+
+        def get_export_form(self):
+            return super().get_export_form()
+
+    def setUp(self):
+        super().setUp()
+        self.export_mixin = self.TestMixin()
+
+    def test_get_export_form_warning(self):
+        target_msg = (
+            "ExportMixin.get_export_form() is deprecated and will "
+            "be removed in a future release. Please use the new "
+            "'export_form_class' attribute to specify a custom form "
+            "class, or override the get_export_form_class() method if "
+            "your requirements are more complex."
+        )
+        with self.assertWarns(DeprecationWarning) as w:
+            self.export_mixin.get_export_form()
+            self.assertEqual(target_msg, str(w.warnings[0].message))

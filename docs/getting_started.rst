@@ -145,6 +145,12 @@ the import preview page::
             report_skipped = False
             fields = ('id', 'name', 'price',)
 
+To further customize the resources, you might like to consider overriding the following
+:class:`~import_export.admin.ImportMixin` methods:
+:meth:`~import_export.admin.ImportMixin.get_resource_kwargs`,
+:meth:`~import_export.admin.ImportMixin.get_resource_class`,
+:meth:`~import_export.admin.ImportMixin.get_export_resource_kwargs`,
+
 .. seealso::
 
     :doc:`/api_resources`
@@ -242,16 +248,16 @@ The ``ForeignKeyWidget`` also supports using Django's natural key functions. A
 manager class with the ``get_by_natural_key`` function is required for importing
 foreign key relationships by the field model's natural key, and the model must
 have a ``natural_key`` function that can be serialized as a JSON list in order to
-export data. 
+export data.
 
 The primary utility for natural key functionality is to enable exporting data
 that can be imported into other Django environments with different numerical
 primary key sequences. The natural key functionality enables handling more
-complex data than specifying either a single field or the PK. 
+complex data than specifying either a single field or the PK.
 
 The example below illustrates how to create a field on the ``BookResource`` that
 imports and exports its author relationships using the natural key functions
-on the ``Author`` model and modelmanager. 
+on the ``Author`` model and modelmanager.
 
 The resource _meta option ``use_natural_foreign_keys`` enables this setting
 for all Models that support it.
@@ -287,7 +293,7 @@ for all Models that support it.
 
         class Meta:
             model = Book
-    
+
     # All widgets with foreign key functions use them.
     class BookResource(resources.ModelResource):
 
@@ -480,10 +486,10 @@ example, to add an additional field in the import form, subclass and extend the
 consider :class:`~import_export.forms.ConfirmImportForm` as importing is a
 two-step process).
 
-To use the customized form(s), overload
-:class:`~import_export.admin.ImportMixin` respective methods, i.e.
-:meth:`~import_export.admin.ImportMixin.get_import_form`, and also
-:meth:`~import_export.admin.ImportMixin.get_confirm_import_form` if need be.
+To use your customized form(s), change the respective attributes on your
+``ModelAdmin`` class:
+* :attr:`~import_export.admin.ImportMixin.import_form_class`
+* :attr:`~import_export.admin.ImportMixin.confirm_form_class`.
 
 For example, imagine you want to import books for a specific author. You can
 extend the import forms to include ``author`` field to select the author from.
@@ -506,33 +512,26 @@ Customize ``ModelAdmin``::
 
     class CustomBookAdmin(ImportMixin, admin.ModelAdmin):
         resource_classes = [BookResource]
+        import_form_class = CustomImportForm
+        confirm_form_class = CustomConfirmImportForm
 
-        def get_import_form(self):
-            return CustomImportForm
-
-        def get_confirm_import_form(self):
-            return CustomConfirmImportForm
-
-        def get_form_kwargs(self, form, *args, **kwargs):
-            # pass on `author` to the kwargs for the custom confirm form
-            if isinstance(form, CustomImportForm):
-                if form.is_valid():
-                    author = form.cleaned_data['author']
-                    kwargs.update({'author': author.id})
-            return kwargs
-
+        def get_confirm_form_initial(self, request, import_form):
+            initial = super().get_confirm_form_initial(request, import_form)
+            # Pass on the `author` value from the import form to
+            # the confirm form (if provided)
+            if import_form:
+                initial['author'] = import_form.cleaned_data['author']
+            return initial
 
     admin.site.register(Book, CustomBookAdmin)
 
-To further customize admin imports, consider modifying the following
+To further customize the import forms, you might like to consider overriding the following
 :class:`~import_export.admin.ImportMixin` methods:
-:meth:`~import_export.admin.ImportMixin.get_form_kwargs`,
-:meth:`~import_export.admin.ImportMixin.get_import_resource_kwargs`,
-:meth:`~import_export.admin.ImportMixin.get_import_data_kwargs`.
-
-Using the above methods it is possible to customize import form initialization
-as well as importing customizations.
-
+:meth:`~import_export.admin.ImportMixin.get_import_form_class`,
+:meth:`~import_export.admin.ImportMixin.get_import_form_kwargs`,
+:meth:`~import_export.admin.ImportMixin.get_import_form_initial`,
+:meth:`~import_export.admin.ImportMixin.get_confirm_form_class`,
+:meth:`~import_export.admin.ImportMixin.get_confirm_form_kwargs`,
 
 .. warning::
 
