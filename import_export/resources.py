@@ -10,6 +10,7 @@ from django.conf import settings
 from django.core.exceptions import (
     FieldDoesNotExist,
     ImproperlyConfigured,
+    ObjectDoesNotExist,
     ValidationError,
 )
 from django.core.management.color import no_style
@@ -559,7 +560,7 @@ class Resource(metaclass=DeclarativeMetaclass):
                 continue
             try:
                 self.import_field(field, obj, data, **kwargs)
-            except ValueError as e:
+            except (ValueError, ObjectDoesNotExist) as e:
                 errors[field.attribute] = ValidationError(
                     force_str(e), code="invalid")
         if errors:
