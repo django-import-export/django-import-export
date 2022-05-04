@@ -1,7 +1,7 @@
 Changelog
 =========
 
-3.0.0-beta.3 (unreleased)
+3.0.0-beta.3 (2022-05-04)
 -------------------------
 
 - Refactored form-related methods on `ImportMixin` / `ExportMixin` (#1147)
