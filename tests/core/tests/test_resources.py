@@ -13,6 +13,7 @@ from django.contrib.auth.models import User
 from django.core.exceptions import (
     FieldDoesNotExist,
     ImproperlyConfigured,
+    ObjectDoesNotExist,
     ValidationError,
 )
 from django.core.paginator import Paginator
@@ -1179,6 +1180,35 @@ class ModelResourceTest(TestCase):
 
         with self.assertRaises(ConnectionDoesNotExist):
             BookResource().import_data(self.dataset)
+
+    def test_foreign_object_does_not_exists_populates_row_results(self):
+        class BookResource(resources.ModelResource):
+            class Meta:
+                model = Book
+                fields = ("author", )
+                force_init_instance = True
+
+        dataset = tablib.Dataset(headers=['id', 'author'])
+        dataset.append(['', '333'])
+        resource = BookResource()
+        result = resource.import_data(dataset)
+
+        self.assertDictEqual(
+            result.invalid_rows[0].field_specific_errors,
+            {'author': ['Author matching query does not exist.']}
+        )
+
+    def test_foreign_object_does_not_exist_into_ValidationError(self):
+        class BookResource(resources.ModelResource):
+            class Meta:
+                model = Book
+                fields = ("author", )
+
+            def import_field(*args, **kwargs):
+                raise ObjectDoesNotExist
+
+        with self.assertRaises(ValidationError):
+            BookResource().import_obj(Book(), ['', '333'], dry_run=False)
 
 
     def test_natural_foreign_key_detection(self):
