@@ -18,6 +18,8 @@ class AuthorManager(models.Manager):
         Django pattern function for finding an author by its name
         """
         return self.get(name=name)
+
+
 class Author(models.Model):
 
     objects = AuthorManager()
@@ -54,6 +56,7 @@ class Category(models.Model):
     def __str__(self):
         return self.name
 
+
 class BookManager(models.Manager):
     """
     Added to enable get_by_natural_key method
@@ -66,6 +69,7 @@ class BookManager(models.Manager):
         Django pattern function for returning a book by its natural key
         """
         return self.get(name=name, author=Author.objects.get_by_natural_key(author))
+
 
 class Book(models.Model):
 
@@ -108,6 +112,7 @@ class Child(models.Model):
 
     def __str__(self):
         return '%s - child of %s' % (self.name, self.parent.name)
+
 
 class Profile(models.Model):
     user = models.OneToOneField('auth.User', on_delete=models.CASCADE)
