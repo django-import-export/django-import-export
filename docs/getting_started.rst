@@ -148,7 +148,7 @@ the import preview page::
 To further customize the resources, you might like to consider overriding the following
 :class:`~import_export.admin.ImportMixin` methods:
 :meth:`~import_export.admin.ImportMixin.get_resource_kwargs`,
-:meth:`~import_export.admin.ImportMixin.get_resource_class`,
+:meth:`~import_export.admin.ImportMixin.get_resource_classes`,
 :meth:`~import_export.admin.ImportMixin.get_export_resource_kwargs`,
 
 .. seealso::
