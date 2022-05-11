@@ -641,6 +641,46 @@ class ImportExportAdminIntegrationTest(TestCase):
                 1, 0, EBook._meta.verbose_name_plural)
         )
 
+    @mock.patch('core.admin.BookAdmin.get_import_form_class')
+    def test_deprecated_importform_new_api_raises_warning(self, mock_get_import_form):
+        class DjangoImportForm(django.forms.Form):
+            def __init__(self, import_formats, *args, **kwargs):
+                super().__init__(*args, **kwargs)
+
+        mock_get_import_form.return_value = DjangoImportForm
+
+        with self.assertWarnsRegex(
+                DeprecationWarning,
+                r"^The ImportForm class must inherit from ImportExportFormBase, "
+                r"this is needed for multiple resource classes to work properly. $"
+                ):
+            # GET the import form
+            response = self.client.get('/admin/core/book/import/')
+            self.assertEqual(response.status_code, 200)
+            self.assertTemplateUsed(response, 'admin/import_export/import.html')
+            self.assertContains(response, 'form action=""')
+
+    @mock.patch('core.admin.BookAdmin.get_import_form_class')
+    @mock.patch('core.admin.BookAdmin.get_form_kwargs')
+    def test_deprecated_importform_raises_warning(self, mock_get_form_kwargs, mock_get_import_form):
+        class DjangoImportForm(django.forms.Form):
+            def __init__(self, import_formats, *args, **kwargs):
+                super().__init__(*args, **kwargs)
+
+        mock_get_form_kwargs.is_original = False
+        mock_get_import_form.return_value = DjangoImportForm
+
+        with self.assertWarnsRegex(
+                DeprecationWarning,
+                r"^The ImportForm class must inherit from ImportExportFormBase, "
+                r"this is needed for multiple resource classes to work properly. $"
+                ):
+            # GET the import form
+            response = self.client.get('/admin/core/book/import/')
+            self.assertEqual(response.status_code, 200)
+            self.assertTemplateUsed(response, 'admin/import_export/import.html')
+            self.assertContains(response, 'form action=""')
+
     def test_get_skip_admin_log_attribute(self):
         m = ImportMixin()
         m.skip_admin_log = True
@@ -946,7 +986,7 @@ class ExportActionAdminIntegrationTest(TestCase):
 
         m = TestCategoryAdmin()
         action_form = m.action_form
- 
+
         items = list(action_form.base_fields.items())
         file_format = items[len(items)-1][1]
         choices = file_format.choices
@@ -971,7 +1011,7 @@ class ExportActionAdminIntegrationTest(TestCase):
 
         m = TestCategoryAdmin()
         action_form = m.action_form
- 
+
         items = list(action_form.base_fields.items())
         file_format = items[len(items)-1][1]
         choices = file_format.choices
@@ -981,7 +1021,7 @@ class ExportActionAdminIntegrationTest(TestCase):
 
         m = TestFormatsCategoryAdmin()
         action_form = m.action_form
- 
+
         items = list(action_form.base_fields.items())
         file_format = items[len(items)-1][1]
         choices = file_format.choices
