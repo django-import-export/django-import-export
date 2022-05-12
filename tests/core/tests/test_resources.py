@@ -1654,6 +1654,7 @@ class ManyToManyWidgetDiffTest(TestCase):
         self.assertEqual(2, book.categories.count())
 
     def test_many_to_many_widget_handles_uuid(self):
+        # Test for #1435 - skip_row() handles M2M widget when UUID pk used
         class _UUIDBookResource(resources.ModelResource):
             class Meta:
                 model = UUIDBook
@@ -1666,13 +1667,11 @@ class ManyToManyWidgetDiffTest(TestCase):
         uuid_book.categories.add(cat1, cat2)
         uuid_book.save()
 
-        # import with natural order
         dataset_headers = ["id", "name", "categories"]
         dataset_row = [uuid_book.id, uuid_book.name, f"{cat1.catid},{cat2.catid}"]
         dataset = tablib.Dataset(headers=dataset_headers)
         dataset.append(dataset_row)
         result = uuid_resource.import_data(dataset, dry_run=False)
-        print(result)
         self.assertEqual(result.rows[0].import_type, results.RowResult.IMPORT_TYPE_SKIP)
 
 
