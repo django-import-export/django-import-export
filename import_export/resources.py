@@ -630,7 +630,7 @@ class Resource(metaclass=DeclarativeMetaclass):
                 if len(instance_values) != len(original_values):
                     return False
 
-                if sorted(v.id for v in instance_values) != sorted(v.id for v in original_values):
+                if sorted(v.pk for v in instance_values) != sorted(v.pk for v in original_values):
                     return False
             else:
                 if field.get_value(instance) != field.get_value(original):
