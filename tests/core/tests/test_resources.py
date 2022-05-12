@@ -38,7 +38,7 @@ from ..models import (
     UUIDBook,
     WithDefault,
     WithDynamicDefault,
-    WithFloatField,
+    WithFloatField, UUIDCategory,
 )
 
 
@@ -1652,6 +1652,28 @@ class ManyToManyWidgetDiffTest(TestCase):
         self.assertEqual(result.rows[0].import_type, results.RowResult.IMPORT_TYPE_SKIP)
 
         self.assertEqual(2, book.categories.count())
+
+    def test_many_to_many_widget_handles_uuid(self):
+        class _UUIDBookResource(resources.ModelResource):
+            class Meta:
+                model = UUIDBook
+
+        uuid_resource = _UUIDBookResource()
+        uuid_resource._meta.skip_unchanged = True
+        cat1 = UUIDCategory.objects.create(name="Category 1")
+        cat2 = UUIDCategory.objects.create(name="Category 2")
+        uuid_book = UUIDBook.objects.create(name="uuid book")
+        uuid_book.categories.add(cat1, cat2)
+        uuid_book.save()
+
+        # import with natural order
+        dataset_headers = ["id", "name", "categories"]
+        dataset_row = [uuid_book.id, uuid_book.name, f"{cat1.catid},{cat2.catid}"]
+        dataset = tablib.Dataset(headers=dataset_headers)
+        dataset.append(dataset_row)
+        result = uuid_resource.import_data(dataset, dry_run=False)
+        print(result)
+        self.assertEqual(result.rows[0].import_type, results.RowResult.IMPORT_TYPE_SKIP)
 
 
 @mock.patch("import_export.resources.Diff", spec=True)

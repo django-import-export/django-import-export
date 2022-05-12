@@ -168,7 +168,13 @@ class LegacyBook(Book):
         proxy = True
 
 
+class UUIDCategory(models.Model):
+    catid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=32)
+
+
 class UUIDBook(models.Model):
     """A model which uses a UUID pk (issue 1274)"""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField('Book name', max_length=100)
+    categories = models.ManyToManyField(UUIDCategory, blank=True)
