@@ -36,9 +36,10 @@ from ..models import (
     Profile,
     Role,
     UUIDBook,
+    UUIDCategory,
     WithDefault,
     WithDynamicDefault,
-    WithFloatField, UUIDCategory,
+    WithFloatField,
 )
 
 
