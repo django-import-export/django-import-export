@@ -1655,7 +1655,7 @@ class ManyToManyWidgetDiffTest(TestCase):
         self.assertEqual(2, book.categories.count())
 
     def test_many_to_many_widget_handles_uuid(self):
-        # Test for #1435 - skip_row() handles M2M widget when UUID pk used
+        # Test for #1435 - skip_row() handles M2M field when UUID pk used
         class _UUIDBookResource(resources.ModelResource):
             class Meta:
                 model = UUIDBook
