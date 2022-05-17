@@ -5,6 +5,7 @@ Changelog
 -------------------------
 
 - bugfix: `skip_row()` handles M2M field when UUID pk used
+- improve compatibility with previous ImportForm signature (#1434)
 
 
 3.0.0-beta.3 (2022-05-04)
