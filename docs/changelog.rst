@@ -1,7 +1,7 @@
 Changelog
 =========
 
-3.0.0-beta.4 (unreleased)
+3.0.0-beta.4 (2022-05-17)
 -------------------------
 
 - bugfix: `skip_row()` handles M2M field when UUID pk used
