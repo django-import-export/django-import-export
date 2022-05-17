@@ -17,7 +17,13 @@ from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_POST
 
 from .formats.base_formats import DEFAULT_FORMATS
-from .forms import ConfirmImportForm, ExportForm, ImportForm, export_action_form_factory
+from .forms import (
+    ConfirmImportForm,
+    ExportForm,
+    ImportExportFormBase,
+    ImportForm,
+    export_action_form_factory,
+)
 from .mixins import BaseExportMixin, BaseImportMixin
 from .results import RowResult
 from .signals import post_export, post_import
@@ -252,6 +258,14 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         formats = self.get_import_formats()
         form_class = self.get_import_form_class(request)
         kwargs = self.get_import_form_kwargs(request)
+
+        if not issubclass(form_class, ImportExportFormBase):
+            warnings.warn(
+                "The ImportForm class must inherit from ImportExportFormBase, "
+                "this is needed for multiple resource classes to work properly. ",
+                category=DeprecationWarning
+            )
+            return form_class(formats, **kwargs)
         return form_class(formats, self.get_import_resource_classes(), **kwargs)
 
     def get_import_form_class(self, request):
@@ -423,13 +437,27 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         else:
             form_class = self.get_import_form_class(request)
             form_kwargs = self.get_form_kwargs(form_class, *args, **kwargs)
-            import_form = form_class(
-                import_formats,
-                self.get_import_resource_classes(),
-                request.POST or None,
-                request.FILES or None,
-                **form_kwargs
-            )
+
+            if issubclass(form_class, ImportExportFormBase):
+                import_form = form_class(
+                    import_formats,
+                    self.get_import_resource_classes(),
+                    request.POST or None,
+                    request.FILES or None,
+                    **form_kwargs
+                )
+            else:
+                warnings.warn(
+                    "The ImportForm class must inherit from ImportExportFormBase, "
+                    "this is needed for multiple resource classes to work properly. ",
+                    category=DeprecationWarning
+                )
+                import_form = form_class(
+                    import_formats,
+                    request.POST or None,
+                    request.FILES or None,
+                    **form_kwargs
+                )
 
         resources = list()
         if request.POST and import_form.is_valid():

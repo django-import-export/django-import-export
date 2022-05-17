@@ -49,6 +49,9 @@ This release makes some minor changes to the public API.  If you have overridden
 - Admin interface: Modified handling of import errors (#1306)
     - Exceptions raised during the import process are now presented as form errors, instead of being wrapped in a \<H1\> tag in the response.  If you have any custom logic which uses the error written directly into the response, then this may need to be changed.
 
+- ImportForm: improve compatibility with previous signature (#1434)
+    - Previous `ImportForm` implementation was based on Django's `forms.Form`, if you have any custom ImportForm you now need to inherit from `import_export.forms.ImportExportFormBase`.
+
 Deprecations
 ############
 
