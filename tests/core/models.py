@@ -25,6 +25,7 @@ class Author(models.Model):
     objects = AuthorManager()
 
     name = models.CharField(max_length=100)
+    title = models.CharField(max_length=10, null=True)
     birthday = models.DateTimeField(auto_now_add=True)
 
     def natural_key(self):
@@ -76,6 +77,7 @@ class Book(models.Model):
     objects = BookManager()
 
     name = models.CharField('Book name', max_length=100)
+    isbn = models.CharField(max_length=10, null=True)
     author = models.ForeignKey(Author, blank=True, null=True, on_delete=models.CASCADE)
     author_email = models.EmailField('Author email', max_length=75, blank=True)
     imported = models.BooleanField(default=False)

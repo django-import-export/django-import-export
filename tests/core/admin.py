@@ -15,6 +15,7 @@ class BookResource(ModelResource):
 
     class Meta:
         model = Book
+        skip_unchanged = True
 
     def for_delete(self, row, instance):
         return self.fields['name'].clean(row) == ''
