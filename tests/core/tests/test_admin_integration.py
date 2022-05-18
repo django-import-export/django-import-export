@@ -177,6 +177,25 @@ class ImportExportAdminIntegrationTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Import finished, with 0 new and 1 updated legacy books.')
 
+    def test_import_skips_empty_field(self):
+        # issue 1437
+        # When the import contains an empty string, skip should behave correctly
+        # when the corresponding persisted value is null
+        book = Book.objects.create(id=1, name="Test 1")
+        self.assertIsNone(book.isbn)
+        dataset = Dataset(headers=["id", "name", "isbn"])
+        dataset.append([1, "Test 1", ""])
+        input_format = '0'
+        content = dataset.csv
+        f = SimpleUploadedFile("data.csv", content.encode(), content_type="text/csv")
+        data = {
+            "input_format": input_format,
+            "import_file": f,
+        }
+        response = self.client.post('/admin/core/book/import/', data)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Skip')
+
     def test_import_action_handles_UnicodeDecodeError_as_form_error(self):
         # POST the import form
         input_format = '0'
@@ -386,7 +405,7 @@ class ImportExportAdminIntegrationTest(TestCase):
         )
         self.assertEqual(
             b"id,name,author,author_email,imported,published,"
-            b"published_time,price,added,categories\r\n",
+            b"published_time,price,added,isbn,categories\r\n",
             response.content,
         )
 
