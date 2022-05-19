@@ -637,7 +637,12 @@ class Resource(metaclass=DeclarativeMetaclass):
                 if sorted(v.pk for v in instance_values) != sorted(v.pk for v in original_values):
                     return False
             else:
-                if field.get_value(instance) != field.get_value(original):
+                instance_val = field.get_value(instance)
+                original_val = field.get_value(original)
+                if instance_val == "" and original_val is None:
+                    # issue 1437 - handle comparison when CharField is nullable
+                    continue
+                if instance_val != original_val:
                     return False
         return True
 

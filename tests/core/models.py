@@ -83,6 +83,9 @@ class Book(models.Model):
     published_time = models.TimeField('Time published', blank=True, null=True)
     price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     added = models.DateTimeField(blank=True, null=True)
+
+    # This field is included to test behaviour when a CharField can be null
+    # This practice should be avoided - see https://docs.djangoproject.com/en/dev/ref/models/fields/#null
     isbn = models.CharField(max_length=10, null=True)
 
     categories = models.ManyToManyField(Category, blank=True)
