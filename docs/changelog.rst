@@ -4,7 +4,8 @@ Changelog
 3.0.0-beta.5 (unreleased)
 -------------------------
 
-- Nothing changed yet.
+- bugfix: `skip_row()` fix crash when model has m2m field and none is provided in upload (#1438)
+- bugfix: `skip_row()` fix default comparison when CharField is nullable and empty string in upload (#1438)
 
 
 3.0.0-beta.4 (2022-05-17)
