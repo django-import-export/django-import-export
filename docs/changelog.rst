@@ -4,7 +4,7 @@ Changelog
 3.0.0-beta.5 (unreleased)
 -------------------------
 
-- bugfix: `skip_row()` fix crash when model has m2m field and none is provided in upload (#1438)
+- bugfix: `skip_row()` fix crash when model has m2m field and none is provided in upload (#1439)
 
 3.0.0-beta.4 (2022-05-17)
 -------------------------
