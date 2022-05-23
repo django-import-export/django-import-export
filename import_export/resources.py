@@ -625,6 +625,11 @@ class Resource(metaclass=DeclarativeMetaclass):
             # For fields that are models.fields.related.ManyRelatedManager
             # we need to compare the results
             if isinstance(field.widget, widgets.ManyToManyWidget):
+                # #1437 - handle m2m field not present in import file
+                if field.column_name not in row.keys():
+                    continue
+                # m2m instance values are taken from the 'row' because they
+                # have not been written to the 'instance' at this point
                 instance_values = list(field.clean(row))
                 original_values = list(field.get_value(original).all())
                 if len(instance_values) != len(original_values):
