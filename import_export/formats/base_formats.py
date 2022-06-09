@@ -82,7 +82,7 @@ class TablibFormat(Format):
         return self.get_format().title
 
     def create_dataset(self, in_stream, **kwargs):
-        return tablib.import_set(in_stream, format=self.get_title())
+        return tablib.import_set(in_stream, format=self.get_title(), **kwargs)
 
     def export_data(self, dataset, **kwargs):
         return dataset.export(self.get_title(), **kwargs)
