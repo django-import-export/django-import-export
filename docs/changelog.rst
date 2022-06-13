@@ -4,7 +4,7 @@ Changelog
 2.8.1 (unreleased)
 ------------------
 
-- Fix deprecation: Added support for transitional form renderer (#1449)
+- Fix deprecation in example application: Added support for transitional form renderer (#1449)
 
 
 2.8.0 (2022-03-31)
