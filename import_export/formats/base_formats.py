@@ -204,3 +204,4 @@ DEFAULT_FORMATS = [fmt for fmt in (
     YAML,
     HTML,
 ) if fmt.is_available()]
+
