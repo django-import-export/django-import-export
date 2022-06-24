@@ -108,3 +108,5 @@ LOGGING = {
 
 
 USE_TZ = False
+if django.VERSION >= (4, 1):
+    FORM_RENDERER = "django.forms.renderers.DjangoDivFormRenderer"

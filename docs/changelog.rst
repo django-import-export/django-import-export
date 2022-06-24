@@ -4,7 +4,7 @@ Changelog
 3.0.0-beta.5 (unreleased)
 -------------------------
 
-- Nothing changed yet.
+- Fix deprecation in example application: Added support for transitional form renderer (#1451)
 
 
 3.0.0-beta.4 (2022-05-17)
