@@ -965,7 +965,7 @@ class ModelResourceTest(TestCase):
         self.assertEqual(len(dataset), 0)
 
     def test_import_data_skip_unchanged(self):
-        def attempted_save(instance, real_dry_run):
+        def attempted_save(instance, new, using_transactions, real_dry_run):
             self.fail('Resource attempted to save instead of skipping')
 
         # Make sure we test with ManyToMany related objects
@@ -1674,6 +1674,24 @@ class ManyToManyWidgetDiffTest(TestCase):
         dataset.append(dataset_row)
         result = uuid_resource.import_data(dataset, dry_run=False)
         self.assertEqual(result.rows[0].import_type, results.RowResult.IMPORT_TYPE_SKIP)
+
+    def test_skip_row_no_m2m_data_supplied(self):
+        # issue #1437
+        # test skip_row() when the model defines a m2m field
+        # but it is not present in the dataset
+        book = Book.objects.first()
+        dataset_headers = ["id", "name"]
+        dataset_row = [book.id, book.name]
+        dataset = tablib.Dataset(headers=dataset_headers)
+        dataset.append(dataset_row)
+
+        book_resource = BookResource()
+        book_resource._meta.skip_unchanged = True
+
+        self.assertEqual(1, book.categories.count())
+        result = book_resource.import_data(dataset, dry_run=False)
+        self.assertEqual(result.rows[0].import_type, results.RowResult.IMPORT_TYPE_SKIP)
+        self.assertEqual(1, book.categories.count())
 
 
 @mock.patch("import_export.resources.Diff", spec=True)
