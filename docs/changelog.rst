@@ -5,6 +5,7 @@ Changelog
 ------------------
 
 - Fix deprecation in example application: Added support for transitional form renderer (#1451)
+- Automatically guess the format of the file when importing (#1460)
 
 
 2.8.0 (2022-03-31)
