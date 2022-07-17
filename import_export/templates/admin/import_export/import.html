@@ -5,6 +5,7 @@
 {% load static %}
 
 {% block extrastyle %}{{ block.super }}<link rel="stylesheet" type="text/css" href="{% static "import_export/import.css" %}" />{% endblock %}
+{% block extrahead %}{{ block.super }}{{ media.js }}{% endblock %}
 
 {% block breadcrumbs_last %}
 {% trans "Import" %}
@@ -26,6 +27,7 @@
   {% else %}
     <form action="" method="post" enctype="multipart/form-data">
       {% csrf_token %}
+      {{ form.media }}
 
       <p>
         {% trans "This importer will import the following fields: " %}
