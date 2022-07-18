@@ -1,6 +1,6 @@
 import json
 from datetime import date, datetime, time
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 
 import django
 from django.conf import settings
@@ -96,7 +96,10 @@ class DecimalWidget(NumberWidget):
     def clean(self, value, row=None, **kwargs):
         if self.is_empty(value):
             return None
-        return Decimal(force_str(value))
+        try:
+            return Decimal(force_str(value))
+        except InvalidOperation:
+            raise ValueError("Enter a valid Decimal")
 
 
 class CharWidget(Widget):
