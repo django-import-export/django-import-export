@@ -559,6 +559,8 @@ class Resource(metaclass=DeclarativeMetaclass):
                 continue
             try:
                 self.import_field(field, obj, data, **kwargs)
+            except ValidationError as e:
+                errors[field.attribute] = e
             except ValueError as e:
                 errors[field.attribute] = ValidationError(
                     force_str(e), code="invalid")
