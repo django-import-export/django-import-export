@@ -403,7 +403,10 @@ class ForeignKeyWidget(Widget):
     def clean(self, value, row=None, *args, **kwargs):
         val = super().clean(value)
         if val:
-            return self.get_queryset(value, row, *args, **kwargs).get(**{self.field: val})
+            try:
+                return self.get_queryset(value, row, *args, **kwargs).get(**{self.field: val})
+            except ObjectDoesNotExist:
+                raise ValueError("Object does not exist")
         else:
             return None
 
