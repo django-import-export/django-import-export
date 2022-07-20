@@ -406,12 +406,15 @@ class ForeignKeyWidget(Widget):
     def clean(self, value, row=None, **kwargs):
         val = super().clean(value)
         if val:
-            if self.use_natural_foreign_keys:
-                # natural keys will always be a tuple, which ends up as a json list.
-                value = json.loads(value) 
-                return self.model.objects.get_by_natural_key(*value)
-            else:
-                return self.get_queryset(value, row, **kwargs).get(**{self.field: val})
+            try:
+                if self.use_natural_foreign_keys:
+                    # natural keys will always be a tuple, which ends up as a json list.
+                    value = json.loads(value)
+                    return self.model.objects.get_by_natural_key(*value)
+                else:
+                    return self.get_queryset(value, row, **kwargs).get(**{self.field: val})
+            except ObjectDoesNotExist:
+                raise ValueError("Object does not exist")
         else:
             return None
 
