@@ -14,6 +14,7 @@ from django.utils.encoding import force_str
 from django.utils.module_loading import import_string
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_POST
+from django.template.defaultfilters import escape
 
 from .forms import ConfirmImportForm, ExportForm, ImportForm, export_action_form_factory
 from .mixins import BaseExportMixin, BaseImportMixin
@@ -259,9 +260,10 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
                     data = force_str(data, self.from_encoding)
                 dataset = input_format.create_dataset(data)
             except UnicodeDecodeError as e:
-                return HttpResponse(_(u"<h1>Imported file has a wrong encoding: %s</h1>" % e))
+                return HttpResponse(_(u"<h1>Imported file has a wrong encoding: %s</h1>" % escape(e)))
             except Exception as e:
-                return HttpResponse(_(u"<h1>%s encountered while trying to read file: %s</h1>" % (type(e).__name__, import_file.name)))
+                return HttpResponse(_(u"<h1>%s encountered while trying to read file: %s</h1>" % (
+                    escape(type(e).__name__), escape(import_file.name))))
 
             # prepare kwargs for import data, if needed
             res_kwargs = self.get_import_resource_kwargs(request, form=form, *args, **kwargs)
