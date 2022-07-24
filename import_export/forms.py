@@ -28,7 +28,11 @@ class ImportForm(forms.Form):
         self.fields['input_format'].choices = choices
 
     class Media:
-        js = ('import_export/guess_format.js', )
+        js = (
+            'vendor/jquery/jquery.js',
+            'jquery.init.js',
+            'import_export/guess_format.js',
+        )
 
 
 class ConfirmImportForm(forms.Form):
