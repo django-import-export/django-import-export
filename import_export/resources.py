@@ -759,7 +759,7 @@ class Resource(metaclass=DeclarativeMetaclass):
         connection = connections[db_connection]
         supports_transactions = getattr(connection.features, "supports_transactions", False)
 
-        if use_transactions and not supports_transactions:
+        if use_transactions and not supports_transactions and connection.vendor != "djongo":
             raise ImproperlyConfigured
 
         using_transactions = (use_transactions or dry_run) and supports_transactions
