@@ -29,7 +29,7 @@ class ImportForm(forms.Form):
 
     class Media:
         js = (
-            'vendor/jquery/jquery.js',
+            'vendor/jquery/jquery.min.js',
             'jquery.init.js',
             'import_export/guess_format.js',
         )
