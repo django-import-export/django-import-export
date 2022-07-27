@@ -107,6 +107,17 @@ class DateTimeWidgetTest(TestCase):
         self.assertEqual(self.widget.render(utc_dt), "13.08.2012 20:00:00")
         self.assertEqual(self.widget.clean("13.08.2012 20:00:00"), utc_dt)
 
+    @override_settings(USE_TZ=True, TIME_ZONE='Europe/Ljubljana')
+    def test_regression_issue_1165(self):
+        utc_dt = timezone.make_aware(self.datetime, pytz.UTC)
+
+        # issue #1165 as initially described: sending an input through render(clean(..))
+        # raises an exception
+        self.widget.render(self.widget.clean(datetime(2012, 8, 13, 20, 0, 0)))
+
+        # regression test for the underlying problem
+        self.assertEqual(self.widget.clean(datetime(2012, 8, 13, 20, 0, 0)), utc_dt)
+
     @override_settings(DATETIME_INPUT_FORMATS=None)
     def test_default_format(self):
         self.widget = widgets.DateTimeWidget()
