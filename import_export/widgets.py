@@ -215,6 +215,10 @@ class DateTimeWidget(Widget):
         if not value:
             return None
         if isinstance(value, datetime):
+            if settings.USE_TZ:
+                # make datetime timezone aware so we don't compare
+                # naive datetime to an aware one
+                return timezone.make_aware(value, timezone.get_default_timezone())
             return value
         for format in self.formats:
             try:
