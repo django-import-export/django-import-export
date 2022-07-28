@@ -581,14 +581,14 @@ class ModelResourceTest(TestCase):
         )
         self.assertEqual(1, len(result.failed_dataset), )
         self.assertEqual('1', result.failed_dataset.dict[0]['id'])
-        self.assertEqual("{'__all__': ['fail!']}", result.failed_dataset.dict[0]['Error'])
+        self.assertEqual("{'id': ['fail!']}", result.failed_dataset.dict[0]['Error'])
 
     def test_row_result_raise_ValidationError(self):
         resource = ProfileResource()
         row = ['1']
         dataset = tablib.Dataset(row, headers=['id'])
         with mock.patch("import_export.resources.Field.save", side_effect=ValidationError("fail!")):
-            with self.assertRaisesRegex(ValidationError, "{'__all__': \\['fail!'\\]}") :
+            with self.assertRaisesRegex(ValidationError, "{'id': \\['fail!'\\]}") :
                 resource.import_data(
                     dataset, dry_run=True, use_transactions=True,
                     raise_errors=True,
