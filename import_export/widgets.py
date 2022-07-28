@@ -99,7 +99,7 @@ class DecimalWidget(NumberWidget):
         try:
             return Decimal(force_str(value))
         except InvalidOperation:
-            raise ValueError("Enter a valid Decimal")
+            raise ValueError("Enter a valid Decimal.")
 
 
 class CharWidget(Widget):

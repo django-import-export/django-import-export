@@ -287,6 +287,10 @@ class DecimalWidgetTest(TestCase):
         self.assertEqual(self.widget.clean(" "), None)
         self.assertEqual(self.widget.clean("\r\n\t"), None)
 
+    def test_clean_raises_ValueError(self):
+        with self.assertRaisesRegex(ValueError, "Enter a valid Decimal."):
+            self.widget.clean('asdf')
+
 
 class IntegerWidgetTest(TestCase):
 
