@@ -402,6 +402,11 @@ class ForeignKeyWidgetTest(TestCase):
             self.natural_key_book_widget.render(self.book), json.dumps(self.book.natural_key())
         )
 
+    def test_clean_raises_ValueError(self):
+        with self.assertRaisesRegex(ValueError, "Object does not exist."):
+            self.widget.clean("123456789123456789")
+
+
 class ManyToManyWidget(TestCase):
 
     def setUp(self):
