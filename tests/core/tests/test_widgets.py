@@ -326,6 +326,9 @@ class ForeignKeyWidgetTest(TestCase):
         self.widget = widgets.ForeignKeyWidget(mock.Mock(), "attr")
         self.assertIsNone(self.widget.render(t))
 
+    def test_clean_raises_ValueError(self):
+        with self.assertRaisesRegex(ValueError, "Object does not exist."):
+            self.widget.clean("123456789123456789")
 
 
 class ManyToManyWidget(TestCase):

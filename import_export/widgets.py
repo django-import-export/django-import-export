@@ -406,7 +406,7 @@ class ForeignKeyWidget(Widget):
             try:
                 return self.get_queryset(value, row, *args, **kwargs).get(**{self.field: val})
             except ObjectDoesNotExist:
-                raise ValueError("Object does not exist")
+                raise ValueError("Object does not exist.")
         else:
             return None
 
