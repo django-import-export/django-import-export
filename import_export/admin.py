@@ -7,6 +7,7 @@ from django.contrib.auth import get_permission_codename
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import PermissionDenied
 from django.http import HttpResponse, HttpResponseRedirect
+from django.template.defaultfilters import escape
 from django.template.response import TemplateResponse
 from django.urls import path, reverse
 from django.utils.decorators import method_decorator
@@ -14,7 +15,6 @@ from django.utils.encoding import force_str
 from django.utils.module_loading import import_string
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_POST
-from django.template.defaultfilters import escape
 
 from .forms import ConfirmImportForm, ExportForm, ImportForm, export_action_form_factory
 from .mixins import BaseExportMixin, BaseImportMixin
