@@ -1,3 +1,4 @@
+import zoneinfo
 from datetime import date, datetime, time, timedelta
 from decimal import Decimal
 from unittest import mock
@@ -106,6 +107,12 @@ class DateTimeWidgetTest(TestCase):
         utc_dt = timezone.make_aware(self.datetime, pytz.UTC)
         self.assertEqual(self.widget.render(utc_dt), "13.08.2012 20:00:00")
         self.assertEqual(self.widget.clean("13.08.2012 20:00:00"), utc_dt)
+
+    @override_settings(USE_TZ=True, TIME_ZONE='Europe/Ljubljana')
+    def test_clean_returns_tz_aware_datetime_when_naive_datetime_passed(self):
+        # issue 1165
+        target_dt = timezone.make_aware(self.datetime, zoneinfo.ZoneInfo('Europe/Ljubljana'))
+        self.assertEqual(target_dt, self.widget.clean(self.datetime))
 
     @override_settings(DATETIME_INPUT_FORMATS=None)
     def test_default_format(self):
