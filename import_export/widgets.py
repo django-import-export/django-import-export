@@ -212,25 +212,21 @@ class DateTimeWidget(Widget):
         self.formats = formats
 
     def clean(self, value, row=None, *args, **kwargs):
+        dt = None
         if not value:
             return None
         if isinstance(value, datetime):
+            dt = value
+        else:
+            for format_ in self.formats:
+                try:
+                    dt = datetime.strptime(value, format_)
+                except (ValueError, TypeError):
+                    continue
+        if dt:
             if settings.USE_TZ:
-                # make datetime timezone aware so we don't compare
-                # naive datetime to an aware one
-                return timezone.make_aware(value, timezone.get_default_timezone())
-            return value
-        for format in self.formats:
-            try:
-                dt = datetime.strptime(value, format)
-                if settings.USE_TZ:
-                    # make datetime timezone aware so we don't compare
-                    # naive datetime to an aware one
-                    dt = timezone.make_aware(dt,
-                                             timezone.get_default_timezone())
-                return dt
-            except (ValueError, TypeError):
-                continue
+                dt = timezone.make_aware(dt)
+            return dt
         raise ValueError("Enter a valid date/time.")
 
     def render(self, value, obj=None):
