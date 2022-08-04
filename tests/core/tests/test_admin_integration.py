@@ -471,9 +471,11 @@ class ImportActionDecodeErrorTest(TestCase):
         m = TestImportExportActionModelAdmin(self.mock_model, self.mock_site,
                                                   UnicodeDecodeError('codec', b_arr, 1, 2, 'fail!'))
         res = m.import_action(self.mock_request)
-        self.assertEqual(
-            "<h1>Imported file has a wrong encoding: \'codec\' codec can\'t decode byte 0x00 in position 1: fail!</h1>",
-            res.content.decode())
+        target = (
+            "<h1>Imported file has a wrong encoding: &#x27;codec&#x27; codec "
+            "can&#x27;t decode byte 0x00 in position 1: fail!</h1>"
+        )
+        self.assertEqual(target, res.content.decode())
 
     @mock.patch("import_export.admin.ImportForm")
     def test_import_action_handles_error(self, mock_form):
