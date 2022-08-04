@@ -6,6 +6,7 @@ Changelog
 
 - Fix deprecation in example application: Added support for transitional form renderer (#1451)
 - Escape HTML output when rendering decoding errors (#1469)
+- Apply make_aware when the original file contains actual datetimes (#1478)
 
 2.8.0 (2022-03-31)
 ------------------
