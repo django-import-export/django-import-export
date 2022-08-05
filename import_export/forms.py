@@ -1,6 +1,7 @@
 import os.path
 
 from django import forms
+from django.conf import settings
 from django.contrib.admin.helpers import ActionForm
 from django.utils.translation import gettext_lazy as _
 
@@ -28,11 +29,19 @@ class ImportForm(forms.Form):
         self.fields['input_format'].choices = choices
 
     class Media:
-        js = (
-            'vendor/jquery/jquery.min.js',
-            'jquery.init.js',
-            'import_export/guess_format.js',
-        )
+        if settings.DEBUG:
+            js = (
+                'admin/js/vendor/jquery/jquery.js',
+                'admin/js/jquery.init.js',
+                'import_export/guess_format.js',
+            )
+        else:
+            js = (
+                'admin/js/vendor/jquery/jquery.min.js',
+                'admin/js/jquery.init.js',
+                'import_export/guess_format.js',
+            )
+
 
 
 class ConfirmImportForm(forms.Form):
