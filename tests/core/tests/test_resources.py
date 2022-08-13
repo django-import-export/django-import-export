@@ -16,8 +16,9 @@ from django.core.exceptions import (
     ValidationError,
 )
 from django.core.paginator import Paginator
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 from django.db.models import CharField, Count
+from django.db.models.signals import post_save
 from django.db.utils import ConnectionDoesNotExist
 from django.test import TestCase, TransactionTestCase, skipUnlessDBFeature
 from django.utils.encoding import force_str
@@ -1353,6 +1354,39 @@ class ModelResourceTransactionTest(TransactionTestCase):
 
         # Ensure the rollback has worked properly, no instances were created.
         self.assertFalse(Author.objects.exists())
+
+    def test_rollback_auxiliary_on_commit_transactions_when_dry_run(self):
+        """
+        Ensures functions waiting to be executed via on_commit are
+        also marked as "rolled back" to avoid triggering events if
+        the model's save() method is called, but then rolled back
+        due to dry_run=True
+        """
+        mock_call = mock.Mock()
+
+        def signal_callback_handler(*args, **kwargs):
+            transaction.on_commit(mock_call.method)
+
+        post_save.connect(
+            signal_callback_handler,
+            sender=Author,
+        )
+
+        resource = AuthorResource()
+        headers = ['id', 'name', 'birthday']
+        rows = [['', 'A.A.Milne', '']]
+        dataset = tablib.Dataset(*rows, headers=headers)
+
+        resource.import_data(
+            dataset,
+            use_transactions=True,
+            dry_run=True,
+        )
+
+        # Ensure the side effect hasn't been executed, and the rollback is successful
+        mock_call.method.assert_not_called()
+        self.assertFalse(Author.objects.exists())
+
 
 
 class ModelResourceFactoryTest(TestCase):

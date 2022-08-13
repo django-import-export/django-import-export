@@ -17,12 +17,7 @@ from django.core.paginator import Paginator
 from django.db import connections, router
 from django.db.models.fields.related import ForeignObjectRel
 from django.db.models.query import QuerySet
-from django.db.transaction import (
-    TransactionManagementError,
-    savepoint,
-    savepoint_commit,
-    savepoint_rollback,
-)
+from django.db.transaction import TransactionManagementError, get_connection
 from django.utils.encoding import force_str
 from django.utils.safestring import mark_safe
 
@@ -823,11 +818,6 @@ class Resource(metaclass=DeclarativeMetaclass):
         result.total_rows = len(dataset)
         db_connection = self.get_db_connection_name()
 
-        if using_transactions:
-            # when transactions are used we want to create/update/delete object
-            # as transaction will be rolled back if dry_run is set
-            sp1 = savepoint(using=db_connection)
-
         try:
             with atomic_if_using_transaction(using_transactions, using=db_connection):
                 self.before_import(dataset, using_transactions, dry_run, **kwargs)
@@ -895,9 +885,7 @@ class Resource(metaclass=DeclarativeMetaclass):
             if dry_run or \
                     result.has_errors() or \
                     (rollback_on_validation_errors and result.has_validation_errors()):
-                savepoint_rollback(sp1, using=db_connection)
-            else:
-                savepoint_commit(sp1, using=db_connection)
+                get_connection(using=db_connection).set_rollback(True)
 
         return result
 
