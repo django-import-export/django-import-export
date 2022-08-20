@@ -29,19 +29,12 @@ class ImportForm(forms.Form):
         self.fields['input_format'].choices = choices
 
     class Media:
-        if settings.DEBUG:
-            js = (
-                'admin/js/vendor/jquery/jquery.js',
-                'admin/js/jquery.init.js',
-                'import_export/guess_format.js',
-            )
-        else:
-            js = (
-                'admin/js/vendor/jquery/jquery.min.js',
-                'admin/js/jquery.init.js',
-                'import_export/guess_format.js',
-            )
-
+        extra = "" if settings.DEBUG else ".min"
+        js = (
+            f'admin/js/vendor/jquery/jquery{extra}.js',
+            'admin/js/jquery.init.js',
+            'import_export/guess_format.js',
+        )
 
 
 class ConfirmImportForm(forms.Form):
