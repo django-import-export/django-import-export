@@ -60,6 +60,18 @@ class ResourceOptions:
     of fields.
     """
 
+    import_field = None
+    """
+    Controls import fields  in the Resource . A whitelist
+    of import_field. if import_field is None default  the Resource all fields
+    """
+
+    export_field = None
+    """
+    Controls export fields  in the Resource . A whitelist
+    of import_field. if export_field is None default  the Resource all fields
+    """
+
     exclude = None
     """
     Controls what introspected fields the Resource should
