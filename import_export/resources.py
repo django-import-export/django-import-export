@@ -60,13 +60,13 @@ class ResourceOptions:
     of fields.
     """
 
-    import_field = None
+    import_fields = None
     """
     Controls import fields  in the Resource . A whitelist
     of import_field. if import_field is None default  the Resource all fields
     """
 
-    export_field = None
+    export_fields = None
     """
     Controls export fields  in the Resource . A whitelist
     of import_field. if export_field is None default  the Resource all fields
@@ -324,7 +324,14 @@ class Resource(metaclass=DeclarativeMetaclass):
         Returns fields sorted according to
         :attr:`~import_export.resources.ResourceOptions.export_order`.
         """
-        return [self.fields[f] for f in self.get_export_order()]
+        fields = None
+        if kwargs.get('import_fields'):
+            fields = tuple(self._meta.import_fields or ())
+        elif kwargs.get('export_fields'):
+            fields = tuple(self._meta.export_fields or ())
+        if not fields:
+            fields = self.get_export_order()
+        return [self.fields[f] for f in fields]
 
     def get_field_name(self, field):
         """
@@ -530,7 +537,7 @@ class Resource(metaclass=DeclarativeMetaclass):
             field.save(obj, data, is_m2m, **kwargs)
 
     def get_import_fields(self):
-        return self.get_fields()
+        return self.get_fields(import_fields=True)
 
     def import_obj(self, obj, data, dry_run, **kwargs):
         """
@@ -776,7 +783,8 @@ class Resource(metaclass=DeclarativeMetaclass):
 
         using_transactions = (use_transactions or dry_run) and supports_transactions
 
-        if self._meta.batch_size is not None and (not isinstance(self._meta.batch_size, int) or self._meta.batch_size < 0):
+        if self._meta.batch_size is not None and (
+                not isinstance(self._meta.batch_size, int) or self._meta.batch_size < 0):
             raise ValueError("Batch size must be a positive integer")
 
         with atomic_if_using_transaction(using_transactions, using=db_connection):
@@ -894,7 +902,7 @@ class Resource(metaclass=DeclarativeMetaclass):
         return field.export(obj)
 
     def get_export_fields(self):
-        return self.get_fields()
+        return self.get_fields(export_fields=True)
 
     def export_resource(self, obj):
         return [self.export_field(field, obj) for field in self.get_export_fields()]
@@ -974,7 +982,7 @@ class ModelDeclarativeMetaclass(DeclarativeMetaclass):
 
                 field = new_class.field_from_django_field(f.name, f,
                                                           readonly=False)
-                field_list.append((f.name, field, ))
+                field_list.append((f.name, field,))
 
             new_class.fields.update(OrderedDict(field_list))
 
@@ -990,7 +998,7 @@ class ModelDeclarativeMetaclass(DeclarativeMetaclass):
                     model = opts.model
                     attrs = field_name.split('__')
                     for i, attr in enumerate(attrs):
-                        verbose_path = ".".join([opts.model.__name__] + attrs[0:i+1])
+                        verbose_path = ".".join([opts.model.__name__] + attrs[0:i + 1])
 
                         try:
                             f = model._meta.get_field(attr)
