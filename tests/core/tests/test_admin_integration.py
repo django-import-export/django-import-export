@@ -157,6 +157,9 @@ class ImportExportAdminIntegrationTest(TestCase):
             _('Import finished, with {} new and {} updated {}.').format(
                 1, 0, Book._meta.verbose_name_plural)
         )
+        self.assertContains(response, '<script src="/static/admin/js/vendor/jquery/jquery.min.js">', count=1, html=True)
+        self.assertContains(response, '<script src="/static/admin/js/jquery.init.js">', count=1, html=True)
+        self.assertContains(response, '<script src="/static/import_export/guess_format.js">', count=1, html=True)
 
     def test_export(self):
         response = self.client.get('/admin/core/book/export/')
