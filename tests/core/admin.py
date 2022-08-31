@@ -32,6 +32,7 @@ class BookAdmin(ImportExportMixin, admin.ModelAdmin):
     list_display = ('name', 'author', 'added')
     list_filter = ['categories', 'author']
     resource_classes = [BookResource, BookNameResource]
+    change_list_template = "core/admin/change_list.html"
 
 
 class CategoryAdmin(ExportActionModelAdmin):

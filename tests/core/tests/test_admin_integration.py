@@ -52,8 +52,11 @@ class ImportExportAdminIntegrationTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response,
                 'admin/import_export/change_list_import_export.html')
+        self.assertTemplateUsed(response, 'admin/change_list.html')
+        self.assertTemplateUsed(response, 'core/admin/change_list.html')
         self.assertContains(response, _('Import'))
         self.assertContains(response, _('Export'))
+        self.assertContains(response, 'Custom change list item')
 
     @override_settings(TEMPLATE_STRING_IF_INVALID='INVALID_VARIABLE')
     def test_import(self):
