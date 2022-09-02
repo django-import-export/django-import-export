@@ -86,9 +86,9 @@ class ImportExportAdminIntegrationTest(TestCase):
                                     follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertContains(response,
-                            _('Import finished, with {} new and {} updated {}.').format(
-                                1, 0, Book._meta.verbose_name_plural)
-                            )
+            _('Import finished, with {} new and {} updated {}.').format(
+                1, 0, Book._meta.verbose_name_plural)
+        )
 
     @override_settings(DEBUG=True)
     def test_correct_scripts_declared_when_debug_is_true(self):
