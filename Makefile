@@ -33,6 +33,7 @@ messages: ## generate locale file translations
 
 coverage: ## generates codecov report
 	coverage run --omit='setup.py,tests/*' --source=. tests/manage.py test core --settings=
+	coverage combine
 	coverage report
 
 sdist: clean ## package
