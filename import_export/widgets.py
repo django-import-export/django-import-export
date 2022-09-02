@@ -210,6 +210,7 @@ class DateTimeWidget(Widget):
         self.formats = formats
 
     def clean(self, value, row=None, **kwargs):
+        dt = None
         if not value:
             return None
         if isinstance(value, datetime):

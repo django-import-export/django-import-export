@@ -46,12 +46,15 @@ class ImportForm(ImportExportFormBase):
 
         self.fields['input_format'].choices = choices
 
-    class Media:
+    @property
+    def media(self):
         extra = "" if settings.DEBUG else ".min"
-        js = (
-            f'admin/js/vendor/jquery/jquery{extra}.js',
-            'admin/js/jquery.init.js',
-            'import_export/guess_format.js',
+        return forms.Media(
+            js=(
+                f'admin/js/vendor/jquery/jquery{extra}.js',
+                'admin/js/jquery.init.js',
+                'import_export/guess_format.js',
+            )
         )
 
 
