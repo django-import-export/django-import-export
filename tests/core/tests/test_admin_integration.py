@@ -52,6 +52,7 @@ class ImportExportAdminIntegrationTest(TestCase):
         self.assertContains(response, _('Import'))
         self.assertContains(response, _('Export'))
 
+
     @override_settings(TEMPLATE_STRING_IF_INVALID='INVALID_VARIABLE')
     def test_import(self):
         # GET the import form
@@ -59,6 +60,9 @@ class ImportExportAdminIntegrationTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'admin/import_export/import.html')
         self.assertContains(response, 'form action=""')
+        self.assertContains(response, '<script src="/static/admin/js/vendor/jquery/jquery.min.js">', count=1, html=True)
+        self.assertContains(response, '<script src="/static/admin/js/jquery.init.js">', count=1, html=True)
+        self.assertContains(response, '<script src="/static/import_export/guess_format.js">', count=1, html=True)
 
         # POST the import form
         input_format = '0'
@@ -157,7 +161,7 @@ class ImportExportAdminIntegrationTest(TestCase):
             _('Import finished, with {} new and {} updated {}.').format(
                 1, 0, Book._meta.verbose_name_plural)
         )
-
+        
     def test_export(self):
         response = self.client.get('/admin/core/book/export/')
         self.assertEqual(response.status_code, 200)

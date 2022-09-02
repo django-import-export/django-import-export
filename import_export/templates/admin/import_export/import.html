@@ -5,6 +5,7 @@
 {% load static %}
 
 {% block extrastyle %}{{ block.super }}<link rel="stylesheet" type="text/css" href="{% static "import_export/import.css" %}" />{% endblock %}
+{% block extrahead %}{{ block.super }}{{ media.js }}{% endblock %}
 
 {% block breadcrumbs_last %}
 {% trans "Import" %}
