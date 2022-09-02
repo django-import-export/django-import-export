@@ -1,6 +1,7 @@
 import os.path
 
 from django import forms
+from django.conf import settings
 from django.contrib.admin.helpers import ActionForm
 from django.utils.translation import gettext_lazy as _
 
@@ -26,21 +27,32 @@ class ImportExportFormBase(forms.Form):
 class ImportForm(ImportExportFormBase):
     import_file = forms.FileField(
         label=_('File to import')
-        )
+    )
     input_format = forms.ChoiceField(
         label=_('Format'),
         choices=(),
-        )
+    )
 
     def __init__(self, import_formats, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        choices = []
-        for i, f in enumerate(import_formats):
-            choices.append((str(i), f().get_title(),))
+        choices = [
+            (str(i), f().get_title())
+            for i, f in enumerate(import_formats)
+        ]
         if len(import_formats) > 1:
             choices.insert(0, ('', '---'))
+            self.fields['import_file'].widget.attrs['class'] = 'guess_format'
+            self.fields['input_format'].widget.attrs['class'] = 'guess_format'
 
         self.fields['input_format'].choices = choices
+
+    class Media:
+        extra = "" if settings.DEBUG else ".min"
+        js = (
+            f'admin/js/vendor/jquery/jquery{extra}.js',
+            'admin/js/jquery.init.js',
+            'import_export/guess_format.js',
+        )
 
 
 class ConfirmImportForm(forms.Form):

@@ -9,6 +9,7 @@ from django.contrib.auth import get_permission_codename
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import PermissionDenied
 from django.http import HttpResponse, HttpResponseRedirect
+from django.template.defaultfilters import escape
 from django.template.response import TemplateResponse
 from django.urls import path, reverse
 from django.utils.decorators import method_decorator
@@ -545,6 +546,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         context['title'] = _("Import")
         context['form'] = import_form
         context['opts'] = self.model._meta
+        context['media'] = self.media + import_form.media
         context['fields_list'] = [
             (resource.get_display_name(), [f.column_name for f in resource.get_user_visible_fields()])
             for resource in resources

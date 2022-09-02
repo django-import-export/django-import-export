@@ -91,6 +91,14 @@ Documentation
 
 - Clarified issues around the usage of temporary storage (#1306)
 
+2.8.1 (unreleased)
+------------------
+
+- Fix deprecation in example application: Added support for transitional form renderer (#1451)
+- Escape HTML output when rendering decoding errors (#1469)
+- Apply make_aware when the original file contains actual datetimes (#1478)
+- Automatically guess the format of the file when importing (#1460)
+
 2.8.0 (2022-03-31)
 ------------------
 

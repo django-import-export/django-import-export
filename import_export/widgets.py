@@ -213,18 +213,17 @@ class DateTimeWidget(Widget):
         if not value:
             return None
         if isinstance(value, datetime):
-            return value
-        for format in self.formats:
-            try:
-                dt = datetime.strptime(value, format)
-                if settings.USE_TZ:
-                    # make datetime timezone aware so we don't compare
-                    # naive datetime to an aware one
-                    dt = timezone.make_aware(dt,
-                                             timezone.get_default_timezone())
-                return dt
-            except (ValueError, TypeError):
-                continue
+            dt = value
+        else:
+            for format_ in self.formats:
+                try:
+                    dt = datetime.strptime(value, format_)
+                except (ValueError, TypeError):
+                    continue
+        if dt:
+            if settings.USE_TZ:
+                dt = timezone.make_aware(dt)
+            return dt
         raise ValueError("Enter a valid date/time.")
 
     def render(self, value, obj=None):
@@ -367,11 +366,11 @@ class ForeignKeyWidget(Widget):
 
             class Meta:
                 fields = ('author',)
-    
+
     :param model: The Model the ForeignKey refers to (required).
     :param field: A field on the related model used for looking up a particular
         object.
-    :param use_natural_foreign_keys: Use natural key functions to identify 
+    :param use_natural_foreign_keys: Use natural key functions to identify
         related object, default to False
     """
     def __init__(self, model, field='pk', use_natural_foreign_keys=False, **kwargs):
@@ -408,7 +407,7 @@ class ForeignKeyWidget(Widget):
         if val:
             if self.use_natural_foreign_keys:
                 # natural keys will always be a tuple, which ends up as a json list.
-                value = json.loads(value) 
+                value = json.loads(value)
                 return self.model.objects.get_by_natural_key(*value)
             else:
                 return self.get_queryset(value, row, **kwargs).get(**{self.field: val})

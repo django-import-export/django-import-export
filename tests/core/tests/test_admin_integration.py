@@ -65,6 +65,9 @@ class ImportExportAdminIntegrationTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'admin/import_export/import.html')
         self.assertContains(response, 'form action=""')
+        self.assertContains(response, '<script src="/static/admin/js/vendor/jquery/jquery.min.js">', count=1, html=True)
+        self.assertContains(response, '<script src="/static/admin/js/jquery.init.js">', count=1, html=True)
+        self.assertContains(response, '<script src="/static/import_export/guess_format.js">', count=1, html=True)
 
         # POST the import form
         input_format = '0'
