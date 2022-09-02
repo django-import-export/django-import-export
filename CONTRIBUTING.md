@@ -13,7 +13,7 @@ Philosophy
   * the original work of the author, contributed under the BSD, or...
   * work taken from another project released under a BSD-compatible license.
 * GPL'd (or similar) works are not eligible for inclusion.
-* django-import-export's git master branch should always be stable, production-ready &
+* django-import-export's git main branch should always be stable, production-ready &
   passing all tests.
 
 
