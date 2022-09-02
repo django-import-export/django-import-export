@@ -51,6 +51,10 @@ class ImportExportAdminIntegrationTest(TestCase):
                 'admin/import_export/change_list_import_export.html')
         self.assertContains(response, _('Import'))
         self.assertContains(response, _('Export'))
+        self.assertContains(response, '<script src="/static/admin/js/vendor/jquery/jquery.min.js">', count=1, html=True)
+        self.assertContains(response, '<script src="/static/admin/js/jquery.init.js">', count=1, html=True)
+        self.assertContains(response, '<script src="/static/import_export/guess_format.js">', count=1, html=True)
+
 
     @override_settings(TEMPLATE_STRING_IF_INVALID='INVALID_VARIABLE')
     def test_import(self):
@@ -157,10 +161,7 @@ class ImportExportAdminIntegrationTest(TestCase):
             _('Import finished, with {} new and {} updated {}.').format(
                 1, 0, Book._meta.verbose_name_plural)
         )
-        self.assertContains(response, '<script src="/static/admin/js/vendor/jquery/jquery.min.js">', count=1, html=True)
-        self.assertContains(response, '<script src="/static/admin/js/jquery.init.js">', count=1, html=True)
-        self.assertContains(response, '<script src="/static/import_export/guess_format.js">', count=1, html=True)
-
+        
     def test_export(self):
         response = self.client.get('/admin/core/book/export/')
         self.assertEqual(response.status_code, 200)
