@@ -6,6 +6,7 @@ Changelog
 
 - bugfix: `skip_row()` fix crash when model has m2m field and none is provided in upload (#1439)
 - Fix deprecation in example application: Added support for transitional form renderer (#1451)
+- Allow custom `change_list_template` in admin views using mixins (#1483)
 - Fixed Makefile coverage: added `coverage combine`
 
 3.0.0-beta.4 (2022-05-17)
