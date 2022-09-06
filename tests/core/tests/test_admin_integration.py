@@ -325,6 +325,28 @@ class ImportExportAdminIntegrationTest(TestCase):
     def test_import_action_handles_MediaStorage_read_binary(self):
         self.assert_string_in_response('books.xls', '1')
 
+    @override_settings(DEBUG=True)
+    def test_correct_scripts_declared_when_debug_is_true(self):
+        # GET the import form
+        response = self.client.get('/admin/core/book/import/')
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'admin/import_export/import.html')
+        self.assertContains(response, 'form action=""')
+        self.assertContains(response, '<script src="/static/admin/js/vendor/jquery/jquery.js">', count=1, html=True)
+        self.assertContains(response, '<script src="/static/admin/js/jquery.init.js">', count=1, html=True)
+        self.assertContains(response, '<script src="/static/import_export/guess_format.js">', count=1, html=True)
+
+    @override_settings(DEBUG=False)
+    def test_correct_scripts_declared_when_debug_is_false(self):
+        # GET the import form
+        response = self.client.get('/admin/core/book/import/')
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'admin/import_export/import.html')
+        self.assertContains(response, 'form action=""')
+        self.assertContains(response, '<script src="/static/admin/js/vendor/jquery/jquery.min.js">', count=1, html=True)
+        self.assertContains(response, '<script src="/static/admin/js/jquery.init.js">', count=1, html=True)
+        self.assertContains(response, '<script src="/static/import_export/guess_format.js">', count=1, html=True)
+
     def test_delete_from_admin(self):
         # test delete from admin site (see #432)
 
