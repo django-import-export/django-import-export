@@ -33,9 +33,33 @@ from .utils import original
 
 
 class ImportExportMixinBase:
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # Store already set change_list_template to allow users to independently
+        # customize the change list object tools. This treats the cases where
+        # `self.change_list_template` is `None` (the default in `ModelAdmin`) or
+        # where `self.import_export_change_list_template` is `None` as falling
+        # back on the default templates.
+        if getattr(self, 'change_list_template', None):
+            self.base_change_list_template = self.change_list_template
+        else:
+            self.base_change_list_template = 'admin/change_list.html'
+
+        self.change_list_template = getattr(
+            self, 'import_export_change_list_template', None
+        )
+        if self.change_list_template is None:
+            self.change_list_template = self.base_change_list_template
+
     def get_model_info(self):
         app_label = self.model._meta.app_label
         return (app_label, self.model._meta.model_name)
+
+    def changelist_view(self, request, extra_context=None):
+        extra_context = extra_context or {}
+        extra_context['base_change_list_template'] = self.base_change_list_template
+        return super().changelist_view(request, extra_context)
 
 
 class ImportMixin(BaseImportMixin, ImportExportMixinBase):
@@ -47,7 +71,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
     """
 
     #: template for change_list view
-    change_list_template = 'admin/import_export/change_list_import.html'
+    import_export_change_list_template = 'admin/import_export/change_list_import.html'
     #: template for import view
     import_template_name = 'admin/import_export/import.html'
     #: available import formats
@@ -547,7 +571,7 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
     https://docs.djangoproject.com/en/dev/ref/contrib/admin/
     """
     #: template for change_list view
-    change_list_template = 'admin/import_export/change_list_export.html'
+    import_export_change_list_template = 'admin/import_export/change_list_export.html'
     #: template for export view
     export_template_name = 'admin/import_export/export.html'
     #: export data encoding
@@ -709,7 +733,7 @@ class ImportExportMixin(ImportMixin, ExportMixin):
     Import and export mixin.
     """
     #: template for change_list view
-    change_list_template = 'admin/import_export/change_list_import_export.html'
+    import_export_change_list_template = 'admin/import_export/change_list_import_export.html'
 
 
 class ImportExportModelAdmin(ImportExportMixin, admin.ModelAdmin):
@@ -724,7 +748,7 @@ class ExportActionMixin(ExportMixin):
     """
 
     # Don't use custom change list template.
-    change_list_template = None
+    import_export_change_list_template = None
 
     def __init__(self, *args, **kwargs):
         """
