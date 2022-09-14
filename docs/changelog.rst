@@ -96,7 +96,7 @@ Documentation
 
 - Clarified issues around the usage of temporary storage (#1306)
 
-2.8.1 (unreleased)
+2.9.0 (2022-09-14)
 ------------------
 
 - Fix deprecation in example application: Added support for transitional form renderer (#1451)
