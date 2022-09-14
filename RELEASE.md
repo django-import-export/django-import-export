@@ -27,6 +27,7 @@ pip install -U pip setuptools wheel
 pip install -r requirements/deploy.txt
 
 # zest.releaser pre-release
+# (you can set the correct version in this step)
 prerelease
 ```
 
