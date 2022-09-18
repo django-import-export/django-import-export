@@ -7,6 +7,7 @@ Changelog
 - bugfix: `skip_row()` fix crash when model has m2m field and none is provided in upload (#1439)
 - Fix deprecation in example application: Added support for transitional form renderer (#1451)
 - Allow custom `change_list_template` in admin views using mixins (#1483)
+- Added blocks to import template (#1488)
 - Fixed Makefile coverage: added `coverage combine`
 
 3.0.0-beta.4 (2022-05-17)
@@ -63,6 +64,9 @@ This release makes some minor changes to the public API.  If you have overridden
 
 - Allow custom `change_list_template` in admin views using mixins (#1483)
     - If you are using admin mixins from this library in conjunction with code that overrides `change_list_template` (typically admin mixins from other libraries such as django-admin-sortable2 or reversion), object tools in the admin change list views may render differently now.
+
+- `import.html`: Added blocks to import template (#1488)
+    - If you have made customizations to the import template then you may need to refactor these after the addition of block declarations.
 
 Deprecations
 ############
