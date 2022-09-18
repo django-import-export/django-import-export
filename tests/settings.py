@@ -58,8 +58,8 @@ if os.environ.get('IMPORT_EXPORT_TEST_TYPE') == 'mysql-innodb':
         'default': {
             'ENGINE': 'django.db.backends.mysql',
             'NAME': 'import_export',
-            'USER': os.environ.get('IMPORT_EXPORT_MYSQL_USER', 'root'),
-            'PASSWORD': os.environ.get('IMPORT_EXPORT_MYSQL_PASSWORD', 'password'),
+            'USER': os.environ.get('IMPORT_EXPORT_MYSQL_USER'),
+            'PASSWORD': os.environ.get('IMPORT_EXPORT_MYSQL_PASSWORD'),
             'HOST': '127.0.0.1',
             'PORT': 3306,
             'TEST': {

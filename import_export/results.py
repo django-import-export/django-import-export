@@ -32,7 +32,7 @@ class RowResult:
         self.validation_error = None
         self.diff = None
         self.import_type = None
-        self.raw_values = {}
+        self.row_values = {}
         self.object_id = None
         self.object_repr = None
 

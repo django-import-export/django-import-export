@@ -1,3 +1,5 @@
+import warnings
+
 from django.http import HttpResponse
 from django.utils.timezone import now
 from django.views.generic.edit import FormView
@@ -11,22 +13,65 @@ from .signals import post_export
 class BaseImportExportMixin:
     formats = base_formats.DEFAULT_FORMATS
     resource_class = None
+    resource_classes = []
 
-    def get_resource_class(self):
-        if not self.resource_class:
-            return modelresource_factory(self.model)
-        return self.resource_class
+    def check_resource_classes(self, resource_classes):
+        if resource_classes and not hasattr(resource_classes, '__getitem__'):
+            raise Exception("The resource_classes field type must be subscriptable (list, tuple, ...)")
+
+    def get_resource_classes(self):
+        """ Return subscriptable type (list, tuple, ...) containing resource classes """
+        if self.resource_classes and self.resource_class:
+            raise Exception("Only one of 'resource_class' and 'resource_classes' can be set")
+        if hasattr(self, 'get_resource_class'):
+            warnings.warn(
+                "The 'get_resource_class()' method has been deprecated. "
+                "Please implement the new 'get_resource_classes()' method",
+                DeprecationWarning,
+            )
+            return [self.get_resource_class()]
+        if self.resource_class:
+            warnings.warn(
+                "The 'resource_class' field has been deprecated. "
+                "Please implement the new 'resource_classes' field",
+                DeprecationWarning,
+            )
+        if not self.resource_classes and not self.resource_class:
+            return [modelresource_factory(self.model)]
+        if self.resource_classes:
+            return self.resource_classes
+        return [self.resource_class]
 
     def get_resource_kwargs(self, request, *args, **kwargs):
         return {}
 
+    def get_resource_index(self, form):
+        resource_index = 0
+        if form and 'resource' in form.cleaned_data:
+            try:
+                resource_index = int(form.cleaned_data['resource'])
+            except ValueError:
+                pass
+        return resource_index
+
 
 class BaseImportMixin(BaseImportExportMixin):
-    def get_import_resource_class(self):
+
+    def get_import_resource_classes(self):
         """
-        Returns ResourceClass to use for import.
+        Returns ResourceClass subscriptable (list, tuple, ...) to use for import.
         """
-        return self.get_resource_class()
+        if hasattr(self, 'get_import_resource_class'):
+            warnings.warn(
+                "The 'get_import_resource_class()' method has been deprecated. "
+                "Please implement the new 'get_import_resource_classes()' method",
+                DeprecationWarning,
+            )
+            return [self.get_import_resource_class()]
+
+        resource_classes = self.get_resource_classes()
+        self.check_resource_classes(resource_classes)
+        return resource_classes
 
     def get_import_formats(self):
         """
@@ -36,6 +81,10 @@ class BaseImportMixin(BaseImportExportMixin):
 
     def get_import_resource_kwargs(self, request, *args, **kwargs):
         return self.get_resource_kwargs(request, *args, **kwargs)
+
+    def choose_import_resource_class(self, form):
+        resource_index = self.get_resource_index(form)
+        return self.get_import_resource_classes()[resource_index]
 
 
 class BaseExportMixin(BaseImportExportMixin):
@@ -47,18 +96,33 @@ class BaseExportMixin(BaseImportExportMixin):
         """
         return [f for f in self.formats if f().can_export()]
 
-    def get_export_resource_class(self):
+    def get_export_resource_classes(self):
         """
-        Returns ResourceClass to use for export.
+        Returns ResourceClass subscriptable (list, tuple, ...) to use for export.
         """
-        return self.get_resource_class()
+        if hasattr(self, 'get_export_resource_class'):
+            warnings.warn(
+                "The 'get_export_resource_class()' method has been deprecated. "
+                "Please implement the new 'get_export_resource_classes()' method",
+                DeprecationWarning,
+            )
+            return [self.get_export_resource_class()]
+
+        resource_classes = self.get_resource_classes()
+        self.check_resource_classes(resource_classes)
+        return resource_classes
+
+    def choose_export_resource_class(self, form):
+        resource_index = self.get_resource_index(form)
+        return self.get_export_resource_classes()[resource_index]
 
     def get_export_resource_kwargs(self, request, *args, **kwargs):
         return self.get_resource_kwargs(request, *args, **kwargs)
 
     def get_data_for_export(self, request, queryset, *args, **kwargs):
-        resource_class = self.get_export_resource_class()
-        return resource_class(**self.get_export_resource_kwargs(request, *args, **kwargs))\
+        export_form = kwargs.pop('export_form', None)
+        return self.choose_export_resource_class(export_form)\
+            (**self.get_export_resource_kwargs(request, *args, **kwargs))\
             .export(queryset, *args, **kwargs)
 
     def get_export_filename(self, file_format):

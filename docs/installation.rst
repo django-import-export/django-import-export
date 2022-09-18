@@ -12,7 +12,7 @@ additional formats like ``cli`` or ``Pandas DataFrame``, you should install the
 appropriate tablib dependencies (e.g. ``pip install tablib[pandas]``). Read
 more on the `tablib format documentation page`_.
 
-.. _tablib format documentation page: https://tablib.readthedocs.io/en/stable/formats/
+.. _tablib format documentation page: https://tablib.readthedocs.io/en/stable/formats.html
 
 Alternatively, you can install the git repository directly to obtain the
 development version::
@@ -64,6 +64,8 @@ of losing an audit trail.
 
 Can be overridden on a ``ModelAdmin`` class inheriting from ``ImportMixin`` by
 setting the ``skip_admin_log`` class attribute.
+
+.. _IMPORT_EXPORT_TMP_STORAGE_CLASS:
 
 ``IMPORT_EXPORT_TMP_STORAGE_CLASS``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

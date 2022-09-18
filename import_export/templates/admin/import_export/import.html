@@ -5,7 +5,15 @@
 {% load static %}
 
 {% block extrastyle %}{{ block.super }}<link rel="stylesheet" type="text/css" href="{% static "import_export/import.css" %}" />{% endblock %}
-{% block extrahead %}{{ block.super }}{{ media.js }}{% endblock %}
+
+{% block extrahead %}{{ block.super }}
+  <script type="text/javascript" src="{% url 'admin:jsi18n' %}"></script>
+  {% if confirm_form %}
+    {{ confirm_form.media }}
+  {% else %}
+    {{ form.media }}
+  {% endif %}
+{% endblock %}
 
 {% block breadcrumbs_last %}
 {% trans "Import" %}
@@ -15,47 +23,56 @@
 
   {% if confirm_form %}
     {% block confirm_import_form %}
-      <form action="{% url opts|admin_urlname:"process_import" %}" method="POST">
-        {% csrf_token %}
-        {{ confirm_form.as_p }}
-        <p>
-          {% trans "Below is a preview of data to be imported. If you are satisfied with the results, click 'Confirm import'" %}
-        </p>
-        <div class="submit-row">
-          <input type="submit" class="default" name="confirm" value="{% trans "Confirm import" %}">
-        </div>
-      </form>
+    <form action="{% url opts|admin_urlname:"process_import" %}" method="POST">
+      {% csrf_token %}
+      {{ confirm_form.as_p }}
+      <p>
+        {% trans "Below is a preview of data to be imported. If you are satisfied with the results, click 'Confirm import'" %}
+      </p>
+      <div class="submit-row">
+        <input type="submit" class="default" name="confirm" value="{% trans "Confirm import" %}">
+      </div>
+    </form>
     {% endblock %}
   {% else %}
     {% block import_form %}
-      <form action="" method="post" enctype="multipart/form-data">
-        {% csrf_token %}
+    <form action="" method="post" enctype="multipart/form-data">
+      {% csrf_token %}
 
-        <p>
-          {% trans "This importer will import the following fields: " %}
-          <code>{{ fields|join:", " }}</code>
-        </p>
+      <p>
+        {% trans "This importer will import the following fields: " %}
+        {% if fields_list|length <= 1 %}
+           <code>{{ fields_list.0.1|join:", " }}</code>
+        {% else %}
+           <dl>
+              {% for resource, fields in fields_list %}
+                  <dt>{{ resource }}</dt>
+                  <dd><code>{{ fields|join:", " }}</code></dd>
+              {% endfor %}
+           </dl>
+        {% endif %}
+      </p>
 
-        <fieldset class="module aligned">
-          {% for field in form %}
-            <div class="form-row">
-              {{ field.errors }}
+      <fieldset class="module aligned">
+        {% for field in form %}
+          <div class="form-row">
+            {{ field.errors }}
 
-              {{ field.label_tag }}
+            {{ field.label_tag }}
 
-              {{ field }}
+            {{ field }}
 
-              {% if field.field.help_text %}
-              <p class="help">{{ field.field.help_text|safe }}</p>
-              {% endif %}
-            </div>
-          {% endfor %}
-        </fieldset>
+            {% if field.field.help_text %}
+            <p class="help">{{ field.field.help_text|safe }}</p>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </fieldset>
 
-        <div class="submit-row">
-          <input type="submit" class="default" value="{% trans "Submit" %}">
-        </div>
-      </form>
+      <div class="submit-row">
+        <input type="submit" class="default" value="{% trans "Submit" %}">
+      </div>
+    </form>
     {% endblock %}
   {% endif %}
 
@@ -88,9 +105,9 @@
 
       {% block validation_errors %}
         <h2>{% trans "Some rows failed to validate" %}</h2>
-          
+
         <p>{% trans "Please correct these errors in your data where possible, then reupload it using the form above." %}</p>
-        
+
         <table class="import-preview">
           <thead>
             <tr>
@@ -106,7 +123,7 @@
             <tr>
               <td>{{ row.number }} </td>
               <td class="errors">
-                <span class="validation-error-count">{{ row.error_count }}</span> 
+                <span class="validation-error-count">{{ row.error_count }}</span>
                 <div class="validation-error-container">
                   <ul class="validation-error-list">
                     {% for field_name, error_list in row.field_specific_errors.items %}
