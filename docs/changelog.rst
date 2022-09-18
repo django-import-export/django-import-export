@@ -65,6 +65,9 @@ This release makes some minor changes to the public API.  If you have overridden
 - Allow custom `change_list_template` in admin views using mixins (#1483)
     - If you are using admin mixins from this library in conjunction with code that overrides `change_list_template` (typically admin mixins from other libraries such as django-admin-sortable2 or reversion), object tools in the admin change list views may render differently now.
 
+- `import.html`: Added blocks to import template (#1488)
+    - If you have made customizations to the import template then you may need to refactor these after the addition of block declarations.
+
 Deprecations
 ############
 
