@@ -865,7 +865,7 @@ class Resource(metaclass=DeclarativeMetaclass):
                 if raise_errors:
                     raise row_result.errors[-1].error
             elif row_result.validation_error:
-                result.append_invalid_row(i, row, row_result.validation_error)
+                result.append_invalid_row(i, row, row_result.validation_error, getattr(row_result,"warnings",list()))
                 if collect_failed_rows:
                     result.append_failed_row(row, row_result.validation_error)
                 if raise_errors:

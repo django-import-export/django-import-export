@@ -1,3 +1,4 @@
+import io
 import os.path
 import warnings
 from datetime import datetime
@@ -792,6 +793,45 @@ class ImportExportAdminIntegrationTest(TestCase):
         target_media = m.media
         self.assertEqual('import_export/action_formats.js', target_media._js[-1])
 
+    @override_settings(TEMPLATE_STRING_IF_INVALID='INVALID_VARIABLE')
+    def test_import_warnings(self):
+        input_format = '0'
+        filename = os.path.join(
+            os.path.dirname(__file__),
+            os.path.pardir,
+            'exports',
+            'books.csv')
+        with open(filename, "rb") as f:
+            data = {
+                'input_format': input_format,
+                'import_file': f,
+                'resource': 2,
+            }
+            response = self.client.post('/admin/core/book/import/', data)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('result', response.context)
+        row = response.context['result'].valid_rows()[0]
+        self.assertTrue(row.has_warnings())
+        self.assertEqual(row.warning_count,1)
+        self.assertContains(response,
+            "Warning in row"
+        )
+        data = {
+            "input_format": input_format,
+            "import_file": io.BytesIO(
+                "id,name,author_email\r\n2,Some book,test@example.com".encode("utf-8")
+            ),
+            "resource": 2,
+        }
+        response = self.client.post('/admin/core/book/import/', data)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('result', response.context)
+        row = response.context['result'].invalid_rows[0]
+        self.assertTrue(row.has_warnings())
+        self.assertEqual(row.warning_count,1)
+        self.assertContains(response,
+            "Warning in validation"
+        )
 
 class ConfirmImportEncodingTest(TestCase):
     """Test handling 'confirm import' step using different file encodings

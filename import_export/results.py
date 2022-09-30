@@ -29,6 +29,7 @@ class RowResult:
 
     def __init__(self):
         self.errors = []
+        self.warnings = [] # Warnings
         self.validation_error = None
         self.diff = None
         self.import_type = None
@@ -42,14 +43,29 @@ class RowResult:
             self.object_id = getattr(instance, "pk", None)
             self.object_repr = force_str(instance)
 
+    @property
+    def warning_count(self):
+        """Returns the total number of warnings for this row."""
+        return len(self.warnings)
+
+    def append_warning(self, warning_message:str):
+        self.warnings.append(
+            warning_message
+        )
+
+    def has_warnings(self):
+        """Returns a boolean indicating whether the import process resulted in
+        any warnings."""
+        return bool(self.warnings)
 
 class InvalidRow:
     """A row that resulted in one or more ``ValidationError`` being raised during import."""
 
-    def __init__(self, number, validation_error, values):
+    def __init__(self, number, validation_error, values, warnings=list()):
         self.number = number
         self.error = validation_error
         self.values = values
+        self.warnings = warnings
         try:
             self.error_dict = validation_error.message_dict
         except AttributeError:
@@ -76,6 +92,15 @@ class InvalidRow:
             count += len(error_list)
         return count
 
+    @property
+    def warning_count(self):
+        """Returns the total number of warnings for this row."""
+        return len(self.warnings)
+
+    def has_warnings(self):
+        """Returns a boolean indicating whether the import process resulted in
+        any warnings."""
+        return bool(self.warnings)
 
 class Result:
     def __init__(self, *args, **kwargs):
@@ -117,12 +142,12 @@ class Result:
             row_values.append(str(error))
         self.failed_dataset.append(row_values)
 
-    def append_invalid_row(self, number, row, validation_error):
+    def append_invalid_row(self, number, row, validation_error, warnings=list()):
         # NOTE: value order must match diff_headers order, so that row
         # values and column headers match in the UI when displayed
         values = tuple(row.get(col, "---") for col in self.diff_headers)
         self.invalid_rows.append(
-            InvalidRow(number=number, validation_error=validation_error, values=values)
+            InvalidRow(number=number, validation_error=validation_error, values=values, warnings=warnings)
         )
 
     def increment_row_result_total(self, row_result):

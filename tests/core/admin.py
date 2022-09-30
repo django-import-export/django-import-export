@@ -1,7 +1,9 @@
 from django.contrib import admin
+from django.core.exceptions import ValidationError
 
 from import_export.admin import ExportActionModelAdmin, ImportExportMixin, ImportMixin
 from import_export.resources import ModelResource
+from import_export.results import RowResult
 
 from .forms import CustomConfirmImportForm, CustomExportForm, CustomImportForm
 from .models import Author, Book, Category, Child, EBook, LegacyBook
@@ -11,8 +13,32 @@ class ChildAdmin(ImportMixin, admin.ModelAdmin):
     pass
 
 
-class BookResource(ModelResource):
+class BookWithWarningsResource(ModelResource):
+    class Meta:
+        model = Book
 
+    def import_row(
+        self,
+        row,
+        instance_loader,
+        using_transactions=True,
+        dry_run=False,
+        raise_errors=False,
+        **kwargs
+    ):
+        row_result = super().import_row(
+            row, instance_loader, using_transactions, dry_run, raise_errors, **kwargs
+        )
+        row_result.append_warning("Warning in row")
+        if row.get("id") != '1':
+            row_result = self.get_row_result_class()()
+            row_result.import_type = RowResult.IMPORT_TYPE_INVALID
+            row_result.validation_error = ValidationError("Invalid record")
+            row_result.append_warning("Warning in validation")
+        return row_result
+
+
+class BookResource(ModelResource):
     class Meta:
         model = Book
 
@@ -31,7 +57,7 @@ class BookNameResource(ModelResource):
 class BookAdmin(ImportExportMixin, admin.ModelAdmin):
     list_display = ('name', 'author', 'added')
     list_filter = ['categories', 'author']
-    resource_classes = [BookResource, BookNameResource]
+    resource_classes = [BookResource, BookNameResource, BookWithWarningsResource]
     change_list_template = "core/admin/change_list.html"
 
 
@@ -45,6 +71,7 @@ class AuthorAdmin(ImportMixin, admin.ModelAdmin):
 
 class CustomBookAdmin(BookAdmin):
     """BookAdmin with custom import forms"""
+
     import_form_class = CustomImportForm
     confirm_form_class = CustomConfirmImportForm
     export_form_class = CustomExportForm

@@ -112,6 +112,7 @@
           <tr>
             <th>{% trans "Row" %}</th>
             <th>{% trans "Errors" %}</th>
+            <th>{% trans "Warnings" %}</th>
             {% for field in result.diff_headers %}
               <th>{{ field }}</th>
             {% endfor %}
@@ -148,6 +149,19 @@
                 </ul>
               </div>
             </td>
+            <td class="errors">
+              {% if row.has_warnings %}
+                <span class="validation-error-count import-warning-count">{{ row.warning_count }}</span>
+                <div class="validation-error-container">
+                  <ul class="validation-error-list">
+                    <span class="validation-error-field-label import-warning-label">{% trans "Warnings" %}</span>
+                    {% for warning in row.warnings %}
+                        <li>{{ warning }}</li>
+                    {% endfor %}
+                  </ul>
+                </div>
+              {% endif %}
+            </td>
             {% for field in row.values %}
               <td>{{ field }}</td>
             {% endfor %}
@@ -166,6 +180,7 @@
         <thead>
           <tr>
             <th></th>
+            <th></th>
             {% for field in result.diff_headers %}
               <th>{{ field }}</th>
             {% endfor %}
@@ -182,6 +197,19 @@
                 {% trans "Delete" %}
               {% elif row.import_type == 'update' %}
                 {% trans "Update" %}
+              {% endif %}
+            </td>
+            <td class="errors">
+              {% if row.has_warnings %}
+                <span class="validation-error-count import-warning-count">{{ row.warning_count }}</span>
+                <div class="validation-error-container">
+                  <ul class="validation-error-list">
+                    <span class="validation-error-field-label import-warning-label">{% trans "Warnings" %}</span>
+                    {% for warning in row.warnings %}
+                        <li>{{ warning }}</li>
+                    {% endfor %}
+                  </ul>
+                </div>
               {% endif %}
             </td>
             {% for field in row.diff %}
