@@ -243,6 +243,10 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
                          request.FILES or None,
                          **form_kwargs)
 
+        if request.POST and not form.is_valid():
+            for error in form.errors.values():
+                messages.error(request, ", ".join(error))
+
         if request.POST and form.is_valid():
             input_format = import_formats[
                 int(form.cleaned_data['input_format'])
