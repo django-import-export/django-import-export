@@ -9,13 +9,15 @@ from django.core.files.storage import default_storage
 
 class BaseStorage:
 
-    def __init__(self, name=None):
+    def __init__(self, name=None, read_mode='r', encoding=None):
         self.name = name
+        self.read_mode = read_mode
+        self.encoding = encoding
 
-    def save(self, data, mode='w'):
+    def save(self, data):
         raise NotImplementedError
 
-    def read(self, read_mode='r'):
+    def read(self):
         raise NotImplementedError
 
     def remove(self):
@@ -24,20 +26,12 @@ class BaseStorage:
 
 class TempFolderStorage(BaseStorage):
 
-    def open(self, mode='r'):
-        if self.name:
-            return open(self.get_full_path(), mode)
-        else:
-            tmp_file = tempfile.NamedTemporaryFile(delete=False)
-            self.name = tmp_file.name
-            return tmp_file
-
-    def save(self, data, mode='w'):
-        with self.open(mode=mode) as file:
+    def save(self, data):
+        with self._open(mode='w') as file:
             file.write(data)
 
-    def read(self, mode='r'):
-        with self.open(mode=mode) as file:
+    def read(self):
+        with self._open(mode=self.read_mode) as file:
             return file.read()
 
     def remove(self):
@@ -49,6 +43,14 @@ class TempFolderStorage(BaseStorage):
             self.name
         )
 
+    def _open(self, mode='r'):
+        if self.name:
+            return open(self.get_full_path(), mode, encoding=self.encoding)
+        else:
+            tmp_file = tempfile.NamedTemporaryFile(delete=False)
+            self.name = tmp_file.name
+            return tmp_file
+
 
 class CacheStorage(BaseStorage):
     """
@@ -57,12 +59,12 @@ class CacheStorage(BaseStorage):
     CACHE_LIFETIME = 86400
     CACHE_PREFIX = 'django-import-export-'
 
-    def save(self, data, mode=None):
+    def save(self, data):
         if not self.name:
             self.name = uuid4().hex
         cache.set(self.CACHE_PREFIX + self.name, data, self.CACHE_LIFETIME)
 
-    def read(self, read_mode='r'):
+    def read(self):
         return cache.get(self.CACHE_PREFIX + self.name)
 
     def remove(self):
@@ -72,13 +74,16 @@ class CacheStorage(BaseStorage):
 class MediaStorage(BaseStorage):
     MEDIA_FOLDER = 'django-import-export'
 
-    def save(self, data, mode=None):
+    def __init__(self, name=None, read_mode='rb', encoding=None):
+        super().__init__(name, read_mode=read_mode, encoding=encoding)
+
+    def save(self, data):
         if not self.name:
             self.name = uuid4().hex
         default_storage.save(self.get_full_path(), ContentFile(data))
 
-    def read(self, read_mode='rb'):
-        with default_storage.open(self.get_full_path(), mode=read_mode) as f:
+    def read(self):
+        with default_storage.open(self.get_full_path(), mode=self.read_mode) as f:
             return f.read()
 
     def remove(self):

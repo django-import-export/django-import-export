@@ -1,14 +1,38 @@
+import json
 from datetime import date, datetime, time, timedelta
 from decimal import Decimal
-from unittest import mock
+from unittest import mock, skipUnless
 
+import django
 import pytz
-from core.models import Author, Category
+from core.models import Author, Book, Category
 from django.test import TestCase
 from django.test.utils import override_settings
 from django.utils import timezone
 
 from import_export import widgets
+
+
+class WidgetTest(TestCase):
+    def setUp(self):
+        self.widget = widgets.Widget()
+
+    def test_clean(self):
+        self.assertEqual("a", self.widget.clean("a"))
+
+    def test_render(self):
+        self.assertEqual("1", self.widget.render(1))
+
+
+class CharWidgetTest(TestCase):
+    def setUp(self):
+        self.widget = widgets.CharWidget()
+
+    def test_clean(self):
+        self.assertEqual("a", self.widget.clean("a"))
+
+    def test_render(self):
+        self.assertEqual("1", self.widget.render(1))
 
 
 class BooleanWidgetTest(TestCase):
@@ -40,6 +64,20 @@ class BooleanWidgetTest(TestCase):
         self.assertEqual(self.widget.render(True), "1")
         self.assertEqual(self.widget.render(False), "0")
         self.assertEqual(self.widget.render(None), "")
+
+
+class FormatDatetimeTest(TestCase):
+    date = date(10, 8, 2)
+    target_dt = "02.08.0010"
+    format = "%d.%m.%Y"
+
+    @skipUnless(django.VERSION[0] < 4, f"skipping django {django.VERSION} version specific test")
+    def test_format_datetime_lt_django4(self):
+        self.assertEqual(self.target_dt, widgets.format_datetime(self.date, self.format))
+
+    @skipUnless(django.VERSION[0] >= 4, f"running django {django.VERSION} version specific test")
+    def test_format_datetime_gte_django4(self):
+        self.assertEqual(self.target_dt, widgets.format_datetime(self.date, self.format))
 
 
 class DateWidgetTest(TestCase):
@@ -283,7 +321,10 @@ class ForeignKeyWidgetTest(TestCase):
 
     def setUp(self):
         self.widget = widgets.ForeignKeyWidget(Author)
+        self.natural_key_author_widget = widgets.ForeignKeyWidget(Author, use_natural_foreign_keys=True)
+        self.natural_key_book_widget = widgets.ForeignKeyWidget(Book, use_natural_foreign_keys=True )
         self.author = Author.objects.create(name='Foo')
+        self.book = Book.objects.create(name="Bar", author=self.author)
 
     def test_clean(self):
         self.assertEqual(self.widget.clean(self.author.id), self.author)
@@ -307,8 +348,8 @@ class ForeignKeyWidgetTest(TestCase):
         author2.birthday = "2016-01-01"
         author2.save()
         birthday_widget = BirthdayWidget(Author, 'name')
-        row = {'name': "Foo", 'birthday': author2.birthday}
-        self.assertEqual(birthday_widget.clean("Foo", row), author2)
+        row_dict = {'name': "Foo", 'birthday': author2.birthday}
+        self.assertEqual(birthday_widget.clean("Foo", row=row_dict), author2)
 
     def test_invalid_get_queryset(self):
         class BirthdayWidget(widgets.ForeignKeyWidget):
@@ -318,9 +359,9 @@ class ForeignKeyWidgetTest(TestCase):
                 )
 
         birthday_widget = BirthdayWidget(Author, 'name')
-        row = {'name': "Foo", 'age': 38}
+        row_dict = {'name': "Foo", 'age': 38}
         with self.assertRaises(TypeError):
-            birthday_widget.clean("Foo", row, row_number=1)
+            birthday_widget.clean("Foo", row=row_dict, row_number=1)
 
     def test_render_handles_value_error(self):
         class TestObj(object):
@@ -331,8 +372,41 @@ class ForeignKeyWidgetTest(TestCase):
         t = TestObj()
         self.widget = widgets.ForeignKeyWidget(mock.Mock(), "attr")
         self.assertIsNone(self.widget.render(t))
+    
+    def test_author_natural_key_clean(self):
+        """
+        Ensure that we can import an author by its natural key. Note that
+        this will always need to be an iterable.
+        Generally this will be rendered as a list.
+        """
+        self.assertEqual(
+            self.natural_key_author_widget.clean( json.dumps(self.author.natural_key()) ), self.author )
 
+    def test_author_natural_key_render(self):
+        """
+        Ensure we can render an author by its natural key. Natural keys will always be
+        tuples. 
+        """
+        self.assertEqual(
+            self.natural_key_author_widget.render(self.author), json.dumps(self.author.natural_key()) )    
+    
+    def test_book_natural_key_clean(self):
+        """
+        Use the book case to validate a composite natural key of book name and author
+        can be cleaned.
+        """
+        self.assertEqual(
+            self.natural_key_book_widget.clean( json.dumps(self.book.natural_key())), self.book
+        )
 
+    def test_book_natural_key_render(self):
+        """
+        Use the book case to validate a composite natural key of book name and author
+        can be rendered
+        """
+        self.assertEqual(
+            self.natural_key_book_widget.render(self.book), json.dumps(self.book.natural_key())
+        )
 
 class ManyToManyWidget(TestCase):
 

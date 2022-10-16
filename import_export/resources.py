@@ -41,6 +41,11 @@ def get_related_model(field):
     if hasattr(field, 'related_model'):
         return field.related_model
 
+def has_natural_foreign_key(model):
+    """
+    Determine if a model has natural foreign key functions
+    """
+    return (hasattr(model, "natural_key") and hasattr(model.objects, "get_by_natural_key"))
 
 class ResourceOptions:
     """
@@ -174,6 +179,21 @@ class ResourceOptions:
     DB Connection name to use for db transactions. If not provided,
     ``router.db_for_write(model)`` will be evaluated and if it's missing,
     DEFAULT_DB_ALIAS constant ("default") is used.
+    """
+
+    store_row_values = False
+    """
+    If True, each row's raw data will be stored in each row result.
+    Enabling this parameter will increase the memory usage during import
+    which should be considered when importing large datasets.
+    """
+
+    use_natural_foreign_keys = False
+    """
+    If True, use_natural_foreign_keys = True will be passed to all foreign
+    key widget fields whose models support natural foreign keys. That is,
+    the model has a natural_key function and the manager has a
+    get_by_natural_key function. 
     """
 
 
@@ -449,18 +469,24 @@ class Resource(metaclass=DeclarativeMetaclass):
         if errors:
             raise ValidationError(errors)
 
-    def save_instance(self, instance, using_transactions=True, dry_run=False):
+    def save_instance(self, instance, is_create, using_transactions=True, dry_run=False):
         """
         Takes care of saving the object to the database.
 
         Objects can be created in bulk if ``use_bulk`` is enabled.
+
+        :param instance: The instance of the object to be persisted.
+        :param is_create: A boolean flag to indicate whether this is a new object
+        to be created, or an existing object to be updated.
+        :param using_transactions: A flag to indicate whether db transactions are used.
+        :param dry_run: A flag to indicate dry-run mode.
         """
         self.before_save_instance(instance, using_transactions, dry_run)
         if self._meta.use_bulk:
-            if instance.pk:
-                self.update_instances.append(instance)
-            else:
+            if is_create:
                 self.create_instances.append(instance)
+            else:
+                self.update_instances.append(instance)
         else:
             if not using_transactions and dry_run:
                 # we don't have transactions and we want to do a dry_run
@@ -565,7 +591,7 @@ class Resource(metaclass=DeclarativeMetaclass):
         """
         return False
 
-    def skip_row(self, instance, original):
+    def skip_row(self, instance, original, row, import_validation_errors=None):
         """
         Returns ``True`` if ``row`` importing should be skipped.
 
@@ -576,7 +602,11 @@ class Resource(metaclass=DeclarativeMetaclass):
         will be None.
 
         When left unspecified, skip_diff and skip_unchanged both default to ``False``, 
-        and rows are never skipped. 
+        and rows are never skipped.
+
+        By default, rows are not skipped if validation errors have been detected
+        during import.  You can change this behavior and choose to ignore validation
+        errors by overriding this method.
 
         Override this method to handle skipping rows meeting certain
         conditions.
@@ -584,20 +614,30 @@ class Resource(metaclass=DeclarativeMetaclass):
         Use ``super`` if you want to preserve default handling while overriding
         ::
             class YourResource(ModelResource):
-                def skip_row(self, instance, original):
+                def skip_row(self, instance, original, row, import_validation_errors=None):
                     # Add code here
-                    return super(YourResource, self).skip_row(instance, original)
+                    return super().skip_row(instance, original, row, import_validation_errors=import_validation_errors)
 
         """
-        if not self._meta.skip_unchanged or self._meta.skip_diff:
+        if not self._meta.skip_unchanged or self._meta.skip_diff or import_validation_errors:
             return False
         for field in self.get_import_fields():
-            try:
-                # For fields that are models.fields.related.ManyRelatedManager
-                # we need to compare the results
-                if list(field.get_value(instance).all()) != list(field.get_value(original).all()):
+            # For fields that are models.fields.related.ManyRelatedManager
+            # we need to compare the results
+            if isinstance(field.widget, widgets.ManyToManyWidget):
+                # #1437 - handle m2m field not present in import file
+                if field.column_name not in row.keys():
+                    continue
+                # m2m instance values are taken from the 'row' because they
+                # have not been written to the 'instance' at this point
+                instance_values = list(field.clean(row))
+                original_values = list(field.get_value(original).all())
+                if len(instance_values) != len(original_values):
                     return False
-            except AttributeError:
+
+                if sorted(v.pk for v in instance_values) != sorted(v.pk for v in original_values):
+                    return False
+            else:
                 if field.get_value(instance) != field.get_value(original):
                     return False
         return True
@@ -655,6 +695,8 @@ class Resource(metaclass=DeclarativeMetaclass):
         """
         skip_diff = self._meta.skip_diff
         row_result = self.get_row_result_class()()
+        if self._meta.store_row_values:
+            row_result.row_values = row
         original = None
         try:
             self.before_import_row(row, **kwargs)
@@ -688,11 +730,12 @@ class Resource(metaclass=DeclarativeMetaclass):
                     # validate_instance(), where they can be combined with model
                     # instance validation errors if necessary
                     import_validation_errors = e.update_error_dict(import_validation_errors)
-                if self.skip_row(instance, original):
+
+                if self.skip_row(instance, original, row, import_validation_errors):
                     row_result.import_type = RowResult.IMPORT_TYPE_SKIP
                 else:
                     self.validate_instance(instance, import_validation_errors)
-                    self.save_instance(instance, using_transactions, dry_run)
+                    self.save_instance(instance, new, using_transactions, dry_run)
                     self.save_m2m(instance, row, using_transactions, dry_run)
                     row_result.add_instance_info(instance)
                 if not skip_diff:
@@ -1023,6 +1066,7 @@ class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
         'ManyToManyField': 'get_m2m_widget',
         'OneToOneField': 'get_fk_widget',
         'ForeignKey': 'get_fk_widget',
+        'CharField': widgets.CharWidget,
         'DecimalField': widgets.DecimalWidget,
         'DateTimeField': widgets.DateTimeWidget,
         'DateField': widgets.DateWidget,
@@ -1056,9 +1100,17 @@ class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
         """
         Prepare widget for fk and o2o fields
         """
+
+        model = get_related_model(field)
+
+        use_natural_foreign_keys = ( 
+            has_natural_foreign_key(model) and cls._meta.use_natural_foreign_keys
+        )
+
         return functools.partial(
             widgets.ForeignKeyWidget,
-            model=get_related_model(field))
+            model=model,
+            use_natural_foreign_keys=use_natural_foreign_keys)
 
     @classmethod
     def widget_from_django_field(cls, f, default=widgets.Widget):
@@ -1066,7 +1118,7 @@ class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
         Returns the widget that would likely be associated with each
         Django type.
 
-        Includes mapping of Postgres Array and JSON fields. In the case that
+        Includes mapping of Postgres Array field. In the case that
         psycopg2 is not installed, we consume the error and process the field
         regardless.
         """
@@ -1147,6 +1199,12 @@ class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
                         cursor.execute(line)
                 finally:
                     cursor.close()
+
+    @classmethod
+    def get_display_name(cls):
+        if hasattr(cls._meta, 'name'):
+            return cls._meta.name
+        return cls.__name__
 
 
 def modelresource_factory(model, resource_class=ModelResource):

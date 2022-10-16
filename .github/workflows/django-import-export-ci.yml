@@ -7,58 +7,34 @@ on:
   pull_request:
     branches:
     - main
+    # this is a temporary addition - can be removed after 3.0 release
+    - release-3-x
 
 jobs:
   test:
     runs-on: ubuntu-latest
     env:
-      USERNAME: testuser
-      PASSWD: ${{ secrets.TEST_PASSWD }}
+      DB_NAME: import_export
+      IMPORT_EXPORT_POSTGRESQL_USER: postgres
+      IMPORT_EXPORT_POSTGRESQL_PASSWORD: somepass
+      IMPORT_EXPORT_MYSQL_USER: root
+      IMPORT_EXPORT_MYSQL_PASSWORD: root
+      COVERAGE: 1
     strategy:
-      max-parallel: 4
+      fail-fast: true
       matrix:
-        db: [ sqlite, postgres, mysql ]
-        python-version: [ 3.7, 3.8, 3.9, "3.10" ]
-        django-version: [ 3.2, 4.0, main ]
-        include:
-          - db: postgres
-            db_port: 5432
-          - db: mysql
-            db_port: 3306
-        exclude:
-          - django-version: main
-            python-version: 3.7
-          - django-version: 4.0
-            python-version: 3.7
-          - django-version: 3.2
-            python-version: "3.10"
+        python-version:
+          - '3.7'
+          - '3.8'
+          - '3.9'
+          - '3.10'
     services:
-      mysql:
-        image: mysql:8.0
-        env:
-          IMPORT_EXPORT_TEST_TYPE: mysql-innodb
-          IMPORT_EXPORT_MYSQL_USER: ${{ env.TESTUSER }}
-          IMPORT_EXPORT_MYSQL_PASSWORD: ${{ env.PASSWD }}
-          MYSQL_USER: ${{ env.TESTUSER }}
-          MYSQL_PASSWORD: ${{ env.IMPORT_EXPORT_MYSQL_PASSWORD }}
-          MYSQL_ROOT_PASSWORD: root
-          MYSQL_DATABASE: import_export
-        ports:
-            - 3306:3306
-        options: >-
-          --health-cmd="mysqladmin ping"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=3
       postgres:
         image: postgres
         env:
-          IMPORT_EXPORT_TEST_TYPE: postgres
-          IMPORT_EXPORT_POSTGRESQL_USER: postgres
-          IMPORT_EXPORT_POSTGRESQL_PASSWORD: ${{ env.PASSWD }}
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: import_export
+          POSTGRES_USER: ${{ env.IMPORT_EXPORT_POSTGRESQL_USER }}
+          POSTGRES_PASSWORD: ${{ env.IMPORT_EXPORT_POSTGRESQL_PASSWORD }}
+          POSTGRES_DB: ${{ env.DB_NAME }}
         ports:
           - 5432:5432
         options: >-
@@ -66,53 +42,49 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-
     steps:
+    - name: Set up MySQL
+      run: >
+        sudo /etc/init.d/mysql start
+        
+        mysql -e 'CREATE DATABASE ${{ env.DB_NAME }};' 
+        -u${{ env.IMPORT_EXPORT_MYSQL_USER }}
+        -p${{ env.IMPORT_EXPORT_MYSQL_PASSWORD }}
     - name: Check out repository code
       uses: actions/checkout@v2
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Run isort checks
+    - name: isort
       uses: jamescurtin/isort-action@master
+    - uses: actions/cache@v2
       with:
-        sortPaths: "import_export tests"
-        configuration: "--check-only"
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('requirements/*.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
     - name: Install Dependencies
       run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements/base.txt
-        pip install -r requirements/test.txt
-    - if: matrix.django-version != 'main'
-      name: Upgrade Django version (release)
-      run: |
-        python -m pip install "Django~=${{ matrix.django-version }}.0"
-    - if: matrix.django-version == 'main'
-      name: Upgrade Django version (main)
-      run: |
-        python -m pip install "https://github.com/django/django/archive/main.tar.gz"
-    - name: List versions
-      run: |
-        echo "Python ${{ matrix.python-version }} -> Django ${{ matrix.django-version }}"
-        python --version
-        echo "Django `django-admin --version`"
-    - name: Run Tests
+        python -m pip install --upgrade pip 
+        pip install tox tox-py coverage coveralls
+    - name: Run tox targets for ${{ matrix.python-version }} (sqlite)
+      run: tox --py current
+    - name: Run tox targets for ${{ matrix.python-version }} (postgres)
+      run: tox --py current
       env:
-        DB: ${{ matrix.db }}
-        DB_HOST: 127.0.0.1
-        DB_PORT: ${{ matrix.db_port }}
-        DB_PASSWORD: ${{ env.PASSWD }}
-      run: >-
-        PYTHONPATH=".:tests:$PYTHONPATH" python
-        -W error::DeprecationWarning -W error::PendingDeprecationWarning
-        -m coverage run --omit='setup.py,./tests/*,./import_export/locale/*'
-        --source=. tests/manage.py test core --settings=
+        IMPORT_EXPORT_TEST_TYPE: postgres
+    - name: Run tox targets for ${{ matrix.python-version }} (mysql)
+      run: tox --py current
+      env:
+        IMPORT_EXPORT_TEST_TYPE: mysql-innodb
+    - name: Combine test coverage
+      run: coverage combine
     - name: Upload coverage data to coveralls.io
       run: coveralls --service=github
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        COVERALLS_FLAG_NAME: ${{ matrix.db }}-${{ matrix.django-version }}-${{ matrix.python-version }}
+        COVERALLS_FLAG_NAME: ${{ matrix.python-version }}
         COVERALLS_PARALLEL: true
 
   coveralls:

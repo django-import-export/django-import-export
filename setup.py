@@ -8,6 +8,7 @@ CLASSIFIERS = [
     'Framework :: Django',
     'Framework :: Django :: 3.2',
     'Framework :: Django :: 4.0',
+    'Framework :: Django :: 4.1',
     'Intended Audience :: Developers',
     'License :: OSI Approved :: BSD License',
     'Operating System :: OS Independent',
@@ -24,7 +25,7 @@ CLASSIFIERS = [
 install_requires = [
     'diff-match-patch',
     'Django>=3.2',
-    'tablib[html,ods,xls,xlsx,yaml]>=3.0.0',
+    'tablib[html,ods,xls,xlsx,yaml]>=3.2.1',
 ]
 
 
