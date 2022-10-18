@@ -7,62 +7,60 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-10-18 20:53+0100\n"
-"PO-Revision-Date: 2016-02-01 17:33+0100\n"
-"Last-Translator: Jannis <jvajen@gmail.com>\n"
+"POT-Creation-Date: 2022-10-17 17:33+0200\n"
+"PO-Revision-Date: 2022-10-17 17:42+0200\n"
+"Last-Translator: Jannis Vajen <jvajen@mailbox.org>\n"
 "Language-Team: \n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 1.8.4\n"
+"X-Generator: Poedit 3.1.1\n"
 
-#: admin.py:158
+#: admin.py:159
 #, python-format
 msgid "%s through import_export"
-msgstr ""
+msgstr "%s durch import_export"
 
-#: admin.py:164
+#: admin.py:165
 msgid "Import finished, with {} new and {} updated {}."
-msgstr ""
+msgstr "Import fertiggestellt, mit {} neuen und {} aktualisierten {}."
 
-#: admin.py:262
-#, fuzzy, python-format
-#| msgid "<h1>Imported file is not in unicode: %s</h1>"
+#: admin.py:263
+#, python-format
 msgid "<h1>Imported file has a wrong encoding: %s</h1>"
 msgstr "<h1>Importierte Datei hat die falsche Zeichenkodierung: %s</h1>"
 
-#: admin.py:264
-#, fuzzy, python-format
-#| msgid "<h1>%s encountred while trying to read file: %s</h1>"
+#: admin.py:265
+#, python-format
 msgid "<h1>%s encountered while trying to read file: %s</h1>"
 msgstr "<h1>%s trat auf beim Versuch die Datei zu lesen: %s</h1>"
 
-#: admin.py:295 templates/admin/import_export/change_list_import_item.html:5
-#: templates/admin/import_export/import.html:10
+#: admin.py:297 templates/admin/import_export/change_list_import_item.html:5
+#: templates/admin/import_export/import.html:11
 msgid "Import"
 msgstr "Importieren"
 
-#: admin.py:429 templates/admin/import_export/change_list_export_item.html:5
+#: admin.py:438 templates/admin/import_export/change_list_export_item.html:5
 #: templates/admin/import_export/export.html:7
 msgid "Export"
 msgstr "Exportieren"
 
-#: admin.py:490
+#: admin.py:499
 msgid "You must select an export format."
 msgstr "Es muss ein Exportformat ausgewählt werden."
 
-#: admin.py:513
+#: admin.py:522
 #, python-format
 msgid "Export selected %(verbose_name_plural)s"
 msgstr "Ausgewählte %(verbose_name_plural)s exportieren"
 
-#: forms.py:10
+#: forms.py:11
 msgid "File to import"
 msgstr "Zu importierende Datei"
 
-#: forms.py:13 forms.py:41 forms.py:66
+#: forms.py:14 forms.py:56 forms.py:81
 msgid "Format"
 msgstr "Dateiformat"
 
@@ -71,11 +69,11 @@ msgid "Home"
 msgstr "Start"
 
 #: templates/admin/import_export/export.html:31
-#: templates/admin/import_export/import.html:52
+#: templates/admin/import_export/import.html:53
 msgid "Submit"
 msgstr "Absenden"
 
-#: templates/admin/import_export/import.html:20
+#: templates/admin/import_export/import.html:21
 msgid ""
 "Below is a preview of data to be imported. If you are satisfied with the "
 "results, click 'Confirm import'"
@@ -83,58 +81,60 @@ msgstr ""
 "Unten befindet sich eine Vorschau der zu importierenden Daten. Wenn die "
 "Ergebnisse zufriedenstellend sind, klicke auf \"Import bestätigen\"."
 
-#: templates/admin/import_export/import.html:23
+#: templates/admin/import_export/import.html:24
 msgid "Confirm import"
 msgstr "Import bestätigen"
 
-#: templates/admin/import_export/import.html:31
+#: templates/admin/import_export/import.html:32
 msgid "This importer will import the following fields: "
-msgstr "Es werden die folgenden Felder importiert:"
+msgstr "Es werden die folgenden Felder importiert: "
 
-#: templates/admin/import_export/import.html:61
-#: templates/admin/import_export/import.html:90
+#: templates/admin/import_export/import.html:62
+#: templates/admin/import_export/import.html:91
 msgid "Errors"
 msgstr "Fehler"
 
-#: templates/admin/import_export/import.html:72
+#: templates/admin/import_export/import.html:73
 msgid "Line number"
 msgstr "Zeilennummer"
 
-#: templates/admin/import_export/import.html:82
+#: templates/admin/import_export/import.html:83
 msgid "Some rows failed to validate"
-msgstr ""
+msgstr "Die Validierung einiger Zeilen schlug fehl"
 
-#: templates/admin/import_export/import.html:84
+#: templates/admin/import_export/import.html:85
 msgid ""
 "Please correct these errors in your data where possible, then reupload it "
 "using the form above."
 msgstr ""
+"Bitte korrigiere falls möglich diese Fehler in deiner Datei und lade sie "
+"anschließend erneut mit dem obigen Formular hoch."
 
-#: templates/admin/import_export/import.html:89
+#: templates/admin/import_export/import.html:90
 msgid "Row"
-msgstr ""
+msgstr "Zeile"
 
-#: templates/admin/import_export/import.html:116
+#: templates/admin/import_export/import.html:117
 msgid "Non field specific"
-msgstr ""
+msgstr "Nicht feldspezifisch"
 
-#: templates/admin/import_export/import.html:137
+#: templates/admin/import_export/import.html:138
 msgid "Preview"
 msgstr "Vorschau"
 
-#: templates/admin/import_export/import.html:152
+#: templates/admin/import_export/import.html:153
 msgid "New"
 msgstr "Neu"
 
-#: templates/admin/import_export/import.html:154
+#: templates/admin/import_export/import.html:155
 msgid "Skipped"
 msgstr "Übersprungen"
 
-#: templates/admin/import_export/import.html:156
+#: templates/admin/import_export/import.html:157
 msgid "Delete"
 msgstr "Löschen"
 
-#: templates/admin/import_export/import.html:158
+#: templates/admin/import_export/import.html:159
 msgid "Update"
 msgstr "Überschreiben"
 
