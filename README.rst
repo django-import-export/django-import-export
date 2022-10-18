@@ -26,9 +26,6 @@ django-import-export
 django-import-export is a Django application and library for importing
 and exporting data with included admin integration.
 
-**django-import-export release 3 is currently in beta** (`pypi <https://pypi.org/project/django-import-export/3.0.0b4/>`_).
-List of planned changes is `here <https://github.com/django-import-export/django-import-export/blob/release-3-x/docs/changelog.rst>`_.
-
 Features:
 
 * support multiple formats (Excel, CSV, JSON, ...

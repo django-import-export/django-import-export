@@ -7,8 +7,6 @@ on:
   pull_request:
     branches:
     - main
-    # this is a temporary addition - can be removed after 3.0 release
-    - release-3-x
 
 jobs:
   test:
