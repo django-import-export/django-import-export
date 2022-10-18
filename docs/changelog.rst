@@ -1,7 +1,7 @@
 Changelog
 =========
 
-3.0.1 (unreleased)
+3.0.1 (2022-10-18)
 ------------------
 
 - Updated `django-import-export-ci.yml` to fix node.js deprecation
