@@ -4,7 +4,9 @@ Changelog
 3.0.1 (unreleased)
 ------------------
 
+- Updated `django-import-export-ci.yml` to fix node.js deprecation
 - bugfix: `DateTimeWidget.clean()` handles tz aware datetime (#1499)
+- Updated translations for v3.0.0 release (#1500)
 
 3.0.0 (2022-10-18)
 ------------------
