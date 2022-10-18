@@ -1,42 +1,14 @@
 Changelog
 =========
 
-3.0.0-beta.5 (unreleased)
--------------------------
+3.0.1 (unreleased)
+------------------
 
-- bugfix: `skip_row()` fix crash when model has m2m field and none is provided in upload (#1439)
-- Fix deprecation in example application: Added support for transitional form renderer (#1451)
-- Allow custom `change_list_template` in admin views using mixins (#1483)
-- Added blocks to import template (#1488)
-- Fixed Makefile coverage: added `coverage combine`
-
-3.0.0-beta.4 (2022-05-17)
--------------------------
-
-- bugfix: `skip_row()` handles M2M field when UUID pk used
-- improve compatibility with previous ImportForm signature (#1434)
+- Nothing changed yet.
 
 
-3.0.0-beta.3 (2022-05-04)
--------------------------
-
-- Refactored form-related methods on `ImportMixin` / `ExportMixin` (#1147)
-
-3.0.0-beta.2 (2022-04-21)
--------------------------
-
-- Fix broken link to tablib formats page (#1418)
-- Fix broken image ref in `README.rst`
-- Include custom form media in templates (#1038)
-- Remove unnecessary files generated when running tox locally (#1426)
-
-3.0.0-beta.1 (2022-04-11)
--------------------------
-
-- Fixed handling of LF character when using `CacheStorage` (#1417)
-
-3.0.0-beta (2022-04-09)
------------------------
+3.0.0 (2022-10-18)
+------------------
 
 Breaking changes
 ################
@@ -89,6 +61,23 @@ Enhancements
 - Added option to store raw row values in each row's `RowResult` (#1393)
 - Add natural key support to `ForeignKeyWidget` (#1371)
 - Optimised default instantiation of `CharWidget` (#1414)
+- Allow custom `change_list_template` in admin views using mixins (#1483)
+- Added blocks to import template (#1488)
+- improve compatibility with previous ImportForm signature (#1434)
+- Refactored form-related methods on `ImportMixin` / `ExportMixin` (#1147)
+- Include custom form media in templates (#1038)
+- Remove unnecessary files generated when running tox locally (#1426)
+
+Fixes
+#####
+
+- Fixed Makefile coverage: added `coverage combine`
+- Fixed handling of LF character when using `CacheStorage` (#1417)
+- bugfix: `skip_row()` handles M2M field when UUID pk used
+- Fix broken link to tablib formats page (#1418)
+- Fix broken image ref in `README.rst`
+- bugfix: `skip_row()` fix crash when model has m2m field and none is provided in upload (#1439)
+- Fix deprecation in example application: Added support for transitional form renderer (#1451)
 
 Development
 ###########

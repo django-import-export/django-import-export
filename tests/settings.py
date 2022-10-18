@@ -65,6 +65,7 @@ if os.environ.get('IMPORT_EXPORT_TEST_TYPE') == 'mysql-innodb':
             'TEST': {
                 'CHARSET': 'utf8',
                 'COLLATION': 'utf8_general_ci',
+                'NAME': 'test_import_export'
             }
         }
     }

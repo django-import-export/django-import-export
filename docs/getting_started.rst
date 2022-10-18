@@ -488,8 +488,9 @@ two-step process).
 
 To use your customized form(s), change the respective attributes on your
 ``ModelAdmin`` class:
+
 * :attr:`~import_export.admin.ImportMixin.import_form_class`
-* :attr:`~import_export.admin.ImportMixin.confirm_form_class`.
+* :attr:`~import_export.admin.ImportMixin.confirm_form_class`
 
 For example, imagine you want to import books for a specific author. You can
 extend the import forms to include ``author`` field to select the author from.

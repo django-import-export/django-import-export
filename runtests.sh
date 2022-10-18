@@ -1,8 +1,9 @@
 #!/usr/bin/env sh
 
-# run tests against all supported databases
+# run tests against all supported databases using tox
 # postgres / mysql run via docker
 # sqlite (default) runs against local database file (database.db)
+# use pyenv or similar to install multiple python instances
 
 export DJANGO_SETTINGS_MODULE=settings
 
@@ -14,6 +15,9 @@ export IMPORT_EXPORT_MYSQL_PASSWORD=mysqluserpass
 
 echo "starting local database instances"
 docker-compose -f tests/docker-compose.yml up -d
+
+echo "waiting for db initialization"
+sleep 45
 
 echo "running tests (sqlite)"
 tox
