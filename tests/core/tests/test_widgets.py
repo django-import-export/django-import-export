@@ -151,6 +151,11 @@ class DateTimeWidgetTest(TestCase):
         target_dt = timezone.make_aware(self.datetime, pytz.timezone('Europe/Ljubljana'))
         self.assertEqual(target_dt, self.widget.clean(self.datetime))
 
+    @override_settings(USE_TZ=True, TIME_ZONE='Europe/Ljubljana')
+    def test_clean_handles_tz_aware_datetime(self):
+        self.datetime = datetime(2012, 8, 13, 18, 0, 0, tzinfo=pytz.timezone('UTC'))
+        self.assertEqual(self.datetime, self.widget.clean(self.datetime))
+
     @override_settings(DATETIME_INPUT_FORMATS=None)
     def test_default_format(self):
         self.widget = widgets.DateTimeWidget()

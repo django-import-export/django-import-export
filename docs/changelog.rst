@@ -4,8 +4,7 @@ Changelog
 3.0.1 (unreleased)
 ------------------
 
-- Nothing changed yet.
-
+- bugfix: `DateTimeWidget.clean()` handles tz aware datetime (#1499)
 
 3.0.0 (2022-10-18)
 ------------------

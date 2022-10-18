@@ -222,7 +222,7 @@ class DateTimeWidget(Widget):
                 except (ValueError, TypeError):
                     continue
         if dt:
-            if settings.USE_TZ:
+            if settings.USE_TZ and timezone.is_naive(dt):
                 dt = timezone.make_aware(dt)
             return dt
         raise ValueError("Enter a valid date/time.")
