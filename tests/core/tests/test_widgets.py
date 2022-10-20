@@ -6,7 +6,7 @@ from unittest import mock, skipUnless
 import django
 import pytz
 from core.models import Author, Book, Category
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.test.utils import override_settings
 from django.utils import timezone
 
@@ -523,3 +523,19 @@ class SimpleArrayWidgetTest(TestCase):
         v = ["a", "b", "c"]
         s = "a,b,c"
         self.assertEqual(s, self.widget.render(v))
+
+class FloatWidgetTest(TestCase):
+    def setUp(self):
+        self.widget = widgets.FloatWidget()
+
+    @override_settings(LANGUAGE_CODE='fr-fr')
+    def test_locale_render(self):
+        self.assertEqual("1,25", self.widget.render(1.25))
+
+class DecimalWidgetTest(TestCase):
+    def setUp(self):
+        self.widget = widgets.DecimalWidget()
+
+    @override_settings(LANGUAGE_CODE='fr-fr')
+    def test_locale_render(self):
+        self.assertEqual("1,25", self.widget.render(1.25))
