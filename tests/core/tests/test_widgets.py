@@ -264,7 +264,7 @@ class FloatWidgetTest(TestCase):
         self.assertEqual(self.widget.clean(11.111), self.value)
 
     def test_render(self):
-        self.assertEqual(self.widget.render(self.value), self.value)
+        self.assertEqual(self.widget.render(self.value), "11.111")
 
     def test_clean_string_zero(self):
         self.assertEqual(self.widget.clean("0"), 0.0)
@@ -274,6 +274,10 @@ class FloatWidgetTest(TestCase):
         self.assertEqual(self.widget.clean(""), None)
         self.assertEqual(self.widget.clean(" "), None)
         self.assertEqual(self.widget.clean("\r\n\t"), None)
+
+    @override_settings(LANGUAGE_CODE='fr-fr')
+    def test_locale_render(self):
+        self.assertEqual("11,111", self.widget.render(self.value))
 
 
 class DecimalWidgetTest(TestCase):
@@ -287,7 +291,7 @@ class DecimalWidgetTest(TestCase):
         self.assertEqual(self.widget.clean(11.111), self.value)
 
     def test_render(self):
-        self.assertEqual(self.widget.render(self.value), self.value)
+        self.assertEqual(self.widget.render(self.value), "11.111")
 
     def test_clean_string_zero(self):
         self.assertEqual(self.widget.clean("0"), Decimal("0"))
@@ -297,6 +301,10 @@ class DecimalWidgetTest(TestCase):
         self.assertEqual(self.widget.clean(""), None)
         self.assertEqual(self.widget.clean(" "), None)
         self.assertEqual(self.widget.clean("\r\n\t"), None)
+
+    @override_settings(LANGUAGE_CODE='fr-fr')
+    def test_locale_render(self):
+        self.assertEqual("11,111", self.widget.render(self.value))
 
 
 class IntegerWidgetTest(TestCase):
@@ -523,19 +531,3 @@ class SimpleArrayWidgetTest(TestCase):
         v = ["a", "b", "c"]
         s = "a,b,c"
         self.assertEqual(s, self.widget.render(v))
-
-class FloatWidgetTest(TestCase):
-    def setUp(self):
-        self.widget = widgets.FloatWidget()
-
-    @override_settings(LANGUAGE_CODE='fr-fr')
-    def test_locale_render(self):
-        self.assertEqual("1,25", self.widget.render(1.25))
-
-class DecimalWidgetTest(TestCase):
-    def setUp(self):
-        self.widget = widgets.DecimalWidget()
-
-    @override_settings(LANGUAGE_CODE='fr-fr')
-    def test_locale_render(self):
-        self.assertEqual("1,25", self.widget.render(1.25))
