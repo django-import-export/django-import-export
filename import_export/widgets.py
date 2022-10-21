@@ -11,6 +11,7 @@ from django.utils.dateparse import parse_duration
 from django.utils.encoding import force_str, smart_str
 from django.utils.translation import get_language, to_locale
 
+
 def format_number(value):
     locale.setlocale(
         locale.LC_NUMERIC,
