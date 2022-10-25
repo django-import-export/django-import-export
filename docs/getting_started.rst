@@ -415,22 +415,10 @@ mixins (:class:`~import_export.admin.ImportMixin`,
 
    A screenshot of the change view with Import and Export buttons.
 
-.. _confirm-import-figure:
-
-.. figure:: _static/images/django-import-export-import.png
-
-   A screenshot of the import view.
-
-.. figure:: _static/images/django-import-export-import-confirm.png
-
-   A screenshot of the confirm import view.
-
-
 .. warning::
 
     The `resource_class` parameter was deprecated in `django-import-export` 3.0.
     Assign list or tuple with Resource(s) to `resource_classes` parameter now.
-
 
 
 Exporting via admin action
@@ -475,6 +463,16 @@ To do this subclass :class:`~import_export.admin.ImportExportModelAdmin` or use
 one of the available mixins, i.e. :class:`~import_export.admin.ImportMixin`, or
 :class:`~import_export.admin.ImportExportMixin`. Customizations are, of course,
 possible.
+
+.. _confirm-import-figure:
+
+.. figure:: _static/images/django-import-export-import.png
+
+   A screenshot of the import view.
+
+.. figure:: _static/images/django-import-export-import-confirm.png
+
+   A screenshot of the confirm import view.
 
 
 Customize admin import forms

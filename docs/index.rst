@@ -33,6 +33,7 @@ exporting data with included admin integration.
    bulk_import
    celery
    testing
+   faq
    changelog
 
 .. toctree::
@@ -47,6 +48,12 @@ exporting data with included admin integration.
    api_tmp_storages
    api_results
    api_forms
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Developers
+
+   contributing
 
 
 .. _`tablib`: https://github.com/jazzband/tablib

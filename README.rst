@@ -23,6 +23,9 @@ django-import-export
 .. image:: https://img.shields.io/pypi/djversions/django-import-export
     :alt: PyPI - Django Version
 
+.. image:: https://img.shields.io/badge/Contributo
+    :alt: Contributor Covenant
+
 django-import-export is a Django application and library for importing
 and exporting data with included admin integration.
 
@@ -62,14 +65,9 @@ To run the demo app::
 Contribute
 ----------
 
-If you'd like to contribute, simply fork `the repository`_, commit your
-changes to the **develop** branch (or branch off of it), and send a pull
-request. Make sure you add yourself to AUTHORS_.
-
-As most projects, we try to follow PEP8_ as closely as possible. Please bear
-in mind that most pull requests will be rejected without proper unit testing.
+Please refer to `contribution guidelines CONTRIBUTE`_.
 
 .. _`PEP8`: https://www.python.org/dev/peps/pep-0008/
 .. _`tablib`: https://github.com/jazzband/tablib
 .. _`the repository`: https://github.com/django-import-export/django-import-export/
-.. _AUTHORS: https://github.com/django-import-export/django-import-export/blob/master/AUTHORS
+.. _CONTRIBUTE: https://django-import-export.readthedocs.io/en/latest/contributing.html
