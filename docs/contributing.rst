@@ -23,14 +23,25 @@ Philosophy
 
 * django-import-export's git main branch should always be stable, production-ready & passing all tests.
 
+.. _question:
+
+Questions
+---------
+
+For general questions about usage, we recommend posting to Stack Overflow, using the `django-import-export <https://stackoverflow.com/questions/tagged/django-import-export/>`_ tag.  Please search existing answers to see if any match your problem.  If not, post a new question including as much relevant detail as you can.  See `how to ask <https://stackoverflow.com/help/how-to-ask/>`_ for more details.
+
+For questions about the internals of the library, please raise an `issue <https://github.com/django-import-export/django-import-export/issues/>`_ and use the 'question' workflow.
+
+* First check to see if there is an existing issue which answers your question.
+
+* Remember to include as much detail as you can so that your question is answered in a timely manner.
 
 Guidelines For Reporting An Issue/Feature
 -----------------------------------------
 
-So you've found a bug or have a great idea for a feature. Here's the steps you should take to help get it added/fixed in django-import-export:
+So you've found a bug or have a great idea for a feature. Here are the steps you should take to help get it added/fixed in django-import-export:
 
-* First, check to see if there's an existing `issue <https://github.com/django-import-export/django-import-export/issues/>`_ or `pull request <https://github.com/django-import-export/django-import-export/pulls/>`_ for the
-  bug/feature.
+* First, check to see if there's an existing `issue <https://github.com/django-import-export/django-import-export/issues/>`_ or `pull request <https://github.com/django-import-export/django-import-export/pulls/>`_ for the bug/feature.
 
 * If there isn't one there, please file an issue. The ideal report includes:
 
@@ -48,16 +59,20 @@ So you've found a bug or have a great idea for a feature. Here's the steps you s
 
     * django-import-export
 
-    * Optionally of the other dependencies involved
+    * Optionally any of the other dependencies involved
 
-  * Ideally, creating a pull request with a (failing) test case demonstrating what's wrong. This makes it easy for us to reproduce & fix the problem.
-
+  * Ideally, creating a pull request with a (failing) test case demonstrating what's wrong. This makes it easy for us to reproduce and fix the problem.
 
 Guidelines For Contributing Code
 --------------------------------
 
-If you're ready to take the plunge & contribute back some code/docs, the
-process should look like:
+If you're ready to take the plunge and contribute back some code or documentation please consider the following:
+
+* Search existing issues and PRs to see if there are already any similar proposals.
+
+* For substantial changes, we recommend raising a question_ first so that we can offer any advice or pointers based on previous experience.
+
+the process should look like:
 
 * Fork the project on GitHub into your own account.
 
@@ -69,9 +84,9 @@ process should look like:
 
 * Again, ensure there isn't already an issue or pull request out there on it.
 
-  * If there is & you feel you have a better fix, please take note of the issue number & mention it in your pull request.
+  * If there is and you feel you have a better fix, please take note of the issue number and mention it in your pull request.
 
-* Create a new pull request (based on your branch), including what the problem/feature is, versions of your software & referencing any related issues/pull requests.
+* Create a new pull request (based on your branch), including what the problem/feature is, versions of your software and referencing any related issues/pull requests.
 
 In order to be merged into django-import-export, contributions must have the following:
 
