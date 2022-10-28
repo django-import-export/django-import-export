@@ -9,15 +9,8 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.utils import timezone
 from django.utils.dateparse import parse_duration
 from django.utils.encoding import force_str, smart_str
-from django.utils.translation import get_language, to_locale
+from django.utils.formats import number_format
 
-
-def format_number(value):
-    locale.setlocale(
-        locale.LC_NUMERIC,
-        to_locale(get_language())
-    )
-    return locale.str(value)
 
 def format_datetime(value, datetime_format):
     # conditional logic to handle correct formatting of dates
@@ -86,7 +79,7 @@ class FloatWidget(NumberWidget):
         return float(value)
 
     def render(self, value, obj=None):
-        return format_number(value)
+        return number_format(value)
 
 
 class IntegerWidget(NumberWidget):
@@ -111,7 +104,7 @@ class DecimalWidget(NumberWidget):
         return Decimal(force_str(value))
 
     def render(self, value, obj=None):
-        return format_number(float(value))
+        return number_format(float(value))
 
 
 class CharWidget(Widget):

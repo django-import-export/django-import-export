@@ -260,6 +260,10 @@ class FloatWidgetTest(TestCase):
         self.value = 11.111
         self.widget = widgets.FloatWidget()
 
+        self.locale_settings = {'LANGUAGE_CODE': 'fr-fr'}
+        if django.VERSION[0] <= 3:
+            self.locale_settings['USE_L10N'] = True
+
     def test_clean(self):
         self.assertEqual(self.widget.clean(11.111), self.value)
 
@@ -275,8 +279,14 @@ class FloatWidgetTest(TestCase):
         self.assertEqual(self.widget.clean(" "), None)
         self.assertEqual(self.widget.clean("\r\n\t"), None)
 
+    @skipUnless(django.VERSION[0] < 4, f"skipping django {django.VERSION} version specific test")
+    @override_settings(LANGUAGE_CODE='fr-fr', USE_L10N=True)
+    def test_locale_render_lt_django4(self):
+        self.assertEqual("11,111", self.widget.render(self.value))
+
+    @skipUnless(django.VERSION[0] >= 4, f"skipping django {django.VERSION} version specific test")
     @override_settings(LANGUAGE_CODE='fr-fr')
-    def test_locale_render(self):
+    def test_locale_render_gte_django4(self):
         self.assertEqual("11,111", self.widget.render(self.value))
 
 
@@ -302,8 +312,14 @@ class DecimalWidgetTest(TestCase):
         self.assertEqual(self.widget.clean(" "), None)
         self.assertEqual(self.widget.clean("\r\n\t"), None)
 
+    @skipUnless(django.VERSION[0] < 4, f"skipping django {django.VERSION} version specific test")
+    @override_settings(LANGUAGE_CODE='fr-fr', USE_L10N=True)
+    def test_locale_render_lt_django4(self):
+        self.assertEqual("11,111", self.widget.render(self.value))
+
+    @skipUnless(django.VERSION[0] >= 4, f"skipping django {django.VERSION} version specific test")
     @override_settings(LANGUAGE_CODE='fr-fr')
-    def test_locale_render(self):
+    def test_locale_render_gte_django4(self):
         self.assertEqual("11,111", self.widget.render(self.value))
 
 
