@@ -30,10 +30,14 @@ Common issues
 key error 'id' in ``get_import_id_fields()``
 --------------------------------------------
 
-When attempting to import, this error can be seen.  This indicates that the ``Resource`` has not been configured correctly, and the import logic fails.  A more detailed discussion is provided `here <https://stackoverflow.com/a/69347073/39296/>`_
+When attempting to import, this error can be seen.  This indicates that the ``Resource`` has not been configured correctly, and the import logic fails.  A more detailed discussion is provided `here <https://stackoverflow.com/a/69347073/39296/>`_.
 
 How to handle double-save from Signals
 --------------------------------------
+
+#1078
+
+https://stackoverflow.com/a/71625152/39296
 
 How to dynamically set column name
 ----------------------------------
@@ -58,3 +62,10 @@ How to hide stack trace in UI error messages
 --------------------------------------------
 
 - https://github.com/django-import-export/django-import-export/issues/1257#issuecomment-952276485
+
+Ids incremented twice during import
+-----------------------------------
+
+https://github.com/django-import-export/django-import-export/issues/560
+
+https://wiki.postgresql.org/wiki/FAQ#Why_are_there_gaps_in_the_numbering_of_my_sequence.2FSERIAL_column.3F_Why_aren.27t_my_sequence_numbers_reused_on_transaction_abort.3F
