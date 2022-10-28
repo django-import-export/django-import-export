@@ -260,10 +260,6 @@ class FloatWidgetTest(TestCase):
         self.value = 11.111
         self.widget = widgets.FloatWidget()
 
-        self.locale_settings = {'LANGUAGE_CODE': 'fr-fr'}
-        if django.VERSION[0] <= 3:
-            self.locale_settings['USE_L10N'] = True
-
     def test_clean(self):
         self.assertEqual(self.widget.clean(11.111), self.value)
 
