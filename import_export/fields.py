@@ -17,7 +17,7 @@ class Field:
         this field in the export.
 
     :param widget: Defines a widget that will be used to represent this
-        field's data in the export.
+        field's data in the export, or transform the value during import.
 
     :param readonly: A Boolean which defines if this field will be ignored
         during import.
