@@ -5,6 +5,7 @@ Changelog
 ------------------
 
 - Support Python 3.11
+- use ``get_list_select_related`` in ``ExportMixin``
 
 3.0.1 (2022-10-18)
 ------------------
