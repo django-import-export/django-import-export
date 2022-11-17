@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-10-18 14:58+0100\n"
+"POT-Creation-Date: 2022-11-17 18:28-0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Hristo Gatsinski <gatsinski@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -38,16 +38,16 @@ msgstr ""
 msgid "Import"
 msgstr "Импортиране"
 
-#: admin.py:714 templates/admin/import_export/change_list_export_item.html:5
+#: admin.py:715 templates/admin/import_export/change_list_export_item.html:5
 #: templates/admin/import_export/export.html:12
 msgid "Export"
 msgstr "Експортиране"
 
-#: admin.py:777
+#: admin.py:778
 msgid "You must select an export format."
 msgstr "Трябва да изберете формат за експортиране."
 
-#: admin.py:800
+#: admin.py:801
 #, python-format
 msgid "Export selected %(verbose_name_plural)s"
 msgstr "Експортиране на избраните %(verbose_name_plural)s"
@@ -69,14 +69,18 @@ msgid "Home"
 msgstr "Начало"
 
 #: templates/admin/import_export/export.html:36
-#: templates/admin/import_export/import.html:73
+#: templates/admin/import_export/import.html:74
 msgid "Submit"
 msgstr "Изпълни"
 
 #: templates/admin/import_export/import.html:30
+#, fuzzy
+#| msgid ""
+#| "Below is a preview of data to be imported. If you are satisfied with the "
+#| "results, click 'Confirm import'"
 msgid ""
 "Below is a preview of data to be imported. If you are satisfied with the "
-"results, click 'Confirm import'"
+"results, click 'Confirm import', if you want to go back, click 'Cancel'"
 msgstr ""
 "Отдолу виждате преглед на данните за импортиране. Ако сте доволни от "
 "резултата, изберете 'Потвърди импортирането'"
@@ -85,53 +89,57 @@ msgstr ""
 msgid "Confirm import"
 msgstr "Потвърди импортирането"
 
-#: templates/admin/import_export/import.html:43
+#: templates/admin/import_export/import.html:34
+msgid "Cancel"
+msgstr ""
+
+#: templates/admin/import_export/import.html:44
 msgid "This importer will import the following fields: "
 msgstr "Ще бъдат импортирани следните полета: "
 
-#: templates/admin/import_export/import.html:83
-#: templates/admin/import_export/import.html:114
+#: templates/admin/import_export/import.html:84
+#: templates/admin/import_export/import.html:115
 msgid "Errors"
 msgstr "Грешки"
 
-#: templates/admin/import_export/import.html:94
+#: templates/admin/import_export/import.html:95
 msgid "Line number"
 msgstr "Номер на реда"
 
-#: templates/admin/import_export/import.html:106
+#: templates/admin/import_export/import.html:107
 msgid "Some rows failed to validate"
 msgstr ""
 
-#: templates/admin/import_export/import.html:108
+#: templates/admin/import_export/import.html:109
 msgid ""
 "Please correct these errors in your data where possible, then reupload it "
 "using the form above."
 msgstr ""
 
-#: templates/admin/import_export/import.html:113
+#: templates/admin/import_export/import.html:114
 msgid "Row"
 msgstr ""
 
-#: templates/admin/import_export/import.html:140
+#: templates/admin/import_export/import.html:141
 msgid "Non field specific"
 msgstr ""
 
-#: templates/admin/import_export/import.html:163
+#: templates/admin/import_export/import.html:164
 msgid "Preview"
 msgstr "Преглед"
 
-#: templates/admin/import_export/import.html:178
+#: templates/admin/import_export/import.html:179
 msgid "New"
 msgstr "Нов"
 
-#: templates/admin/import_export/import.html:180
+#: templates/admin/import_export/import.html:181
 msgid "Skipped"
 msgstr "Пропуснат"
 
-#: templates/admin/import_export/import.html:182
+#: templates/admin/import_export/import.html:183
 msgid "Delete"
 msgstr "Изтрит"
 
-#: templates/admin/import_export/import.html:184
+#: templates/admin/import_export/import.html:185
 msgid "Update"
 msgstr "Обновен"

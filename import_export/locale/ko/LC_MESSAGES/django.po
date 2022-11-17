@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-10-18 14:58+0100\n"
+"POT-Creation-Date: 2022-11-17 18:28-0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Yeongkwang Yang <immutable000@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -38,16 +38,16 @@ msgstr ""
 msgid "Import"
 msgstr "가져오기"
 
-#: admin.py:714 templates/admin/import_export/change_list_export_item.html:5
+#: admin.py:715 templates/admin/import_export/change_list_export_item.html:5
 #: templates/admin/import_export/export.html:12
 msgid "Export"
 msgstr "내보내기"
 
-#: admin.py:777
+#: admin.py:778
 msgid "You must select an export format."
 msgstr "내보낼 형식을 선택해주세요."
 
-#: admin.py:800
+#: admin.py:801
 #, python-format
 msgid "Export selected %(verbose_name_plural)s"
 msgstr "선택한 %(verbose_name_plural)s 내보내기"
@@ -69,14 +69,18 @@ msgid "Home"
 msgstr ""
 
 #: templates/admin/import_export/export.html:36
-#: templates/admin/import_export/import.html:73
+#: templates/admin/import_export/import.html:74
 msgid "Submit"
 msgstr "제출"
 
 #: templates/admin/import_export/import.html:30
+#, fuzzy
+#| msgid ""
+#| "Below is a preview of data to be imported. If you are satisfied with the "
+#| "results, click 'Confirm import'"
 msgid ""
 "Below is a preview of data to be imported. If you are satisfied with the "
-"results, click 'Confirm import'"
+"results, click 'Confirm import', if you want to go back, click 'Cancel'"
 msgstr ""
 "다음은 불러올 데이터의 미리보기 입니다.데이터에 문제가 없다면 확인을 눌러 가"
 "져오기를 진행하세요."
@@ -85,53 +89,57 @@ msgstr ""
 msgid "Confirm import"
 msgstr "확인"
 
-#: templates/admin/import_export/import.html:43
+#: templates/admin/import_export/import.html:34
+msgid "Cancel"
+msgstr ""
+
+#: templates/admin/import_export/import.html:44
 msgid "This importer will import the following fields: "
 msgstr "다음의 필드를 가져옵니다: "
 
-#: templates/admin/import_export/import.html:83
-#: templates/admin/import_export/import.html:114
+#: templates/admin/import_export/import.html:84
+#: templates/admin/import_export/import.html:115
 msgid "Errors"
 msgstr "에러"
 
-#: templates/admin/import_export/import.html:94
+#: templates/admin/import_export/import.html:95
 msgid "Line number"
 msgstr "행 번호"
 
-#: templates/admin/import_export/import.html:106
+#: templates/admin/import_export/import.html:107
 msgid "Some rows failed to validate"
 msgstr "유효성 검증에 실패한 행이 있습니다."
 
-#: templates/admin/import_export/import.html:108
+#: templates/admin/import_export/import.html:109
 msgid ""
 "Please correct these errors in your data where possible, then reupload it "
 "using the form above."
 msgstr "에러를 수정한 후 파일을 다시 업로드 해주세요."
 
-#: templates/admin/import_export/import.html:113
+#: templates/admin/import_export/import.html:114
 msgid "Row"
 msgstr ""
 
-#: templates/admin/import_export/import.html:140
+#: templates/admin/import_export/import.html:141
 msgid "Non field specific"
 msgstr "지정된 필드 없음"
 
-#: templates/admin/import_export/import.html:163
+#: templates/admin/import_export/import.html:164
 msgid "Preview"
 msgstr "미리보기"
 
-#: templates/admin/import_export/import.html:178
+#: templates/admin/import_export/import.html:179
 msgid "New"
 msgstr "생성"
 
-#: templates/admin/import_export/import.html:180
+#: templates/admin/import_export/import.html:181
 msgid "Skipped"
 msgstr "넘어감"
 
-#: templates/admin/import_export/import.html:182
+#: templates/admin/import_export/import.html:183
 msgid "Delete"
 msgstr "삭제"
 
-#: templates/admin/import_export/import.html:184
+#: templates/admin/import_export/import.html:185
 msgid "Update"
 msgstr "갱신"
