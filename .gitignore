@@ -17,3 +17,7 @@ dist/
 .vscode
 
 tests/database.db
+
+# Virtual environments
+env/
+venv/
