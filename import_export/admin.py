@@ -1,5 +1,6 @@
 import warnings
 
+import codecs
 import django
 from django import forms
 from django.conf import settings
@@ -700,10 +701,13 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
                 file_format, queryset, request=request, encoding=self.to_encoding, export_form=form,
             )
             content_type = file_format.get_content_type()
-            response = HttpResponse(export_data, content_type=content_type)
+            response = HttpResponse(content_type=content_type)
             response['Content-Disposition'] = 'attachment; filename="%s"' % (
                 self.get_export_filename(request, queryset, file_format),
             )
+            if 'csv' in content_type:
+                response.write(codecs.BOM_UTF8)
+            response.write(export_data)
 
             post_export.send(sender=None, model=self.model)
             return response
