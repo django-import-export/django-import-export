@@ -97,7 +97,6 @@ Now you can add a constructor to your ``Resource`` to store the user reference, 
 Using this method, you can also dynamically set properties of the ``Field`` instance itself, including passing dynamic values to Widgets.  See `this issue <https://github.com/django-import-export/django-import-export/issues/1489/>`_ for more details.
 
 
-
 How to export from more than one table
 --------------------------------------
 
@@ -136,3 +135,8 @@ Foreign key is null when importing
 ----------------------------------
 
 https://github.com/django-import-export/django-import-export/issues/1461
+
+How to customize export data
+----------------------------
+
+https://stackoverflow.com/a/55046474/39296
