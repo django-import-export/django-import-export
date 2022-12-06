@@ -9,7 +9,6 @@ from django.contrib.auth import get_permission_codename
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import PermissionDenied
 from django.http import HttpResponse, HttpResponseRedirect
-from django.template.defaultfilters import escape
 from django.template.response import TemplateResponse
 from django.urls import path, reverse
 from django.utils.decorators import method_decorator
@@ -31,6 +30,8 @@ from .signals import post_export, post_import
 from .tmp_storages import MediaStorage, TempFolderStorage
 from .utils import original
 
+logger = logging.getLogger(__name__)
+
 
 class ImportExportMixinBase:
     def __init__(self, *args, **kwargs):
@@ -46,9 +47,14 @@ class ImportExportMixinBase:
         else:
             self.base_change_list_template = 'admin/change_list.html'
 
-        self.change_list_template = getattr(
-            self, 'import_export_change_list_template', None
-        )
+        try:
+            self.change_list_template = getattr(
+                self, 'import_export_change_list_template', None
+            )
+        except AttributeError:
+            # see issue 1521
+            logger.exception("failed to assign change_list_template attribute")
+
         if self.change_list_template is None:
             self.change_list_template = self.base_change_list_template
 

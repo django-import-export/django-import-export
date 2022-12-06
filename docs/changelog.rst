@@ -4,8 +4,7 @@ Changelog
 3.0.2 (unreleased)
 ------------------
 
-- Nothing changed yet.
-
+- bugfix: handle crash on start-up when `change_list_template` is a property
 
 3.0.1 (2022-10-18)
 ------------------
