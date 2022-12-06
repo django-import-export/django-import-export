@@ -614,6 +614,7 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
         """
         list_display = self.get_list_display(request)
         list_display_links = self.get_list_display_links(request, list_display)
+        list_select_related = self.get_list_select_related(request)
         list_filter = self.get_list_filter(request)
         search_fields = self.get_search_fields(request)
         if self.get_actions(request):
@@ -628,7 +629,7 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
             'list_filter': list_filter,
             'date_hierarchy': self.date_hierarchy,
             'search_fields': search_fields,
-            'list_select_related': self.list_select_related,
+            'list_select_related': list_select_related,
             'list_per_page': self.list_per_page,
             'list_max_show_all': self.list_max_show_all,
             'list_editable': self.list_editable,
