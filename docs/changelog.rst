@@ -4,7 +4,9 @@ Changelog
 3.0.2 (unreleased)
 ------------------
 
-- bugfix: handle crash on start-up when `change_list_template` is a property
+- Support Python 3.11 (#1508)
+- use ``get_list_select_related`` in ``ExportMixin`` (#1511)
+- bugfix: handle crash on start-up when ``change_list_template`` is a property (#1523)
 
 3.0.1 (2022-10-18)
 ------------------
