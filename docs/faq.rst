@@ -81,7 +81,7 @@ First of all, override the import kwargs method so that the request user is reta
             kwargs.update({"user": request.user})
             return kwargs
 
-Now you can add a constructor to your ``Resource`` to store the user reference, then override ```get_queryset()`` to return books for the organisation::
+Now you can add a constructor to your ``Resource`` to store the user reference, then override ``get_queryset()`` to return books for the organisation::
 
     class BookResource(ModelResource):
 
@@ -110,6 +110,7 @@ How to import imagefield in excel cell
 - https://stackoverflow.com/questions/74093994/django-import-export-imagefield-in-excel-cell
 
 - https://github.com/django-import-export/django-import-export/issues/90#issuecomment-729731655
+- https://github.com/django-import-export/django-import-export/issues/90#issuecomment-1336181454
 
 How to hide stack trace in UI error messages
 --------------------------------------------
@@ -140,3 +141,13 @@ How to customize export data
 ----------------------------
 
 https://stackoverflow.com/a/55046474/39296
+
+How to set export file encoding
+-------------------------------
+
+https://github.com/django-import-export/django-import-export/pull/1515
+
+How to create relation during import if it does not exist
+---------------------------------------------------------
+
+https://stackoverflow.com/questions/74562802/import-into-tables-from-django-import-export
