@@ -800,7 +800,7 @@ class ImportExportAdminIntegrationTest(TestCase):
                 return ["x"]
 
         TestImportCls()
-        mock_logger.exception.assert_called_once_with("failed to assign change_list_template attribute")
+        mock_logger.error.assert_called_once_with("failed to assign change_list_template attribute")
 
 
 class ConfirmImportEncodingTest(TestCase):

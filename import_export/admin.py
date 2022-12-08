@@ -37,7 +37,9 @@ logger = logging.getLogger(__name__)
 class ImportExportMixinBase:
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.init_change_list_template()
 
+    def init_change_list_template(self):
         # Store already set change_list_template to allow users to independently
         # customize the change list object tools. This treats the cases where
         # `self.change_list_template` is `None` (the default in `ModelAdmin`) or
