@@ -54,7 +54,7 @@ class ImportExportMixinBase:
             )
         except AttributeError:
             # see issue 1521
-            logger.exception("failed to assign change_list_template attribute")
+            logger.error("failed to assign change_list_template attribute")
 
         if self.change_list_template is None:
             self.change_list_template = self.base_change_list_template
