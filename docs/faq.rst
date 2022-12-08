@@ -151,3 +151,8 @@ How to create relation during import if it does not exist
 ---------------------------------------------------------
 
 https://stackoverflow.com/questions/74562802/import-into-tables-from-django-import-export
+
+How to handle large file uploads
+---------------------------------
+
+https://github.com/django-import-export/django-import-export/issues/1524
