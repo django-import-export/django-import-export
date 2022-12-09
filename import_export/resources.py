@@ -737,7 +737,7 @@ class Resource(metaclass=DeclarativeMetaclass):
                     self.validate_instance(instance, import_validation_errors)
                     self.save_instance(instance, new, using_transactions, dry_run)
                     self.save_m2m(instance, row, using_transactions, dry_run)
-                    row_result.add_instance_info(instance)
+                row_result.add_instance_info(instance)
                 if not skip_diff:
                     diff.compare_with(self, instance, dry_run)
 
