@@ -88,6 +88,11 @@ class ResourceTestCase(TestCase):
             MyResource.fields
         )
 
+    def test_kwargs(self):
+        target_kwargs = {"a": 1}
+        my_resource = MyResource(**target_kwargs)
+        self.assertEqual(my_resource.kwargs, target_kwargs)
+    
     def test_field_column_name(self):
         field = self.my_resource.fields['name']
         self.assertIn(field.column_name, 'name')

@@ -268,13 +268,14 @@ class Resource(metaclass=DeclarativeMetaclass):
     representations and handle importing and exporting data.
     """
 
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         # The fields class attribute is the *class-wide* definition of
         # fields. Because a particular *instance* of the class might want to
         # alter self.fields, we create self.fields here by copying cls.fields.
         # Instances should always modify self.fields; they should not modify
         # cls.fields.
         self.fields = deepcopy(self.fields)
+        self.kwargs = kwargs
 
         # lists to hold model instances in memory when bulk operations are enabled
         self.create_instances = list()
