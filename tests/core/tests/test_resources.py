@@ -987,7 +987,7 @@ class ModelResourceTest(TestCase):
         self.assertTrue(result.rows[0].diff)
         self.assertEqual(result.rows[0].import_type,
                          results.RowResult.IMPORT_TYPE_SKIP)
-        self.assertEqual(result.rows[0].object_id, cat1.pk)
+        self.assertEqual(result.rows[0].object_id, self.book.pk)
 
         # Test that we can suppress reporting of skipped rows
         resource._meta.report_skipped = False
