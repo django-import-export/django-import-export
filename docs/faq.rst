@@ -94,8 +94,40 @@ Now you can add a constructor to your ``Resource`` to store the user reference, 
         class Meta:
             model = Book
 
-Using this method, you can also dynamically set properties of the ``Field`` instance itself, including passing dynamic values to Widgets.  See `this issue <https://github.com/django-import-export/django-import-export/issues/1489/>`_ for more details.
+Using this method, you can also dynamically set properties of the ``Field`` instance itself, including passing dynamic values to Widgets::
 
+    class YourResource(ModelResource):
+
+      def __init__(self, company_name):
+          super().__init__()
+          self.fields["custom_field"] = fields.Field(
+              attribute="custom_field", column_name=company_name,
+              widget=MyCompanyWidget(company_name)
+          )
+
+How to set a value on all imported instances prior to persisting
+----------------------------------------------------------------
+
+TODO this may belong in import data workflow rst
+
+If you need to set the same value on each instance created during import then you can do so as follows.
+
+It might be that you want to set an object read using a user id on each instance to be persisted
+
+You can define your resource to take the associated instance as a param, and then set it on each import instance::
+
+    class YourResource(ModelResource):
+
+        def __init__(self, company):
+            self.company = company
+
+        def before_save_instance(self, instance, using_transactions, dry_run):
+            instance.company = self.company
+
+        class Meta:
+            model = YourModel
+
+See `this example <#how-to-dynamically-set-resource-values>`_ to see how to dynamically read request values.
 
 How to export from more than one table
 --------------------------------------
