@@ -8,6 +8,7 @@ Changelog
 - use ``get_list_select_related`` in ``ExportMixin`` (#1511)
 - bugfix: handle crash on start-up when ``change_list_template`` is a property (#1523)
 - bugfix: include instance info in row result when row is skipped (#1526)
+- bugfix: add ``**kwargs`` param to ``Resource`` constructor (#1527)
 
 3.0.1 (2022-10-18)
 ------------------

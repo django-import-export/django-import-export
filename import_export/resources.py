@@ -268,7 +268,12 @@ class Resource(metaclass=DeclarativeMetaclass):
     representations and handle importing and exporting data.
     """
 
-    def __init__(self):
+    def __init__(self, **kwargs):
+        """
+        kwargs:
+           An optional dict of kwargs.
+           Subclasses can use kwargs to pass dynamic values to enhance import / exports.
+        """
         # The fields class attribute is the *class-wide* definition of
         # fields. Because a particular *instance* of the class might want to
         # alter self.fields, we create self.fields here by copying cls.fields.
