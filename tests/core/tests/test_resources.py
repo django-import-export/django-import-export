@@ -48,6 +48,10 @@ class MyResource(resources.Resource):
     email = fields.Field()
     extra = fields.Field()
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.kwargs = kwargs
+
     class Meta:
         export_order = ('email', 'name')
 
