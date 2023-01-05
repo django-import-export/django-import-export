@@ -26,6 +26,9 @@ django-import-export
 .. image:: https://img.shields.io/badge/Contributo
     :alt: Contributor Covenant
 
+.. image:: https://static.pepy.tech/personalized-badge/django-import-export?period=week&units=international_system&left_color=black&right_color=blue&left_text=Downloads
+    :target: https://pepy.tech/project/django-import-export
+
 django-import-export is a Django application and library for importing
 and exporting data with included admin integration.
 

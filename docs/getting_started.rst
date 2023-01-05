@@ -5,7 +5,7 @@ Getting started
 Test data
 =========
 
-There are test data files which can be used for importing in the `test/core/exports` directory.
+There are test data files which can be used for importing in the `tests/core/exports` directory.
 
 The test models
 ===============
@@ -44,10 +44,10 @@ For example purposes, we'll use a simplified book app. Here is our
 
 .. _base-modelresource:
 
-Creating import-export resource
+Creating a resource
 ===============================
 
-To integrate `django-import-export` with our ``Book`` model, we will create a
+To integrate `import-export` with our ``Book`` model, we will create a
 :class:`~import_export.resources.ModelResource` class in ``admin.py`` that will
 describe how this resource can be imported or exported::
 
@@ -61,6 +61,65 @@ describe how this resource can be imported or exported::
         class Meta:
             model = Book
 
+Importing data
+==============
+
+Let's import some data!
+
+.. code-block:: python
+    :linenos:
+    :emphasize-lines: 4,5
+
+    >>> import tablib
+    >>> from import_export import resources
+    >>> from core.models import Book
+    >>> book_resource = resources.modelresource_factory(model=Book)()
+    >>> dataset = tablib.Dataset(['', 'New book'], headers=['id', 'name'])
+    >>> result = book_resource.import_data(dataset, dry_run=True)
+    >>> print(result.has_errors())
+    False
+    >>> result = book_resource.import_data(dataset, dry_run=False)
+
+In the fourth line we use :func:`~import_export.resources.modelresource_factory`
+to create a default :class:`~import_export.resources.ModelResource`.
+The ModelResource class created this way is equal to the one shown in the
+example in section :ref:`base-modelresource`.
+
+In fifth line a :class:`~tablib.Dataset` with columns ``id`` and ``name``, and
+one book entry, are created. A field for a primary key field (in this case,
+``id``) always needs to be present.
+
+In the rest of the code we first pretend to import data using
+:meth:`~import_export.resources.Resource.import_data` and ``dry_run`` set,
+then check for any errors and actually import data this time.
+
+.. seealso::
+
+    :doc:`/import_workflow`
+        for a detailed description of the import workflow and its customization options.
+
+Deleting data
+-------------
+
+To delete objects during import, implement the
+:meth:`~import_export.resources.Resource.for_delete` method on
+your :class:`~import_export.resources.Resource` class.
+
+The following is an example resource which expects a ``delete`` field in the
+dataset. An import using this resource will delete model instances for rows
+that have their column ``delete`` set to ``1``::
+
+    class BookResource(resources.ModelResource):
+        delete = fields.Field(widget=widgets.BooleanWidget())
+
+        def for_delete(self, row, instance):
+            return self.fields['delete'].clean(row)
+
+        class Meta:
+            model = Book
+
+
+
 Exporting data
 ==============
 
@@ -73,15 +132,24 @@ we can export books::
     id,name,author,author_email,imported,published,price,categories
     2,Some book,1,,0,2012-12-05,8.85,1
 
+
 Customize resource options
 ==========================
 
 By default :class:`~import_export.resources.ModelResource` introspects model
-fields and creates :class:`~import_export.fields.Field`-attributes with an
+fields and creates :class:`~import_export.fields.Field` attributes with an
 appropriate :class:`~import_export.widgets.Widget` for each field.
 
-To affect which model fields will be included in an import-export
-resource, use the ``fields`` option to whitelist fields::
+Fields are generated automatically by introspection on the declared model class.  The field defines the relationship between the resource we are importing (for example, a csv row) and the instance we want to update.  Typically, the row data will map onto a single model instance.  The row data will be set onto model attributes (including model relations) during the import process.
+
+In a simple case, the name of the row headers will map exactly onto the names of the model attributes, and the import process will handle this mapping.  In more complex cases, model attributes and row headers may differ, and we will need to declare explicitly declare this mapping. See :ref:`field_declaration` for more information.
+
+Declare import fields
+---------------------
+
+You can optionally use the ``fields`` declaration to affect which fields are handled during import.
+
+To affect which model fields will be included in a resource, use the ``fields`` option to whitelist fields::
 
     class BookResource(resources.ModelResource):
 
@@ -107,15 +175,10 @@ option::
             fields = ('id', 'name', 'author', 'price',)
             export_order = ('id', 'price', 'author', 'name')
 
-The default field for object identification is ``id``, you can optionally set
-which fields are used as the ``id`` when importing::
+.. _field_declaration:
 
-    class BookResource(resources.ModelResource):
-
-        class Meta:
-            model = Book
-            import_id_fields = ('isbn',)
-            fields = ('isbn', 'name', 'author', 'price',)
+Model relations
+---------------
 
 When defining :class:`~import_export.resources.ModelResource` fields it is
 possible to follow model relationships::
@@ -128,12 +191,209 @@ possible to follow model relationships::
 
 .. note::
 
-    Following relationship fields sets ``field`` as readonly, meaning
-    this field will be skipped when importing data.
+    Following relationship fields sets ``field`` as readonly, meaning this field will be skipped when importing data.  To understand how to import model relations, see :ref:`import_model_relations`.
 
-By default all records will be imported, even if no changes are detected. This
-can be changed setting the ``skip_unchanged`` option. Also, the
-``report_skipped`` option controls whether skipped records appear in the import
+Explicit field declaration
+--------------------------
+
+We can declare fields explicitly to give us more control over the relationship between the row and the model attribute.  In the example below, we use the ``attribute`` kwarg to define the model attribute, and ``column_name`` to define the column name (i.e. row header)::
+
+    from import_export.fields import Field
+
+    class BookResource(resources.ModelResource):
+        published = Field(attribute='published', column_name='published_date')
+
+        class Meta:
+            model = Book
+
+.. seealso::
+
+    :doc:`/api_fields`
+        Available field types and options.
+
+Field widgets
+=============
+
+A widget is an object associated with each field declaration.  The widget has two roles:
+
+1. Transform the raw import data into a python object which is associated with the instance (see :meth:`.clean`).
+2. Export persisted data into a suitable export format (see :meth:`.render`).
+
+There are widgets associated with character data, numeric values, dates, foreign keys.  You can also define your own widget and associate it with the field.
+
+A :class:`~import_export.resources.ModelResource` creates fields with a default widget for a given field type.  If the widget should be initialized with different arguments, this can be done via an explicit declaration or via the widgets dict.
+
+For example, the ``published`` field is overridden to use a different date format. This format will be used both for importing and exporting resource::
+
+    class BookResource(resources.ModelResource):
+        published = Field(attribute='published', column_name='published_date',
+            widget=DateWidget(format='%d.%m.%Y'))
+
+        class Meta:
+            model = Book
+
+Alternatively, widget parameters can be overridden using the widgets dict declaration::
+
+    class BookResource(resources.ModelResource):
+
+        class Meta:
+            model = Book
+            widgets = {
+                'published': {'format': '%d.%m.%Y'},
+            }
+
+.. seealso::
+
+    :doc:`/api_widgets`
+        available widget types and options.
+
+.. _import_model_relations:
+
+Importing model relations
+=========================
+
+If you are importing data for a model instance which has a foreign key relationship to another model, then this can be implemented as follows:
+
+Foreign Key relations
+---------------------
+
+``ForeignKeyWidget`` allows you to declare a reference to a related model.  For example, if we are importing a 'book' csv file, then we can have a single field which references an author by name.
+
+::
+
+  id,title,author
+  1,The Hobbit, J. R. R. Tolkien
+
+We would have to declare our ``BookResource`` to use the author name as the Foreign Key reference::
+
+        from import_export import fields, resources
+        from import_export.widgets import ForeignKeyWidget
+
+        class BookResource(resources.ModelResource):
+            author = fields.Field(
+                column_name='author',
+                attribute='author',
+                widget=ForeignKeyWidget(Author, field='name'))
+
+            class Meta:
+                model = Book
+                fields = ('author',)
+
+By default, ``ForeignKeyWidget`` will use 'pk' as the lookup field, hence we have to pass 'name' as the lookup field.  This relies on 'name' being a unique identifier for the related model instance.
+
+Refer to the :class:`~.ForeignKeyWidget` documentation for more detailed information.
+
+Many-to-many relations
+----------------------
+
+``ManyToManyWidget`` allows you to import m2m references.  For example, we can import associated categories with our book import.  The categories refer to existing data in a ``Category`` table, and are uniquely referenced by category name.  We use the pipe separator in the import file, which means we have to declare this in the ``ManyToManyWidget`` declaration.
+
+::
+
+  id,title,categories
+  1,The Hobbit,Fantasy|Classic|Movies
+
+::
+
+    class BookResource(resources.ModelResource):
+        categories = fields.Field(
+            column_name='categories',
+            attribute='categories',
+            widget=widgets.ManyToManyWidget(Category, field='name', separator='|')
+        )
+
+        class Meta:
+            model = Book
+
+Creating non existent relations
+-------------------------------
+
+The examples above rely on the relation data being present prior to the import.  It is a common use-case to create the data if it does not already exist.  It is possible to achieve this as follows::
+
+    class BookResource(resources.ModelResource):
+
+        def before_import_row(self, row, **kwargs):
+            author_name = row["author"]
+            Author.objects.get_or_create(name=author_name, defaults={"name": author_name})
+
+        class Meta:
+            model = Book
+
+The code above can be adapted to handle m2m relationships.
+
+You can also achieve similar by subclassing the widget :meth:`~import_export.widgets.ForeignKeyWidget.clean` method to create the object if it does not already exist.
+
+Customize relation lookup
+-------------------------
+
+The relation widgets will look for relations by searching the entire relation table for the imported value.  This is implemented in the :meth:`~import_export.widgets.ForeignKeyWidget.get_queryset` method.  For example, for an ``Author`` relation, the lookup calls ``Author.objects.all()``.
+
+In some cases, you may want to customize this behaviour, and it can be a requirement to pass dynamic values in.  For example, suppose we want to look up authors associated with a certain publisher id.  We can achieve this by passing the publisher id into the Resource constructor, which can then be passed to the widget::
+
+
+    class BookResource(resources.ModelResource):
+
+        def __init__(self, publisher_id):
+            super().__init__()
+            self.fields["author"] = fields.Field(
+                attribute="author",
+                column_name="author",
+                widget=AuthorForeignKeyWidget(publisher_id),
+            )
+
+The corresponding ``Author`` subclass::
+
+    class AuthorForeignKeyWidget(ForeignKeyWidget):
+        model = Author
+        field = 'name'
+
+        def __init__(self, publisher_id, **kwargs):
+            super().__init__(self.model, field=self.field, **kwargs)
+            self.publisher_id = publisher_id
+
+        def get_queryset(self, value, row, *args, **kwargs):
+            return self.model.objects.filter(organisation_id=self.organisation_id)
+
+Then if the import was being called from another module, we would pass the ``publisher_id`` into the Resource::
+
+    >>> resource = BookResource(publisher_id=1)
+
+If you need to pass dynamic values to the Resource from an `Admin integration`_, refer to the :ref:`FAQ<dynamically_set_resource_values>`.
+
+Create or update model instances
+================================
+
+When you are importing a file using import-export, the file is going to be processed row by row. For each row, the import process is going to test whether the row corresponds to an existing stored instance, or whether a new instance is to be created.
+
+If an existing instance is found, then the instance is going to be *updated* with the values from the imported row, otherwise a new row will be created.
+
+In order to test whether the instance already exists, import-export needs to use a field (or a combination of fields) in the row being imported. The idea is that the field (or fields) will uniquely identify a single instance of the model type you are importing.
+
+To define which fields identify an instance, use the ``import_id_fields`` meta attribute. You can use this declaration to indicate which field (or fields) should be used to uniquely identify the row. If you don't declare ``import_id_fields``, then a default declaration is used, in which there is only one field: 'id'.
+
+For example, you can use the 'isbn' number instead of 'id' to uniquely identify a Book as follows::
+
+    class BookResource(resources.ModelResource):
+
+        class Meta:
+            model = Book
+            import_id_fields = ('isbn',)
+            fields = ('isbn', 'name', 'author', 'price',)
+
+.. note::
+
+    If setting ``import_id_fields``, you must ensure that the data can uniquely identify a single row.  If the chosen field(s) select more than one row, then a ``MultipleObjectsReturned`` exception will be raised.
+
+Handling duplicate data
+=======================
+
+If an existing instance is identified during import, then the existing instance will be updated, regardless of whether the data in the import row is the same as the persisted data or not.  You can configure the import process to skip the row if it is duplicate by using setting ``skip_unchanged``.
+
+If ``skip_unchanged`` is enabled, then the import process will check each defined import field and perform a simple comparison with the existing instance, and if all comparisons are equal, then the row is skipped.  Skipped rows are recorded in the row ``Result`` object.
+
+You can override the :meth:`~.skip_row` method to have full control over the skip row implementation.
+
+Also, the ``report_skipped`` option controls whether skipped records appear in the import
 ``Result`` object, and if using the admin whether skipped records will show in
 the import preview page::
 
@@ -145,101 +405,9 @@ the import preview page::
             report_skipped = False
             fields = ('id', 'name', 'price',)
 
-To further customize the resources, you might like to consider overriding the following
-:class:`~import_export.admin.ImportMixin` methods:
-:meth:`~import_export.admin.ImportMixin.get_resource_kwargs`,
-:meth:`~import_export.admin.ImportMixin.get_resource_classes`,
-:meth:`~import_export.admin.ImportMixin.get_export_resource_kwargs`,
-
 .. seealso::
 
     :doc:`/api_resources`
-
-
-Declaring fields
-================
-
-It is possible to override a resource field to change some of its
-options::
-
-    from import_export.fields import Field
-
-    class BookResource(resources.ModelResource):
-        published = Field(attribute='published', column_name='published_date')
-
-        class Meta:
-            model = Book
-
-Other fields that don't exist in the target model may be added::
-
-    from import_export.fields import Field
-
-    class BookResource(resources.ModelResource):
-        myfield = Field(column_name='myfield')
-
-        class Meta:
-            model = Book
-
-.. seealso::
-
-    :doc:`/api_fields`
-        Available field types and options.
-
-
-Advanced data manipulation on export
-====================================
-
-Not all data can be easily extracted from an object/model attribute.
-In order to turn complicated data model into a (generally simpler) processed
-data structure on export, ``dehydrate_<fieldname>`` method should be defined::
-
-    from import_export.fields import Field
-
-    class BookResource(resources.ModelResource):
-        full_title = Field()
-
-        class Meta:
-            model = Book
-
-        def dehydrate_full_title(self, book):
-            book_name = getattr(book, "name", "unknown")
-            author_name = getattr(book.author, "name", "unknown")
-            return '%s by %s' % (book_name, author_name)
-
-In this case, the export looks like this:
-
-    >>> from app.admin import BookResource
-    >>> dataset = BookResource().export()
-    >>> print(dataset.csv)
-    full_title,id,name,author,author_email,imported,published,price,categories
-    Some book by 1,2,Some book,1,,0,2012-12-05,8.85,1
-
-
-Customize widgets
-=================
-
-A :class:`~import_export.resources.ModelResource` creates a field with a
-default widget for a given field type. If the widget should be initialized
-with different arguments, set the ``widgets`` dict.
-
-In this example widget, the ``published`` field is overridden to use a
-different date format. This format will be used both for importing
-and exporting resource.
-
-::
-
-    class BookResource(resources.ModelResource):
-
-        class Meta:
-            model = Book
-            widgets = {
-                    'published': {'format': '%d.%m.%Y'},
-                    }
-
-.. seealso::
-
-    :doc:`/api_widgets`
-        available widget types and options.
 
 Django Natural Keys
 ===================
@@ -304,63 +472,33 @@ for all Models that support it.
 Read more at `Django Serialization <https://docs.djangoproject.com/en/4.0/topics/serialization>`_
 
 
-Importing data
-==============
+Advanced data manipulation on export
+====================================
 
-Let's import some data!
+Not all data can be easily extracted from an object/model attribute.
+In order to turn complicated data model into a (generally simpler) processed
+data structure on export, ``dehydrate_<fieldname>`` method should be defined::
 
-.. code-block:: python
-    :linenos:
-    :emphasize-lines: 4,5
-
-    >>> import tablib
-    >>> from import_export import resources
-    >>> from core.models import Book
-    >>> book_resource = resources.modelresource_factory(model=Book)()
-    >>> dataset = tablib.Dataset(['', 'New book'], headers=['id', 'name'])
-    >>> result = book_resource.import_data(dataset, dry_run=True)
-    >>> print(result.has_errors())
-    False
-    >>> result = book_resource.import_data(dataset, dry_run=False)
-
-In the fourth line we use :func:`~import_export.resources.modelresource_factory`
-to create a default :class:`~import_export.resources.ModelResource`.
-The ModelResource class created this way is equal to the one shown in the
-example in section :ref:`base-modelresource`.
-
-In fifth line a :class:`~tablib.Dataset` with columns ``id`` and ``name``, and
-one book entry, are created. A field for a primary key field (in this case,
-``id``) always needs to be present.
-
-In the rest of the code we first pretend to import data using
-:meth:`~import_export.resources.Resource.import_data` and ``dry_run`` set,
-then check for any errors and actually import data this time.
-
-.. seealso::
-
-    :doc:`/import_workflow`
-        for a detailed description of the import workflow and its customization options.
-
-
-Deleting data
--------------
-
-To delete objects during import, implement the
-:meth:`~import_export.resources.Resource.for_delete` method on
-your :class:`~import_export.resources.Resource` class.
-
-The following is an example resource which expects a ``delete`` field in the
-dataset. An import using this resource will delete model instances for rows
-that have their column ``delete`` set to ``1``::
+    from import_export.fields import Field
 
     class BookResource(resources.ModelResource):
-        delete = fields.Field(widget=widgets.BooleanWidget())
-
-        def for_delete(self, row, instance):
-            return self.fields['delete'].clean(row)
+        full_title = Field()
 
         class Meta:
             model = Book
+
+        def dehydrate_full_title(self, book):
+            book_name = getattr(book, "name", "unknown")
+            author_name = getattr(book.author, "name", "unknown")
+            return '%s by %s' % (book_name, author_name)
+
+In this case, the export looks like this:
+
+    >>> from app.admin import BookResource
+    >>> dataset = BookResource().export()
+    >>> print(dataset.csv)
+    full_title,id,name,author,author_email,imported,published,price,categories
+    Some book by 1,2,Some book,1,,0,2012-12-05,8.85,1
 
 
 Signals

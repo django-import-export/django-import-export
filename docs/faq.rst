@@ -64,6 +64,9 @@ Your signal receiver can then include conditional logic to handle this flag::
 
 Further discussion `here <https://github.com/django-import-export/django-import-export/issues/1078/>`_ and `here <https://stackoverflow.com/a/71625152/39296/>`_.
 
+
+.. _dynamically_set_resource_values:
+
 How to dynamically set resource values
 --------------------------------------
 
@@ -156,7 +159,6 @@ https://github.com/django-import-export/django-import-export/issues/560
 
 https://wiki.postgresql.org/wiki/FAQ#Why_are_there_gaps_in_the_numbering_of_my_sequence.2FSERIAL_column.3F_Why_aren.27t_my_sequence_numbers_reused_on_transaction_abort.3F
 
-
 how to handle blank Charfield
 -----------------------------
 
@@ -173,6 +175,7 @@ How to customize export data
 ----------------------------
 
 https://stackoverflow.com/a/55046474/39296
+https://stackoverflow.com/questions/74802453/export-only-the-data-registered-by-the-user-django-import-export
 
 How to set export file encoding
 -------------------------------
