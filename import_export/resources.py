@@ -193,7 +193,7 @@ class ResourceOptions:
     If True, use_natural_foreign_keys = True will be passed to all foreign
     key widget fields whose models support natural foreign keys. That is,
     the model has a natural_key function and the manager has a
-    get_by_natural_key function. 
+    get_by_natural_key function.
     """
 
 
@@ -606,7 +606,7 @@ class Resource(metaclass=DeclarativeMetaclass):
         If skip_diff is True, then no comparisons can be made because ``original``
         will be None.
 
-        When left unspecified, skip_diff and skip_unchanged both default to ``False``, 
+        When left unspecified, skip_diff and skip_unchanged both default to ``False``,
         and rows are never skipped.
 
         By default, rows are not skipped if validation errors have been detected
@@ -1108,7 +1108,7 @@ class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
 
         model = get_related_model(field)
 
-        use_natural_foreign_keys = ( 
+        use_natural_foreign_keys = (
             has_natural_foreign_key(model) and cls._meta.use_natural_foreign_keys
         )
 
@@ -1180,7 +1180,11 @@ class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
         Returns a queryset of all objects for this model. Override this if you
         want to limit the returned queryset.
         """
-        return self._meta.model.objects.all()
+        qs = self._meta.model.objects.all()
+        select_related = getattr(self, 'export_select_related', None)
+        if select_related:
+            qs = qs.select_related(*select_related)
+        return qs
 
     def init_instance(self, row=None):
         """
