@@ -1,3 +1,4 @@
+import logging
 import warnings
 
 import django
@@ -9,7 +10,6 @@ from django.contrib.auth import get_permission_codename
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import PermissionDenied
 from django.http import HttpResponse, HttpResponseRedirect
-from django.template.defaultfilters import escape
 from django.template.response import TemplateResponse
 from django.urls import path, reverse
 from django.utils.decorators import method_decorator
@@ -31,11 +31,15 @@ from .signals import post_export, post_import
 from .tmp_storages import MediaStorage, TempFolderStorage
 from .utils import original
 
+logger = logging.getLogger(__name__)
+
 
 class ImportExportMixinBase:
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.init_change_list_template()
 
+    def init_change_list_template(self):
         # Store already set change_list_template to allow users to independently
         # customize the change list object tools. This treats the cases where
         # `self.change_list_template` is `None` (the default in `ModelAdmin`) or
@@ -46,9 +50,13 @@ class ImportExportMixinBase:
         else:
             self.base_change_list_template = 'admin/change_list.html'
 
-        self.change_list_template = getattr(
-            self, 'import_export_change_list_template', None
-        )
+        try:
+            self.change_list_template = getattr(
+                self, 'import_export_change_list_template', None
+            )
+        except AttributeError:
+            logger.warning("failed to assign change_list_template attribute (see issue 1521)")
+
         if self.change_list_template is None:
             self.change_list_template = self.base_change_list_template
 
@@ -608,6 +616,7 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
         """
         list_display = self.get_list_display(request)
         list_display_links = self.get_list_display_links(request, list_display)
+        list_select_related = self.get_list_select_related(request)
         list_filter = self.get_list_filter(request)
         search_fields = self.get_search_fields(request)
         if self.get_actions(request):
@@ -622,7 +631,7 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
             'list_filter': list_filter,
             'date_hierarchy': self.date_hierarchy,
             'search_fields': search_fields,
-            'list_select_related': self.list_select_related,
+            'list_select_related': list_select_related,
             'list_per_page': self.list_per_page,
             'list_max_show_all': self.list_max_show_all,
             'list_editable': self.list_editable,

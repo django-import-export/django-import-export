@@ -57,6 +57,13 @@ class CustomBookAdmin(BookAdmin):
             initial['author'] = import_form.cleaned_data['author'].id
         return initial
 
+    def get_import_resource_kwargs(self, request, *args, **kwargs):
+        # update resource kwargs so that the Resource is passed the authenticated user
+        # This is included as an example of how dynamic values can be passed to resources
+        kwargs = super().get_resource_kwargs(request, *args, **kwargs)
+        kwargs.update({"user": request.user})
+        return kwargs
+
 
 class LegacyBookAdmin(BookAdmin):
     """
