@@ -48,6 +48,10 @@ class MyResource(resources.Resource):
     email = fields.Field()
     extra = fields.Field()
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.kwargs = kwargs
+
     class Meta:
         export_order = ('email', 'name')
 
@@ -88,6 +92,11 @@ class ResourceTestCase(TestCase):
             MyResource.fields
         )
 
+    def test_kwargs(self):
+        target_kwargs = {"a": 1}
+        my_resource = MyResource(**target_kwargs)
+        self.assertEqual(my_resource.kwargs, target_kwargs)
+    
     def test_field_column_name(self):
         field = self.my_resource.fields['name']
         self.assertIn(field.column_name, 'name')
@@ -987,6 +996,7 @@ class ModelResourceTest(TestCase):
         self.assertTrue(result.rows[0].diff)
         self.assertEqual(result.rows[0].import_type,
                          results.RowResult.IMPORT_TYPE_SKIP)
+        self.assertEqual(result.rows[0].object_id, self.book.pk)
 
         # Test that we can suppress reporting of skipped rows
         resource._meta.report_skipped = False

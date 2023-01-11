@@ -1,17 +1,26 @@
 Changelog
 =========
 
-3.0.2 (unreleased)
+3.0.3 (unreleased)
 ------------------
 
-- Support Python 3.11
-- use ``get_list_select_related`` in ``ExportMixin``
+- Nothing changed yet.
+
+
+3.0.2 (2022-12-13)
+------------------
+
+- Support Python 3.11 (#1508)
+- use ``get_list_select_related`` in ``ExportMixin`` (#1511)
+- bugfix: handle crash on start-up when ``change_list_template`` is a property (#1523)
+- bugfix: include instance info in row result when row is skipped (#1526)
+- bugfix: add ``**kwargs`` param to ``Resource`` constructor (#1527)
 
 3.0.1 (2022-10-18)
 ------------------
 
-- Updated `django-import-export-ci.yml` to fix node.js deprecation
-- bugfix: `DateTimeWidget.clean()` handles tz aware datetime (#1499)
+- Updated ``django-import-export-ci.yml`` to fix node.js deprecation
+- bugfix: ``DateTimeWidget.clean()`` handles tz aware datetime (#1499)
 - Updated translations for v3.0.0 release (#1500)
 
 3.0.0 (2022-10-18)
@@ -20,31 +29,32 @@ Changelog
 Breaking changes
 ################
 
-This release makes some minor changes to the public API.  If you have overridden any methods from the `resources` or `widgets` modules, you may need to update your implementation to accommodate these changes.
+This release makes some minor changes to the public API.  If you have overridden any methods from the ``resources`` or ``widgets`` modules, you may need to update your implementation to accommodate these changes.
 
-- Check value of `ManyToManyField` in `skip_row()` (#1271)
-    - This fixes an issue where ManyToMany fields are not checked correctly in `skip_row()`.  This means that `skip_row()` now takes `row` as a mandatory arg.  If you have overridden `skip_row()` in your own implementation, you will need to add `row` as an arg.
+- Check value of ``ManyToManyField`` in ``skip_row()`` (#1271)
+    - This fixes an issue where ManyToMany fields are not checked correctly in ``skip_row()``.  This means that ``skip_row()`` now takes ``row`` as a mandatory arg.  If you have overridden ``skip_row()`` in your own implementation, you will need to add ``row`` as an arg.
 
-- Bug fix: validation errors were being ignored when `skip_unchanged` is set (#1378)
-    - If you have overridden `skip_row()` you can choose whether or not to skip rows if validation errors are present.  The default behavior is to not to skip rows if there are validation errors during import.
+- Bug fix: validation errors were being ignored when ``skip_unchanged`` is set (#1378)
+    - If you have overridden ``skip_row()`` you can choose whether or not to skip rows if validation errors are present.  The default behavior is to not to skip rows if there are validation errors during import.
 
 - Use 'create' flag instead of instance.pk (#1362)
-    - `import_export.resources.save_instance()` now takes an additional mandatory argument: `is_create`.  If you have overridden `save_instance()` in your own code, you will need to add this new argument.
+    - ``import_export.resources.save_instance()`` now takes an additional mandatory argument: ``is_create``.  If you have overridden ``save_instance()`` in your own code, you will need to add this new argument.
 
-- `widgets`: Unused `*args` params have been removed from method definitions. (#1413)
-    - If you have overridden `clean()` then you should update your method definition to reflect this change.
-    - `widgets.ForeignKeyWidget` / `widgets.ManyToManyWidget`: The unused `*args` param has been removed from `__init__()`.  If you have overridden `ForeignKeyWidget` or `ManyToManyWidget` you may need to update your implementation to reflect this change.
+- ``widgets``: Unused ``*args`` params have been removed from method definitions. (#1413)
+    - If you have overridden ``clean()`` then you should update your method definition to reflect this change.
+    - ``widgets.ForeignKeyWidget`` / ``widgets.ManyToManyWidget``: The unused ``*args`` param has been removed from ``__init__()``.  If you have overridden ``ForeignKeyWidget`` or ``ManyToManyWidget`` you may need to update your implementation to reflect this change.
 
 - Admin interface: Modified handling of import errors (#1306)
     - Exceptions raised during the import process are now presented as form errors, instead of being wrapped in a \<H1\> tag in the response.  If you have any custom logic which uses the error written directly into the response, then this may need to be changed.
 
 - ImportForm: improve compatibility with previous signature (#1434)
-    - Previous `ImportForm` implementation was based on Django's `forms.Form`, if you have any custom ImportForm you now need to inherit from `import_export.forms.ImportExportFormBase`.
+    - Previous ``ImportForm`` implementation was based on Django's ``forms.Form``, if you have any custom ImportForm you now need to inherit from ``import_export.forms.ImportExportFormBase``.
 
-- Allow custom `change_list_template` in admin views using mixins (#1483)
-    - If you are using admin mixins from this library in conjunction with code that overrides `change_list_template` (typically admin mixins from other libraries such as django-admin-sortable2 or reversion), object tools in the admin change list views may render differently now.
+- Allow custom ``change_list_template`` in admin views using mixins (#1483)
+    - If you are using admin mixins from this library in conjunction with code that overrides ``change_list_template`` (typically admin mixins from other libraries such as django-admin-sortable2 or reversion), object tools in the admin change list views may render differently now.
+    - If you have created a custom template which extends any import_export template, then this may now cause a recursion error (see #1514)
 
-- `import.html`: Added blocks to import template (#1488)
+- ``import.html``: Added blocks to import template (#1488)
     - If you have made customizations to the import template then you may need to refactor these after the addition of block declarations.
 
 Deprecations
@@ -53,37 +63,37 @@ Deprecations
 This release adds some deprecations which will be removed in a future release.
 
 - Add support for multiple resources in ModelAdmin. (#1223)
-    - The `*Mixin.resource_class` accepting single resource has been deprecated and the new `*Mixin.resource_classes` accepting subscriptable type (list, tuple, ...) has been added.
-    - Same applies to all of the `get_resource_class`, `get_import_resource_class` and `get_export_resource_class` methods.
+    - The ``*Mixin.resource_class`` accepting single resource has been deprecated and the new ``*Mixin.resource_classes`` accepting subscriptable type (list, tuple, ...) has been added.
+    - Same applies to all of the ``get_resource_class``, ``get_import_resource_class`` and ``get_export_resource_class`` methods.
 
-- Deprecated `exceptions.py` (#1372)
+- Deprecated ``exceptions.py`` (#1372)
 
-- Refactored form-related methods on `ImportMixin` / `ExportMixin` (#1147)
-    - The following are deprecated: `get_import_form()`, `get_confirm_import_form()`, `get_form_kwargs()`, `get_export_form()`
+- Refactored form-related methods on ``ImportMixin`` / ``ExportMixin`` (#1147)
+    - The following are deprecated: ``get_import_form()``, ``get_confirm_import_form()``, ``get_form_kwargs()``, ``get_export_form()``
 
 Enhancements
 ############
 
 - Default format selections set correctly for export action (#1389)
-- Added option to store raw row values in each row's `RowResult` (#1393)
-- Add natural key support to `ForeignKeyWidget` (#1371)
-- Optimised default instantiation of `CharWidget` (#1414)
-- Allow custom `change_list_template` in admin views using mixins (#1483)
+- Added option to store raw row values in each row's ``RowResult`` (#1393)
+- Add natural key support to ``ForeignKeyWidget`` (#1371)
+- Optimised default instantiation of ``CharWidget`` (#1414)
+- Allow custom ``change_list_template`` in admin views using mixins (#1483)
 - Added blocks to import template (#1488)
 - improve compatibility with previous ImportForm signature (#1434)
-- Refactored form-related methods on `ImportMixin` / `ExportMixin` (#1147)
+- Refactored form-related methods on ``ImportMixin`` / ``ExportMixin`` (#1147)
 - Include custom form media in templates (#1038)
 - Remove unnecessary files generated when running tox locally (#1426)
 
 Fixes
 #####
 
-- Fixed Makefile coverage: added `coverage combine`
-- Fixed handling of LF character when using `CacheStorage` (#1417)
-- bugfix: `skip_row()` handles M2M field when UUID pk used
+- Fixed Makefile coverage: added ``coverage combine``
+- Fixed handling of LF character when using ``CacheStorage`` (#1417)
+- bugfix: ``skip_row()`` handles M2M field when UUID pk used
 - Fix broken link to tablib formats page (#1418)
-- Fix broken image ref in `README.rst`
-- bugfix: `skip_row()` fix crash when model has m2m field and none is provided in upload (#1439)
+- Fix broken image ref in ``README.rst``
+- bugfix: ``skip_row()`` fix crash when model has m2m field and none is provided in upload (#1439)
 - Fix deprecation in example application: Added support for transitional form renderer (#1451)
 
 Development
@@ -108,7 +118,7 @@ Documentation
 ------------------
 
 - Updated import.css to support dark mode (#1318)
-- Fix crash when import_data() called with empty Dataset and `collect_failed_rows=True` (#1381)
+- Fix crash when import_data() called with empty Dataset and ``collect_failed_rows=True`` (#1381)
 - Improve Korean translation (#1402)
 - Update example subclass widget code (#1407)
 - Drop support for python3.6, django 2.2, 3.0, 3.1 (#1408)
@@ -117,7 +127,7 @@ Documentation
 2.7.1 (2021-12-23)
 ------------------
 
-- Removed `django_extensions` from example app settings (#1356)
+- Removed ``django_extensions`` from example app settings (#1356)
 - Added support for Django 4.0 (#1357)
 
 2.7.0 (2021-12-07)
@@ -125,7 +135,7 @@ Documentation
 
 - Big integer support for Integer widget (#788)
 - Run compilemessages command to keep .mo files in sync (#1299)
-- Added `skip_html_diff` meta attribute (#1329)
+- Added ``skip_html_diff`` meta attribute (#1329)
 - Added python3.10 to tox and CI environment list (#1336)
 - Add ability to rollback the import on validation error (#1339)
 - Fix missing migration on example app (#1346)
@@ -195,8 +205,8 @@ Documentation
 2.2.0 (2020-06-01)
 ------------------
 
-- Deal with importing a BooleanField that actually has `True`, `False`, and
-  `None` values. (#1071)
+- Deal with importing a BooleanField that actually has ``True``, ``False``, and
+  ``None`` values. (#1071)
 - Add row_number parameter to before_import_row, after_import_row and after_import_instance (#1040)
 - Paginate queryset if Queryset.prefetch_related is used (#1050)
 
@@ -257,7 +267,7 @@ Documentation
 
 - fix: Change logging level (#832)
 
-- fix: Changed `get_instance()` return val (#842)
+- fix: Changed ``get_instance()`` return val (#842)
 
 1.1.0 (2018-10-02)
 ------------------
@@ -467,8 +477,8 @@ Documentation
 
 - Fix default values in fields (#431, #364)
 
-  Field constructor `default` argument is NOT_PROVIDED instead of None
-  Field clean method checks value against `Field.empty_values` [None, '']
+  Field constructor ``default`` argument is NOT_PROVIDED instead of None
+  Field clean method checks value against ``Field.empty_values`` [None, '']
 
 0.4.4 (2016-03-22)
 ------------------
@@ -651,7 +661,7 @@ Documentation
 0.1.4
 -----
 
-* Use `field_name` instead of `column_name` for field dehydration, FIX #36
+* Use ``field_name`` instead of ``column_name`` for field dehydration, FIX #36
 
 * Handle OneToOneField,  FIX #17 - Exception when attempting access something
   on the related_name.

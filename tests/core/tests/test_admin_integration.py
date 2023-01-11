@@ -2,7 +2,7 @@ import os.path
 import warnings
 from datetime import datetime
 from unittest import mock
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import chardet
 import django
@@ -791,6 +791,16 @@ class ImportExportAdminIntegrationTest(TestCase):
         m = TestExportActionModelAdmin()
         target_media = m.media
         self.assertEqual('import_export/action_formats.js', target_media._js[-1])
+
+    @patch("import_export.admin.logger")
+    def test_issue_1521_change_list_template_as_property(self, mock_logger):
+        class TestImportCls(ImportMixin):
+            @property
+            def change_list_template(self):
+                return ["x"]
+
+        TestImportCls()
+        mock_logger.warning.assert_called_once_with("failed to assign change_list_template attribute (see issue 1521)")
 
 
 class ConfirmImportEncodingTest(TestCase):
