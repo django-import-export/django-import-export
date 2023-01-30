@@ -160,7 +160,8 @@ class DateWidget(Widget):
     """
     Widget for converting date fields.
 
-    Takes optional ``format`` parameter.
+    Takes optional ``format`` parameter. If none is set, either
+    ``settings.DATE_INPUT_FORMATS`` or ``"%Y-%m-%d"`` is used.
     """
 
     def __init__(self, format=None):
@@ -239,7 +240,8 @@ class TimeWidget(Widget):
     """
     Widget for converting time fields.
 
-    Takes optional ``format`` parameter.
+    Takes optional ``format`` parameter. If none is set, either
+    ``settings.DATETIME_INPUT_FORMATS`` or ``"%H:%M:%S"`` is used.
     """
 
     def __init__(self, format=None):
