@@ -191,3 +191,8 @@ How to handle large file uploads
 ---------------------------------
 
 https://github.com/django-import-export/django-import-export/issues/1524
+
+How to use field other than `id` in Foreign Key lookup
+------------------------------------------------------
+
+https://stackoverflow.com/a/75244557/39296
