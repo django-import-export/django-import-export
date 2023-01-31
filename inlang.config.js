@@ -1,33 +1,31 @@
 // init the inlang.config
-
 /**
  * @type {import("@inlang/core/config").DefineConfig}
  */
 export async function defineConfig(env) {
-  // importing plugin from local file for testing purposes
+  // import the Plugin which parse the translation file to inlang.com/editor/{yourRepo}
   const plugin = await env.$import(
     "https://cdn.jsdelivr.net/gh/jannesblobel/inlang-plugin-po@1/dist/index.js"
   );
+
   const pluginConfig = {
-    // language mean the name of you file
+    // pathPattern is the location where your po files are stored
+    // language is eqaul to language code
     pathPattern: "./import_export/locale/{language}/LC_MESSAGES/django.po",
-    //definte the referenacePath. If you haven't one enter "null"
+    // referenceResorucePath is ony nesseassry, if you use an pot file
+    /* @example 
+    If you have a pot file it could like like 
+    referenceResourcePath: "locale/reference.pot"
+    If you DON'T use a pot file is referenceResources: null 
+    */
     referenceResourcePath: null,
   };
 
   return {
-    // if your project use a pot file use the pot as the reference Language
-    // !! do not add the pot file in the Languages array
-    /**
-   * @example
-   * example files: en.pot, de.po, es.po, fr.po
-   *  referenceLanguage: "en",
-      languages: ["de","es","fr"],
-   */
+    // referenceLanguage is the language code of your msgID mostly it is en
     referenceLanguage: "en",
+    // languages are all languages stored in the "locale". You have to define this path in getLanguages
     languages: await getLanguages(env),
-    // languages: await getLanguages(env),
-
     readResources: (args) =>
       plugin.readResources({ ...args, ...env, pluginConfig }),
     writeResources: (args) =>
@@ -39,25 +37,24 @@ export async function defineConfig(env) {
 //  * Automatically derives the languages in this repository.
 //  */
 async function getLanguages(env) {
-  // languagePath is the place where the languages are stored
+  // translationsStoredIn is the place where the languages are stored
   // @example translationsStoredIn = "./translations/" don't forget the / at the end of a path
   const translationsStoredIn = "./import_export/locale/";
-  //get all folders / files which are stored in the translationsStoredIn
+
+  //get all folders/files which are stored in the translationsStoredIn
   const files = await env.$fs.readdir(translationsStoredIn);
-  // files that end with .po
-  // remove the .po extension to only get language name
+
   const languages = [];
-  // filter all folder by po files
+  // Search all folders in "translationsStoredIn" for po files
+  // and pushing the matching languagecodes into the "languages" array
   for (const language of files) {
-    //try to read a po file
     try {
       const file = await env.$fs.readdir(
         translationsStoredIn + language + "/LC_MESSAGES/"
       );
-      // somtime are more than 1 file in the folder example: messages.mo and messages.po
+      // Filtering the Po data in nested folders in case there is more than 1 file in them. @example messages.mo and messages.po
       for (const _file of file) {
         if (_file.endsWith(".po")) {
-          //if the po file is recognised, the language code is entered into the array languages returned by the function getLangauges
           languages.push(language);
         }
       }
