@@ -84,3 +84,26 @@ class FieldTest(TestCase):
         self.assertEqual(repr(self.field), '<import_export.fields.Field: name>')
         self.field.column_name = None
         self.assertEqual(repr(self.field), '<import_export.fields.Field>')
+
+    def test_get_dehydrate_method_default(self):
+        field = fields.Field(attribute="foo", column_name="bar")
+
+        # `field_name` is the variable name defined in `Resource`
+        resource_field_name = "field"
+        method_name = field._get_dehydrate_method(resource_field_name)
+        self.assertEqual(f"dehydrate_{resource_field_name}", method_name)
+
+    def test_get_dehydrate_method_with_custom_method_name(self):
+        custom_dehydrate_method = "custom_method_name"
+        field = fields.Field(attribute="foo", column_name="bar", dehydrate_method=custom_dehydrate_method)
+        resource_field_name = "field"
+        method_name = field._get_dehydrate_method(resource_field_name)
+        self.assertEqual(method_name, custom_dehydrate_method)
+
+    def test_get_dehydrate_method_without_params_raises_attribute_error(self):
+        field = fields.Field(attribute="foo", column_name="bar")
+
+        self.assertRaises(
+            AttributeError,
+            field._get_dehydrate_method
+        )
