@@ -27,11 +27,13 @@ class Field:
         not return an adequate value.
 
     :param saves_null_values: Controls whether null values are saved on the object
+    :param dehydrate_method: Lets you choose your own method for dehydration rather
+        than using `dehydrate_{field_name}` syntax.
     """
     empty_values = [None, '']
 
     def __init__(self, attribute=None, column_name=None, widget=None,
-                 default=NOT_PROVIDED, readonly=False, saves_null_values=True):
+                 default=NOT_PROVIDED, readonly=False, saves_null_values=True, dehydrate_method=None):
         self.attribute = attribute
         self.default = default
         self.column_name = column_name
@@ -40,6 +42,7 @@ class Field:
         self.widget = widget
         self.readonly = readonly
         self.saves_null_values = saves_null_values
+        self.dehydrate_method = dehydrate_method
 
     def __repr__(self):
         """
@@ -123,3 +126,15 @@ class Field:
         if value is None:
             return ""
         return self.widget.render(value, obj)
+
+    def _get_dehydrate_method(self, field_name=None):
+        """
+        Returns method name to be used for dehydration of the field.
+        Defaults to `dehydrate_{field_name}`
+        """
+        DEFAULT_DEHYDRATE_METHOD_PREFIX = "dehydrate_"
+
+        if not self.dehydrate_method and not field_name:
+            raise AttributeError("Both `dehydrate_method` and `field_name` are not supplied.")
+
+        return self.dehydrate_method or DEFAULT_DEHYDRATE_METHOD_PREFIX + field_name
