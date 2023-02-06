@@ -127,7 +127,7 @@ class Field:
             return ""
         return self.widget.render(value, obj)
 
-    def _get_dehydrate_method(self, field_name=None):
+    def get_dehydrate_method(self, field_name=None):
         """
         Returns method name to be used for dehydration of the field.
         Defaults to `dehydrate_{field_name}`
