@@ -2,8 +2,8 @@ from datetime import date
 
 from django.test import TestCase
 
-from import_export.exceptions import FieldError
 from import_export import fields
+from import_export.exceptions import FieldError
 
 
 class Obj:
