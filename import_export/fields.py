@@ -131,7 +131,7 @@ class Field:
     def get_dehydrate_method(self, field_name=None):
         """
         Returns method name to be used for dehydration of the field.
-        Defaults to `dehydrate_{field_name}`
+        Defaults to 'dehydrate_{field_name}'
         """
         DEFAULT_DEHYDRATE_METHOD_PREFIX = "dehydrate_"
 
