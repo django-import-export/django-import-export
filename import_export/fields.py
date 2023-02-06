@@ -1,6 +1,7 @@
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models.fields import NOT_PROVIDED
 from django.db.models.manager import Manager
+from .exceptions import FieldError
 
 from . import widgets
 
@@ -135,6 +136,6 @@ class Field:
         DEFAULT_DEHYDRATE_METHOD_PREFIX = "dehydrate_"
 
         if not self.dehydrate_method and not field_name:
-            raise AttributeError("Both `dehydrate_method` and `field_name` are not supplied.")
+            raise FieldError("Both `dehydrate_method` and `field_name` are not supplied.")
 
         return self.dehydrate_method or DEFAULT_DEHYDRATE_METHOD_PREFIX + field_name

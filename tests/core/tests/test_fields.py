@@ -2,6 +2,7 @@ from datetime import date
 
 from django.test import TestCase
 
+from import_export.exceptions import FieldError
 from import_export import fields
 
 
@@ -104,6 +105,6 @@ class FieldTest(TestCase):
         field = fields.Field(attribute="foo", column_name="bar")
 
         self.assertRaises(
-            AttributeError,
+            FieldError,
             field.get_dehydrate_method
         )
