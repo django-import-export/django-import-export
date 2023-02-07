@@ -56,7 +56,13 @@ class Widget:
 
 class NumberWidget(Widget):
     """
+    Takes optional ``coerce_to_string`` parameter, set to ``True`` the 
+    :meth:`~import_export.widgets.Widget.render` method will return a string
+    else it will return a value`
     """
+
+    def __init__(self, coerce_to_string=False):
+        self.coerce_to_string = coerce_to_string
 
     def is_empty(self, value):
         if isinstance(value, str):
@@ -71,14 +77,7 @@ class NumberWidget(Widget):
 class FloatWidget(NumberWidget):
     """
     Widget for converting floats fields.
-    
-    Takes optional ``coerce_to_string`` parameter, set to ``True`` the 
-    :meth:`~import_export.widgets.Widget.render` method will return a string
-    else it will return a value`
     """
-
-    def __init__(self, coerce_to_string=False):
-        self.coerce_to_string = coerce_to_string
 
     def clean(self, value, row=None, **kwargs):
         if self.is_empty(value):
@@ -103,14 +102,7 @@ class IntegerWidget(NumberWidget):
 class DecimalWidget(NumberWidget):
     """
     Widget for converting decimal fields.
-
-    Takes optional ``coerce_to_string`` parameter, set to ``True`` the 
-    :meth:`~import_export.widgets.Widget.render` method will return a string
-    else it will return a value.
     """
-
-    def __init__(self, coerce_to_string=False):
-        self.coerce_to_string = coerce_to_string
 
     def clean(self, value, row=None, **kwargs):
         if self.is_empty(value):
