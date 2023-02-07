@@ -1,5 +1,4 @@
 import json
-import locale
 from datetime import date, datetime, time
 from decimal import Decimal
 
@@ -71,7 +70,7 @@ class NumberWidget(Widget):
         return value is None or value == ""
 
     def render(self, value, obj=None):
-        return value
+        return number_format(value) if self.coerce_to_string else value
 
 
 class FloatWidget(NumberWidget):
@@ -83,9 +82,6 @@ class FloatWidget(NumberWidget):
         if self.is_empty(value):
             return None
         return float(value)
-
-    def render(self, value, obj=None):
-        return number_format(value) if self.coerce_to_string else value
 
 
 class IntegerWidget(NumberWidget):
@@ -108,9 +104,6 @@ class DecimalWidget(NumberWidget):
         if self.is_empty(value):
             return None
         return Decimal(force_str(value))
-
-    def render(self, value, obj=None):
-        return number_format(float(value)) if self.coerce_to_string else value
 
 
 class CharWidget(Widget):
