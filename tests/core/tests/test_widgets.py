@@ -284,13 +284,14 @@ class FloatWidgetTest(TestCase):
 
     @skipUnless(django.VERSION[0] < 4, f"skipping django {django.VERSION} version specific test")
     @override_settings(LANGUAGE_CODE='fr-fr', USE_L10N=True)
-    def test_locale_render_lt_django4(self):
-        self.assertEqual("11,111", self.widget_coerce_to_string.render(self.value))
+    def test_locale_render_coerce_to_string(self):
+        self.assertEqual(self.widget_coerce_to_string.render(self.value), "11,111")
 
     @skipUnless(django.VERSION[0] >= 4, f"skipping django {django.VERSION} version specific test")
     @override_settings(LANGUAGE_CODE='fr-fr')
-    def test_locale_render_gte_django4(self):
-        self.assertEqual("11,111", self.widget_coerce_to_string.render(self.value))
+    def test_locale_render_coerce_to_string(self):
+        self.assertEqual(self.widget_coerce_to_string.render(self.value), "11,111")
+
 
 
 class DecimalWidgetTest(TestCase):
@@ -319,12 +320,12 @@ class DecimalWidgetTest(TestCase):
 
     @skipUnless(django.VERSION[0] < 4, f"skipping django {django.VERSION} version specific test")
     @override_settings(LANGUAGE_CODE='fr-fr', USE_L10N=True)
-    def test_locale_render_lt_django4(self):
+    def test_locale_render_coerce_to_string(self):
         self.assertEqual(self.widget_coerce_to_string.render(self.value), "11,111")
 
     @skipUnless(django.VERSION[0] >= 4, f"skipping django {django.VERSION} version specific test")
     @override_settings(LANGUAGE_CODE='fr-fr')
-    def test_locale_render_gte_django4(self):
+    def test_locale_render_coerce_to_string(self):
         self.assertEqual(self.widget_coerce_to_string.render(self.value), "11,111")
 
 
@@ -334,6 +335,7 @@ class IntegerWidgetTest(TestCase):
         self.value = 0
         self.widget = widgets.IntegerWidget()
         self.bigintvalue = 163371428940853127
+        self.widget_coerce_to_string = widgets.IntegerWidget(coerce_to_string=True)
 
     def test_clean_integer_zero(self):
         self.assertEqual(self.widget.clean(0), self.value)
@@ -349,6 +351,16 @@ class IntegerWidgetTest(TestCase):
         self.assertEqual(self.widget.clean(""), None)
         self.assertEqual(self.widget.clean(" "), None)
         self.assertEqual(self.widget.clean("\n\t\r"), None)
+    
+    @skipUnless(django.VERSION[0] < 4, f"skipping django {django.VERSION} version specific test")
+    @override_settings(LANGUAGE_CODE='fr-fr', USE_L10N=True)
+    def test_locale_render_lt_django4(self):
+        self.assertEqual(self.widget_coerce_to_string.render(self.value), "0")
+
+    @skipUnless(django.VERSION[0] >= 4, f"skipping django {django.VERSION} version specific test")
+    @override_settings(LANGUAGE_CODE='fr-fr')
+    def test_locale_render_gte_django4(self):
+        self.assertEqual(self.widget_coerce_to_string.render(self.value), "0") 
 
 
 class ForeignKeyWidgetTest(TestCase):
