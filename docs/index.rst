@@ -29,6 +29,7 @@ exporting data with included admin integration.
 
    installation
    getting_started
+   advanced_usage
    import_workflow
    bulk_import
    celery

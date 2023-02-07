@@ -65,48 +65,10 @@ Your signal receiver can then include conditional logic to handle this flag::
 Further discussion `here <https://github.com/django-import-export/django-import-export/issues/1078/>`_ and `here <https://stackoverflow.com/a/71625152/39296/>`_.
 
 
-.. _dynamically_set_resource_values:
-
 How to dynamically set resource values
 --------------------------------------
 
-There are a few use cases where it is desirable to dynamically set values in Resources.  For example, suppose you are importing via the Admin console and want to use a value associated with the authenticated user in import queries.  This is easy to do.
-
-Suppose the authenticated user (stored in the ``request`` object) has a property called ``organisation_id``.  During import, we want to filter any books associated only with that organisation.
-
-First of all, override the import kwargs method so that the request user is retained::
-
-    class BookAdmin(ImportExportMixin, admin.ModelAdmin):
-        # attribute declarations not shown
-
-        def get_import_resource_kwargs(self, request, *args, **kwargs):
-            kwargs = super().get_resource_kwargs(request, *args, **kwargs)
-            kwargs.update({"user": request.user})
-            return kwargs
-
-Now you can add a constructor to your ``Resource`` to store the user reference, then override ``get_queryset()`` to return books for the organisation::
-
-    class BookResource(ModelResource):
-
-        def __init__(self, user):
-            self.user = user
-
-        def get_queryset(self):
-            return self._meta.model.objects.filter(organisation_id=self.user.organisation_id)
-
-        class Meta:
-            model = Book
-
-Using this method, you can also dynamically set properties of the ``Field`` instance itself, including passing dynamic values to Widgets::
-
-    class YourResource(ModelResource):
-
-      def __init__(self, company_name):
-          super().__init__()
-          self.fields["custom_field"] = fields.Field(
-              attribute="custom_field", column_name=company_name,
-              widget=MyCompanyWidget(company_name)
-          )
+See :ref:`dynamically_set_resource_values`
 
 How to set a value on all imported instances prior to persisting
 ----------------------------------------------------------------

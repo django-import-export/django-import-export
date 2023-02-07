@@ -106,6 +106,7 @@ decreasing it, or speed up exports by increasing it.
 Can be overridden on a ``Resource`` class by setting the ``chunk_size`` class
 attribute.
 
+.. _exampleapp:
 
 Example app
 ===========
