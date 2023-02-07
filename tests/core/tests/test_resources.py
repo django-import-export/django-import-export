@@ -838,6 +838,28 @@ class ModelResourceTest(TestCase):
         self.assertEqual(full_title, '%s by %s' % (self.book.name,
                                                    self.book.author.name))
 
+    def test_dehydrate_field_using_custom_dehydrate_field_method(self):
+        
+        class B(resources.ModelResource):
+            full_title = fields.Field(column_name="Full title", dehydrate_method="foo_dehydrate_full_title")
+
+            class Meta:
+                model = Book
+                fields = ("full_title")
+
+            def foo_dehydrate_full_title(self, obj):
+                return f"{obj.name} by {obj.author.name}"
+
+        author = Author.objects.create(name="Author")
+        self.book.author = author
+        resource = B()   
+
+        full_title = resource.export_field(resource.get_fields()[0], self.book)
+        self.assertEqual(
+            full_title,
+            f"{self.book.name} by {self.book.author.name}"
+        )
+
     def test_invalid_relation_field_name(self):
 
         class B(resources.ModelResource):

@@ -924,7 +924,9 @@ class Resource(metaclass=DeclarativeMetaclass):
 
     def export_field(self, field, obj):
         field_name = self.get_field_name(field)
-        method = getattr(self, 'dehydrate_%s' % field_name, None)
+        dehydrate_method = field.get_dehydrate_method(field_name)
+
+        method = getattr(self, dehydrate_method, None)
         if method is not None:
             return method(obj)
         return field.export(obj)
