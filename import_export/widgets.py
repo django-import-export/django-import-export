@@ -71,7 +71,14 @@ class NumberWidget(Widget):
 class FloatWidget(NumberWidget):
     """
     Widget for converting floats fields.
+    
+    Takes optional ``coerce_to_string`` parameter, set to ``True`` the 
+    :meth:`~import_export.widgets.Widget.render` method will return a string
+    else it will return a value`
     """
+
+    def __init__(self, coerce_to_string=False):
+        self.coerce_to_string = coerce_to_string
 
     def clean(self, value, row=None, **kwargs):
         if self.is_empty(value):
@@ -79,7 +86,7 @@ class FloatWidget(NumberWidget):
         return float(value)
 
     def render(self, value, obj=None):
-        return number_format(value)
+        return number_format(value) if self.coerce_to_string else value
 
 
 class IntegerWidget(NumberWidget):
@@ -96,7 +103,14 @@ class IntegerWidget(NumberWidget):
 class DecimalWidget(NumberWidget):
     """
     Widget for converting decimal fields.
+
+    Takes optional ``coerce_to_string`` parameter, set to ``True`` the 
+    :meth:`~import_export.widgets.Widget.render` method will return a string
+    else it will return a value.
     """
+
+    def __init__(self, coerce_to_string=False):
+        self.coerce_to_string = coerce_to_string
 
     def clean(self, value, row=None, **kwargs):
         if self.is_empty(value):
@@ -104,7 +118,7 @@ class DecimalWidget(NumberWidget):
         return Decimal(force_str(value))
 
     def render(self, value, obj=None):
-        return number_format(float(value))
+        return number_format(float(value)) if self.coerce_to_string else value
 
 
 class CharWidget(Widget):
