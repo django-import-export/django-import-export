@@ -131,11 +131,11 @@ class Field:
     def get_dehydrate_method(self, field_name=None):
         """
         Returns method name to be used for dehydration of the field.
-        Defaults to 'dehydrate_{field_name}'
+        Defaults to `dehydrate_{field_name}`
         """
         DEFAULT_DEHYDRATE_METHOD_PREFIX = "dehydrate_"
 
         if not self.dehydrate_method and not field_name:
-            raise FieldError("Both `dehydrate_method` and `field_name` are not supplied.")
+            raise FieldError("Both dehydrate_method and field_name are not supplied.")
 
         return self.dehydrate_method or DEFAULT_DEHYDRATE_METHOD_PREFIX + field_name
