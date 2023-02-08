@@ -101,40 +101,48 @@ back prior to the confirm step.  Database implementations mean that sequence num
 
 See `this issue <https://github.com/django-import-export/django-import-export/issues/560>`_ for more detailed discussion.
 
-how to handle blank Charfield
------------------------------
+Not Null constraint fails when importing blank Charfield
+--------------------------------------------------------
 
-https://stackoverflow.com/questions/61987773/django-import-export-how-to-handle-blank-charfield
-
-https://github.com/django-import-export/django-import-export/issues/1485#issuecomment-1295859788
+See `this issue <https://github.com/django-import-export/django-import-export/issues/1485>`_.
 
 Foreign key is null when importing
 ----------------------------------
 
-https://github.com/django-import-export/django-import-export/issues/1461
+It is possible to reference model relations by defining a field with the double underscore syntax. For example::
+
+  fields = ("author__name")
+
+This means that during export, the relation will be followed and the referenced field will be added correctly to the export.
+
+This does not work during import because the reference may not be enough to identify the correct relation instance.  :class:`~import_export.widgets.ForeignKeyWidget` should be used during import.  See also the documentation explaining :ref:`advanced_usage:Foreign Key relations`.
 
 How to customize export data
 ----------------------------
 
-https://stackoverflow.com/a/55046474/39296
-https://stackoverflow.com/questions/74802453/export-only-the-data-registered-by-the-user-django-import-export
+See the following responses on StackOverflow:
+
+1. https://stackoverflow.com/a/55046474/39296
+2. https://stackoverflow.com/questions/74802453/export-only-the-data-registered-by-the-user-django-import-export
 
 How to set export file encoding
 -------------------------------
 
-https://github.com/django-import-export/django-import-export/pull/1515
+Output is garbled when exporting.  See `this issue <https://github.com/django-import-export/django-import-export/issues/1515>`_.
 
 How to create relation during import if it does not exist
 ---------------------------------------------------------
 
-https://stackoverflow.com/questions/74562802/import-into-tables-from-django-import-export
+See :ref:`advanced_usage:Creating non existent relations`.
 
 How to handle large file uploads
 ---------------------------------
 
-https://github.com/django-import-export/django-import-export/issues/1524
+If uploading large files, you may encounter time-outs.
+See :ref:`Celery:Using celery to perform imports` and :ref:`bulk_import:Bulk imports`.
+
 
 How to use field other than `id` in Foreign Key lookup
 ------------------------------------------------------
 
-https://stackoverflow.com/a/75244557/39296
+See :ref:`advanced_usage:Foreign key relations`.
