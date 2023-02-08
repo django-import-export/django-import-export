@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from import_export.admin import ExportActionModelAdmin, ImportExportMixin, ImportMixin
+from import_export.admin import ExportActionModelAdmin, ImportExportMixin, ImportMixin, ImportExportModelAdmin
 from import_export.resources import ModelResource
 
 from .forms import CustomConfirmImportForm, CustomExportForm, CustomImportForm
@@ -28,7 +28,7 @@ class BookNameResource(ModelResource):
         name = "Export/Import only book names"
 
 
-class BookAdmin(ImportExportMixin, admin.ModelAdmin):
+class BookAdmin(ImportExportModelAdmin):
     list_display = ('name', 'author', 'added')
     list_filter = ['categories', 'author']
     resource_classes = [BookResource, BookNameResource]

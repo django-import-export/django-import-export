@@ -97,6 +97,8 @@ See `this example <#how-to-dynamically-set-resource-values>`_ to see how to dyna
 How to export from more than one table
 --------------------------------------
 
+In the usual configuration, a ``Resource`` maps to a single model.  If you want to export data associated with relations to that model, then these values can be defined in the ``fields`` declaration.
+
 - https://stackoverflow.com/questions/74020864/is-it-possible-to-use-import-export-django-lib-to-export-data-from-more-than-one/74029584#74029584
 
 - https://github.com/django-import-export/django-import-export/issues/1440

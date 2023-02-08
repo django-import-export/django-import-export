@@ -348,7 +348,7 @@ class ForeignKeyWidget(Widget):
     instance in both export and import.
 
     The lookup field defaults to using the primary key (``pk``) as lookup
-    criterion but can be customised to use any field on the related model.
+    criterion but can be customized to use any field on the related model.
 
     Unlike specifying a related field in your resource like so…
 

@@ -264,7 +264,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         .. deprecated:: 3.0
             Use :meth:`~import_export.admin.ImportMixin.get_import_form_kwargs` or
             :meth:`~import_export.admin.ImportMixin.get_confirm_form_kwargs`
-            instead, depending on which form you wish to customise.
+            instead, depending on which form you wish to customize.
         """
         warnings.warn(
             "ImportMixin.get_form_kwargs() is deprecated and will be removed "

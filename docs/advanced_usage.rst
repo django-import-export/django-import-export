@@ -121,7 +121,7 @@ Alternatively, widget parameters can be overridden using the widgets dict declar
 Importing model relations
 =========================
 
-If you are importing data for a model instance which has a foreign key relationship to another model then `import-export` can handle the lookup and linking to the related model.
+If you are importing data for a model instance which has a foreign key relationship to another model then import-export can handle the lookup and linking to the related model.
 
 Foreign Key relations
 ---------------------
@@ -229,57 +229,8 @@ Then if the import was being called from another module, we would pass the ``pub
 
 If you need to pass dynamic values to the Resource from an `Admin integration`_, refer to :ref:`How to dynamically set resource values`.
 
-Create or update model instances
-================================
-
-When you are importing a file using import-export, the file is going to be processed row by row. For each row, the import process is going to test whether the row corresponds to an existing stored instance, or whether a new instance is to be created.
-
-If an existing instance is found, then the instance is going to be *updated* with the values from the imported row, otherwise a new row will be created.
-
-In order to test whether the instance already exists, import-export needs to use a field (or a combination of fields) in the row being imported. The idea is that the field (or fields) will uniquely identify a single instance of the model type you are importing.
-
-To define which fields identify an instance, use the ``import_id_fields`` meta attribute. You can use this declaration to indicate which field (or fields) should be used to uniquely identify the row. If you don't declare ``import_id_fields``, then a default declaration is used, in which there is only one field: 'id'.
-
-For example, you can use the 'isbn' number instead of 'id' to uniquely identify a Book as follows::
-
-    class BookResource(resources.ModelResource):
-
-        class Meta:
-            model = Book
-            import_id_fields = ('isbn',)
-            fields = ('isbn', 'name', 'author', 'price',)
-
-.. note::
-
-    If setting ``import_id_fields``, you must ensure that the data can uniquely identify a single row.  If the chosen field(s) select more than one row, then a ``MultipleObjectsReturned`` exception will be raised.
-
-Handling duplicate data
-=======================
-
-If an existing instance is identified during import, then the existing instance will be updated, regardless of whether the data in the import row is the same as the persisted data or not.  You can configure the import process to skip the row if it is duplicate by using setting ``skip_unchanged``.
-
-If ``skip_unchanged`` is enabled, then the import process will check each defined import field and perform a simple comparison with the existing instance, and if all comparisons are equal, then the row is skipped.  Skipped rows are recorded in the row ``Result`` object.
-
-You can override the :meth:`~.skip_row` method to have full control over the skip row implementation.
-
-Also, the ``report_skipped`` option controls whether skipped records appear in the import
-``Result`` object, and if using the admin whether skipped records will show in
-the import preview page::
-
-    class BookResource(resources.ModelResource):
-
-        class Meta:
-            model = Book
-            skip_unchanged = True
-            report_skipped = False
-            fields = ('id', 'name', 'price',)
-
-.. seealso::
-
-    :doc:`/api_resources`
-
 Django Natural Keys
-===================
+-------------------
 
 The ``ForeignKeyWidget`` also supports using Django's natural key functions. A
 manager class with the ``get_by_natural_key`` function is required for importing
@@ -341,6 +292,56 @@ for all Models that support it.
 Read more at `Django Serialization <https://docs.djangoproject.com/en/4.0/topics/serialization>`_
 
 
+Create or update model instances
+================================
+
+When you are importing a file using import-export, the file is going to be processed row by row. For each row, the import process is going to test whether the row corresponds to an existing stored instance, or whether a new instance is to be created.
+
+If an existing instance is found, then the instance is going to be *updated* with the values from the imported row, otherwise a new row will be created.
+
+In order to test whether the instance already exists, import-export needs to use a field (or a combination of fields) in the row being imported. The idea is that the field (or fields) will uniquely identify a single instance of the model type you are importing.
+
+To define which fields identify an instance, use the ``import_id_fields`` meta attribute. You can use this declaration to indicate which field (or fields) should be used to uniquely identify the row. If you don't declare ``import_id_fields``, then a default declaration is used, in which there is only one field: 'id'.
+
+For example, you can use the 'isbn' number instead of 'id' to uniquely identify a Book as follows::
+
+    class BookResource(resources.ModelResource):
+
+        class Meta:
+            model = Book
+            import_id_fields = ('isbn',)
+            fields = ('isbn', 'name', 'author', 'price',)
+
+.. note::
+
+    If setting ``import_id_fields``, you must ensure that the data can uniquely identify a single row.  If the chosen field(s) select more than one row, then a ``MultipleObjectsReturned`` exception will be raised.  If no row is identified, then ``DoesNotExist`` exception will be raised.
+
+Handling duplicate data
+=======================
+
+If an existing instance is identified during import, then the existing instance will be updated, regardless of whether the data in the import row is the same as the persisted data or not.  You can configure the import process to skip the row if it is duplicate by using setting ``skip_unchanged``.
+
+If ``skip_unchanged`` is enabled, then the import process will check each defined import field and perform a simple comparison with the existing instance, and if all comparisons are equal, then the row is skipped.  Skipped rows are recorded in the row ``Result`` object.
+
+You can override the :meth:`~.skip_row` method to have full control over the skip row implementation.
+
+Also, the ``report_skipped`` option controls whether skipped records appear in the import
+``Result`` object, and whether skipped records will show in the import preview page in the Admin UI::
+
+    class BookResource(resources.ModelResource):
+
+        class Meta:
+            model = Book
+            skip_unchanged = True
+            report_skipped = False
+            fields = ('id', 'name', 'price',)
+
+.. seealso::
+
+    :doc:`/api_resources`
+
+
+
 Advanced data manipulation on export
 ====================================
 
@@ -369,11 +370,13 @@ In this case, the export looks like this:
     full_title,id,name,author,author_email,imported,published,price,categories
     Some book by 1,2,Some book,1,,0,2012-12-05,8.85,1
 
+It is also possible to pass a method name in to the :meth:`~import_export.fields.Field` constructor.  If this method name is supplied, then that method
+will be called as the 'dehydrate' method.
 
 Signals
 =======
 
-To hook in the import export workflow, you can connect to ``post_import``,
+To hook in the import-export workflow, you can connect to ``post_import``,
 ``post_export`` signals::
 
     from django.dispatch import receiver
@@ -395,11 +398,13 @@ To hook in the import export workflow, you can connect to ``post_import``,
 Admin integration
 =================
 
-Exporting
----------
+One of the main features of import-export is the support for integration with the
+`Django Admin site <https://docs.djangoproject.com/en/dev/ref/contrib/admin/>`_.
+This provides a convenient interface for importing and exporting Django objects.
 
-Exporting via list filters
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+Please install and run the :ref:`example application<exampleapp>`  to become familiar with Admin integration.
+
+Integrating import-export with your application requires extra configuration.
 
 Admin integration is achieved by subclassing
 :class:`~import_export.admin.ImportExportModelAdmin` or one of the available
@@ -416,30 +421,29 @@ mixins (:class:`~import_export.admin.ImportMixin`,
 
     admin.site.register(Book, BookAdmin)
 
+Once this configuration is present (and server is restarted), 'import' and 'export' buttons will be presented to the user.
+Clicking each button will open a workflow where the user can select the type of import or export.
+
+You can assign multiple resources to the ``resource_classes`` attribute.  These resources will be presented in a select dropdown in the UI.
+
 .. _change-screen-figure:
 
 .. figure:: _static/images/django-import-export-change.png
 
    A screenshot of the change view with Import and Export buttons.
 
-.. warning::
-
-    The `resource_class` parameter was deprecated in `django-import-export` 3.0.
-    Assign list or tuple with Resource(s) to `resource_classes` parameter now.
-
-
 Exporting via admin action
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+--------------------------
 
 Another approach to exporting data is by subclassing
-:class:`~import_export.admin.ImportExportActionModelAdmin` which implements
+:class:`~import_export.admin.ExportActionModelAdmin` which implements
 export as an admin action. As a result it's possible to export a list of
 objects selected on the change list page::
 
     # app/admin.py
-    from import_export.admin import ImportExportActionModelAdmin
+    from import_export.admin import ExportActionModelAdmin
 
-    class BookAdmin(ImportExportActionModelAdmin):
+    class BookAdmin(ExportActionModelAdmin):
         pass
 
 
@@ -449,18 +453,7 @@ objects selected on the change list page::
 
 Note that to use the :class:`~import_export.admin.ExportMixin` or
 :class:`~import_export.admin.ExportActionMixin`, you must declare this mixin
-**before** ``admin.ModelAdmin``::
-
-    # app/admin.py
-    from django.contrib import admin
-    from import_export.admin import ExportActionMixin
-
-    class BookAdmin(ExportActionMixin, admin.ModelAdmin):
-        pass
-
-Note that :class:`~import_export.admin.ExportActionMixin` is declared first in
-the example above!
-
+**before** ``admin.ModelAdmin``.
 
 Importing
 ---------
@@ -468,8 +461,12 @@ Importing
 It is also possible to enable data import via standard Django admin interface.
 To do this subclass :class:`~import_export.admin.ImportExportModelAdmin` or use
 one of the available mixins, i.e. :class:`~import_export.admin.ImportMixin`, or
-:class:`~import_export.admin.ImportExportMixin`. Customizations are, of course,
-possible.
+:class:`~import_export.admin.ImportExportMixin`.
+
+Import is a two step process.
+
+1. Select the file and format for import.
+2. Preview the import data and confirm import.
 
 .. _confirm-import-figure:
 
@@ -481,9 +478,40 @@ possible.
 
    A screenshot of the confirm import view.
 
+Import confirmation
+-------------------
+
+To support :ref:`import confirmation<confirm-import-figure>`, uploaded data is written to temporary storage after step 1 (:ref:`choose file<change-screen-figure>`), and read back for final import after step 2 (import confirmation).
+
+There are three mechanisms for temporary storage.
+
+#. Temporary file storage on the host server (default).  This is suitable for development only.
+   Use of temporary filesystem storage is not recommended for production sites.
+
+#. The `Django cache <https://docs.djangoproject.com/en/dev/topics/cache/>`_.
+
+#. `Django storage <https://docs.djangoproject.com/en/dev/ref/files/storage/>`_.
+
+To modify which storage mechanism is used, please refer to the setting :ref:`IMPORT_EXPORT_TMP_STORAGE_CLASS`.
+
+Temporary resources are removed when data is successfully imported after the confirmation step.
+
+Your choice of temporary storage will be influenced by the following factors:
+
+* Sensitivity of the data being imported.
+* Volume and frequency of uploads.
+* File upload size.
+* Use of containers or load-balanced servers.
+
+.. warning::
+
+    If users do not complete the confirmation step of the workflow,
+    or if there are errors during import, then temporary resources may not be deleted.
+    This will need to be understood and managed in production settings.
+    For example, using a cache expiration policy or cron job to clear stale resources.
 
 Customize admin import forms
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+----------------------------
 
 It is possible to modify default import forms used in the model admin. For
 example, to add an additional field in the import form, subclass and extend the
@@ -499,6 +527,10 @@ To use your customized form(s), change the respective attributes on your
 
 For example, imagine you want to import books for a specific author. You can
 extend the import forms to include ``author`` field to select the author from.
+
+.. figure:: _static/images/custom-import-form.png
+
+   A screenshot of a customized import view.
 
 Customize forms::
 
@@ -533,70 +565,31 @@ Customize ``ModelAdmin``::
 
 To further customize the import forms, you might like to consider overriding the following
 :class:`~import_export.admin.ImportMixin` methods:
-:meth:`~import_export.admin.ImportMixin.get_import_form_class`,
-:meth:`~import_export.admin.ImportMixin.get_import_form_kwargs`,
-:meth:`~import_export.admin.ImportMixin.get_import_form_initial`,
-:meth:`~import_export.admin.ImportMixin.get_confirm_form_class`,
-:meth:`~import_export.admin.ImportMixin.get_confirm_form_kwargs`,
 
-.. warning::
-
-    The `resource_class` parameter was deprecated in `django-import-export` 3.0.
-    Assign list or tuple with Resource(s) to `resource_classes` parameter now.
-
+* :meth:`~import_export.admin.ImportMixin.get_import_form_class`
+* :meth:`~import_export.admin.ImportMixin.get_import_form_kwargs`
+* :meth:`~import_export.admin.ImportMixin.get_import_form_initial`
+* :meth:`~import_export.admin.ImportMixin.get_confirm_form_class`
+* :meth:`~import_export.admin.ImportMixin.get_confirm_form_kwargs`
 
 .. seealso::
 
     :doc:`/api_admin`
         available mixins and options.
 
-Import confirmation
-~~~~~~~~~~~~~~~~~~~
-
-Importing in the Admin site is a two step process.
-
-#. Choose the file to import (:ref:`screenshot<change-screen-figure>`).
-#. Review changes and confirm import (:ref:`screenshot<confirm-import-figure>`).
-
-To support this, uploaded data is written to temporary storage after step 1, and read
-back for final import after step 2.
-
-There are three mechanisms for temporary storage.
-
-#. Temporary file storage on the host server (default).  This is suitable for development only.
-   Use of temporary filesystem storage is not recommended for production sites.
-
-#. The `Django cache <https://docs.djangoproject.com/en/dev/topics/cache/>`_.
-
-#. `Django storage <https://docs.djangoproject.com/en/dev/ref/files/storage/>`_.
-
-To modify which storage mechanism is used, please refer to the setting :ref:`IMPORT_EXPORT_TMP_STORAGE_CLASS`.
-
-Temporary resources are removed when data is successfully imported after the confirmation step.
-
-Your choice of temporary storage will be influenced by the following factors:
-
-* Sensitivity of the data being imported.
-* Volume and frequency of uploads.
-* File upload size.
-* Use of containers or load-balanced servers.
-
-.. warning::
-
-    If users do not complete the confirmation step of the workflow,
-    or if there are errors during import, then temporary resources may not be deleted.
-    This will need to be understood and managed in production settings.
-    For example, using a cache expiration policy or cron job to clear stale resources.
-
 
 Using multiple resources
 ------------------------
 
 It is possible to set multiple resources both to import and export `ModelAdmin` classes.
-The `ImportMixin`, `ExportMixin`, `ImportExportMixin` and `ImportExportModelAdmin` classes accepts
-subscriptable type (list, tuple, ...) as `resource_classes` parameter.
-The subscriptable could also be returned from one of the
-`get_resource_classes()`, `get_import_resource_classes()`, `get_export_resource_classes()` classes.
+The ``ImportMixin``, ``ExportMixin``, ``ImportExportMixin`` and ``ImportExportModelAdmin`` classes accepts
+subscriptable type (list, tuple, ...) as ``resource_classes`` parameter.
+
+The subscriptable could also be returned from one of the following:
+
+* :meth:`~import_export.mixins.BaseImportExportMixin.get_resource_classes`
+* :meth:`~import_export.mixins.BaseImportMixin.get_import_resource_classes`
+* :meth:`~import_export.mixins.BaseExportMixin.get_export_resource_classes`
 
 If there are multiple resources, the resource chooser appears in import/export admin form.
 The displayed name of the resource can be changed through the `name` parameter of the `Meta` class.
@@ -656,15 +649,3 @@ Now you can add a constructor to your ``Resource`` to store the user reference, 
 
         class Meta:
             model = Book
-
-Using this method, you can also dynamically set properties of the ``Field`` instance itself, including passing dynamic values to Widgets::
-
-    class CustomResource(ModelResource):
-
-      def __init__(self, company_name):
-          super().__init__()
-          self.fields["custom_field"] = fields.Field(
-              attribute="custom_field",
-              column_name=company_name,
-              widget=MyCompanyWidget(company_name)
-          )
