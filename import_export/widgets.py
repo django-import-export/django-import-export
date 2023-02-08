@@ -57,7 +57,7 @@ class NumberWidget(Widget):
     """
     Takes optional ``coerce_to_string`` parameter, set to ``True`` the 
     :meth:`~import_export.widgets.Widget.render` method will return a string
-    else it will return a value`
+    else it will return a value.
     """
 
     def __init__(self, coerce_to_string=False):
