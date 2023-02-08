@@ -52,7 +52,7 @@ jobs:
     - name: Check out repository code
       uses: actions/checkout@v3
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v3
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
     - name: isort
@@ -66,15 +66,15 @@ jobs:
     - name: Install Dependencies
       run: |
         python -m pip install --upgrade pip 
-        pip install tox tox-py coverage coveralls
+        pip install tox coverage coveralls
     - name: Run tox targets for ${{ matrix.python-version }} (sqlite)
-      run: tox --py current
+      run: tox run -f py$(echo ${{ matrix.python-version }} | tr -d .)
     - name: Run tox targets for ${{ matrix.python-version }} (postgres)
-      run: tox --py current
+      run: tox run -f py$(echo ${{ matrix.python-version }} | tr -d .)
       env:
         IMPORT_EXPORT_TEST_TYPE: postgres
     - name: Run tox targets for ${{ matrix.python-version }} (mysql)
-      run: tox --py current
+      run: tox run -f py$(echo ${{ matrix.python-version }} | tr -d .)
       env:
         IMPORT_EXPORT_TEST_TYPE: mysql-innodb
     - name: Combine test coverage

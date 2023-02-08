@@ -9,7 +9,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2022-10-18 15:35+0100\n"
 "PO-Revision-Date: 2022-10-17 17:42+0200\n"
-"Last-Translator: Jannis Vajen <jvajen@mailbox.org>\n"
+"Last-Translator: Jannes Blobel <jannes.blobel@inlang.com>\n"
 "Language-Team: \n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
@@ -32,6 +32,8 @@ msgid ""
 "'{type(e).__name__}' encountered while trying to read file. Ensure you have "
 "chosen the correct format for the file. "
 msgstr ""
+"'{type(e).__name__}' beim Versuch, die Datei zu lesen ist aufgetretten. Stellen Sie sicher, dass du "
+" das richtige Format für deine Datei gewählt hast" 
 
 #: admin.py:546 templates/admin/import_export/change_list_import_item.html:5
 #: templates/admin/import_export/import.html:19
@@ -54,7 +56,7 @@ msgstr "Ausgewählte %(verbose_name_plural)s exportieren"
 
 #: forms.py:11
 msgid "Resource"
-msgstr ""
+msgstr "Ressource"
 
 #: forms.py:29
 msgid "File to import"
@@ -136,4 +138,4 @@ msgstr "Löschen"
 
 #: templates/admin/import_export/import.html:184
 msgid "Update"
-msgstr "Überschreiben"
+msgstr "Update"
