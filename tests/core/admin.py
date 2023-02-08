@@ -1,6 +1,11 @@
 from django.contrib import admin
 
-from import_export.admin import ExportActionModelAdmin, ImportExportMixin, ImportMixin, ImportExportModelAdmin
+from import_export.admin import (
+    ExportActionModelAdmin,
+    ImportExportMixin,
+    ImportExportModelAdmin,
+    ImportMixin,
+)
 from import_export.resources import ModelResource
 
 from .forms import CustomConfirmImportForm, CustomExportForm, CustomImportForm
