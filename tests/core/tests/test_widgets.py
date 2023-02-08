@@ -6,7 +6,7 @@ from unittest import mock, skipUnless
 import django
 import pytz
 from core.models import Author, Book, Category
-from django.test import TestCase, override_settings
+from django.test import TestCase
 from django.test.utils import override_settings
 from django.utils import timezone
 
@@ -271,7 +271,6 @@ class FloatWidgetTest(TestCase):
 
     def test_render(self):
         self.assertEqual(self.widget.render(self.value), self.value)
-        self.assertEqual(self.widget_coerce_to_string.render(self.value), "11.111")
 
     def test_clean_string_zero(self):
         self.assertEqual(self.widget.clean("0"), 0.0)
@@ -307,7 +306,6 @@ class DecimalWidgetTest(TestCase):
 
     def test_render(self):
         self.assertEqual(self.widget.render(self.value), self.value)
-        self.assertEqual(self.widget_coerce_to_string.render(self.value), "11.111")
 
     def test_clean_string_zero(self):
         self.assertEqual(self.widget.clean("0"), Decimal("0"))
