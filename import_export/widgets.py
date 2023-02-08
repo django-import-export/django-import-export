@@ -8,6 +8,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.utils import timezone
 from django.utils.dateparse import parse_duration
 from django.utils.encoding import force_str, smart_str
+from django.utils.formats import number_format
 
 
 def format_datetime(value, datetime_format):
@@ -54,7 +55,13 @@ class Widget:
 
 class NumberWidget(Widget):
     """
+    Takes optional ``coerce_to_string`` parameter, set to ``True`` the 
+    :meth:`~import_export.widgets.Widget.render` method will return a string
+    else it will return a value.
     """
+
+    def __init__(self, coerce_to_string=False):
+        self.coerce_to_string = coerce_to_string
 
     def is_empty(self, value):
         if isinstance(value, str):
@@ -63,7 +70,7 @@ class NumberWidget(Widget):
         return value is None or value == ""
 
     def render(self, value, obj=None):
-        return value
+        return number_format(value) if self.coerce_to_string else value
 
 
 class FloatWidget(NumberWidget):
