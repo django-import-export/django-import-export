@@ -7,21 +7,19 @@ enable customization of the import process. The central aspect of the import
 process is a resource's :meth:`~import_export.resources.Resource.import_data`
 method which is explained below.
 
-.. function:: import_data(dataset, dry_run=False, raise_errors=False)
+The :meth:`~import_export.resources.Resource.import_data` method of
+:class:`~import_export.resources.Resource` is responsible for importing data
+from a given dataset.
 
-    The :meth:`~import_export.resources.Resource.import_data` method of
-    :class:`~import_export.resources.Resource` is responsible for importing data
-    from a given dataset.
+``dataset`` is required and expected to be a :class:`tablib.Dataset` with
+a header row.
 
-    ``dataset`` is required and expected to be a :class:`tablib.Dataset` with
-    a header row.
+``dry_run`` is a Boolean which determines if changes to the database are
+made or if the import is only simulated. It defaults to ``False``.
 
-    ``dry_run`` is a Boolean which determines if changes to the database are
-    made or if the import is only simulated. It defaults to ``False``.
-
-    ``raise_errors`` is a Boolean. If ``True``, import should raise errors.
-    The default is ``False``, which means that eventual errors and traceback
-    will be saved in ``Result`` instance.
+``raise_errors`` is a Boolean. If ``True``, import should raise errors.
+The default is ``False``, which means that eventual errors and traceback
+will be saved in ``Result`` instance.
 
 
 This is what happens when the method is invoked:
