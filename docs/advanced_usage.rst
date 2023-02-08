@@ -340,7 +340,27 @@ Also, the ``report_skipped`` option controls whether skipped records appear in t
 
     :doc:`/api_resources`
 
+How to set a value on all imported instances prior to persisting
+================================================================
 
+If you need to set the same value on each instance created during import then you can do so as follows.
+
+It might be that you need to set a value read at runtime on all instances during import.
+
+You can define your resource to take the associated instance as a param, and then set it on each import instance::
+
+    class BookResource(ModelResource):
+
+        def __init__(self, publisher_id):
+            self.publisher_id = publisher_id
+
+        def before_save_instance(self, instance, using_transactions, dry_run):
+            instance.publisher_id = self.publisher_id
+
+        class Meta:
+            model = Book
+
+See also :ref:`How to dynamically set resource values`.
 
 Advanced data manipulation on export
 ====================================

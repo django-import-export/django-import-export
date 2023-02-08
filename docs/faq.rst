@@ -30,7 +30,7 @@ Common issues
 key error 'id' in ``get_import_id_fields()``
 --------------------------------------------
 
-When attempting to import, this error can be seen.  This indicates that the ``Resource`` has not been configured correctly, and the import logic fails.  A more detailed discussion is provided `here <https://stackoverflow.com/a/69347073/39296/>`_.
+When attempting to import, this error can be seen.  This indicates that the ``Resource`` has not been configured correctly, and the import logic fails.  See :ref:`Create or update model instances`.
 
 How to handle double-save from Signals
 --------------------------------------
@@ -68,60 +68,38 @@ Further discussion `here <https://github.com/django-import-export/django-import-
 How to dynamically set resource values
 --------------------------------------
 
-See :ref:`dynamically_set_resource_values`
+There can be use cases where you need a runtime or user supplied value to be passed to a Resource.
+See :ref:`dynamically_set_resource_values`.
 
 How to set a value on all imported instances prior to persisting
 ----------------------------------------------------------------
 
-TODO this may belong in import data workflow rst
-
-If you need to set the same value on each instance created during import then you can do so as follows.
-
-It might be that you want to set an object read using a user id on each instance to be persisted
-
-You can define your resource to take the associated instance as a param, and then set it on each import instance::
-
-    class YourResource(ModelResource):
-
-        def __init__(self, company):
-            self.company = company
-
-        def before_save_instance(self, instance, using_transactions, dry_run):
-            instance.company = self.company
-
-        class Meta:
-            model = YourModel
-
-See `this example <#how-to-dynamically-set-resource-values>`_ to see how to dynamically read request values.
+If you need to set the same value on each instance created during import then refer to
+:ref:`advanced_usage:How to set a value on all imported instances prior to persisting`.
 
 How to export from more than one table
 --------------------------------------
 
-In the usual configuration, a ``Resource`` maps to a single model.  If you want to export data associated with relations to that model, then these values can be defined in the ``fields`` declaration.
-
-- https://stackoverflow.com/questions/74020864/is-it-possible-to-use-import-export-django-lib-to-export-data-from-more-than-one/74029584#74029584
-
-- https://github.com/django-import-export/django-import-export/issues/1440
+In the usual configuration, a ``Resource`` maps to a single model.  If you want to export data associated with relations to that model, then these values can be defined in the ``fields`` declaration.  See :ref:`advanced_usage:Model relations`.
 
 How to import imagefield in excel cell
 --------------------------------------
 
-- https://stackoverflow.com/questions/74093994/django-import-export-imagefield-in-excel-cell
-
-- https://github.com/django-import-export/django-import-export/issues/90#issuecomment-729731655
-- https://github.com/django-import-export/django-import-export/issues/90#issuecomment-1336181454
+Please refer to `this issue <https://github.com/django-import-export/django-import-export/issues/90>`_.
 
 How to hide stack trace in UI error messages
 --------------------------------------------
 
-- https://github.com/django-import-export/django-import-export/issues/1257#issuecomment-952276485
+Please refer to `this issue <https://github.com/django-import-export/django-import-export/issues/1257#issuecomment-952276485>`_.
 
 Ids incremented twice during import
 -----------------------------------
 
-https://github.com/django-import-export/django-import-export/issues/560
+When importing using the Admin site, it can be that the ids of the imported instances are different from those show
+in the preview step.  This occurs because the rows are imported during 'confirm', and then the transaction is rolled
+back prior to the confirm step.  Database implementations mean that sequence numbers may not be reused.
 
-https://wiki.postgresql.org/wiki/FAQ#Why_are_there_gaps_in_the_numbering_of_my_sequence.2FSERIAL_column.3F_Why_aren.27t_my_sequence_numbers_reused_on_transaction_abort.3F
+See `this issue <https://github.com/django-import-export/django-import-export/issues/560>`_ for more detailed discussion.
 
 how to handle blank Charfield
 -----------------------------
