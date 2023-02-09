@@ -1,6 +1,7 @@
 import functools
 import logging
 import traceback
+import warnings
 from collections import OrderedDict
 from copy import deepcopy
 
@@ -683,7 +684,7 @@ class Resource(metaclass=DeclarativeMetaclass):
         """
         pass
 
-    def import_row(self, row, instance_loader, using_transactions=True, dry_run=False, **kwargs):
+    def import_row(self, row, instance_loader, using_transactions=True, dry_run=False, raise_errors=None, **kwargs):
         """
         Imports data from ``tablib.Dataset``. Refer to :doc:`import_workflow`
         for a more complete description of the whole import process.
@@ -698,6 +699,12 @@ class Resource(metaclass=DeclarativeMetaclass):
         :param dry_run: If ``dry_run`` is set, or error occurs, transaction
             will be rolled back.
         """
+        if raise_errors is not None:
+            warnings.warn(
+                "raise_errors argument is deprecated and will be removed in a future release.",
+                category=DeprecationWarning
+            )
+
         skip_diff = self._meta.skip_diff
         row_result = self.get_row_result_class()()
         if self._meta.store_row_values:

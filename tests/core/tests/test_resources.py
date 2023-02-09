@@ -2080,6 +2080,17 @@ class BulkCreateTest(BulkTest):
         resource = _BookResource()
         self.assertIsNotNone(resource.get_or_init_instance(ModelInstanceLoader(resource), self.dataset[0]))
 
+    @mock.patch('import_export.resources.atomic_if_using_transaction')
+    def test_no_sub_transaction_on_row_for_bulk(self, mock_atomic_if_using_transaction):
+        class _BookResource(resources.ModelResource):
+            class Meta:
+                model = Book
+                use_bulk = True
+
+        resource = _BookResource()
+        resource.import_data(self.dataset)
+        self.assertIn(False, [x.args[0] for x in mock_atomic_if_using_transaction.call_args_list])
+
 
 class BulkUpdateTest(BulkTest):
     class _BookResource(resources.ModelResource):
