@@ -8,14 +8,13 @@ Introduction
 This section describes how to get started with import-export.  We'll use the :ref:`example application<exampleapp>`
 as a guide.
 
-import-export can be used programmatically, or it can be integrated with the
+import-export can be used programmatically as described here, or it can be integrated with the
 :ref:`Django Admin interface<admin-integration>`.
-First, we'll look at programmatic implementation.
 
 Test data
 =========
 
-There are sample files which can be used to import data in the `tests/core/exports` directory.
+There are sample files which can be used to test importing data in the `tests/core/exports` directory.
 
 The test models
 ===============

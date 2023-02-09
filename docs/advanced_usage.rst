@@ -163,7 +163,7 @@ We would have to declare our ``BookResource`` to use the author name as the fore
 
 By default, ``ForeignKeyWidget`` will use 'pk' as the lookup field, hence we have to pass 'name' as the lookup field.
 This relies on 'name' being a unique identifier for the related model instance, meaning that a lookup on the related
-table using the field value will return exactly one result.  See also :ref:`Creating non existent relations`.
+table using the field value will return exactly one result.  See also :ref:`advanced_usage:Creating non existent relations`.
 
 Refer to the :class:`~.ForeignKeyWidget` documentation for more detailed information.
 
@@ -252,7 +252,7 @@ Then if the import was being called from another module, we would pass the ``pub
     >>> resource = BookResource(publisher_id=1)
 
 If you need to pass dynamic values to the Resource from an `Admin integration`_, refer to
-:ref:`How to dynamically set resource values`.
+:ref:`advanced_usage:How to dynamically set resource values`.
 
 Django Natural Keys
 -------------------
@@ -314,7 +314,7 @@ for all Models that support it.
             model = Book
             use_natural_foreign_keys = True
 
-Read more at `Django Serialization <https://docs.djangoproject.com/en/4.0/topics/serialization>`_
+Read more at `Django Serialization <https://docs.djangoproject.com/en/dev/topics/serialization/>`_.
 
 
 Create or update model instances
@@ -395,7 +395,7 @@ You can define your resource to take the associated instance as a param, and the
         class Meta:
             model = Book
 
-See also :ref:`How to dynamically set resource values`.
+See also :ref:`advanced_usage:How to dynamically set resource values`.
 
 Advanced data manipulation on export
 ====================================
