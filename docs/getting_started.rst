@@ -5,9 +5,11 @@ Getting started
 Introduction
 ============
 
-This section describes how to get started with import-export.  We'll use the :ref:`example application<exampleapp>` as a guide.
+This section describes how to get started with import-export.  We'll use the :ref:`example application<exampleapp>`
+as a guide.
 
-import-export can be used programmatically, or it can be integrated with the :ref:`Django Admin interface<admin-integration>`.
+import-export can be used programmatically, or it can be integrated with the
+:ref:`Django Admin interface<admin-integration>`.
 First, we'll look at programmatic implementation.
 
 Test data

@@ -5,7 +5,8 @@ Frequently Asked Questions
 What's the best way to communicate a problem, question, or suggestion?
 ======================================================================
 
-To submit a feature, to report a bug, or to ask a question, please refer our :doc:`contributing guidelines <contributing>`.
+To submit a feature, to report a bug, or to ask a question, please refer our
+:doc:`contributing guidelines <contributing>`.
 
 How can I help?
 ===============
@@ -30,14 +31,21 @@ Common issues
 key error 'id' in ``get_import_id_fields()``
 --------------------------------------------
 
-When attempting to import, this error can be seen.  This indicates that the ``Resource`` has not been configured correctly, and the import logic fails.  See :ref:`Create or update model instances`.
+When attempting to import, this error can be seen.  This indicates that the ``Resource`` has not been configured
+correctly, and the import logic fails.  See :ref:`Create or update model instances`.
 
 How to handle double-save from Signals
 --------------------------------------
 
-This issue can apply if you have implemented post-save signals, and you are using the import workflow in the Admin interface.  You will find that the post-save signal is called twice for each instance.  The reason for this is that the model ``save()`` method is called twice: once for the 'confirm' step and once for the 'import' step.  The call to ``save()`` during the 'confirm' step is necessary to prove that the object will be saved successfully, or to report any exceptions in the Admin UI if save failed.  After the 'confirm' step, the database transaction is rolled back so that no changes are persisted.
+This issue can apply if you have implemented post-save signals, and you are using the import workflow in the Admin
+interface.  You will find that the post-save signal is called twice for each instance.  The reason for this is that
+the model ``save()`` method is called twice: once for the 'confirm' step and once for the 'import' step.  The call
+to ``save()`` during the 'confirm' step is necessary to prove that the object will be saved successfully, or to
+report any exceptions in the Admin UI if save failed.  After the 'confirm' step, the database transaction is rolled
+back so that no changes are persisted.
 
-Therefore there is no way at present to stop ``save()`` being called twice, and there will always be two signal calls.  There is a workaround, which is to set a temporary flag on the instance being saved::
+Therefore there is no way at present to stop ``save()`` being called twice, and there will always be two signal calls.
+There is a workaround, which is to set a temporary flag on the instance being saved::
 
     class BookResource(resources.ModelResource):
 
@@ -62,7 +70,8 @@ Your signal receiver can then include conditional logic to handle this flag::
             # this will be executed only on the 'import' step
             pass
 
-Further discussion `here <https://github.com/django-import-export/django-import-export/issues/1078/>`_ and `here <https://stackoverflow.com/a/71625152/39296/>`_.
+Further discussion `here <https://github.com/django-import-export/django-import-export/issues/1078/>`_
+and `here <https://stackoverflow.com/a/71625152/39296/>`_.
 
 
 How to dynamically set resource values
@@ -80,7 +89,9 @@ If you need to set the same value on each instance created during import then re
 How to export from more than one table
 --------------------------------------
 
-In the usual configuration, a ``Resource`` maps to a single model.  If you want to export data associated with relations to that model, then these values can be defined in the ``fields`` declaration.  See :ref:`advanced_usage:Model relations`.
+In the usual configuration, a ``Resource`` maps to a single model.  If you want to export data associated with
+relations to that model, then these values can be defined in the ``fields`` declaration.
+See :ref:`advanced_usage:Model relations`.
 
 How to import imagefield in excel cell
 --------------------------------------
@@ -99,7 +110,8 @@ When importing using the Admin site, it can be that the ids of the imported inst
 in the preview step.  This occurs because the rows are imported during 'confirm', and then the transaction is rolled
 back prior to the confirm step.  Database implementations mean that sequence numbers may not be reused.
 
-See `this issue <https://github.com/django-import-export/django-import-export/issues/560>`_ for more detailed discussion.
+See `this issue <https://github.com/django-import-export/django-import-export/issues/560>`_ for more detailed
+discussion.
 
 Not Null constraint fails when importing blank Charfield
 --------------------------------------------------------
@@ -113,9 +125,12 @@ It is possible to reference model relations by defining a field with the double 
 
   fields = ("author__name")
 
-This means that during export, the relation will be followed and the referenced field will be added correctly to the export.
+This means that during export, the relation will be followed and the referenced field will be added correctly to the
+export.
 
-This does not work during import because the reference may not be enough to identify the correct relation instance.  :class:`~import_export.widgets.ForeignKeyWidget` should be used during import.  See also the documentation explaining :ref:`advanced_usage:Foreign Key relations`.
+This does not work during import because the reference may not be enough to identify the correct relation instance.
+:class:`~import_export.widgets.ForeignKeyWidget` should be used during import.  See also the documentation explaining
+:ref:`advanced_usage:Foreign Key relations`.
 
 How to customize export data
 ----------------------------

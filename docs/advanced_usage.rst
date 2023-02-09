@@ -9,9 +9,14 @@ By default :class:`~import_export.resources.ModelResource` introspects model
 fields and creates :class:`~import_export.fields.Field` attributes with an
 appropriate :class:`~import_export.widgets.Widget` for each field.
 
-Fields are generated automatically by introspection on the declared model class.  The field defines the relationship between the resource we are importing (for example, a csv row) and the instance we want to update.  Typically, the row data will map onto a single model instance.  The row data will be set onto model attributes (including model relations) during the import process.
+Fields are generated automatically by introspection on the declared model class.  The field defines the relationship
+between the resource we are importing (for example, a csv row) and the instance we want to update.  Typically, the row
+data will map onto a single model instance.  The row data will be set onto model attributes (including model relations)
+during the import process.
 
-In a simple case, the name of the row headers will map exactly onto the names of the model attributes, and the import process will handle this mapping.  In more complex cases, model attributes and row headers may differ, and we will need to declare explicitly declare this mapping. See :ref:`field_declaration` for more information.
+In a simple case, the name of the row headers will map exactly onto the names of the model attributes, and the import
+process will handle this mapping.  In more complex cases, model attributes and row headers may differ, and we will need
+to declare explicitly declare this mapping. See :ref:`field_declaration` for more information.
 
 Declare import fields
 ---------------------
@@ -60,12 +65,14 @@ possible to follow model relationships::
 
 .. note::
 
-    Following relationship fields sets ``field`` as readonly, meaning this field will be skipped when importing data.  To understand how to import model relations, see :ref:`import_model_relations`.
+    Following relationship fields sets ``field`` as readonly, meaning this field will be skipped when importing data.
+To understand how to import model relations, see :ref:`import_model_relations`.
 
 Explicit field declaration
 --------------------------
 
-We can declare fields explicitly to give us more control over the relationship between the row and the model attribute.  In the example below, we use the ``attribute`` kwarg to define the model attribute, and ``column_name`` to define the column name (i.e. row header)::
+We can declare fields explicitly to give us more control over the relationship between the row and the model attribute.
+In the example below, we use the ``attribute`` kwarg to define the model attribute, and ``column_name`` to define the column name (i.e. row header)::
 
     from import_export.fields import Field
 
@@ -88,11 +95,15 @@ A widget is an object associated with each field declaration.  The widget has tw
 1. Transform the raw import data into a python object which is associated with the instance (see :meth:`.clean`).
 2. Export persisted data into a suitable export format (see :meth:`.render`).
 
-There are widgets associated with character data, numeric values, dates, foreign keys.  You can also define your own widget and associate it with the field.
+There are widgets associated with character data, numeric values, dates, foreign keys.  You can also define your own
+widget and associate it with the field.
 
-A :class:`~import_export.resources.ModelResource` creates fields with a default widget for a given field type.  If the widget should be initialized with different arguments, this can be done via an explicit declaration or via the widgets dict.
+A :class:`~import_export.resources.ModelResource` creates fields with a default widget for a given field type.  If the
+widget should be initialized with different arguments, this can be done via an explicit declaration or via the widgets
+dict.
 
-For example, the ``published`` field is overridden to use a different date format. This format will be used both for importing and exporting resource::
+For example, the ``published`` field is overridden to use a different date format. This format will be used both for
+importing and exporting resource::
 
     class BookResource(resources.ModelResource):
         published = Field(attribute='published', column_name='published_date',
@@ -121,12 +132,14 @@ Alternatively, widget parameters can be overridden using the widgets dict declar
 Importing model relations
 =========================
 
-If you are importing data for a model instance which has a foreign key relationship to another model then import-export can handle the lookup and linking to the related model.
+If you are importing data for a model instance which has a foreign key relationship to another model then import-export
+can handle the lookup and linking to the related model.
 
 Foreign Key relations
 ---------------------
 
-``ForeignKeyWidget`` allows you to declare a reference to a related model.  For example, if we are importing a 'book' csv file, then we can have a single field which references an author by name.
+``ForeignKeyWidget`` allows you to declare a reference to a related model.  For example, if we are importing a 'book'
+csv file, then we can have a single field which references an author by name.
 
 ::
 
@@ -148,14 +161,19 @@ We would have to declare our ``BookResource`` to use the author name as the fore
                 model = Book
                 fields = ('author',)
 
-By default, ``ForeignKeyWidget`` will use 'pk' as the lookup field, hence we have to pass 'name' as the lookup field.  This relies on 'name' being a unique identifier for the related model instance, meaning that a lookup on the related table using the field value will return exactly one result.  See also :ref:`Creating non existent relations`.
+By default, ``ForeignKeyWidget`` will use 'pk' as the lookup field, hence we have to pass 'name' as the lookup field.
+This relies on 'name' being a unique identifier for the related model instance, meaning that a lookup on the related
+table using the field value will return exactly one result.  See also :ref:`Creating non existent relations`.
 
 Refer to the :class:`~.ForeignKeyWidget` documentation for more detailed information.
 
 Many-to-many relations
 ----------------------
 
-``ManyToManyWidget`` allows you to import m2m references.  For example, we can import associated categories with our book import.  The categories refer to existing data in a ``Category`` table, and are uniquely referenced by category name.  We use the pipe separator in the import file, which means we have to declare this in the ``ManyToManyWidget`` declaration.
+``ManyToManyWidget`` allows you to import m2m references.  For example, we can import associated categories with our
+book import.  The categories refer to existing data in a ``Category`` table, and are uniquely referenced by category
+name.  We use the pipe separator in the import file, which means we have to declare this in the ``ManyToManyWidget``
+declaration.
 
 ::
 
@@ -177,7 +195,8 @@ Many-to-many relations
 Creating non existent relations
 -------------------------------
 
-The examples above rely on the relation data being present prior to the import.  It is a common use-case to create the data if it does not already exist.  It is possible to achieve this as follows::
+The examples above rely on the relation data being present prior to the import.  It is a common use-case to create the
+data if it does not already exist.  It is possible to achieve this as follows::
 
     class BookResource(resources.ModelResource):
 
@@ -190,14 +209,19 @@ The examples above rely on the relation data being present prior to the import. 
 
 The code above can be adapted to handle m2m relationships.
 
-You can also achieve similar by subclassing the widget :meth:`~import_export.widgets.ForeignKeyWidget.clean` method to create the object if it does not already exist.
+You can also achieve similar by subclassing the widget :meth:`~import_export.widgets.ForeignKeyWidget.clean` method to
+create the object if it does not already exist.
 
 Customize relation lookup
 -------------------------
 
-The relation widgets will look for relations by searching the entire relation table for the imported value.  This is implemented in the :meth:`~import_export.widgets.ForeignKeyWidget.get_queryset` method.  For example, for an ``Author`` relation, the lookup calls ``Author.objects.all()``.
+The relation widgets will look for relations by searching the entire relation table for the imported value.  This is
+implemented in the :meth:`~import_export.widgets.ForeignKeyWidget.get_queryset` method.  For example, for an ``Author``
+relation, the lookup calls ``Author.objects.all()``.
 
-In some cases, you may want to customize this behaviour, and it can be a requirement to pass dynamic values in.  For example, suppose we want to look up authors associated with a certain publisher id.  We can achieve this by passing the publisher id into the ``Resource`` constructor, which can then be passed to the widget::
+In some cases, you may want to customize this behaviour, and it can be a requirement to pass dynamic values in.
+For example, suppose we want to look up authors associated with a certain publisher id.  We can achieve this by passing
+the publisher id into the ``Resource`` constructor, which can then be passed to the widget::
 
 
     class BookResource(resources.ModelResource):
@@ -227,7 +251,8 @@ Then if the import was being called from another module, we would pass the ``pub
 
     >>> resource = BookResource(publisher_id=1)
 
-If you need to pass dynamic values to the Resource from an `Admin integration`_, refer to :ref:`How to dynamically set resource values`.
+If you need to pass dynamic values to the Resource from an `Admin integration`_, refer to
+:ref:`How to dynamically set resource values`.
 
 Django Natural Keys
 -------------------
@@ -295,13 +320,18 @@ Read more at `Django Serialization <https://docs.djangoproject.com/en/4.0/topics
 Create or update model instances
 ================================
 
-When you are importing a file using import-export, the file is going to be processed row by row. For each row, the import process is going to test whether the row corresponds to an existing stored instance, or whether a new instance is to be created.
+When you are importing a file using import-export, the file is going to be processed row by row. For each row, the
+import process is going to test whether the row corresponds to an existing stored instance, or whether a new instance is to be created.
 
-If an existing instance is found, then the instance is going to be *updated* with the values from the imported row, otherwise a new row will be created.
+If an existing instance is found, then the instance is going to be *updated* with the values from the imported row,
+otherwise a new row will be created.
 
-In order to test whether the instance already exists, import-export needs to use a field (or a combination of fields) in the row being imported. The idea is that the field (or fields) will uniquely identify a single instance of the model type you are importing.
+In order to test whether the instance already exists, import-export needs to use a field (or a combination of fields)
+in the row being imported. The idea is that the field (or fields) will uniquely identify a single instance of the model type you are importing.
 
-To define which fields identify an instance, use the ``import_id_fields`` meta attribute. You can use this declaration to indicate which field (or fields) should be used to uniquely identify the row. If you don't declare ``import_id_fields``, then a default declaration is used, in which there is only one field: 'id'.
+To define which fields identify an instance, use the ``import_id_fields`` meta attribute. You can use this declaration
+to indicate which field (or fields) should be used to uniquely identify the row. If you don't declare
+``import_id_fields``, then a default declaration is used, in which there is only one field: 'id'.
 
 For example, you can use the 'isbn' number instead of 'id' to uniquely identify a Book as follows::
 
@@ -314,14 +344,19 @@ For example, you can use the 'isbn' number instead of 'id' to uniquely identify 
 
 .. note::
 
-    If setting ``import_id_fields``, you must ensure that the data can uniquely identify a single row.  If the chosen field(s) select more than one row, then a ``MultipleObjectsReturned`` exception will be raised.  If no row is identified, then ``DoesNotExist`` exception will be raised.
+    If setting ``import_id_fields``, you must ensure that the data can uniquely identify a single row.  If the chosen
+field(s) select more than one row, then a ``MultipleObjectsReturned`` exception will be raised.  If no row is identified, then ``DoesNotExist`` exception will be raised.
 
 Handling duplicate data
 =======================
 
-If an existing instance is identified during import, then the existing instance will be updated, regardless of whether the data in the import row is the same as the persisted data or not.  You can configure the import process to skip the row if it is duplicate by using setting ``skip_unchanged``.
+If an existing instance is identified during import, then the existing instance will be updated, regardless of whether
+the data in the import row is the same as the persisted data or not.  You can configure the import process to skip the
+row if it is duplicate by using setting ``skip_unchanged``.
 
-If ``skip_unchanged`` is enabled, then the import process will check each defined import field and perform a simple comparison with the existing instance, and if all comparisons are equal, then the row is skipped.  Skipped rows are recorded in the row ``Result`` object.
+If ``skip_unchanged`` is enabled, then the import process will check each defined import field and perform a simple
+comparison with the existing instance, and if all comparisons are equal, then the row is skipped.  Skipped rows are
+recorded in the row ``Result`` object.
 
 You can override the :meth:`~.skip_row` method to have full control over the skip row implementation.
 
@@ -390,7 +425,8 @@ In this case, the export looks like this:
     full_title,id,name,author,author_email,imported,published,price,categories
     Some book by 1,2,Some book,1,,0,2012-12-05,8.85,1
 
-It is also possible to pass a method name in to the :meth:`~import_export.fields.Field` constructor.  If this method name is supplied, then that method
+It is also possible to pass a method name in to the :meth:`~import_export.fields.Field` constructor.  If this method
+name is supplied, then that method
 will be called as the 'dehydrate' method.
 
 Signals
@@ -441,10 +477,12 @@ mixins (:class:`~import_export.admin.ImportMixin`,
 
     admin.site.register(Book, BookAdmin)
 
-Once this configuration is present (and server is restarted), 'import' and 'export' buttons will be presented to the user.
+Once this configuration is present (and server is restarted), 'import' and 'export' buttons will be presented to the
+user.
 Clicking each button will open a workflow where the user can select the type of import or export.
 
-You can assign multiple resources to the ``resource_classes`` attribute.  These resources will be presented in a select dropdown in the UI.
+You can assign multiple resources to the ``resource_classes`` attribute.  These resources will be presented in a select
+dropdown in the UI.
 
 .. _change-screen-figure:
 
@@ -501,7 +539,8 @@ Import is a two step process.
 Import confirmation
 -------------------
 
-To support :ref:`import confirmation<confirm-import-figure>`, uploaded data is written to temporary storage after step 1 (:ref:`choose file<change-screen-figure>`), and read back for final import after step 2 (import confirmation).
+To support :ref:`import confirmation<confirm-import-figure>`, uploaded data is written to temporary storage after
+step 1 (:ref:`choose file<change-screen-figure>`), and read back for final import after step 2 (import confirmation).
 
 There are three mechanisms for temporary storage.
 
@@ -643,9 +682,11 @@ Use multiple resources::
 How to dynamically set resource values
 --------------------------------------
 
-There are a few use cases where it is desirable to dynamically set values in the `Resource`.  For example, suppose you are importing via the Admin console and want to use a value associated with the authenticated user in import queries.
+There are a few use cases where it is desirable to dynamically set values in the `Resource`.  For example, suppose you
+are importing via the Admin console and want to use a value associated with the authenticated user in import queries.
 
-Suppose the authenticated user (stored in the ``request`` object) has a property called ``publisher_id``.  During import, we want to filter any books associated only with that publisher.
+Suppose the authenticated user (stored in the ``request`` object) has a property called ``publisher_id``.  During
+import, we want to filter any books associated only with that publisher.
 
 First of all, override the ``get_import_resource_kwargs()`` method so that the request user is retained::
 
@@ -657,7 +698,8 @@ First of all, override the ``get_import_resource_kwargs()`` method so that the r
             kwargs.update({"user": request.user})
             return kwargs
 
-Now you can add a constructor to your ``Resource`` to store the user reference, then override ``get_queryset()`` to return books for the publisher::
+Now you can add a constructor to your ``Resource`` to store the user reference, then override ``get_queryset()`` to
+return books for the publisher::
 
     class BookResource(ModelResource):
 
