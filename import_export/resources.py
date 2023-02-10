@@ -1,6 +1,7 @@
 import functools
 import logging
 import traceback
+import warnings
 from collections import OrderedDict
 from copy import deepcopy
 
@@ -683,7 +684,7 @@ class Resource(metaclass=DeclarativeMetaclass):
         """
         pass
 
-    def import_row(self, row, instance_loader, using_transactions=True, dry_run=False, raise_errors=False, **kwargs):
+    def import_row(self, row, instance_loader, using_transactions=True, dry_run=False, raise_errors=None, **kwargs):
         """
         Imports data from ``tablib.Dataset``. Refer to :doc:`import_workflow`
         for a more complete description of the whole import process.
@@ -698,6 +699,12 @@ class Resource(metaclass=DeclarativeMetaclass):
         :param dry_run: If ``dry_run`` is set, or error occurs, transaction
             will be rolled back.
         """
+        if raise_errors is not None:
+            warnings.warn(
+                "raise_errors argument is deprecated and will be removed in a future release.",
+                category=DeprecationWarning
+            )
+
         skip_diff = self._meta.skip_diff
         row_result = self.get_row_result_class()()
         if self._meta.store_row_values:
@@ -761,17 +768,6 @@ class Resource(metaclass=DeclarativeMetaclass):
                 logger.debug(e, exc_info=e)
             tb_info = traceback.format_exc()
             row_result.errors.append(self.get_error_result_class()(e, tb_info, row))
-
-        if self._meta.use_bulk:
-            # persist a batch of rows
-            # because this is a batch, any exceptions are logged and not associated
-            # with a specific row
-            if len(self.create_instances) == self._meta.batch_size:
-                self.bulk_create(using_transactions, dry_run, raise_errors, batch_size=self._meta.batch_size)
-            if len(self.update_instances) == self._meta.batch_size:
-                self.bulk_update(using_transactions, dry_run, raise_errors, batch_size=self._meta.batch_size)
-            if len(self.delete_instances) == self._meta.batch_size:
-                self.bulk_delete(using_transactions, dry_run, raise_errors)
 
         return row_result
 
@@ -852,16 +848,29 @@ class Resource(metaclass=DeclarativeMetaclass):
             result.add_dataset_headers(dataset.headers)
 
         for i, row in enumerate(dataset.dict, 1):
-            with atomic_if_using_transaction(using_transactions, using=db_connection):
+            with atomic_if_using_transaction(using_transactions and not self._meta.use_bulk, using=db_connection):
                 row_result = self.import_row(
                     row,
                     instance_loader,
                     using_transactions=using_transactions,
                     dry_run=dry_run,
                     row_number=i,
-                    raise_errors=raise_errors,
                     **kwargs
                 )
+            if self._meta.use_bulk:
+                # persist a batch of rows
+                # because this is a batch, any exceptions are logged and not associated
+                # with a specific row
+                if len(self.create_instances) == self._meta.batch_size:
+                    with atomic_if_using_transaction(using_transactions, using=db_connection):
+                        self.bulk_create(using_transactions, dry_run, raise_errors, batch_size=self._meta.batch_size)
+                if len(self.update_instances) == self._meta.batch_size:
+                    with atomic_if_using_transaction(using_transactions, using=db_connection):
+                        self.bulk_update(using_transactions, dry_run, raise_errors, batch_size=self._meta.batch_size)
+                if len(self.delete_instances) == self._meta.batch_size:
+                    with atomic_if_using_transaction(using_transactions, using=db_connection):
+                        self.bulk_delete(using_transactions, dry_run, raise_errors)
+
             result.increment_row_result_total(row_result)
 
             if row_result.errors:
