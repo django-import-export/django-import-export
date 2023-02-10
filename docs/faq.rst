@@ -32,7 +32,8 @@ key error 'id' in ``get_import_id_fields()``
 --------------------------------------------
 
 When attempting to import, this error can be seen.  This indicates that the ``Resource`` has not been configured
-correctly, and the import logic fails.  See :ref:`Create or update model instances`.
+correctly, and the import logic fails.  Specifically, the import process is looking for an instance field called ``id``
+and there is no such field in the import.  See :ref:`advanced_usage:Create or update model instances`.
 
 How to handle double-save from Signals
 --------------------------------------
