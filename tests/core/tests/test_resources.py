@@ -185,6 +185,36 @@ class ResourceTestCase(TestCase):
         target = dict()
         full_clean_mock.assert_called_once_with(exclude=target.keys(), validate_unique=True)
 
+    def test_raise_errors_deprecation_import_row(self,):
+        target_msg = (
+            "raise_errors argument is deprecated and will be removed in a future release."
+        )
+        dataset = tablib.Dataset(headers=['name', 'email', 'extra'])
+        dataset.append(['Some book', 'test@example.com', "10.25"])
+
+        class Loader:
+            def __init__(self, *args, **kwargs):
+                pass
+
+        class A(MyResource):
+            class Meta:
+                instance_loader_class = Loader
+                force_init_instance = True
+
+            def init_instance(self, row=None):
+                return row or {}
+
+            def import_row(self, row, instance_loader, using_transactions=True, dry_run=False, raise_errors=False, **kwargs):
+                return super().import_row(row, instance_loader, using_transactions, dry_run, raise_errors, **kwargs)
+
+            def save_instance(self, instance, is_create, using_transactions=True, dry_run=False):
+                pass
+
+        resource = A()
+        with self.assertWarns(DeprecationWarning) as w:
+            resource.import_data(dataset, raise_errors=True)
+            self.assertEqual(target_msg, str(w.warnings[0].message))
+
 
 class AuthorResource(resources.ModelResource):
 
@@ -2089,7 +2119,7 @@ class BulkCreateTest(BulkTest):
 
         resource = _BookResource()
         resource.import_data(self.dataset)
-        self.assertIn(False, [x.args[0] for x in mock_atomic_if_using_transaction.call_args_list])
+        self.assertIn(False, [x[0][0] for x in mock_atomic_if_using_transaction.call_args_list])
 
 
 class BulkUpdateTest(BulkTest):
