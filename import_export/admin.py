@@ -181,7 +181,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         return resource.import_data(dataset,
                                     dry_run=False,
                                     raise_errors=True,
-                                    file_name=confirm_form.cleaned_data['original_file_name'],
+                                    file_name=confirm_form.cleaned_data.get('original_file_name'),
                                     user=request.user,
                                     **imp_kwargs)
 
@@ -498,52 +498,62 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
             if not input_format.is_binary():
                 input_format.encoding = self.from_encoding
             import_file = import_form.cleaned_data['import_file']
-            # first always write the uploaded file to disk as it may be a
-            # memory file or else based on settings upload handlers
-            tmp_storage = self.write_to_tmp_storage(import_file, input_format)
-            # allows get_confirm_form_initial() to include both the
-            # original and saved file names from form.cleaned_data
-            import_file.tmp_storage_name = tmp_storage.name
 
-            try:
-                # then read the file, using the proper format-specific mode
-                # warning, big files may exceed memory
-                data = tmp_storage.read()
+            if getattr(settings, "IMPORT_EXPORT_SKIP_ADMIN_CONFIRM"):
+                # Perform the import but skip the confirm step
+                data = bytes()
+                for chunk in import_file.chunks():
+                    data += chunk
                 dataset = input_format.create_dataset(data)
-            except Exception as e:
-                import_form.add_error('import_file',
-                               _(f"'{type(e).__name__}' encountered while trying to read file. "
-                                 "Ensure you have chosen the correct format for the file. "
-                                 f"{str(e)}"))
+                result = self.process_dataset(dataset, import_form, request, *args, **kwargs)
+                return self.process_result(result, request)
+            else:
+                # first always write the uploaded file to disk as it may be a
+                # memory file or else based on settings upload handlers
+                tmp_storage = self.write_to_tmp_storage(import_file, input_format)
+                # allows get_confirm_form_initial() to include both the
+                # original and saved file names from form.cleaned_data
+                import_file.tmp_storage_name = tmp_storage.name
 
-            if not import_form.errors:
-                # prepare kwargs for import data, if needed
-                res_kwargs = self.get_import_resource_kwargs(request, form=import_form, *args, **kwargs)
-                resource = self.choose_import_resource_class(import_form)(**res_kwargs)
-                resources = [resource]
+                try:
+                    # then read the file, using the proper format-specific mode
+                    # warning, big files may exceed memory
+                    data = tmp_storage.read()
+                    dataset = input_format.create_dataset(data)
+                except Exception as e:
+                    import_form.add_error('import_file',
+                                   _(f"'{type(e).__name__}' encountered while trying to read file. "
+                                     "Ensure you have chosen the correct format for the file. "
+                                     f"{str(e)}"))
 
-                # prepare additional kwargs for import_data, if needed
-                imp_kwargs = self.get_import_data_kwargs(request, form=import_form, *args, **kwargs)
-                result = resource.import_data(dataset, dry_run=True,
-                                              raise_errors=False,
-                                              file_name=import_file.name,
-                                              user=request.user,
-                                              **imp_kwargs)
+                if not import_form.errors:
+                    # prepare kwargs for import data, if needed
+                    res_kwargs = self.get_import_resource_kwargs(request, form=import_form, *args, **kwargs)
+                    resource = self.choose_import_resource_class(import_form)(**res_kwargs)
+                    resources = [resource]
 
-                context['result'] = result
+                    # prepare additional kwargs for import_data, if needed
+                    imp_kwargs = self.get_import_data_kwargs(request, form=import_form, *args, **kwargs)
+                    result = resource.import_data(dataset, dry_run=True,
+                                                  raise_errors=False,
+                                                  file_name=import_file.name,
+                                                  user=request.user,
+                                                  **imp_kwargs)
 
-                if not result.has_errors() and not result.has_validation_errors():
-                    if getattr(self.get_form_kwargs, "is_original", False):
-                        # Use new API
-                        context["confirm_form"] = self.create_confirm_form(
-                            request, import_form=import_form
-                        )
-                    else:
-                        confirm_form_class = self.get_confirm_form_class(request)
-                        initial = self.get_confirm_form_initial(request, import_form)
-                        context["confirm_form"] = confirm_form_class(
-                            initial=self.get_form_kwargs(form=import_form, **initial)
-                        )
+                    context['result'] = result
+
+                    if not result.has_errors() and not result.has_validation_errors():
+                        if getattr(self.get_form_kwargs, "is_original", False):
+                            # Use new API
+                            context["confirm_form"] = self.create_confirm_form(
+                                request, import_form=import_form
+                            )
+                        else:
+                            confirm_form_class = self.get_confirm_form_class(request)
+                            initial = self.get_confirm_form_initial(request, import_form)
+                            context["confirm_form"] = confirm_form_class(
+                                initial=self.get_form_kwargs(form=import_form, **initial)
+                            )
         else:
             res_kwargs = self.get_import_resource_kwargs(request, form=import_form, *args, **kwargs)
             resource_classes = self.get_import_resource_classes()

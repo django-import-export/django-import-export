@@ -113,3 +113,5 @@ if django.VERSION >= (4, 1):
     FORM_RENDERER = "django.forms.renderers.DjangoDivFormRenderer"
 if django.VERSION >= (5, 0):
     FORM_RENDERER = "django.forms.renderers.DjangoTemplates"
+
+IMPORT_EXPORT_SKIP_ADMIN_CONFIRM = False
