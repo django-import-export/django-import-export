@@ -100,12 +100,13 @@ and ``view``. You can also add your own permissions.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 An integer that defines the size of chunks when iterating a QuerySet for data
-exports. Defaults to ``100``. You may be able to save memory usage by
+exports. Defaults to ``100``. You may be able to save memory usage byd
 decreasing it, or speed up exports by increasing it.
 
 Can be overridden on a ``Resource`` class by setting the ``chunk_size`` class
 attribute.
 
+.. _exampleapp:
 
 Example app
 ===========
@@ -125,4 +126,4 @@ You can run the example application as follows::
 
 Go to http://127.0.0.1:8000
 
-``books-sample.csv`` contains sample book data which can be imported.
+For example import files, see :ref:`getting_started:Test data`.
