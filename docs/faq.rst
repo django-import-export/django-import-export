@@ -38,7 +38,7 @@ and there is no such field in the import.  See :ref:`advanced_usage:Create or up
 How to handle double-save from Signals
 --------------------------------------
 
-This issue can apply if you have implemented post-save signals, and you are using the import workflow in the Admin
+This issue can apply if you have implemented post-save :ref:`advanced_usage:signals`, and you are using the import workflow in the Admin
 interface.  You will find that the post-save signal is called twice for each instance.  The reason for this is that
 the model ``save()`` method is called twice: once for the 'confirm' step and once for the 'import' step.  The call
 to ``save()`` during the 'confirm' step is necessary to prove that the object will be saved successfully, or to
@@ -130,7 +130,7 @@ This means that during export, the relation will be followed and the referenced 
 export.
 
 This does not work during import because the reference may not be enough to identify the correct relation instance.
-:class:`~import_export.widgets.ForeignKeyWidget` should be used during import.  See also the documentation explaining
+:class:`~import_export.widgets.ForeignKeyWidget` should be used during import.  See the documentation explaining
 :ref:`advanced_usage:Foreign Key relations`.
 
 How to customize export data
@@ -138,13 +138,14 @@ How to customize export data
 
 See the following responses on StackOverflow:
 
-1. https://stackoverflow.com/a/55046474/39296
-2. https://stackoverflow.com/questions/74802453/export-only-the-data-registered-by-the-user-django-import-export
+  * https://stackoverflow.com/a/55046474/39296
+  * https://stackoverflow.com/questions/74802453/export-only-the-data-registered-by-the-user-django-import-export
 
 How to set export file encoding
 -------------------------------
 
-Output is garbled when exporting.  See `this issue <https://github.com/django-import-export/django-import-export/issues/1515>`_.
+If export produces garbled or unexpected output, you may need to set the export encoding.
+See `this issue <https://github.com/django-import-export/django-import-export/issues/1515>`_.
 
 How to create relation during import if it does not exist
 ---------------------------------------------------------
