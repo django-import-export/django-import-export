@@ -2,9 +2,9 @@
 Bulk imports
 =============
 
-django-import-export provides a 'bulk mode' to improve the performance of importing large datasets.
+import-export provides a 'bulk mode' to improve the performance of importing large datasets.
 
-In normal operation, django-import-export will call ``instance.save()`` as each row in a dataset is processed.  Bulk
+In normal operation, import-export will call ``instance.save()`` as each row in a dataset is processed.  Bulk
 mode means that ``instance.save()`` is not called, and instances are instead added to temporary lists.  Once the number
 of rows processed matches the ``batch_size`` value, then either ``bulk_create()`` or ``bulk_update()`` is called.
 
@@ -24,16 +24,16 @@ Caveats
 * Bulk operations do not work with many-to-many relationships.
 
 * Take care to ensure that instances are validated before bulk operations are called.  This means ensuring that
-resource fields are declared appropriately with the correct widgets.  If an exception is raised by a bulk operation,
-then that batch will fail.  It's also possible that transactions can be left in a corrupted state.  Other batches may
-be successfully persisted, meaning that you may have a partially successful import.
+  resource fields are declared appropriately with the correct widgets.  If an exception is raised by a bulk operation,
+  then that batch will fail.  It's also possible that transactions can be left in a corrupted state.  Other batches may
+  be successfully persisted, meaning that you may have a partially successful import.
 
 * In bulk mode, exceptions are not linked to a row.  Any exceptions raised by bulk operations are logged (and
-re-raised if ``raise_errors`` is true).
+  re-raised if ``raise_errors`` is true).
 
 * If you use :class:`~import_export.widgets.ForeignKeyWidget` then this can affect performance, because it reads from
-the database for each row.  If this is an issue then create a subclass which caches ``get_queryset()`` results rather
-than reading for each invocation.
+  the database for each row.  If this is an issue then create a subclass which caches ``get_queryset()`` results rather
+  than reading for each invocation.
 
 For more information, please read the Django documentation on
 `bulk_create() <https://docs.djangoproject.com/en/dev/ref/models/querysets/#bulk-create>`_ and
@@ -58,3 +58,8 @@ Consider the following if you need to improve the performance of imports.
 
 * Setting ``batch_size`` to a different value is possible, but tests showed that setting this to ``None`` always
   resulted in worse performance in both duration and peak memory.
+
+Testing
+=======
+
+Scripts are provided to enable testing and benchmarking of bulk imports.  See :ref:`testing:Bulk testing`.

@@ -1,6 +1,8 @@
 import os
 import sys
 
+import django
+
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
@@ -8,8 +10,6 @@ sys.path.append(os.path.abspath('.'))
 sys.path.append(os.path.abspath('..'))
 sys.path.append(os.path.abspath('../tests'))
 os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
-
-import django
 
 django.setup()
 
@@ -32,7 +32,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'django-import-export'
-copyright = '2012–2022, Bojan Mihelac'
+copyright = '2012–2023, Bojan Mihelac'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the

@@ -95,8 +95,9 @@ The ``ModelResource`` class created this way is equal to the one shown in the
 example in section :ref:`base-modelresource`.
 
 In fifth line a :class:`~tablib.Dataset` with columns ``id`` and ``name``, and
-one book entry, are created. A field for a primary key field (in this case,
-``id``) always needs to be present.
+one book entry, are created. A field (or combination of fields) which uniquely identifies an instance always needs to
+be present.  This is so that the import process can manage creates / updates.  In this case, we use ``id``.
+For more information, see :ref:`advanced_usage:Create or update model instances`.
 
 In the rest of the code we first pretend to import data using
 :meth:`~import_export.resources.Resource.import_data` and ``dry_run`` set,

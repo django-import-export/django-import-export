@@ -11,8 +11,8 @@ appropriate :class:`~import_export.widgets.Widget` for each field.
 
 Fields are generated automatically by introspection on the declared model class.  The field defines the relationship
 between the resource we are importing (for example, a csv row) and the instance we want to update.  Typically, the row
-data will map onto a single model instance.  The row data will be set onto model attributes (including model relations)
-during the import process.
+data will map onto a single model instance.  The row data will be set onto model instance attributes (including instance
+relations) during the import process.
 
 In a simple case, the name of the row headers will map exactly onto the names of the model attributes, and the import
 process will handle this mapping.  In more complex cases, model attributes and row headers may differ, and we will need
@@ -63,16 +63,18 @@ possible to follow model relationships::
             model = Book
             fields = ('author__name',)
 
-.. note::
+This example declares that the ``Author.name`` value (which has a foreign key relation to ``Book``) will appear in the
+export.
 
-    Following relationship fields sets ``field`` as readonly, meaning this field will be skipped when importing data.
-To understand how to import model relations, see :ref:`import_model_relations`.
+Note that declaring the relationship using this syntax sets ``field`` as readonly, meaning this field will be skipped
+when importing data. To understand how to import model relations, see :ref:`import_model_relations`.
 
 Explicit field declaration
 --------------------------
 
 We can declare fields explicitly to give us more control over the relationship between the row and the model attribute.
-In the example below, we use the ``attribute`` kwarg to define the model attribute, and ``column_name`` to define the column name (i.e. row header)::
+In the example below, we use the ``attribute`` kwarg to define the model attribute, and ``column_name`` to define the
+column name (i.e. row header)::
 
     from import_export.fields import Field
 
@@ -98,9 +100,9 @@ A widget is an object associated with each field declaration.  The widget has tw
 There are widgets associated with character data, numeric values, dates, foreign keys.  You can also define your own
 widget and associate it with the field.
 
-A :class:`~import_export.resources.ModelResource` creates fields with a default widget for a given field type.  If the
-widget should be initialized with different arguments, this can be done via an explicit declaration or via the widgets
-dict.
+A :class:`~import_export.resources.ModelResource` creates fields with a default widget for a given field type via
+instrospection.  If the widget should be initialized with different arguments, this can be done via an explicit
+declaration or via the widgets dict.
 
 For example, the ``published`` field is overridden to use a different date format. This format will be used both for
 importing and exporting resource::
@@ -163,7 +165,12 @@ We would have to declare our ``BookResource`` to use the author name as the fore
 
 By default, ``ForeignKeyWidget`` will use 'pk' as the lookup field, hence we have to pass 'name' as the lookup field.
 This relies on 'name' being a unique identifier for the related model instance, meaning that a lookup on the related
-table using the field value will return exactly one result.  See also :ref:`advanced_usage:Creating non existent relations`.
+table using the field value will return exactly one result.
+
+This is implemented as a ``Model.objects.get()`` query, so if the instance in not uniquely identifiable based on the
+given arg, then the import process will raise either ``DoesNotExist`` or ``MultipleObjectsReturned`` errors.
+
+See also :ref:`advanced_usage:Creating non existent relations`.
 
 Refer to the :class:`~.ForeignKeyWidget` documentation for more detailed information.
 
@@ -215,9 +222,9 @@ create the object if it does not already exist.
 Customize relation lookup
 -------------------------
 
-The relation widgets will look for relations by searching the entire relation table for the imported value.  This is
-implemented in the :meth:`~import_export.widgets.ForeignKeyWidget.get_queryset` method.  For example, for an ``Author``
-relation, the lookup calls ``Author.objects.all()``.
+The ``ForeignKeyWidget`` and ``ManyToManyWidget`` widgets will look for relations by searching the entire relation
+table for the imported value.  This is implemented in the :meth:`~import_export.widgets.ForeignKeyWidget.get_queryset`
+method.  For example, for an ``Author`` relation, the lookup calls ``Author.objects.all()``.
 
 In some cases, you may want to customize this behaviour, and it can be a requirement to pass dynamic values in.
 For example, suppose we want to look up authors associated with a certain publisher id.  We can achieve this by passing
@@ -320,14 +327,16 @@ Read more at `Django Serialization <https://docs.djangoproject.com/en/dev/topics
 Create or update model instances
 ================================
 
-When you are importing a file using import-export, the file is going to be processed row by row. For each row, the
-import process is going to test whether the row corresponds to an existing stored instance, or whether a new instance is to be created.
+When you are importing a file using import-export, the file is processed row by row. For each row, the
+import process is going to test whether the row corresponds to an existing stored instance, or whether a new instance
+is to be created.
 
 If an existing instance is found, then the instance is going to be *updated* with the values from the imported row,
 otherwise a new row will be created.
 
 In order to test whether the instance already exists, import-export needs to use a field (or a combination of fields)
-in the row being imported. The idea is that the field (or fields) will uniquely identify a single instance of the model type you are importing.
+in the row being imported. The idea is that the field (or fields) will uniquely identify a single instance of the model
+type you are importing.
 
 To define which fields identify an instance, use the ``import_id_fields`` meta attribute. You can use this declaration
 to indicate which field (or fields) should be used to uniquely identify the row. If you don't declare
@@ -345,7 +354,8 @@ For example, you can use the 'isbn' number instead of 'id' to uniquely identify 
 .. note::
 
     If setting ``import_id_fields``, you must ensure that the data can uniquely identify a single row.  If the chosen
-field(s) select more than one row, then a ``MultipleObjectsReturned`` exception will be raised.  If no row is identified, then ``DoesNotExist`` exception will be raised.
+    field(s) select more than one row, then a ``MultipleObjectsReturned`` exception will be raised.  If no row is
+    identified, then ``DoesNotExist`` exception will be raised.
 
 Handling duplicate data
 =======================
@@ -378,9 +388,8 @@ Also, the ``report_skipped`` option controls whether skipped records appear in t
 How to set a value on all imported instances prior to persisting
 ================================================================
 
-If you need to set the same value on each instance created during import then you can do so as follows.
-
-It might be that you need to set a value read at runtime on all instances during import.
+You may have a use-case where you need to set the same value on each instance created during import.
+For example, it might be that you need to set a value read at runtime on all instances during import.
 
 You can define your resource to take the associated instance as a param, and then set it on each import instance::
 
