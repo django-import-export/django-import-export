@@ -32,6 +32,7 @@ exporting data with included admin integration.
    import_workflow
    bulk_import
    celery
+   testing
    changelog
 
 .. toctree::

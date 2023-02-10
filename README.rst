@@ -39,7 +39,7 @@ Features:
 
 * export data respecting admin filters
 
-.. image:: docs/_static/images/django-import-export-change.png
+.. image:: https://raw.githubusercontent.com/django-import-export/django-import-export/main/docs/_static/images/django-import-export-change.png
 
 
 * Documentation: https://django-import-export.readthedocs.io/en/stable/

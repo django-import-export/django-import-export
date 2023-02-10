@@ -1,6 +1,5 @@
-from importlib import import_module
-
 import tablib
+from tablib.formats import registry
 
 
 class Format:
@@ -57,18 +56,17 @@ class TablibFormat(Format):
     TABLIB_MODULE = None
     CONTENT_TYPE = 'application/octet-stream'
 
+    def __init__(self, encoding=None):
+        self.encoding = encoding
+
     def get_format(self):
         """
         Import and returns tablib module.
         """
-        try:
-            # Available since tablib 1.0
-            from tablib.formats import registry
-        except ImportError:
-            return import_module(self.TABLIB_MODULE)
-        else:
-            key = self.TABLIB_MODULE.split('.')[-1].replace('_', '')
-            return registry.get_format(key)
+        if not self.TABLIB_MODULE:
+            raise AttributeError("TABLIB_MODULE must be defined")
+        key = self.TABLIB_MODULE.split('.')[-1].replace('_', '')
+        return registry.get_format(key)
 
     @classmethod
     def is_available(cls):
@@ -101,6 +99,12 @@ class TablibFormat(Format):
 
 
 class TextFormat(TablibFormat):
+
+    def create_dataset(self, in_stream, **kwargs):
+        if isinstance(in_stream, bytes) and self.encoding:
+            in_stream = in_stream.decode(self.encoding)
+        return super().create_dataset(in_stream, **kwargs)
+
     def get_read_mode(self):
         return 'r'
 
@@ -111,9 +115,6 @@ class TextFormat(TablibFormat):
 class CSV(TextFormat):
     TABLIB_MODULE = 'tablib.formats._csv'
     CONTENT_TYPE = 'text/csv'
-
-    def create_dataset(self, in_stream, **kwargs):
-        return super().create_dataset(in_stream, **kwargs)
 
 
 class JSON(TextFormat):
@@ -175,7 +176,9 @@ class XLSX(TablibFormat):
         from io import BytesIO
 
         import openpyxl
-        xlsx_book = openpyxl.load_workbook(BytesIO(in_stream), read_only=True)
+
+        # 'data_only' means values are read from formula cells, not the formula itself
+        xlsx_book = openpyxl.load_workbook(BytesIO(in_stream), read_only=True, data_only=True)
 
         dataset = tablib.Dataset()
         sheet = xlsx_book.active

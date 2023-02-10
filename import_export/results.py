@@ -1,6 +1,7 @@
 from collections import OrderedDict
 
 from django.core.exceptions import NON_FIELD_ERRORS
+from django.utils.encoding import force_str
 from tablib import Dataset
 
 
@@ -31,7 +32,15 @@ class RowResult:
         self.validation_error = None
         self.diff = None
         self.import_type = None
-        self.raw_values = {}
+        self.row_values = {}
+        self.object_id = None
+        self.object_repr = None
+
+    def add_instance_info(self, instance):
+        if instance is not None:
+            # Add object info to RowResult (e.g. for LogEntry)
+            self.object_id = getattr(instance, "pk", None)
+            self.object_repr = force_str(instance)
 
 
 class InvalidRow:
@@ -97,6 +106,7 @@ class Result:
         self.base_errors.append(error)
 
     def add_dataset_headers(self, headers):
+        headers = list() if not headers else headers
         self.failed_dataset.headers = headers + ["Error"]
 
     def append_failed_row(self, row, error):

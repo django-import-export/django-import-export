@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-06-04 09:27+0200\n"
+"POT-Creation-Date: 2022-10-18 14:58+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Hristo Gatsinski <gatsinski@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,49 +18,49 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: admin.py:194
+#: admin.py:206
 #, python-format
 msgid "%s through import_export"
 msgstr "%s чрез import_export"
 
-#: admin.py:200
+#: admin.py:212
 msgid "Import finished, with {} new and {} updated {}."
 msgstr "Импортирането е завършено, с {} нови и {} обновени {}."
 
-#: admin.py:298
-#, python-format
-msgid "<h1>Imported file has a wrong encoding: %s</h1>"
-msgstr "<h1>Импортирания файл има грешна кодировка: %s</h1>"
+#: admin.py:507
+msgid ""
+"'{type(e).__name__}' encountered while trying to read file. Ensure you have "
+"chosen the correct format for the file. "
+msgstr ""
 
-#: admin.py:300
-#, python-format
-msgid "<h1>%s encountered while trying to read file: %s</h1>"
-msgstr "<h1>%s при опит за четене на файл: %s</h1>"
-
-#: admin.py:331 templates/admin/import_export/change_list_import_item.html:5
-#: templates/admin/import_export/import.html:10
+#: admin.py:546 templates/admin/import_export/change_list_import_item.html:5
+#: templates/admin/import_export/import.html:19
 msgid "Import"
 msgstr "Импортиране"
 
-#: admin.py:496 templates/admin/import_export/change_list_export_item.html:5
-#: templates/admin/import_export/export.html:7
+#: admin.py:714 templates/admin/import_export/change_list_export_item.html:5
+#: templates/admin/import_export/export.html:12
 msgid "Export"
 msgstr "Експортиране"
 
-#: admin.py:554
+#: admin.py:777
 msgid "You must select an export format."
 msgstr "Трябва да изберете формат за експортиране."
 
-#: admin.py:567
+#: admin.py:800
 #, python-format
 msgid "Export selected %(verbose_name_plural)s"
 msgstr "Експортиране на избраните %(verbose_name_plural)s"
 
-#: forms.py:10
+#: forms.py:11
+msgid "Resource"
+msgstr ""
+
+#: forms.py:29
 msgid "File to import"
 msgstr "Файл за импортиране"
 
-#: forms.py:13 forms.py:41 forms.py:66
+#: forms.py:32 forms.py:75 forms.py:100
 msgid "Format"
 msgstr "Формат"
 
@@ -68,12 +68,12 @@ msgstr "Формат"
 msgid "Home"
 msgstr "Начало"
 
-#: templates/admin/import_export/export.html:31
-#: templates/admin/import_export/import.html:52
+#: templates/admin/import_export/export.html:36
+#: templates/admin/import_export/import.html:73
 msgid "Submit"
 msgstr "Изпълни"
 
-#: templates/admin/import_export/import.html:20
+#: templates/admin/import_export/import.html:30
 msgid ""
 "Below is a preview of data to be imported. If you are satisfied with the "
 "results, click 'Confirm import'"
@@ -81,57 +81,57 @@ msgstr ""
 "Отдолу виждате преглед на данните за импортиране. Ако сте доволни от "
 "резултата, изберете 'Потвърди импортирането'"
 
-#: templates/admin/import_export/import.html:23
+#: templates/admin/import_export/import.html:33
 msgid "Confirm import"
 msgstr "Потвърди импортирането"
 
-#: templates/admin/import_export/import.html:31
+#: templates/admin/import_export/import.html:43
 msgid "This importer will import the following fields: "
 msgstr "Ще бъдат импортирани следните полета: "
 
-#: templates/admin/import_export/import.html:61
-#: templates/admin/import_export/import.html:90
+#: templates/admin/import_export/import.html:83
+#: templates/admin/import_export/import.html:114
 msgid "Errors"
 msgstr "Грешки"
 
-#: templates/admin/import_export/import.html:72
+#: templates/admin/import_export/import.html:94
 msgid "Line number"
 msgstr "Номер на реда"
 
-#: templates/admin/import_export/import.html:82
+#: templates/admin/import_export/import.html:106
 msgid "Some rows failed to validate"
 msgstr ""
 
-#: templates/admin/import_export/import.html:84
+#: templates/admin/import_export/import.html:108
 msgid ""
 "Please correct these errors in your data where possible, then reupload it "
 "using the form above."
 msgstr ""
 
-#: templates/admin/import_export/import.html:89
+#: templates/admin/import_export/import.html:113
 msgid "Row"
 msgstr ""
 
-#: templates/admin/import_export/import.html:116
+#: templates/admin/import_export/import.html:140
 msgid "Non field specific"
 msgstr ""
 
-#: templates/admin/import_export/import.html:137
+#: templates/admin/import_export/import.html:163
 msgid "Preview"
 msgstr "Преглед"
 
-#: templates/admin/import_export/import.html:152
+#: templates/admin/import_export/import.html:178
 msgid "New"
 msgstr "Нов"
 
-#: templates/admin/import_export/import.html:154
+#: templates/admin/import_export/import.html:180
 msgid "Skipped"
 msgstr "Пропуснат"
 
-#: templates/admin/import_export/import.html:156
+#: templates/admin/import_export/import.html:182
 msgid "Delete"
 msgstr "Изтрит"
 
-#: templates/admin/import_export/import.html:158
+#: templates/admin/import_export/import.html:184
 msgid "Update"
 msgstr "Обновен"

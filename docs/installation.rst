@@ -12,7 +12,7 @@ additional formats like ``cli`` or ``Pandas DataFrame``, you should install the
 appropriate tablib dependencies (e.g. ``pip install tablib[pandas]``). Read
 more on the `tablib format documentation page`_.
 
-.. _tablib format documentation page: https://tablib.readthedocs.io/en/stable/formats/
+.. _tablib format documentation page: https://tablib.readthedocs.io/en/stable/formats.html
 
 Alternatively, you can install the git repository directly to obtain the
 development version::
@@ -65,11 +65,7 @@ of losing an audit trail.
 Can be overridden on a ``ModelAdmin`` class inheriting from ``ImportMixin`` by
 setting the ``skip_admin_log`` class attribute.
 
-``IMPORT_EXPORT_SKIP_ADMIN_CONFIRM_FORM``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-If that environment variable is true, the form to confirm 
-data inside the file to import won´t be shown and the file will be imported.
+.. _IMPORT_EXPORT_TMP_STORAGE_CLASS:
 
 ``IMPORT_EXPORT_TMP_STORAGE_CLASS``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -110,14 +106,15 @@ decreasing it, or speed up exports by increasing it.
 Can be overridden on a ``Resource`` class by setting the ``chunk_size`` class
 attribute.
 
+
 Example app
 ===========
 
 There's an example application that showcases what django-import-export can do.
 It's assumed that you have set up a Python ``venv`` with all required dependencies
-or are otherwise able to run Django locally.
+(from ``test.txt`` requirements file) and are able to run Django locally.
 
-You can run it via::
+You can run the example application as follows::
 
     cd tests
     ./manage.py makemigrations
