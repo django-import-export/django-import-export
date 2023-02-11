@@ -7,12 +7,14 @@
 #### Release
 
 - Ensure that all code has been committed and integration tests have run on Github.
+  - If pushing directly to `main` branch, ensure this is done on the correct remote repo. 
 - `make messages` is intended to be run now to keep the translation files up-to-date.  
-  - Run this if there have been any translations updates for the release.
+  - Run this if there have been any translations updates for the release.  It is recommended to run this prior to any minor release.
   - This creates updates to all translation files so there is no need to commit these unless there have been any translation changes.
 
 ```bash
-# checked out clean version 
+# check out clean version 
+# all git operations will be run against this source repo
 git clone git@github.com:django-import-export/django-import-export.git django-import-export-rel
 
 cd django-import-export-rel

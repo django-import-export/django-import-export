@@ -115,6 +115,8 @@ The file will be imported in a single step.
 The import will occur in a transaction. If the import results in validation errors,
 then the errors are presented to the user and then entire transaction is rolled back.
 
+.. _exampleapp:
+
 Example app
 ===========
 
@@ -133,4 +135,4 @@ You can run the example application as follows::
 
 Go to http://127.0.0.1:8000
 
-``books-sample.csv`` contains sample book data which can be imported.
+For example import files, see :ref:`getting_started:Test data`.
