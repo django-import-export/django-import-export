@@ -17,5 +17,3 @@ dist/
 .vscode
 
 tests/database.db
-.vscode/
-venv/
