@@ -172,15 +172,18 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
 
             return self.process_result(result, request)
 
-    def process_dataset(self, dataset, confirm_form, request, *args, **kwargs):
+    def process_dataset(self, dataset, confirm_form, request, *args, raise_errors=True, use_transactions=None,
+                        rollback_on_validation_errors=False, **kwargs):
 
         res_kwargs = self.get_import_resource_kwargs(request, form=confirm_form, *args, **kwargs)
         resource = self.choose_import_resource_class(confirm_form)(**res_kwargs)
-
         imp_kwargs = self.get_import_data_kwargs(request, form=confirm_form, *args, **kwargs)
+
         return resource.import_data(dataset,
                                     dry_run=False,
-                                    raise_errors=True,
+                                    raise_errors=raise_errors,
+                                    use_transactions=use_transactions,
+                                    rollback_on_validation_errors=rollback_on_validation_errors,
                                     file_name=confirm_form.cleaned_data.get('original_file_name'),
                                     user=request.user,
                                     **imp_kwargs)
@@ -501,12 +504,18 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
 
             if getattr(settings, "IMPORT_EXPORT_SKIP_ADMIN_CONFIRM"):
                 # Perform the import but skip the confirm step
+                # - Will this handle failures cleanly?
+                # - Will it partially import data sets or roll back correctly?
                 data = bytes()
                 for chunk in import_file.chunks():
                     data += chunk
                 dataset = input_format.create_dataset(data)
-                result = self.process_dataset(dataset, import_form, request, *args, **kwargs)
-                return self.process_result(result, request)
+                result = self.process_dataset(dataset, import_form, request, *args, use_transactions=True,
+                                              raise_errors=False, rollback_on_validation_errors=True, **kwargs)
+                if not result.has_errors() and not result.has_validation_errors():
+                    return self.process_result(result, request)
+                else:
+                    context['result'] = result
             else:
                 # first always write the uploaded file to disk as it may be a
                 # memory file or else based on settings upload handlers

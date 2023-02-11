@@ -7,18 +7,11 @@ from unittest.mock import MagicMock, patch
 import chardet
 import django
 import tablib
-from core.admin import (
-    AuthorAdmin,
-    BookAdmin,
-    BookResource,
-    CustomBookAdmin,
-    ImportMixin,
-)
+from core.admin import AuthorAdmin, BookAdmin, CustomBookAdmin, ImportMixin
 from core.models import Author, Book, Category, EBook, Parent
 from django.contrib.admin.models import DELETION, LogEntry
 from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied
-from django.core.files.uploadedfile import SimpleUploadedFile
 from django.http import HttpRequest
 from django.test.testcases import TestCase
 from django.test.utils import override_settings
@@ -39,7 +32,16 @@ from import_export.tmp_storages import TempFolderStorage
 
 class AdminTestCase(TestCase):
 
-    def _assert_string_in_response(self, filename, input_format, encoding=None, str_in_response=None):
+    def setUp(self):
+        super().setUp()
+        user = User.objects.create_user('admin', 'admin@example.com',
+                                        'password')
+        user.is_staff = True
+        user.is_superuser = True
+        user.save()
+        self.client.login(username='admin', password='password')
+
+    def _do_import_post(self,  filename, input_format, encoding=None, follow=False):
         input_format = input_format
         filename = os.path.join(
             os.path.dirname(__file__),
@@ -53,8 +55,13 @@ class AdminTestCase(TestCase):
             }
             if encoding:
                 BookAdmin.from_encoding = encoding
-            response = self.client.post('/admin/core/book/import/', data)
-        self.assertEqual(response.status_code, 200)
+            response = self.client.post('/admin/core/book/import/', data, follow=follow)
+        return response
+    
+    def _assert_string_in_response(self, filename, input_format, encoding=None, str_in_response=None,
+                                   follow=False, status_code=200):
+        response = self._do_import_post(filename, input_format, encoding=encoding, follow=follow)
+        self.assertEqual(response.status_code, status_code)
         self.assertIn('result', response.context)
         self.assertFalse(response.context['result'].has_errors())
         if str_in_response is not None:
@@ -62,15 +69,6 @@ class AdminTestCase(TestCase):
 
 
 class ImportExportAdminIntegrationTest(AdminTestCase):
-
-    def setUp(self):
-        super().setUp()
-        user = User.objects.create_user('admin', 'admin@example.com',
-                                        'password')
-        user.is_staff = True
-        user.is_superuser = True
-        user.save()
-        self.client.login(username='admin', password='password')
 
     def test_import_export_template(self):
         response = self.client.get('/admin/core/book/')
@@ -296,26 +294,6 @@ class ImportExportAdminIntegrationTest(AdminTestCase):
                     self.assertFormError(response, 'form', 'import_file', target_msg)
         else:
             self.assertFormError(response, 'form', 'import_file', target_msg)
-
-    # def assert_string_in_response(self, filename, input_format, encoding=None):
-    #     input_format = input_format
-    #     filename = os.path.join(
-    #         os.path.dirname(__file__),
-    #         os.path.pardir,
-    #         'exports',
-    #         filename)
-    #     with open(filename, "rb") as f:
-    #         data = {
-    #             'input_format': input_format,
-    #             'import_file': f,
-    #         }
-    #         if encoding:
-    #             BookAdmin.from_encoding = encoding
-    #         response = self.client.post('/admin/core/book/import/', data)
-    #     self.assertEqual(response.status_code, 200)
-    #     self.assertIn('result', response.context)
-    #     self.assertFalse(response.context['result'].has_errors())
-    #     self.assertContains(response, 'test@example.com')
 
     def _assert_string_in_response(self, filename, input_format, encoding=None):
         super()._assert_string_in_response(filename, input_format, encoding=encoding, str_in_response="test@example.com")
@@ -616,57 +594,6 @@ class ImportExportAdminIntegrationTest(AdminTestCase):
         self.assertEqual(child.object_repr, 'Some - child of Some Parent')
         self.assertEqual(child.object_id, str(1))
 
-    def test_logentry_creation_with_import_obj_exception(self):
-        # from https://mail.python.org/pipermail/python-dev/2008-January/076194.html
-        def monkeypatch_method(cls):
-            def decorator(func):
-                setattr(cls, func.__name__, func)
-                return func
-            return decorator
-
-        # Cause an exception in import_row, but only after import is confirmed,
-        # so a failure only occurs when ImportMixin.process_import is called.
-        class R(BookResource):
-            def import_obj(self, obj, data, dry_run, **kwargs):
-                if dry_run:
-                    super().import_obj(obj, data, dry_run, **kwargs)
-                else:
-                    raise Exception
-
-        @monkeypatch_method(BookAdmin)
-        def get_resource_classes(self):
-            return [R]
-
-        # Verify that when an exception occurs in import_row, when raise_errors is False,
-        # the returned row result has a correct import_type value,
-        # so generating log entries does not fail.
-        @monkeypatch_method(BookAdmin)
-        def process_dataset(self, dataset, confirm_form, request, *args, **kwargs):
-            resource = self.get_import_resource_classes()[0](**self.get_import_resource_kwargs(request, *args, **kwargs))
-            return resource.import_data(dataset,
-                                        dry_run=False,
-                                        raise_errors=False,
-                                        file_name=confirm_form.cleaned_data['original_file_name'],
-                                        user=request.user,
-                                        **kwargs)
-
-        dataset = Dataset(headers=["id","name","author_email"])
-        dataset.append([1, "Test 1", "test@example.com"])
-        input_format = '0'
-        content = dataset.csv
-        f = SimpleUploadedFile("data.csv", content.encode(), content_type="text/csv")
-        data = {
-            "input_format": input_format,
-            "import_file": f,
-        }
-        response = self.client.post('/admin/core/book/import/', data)
-        self.assertEqual(response.status_code, 200)
-        confirm_form = response.context['confirm_form']
-        data = confirm_form.initial
-        response = self.client.post('/admin/core/book/process_import/', data,
-                                    follow=True)
-        self.assertEqual(response.status_code, 200)
-
     def test_import_with_customized_forms(self):
         """Test if admin import works if forms are customized"""
         # We reuse import scheme from `test_import` to import books.csv.
@@ -835,33 +762,6 @@ class ConfirmImportEncodingTest(AdminTestCase):
     and storage types.
     """
 
-    def setUp(self):
-        user = User.objects.create_user('admin', 'admin@example.com',
-                                        'password')
-        user.is_staff = True
-        user.is_superuser = True
-        user.save()
-        self.client.login(username='admin', password='password')
-
-    # def assert_string_in_response(self, filename, input_format, encoding=None):
-    #     input_format = input_format
-    #     filename = os.path.join(
-    #         os.path.dirname(__file__),
-    #         os.path.pardir,
-    #         'exports',
-    #         filename)
-    #     with open(filename, "rb") as f:
-    #         data = {
-    #             'input_format': input_format,
-    #             'import_file': f,
-    #         }
-    #         if encoding:
-    #             BookAdmin.from_encoding = encoding
-    #         response = self.client.post('/admin/core/book/import/', data)
-    #     self.assertEqual(response.status_code, 200)
-    #     self.assertIn('result', response.context)
-    #     self.assertFalse(response.context['result'].has_errors())
-    #     self.assertContains(response, 'test@example.com')
     def _assert_string_in_response(self, filename, input_format, encoding=None):
         super()._assert_string_in_response(filename, input_format, encoding=encoding, str_in_response="test@example.com")
 
@@ -918,18 +818,6 @@ class CompleteImportEncodingTest(AdminTestCase):
     """Test handling 'complete import' step using different file encodings
     and storage types.
     """
-
-    def setUp(self):
-        user = User.objects.create_user('admin', 'admin@example.com',
-                                        'password')
-        user.is_staff = True
-        user.is_superuser = True
-        user.save()
-        self.client.login(username='admin', password='password')
-
-    # def _assert_string_in_response(self, filename, input_format, encoding=None):
-    #     super()._assert_string_in_response(filename, input_format, encoding=encoding,
-    #                                        str_in_response="Import finished, with 1 new and 0 updated books.")
     def _assert_string_in_response(self, filename, input_format, encoding=None):
         input_format = input_format
         filename = os.path.join(
@@ -1293,3 +1181,41 @@ class TestExportMixinDeprecationWarnings(TestCase):
         with self.assertWarns(DeprecationWarning) as w:
             self.export_mixin.get_export_form()
             self.assertEqual(target_msg, str(w.warnings[0].message))
+
+
+@override_settings(IMPORT_EXPORT_SKIP_ADMIN_CONFIRM=True)
+class TestImportSkipConfirm(AdminTestCase):
+
+    def _assert_string_in_response(self, filename, input_format, encoding=None, str_in_response=None,
+                                   follow=False, status_code=200):
+        response = self._do_import_post(filename, input_format, encoding=encoding, follow=follow)
+        self.assertEqual(response.status_code, status_code)
+        if str_in_response is not None:
+            self.assertContains(response, str_in_response)
+
+    def test_import_action_create(self):
+        self._assert_string_in_response('books.csv', '0', follow=True,
+                                        str_in_response="Import finished, with 1 new and 0 updated books.")
+        self.assertEqual(1, Book.objects.count())
+
+    def test_import_action_invalid_date(self):
+        # test that a row with an invalid date redirects to errors page
+        response = self._do_import_post('books-invalid-date.csv', '0')
+        result = response.context["result"]
+        # there should be a single invalid row
+        self.assertEqual(1, len(result.invalid_rows))
+        self.assertEqual("Enter a valid date.", result.invalid_rows[0].error.messages[0])
+        # No rows should be imported
+        self.assertEqual(0, Book.objects.count())
+
+    def test_import_action_mac(self):
+        self._assert_string_in_response('books-mac.csv', '0', follow=True,
+                                        str_in_response="Import finished, with 1 new and 0 updated books.")
+
+    def test_import_action_iso_8859_1(self):
+        self._assert_string_in_response('books-ISO-8859-1.csv', '0', 'ISO-8859-1', follow=True,
+                                        str_in_response="Import finished, with 1 new and 0 updated books.")
+
+    def test_import_action_binary(self):
+        self._assert_string_in_response('books.xls', '1', follow=True,
+                                        str_in_response="Import finished, with 1 new and 0 updated books.")
