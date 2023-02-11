@@ -112,6 +112,9 @@ attribute.
 If True, no import confirmation page will be presented to the user in the Admin UI.
 The file will be imported in a single step.
 
+The import will occur in a transaction. If the import results in validation errors,
+then the errors are presented to the user and then entire transaction is rolled back.
+
 Example app
 ===========
 

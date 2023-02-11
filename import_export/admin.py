@@ -503,9 +503,9 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
             import_file = import_form.cleaned_data['import_file']
 
             if getattr(settings, "IMPORT_EXPORT_SKIP_ADMIN_CONFIRM"):
-                # Perform the import but skip the confirm step
-                # - Will this handle failures cleanly?
-                # - Will it partially import data sets or roll back correctly?
+                # This setting means we are going to skip the import confirmation step.
+                # Go ahead and process the file for import in a transaction
+                # If there are any errors, we roll back the transaction.
                 data = bytes()
                 for chunk in import_file.chunks():
                     data += chunk
