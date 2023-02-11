@@ -502,7 +502,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
                 input_format.encoding = self.from_encoding
             import_file = import_form.cleaned_data['import_file']
 
-            if getattr(settings, "IMPORT_EXPORT_SKIP_ADMIN_CONFIRM"):
+            if getattr(settings, "IMPORT_EXPORT_SKIP_ADMIN_CONFIRM", False):
                 # This setting means we are going to skip the import confirmation step.
                 # Go ahead and process the file for import in a transaction
                 # If there are any errors, we roll back the transaction.
