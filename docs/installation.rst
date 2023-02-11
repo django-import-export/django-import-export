@@ -106,8 +106,8 @@ decreasing it, or speed up exports by increasing it.
 Can be overridden on a ``Resource`` class by setting the ``chunk_size`` class
 attribute.
 
-``IMPORT_EXPORT_SKIP_ADMIN_CONFIRM_FORM``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``IMPORT_EXPORT_SKIP_ADMIN_CONFIRM``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If True, no import confirmation page will be presented to the user in the Admin UI.
 The file will be imported in a single step.
