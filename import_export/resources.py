@@ -18,10 +18,7 @@ from django.core.paginator import Paginator
 from django.db import connections, router
 from django.db.models.fields.related import ForeignObjectRel
 from django.db.models.query import QuerySet
-from django.db.transaction import (
-    TransactionManagementError,
-    set_rollback,
-)
+from django.db.transaction import TransactionManagementError, set_rollback
 from django.utils.encoding import force_str
 from django.utils.safestring import mark_safe
 
@@ -313,6 +310,7 @@ class Resource(metaclass=DeclarativeMetaclass):
         """
         return Diff
 
+    @classmethod
     def get_db_connection_name(self):
         if self._meta.using_db is None:
             return router.db_for_write(self._meta.model)
