@@ -1197,6 +1197,13 @@ class TestImportSkipConfirm(AdminTestCase):
         if str_in_response is not None:
             self.assertContains(response, str_in_response)
 
+    def _assert_regex_in_response(self, filename, input_format, encoding=None, regex_in_response=None,
+                                   follow=False, status_code=200):
+        response = self._do_import_post(filename, input_format, encoding=encoding, follow=follow)
+        self.assertEqual(response.status_code, status_code)
+        if regex_in_response is not None:
+            self.assertRegex(str(response.content), regex_in_response)
+
     def test_import_action_create(self):
         self._assert_string_in_response('books.csv', '0', follow=True,
                                         str_in_response="Import finished, with 1 new and 0 updated books.")
@@ -1214,8 +1221,9 @@ class TestImportSkipConfirm(AdminTestCase):
 
     def test_import_action_empty_author_email(self):
         xlsx_index = self._get_input_format_index("xlsx")
-        self._assert_string_in_response('books-empty-author-email.xlsx', xlsx_index, follow=True,
-                                        str_in_response="NOT NULL constraint failed")
+        # sqlite / MySQL / Postgres have different error messages
+        self._assert_regex_in_response('books-empty-author-email.xlsx', xlsx_index, follow=True,
+                                        regex_in_response=r"(NOT NULL|null value in column)")
 
     def test_import_action_mac(self):
         self._assert_string_in_response('books-mac.csv', '0', follow=True,
