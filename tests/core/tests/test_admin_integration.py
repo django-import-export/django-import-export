@@ -67,6 +67,15 @@ class AdminTestCase(TestCase):
         if str_in_response is not None:
             self.assertContains(response, str_in_response)
 
+    def _get_input_format_index(self, format):
+        for i, f in enumerate(DEFAULT_FORMATS):
+            if f().get_title() == format:
+                xlsx_index = i
+                break
+        else:
+            raise Exception('Unable to find %s format. DEFAULT_FORMATS: %r' % (format, DEFAULT_FORMATS))
+        return xlsx_index
+
 
 class ImportExportAdminIntegrationTest(AdminTestCase):
 
@@ -493,12 +502,7 @@ class ImportExportAdminIntegrationTest(AdminTestCase):
         response = self.client.get('/admin/core/book/export/')
         self.assertEqual(response.status_code, 200)
 
-        for i, f in enumerate(DEFAULT_FORMATS):
-            if f().get_title() == 'xlsx':
-                xlsx_index = i
-                break
-        else:
-            self.fail('Unable to find xlsx format. DEFAULT_FORMATS: %r' % DEFAULT_FORMATS)
+        xlsx_index = self._get_input_format_index("xlsx")
         data = {'file_format': str(xlsx_index)}
         response = self.client.post('/admin/core/book/export/', data)
         self.assertEqual(response.status_code, 200)
@@ -1207,6 +1211,11 @@ class TestImportSkipConfirm(AdminTestCase):
         self.assertEqual("Enter a valid date.", result.invalid_rows[0].error.messages[0])
         # No rows should be imported
         self.assertEqual(0, Book.objects.count())
+
+    def test_import_action_empty_author_email(self):
+        xlsx_index = self._get_input_format_index("xlsx")
+        self._assert_string_in_response('books-empty-author-email.xlsx', xlsx_index, follow=True,
+                                        str_in_response="NOT NULL constraint failed")
 
     def test_import_action_mac(self):
         self._assert_string_in_response('books-mac.csv', '0', follow=True,
