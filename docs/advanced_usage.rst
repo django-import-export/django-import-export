@@ -531,7 +531,7 @@ one of the available mixins, i.e. :class:`~import_export.admin.ImportMixin`, or
 :class:`~import_export.admin.ImportExportMixin`.
 
 By default, import is a two step process, though it can be configured to be a single step process
-(see :ref:`advanced_usage:Import confirmation`).
+(see :ref:`IMPORT_EXPORT_SKIP_ADMIN_CONFIRM`).
 
 The two step process is:
 
@@ -548,13 +548,12 @@ The two step process is:
 
    A screenshot of the confirm import view.
 
-It is possible to configure import to be a single step process, so that the confirm screen is not displayed.  See  :ref:`IMPORT_EXPORT_SKIP_ADMIN_CONFIRM`.
-
 Import confirmation
 -------------------
 
-To support :ref:`import confirmation<confirm-import-figure>`, uploaded data is written to temporary storage after
-step 1 (:ref:`choose file<change-screen-figure>`), and read back for final import after step 2 (import confirmation).
+To support import confirmation, uploaded data is written to temporary storage after
+step 1 (:ref:`choose file<change-screen-figure>`), and read back for final import after step 2
+(:ref:`import confirmation<confirm-import-figure>`).
 
 There are three mechanisms for temporary storage.
 
@@ -582,10 +581,6 @@ Your choice of temporary storage will be influenced by the following factors:
     or if there are errors during import, then temporary resources may not be deleted.
     This will need to be understood and managed in production settings.
     For example, using a cache expiration policy or cron job to clear stale resources.
-
-If you don't require a confirmation step, you can configure the import process to be completed in a single step.
-In this case, there is no temporary storage, and no data is persisted during the two stages of workflow.
-See :ref:`IMPORT_EXPORT_SKIP_ADMIN_CONFIRM`.
 
 Customize admin import forms
 ----------------------------
