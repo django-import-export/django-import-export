@@ -1223,7 +1223,7 @@ class TestImportSkipConfirm(AdminTestCase):
         xlsx_index = self._get_input_format_index("xlsx")
         # sqlite / MySQL / Postgres have different error messages
         self._assert_regex_in_response('books-empty-author-email.xlsx', xlsx_index, follow=True,
-                                        regex_in_response=r"(NOT NULL|null value in column)")
+                                        regex_in_response=r"(NOT NULL|null value in column|cannot be null)")
 
     def test_import_action_mac(self):
         self._assert_string_in_response('books-mac.csv', '0', follow=True,
