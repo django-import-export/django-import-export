@@ -109,7 +109,7 @@ attribute.
 ``IMPORT_EXPORT_SKIP_ADMIN_CONFIRM``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If True, no import confirmation page will be presented to the user in the Admin UI.
+If ``True``, no import confirmation page will be presented to the user in the Admin UI.
 The file will be imported in a single step.
 
 The import will occur in a transaction. If the import results in validation errors,
