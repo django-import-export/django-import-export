@@ -389,7 +389,7 @@ class Resource(metaclass=DeclarativeMetaclass):
         """
         return [f for f in self.fields if f not in self._meta.import_id_fields]
 
-    def bulk_create(self, using_transactions, dry_run, raise_errors, result, batch_size=None):
+    def bulk_create(self, using_transactions, dry_run, raise_errors, batch_size=None, result=None):
         """
         Creates objects by calling ``bulk_create``.
         """
@@ -400,15 +400,11 @@ class Resource(metaclass=DeclarativeMetaclass):
                 else:
                     self._meta.model.objects.bulk_create(self.create_instances, batch_size=batch_size)
         except Exception as e:
-            logger.debug(e, exc_info=e)
-            tb_info = traceback.format_exc()
-            result.append_base_error(self.get_error_result_class()(e, tb_info))
-            if raise_errors:
-                raise e
+            self.handle_import_error(result, e, raise_errors)
         finally:
             self.create_instances.clear()
 
-    def bulk_update(self, using_transactions, dry_run, raise_errors, result, batch_size=None):
+    def bulk_update(self, using_transactions, dry_run, raise_errors, batch_size=None, result=None):
         """
         Updates objects by calling ``bulk_update``.
         """
@@ -420,15 +416,11 @@ class Resource(metaclass=DeclarativeMetaclass):
                     self._meta.model.objects.bulk_update(self.update_instances, self.get_bulk_update_fields(),
                                                          batch_size=batch_size)
         except Exception as e:
-            logger.debug(e, exc_info=e)
-            tb_info = traceback.format_exc()
-            result.append_base_error(self.get_error_result_class()(e, tb_info))
-            if raise_errors:
-                raise e
+            self.handle_import_error(result, e, raise_errors)
         finally:
             self.update_instances.clear()
 
-    def bulk_delete(self, using_transactions, dry_run, raise_errors, result):
+    def bulk_delete(self, using_transactions, dry_run, raise_errors, result=None):
         """
         Deletes objects by filtering on a list of instances to be deleted,
         then calling ``delete()`` on the entire queryset.
@@ -441,11 +433,7 @@ class Resource(metaclass=DeclarativeMetaclass):
                     delete_ids = [o.pk for o in self.delete_instances]
                     self._meta.model.objects.filter(pk__in=delete_ids).delete()
         except Exception as e:
-            logger.debug(e, exc_info=e)
-            tb_info = traceback.format_exc()
-            result.append_base_error(self.get_error_result_class()(e, tb_info))
-            if raise_errors:
-                raise e
+            self.handle_import_error(result, e, raise_errors)
         finally:
             self.delete_instances.clear()
 
@@ -686,6 +674,14 @@ class Resource(metaclass=DeclarativeMetaclass):
         """
         pass
 
+    def handle_import_error(self, result, error, raise_errors=False):
+        logger.debug(error, exc_info=error)
+        if result:
+            tb_info = traceback.format_exc()
+            result.append_base_error(self.get_error_result_class()(error, tb_info))
+        if raise_errors:
+            raise
+
     def import_row(self, row, instance_loader, using_transactions=True, dry_run=False, raise_errors=None, **kwargs):
         """
         Imports data from ``tablib.Dataset``. Refer to :doc:`import_workflow`
@@ -840,11 +836,7 @@ class Resource(metaclass=DeclarativeMetaclass):
             with atomic_if_using_transaction(using_transactions, using=db_connection):
                 self.before_import(dataset, using_transactions, dry_run, **kwargs)
         except Exception as e:
-            logger.debug(e, exc_info=e)
-            tb_info = traceback.format_exc()
-            result.append_base_error(self.get_error_result_class()(e, tb_info))
-            if raise_errors:
-                raise
+            self.handle_import_error(result, e, raise_errors)
 
         instance_loader = self._meta.instance_loader_class(self, dataset)
 
@@ -870,15 +862,15 @@ class Resource(metaclass=DeclarativeMetaclass):
                 # with a specific row
                 if len(self.create_instances) == self._meta.batch_size:
                     with atomic_if_using_transaction(using_transactions, using=db_connection):
-                        self.bulk_create(using_transactions, dry_run, raise_errors, result,
-                                         batch_size=self._meta.batch_size)
+                        self.bulk_create(using_transactions, dry_run, raise_errors,
+                                         batch_size=self._meta.batch_size, result=result)
                 if len(self.update_instances) == self._meta.batch_size:
                     with atomic_if_using_transaction(using_transactions, using=db_connection):
-                        self.bulk_update(using_transactions, dry_run, raise_errors, result,
-                                         batch_size=self._meta.batch_size)
+                        self.bulk_update(using_transactions, dry_run, raise_errors,
+                                         batch_size=self._meta.batch_size, result=result)
                 if len(self.delete_instances) == self._meta.batch_size:
                     with atomic_if_using_transaction(using_transactions, using=db_connection):
-                        self.bulk_delete(using_transactions, dry_run, raise_errors, result)
+                        self.bulk_delete(using_transactions, dry_run, raise_errors, result=result)
 
             result.increment_row_result_total(row_result)
 
@@ -900,19 +892,15 @@ class Resource(metaclass=DeclarativeMetaclass):
         if self._meta.use_bulk:
             # bulk persist any instances which are still pending
             with atomic_if_using_transaction(using_transactions, using=db_connection):
-                self.bulk_create(using_transactions, dry_run, raise_errors, result)
-                self.bulk_update(using_transactions, dry_run, raise_errors, result)
-                self.bulk_delete(using_transactions, dry_run, raise_errors, result)
+                self.bulk_create(using_transactions, dry_run, raise_errors, result=result)
+                self.bulk_update(using_transactions, dry_run, raise_errors, result=result)
+                self.bulk_delete(using_transactions, dry_run, raise_errors, result=result)
 
         try:
             with atomic_if_using_transaction(using_transactions, using=db_connection):
                 self.after_import(dataset, result, using_transactions, dry_run, **kwargs)
         except Exception as e:
-            logger.debug(e, exc_info=e)
-            tb_info = traceback.format_exc()
-            result.append_base_error(self.get_error_result_class()(e, tb_info))
-            if raise_errors:
-                raise
+            self.handle_import_error(result, e, raise_errors)
 
         return result
 
