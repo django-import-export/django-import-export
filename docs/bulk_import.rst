@@ -28,8 +28,8 @@ Caveats
   then that batch will fail.  It's also possible that transactions can be left in a corrupted state.  Other batches may
   be successfully persisted, meaning that you may have a partially successful import.
 
-* In bulk mode, exceptions are not linked to a row.  Any exceptions raised by bulk operations are logged (and
-  re-raised if ``raise_errors`` is true).
+* In bulk mode, exceptions are not linked to a row.  Any exceptions raised by bulk operations are logged and returned
+  as critical (non-validation) errors (and re-raised if ``raise_errors`` is true).
 
 * If you use :class:`~import_export.widgets.ForeignKeyWidget` then this can affect performance, because it reads from
   the database for each row.  If this is an issue then create a subclass which caches ``get_queryset()`` results rather
