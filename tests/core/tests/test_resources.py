@@ -215,6 +215,38 @@ class ResourceTestCase(TestCase):
             resource.import_data(dataset, raise_errors=True)
             self.assertEqual(target_msg, str(w.warnings[0].message))
 
+    def test_rollback_on_validation_errors_deprecation_import_inner(self,):
+        target_msg = (
+            "rollback_on_validation_errors argument is deprecated and will be removed in a future release."
+        )
+        dataset = tablib.Dataset(headers=['name', 'email', 'extra'])
+        dataset.append(['Some book', 'test@example.com', "10.25"])
+
+        class Loader:
+            def __init__(self, *args, **kwargs):
+                pass
+
+        class A(MyResource):
+            class Meta:
+                instance_loader_class = Loader
+                force_init_instance = True
+
+            def init_instance(self, row=None):
+                return row or {}
+
+            def import_data_inner(self, dataset, dry_run, raise_errors, using_transactions,
+                                  collect_failed_rows, rollback_on_validation_errors=False, **kwargs):
+                return super().import_data_inner(dataset, dry_run, raise_errors, using_transactions,
+                                                 collect_failed_rows, rollback_on_validation_errors, **kwargs)
+
+            def save_instance(self, instance, is_create, using_transactions=True, dry_run=False):
+                pass
+
+        resource = A()
+        with self.assertWarns(DeprecationWarning) as w:
+            resource.import_data(dataset, raise_errors=True)
+            self.assertEqual(target_msg, str(w.warnings[0].message))
+
 
 class AuthorResource(resources.ModelResource):
 
@@ -523,6 +555,29 @@ class ModelResourceTest(TestCase):
         instance = Book.objects.get(pk=self.book.pk)
         self.assertEqual(instance.author_email, 'test@example.com')
         self.assertEqual(instance.price, Decimal("10.25"))
+
+    @skipUnlessDBFeature('supports_transactions')
+    @mock.patch("import_export.resources.connections")
+    def test_import_data_no_transaction(self, mock_db_connections):
+        class Features:
+            supports_transactions = False
+
+        class DummyConnection:
+            features = Features(
+
+            )
+
+        dummy_connection = DummyConnection()
+        mock_db_connections.__getitem__.return_value = dummy_connection
+        result = self.resource.import_data(self.dataset, dry_run=True, use_transactions=False, raise_errors=True)
+
+        self.assertFalse(result.has_errors())
+        self.assertEqual(len(result.rows), 1)
+        self.assertTrue(result.rows[0].diff)
+        self.assertEqual(result.rows[0].import_type,
+                         results.RowResult.IMPORT_TYPE_UPDATE)
+        self.assertEqual(result.rows[0].row_values.get('name'), None)
+        self.assertEqual(result.rows[0].row_values.get('author_email'), None)
 
     @mock.patch("import_export.resources.connections")
     def test_raised_ImproperlyConfigured_if_use_transactions_set_when_transactions_not_supported(self, mock_db_connections):
@@ -2065,9 +2120,9 @@ class BulkCreateTest(BulkTest):
                 use_bulk = True
                 batch_size = 100
         resource = _BookResource()
-        with mock.patch("logging.Logger.exception") as mock_exception:
+        with mock.patch("logging.Logger.debug") as mock_exception:
             resource.import_data(self.dataset)
-            mock_exception.assert_called_with(e)
+            mock_exception.assert_called_with(e, exc_info=mock.ANY)
             self.assertEqual(1, mock_exception.call_count)
 
     @mock.patch('core.models.Book.objects.bulk_create')
@@ -2081,6 +2136,18 @@ class BulkCreateTest(BulkTest):
         resource = _BookResource()
         with self.assertRaises(ValidationError):
             resource.import_data(self.dataset, raise_errors=True)
+
+    @mock.patch('core.models.Book.objects.bulk_create')
+    def test_bulk_create_exception_gathered_on_dry_run(self, mock_bulk_create):
+        mock_bulk_create.side_effect = ValidationError("invalid field")
+        class _BookResource(resources.ModelResource):
+            class Meta:
+                model = Book
+                use_bulk = True
+                batch_size = 100
+        resource = _BookResource()
+        result = resource.import_data(self.dataset, dry_run=True, raise_errors=False)
+        self.assertTrue(result.has_errors())
 
     def test_m2m_not_called_for_bulk(self):
         mock_m2m_widget = mock.Mock(spec=widgets.ManyToManyWidget)
@@ -2231,9 +2298,9 @@ class BulkUpdateTest(BulkTest):
                 model = Book
                 use_bulk = True
         resource = _BookResource()
-        with mock.patch("logging.Logger.exception") as mock_exception:
+        with mock.patch("logging.Logger.debug") as mock_exception:
             resource.import_data(self.dataset)
-            mock_exception.assert_called_with(e)
+            mock_exception.assert_called_with(e, exc_info=mock.ANY)
             self.assertEqual(1, mock_exception.call_count)
 
     @mock.patch('core.models.Book.objects.bulk_update')
@@ -2375,9 +2442,9 @@ class BulkDeleteTest(BulkTest):
                 model = Book
                 use_bulk = True
         resource = _BookResource()
-        with mock.patch("logging.Logger.exception") as mock_exception:
+        with mock.patch("logging.Logger.debug") as mock_exception:
             resource.import_data(self.dataset)
-            mock_exception.assert_called_with(e)
+            mock_exception.assert_called_with(e, exc_info=mock.ANY)
             self.assertEqual(1, mock_exception.call_count)
 
     @mock.patch("core.models.Book.objects")
