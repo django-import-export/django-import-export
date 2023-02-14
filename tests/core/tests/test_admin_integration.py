@@ -620,7 +620,7 @@ class ImportExportAdminIntegrationTest(AdminTestMixin, TestCase):
 
     def test_get_import_data_kwargs_with_no_form_kwarg_returns_empty_dict(self):
         """
-        Test that if a the method is called with no 'form' kwarg,
+        Test that if the method is called with no 'form' kwarg,
         then an empty dict is returned
         """
         request = MagicMock(spec=HttpRequest)
