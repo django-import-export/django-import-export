@@ -172,8 +172,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
 
             return self.process_result(result, request)
 
-    def process_dataset(self, dataset, confirm_form, request, *args, raise_errors=True, use_transactions=None,
-                        rollback_on_validation_errors=False, **kwargs):
+    def process_dataset(self, dataset, confirm_form, request, *args, **kwargs):
 
         res_kwargs = self.get_import_resource_kwargs(request, form=confirm_form, *args, **kwargs)
         resource = self.choose_import_resource_class(confirm_form)(**res_kwargs)
@@ -181,9 +180,6 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
 
         return resource.import_data(dataset,
                                     dry_run=False,
-                                    raise_errors=raise_errors,
-                                    use_transactions=use_transactions,
-                                    rollback_on_validation_errors=rollback_on_validation_errors,
                                     file_name=confirm_form.cleaned_data.get('original_file_name'),
                                     user=request.user,
                                     **imp_kwargs)
@@ -510,8 +506,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
                 for chunk in import_file.chunks():
                     data += chunk
                 dataset = input_format.create_dataset(data)
-                result = self.process_dataset(dataset, import_form, request, *args, use_transactions=True,
-                                              raise_errors=False, rollback_on_validation_errors=True, **kwargs)
+                result = self.process_dataset(dataset, import_form, request, *args, raise_errors=False, **kwargs)
                 if not result.has_errors() and not result.has_validation_errors():
                     return self.process_result(result, request)
                 else:

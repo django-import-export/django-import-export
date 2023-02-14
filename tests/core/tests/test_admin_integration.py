@@ -7,13 +7,14 @@ from unittest.mock import MagicMock, patch
 import chardet
 import django
 import tablib
+
 from core.admin import AuthorAdmin, BookAdmin, CustomBookAdmin, ImportMixin
 from core.models import Author, Book, Category, EBook, Parent
 from django.contrib.admin.models import DELETION, LogEntry
 from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied
 from django.http import HttpRequest
-from django.test.testcases import TestCase
+from django.test.testcases import TestCase, TransactionTestCase
 from django.test.utils import override_settings
 from django.utils.translation import gettext_lazy as _
 from tablib import Dataset
@@ -30,7 +31,7 @@ from import_export.formats.base_formats import DEFAULT_FORMATS
 from import_export.tmp_storages import TempFolderStorage
 
 
-class AdminTestCase(TestCase):
+class AdminTestCase(TransactionTestCase):
 
     def setUp(self):
         super().setUp()
@@ -1216,14 +1217,40 @@ class TestImportSkipConfirm(AdminTestCase):
         # there should be a single invalid row
         self.assertEqual(1, len(result.invalid_rows))
         self.assertEqual("Enter a valid date.", result.invalid_rows[0].error.messages[0])
-        # No rows should be imported
-        self.assertEqual(0, Book.objects.count())
+        # the valid row should be imported
+        self.assertEqual(1, Book.objects.count())
 
     def test_import_action_empty_author_email(self):
         xlsx_index = self._get_input_format_index("xlsx")
         # sqlite / MySQL / Postgres have different error messages
         self._assert_regex_in_response('books-empty-author-email.xlsx', xlsx_index, follow=True,
                                         regex_in_response=r"(NOT NULL|null value in column|cannot be null)")
+
+    @override_settings(IMPORT_EXPORT_USE_TRANSACTIONS=True)
+    def test_import_transaction_enabled_validation_error(self):
+        # with transactions enabled, a validation error should cause the entire import to fail
+        self._do_import_post('books-invalid-date.csv', '0')
+        self.assertEqual(0, Book.objects.count())
+
+    @override_settings(IMPORT_EXPORT_USE_TRANSACTIONS=False)
+    def test_import_transaction_disabled_validation_error(self):
+        # with transactions disabled, a validation error should not cause the entire import to fail
+        self._do_import_post('books-invalid-date.csv', '0')
+        self.assertEqual(1, Book.objects.count())
+
+    @override_settings(IMPORT_EXPORT_USE_TRANSACTIONS=True)
+    def test_import_transaction_enabled_core_error(self):
+        # with transactions enabled, a core error should cause the entire import to fail
+        xlsx_index = self._get_input_format_index("xlsx")
+        self._do_import_post('books-empty-author-email.xlsx', xlsx_index)
+        self.assertEqual(0, Book.objects.count())
+
+    @override_settings(IMPORT_EXPORT_USE_TRANSACTIONS=False)
+    def test_import_transaction_disabled_core_error(self):
+        # with transactions disabled, a core (db contraint) error should not cause the entire import to fail
+        xlsx_index = self._get_input_format_index("xlsx")
+        self._do_import_post('books-empty-author-email.xlsx', xlsx_index)
+        self.assertEqual(1, Book.objects.count())
 
     def test_import_action_mac(self):
         self._assert_string_in_response('books-mac.csv', '0', follow=True,
