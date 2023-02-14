@@ -7,7 +7,6 @@ from unittest.mock import MagicMock, patch
 import chardet
 import django
 import tablib
-
 from core.admin import AuthorAdmin, BookAdmin, CustomBookAdmin, ImportMixin
 from core.models import Author, Book, Category, EBook, Parent
 from django.contrib.admin.models import DELETION, LogEntry
