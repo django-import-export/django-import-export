@@ -7,8 +7,6 @@ from unittest.mock import MagicMock, patch
 import chardet
 import django
 import tablib
-from django.urls import reverse
-
 from core.admin import AuthorAdmin, BookAdmin, CustomBookAdmin, ImportMixin
 from core.models import Author, Book, Category, EBook, Parent
 from django.contrib.admin.models import DELETION, LogEntry
@@ -1097,8 +1095,8 @@ class TestImportSkipConfirm(AdminTestMixin, TransactionTestCase):
         # there should be a single invalid row
         self.assertEqual(1, len(result.invalid_rows))
         self.assertEqual("Enter a valid date.", result.invalid_rows[0].error.messages[0])
-        # the valid row should be imported
-        self.assertEqual(1, Book.objects.count())
+        # no rows should be imported because we rollback on validation errors
+        self.assertEqual(0, Book.objects.count())
 
     def test_import_action_empty_author_email(self):
         xlsx_index = self._get_input_format_index("xlsx")
@@ -1108,9 +1106,9 @@ class TestImportSkipConfirm(AdminTestMixin, TransactionTestCase):
 
     @override_settings(IMPORT_EXPORT_USE_TRANSACTIONS=True)
     def test_import_transaction_enabled_validation_error(self):
-        # with transactions enabled, a validation error should not cause the entire import to fail
+        # with transactions enabled, a validation error should cause the entire import to be rolled back
         self._do_import_post(self.book_import_url, 'books-invalid-date.csv')
-        self.assertEqual(1, Book.objects.count())
+        self.assertEqual(0, Book.objects.count())
 
     @override_settings(IMPORT_EXPORT_USE_TRANSACTIONS=False)
     def test_import_transaction_disabled_validation_error(self):

@@ -49,7 +49,7 @@ You can configure the following in your settings file:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Controls if resource importing should use database transactions. Defaults to
-``False``. Using transactions makes imports safer as a failure during import
+``True``. Using transactions makes imports safer as a failure during import
 won’t import only part of the data set.
 
 Can be overridden on a ``Resource`` class by setting the
@@ -112,8 +112,13 @@ attribute.
 If ``True``, no import confirmation page will be presented to the user in the Admin UI.
 The file will be imported in a single step.
 
-The import will occur in a transaction. If the import results in validation errors,
+By default, the import will occur in a transaction.
+If the import causes any runtime errors (including validation errors),
 then the errors are presented to the user and then entire transaction is rolled back.
+
+Note that if you disable transaction support via configuration (or if your database
+does not support transactions), then validation errors will still be presented to the user
+but valid rows will have imported.
 
 .. _exampleapp:
 

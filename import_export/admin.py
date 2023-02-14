@@ -172,7 +172,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
 
             return self.process_result(result, request)
 
-    def process_dataset(self, dataset, confirm_form, request, *args, **kwargs):
+    def process_dataset(self, dataset, confirm_form, request, *args, rollback_on_validation_errors=False, **kwargs):
 
         res_kwargs = self.get_import_resource_kwargs(request, form=confirm_form, *args, **kwargs)
         resource = self.choose_import_resource_class(confirm_form)(**res_kwargs)
@@ -182,6 +182,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
                                     dry_run=False,
                                     file_name=confirm_form.cleaned_data.get('original_file_name'),
                                     user=request.user,
+                                    rollback_on_validation_errors=True,
                                     **imp_kwargs)
 
     def process_result(self, result, request):
@@ -502,11 +503,15 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
                 # This setting means we are going to skip the import confirmation step.
                 # Go ahead and process the file for import in a transaction
                 # If there are any errors, we roll back the transaction.
+                # rollback_on_validation_errors is set to True so that we rollback on
+                # validation errors. If this is not done validation errors would be
+                # silently skipped.
                 data = bytes()
                 for chunk in import_file.chunks():
                     data += chunk
                 dataset = input_format.create_dataset(data)
-                result = self.process_dataset(dataset, import_form, request, *args, raise_errors=False, **kwargs)
+                result = self.process_dataset(dataset, import_form, request, *args, raise_errors=False,
+                                              rollback_on_validation_errors=True, **kwargs)
                 if not result.has_errors() and not result.has_validation_errors():
                     return self.process_result(result, request)
                 else:
