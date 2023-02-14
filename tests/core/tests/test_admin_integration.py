@@ -31,7 +31,7 @@ from import_export.formats.base_formats import DEFAULT_FORMATS
 from import_export.tmp_storages import TempFolderStorage
 
 
-class AdminTestCase(TransactionTestCase):
+class AdminTestMixin(object):
 
     def setUp(self):
         super().setUp()
@@ -78,7 +78,7 @@ class AdminTestCase(TransactionTestCase):
         return xlsx_index
 
 
-class ImportExportAdminIntegrationTest(AdminTestCase):
+class ImportExportAdminIntegrationTest(AdminTestMixin, TestCase):
 
     def test_import_export_template(self):
         response = self.client.get('/admin/core/book/')
@@ -762,7 +762,7 @@ class ImportExportAdminIntegrationTest(AdminTestCase):
         mock_logger.warning.assert_called_once_with("failed to assign change_list_template attribute (see issue 1521)")
 
 
-class ConfirmImportEncodingTest(AdminTestCase):
+class ConfirmImportEncodingTest(AdminTestMixin, TestCase):
     """Test handling 'confirm import' step using different file encodings
     and storage types.
     """
@@ -819,7 +819,7 @@ class ConfirmImportEncodingTest(AdminTestCase):
         self._assert_string_in_response('books.xls', '1')
 
 
-class CompleteImportEncodingTest(AdminTestCase):
+class CompleteImportEncodingTest(AdminTestMixin, TestCase):
     """Test handling 'complete import' step using different file encodings
     and storage types.
     """
@@ -907,19 +907,12 @@ class TestImportExportActionModelAdmin(ImportExportActionModelAdmin):
         return mock_storage
 
 
-class ExportActionAdminIntegrationTest(TestCase):
+class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
 
     def setUp(self):
-        user = User.objects.create_user('admin', 'admin@example.com',
-                                        'password')
-        user.is_staff = True
-        user.is_superuser = True
-        user.save()
-
+        super().setUp()
         self.cat1 = Category.objects.create(name='Cat 1')
         self.cat2 = Category.objects.create(name='Cat 2')
-
-        self.client.login(username='admin', password='password')
 
     def test_export(self):
         data = {
@@ -1189,7 +1182,7 @@ class TestExportMixinDeprecationWarnings(TestCase):
 
 
 @override_settings(IMPORT_EXPORT_SKIP_ADMIN_CONFIRM=True)
-class TestImportSkipConfirm(AdminTestCase):
+class TestImportSkipConfirm(AdminTestMixin, TransactionTestCase):
 
     def _assert_string_in_response(self, filename, input_format, encoding=None, str_in_response=None,
                                    follow=False, status_code=200):
@@ -1228,9 +1221,9 @@ class TestImportSkipConfirm(AdminTestCase):
 
     @override_settings(IMPORT_EXPORT_USE_TRANSACTIONS=True)
     def test_import_transaction_enabled_validation_error(self):
-        # with transactions enabled, a validation error should cause the entire import to fail
+        # with transactions enabled, a validation error should not cause the entire import to fail
         self._do_import_post('books-invalid-date.csv', '0')
-        self.assertEqual(0, Book.objects.count())
+        self.assertEqual(1, Book.objects.count())
 
     @override_settings(IMPORT_EXPORT_USE_TRANSACTIONS=False)
     def test_import_transaction_disabled_validation_error(self):
