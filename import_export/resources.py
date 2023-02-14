@@ -846,7 +846,8 @@ class Resource(metaclass=DeclarativeMetaclass):
         if collect_failed_rows:
             result.add_dataset_headers(dataset.headers)
 
-        for i, row in enumerate(dataset.dict, 1):
+        for i, data_row in enumerate(dataset, 1):
+            row = OrderedDict(zip(dataset.headers, data_row))
             with atomic_if_using_transaction(using_transactions and not self._meta.use_bulk, using=db_connection):
                 row_result = self.import_row(
                     row,
