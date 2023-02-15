@@ -49,7 +49,7 @@ You can configure the following in your settings file:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Controls if resource importing should use database transactions. Defaults to
-``False``. Using transactions makes imports safer as a failure during import
+``True``. Using transactions makes imports safer as a failure during import
 won’t import only part of the data set.
 
 Can be overridden on a ``Resource`` class by setting the
@@ -100,11 +100,25 @@ and ``view``. You can also add your own permissions.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 An integer that defines the size of chunks when iterating a QuerySet for data
-exports. Defaults to ``100``. You may be able to save memory usage byd
+exports. Defaults to ``100``. You may be able to save memory usage by
 decreasing it, or speed up exports by increasing it.
 
 Can be overridden on a ``Resource`` class by setting the ``chunk_size`` class
 attribute.
+
+``IMPORT_EXPORT_SKIP_ADMIN_CONFIRM``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If ``True``, no import confirmation page will be presented to the user in the Admin UI.
+The file will be imported in a single step.
+
+By default, the import will occur in a transaction.
+If the import causes any runtime errors (including validation errors),
+then the errors are presented to the user and then entire transaction is rolled back.
+
+Note that if you disable transaction support via configuration (or if your database
+does not support transactions), then validation errors will still be presented to the user
+but valid rows will have imported.
 
 .. _exampleapp:
 

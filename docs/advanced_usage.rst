@@ -530,7 +530,10 @@ To do this subclass :class:`~import_export.admin.ImportExportModelAdmin` or use
 one of the available mixins, i.e. :class:`~import_export.admin.ImportMixin`, or
 :class:`~import_export.admin.ImportExportMixin`.
 
-Import is a two step process.
+By default, import is a two step process, though it can be configured to be a single step process
+(see :ref:`IMPORT_EXPORT_SKIP_ADMIN_CONFIRM`).
+
+The two step process is:
 
 1. Select the file and format for import.
 2. Preview the import data and confirm import.
@@ -548,8 +551,9 @@ Import is a two step process.
 Import confirmation
 -------------------
 
-To support :ref:`import confirmation<confirm-import-figure>`, uploaded data is written to temporary storage after
-step 1 (:ref:`choose file<change-screen-figure>`), and read back for final import after step 2 (import confirmation).
+To support import confirmation, uploaded data is written to temporary storage after
+step 1 (:ref:`choose file<change-screen-figure>`), and read back for final import after step 2
+(:ref:`import confirmation<confirm-import-figure>`).
 
 There are three mechanisms for temporary storage.
 
