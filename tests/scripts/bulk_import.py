@@ -68,9 +68,20 @@ def do_import_mem(resource, dataset):
 
 
 def do_create():
+    class _BookResource(resources.ModelResource):
+        class Meta:
+            model = Book
+            fields = ('id', 'name', 'author_email', 'price')
+            use_bulk = True
+            batch_size = 1000
+            skip_unchanged = True
+            skip_diff = True
+            force_init_instance = True
+
     print("\ndo_create()")
     # clearing down existing objects
-    Book.objects.all().delete()
+    books = Book.objects.all()
+    books._raw_delete(books.db)
 
     rows = [('', 'Some new book', 'email@example.com', '10.25')] * NUM_ROWS
     dataset = tablib.Dataset(*rows, headers=['id', 'name', 'author_email', 'price'])
@@ -81,14 +92,15 @@ def do_create():
 
     # Book objects are created once for the 'duration' run, and once for the 'memory' run
     assert Book.objects.count() == NUM_ROWS * 2
-    Book.objects.all().delete()
+    books._raw_delete(books.db)
 
 
 def do_update():
     print("\ndo_update()")
 
     # clearing down existing objects
-    Book.objects.all().delete()
+    books = Book.objects.all()
+    books._raw_delete(books.db)
 
     rows = [('', 'Some new book', 'email@example.com', '10.25')] * NUM_ROWS
     books = [Book(name=r[1], author_email=r[2], price=r[3]) for r in rows]
@@ -108,7 +120,8 @@ def do_update():
     do_import_mem(book_resource, dataset)
 
     assert NUM_ROWS == Book.objects.count()
-    Book.objects.all().delete()
+    books = Book.objects.all()
+    books._raw_delete(books.db)
 
 
 def do_delete():
@@ -128,7 +141,8 @@ def do_delete():
     print("\ndo_delete()")
 
     # clearing down existing objects
-    Book.objects.all().delete()
+    books = Book.objects.all()
+    books._raw_delete(books.db)
 
     rows = [('', 'Some new book', 'email@example.com', '10.25')] * NUM_ROWS
     books = [Book(name=r[1], author_email=r[2], price=r[3]) for r in rows]
