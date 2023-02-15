@@ -1076,7 +1076,7 @@ class TestImportSkipConfirm(AdminTestMixin, TransactionTestCase):
         if str_in_response is not None:
             self.assertContains(response, str_in_response)
 
-    def _assert_regex_in_response(self, filename, input_format, encoding=None, regex_in_response=None,
+    def _is_regex_in_response(self, filename, input_format, encoding=None, regex_in_response=None,
                                    follow=False, status_code=200):
         response = self._do_import_post(self.book_import_url, filename, input_format, encoding=encoding, follow=follow)
         self.assertEqual(response.status_code, status_code)
@@ -1101,7 +1101,7 @@ class TestImportSkipConfirm(AdminTestMixin, TransactionTestCase):
     def test_import_action_empty_author_email(self):
         xlsx_index = self._get_input_format_index("xlsx")
         # sqlite / MySQL / Postgres have different error messages
-        self._assert_regex_in_response('books-empty-author-email.xlsx', xlsx_index, follow=True,
+        self._is_regex_in_response('books-empty-author-email.xlsx', xlsx_index, follow=True,
                                         regex_in_response=r"(NOT NULL|null value in column|cannot be null)")
 
     @override_settings(IMPORT_EXPORT_USE_TRANSACTIONS=True)
@@ -1137,6 +1137,11 @@ class TestImportSkipConfirm(AdminTestMixin, TransactionTestCase):
     def test_import_action_iso_8859_1(self):
         self._is_str_in_response('books-ISO-8859-1.csv', '0', 'ISO-8859-1', follow=True,
                                         str_in_response="Import finished, with 1 new and 0 updated books.")
+
+    def test_import_action_decode_error(self):
+        # attempting to read a file with the incorrect encoding should raise an error
+        self._is_regex_in_response('books-ISO-8859-1.csv', '0', follow=True, encoding='utf-8-sig',
+                                        regex_in_response=".*UnicodeDecodeError.* encountered while trying to read file")
 
     def test_import_action_binary(self):
         self._is_str_in_response('books.xls', '1', follow=True,

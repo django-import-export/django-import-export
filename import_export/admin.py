@@ -451,6 +451,12 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         tmp_storage.save(data)
         return tmp_storage
 
+    def add_data_read_fail_error_to_form(self, form, e):
+        form.add_error('import_file',
+                       _(f"'{type(e).__name__}' encountered while trying to read file. "
+                         "Ensure you have chosen the correct format for the file. "
+                         f"{str(e)}"))
+
     def import_action(self, request, *args, **kwargs):
         """
         Perform a dry_run of the import to make sure the import will not
@@ -509,13 +515,17 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
                 data = bytes()
                 for chunk in import_file.chunks():
                     data += chunk
-                dataset = input_format.create_dataset(data)
-                result = self.process_dataset(dataset, import_form, request, *args, raise_errors=False,
-                                              rollback_on_validation_errors=True, **kwargs)
-                if not result.has_errors() and not result.has_validation_errors():
-                    return self.process_result(result, request)
-                else:
-                    context['result'] = result
+                try:
+                    dataset = input_format.create_dataset(data)
+                except Exception as e:
+                    self.add_data_read_fail_error_to_form(import_form, e)
+                if not import_form.errors:
+                    result = self.process_dataset(dataset, import_form, request, *args, raise_errors=False,
+                                                  rollback_on_validation_errors=True, **kwargs)
+                    if not result.has_errors() and not result.has_validation_errors():
+                        return self.process_result(result, request)
+                    else:
+                        context['result'] = result
             else:
                 # first always write the uploaded file to disk as it may be a
                 # memory file or else based on settings upload handlers
@@ -530,10 +540,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
                     data = tmp_storage.read()
                     dataset = input_format.create_dataset(data)
                 except Exception as e:
-                    import_form.add_error('import_file',
-                                   _(f"'{type(e).__name__}' encountered while trying to read file. "
-                                     "Ensure you have chosen the correct format for the file. "
-                                     f"{str(e)}"))
+                    self.add_data_read_fail_error_to_form(import_form, e)
 
                 if not import_form.errors:
                     # prepare kwargs for import data, if needed
