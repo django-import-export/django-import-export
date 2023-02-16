@@ -1,4 +1,5 @@
 from datetime import date
+from unittest import mock
 
 from django.test import TestCase
 
@@ -108,3 +109,38 @@ class FieldTest(TestCase):
             FieldError,
             field.get_dehydrate_method
         )
+
+    def test_m2m_add_true(self):
+        m2m_related_manager = mock.Mock(spec=["add", "set", "all"])
+        m2m_related_manager.all.return_value = []
+        self.obj.aliases = m2m_related_manager
+        field = fields.Field(column_name='aliases', attribute='aliases', m2m_add=True)
+        row = {
+            'aliases': ["Foo", "Bar"],
+        }
+        field.save(self.obj, row, is_m2m=True)
+
+        self.assertEqual(m2m_related_manager.add.call_count, 1)
+        self.assertEqual(m2m_related_manager.set.call_count, 0)
+        self.assertSequenceEqual(m2m_related_manager.add.call_args.args, ('Foo', 'Bar'))
+
+        row = {
+            'aliases': ["apple"],
+        }
+        field.save(self.obj, row, is_m2m=True)
+        self.assertEqual(m2m_related_manager.add.call_args.args[0], 'apple')
+
+    def test_m2m_add_False(self):
+        m2m_related_manager = mock.Mock(spec=["add", "set", "all"])
+        self.obj.aliases = m2m_related_manager
+        field = fields.Field(column_name='aliases', attribute='aliases')
+        row = {
+            'aliases': ["Foo", "Bar"],
+        }
+        field.save(self.obj, row, is_m2m=True)
+
+        self.assertEqual(m2m_related_manager.add.call_count, 0)
+        self.assertEqual(m2m_related_manager.set.call_count, 1)
+        self.assertEqual(m2m_related_manager.set.call_args.args[0], ['Foo', 'Bar'])
+
+

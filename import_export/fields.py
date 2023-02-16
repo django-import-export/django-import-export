@@ -30,11 +30,15 @@ class Field:
     :param saves_null_values: Controls whether null values are saved on the object
     :param dehydrate_method: Lets you choose your own method for dehydration rather
         than using `dehydrate_{field_name}` syntax.
+    :param m2m_add: changes save of this field to add the values, if they do not exist,
+        to a ManyToMany field instead of setting all values.  Only useful if field is
+        a ManyToMany field.
     """
     empty_values = [None, '']
 
     def __init__(self, attribute=None, column_name=None, widget=None,
-                 default=NOT_PROVIDED, readonly=False, saves_null_values=True, dehydrate_method=None):
+                 default=NOT_PROVIDED, readonly=False, saves_null_values=True,
+                 dehydrate_method=None, m2m_add=False):
         self.attribute = attribute
         self.default = default
         self.column_name = column_name
@@ -44,6 +48,7 @@ class Field:
         self.readonly = readonly
         self.saves_null_values = saves_null_values
         self.dehydrate_method = dehydrate_method
+        self.m2m_add = m2m_add
 
     def __repr__(self):
         """
@@ -116,7 +121,11 @@ class Field:
                 if not is_m2m:
                     setattr(obj, attrs[-1], cleaned)
                 else:
-                    getattr(obj, attrs[-1]).set(cleaned)
+                    if self.m2m_add:
+                        new_values = [val for val in cleaned if val not in getattr(obj, attrs[-1]).all()]
+                        getattr(obj, attrs[-1]).add(*new_values)
+                    else:
+                        getattr(obj, attrs[-1]).set(cleaned)
 
     def export(self, obj):
         """
