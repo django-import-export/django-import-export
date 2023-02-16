@@ -122,8 +122,7 @@ class Field:
                     setattr(obj, attrs[-1], cleaned)
                 else:
                     if self.m2m_add:
-                        new_values = [val for val in cleaned if val not in getattr(obj, attrs[-1]).all()]
-                        getattr(obj, attrs[-1]).add(*new_values)
+                        getattr(obj, attrs[-1]).add(*cleaned)
                     else:
                         getattr(obj, attrs[-1]).set(cleaned)
 
