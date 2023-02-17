@@ -14,7 +14,7 @@ class Format:
         """
         raise NotImplementedError()
 
-    def export_data(self, dataset, **kwargs):
+    def export_data(self, dataset, escape_output=False, **kwargs):
         """
         Returns format representation for given dataset.
         """
@@ -84,7 +84,7 @@ class TablibFormat(Format):
     def create_dataset(self, in_stream, **kwargs):
         return tablib.import_set(in_stream, format=self.get_title())
 
-    def export_data(self, dataset, **kwargs):
+    def export_data(self, dataset, escape_output=False, **kwargs):
         return dataset.export(self.get_title(), **kwargs)
 
     def get_extension(self):
@@ -147,11 +147,12 @@ class HTML(TextFormat):
     TABLIB_MODULE = 'tablib.formats._html'
     CONTENT_TYPE = 'text/html'
 
-    def export_data(self, dataset, **kwargs):
-        for _ in dataset:
-            row = dataset.lpop()
-            row = [html.escape(cell) for cell in row]
-            dataset.append(row)
+    def export_data(self, dataset, escape_output=False, **kwargs):
+        if escape_output:
+            for _ in dataset:
+                row = dataset.lpop()
+                row = [html.escape(cell) for cell in row]
+                dataset.append(row)
         return dataset.export(self.get_title(), **kwargs)
 
 
