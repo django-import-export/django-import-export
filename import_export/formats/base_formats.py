@@ -1,3 +1,5 @@
+import html
+
 import tablib
 from tablib.formats import registry
 
@@ -144,6 +146,13 @@ class ODS(TextFormat):
 class HTML(TextFormat):
     TABLIB_MODULE = 'tablib.formats._html'
     CONTENT_TYPE = 'text/html'
+
+    def export_data(self, dataset, **kwargs):
+        for _ in dataset:
+            row = dataset.lpop()
+            row = [html.escape(cell) for cell in row]
+            dataset.append(row)
+        return dataset.export(self.get_title(), **kwargs)
 
 
 class XLS(TablibFormat):
