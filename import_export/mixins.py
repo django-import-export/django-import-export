@@ -90,6 +90,11 @@ class BaseImportMixin(BaseImportExportMixin):
 
 class BaseExportMixin(BaseImportExportMixin):
     model = None
+    escape_exported_data = False
+
+    @property
+    def should_escape_output(self):
+        return getattr(settings, 'IMPORT_EXPORT_ESCAPE_OUTPUT_ON_EXPORT', self.escape_exported_data)
 
     def get_export_formats(self):
         """
@@ -136,11 +141,6 @@ class BaseExportMixin(BaseImportExportMixin):
 
 class ExportViewMixin(BaseExportMixin):
     form_class = ExportForm
-    escape_exported_data = False
-
-    @property
-    def should_escape_output(self):
-        return getattr(settings, 'IMPORT_EXPORT_ESCAPE_OUTPUT_ON_EXPORT', self.escape_exported_data)
 
     def get_export_data(self, file_format, queryset, *args, **kwargs):
         """
