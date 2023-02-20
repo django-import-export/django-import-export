@@ -212,7 +212,7 @@ class HTMLFormatTest(TestCase):
     def setUp(self):
         self.format = base_formats.HTML()
         self.dataset = tablib.Dataset(headers=['id', 'username', 'name'])
-        self.dataset.append(('1', 'good_user', 'John Doe'))
+        self.dataset.append((1, 'good_user', 'John Doe'))
         self.dataset.append(('2', 'evil_user', '<script>alert("I want to steal your credit card data")</script>'))
 
     def test_export_data_escape(self):

@@ -151,7 +151,7 @@ class HTML(TextFormat):
         if escape_output:
             for _ in dataset:
                 row = dataset.lpop()
-                row = [html.escape(cell) for cell in row]
+                row = [html.escape(str(cell)) for cell in row]
                 dataset.append(row)
         return dataset.export(self.get_title(), **kwargs)
 
