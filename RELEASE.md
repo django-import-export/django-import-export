@@ -11,6 +11,7 @@
 - `make messages` is intended to be run now to keep the translation files up-to-date.  
   - Run this if there have been any translations updates for the release.  It is recommended to run this prior to any minor release.
   - This creates updates to all translation files so there is no need to commit these unless there have been any translation changes.
+  - If 'no module named settings' error is seen, try unsetting `DJANGO_SETTINGS_MODULE` environment variable.
 
 ```bash
 # check out clean version 
