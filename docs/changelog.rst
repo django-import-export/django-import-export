@@ -1,7 +1,7 @@
 Changelog
 =========
 
-3.1.0 (unreleased)
+3.1.0 (2023-02-21)
 ------------------
 
 - Add optional dehydrate method param (#1536)
