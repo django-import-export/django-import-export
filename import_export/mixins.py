@@ -1,5 +1,6 @@
 import warnings
 
+from django.conf import settings
 from django.http import HttpResponse
 from django.utils.timezone import now
 from django.views.generic.edit import FormView
@@ -89,6 +90,11 @@ class BaseImportMixin(BaseImportExportMixin):
 
 class BaseExportMixin(BaseImportExportMixin):
     model = None
+    escape_exported_data = False
+
+    @property
+    def should_escape_output(self):
+        return getattr(settings, 'IMPORT_EXPORT_ESCAPE_OUTPUT_ON_EXPORT', self.escape_exported_data)
 
     def get_export_formats(self):
         """
@@ -141,7 +147,7 @@ class ExportViewMixin(BaseExportMixin):
         Returns file_format representation for given queryset.
         """
         data = self.get_data_for_export(self.request, queryset, *args, **kwargs)
-        export_data = file_format.export_data(data)
+        export_data = file_format.export_data(data, escape_output=self.should_escape_output)
         return export_data
 
     def get_context_data(self, **kwargs):
