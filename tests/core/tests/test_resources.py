@@ -1053,6 +1053,46 @@ class ModelResourceTest(TestCase):
         self.assertIn(cat1, book.categories.all())
         self.assertIn(cat2, book.categories.all())
 
+    def test_m2m_add(self):
+        cat1 = Category.objects.create(name='Cat 1')
+        cat2 = Category.objects.create(name='Cat 2')
+        cat3 = Category.objects.create(name='Cat 3')
+        cat4 = Category.objects.create(name='Cat 4')
+        headers = ['id', 'name', 'categories']
+        row = [None, 'FooBook', "Cat 1|Cat 2"]
+        dataset = tablib.Dataset(row, headers=headers)
+
+        class BookM2MResource(resources.ModelResource):
+            categories = fields.Field(
+                attribute='categories',
+                m2m_add=True,
+                widget=widgets.ManyToManyWidget(Category, field='name',
+                                                separator='|')
+            )
+
+            class Meta:
+                model = Book
+
+        resource = BookM2MResource()
+        resource.import_data(dataset, raise_errors=True)
+        book = Book.objects.get(name='FooBook')
+        self.assertIn(cat1, book.categories.all())
+        self.assertIn(cat2, book.categories.all())
+        self.assertNotIn(cat3, book.categories.all())
+        self.assertNotIn(cat4, book.categories.all())
+
+        row1 = [book.id, 'FooBook', "Cat 1|Cat 2"]  # This should have no effect, since Cat 1 and Cat 2 already exist
+        row2 = [book.id, 'FooBook', "Cat 3|Cat 4"]
+        dataset = tablib.Dataset(row1, row2, headers=headers)
+        resource.import_data(dataset, raise_errors=True)
+        book2 = Book.objects.get(name='FooBook')
+        self.assertEqual(book.id, book2.id)
+        self.assertEqual(book.categories.count(), 4)
+        self.assertIn(cat1, book2.categories.all())
+        self.assertIn(cat2, book2.categories.all())
+        self.assertIn(cat3, book2.categories.all())
+        self.assertIn(cat4, book2.categories.all())
+
     def test_related_one_to_one(self):
         # issue #17 - Exception when attempting access something on the
         # related_name
