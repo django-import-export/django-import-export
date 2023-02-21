@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-10-18 14:58+0100\n"
+"POT-Creation-Date: 2023-02-21 18:05+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: hao wang <173300430@qq.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,36 +18,36 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: admin.py:206
+#: admin.py:214
 #, python-format
 msgid "%s through import_export"
 msgstr "%s 通过 django-import-export导入"
 
-#: admin.py:212
+#: admin.py:220
 msgid "Import finished, with {} new and {} updated {}."
 msgstr "导入成功，新增{}条记录，更新{}条记录。"
 
-#: admin.py:507
+#: admin.py:456
 msgid ""
 "'{type(e).__name__}' encountered while trying to read file. Ensure you have "
 "chosen the correct format for the file. "
 msgstr ""
 
-#: admin.py:546 templates/admin/import_export/change_list_import_item.html:5
+#: admin.py:580 templates/admin/import_export/change_list_import_item.html:5
 #: templates/admin/import_export/import.html:19
 msgid "Import"
 msgstr "导入"
 
-#: admin.py:714 templates/admin/import_export/change_list_export_item.html:5
+#: admin.py:749 templates/admin/import_export/change_list_export_item.html:5
 #: templates/admin/import_export/export.html:12
 msgid "Export"
 msgstr "导出"
 
-#: admin.py:777
+#: admin.py:812
 msgid "You must select an export format."
 msgstr "您必须选择一个导出格式。"
 
-#: admin.py:800
+#: admin.py:835
 #, python-format
 msgid "Export selected %(verbose_name_plural)s"
 msgstr "导出选中的 %(verbose_name_plural)s"

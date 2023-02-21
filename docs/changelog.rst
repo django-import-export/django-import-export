@@ -4,43 +4,26 @@ Changelog
 3.1.0 (unreleased)
 ------------------
 
-Enhancements
-############
-
 - Add optional dehydrate method param (#1536)
 
   - ``exceptions`` module has been undeprecated
 
 - Updated DE translation (#1537)
 - Add option for single step import via Admin Site (#1540)
-
-Fixes
-#####
-
+- Add support for m2m add (#1545)
 - collect errors on bulk operations (#1541)
 
   - this change causes bulk import errors to be logged at DEBUG level not EXCEPTION.
-
-Development
-###########
-
-- tox updates (#1534)
-
-Performance
-###########
 
 - Improve bulk import performance (#1539)
 
   - ``raise_errors`` has been deprecated as a kwarg in ``import_row()``
 
 - Reduce memory footprint during import (#1542)
-
-Documentation
-#############
-
 - documentation updates (#1533)
 - add detailed format parameter docstrings to ``DateWidget`` and ``TimeWidget`` (#1532)
-
+- tox updates (#1534)
+- fix xss vulnerability in html export (#1546)
 
 3.0.2 (2022-12-13)
 ------------------
