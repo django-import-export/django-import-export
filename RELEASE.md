@@ -51,3 +51,11 @@ deactivate
 cd ..
 rm -rf django-import-export-rel
 ```
+
+#### Add Release to Github
+
+- Go to [Github releases](https://github.com/django-import-export/django-import-export/releases)
+- Click 'Draft a new release'
+- Enter the version number (e.g. 3.1.0)
+- Select the correct tag
+- Publish the release
