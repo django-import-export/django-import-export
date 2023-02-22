@@ -1,4 +1,4 @@
-Django>=2.2
-tablib[html,ods,xls,xlsx,yaml]>=3.0.0
+Django>=3.2
+tablib[html,ods,xls,xlsx,yaml]>=3.2.1
 diff-match-patch
 setuptools_scm

@@ -12,7 +12,7 @@ additional formats like ``cli`` or ``Pandas DataFrame``, you should install the
 appropriate tablib dependencies (e.g. ``pip install tablib[pandas]``). Read
 more on the `tablib format documentation page`_.
 
-.. _tablib format documentation page: https://tablib.readthedocs.io/en/stable/formats/
+.. _tablib format documentation page: https://tablib.readthedocs.io/en/stable/formats.html
 
 Alternatively, you can install the git repository directly to obtain the
 development version::
@@ -49,7 +49,7 @@ You can configure the following in your settings file:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Controls if resource importing should use database transactions. Defaults to
-``False``. Using transactions makes imports safer as a failure during import
+``True``. Using transactions makes imports safer as a failure during import
 won’t import only part of the data set.
 
 Can be overridden on a ``Resource`` class by setting the
@@ -64,6 +64,8 @@ of losing an audit trail.
 
 Can be overridden on a ``ModelAdmin`` class inheriting from ``ImportMixin`` by
 setting the ``skip_admin_log`` class attribute.
+
+.. _IMPORT_EXPORT_TMP_STORAGE_CLASS:
 
 ``IMPORT_EXPORT_TMP_STORAGE_CLASS``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -104,15 +106,39 @@ decreasing it, or speed up exports by increasing it.
 Can be overridden on a ``Resource`` class by setting the ``chunk_size`` class
 attribute.
 
+``IMPORT_EXPORT_SKIP_ADMIN_CONFIRM``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If ``True``, no import confirmation page will be presented to the user in the Admin UI.
+The file will be imported in a single step.
+
+By default, the import will occur in a transaction.
+If the import causes any runtime errors (including validation errors),
+then the errors are presented to the user and then entire transaction is rolled back.
+
+Note that if you disable transaction support via configuration (or if your database
+does not support transactions), then validation errors will still be presented to the user
+but valid rows will have imported.
+
+``IMPORT_EXPORT_ESCAPE_OUTPUT_ON_EXPORT``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If set to ``True``, export output will be sanitized. By default this is set to ``False``.
+
+Note: currently this only works for ``HTML`` output, and only for exports done via the admin UI.
+
+
+
+.. _exampleapp:
 
 Example app
 ===========
 
 There's an example application that showcases what django-import-export can do.
 It's assumed that you have set up a Python ``venv`` with all required dependencies
-or are otherwise able to run Django locally.
+(from ``test.txt`` requirements file) and are able to run Django locally.
 
-You can run it via::
+You can run the example application as follows::
 
     cd tests
     ./manage.py makemigrations
@@ -123,4 +149,4 @@ You can run it via::
 
 Go to http://127.0.0.1:8000
 
-``books-sample.csv`` contains sample book data which can be imported.
+For example import files, see :ref:`getting_started:Test data`.

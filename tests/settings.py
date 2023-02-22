@@ -50,8 +50,7 @@ TEMPLATES = [
     },
 ]
 
-if django.VERSION >= (3, 2):
-    DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 if os.environ.get('IMPORT_EXPORT_TEST_TYPE') == 'mysql-innodb':
     IMPORT_EXPORT_USE_TRANSACTIONS = True
@@ -59,13 +58,14 @@ if os.environ.get('IMPORT_EXPORT_TEST_TYPE') == 'mysql-innodb':
         'default': {
             'ENGINE': 'django.db.backends.mysql',
             'NAME': 'import_export',
-            'USER': os.environ.get('IMPORT_EXPORT_MYSQL_USER', 'root'),
-            'PASSWORD': os.environ.get('IMPORT_EXPORT_MYSQL_PASSWORD', 'password'),
+            'USER': os.environ.get('IMPORT_EXPORT_MYSQL_USER'),
+            'PASSWORD': os.environ.get('IMPORT_EXPORT_MYSQL_PASSWORD'),
             'HOST': '127.0.0.1',
             'PORT': 3306,
             'TEST': {
                 'CHARSET': 'utf8',
                 'COLLATION': 'utf8_general_ci',
+                'NAME': 'test_import_export'
             }
         }
     }
@@ -109,3 +109,7 @@ LOGGING = {
 
 
 USE_TZ = False
+if django.VERSION >= (4, 1):
+    FORM_RENDERER = "django.forms.renderers.DjangoDivFormRenderer"
+if django.VERSION >= (5, 0):
+    FORM_RENDERER = "django.forms.renderers.DjangoTemplates"

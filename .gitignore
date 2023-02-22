@@ -14,4 +14,7 @@ dist/
 .coverage
 *.sw[po]
 
+# IDE support
+.vscode
+
 tests/database.db

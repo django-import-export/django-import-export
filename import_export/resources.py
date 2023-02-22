@@ -1,25 +1,24 @@
 import functools
 import logging
 import traceback
+import warnings
 from collections import OrderedDict
 from copy import deepcopy
 
-import django
 import tablib
 from diff_match_patch import diff_match_patch
 from django.conf import settings
-from django.core.exceptions import ImproperlyConfigured, ValidationError
+from django.core.exceptions import (
+    FieldDoesNotExist,
+    ImproperlyConfigured,
+    ValidationError,
+)
 from django.core.management.color import no_style
 from django.core.paginator import Paginator
 from django.db import connections, router
 from django.db.models.fields.related import ForeignObjectRel
 from django.db.models.query import QuerySet
-from django.db.transaction import (
-    TransactionManagementError,
-    savepoint,
-    savepoint_commit,
-    savepoint_rollback,
-)
+from django.db.transaction import TransactionManagementError, set_rollback
 from django.utils.encoding import force_str
 from django.utils.safestring import mark_safe
 
@@ -29,12 +28,6 @@ from .instance_loaders import ModelInstanceLoader
 from .results import Error, Result, RowResult
 from .utils import atomic_if_using_transaction
 
-if django.VERSION[0] >= 3:
-    from django.core.exceptions import FieldDoesNotExist
-else:
-    from django.db.models.fields import FieldDoesNotExist
-
-
 logger = logging.getLogger(__name__)
 # Set default logging handler to avoid "No handler found" warnings.
 logger.addHandler(logging.NullHandler())
@@ -43,10 +36,12 @@ logger.addHandler(logging.NullHandler())
 def get_related_model(field):
     if hasattr(field, 'related_model'):
         return field.related_model
-    # Django 1.6, 1.7
-    if field.rel:
-        return field.rel.to
 
+def has_natural_foreign_key(model):
+    """
+    Determine if a model has natural foreign key functions
+    """
+    return (hasattr(model, "natural_key") and hasattr(model.objects, "get_by_natural_key"))
 
 class ResourceOptions:
     """
@@ -109,7 +104,7 @@ class ResourceOptions:
 
     report_skipped = True
     """
-    Controls if the result reports skipped rows Default value is True
+    Controls if the result reports skipped rows. Default value is True
     """
 
     clean_model_instances = False
@@ -133,6 +128,23 @@ class ResourceOptions:
     stored in each ``RowResult``.
     If diffing is not required, then disabling the diff operation by setting this value to ``True``
     improves performance, because the copy and comparison operations are skipped for each row.
+    If enabled, then ``skip_row()`` checks do not execute, because 'skip' logic requires
+    comparison between the stored and imported versions of a row.
+    If enabled, then HTML row reports are also not generated (see ``skip_html_diff``).
+    The default value is False.
+    """
+
+    skip_html_diff = False
+    """
+    Controls whether or not a HTML report is generated after each row.
+    By default, the difference between a stored copy and an imported instance
+    is generated in HTML form and stored in each ``RowResult``.
+    The HTML report is used to present changes on the confirmation screen in the admin site,
+    hence when this value is ``True``, then changes will not be presented on the confirmation
+    screen.
+    If the HTML report is not required, then setting this value to ``True`` improves performance,
+    because the HTML generation is skipped for each row.
+    This is a useful optimization when importing large datasets.
     The default value is False.
     """
 
@@ -163,6 +175,21 @@ class ResourceOptions:
     DB Connection name to use for db transactions. If not provided,
     ``router.db_for_write(model)`` will be evaluated and if it's missing,
     DEFAULT_DB_ALIAS constant ("default") is used.
+    """
+
+    store_row_values = False
+    """
+    If True, each row's raw data will be stored in each row result.
+    Enabling this parameter will increase the memory usage during import
+    which should be considered when importing large datasets.
+    """
+
+    use_natural_foreign_keys = False
+    """
+    If True, use_natural_foreign_keys = True will be passed to all foreign
+    key widget fields whose models support natural foreign keys. That is,
+    the model has a natural_key function and the manager has a
+    get_by_natural_key function. 
     """
 
 
@@ -237,7 +264,12 @@ class Resource(metaclass=DeclarativeMetaclass):
     representations and handle importing and exporting data.
     """
 
-    def __init__(self):
+    def __init__(self, **kwargs):
+        """
+        kwargs:
+           An optional dict of kwargs.
+           Subclasses can use kwargs to pass dynamic values to enhance import / exports.
+        """
         # The fields class attribute is the *class-wide* definition of
         # fields. Because a particular *instance* of the class might want to
         # alter self.fields, we create self.fields here by copying cls.fields.
@@ -278,6 +310,7 @@ class Resource(metaclass=DeclarativeMetaclass):
         """
         return Diff
 
+    @classmethod
     def get_db_connection_name(self):
         if self._meta.using_db is None:
             return router.db_for_write(self._meta.model)
@@ -356,7 +389,7 @@ class Resource(metaclass=DeclarativeMetaclass):
         """
         return [f for f in self.fields if f not in self._meta.import_id_fields]
 
-    def bulk_create(self, using_transactions, dry_run, raise_errors, batch_size=None):
+    def bulk_create(self, using_transactions, dry_run, raise_errors, batch_size=None, result=None):
         """
         Creates objects by calling ``bulk_create``.
         """
@@ -367,13 +400,11 @@ class Resource(metaclass=DeclarativeMetaclass):
                 else:
                     self._meta.model.objects.bulk_create(self.create_instances, batch_size=batch_size)
         except Exception as e:
-            logger.exception(e)
-            if raise_errors:
-                raise e
+            self.handle_import_error(result, e, raise_errors)
         finally:
             self.create_instances.clear()
 
-    def bulk_update(self, using_transactions, dry_run, raise_errors, batch_size=None):
+    def bulk_update(self, using_transactions, dry_run, raise_errors, batch_size=None, result=None):
         """
         Updates objects by calling ``bulk_update``.
         """
@@ -385,13 +416,11 @@ class Resource(metaclass=DeclarativeMetaclass):
                     self._meta.model.objects.bulk_update(self.update_instances, self.get_bulk_update_fields(),
                                                          batch_size=batch_size)
         except Exception as e:
-            logger.exception(e)
-            if raise_errors:
-                raise e
+            self.handle_import_error(result, e, raise_errors)
         finally:
             self.update_instances.clear()
 
-    def bulk_delete(self, using_transactions, dry_run, raise_errors):
+    def bulk_delete(self, using_transactions, dry_run, raise_errors, result=None):
         """
         Deletes objects by filtering on a list of instances to be deleted,
         then calling ``delete()`` on the entire queryset.
@@ -404,9 +433,7 @@ class Resource(metaclass=DeclarativeMetaclass):
                     delete_ids = [o.pk for o in self.delete_instances]
                     self._meta.model.objects.filter(pk__in=delete_ids).delete()
         except Exception as e:
-            logger.exception(e)
-            if raise_errors:
-                raise e
+            self.handle_import_error(result, e, raise_errors)
         finally:
             self.delete_instances.clear()
 
@@ -438,18 +465,24 @@ class Resource(metaclass=DeclarativeMetaclass):
         if errors:
             raise ValidationError(errors)
 
-    def save_instance(self, instance, using_transactions=True, dry_run=False):
+    def save_instance(self, instance, is_create, using_transactions=True, dry_run=False):
         """
         Takes care of saving the object to the database.
 
         Objects can be created in bulk if ``use_bulk`` is enabled.
+
+        :param instance: The instance of the object to be persisted.
+        :param is_create: A boolean flag to indicate whether this is a new object
+        to be created, or an existing object to be updated.
+        :param using_transactions: A flag to indicate whether db transactions are used.
+        :param dry_run: A flag to indicate dry-run mode.
         """
         self.before_save_instance(instance, using_transactions, dry_run)
         if self._meta.use_bulk:
-            if instance.pk:
-                self.update_instances.append(instance)
-            else:
+            if is_create:
                 self.create_instances.append(instance)
+            else:
+                self.update_instances.append(instance)
         else:
             if not using_transactions and dry_run:
                 # we don't have transactions and we want to do a dry_run
@@ -554,7 +587,7 @@ class Resource(metaclass=DeclarativeMetaclass):
         """
         return False
 
-    def skip_row(self, instance, original):
+    def skip_row(self, instance, original, row, import_validation_errors=None):
         """
         Returns ``True`` if ``row`` importing should be skipped.
 
@@ -565,7 +598,11 @@ class Resource(metaclass=DeclarativeMetaclass):
         will be None.
 
         When left unspecified, skip_diff and skip_unchanged both default to ``False``, 
-        and rows are never skipped. 
+        and rows are never skipped.
+
+        By default, rows are not skipped if validation errors have been detected
+        during import.  You can change this behavior and choose to ignore validation
+        errors by overriding this method.
 
         Override this method to handle skipping rows meeting certain
         conditions.
@@ -573,20 +610,30 @@ class Resource(metaclass=DeclarativeMetaclass):
         Use ``super`` if you want to preserve default handling while overriding
         ::
             class YourResource(ModelResource):
-                def skip_row(self, instance, original):
+                def skip_row(self, instance, original, row, import_validation_errors=None):
                     # Add code here
-                    return super(YourResource, self).skip_row(instance, original)
+                    return super().skip_row(instance, original, row, import_validation_errors=import_validation_errors)
 
         """
-        if not self._meta.skip_unchanged or self._meta.skip_diff:
+        if not self._meta.skip_unchanged or self._meta.skip_diff or import_validation_errors:
             return False
         for field in self.get_import_fields():
-            try:
-                # For fields that are models.fields.related.ManyRelatedManager
-                # we need to compare the results
-                if list(field.get_value(instance).all()) != list(field.get_value(original).all()):
+            # For fields that are models.fields.related.ManyRelatedManager
+            # we need to compare the results
+            if isinstance(field.widget, widgets.ManyToManyWidget):
+                # #1437 - handle m2m field not present in import file
+                if field.column_name not in row.keys():
+                    continue
+                # m2m instance values are taken from the 'row' because they
+                # have not been written to the 'instance' at this point
+                instance_values = list(field.clean(row))
+                original_values = list(field.get_value(original).all())
+                if len(instance_values) != len(original_values):
                     return False
-            except AttributeError:
+
+                if sorted(v.pk for v in instance_values) != sorted(v.pk for v in original_values):
+                    return False
+            else:
                 if field.get_value(instance) != field.get_value(original):
                     return False
         return True
@@ -627,7 +674,15 @@ class Resource(metaclass=DeclarativeMetaclass):
         """
         pass
 
-    def import_row(self, row, instance_loader, using_transactions=True, dry_run=False, raise_errors=False, **kwargs):
+    def handle_import_error(self, result, error, raise_errors=False):
+        logger.debug(error, exc_info=error)
+        if result:
+            tb_info = traceback.format_exc()
+            result.append_base_error(self.get_error_result_class()(error, tb_info))
+        if raise_errors:
+            raise
+
+    def import_row(self, row, instance_loader, using_transactions=True, dry_run=False, raise_errors=None, **kwargs):
         """
         Imports data from ``tablib.Dataset``. Refer to :doc:`import_workflow`
         for a more complete description of the whole import process.
@@ -642,8 +697,16 @@ class Resource(metaclass=DeclarativeMetaclass):
         :param dry_run: If ``dry_run`` is set, or error occurs, transaction
             will be rolled back.
         """
+        if raise_errors is not None:
+            warnings.warn(
+                "raise_errors argument is deprecated and will be removed in a future release.",
+                category=DeprecationWarning
+            )
+
         skip_diff = self._meta.skip_diff
         row_result = self.get_row_result_class()()
+        if self._meta.store_row_values:
+            row_result.row_values = row
         original = None
         try:
             self.before_import_row(row, **kwargs)
@@ -664,6 +727,7 @@ class Resource(metaclass=DeclarativeMetaclass):
                         diff.compare_with(self, None, dry_run)
                 else:
                     row_result.import_type = RowResult.IMPORT_TYPE_DELETE
+                    row_result.add_instance_info(instance)
                     self.delete_instance(instance, using_transactions, dry_run)
                     if not skip_diff:
                         diff.compare_with(self, None, dry_run)
@@ -676,19 +740,18 @@ class Resource(metaclass=DeclarativeMetaclass):
                     # validate_instance(), where they can be combined with model
                     # instance validation errors if necessary
                     import_validation_errors = e.update_error_dict(import_validation_errors)
-                if self.skip_row(instance, original):
+
+                if self.skip_row(instance, original, row, import_validation_errors):
                     row_result.import_type = RowResult.IMPORT_TYPE_SKIP
                 else:
                     self.validate_instance(instance, import_validation_errors)
-                    self.save_instance(instance, using_transactions, dry_run)
+                    self.save_instance(instance, new, using_transactions, dry_run)
                     self.save_m2m(instance, row, using_transactions, dry_run)
-                    # Add object info to RowResult for LogEntry
-                    row_result.object_id = instance.pk
-                    row_result.object_repr = force_str(instance)
+                row_result.add_instance_info(instance)
                 if not skip_diff:
                     diff.compare_with(self, instance, dry_run)
 
-            if not skip_diff:
+            if not skip_diff and not self._meta.skip_html_diff:
                 row_result.diff = diff.as_html()
             self.after_import_row(row, row_result, **kwargs)
 
@@ -703,17 +766,6 @@ class Resource(metaclass=DeclarativeMetaclass):
                 logger.debug(e, exc_info=e)
             tb_info = traceback.format_exc()
             row_result.errors.append(self.get_error_result_class()(e, tb_info, row))
-
-        if self._meta.use_bulk:
-            # persist a batch of rows
-            # because this is a batch, any exceptions are logged and not associated
-            # with a specific row
-            if len(self.create_instances) == self._meta.batch_size:
-                self.bulk_create(using_transactions, dry_run, raise_errors, batch_size=self._meta.batch_size)
-            if len(self.update_instances) == self._meta.batch_size:
-                self.bulk_update(using_transactions, dry_run, raise_errors, batch_size=self._meta.batch_size)
-            if len(self.delete_instances) == self._meta.batch_size:
-                self.bulk_delete(using_transactions, dry_run, raise_errors)
 
         return row_result
 
@@ -758,32 +810,33 @@ class Resource(metaclass=DeclarativeMetaclass):
             raise ValueError("Batch size must be a positive integer")
 
         with atomic_if_using_transaction(using_transactions, using=db_connection):
-            return self.import_data_inner(
-                dataset, dry_run, raise_errors, using_transactions, collect_failed_rows,
-                rollback_on_validation_errors, **kwargs)
+            result = self.import_data_inner(
+                dataset, dry_run, raise_errors, using_transactions, collect_failed_rows, **kwargs)
+            if using_transactions and (dry_run or result.has_errors() or
+                                       (rollback_on_validation_errors and result.has_validation_errors())):
+                set_rollback(True, using=db_connection)
+            return result
 
     def import_data_inner(
             self, dataset, dry_run, raise_errors, using_transactions,
-            collect_failed_rows, rollback_on_validation_errors=False, **kwargs):
+            collect_failed_rows, rollback_on_validation_errors=None, **kwargs):
+
+        if rollback_on_validation_errors is not None:
+            warnings.warn(
+                "rollback_on_validation_errors argument is deprecated and will be removed in a future release.",
+                category=DeprecationWarning
+            )
+
         result = self.get_result_class()()
         result.diff_headers = self.get_diff_headers()
         result.total_rows = len(dataset)
         db_connection = self.get_db_connection_name()
 
-        if using_transactions:
-            # when transactions are used we want to create/update/delete object
-            # as transaction will be rolled back if dry_run is set
-            sp1 = savepoint(using=db_connection)
-
         try:
             with atomic_if_using_transaction(using_transactions, using=db_connection):
                 self.before_import(dataset, using_transactions, dry_run, **kwargs)
         except Exception as e:
-            logger.debug(e, exc_info=e)
-            tb_info = traceback.format_exc()
-            result.append_base_error(self.get_error_result_class()(e, tb_info))
-            if raise_errors:
-                raise
+            self.handle_import_error(result, e, raise_errors)
 
         instance_loader = self._meta.instance_loader_class(self, dataset)
 
@@ -793,17 +846,33 @@ class Resource(metaclass=DeclarativeMetaclass):
         if collect_failed_rows:
             result.add_dataset_headers(dataset.headers)
 
-        for i, row in enumerate(dataset.dict, 1):
-            with atomic_if_using_transaction(using_transactions, using=db_connection):
+        for i, data_row in enumerate(dataset, 1):
+            row = OrderedDict(zip(dataset.headers, data_row))
+            with atomic_if_using_transaction(using_transactions and not self._meta.use_bulk, using=db_connection):
                 row_result = self.import_row(
                     row,
                     instance_loader,
                     using_transactions=using_transactions,
                     dry_run=dry_run,
                     row_number=i,
-                    raise_errors=raise_errors,
                     **kwargs
                 )
+            if self._meta.use_bulk:
+                # persist a batch of rows
+                # because this is a batch, any exceptions are logged and not associated
+                # with a specific row
+                if len(self.create_instances) == self._meta.batch_size:
+                    with atomic_if_using_transaction(using_transactions, using=db_connection):
+                        self.bulk_create(using_transactions, dry_run, raise_errors,
+                                         batch_size=self._meta.batch_size, result=result)
+                if len(self.update_instances) == self._meta.batch_size:
+                    with atomic_if_using_transaction(using_transactions, using=db_connection):
+                        self.bulk_update(using_transactions, dry_run, raise_errors,
+                                         batch_size=self._meta.batch_size, result=result)
+                if len(self.delete_instances) == self._meta.batch_size:
+                    with atomic_if_using_transaction(using_transactions, using=db_connection):
+                        self.bulk_delete(using_transactions, dry_run, raise_errors, result=result)
+
             result.increment_row_result_total(row_result)
 
             if row_result.errors:
@@ -824,27 +893,15 @@ class Resource(metaclass=DeclarativeMetaclass):
         if self._meta.use_bulk:
             # bulk persist any instances which are still pending
             with atomic_if_using_transaction(using_transactions, using=db_connection):
-                self.bulk_create(using_transactions, dry_run, raise_errors)
-                self.bulk_update(using_transactions, dry_run, raise_errors)
-                self.bulk_delete(using_transactions, dry_run, raise_errors)
+                self.bulk_create(using_transactions, dry_run, raise_errors, result=result)
+                self.bulk_update(using_transactions, dry_run, raise_errors, result=result)
+                self.bulk_delete(using_transactions, dry_run, raise_errors, result=result)
 
         try:
             with atomic_if_using_transaction(using_transactions, using=db_connection):
                 self.after_import(dataset, result, using_transactions, dry_run, **kwargs)
         except Exception as e:
-            logger.debug(e, exc_info=e)
-            tb_info = traceback.format_exc()
-            result.append_base_error(self.get_error_result_class()(e, tb_info))
-            if raise_errors:
-                raise
-
-        if using_transactions:
-            if dry_run or \
-                    result.has_errors() or \
-                    (rollback_on_validation_errors and result.has_validation_errors()):
-                savepoint_rollback(sp1, using=db_connection)
-            else:
-                savepoint_commit(sp1, using=db_connection)
+            self.handle_import_error(result, e, raise_errors)
 
         return result
 
@@ -866,7 +923,9 @@ class Resource(metaclass=DeclarativeMetaclass):
 
     def export_field(self, field, obj):
         field_name = self.get_field_name(field)
-        method = getattr(self, 'dehydrate_%s' % field_name, None)
+        dehydrate_method = field.get_dehydrate_method(field_name)
+
+        method = getattr(self, dehydrate_method, None)
         if method is not None:
             return method(obj)
         return field.export(obj)
@@ -1013,6 +1072,7 @@ class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
         'ManyToManyField': 'get_m2m_widget',
         'OneToOneField': 'get_fk_widget',
         'ForeignKey': 'get_fk_widget',
+        'CharField': widgets.CharWidget,
         'DecimalField': widgets.DecimalWidget,
         'DateTimeField': widgets.DateTimeWidget,
         'DateField': widgets.DateWidget,
@@ -1029,6 +1089,7 @@ class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
         'BigAutoField': widgets.IntegerWidget,
         'NullBooleanField': widgets.BooleanWidget,
         'BooleanField': widgets.BooleanWidget,
+        'JSONField': widgets.JSONWidget,
     }
 
     @classmethod
@@ -1045,9 +1106,17 @@ class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
         """
         Prepare widget for fk and o2o fields
         """
+
+        model = get_related_model(field)
+
+        use_natural_foreign_keys = ( 
+            has_natural_foreign_key(model) and cls._meta.use_natural_foreign_keys
+        )
+
         return functools.partial(
             widgets.ForeignKeyWidget,
-            model=get_related_model(field))
+            model=model,
+            use_natural_foreign_keys=use_natural_foreign_keys)
 
     @classmethod
     def widget_from_django_field(cls, f, default=widgets.Widget):
@@ -1055,7 +1124,7 @@ class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
         Returns the widget that would likely be associated with each
         Django type.
 
-        Includes mapping of Postgres Array and JSON fields. In the case that
+        Includes mapping of Postgres Array field. In the case that
         psycopg2 is not installed, we consume the error and process the field
         regardless.
         """
@@ -1071,22 +1140,13 @@ class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
         else:
             try:
                 from django.contrib.postgres.fields import ArrayField
-                try:
-                    from django.db.models import JSONField
-                except ImportError:
-                    from django.contrib.postgres.fields import JSONField
             except ImportError:
                 # ImportError: No module named psycopg2.extras
                 class ArrayField:
                     pass
 
-                class JSONField:
-                    pass
-
             if isinstance(f, ArrayField):
                 return widgets.SimpleArrayWidget
-            elif isinstance(f, JSONField):
-                return widgets.JSONWidget
 
         return result
 
@@ -1145,6 +1205,12 @@ class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
                         cursor.execute(line)
                 finally:
                     cursor.close()
+
+    @classmethod
+    def get_display_name(cls):
+        if hasattr(cls._meta, 'name'):
+            return cls._meta.name
+        return cls.__name__
 
 
 def modelresource_factory(model, resource_class=ModelResource):

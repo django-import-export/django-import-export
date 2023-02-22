@@ -52,6 +52,16 @@ class FormatTest(TestCase):
     def test_can_export_default(self):
         self.assertFalse(self.format.can_export())
 
+
+class TablibFormatTest(TestCase):
+    def setUp(self):
+        self.format = base_formats.TablibFormat()
+
+    def test_get_format_for_undefined_TABLIB_MODULE_raises_AttributeError(self):
+        with self.assertRaises(AttributeError):
+            self.format.get_format()
+
+
 class XLSTest(TestCase):
 
     def setUp(self):
@@ -195,3 +205,40 @@ class TextFormatTest(TestCase):
 
     def test_is_binary(self):
         self.assertFalse(self.format.is_binary())
+
+
+class HTMLFormatTest(TestCase):
+
+    def setUp(self):
+        self.format = base_formats.HTML()
+        self.dataset = tablib.Dataset(headers=['id', 'username', 'name'])
+        self.dataset.append((1, 'good_user', 'John Doe'))
+        self.dataset.append(('2', 'evil_user', '<script>alert("I want to steal your credit card data")</script>'))
+
+    def test_export_data_escape(self):
+        res = self.format.export_data(self.dataset, escape_output=True)
+        self.assertIn(
+            (
+                "<tr><td>1</td>\n"
+                "<td>good_user</td>\n"
+                "<td>John Doe</td></tr>\n"
+                "<tr><td>2</td>\n"
+                "<td>evil_user</td>\n"
+                "<td>&lt;script&gt;alert(&quot;I want to steal your credit card data&quot;)&lt;/script&gt;</td></tr>\n"
+            ),
+            res
+        )
+
+    def test_export_data_no_escape(self):
+        res = self.format.export_data(self.dataset)
+        self.assertIn(
+            (
+                "<tr><td>1</td>\n"
+                "<td>good_user</td>\n"
+                "<td>John Doe</td></tr>\n"
+                "<tr><td>2</td>\n"
+                "<td>evil_user</td>\n"
+                "<td><script>alert(\"I want to steal your credit card data\")</script></td></tr>\n"
+            ),
+            res
+        )

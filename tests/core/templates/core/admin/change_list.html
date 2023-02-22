@@ -1,0 +1,9 @@
+{% extends "admin/change_list.html" %}
+{% comment %}
+A template used for testing customizations to the change_list view (See #1483).
+{% endcomment %}
+
+{% block object-tools-items %}
+  <!-- <li>Custom change list item</li> -->
+  {{ block.super }}
+{% endblock %}

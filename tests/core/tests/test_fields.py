@@ -1,8 +1,10 @@
 from datetime import date
+from unittest import mock
 
 from django.test import TestCase
 
 from import_export import fields
+from import_export.exceptions import FieldError
 
 
 class Obj:
@@ -84,3 +86,61 @@ class FieldTest(TestCase):
         self.assertEqual(repr(self.field), '<import_export.fields.Field: name>')
         self.field.column_name = None
         self.assertEqual(repr(self.field), '<import_export.fields.Field>')
+
+    def testget_dehydrate_method_default(self):
+        field = fields.Field(attribute="foo", column_name="bar")
+
+        # `field_name` is the variable name defined in `Resource`
+        resource_field_name = "field"
+        method_name = field.get_dehydrate_method(resource_field_name)
+        self.assertEqual(f"dehydrate_{resource_field_name}", method_name)
+
+    def testget_dehydrate_method_with_custom_method_name(self):
+        custom_dehydrate_method = "custom_method_name"
+        field = fields.Field(attribute="foo", column_name="bar", dehydrate_method=custom_dehydrate_method)
+        resource_field_name = "field"
+        method_name = field.get_dehydrate_method(resource_field_name)
+        self.assertEqual(method_name, custom_dehydrate_method)
+
+    def testget_dehydrate_method_without_params_raises_attribute_error(self):
+        field = fields.Field(attribute="foo", column_name="bar")
+
+        self.assertRaises(
+            FieldError,
+            field.get_dehydrate_method
+        )
+
+    def test_m2m_add_true(self):
+        m2m_related_manager = mock.Mock(spec=["add", "set", "all"])
+        m2m_related_manager.all.return_value = []
+        self.obj.aliases = m2m_related_manager
+        field = fields.Field(column_name='aliases', attribute='aliases', m2m_add=True)
+        row = {
+            'aliases': ["Foo", "Bar"],
+        }
+        field.save(self.obj, row, is_m2m=True)
+
+        self.assertEqual(m2m_related_manager.add.call_count, 1)
+        self.assertEqual(m2m_related_manager.set.call_count, 0)
+        m2m_related_manager.add.assert_called_once_with('Foo', 'Bar')
+
+        row = {
+            'aliases': ["apple"],
+        }
+        field.save(self.obj, row, is_m2m=True)
+        m2m_related_manager.add.assert_called_with('apple')
+
+    def test_m2m_add_False(self):
+        m2m_related_manager = mock.Mock(spec=["add", "set", "all"])
+        self.obj.aliases = m2m_related_manager
+        field = fields.Field(column_name='aliases', attribute='aliases')
+        row = {
+            'aliases': ["Foo", "Bar"],
+        }
+        field.save(self.obj, row, is_m2m=True)
+
+        self.assertEqual(m2m_related_manager.add.call_count, 0)
+        self.assertEqual(m2m_related_manager.set.call_count, 1)
+        m2m_related_manager.set.assert_called_once_with(['Foo', 'Bar'])
+
+

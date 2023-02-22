@@ -1,18 +1,23 @@
 import json
+import sys
 from collections import OrderedDict
 from copy import deepcopy
 from datetime import date
-from decimal import Decimal
-from unittest import mock, skip, skipIf, skipUnless
+from decimal import Decimal, InvalidOperation
+from unittest import mock, skipUnless
+from unittest.mock import patch
 
-import django
 import tablib
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.core.exceptions import ImproperlyConfigured, ValidationError
+from django.core.exceptions import (
+    FieldDoesNotExist,
+    ImproperlyConfigured,
+    ValidationError,
+)
 from django.core.paginator import Paginator
 from django.db import IntegrityError
-from django.db.models import Count
+from django.db.models import CharField, Count
 from django.db.utils import ConnectionDoesNotExist
 from django.test import TestCase, TransactionTestCase, skipUnlessDBFeature
 from django.utils.encoding import force_str
@@ -30,21 +35,22 @@ from ..models import (
     Person,
     Profile,
     Role,
+    UUIDBook,
+    UUIDCategory,
     WithDefault,
     WithDynamicDefault,
     WithFloatField,
 )
-
-if django.VERSION[0] >= 3:
-    from django.core.exceptions import FieldDoesNotExist
-else:
-    from django.db.models.fields import FieldDoesNotExist
 
 
 class MyResource(resources.Resource):
     name = fields.Field()
     email = fields.Field()
     extra = fields.Field()
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.kwargs = kwargs
 
     class Meta:
         export_order = ('email', 'name')
@@ -86,6 +92,11 @@ class ResourceTestCase(TestCase):
             MyResource.fields
         )
 
+    def test_kwargs(self):
+        target_kwargs = {"a": 1}
+        my_resource = MyResource(**target_kwargs)
+        self.assertEqual(my_resource.kwargs, target_kwargs)
+    
     def test_field_column_name(self):
         field = self.my_resource.fields['name']
         self.assertIn(field.column_name, 'name')
@@ -106,6 +117,9 @@ class ResourceTestCase(TestCase):
     def test_get_export_order(self):
         self.assertEqual(self.my_resource.get_export_headers(),
                          ['email', 'name', 'extra'])
+
+    def test_default_after_import(self):
+        self.assertIsNone(self.my_resource.after_import(tablib.Dataset(), results.Result(), False, False))
 
     # Issue 140 Attributes aren't inherited by subclasses
     def test_inheritance(self):
@@ -158,6 +172,80 @@ class ResourceTestCase(TestCase):
     def test_init_instance_raises_NotImplementedError(self):
         with self.assertRaises(NotImplementedError):
             self.my_resource.init_instance([])
+
+    @patch("core.models.Book.full_clean")
+    def test_validate_instance_called_with_import_validation_errors_as_None_creates_empty_dict(self, full_clean_mock):
+        # validate_instance() import_validation_errors is an optional kwarg
+        # If not provided, it defaults to an empty dict
+        # this tests that scenario by ensuring that an empty dict is passed
+        # to the model instance full_clean() method.
+        book = Book()
+        self.my_resource._meta.clean_model_instances = True
+        self.my_resource.validate_instance(book)
+        target = dict()
+        full_clean_mock.assert_called_once_with(exclude=target.keys(), validate_unique=True)
+
+    def test_raise_errors_deprecation_import_row(self,):
+        target_msg = (
+            "raise_errors argument is deprecated and will be removed in a future release."
+        )
+        dataset = tablib.Dataset(headers=['name', 'email', 'extra'])
+        dataset.append(['Some book', 'test@example.com', "10.25"])
+
+        class Loader:
+            def __init__(self, *args, **kwargs):
+                pass
+
+        class A(MyResource):
+            class Meta:
+                instance_loader_class = Loader
+                force_init_instance = True
+
+            def init_instance(self, row=None):
+                return row or {}
+
+            def import_row(self, row, instance_loader, using_transactions=True, dry_run=False, raise_errors=False, **kwargs):
+                return super().import_row(row, instance_loader, using_transactions, dry_run, raise_errors, **kwargs)
+
+            def save_instance(self, instance, is_create, using_transactions=True, dry_run=False):
+                pass
+
+        resource = A()
+        with self.assertWarns(DeprecationWarning) as w:
+            resource.import_data(dataset, raise_errors=True)
+            self.assertEqual(target_msg, str(w.warnings[0].message))
+
+    def test_rollback_on_validation_errors_deprecation_import_inner(self,):
+        target_msg = (
+            "rollback_on_validation_errors argument is deprecated and will be removed in a future release."
+        )
+        dataset = tablib.Dataset(headers=['name', 'email', 'extra'])
+        dataset.append(['Some book', 'test@example.com', "10.25"])
+
+        class Loader:
+            def __init__(self, *args, **kwargs):
+                pass
+
+        class A(MyResource):
+            class Meta:
+                instance_loader_class = Loader
+                force_init_instance = True
+
+            def init_instance(self, row=None):
+                return row or {}
+
+            def import_data_inner(self, dataset, dry_run, raise_errors, using_transactions,
+                                  collect_failed_rows, rollback_on_validation_errors=False, **kwargs):
+                return super().import_data_inner(dataset, dry_run, raise_errors, using_transactions,
+                                                 collect_failed_rows, rollback_on_validation_errors, **kwargs)
+
+            def save_instance(self, instance, is_create, using_transactions=True, dry_run=False):
+                pass
+
+        resource = A()
+        with self.assertWarns(DeprecationWarning) as w:
+            resource.import_data(dataset, raise_errors=True)
+            self.assertEqual(target_msg, str(w.warnings[0].message))
 
 
 class AuthorResource(resources.ModelResource):
@@ -235,6 +323,36 @@ class AuthorResourceWithCustomWidget(resources.ModelResource):
         return result
 
 
+class ModelResourcePostgresModuleLoadTest(TestCase):
+    pg_module_name = 'django.contrib.postgres.fields'
+
+    class ImportRaiser:
+        def find_spec(self, fullname, path, target=None):
+            if fullname == ModelResourcePostgresModuleLoadTest.pg_module_name:
+                # we get here if the module is not loaded and not in sys.modules
+                raise ImportError()
+
+    def setUp(self):
+        super().setUp()
+        self.resource = BookResource()
+        if self.pg_module_name in sys.modules:
+            self.pg_modules = sys.modules[self.pg_module_name]
+            del sys.modules[self.pg_module_name]
+
+    def tearDown(self):
+        super().tearDown()
+        sys.modules[self.pg_module_name] = self.pg_modules
+
+    def test_widget_from_django_field_cannot_import_postgres(self):
+        # test that default widget is returned if postgres extensions
+        # are not present
+        sys.meta_path.insert(0, self.ImportRaiser())
+
+        f = fields.Field()
+        res = self.resource.widget_from_django_field(f)
+        self.assertEqual(widgets.Widget, res)
+
+
 class ModelResourceTest(TestCase):
     def setUp(self):
         self.resource = BookResource()
@@ -262,6 +380,20 @@ class ModelResourceTest(TestCase):
         widget = fields['author'].widget
         self.assertIsInstance(widget, widgets.ForeignKeyWidget)
         self.assertEqual(widget.model, Author)
+
+    def test_get_display_name(self):
+        display_name = self.resource.get_display_name()
+        self.assertEqual(display_name, 'BookResource')
+
+        class BookResource(resources.ModelResource):
+            class Meta:
+                name = 'Foo Name'
+                model = Book
+                import_id_fields = ['name']
+
+        resource = BookResource()
+        display_name = resource.get_display_name()
+        self.assertEqual(display_name, 'Foo Name')
 
     def test_fields_m2m(self):
         fields = self.resource.fields
@@ -409,21 +541,6 @@ class ModelResourceTest(TestCase):
                          'other </ins><span>book</span>')
         self.assertFalse(html[headers.index('author_email')])
 
-    @skip("See: https://github.com/django-import-export/django-import-export/issues/311")
-    def test_get_diff_with_callable_related_manager(self):
-        resource = AuthorResource()
-        author = Author(name="Some author")
-        author.save()
-        author2 = Author(name="Some author")
-        self.book.author = author
-        self.book.save()
-        diff = Diff(self.resource, author, False)
-        diff.compare_with(self.resource, author2)
-        html = diff.as_html()
-        headers = resource.get_export_headers()
-        self.assertEqual(html[headers.index('books')],
-                         '<span>core.Book.None</span>')
-
     def test_import_data(self):
         result = self.resource.import_data(self.dataset, raise_errors=True)
 
@@ -432,10 +549,35 @@ class ModelResourceTest(TestCase):
         self.assertTrue(result.rows[0].diff)
         self.assertEqual(result.rows[0].import_type,
                          results.RowResult.IMPORT_TYPE_UPDATE)
+        self.assertEqual(result.rows[0].row_values.get('name'), None)
+        self.assertEqual(result.rows[0].row_values.get('author_email'), None)
 
         instance = Book.objects.get(pk=self.book.pk)
         self.assertEqual(instance.author_email, 'test@example.com')
         self.assertEqual(instance.price, Decimal("10.25"))
+
+    @skipUnlessDBFeature('supports_transactions')
+    @mock.patch("import_export.resources.connections")
+    def test_import_data_no_transaction(self, mock_db_connections):
+        class Features:
+            supports_transactions = False
+
+        class DummyConnection:
+            features = Features(
+
+            )
+
+        dummy_connection = DummyConnection()
+        mock_db_connections.__getitem__.return_value = dummy_connection
+        result = self.resource.import_data(self.dataset, dry_run=True, use_transactions=False, raise_errors=True)
+
+        self.assertFalse(result.has_errors())
+        self.assertEqual(len(result.rows), 1)
+        self.assertTrue(result.rows[0].diff)
+        self.assertEqual(result.rows[0].import_type,
+                         results.RowResult.IMPORT_TYPE_UPDATE)
+        self.assertEqual(result.rows[0].row_values.get('name'), None)
+        self.assertEqual(result.rows[0].row_values.get('author_email'), None)
 
     @mock.patch("import_export.resources.connections")
     def test_raised_ImproperlyConfigured_if_use_transactions_set_when_transactions_not_supported(self, mock_db_connections):
@@ -468,6 +610,26 @@ class ModelResourceTest(TestCase):
         self.assertTrue(result.has_validation_errors())
         self.assertIs(result.rows[0].import_type, results.RowResult.IMPORT_TYPE_INVALID)
         self.assertIn('birthday', result.invalid_rows[0].field_specific_errors)
+
+    def test_import_data_raises_field_specific_validation_errors_with_skip_unchanged(self):
+        resource = AuthorResource()
+        resource._meta.skip_unchanged = True
+
+        author = Author.objects.create(name="Some author")
+
+        dataset = tablib.Dataset(headers=['id', 'birthday'])
+        dataset.append([author.id, '1882test-01-18'])
+
+        result = resource.import_data(dataset, raise_errors=False)
+
+        self.assertTrue(result.has_validation_errors())
+        self.assertIs(result.rows[0].import_type, results.RowResult.IMPORT_TYPE_INVALID)
+        self.assertIn('birthday', result.invalid_rows[0].field_specific_errors)
+
+    def test_import_data_empty_dataset_with_collect_failed_rows(self):
+        resource = AuthorResource()
+        result = resource.import_data(tablib.Dataset(), collect_failed_rows=True)
+        self.assertEqual(['Error'], result.failed_dataset.headers)
 
     def test_collect_failed_rows(self):
         resource = ProfileResource()
@@ -625,8 +787,8 @@ class ModelResourceTest(TestCase):
         self.assertTrue(result.has_errors())
         self.assertTrue(result.rows[0].errors)
         actual = result.rows[0].errors[0].error
-        self.assertIsInstance(actual, ValueError)
-        self.assertIn("could not convert string to float", str(actual))
+        self.assertIsInstance(actual, (ValueError, InvalidOperation))
+        self.assertIn(str(actual), {"could not convert string to float", "[<class 'decimal.ConversionSyntax'>]"})
 
     def test_import_data_delete(self):
 
@@ -652,8 +814,8 @@ class ModelResourceTest(TestCase):
                     self.before_save_instance_dry_run = True
                 else:
                     self.before_save_instance_dry_run = False
-            def save_instance(self, instance, using_transactions=True, dry_run=False):
-                super().save_instance(instance, using_transactions, dry_run)
+            def save_instance(self, instance, new, using_transactions=True, dry_run=False):
+                super().save_instance(instance, new, using_transactions, dry_run)
                 if dry_run:
                     self.save_instance_dry_run = True
                 else:
@@ -679,7 +841,7 @@ class ModelResourceTest(TestCase):
     @mock.patch("core.models.Book.save")
     def test_save_instance_noop(self, mock_book):
         book = Book.objects.first()
-        self.resource.save_instance(book, using_transactions=False, dry_run=True)
+        self.resource.save_instance(book, is_create=False, using_transactions=False, dry_run=True)
         self.assertEqual(0, mock_book.call_count)
 
     @mock.patch("core.models.Book.save")
@@ -760,6 +922,43 @@ class ModelResourceTest(TestCase):
         full_title = resource.export_field(resource.get_fields()[0], self.book)
         self.assertEqual(full_title, '%s by %s' % (self.book.name,
                                                    self.book.author.name))
+
+    def test_dehydrate_field_using_custom_dehydrate_field_method(self):
+        
+        class B(resources.ModelResource):
+            full_title = fields.Field(column_name="Full title", dehydrate_method="foo_dehydrate_full_title")
+
+            class Meta:
+                model = Book
+                fields = ("full_title")
+
+            def foo_dehydrate_full_title(self, obj):
+                return f"{obj.name} by {obj.author.name}"
+
+        author = Author.objects.create(name="Author")
+        self.book.author = author
+        resource = B()   
+
+        full_title = resource.export_field(resource.get_fields()[0], self.book)
+        self.assertEqual(
+            full_title,
+            f"{self.book.name} by {self.book.author.name}"
+        )
+
+    def test_invalid_relation_field_name(self):
+
+        class B(resources.ModelResource):
+            full_title = fields.Field(column_name="Full title")
+
+            class Meta:
+                model = Book
+                # author_name is not a valid field or relation,
+                # so should be ignored
+                fields = ("author_name", "full_title")
+
+        resource = B()
+        self.assertEqual(1, len(resource.fields))
+        self.assertEqual("full_title", list(resource.fields.keys())[0])
 
     def test_widget_format_in_fk_field(self):
         class B(resources.ModelResource):
@@ -854,6 +1053,46 @@ class ModelResourceTest(TestCase):
         self.assertIn(cat1, book.categories.all())
         self.assertIn(cat2, book.categories.all())
 
+    def test_m2m_add(self):
+        cat1 = Category.objects.create(name='Cat 1')
+        cat2 = Category.objects.create(name='Cat 2')
+        cat3 = Category.objects.create(name='Cat 3')
+        cat4 = Category.objects.create(name='Cat 4')
+        headers = ['id', 'name', 'categories']
+        row = [None, 'FooBook', "Cat 1|Cat 2"]
+        dataset = tablib.Dataset(row, headers=headers)
+
+        class BookM2MResource(resources.ModelResource):
+            categories = fields.Field(
+                attribute='categories',
+                m2m_add=True,
+                widget=widgets.ManyToManyWidget(Category, field='name',
+                                                separator='|')
+            )
+
+            class Meta:
+                model = Book
+
+        resource = BookM2MResource()
+        resource.import_data(dataset, raise_errors=True)
+        book = Book.objects.get(name='FooBook')
+        self.assertIn(cat1, book.categories.all())
+        self.assertIn(cat2, book.categories.all())
+        self.assertNotIn(cat3, book.categories.all())
+        self.assertNotIn(cat4, book.categories.all())
+
+        row1 = [book.id, 'FooBook', "Cat 1|Cat 2"]  # This should have no effect, since Cat 1 and Cat 2 already exist
+        row2 = [book.id, 'FooBook', "Cat 3|Cat 4"]
+        dataset = tablib.Dataset(row1, row2, headers=headers)
+        resource.import_data(dataset, raise_errors=True)
+        book2 = Book.objects.get(name='FooBook')
+        self.assertEqual(book.id, book2.id)
+        self.assertEqual(book.categories.count(), 4)
+        self.assertIn(cat1, book2.categories.all())
+        self.assertIn(cat2, book2.categories.all())
+        self.assertIn(cat3, book2.categories.all())
+        self.assertIn(cat4, book2.categories.all())
+
     def test_related_one_to_one(self):
         # issue #17 - Exception when attempting access something on the
         # related_name
@@ -882,7 +1121,7 @@ class ModelResourceTest(TestCase):
         self.assertEqual(len(dataset), 0)
 
     def test_import_data_skip_unchanged(self):
-        def attempted_save(instance, real_dry_run):
+        def attempted_save(instance, new, using_transactions, real_dry_run):
             self.fail('Resource attempted to save instead of skipping')
 
         # Make sure we test with ManyToMany related objects
@@ -904,6 +1143,7 @@ class ModelResourceTest(TestCase):
         self.assertTrue(result.rows[0].diff)
         self.assertEqual(result.rows[0].import_type,
                          results.RowResult.IMPORT_TYPE_SKIP)
+        self.assertEqual(result.rows[0].object_id, self.book.pk)
 
         # Test that we can suppress reporting of skipped rows
         resource._meta.report_skipped = False
@@ -1099,6 +1339,65 @@ class ModelResourceTest(TestCase):
             BookResource().import_data(self.dataset)
 
 
+    def test_natural_foreign_key_detection(self):
+        """
+        Test that when the _meta option for use_natural_foreign_keys
+        is set on a resource that foreign key widgets are created
+        with that flag, and when it's off they are not. 
+        """
+
+        # For future proof testing, we have one resource with natural
+        # foreign keys on, and one off. If the default ever changes
+        # this should still work. 
+        class _BookResource_Unfk(resources.ModelResource):
+            class Meta:
+                use_natural_foreign_keys = True
+                model = Book
+
+        class _BookResource(resources.ModelResource):
+            
+            class Meta:
+                use_natural_foreign_keys = False
+                model = Book     
+        
+        resource_with_nfks = _BookResource_Unfk()
+        author_field_widget = resource_with_nfks.fields["author"].widget
+        self.assertTrue(author_field_widget.use_natural_foreign_keys)
+
+        resource_without_nfks = _BookResource()
+        author_field_widget = resource_without_nfks.fields["author"].widget
+        self.assertFalse(author_field_widget.use_natural_foreign_keys)
+
+    def test_natural_foreign_key_false_positives(self):
+        """
+        Ensure that if the field's model does not have natural foreign
+        key functions, it is not set to use natural foreign keys.
+        """
+        from django.db import models
+        class RelatedModel(models.Model):
+            name = models.CharField()
+            class Meta:
+                app_label = "Test"
+
+        class TestModel(models.Model):
+            related_field = models.ForeignKey(RelatedModel, on_delete=models.PROTECT)
+            
+            class Meta:
+                app_label = "Test"
+
+        class TestModelResource(resources.ModelResource):
+            class Meta:
+                model = TestModel
+                fields = (
+                    'id',
+                    'related_field'
+                )
+                use_natural_foreign_keys = True
+    
+        resource = TestModelResource()
+        related_field_widget = resource.fields["related_field"].widget
+        self.assertFalse(related_field_widget.use_natural_foreign_keys)
+
 class ModelResourceTransactionTest(TransactionTestCase):
     @skipUnlessDBFeature('supports_transactions')
     def test_m2m_import_with_transactions(self):
@@ -1221,6 +1520,15 @@ class ModelResourceFactoryTest(TestCase):
         self.assertEqual(BookResource._meta.model, Book)
 
 
+class WidgetFromDjangoFieldTest(TestCase):
+
+    def test_widget_from_django_field_for_CharField_returns_CharWidget(self):
+        f = CharField()
+        resource = BookResource()
+        w = resource.widget_from_django_field(f)
+        self.assertEqual(widgets.CharWidget, w)
+
+
 @skipUnless(
     'postgresql' in settings.DATABASES['default']['ENGINE'],
     'Run only against Postgres')
@@ -1239,19 +1547,21 @@ class PostgresTests(TransactionTestCase):
         except IntegrityError:
             self.fail('IntegrityError was raised.')
 
+    def test_widget_from_django_field_for_ArrayField_returns_SimpleArrayWidget(self):
+        f = ArrayField(CharField)
+        resource = BookResource()
+        res = resource.widget_from_django_field(f)
+        self.assertEqual(widgets.SimpleArrayWidget, res)
+
+
 if 'postgresql' in settings.DATABASES['default']['ENGINE']:
     from django.contrib.postgres.fields import ArrayField
     from django.db import models
-    try:
-        from django.db.models import JSONField
-    except ImportError:
-        from django.contrib.postgres.fields import JSONField
-
 
     class BookWithChapters(models.Model):
         name = models.CharField('Book name', max_length=100)
         chapters = ArrayField(models.CharField(max_length=100), default=list)
-        data = JSONField(null=True)
+        data = models.JSONField(null=True)
 
 
     class BookWithChaptersResource(resources.ModelResource):
@@ -1400,6 +1710,147 @@ class ManyRelatedManagerDiffTest(TestCase):
                          expected_value)
 
 
+class ManyToManyWidgetDiffTest(TestCase):
+    # issue #1270 - ensure ManyToMany fields are correctly checked for
+    # changes when skip_unchanged=True
+    fixtures = ["category", "book"]
+
+    def setUp(self):
+        pass
+
+    def test_many_to_many_widget_create(self):
+        # the book is associated with 0 categories
+        # when we import a book with category 1, the book
+        # should be updated, not skipped
+        book = Book.objects.first()
+        book.categories.clear()
+        dataset_headers = ["id", "name", "categories"]
+        dataset_row = [book.id, book.name, "1"]
+        dataset = tablib.Dataset(headers=dataset_headers)
+        dataset.append(dataset_row)
+
+        book_resource = BookResource()
+        book_resource._meta.skip_unchanged = True
+        self.assertEqual(0, book.categories.count())
+
+        result = book_resource.import_data(dataset, dry_run=False)
+
+        book.refresh_from_db()
+        self.assertEqual(1, book.categories.count())
+        self.assertEqual(result.rows[0].import_type, results.RowResult.IMPORT_TYPE_UPDATE)
+        self.assertEqual(Category.objects.first(), book.categories.first())
+
+    def test_many_to_many_widget_update(self):
+        # the book is associated with 1 category ('Category 2')
+        # when we import a book with category 1, the book
+        # should be updated, not skipped, so that Category 2 is replaced by Category 1
+        book = Book.objects.first()
+        dataset_headers = ["id", "name", "categories"]
+        dataset_row = [book.id, book.name, "1"]
+        dataset = tablib.Dataset(headers=dataset_headers)
+        dataset.append(dataset_row)
+
+        book_resource = BookResource()
+        book_resource._meta.skip_unchanged = True
+        self.assertEqual(1, book.categories.count())
+
+        result = book_resource.import_data(dataset, dry_run=False)
+        self.assertEqual(result.rows[0].import_type, results.RowResult.IMPORT_TYPE_UPDATE)
+        self.assertEqual(1, book.categories.count())
+        self.assertEqual(Category.objects.first(), book.categories.first())
+
+    def test_many_to_many_widget_no_changes(self):
+        # the book is associated with 1 category ('Category 2')
+        # when we import a row with a book with category 1, the book
+        # should be skipped, because there is no change
+        book = Book.objects.first()
+        dataset_headers = ["id", "name", "categories"]
+        dataset_row = [book.id, book.name, book.categories.first().id]
+        dataset = tablib.Dataset(headers=dataset_headers)
+        dataset.append(dataset_row)
+
+        book_resource = BookResource()
+        book_resource._meta.skip_unchanged = True
+
+        self.assertEqual(1, book.categories.count())
+        result = book_resource.import_data(dataset, dry_run=False)
+        self.assertEqual(result.rows[0].import_type, results.RowResult.IMPORT_TYPE_SKIP)
+        self.assertEqual(1, book.categories.count())
+
+    def test_many_to_many_widget_handles_ordering(self):
+        # the book is associated with 2 categories ('Category 1', 'Category 2')
+        # when we import a row with a book with both categories (in any order), the book
+        # should be skipped, because there is no change
+        book = Book.objects.first()
+        self.assertEqual(1, book.categories.count())
+        cat1 = Category.objects.get(name="Category 1")
+        cat2 = Category.objects.get(name="Category 2")
+        book.categories.add(cat1)
+        book.save()
+        self.assertEqual(2, book.categories.count())
+        dataset_headers = ["id", "name", "categories"]
+
+        book_resource = BookResource()
+        book_resource._meta.skip_unchanged = True
+
+        # import with natural order
+        dataset_row = [book.id, book.name, f"{cat1.id},{cat2.id}"]
+        dataset = tablib.Dataset(headers=dataset_headers)
+        dataset.append(dataset_row)
+
+        result = book_resource.import_data(dataset, dry_run=False)
+        self.assertEqual(result.rows[0].import_type, results.RowResult.IMPORT_TYPE_SKIP)
+
+        # import with reverse order
+        dataset_row = [book.id, book.name, f"{cat2.id},{cat1.id}"]
+        dataset = tablib.Dataset(headers=dataset_headers)
+        dataset.append(dataset_row)
+
+        result = book_resource.import_data(dataset, dry_run=False)
+        self.assertEqual(result.rows[0].import_type, results.RowResult.IMPORT_TYPE_SKIP)
+
+        self.assertEqual(2, book.categories.count())
+
+    def test_many_to_many_widget_handles_uuid(self):
+        # Test for #1435 - skip_row() handles M2M field when UUID pk used
+        class _UUIDBookResource(resources.ModelResource):
+            class Meta:
+                model = UUIDBook
+
+        uuid_resource = _UUIDBookResource()
+        uuid_resource._meta.skip_unchanged = True
+        cat1 = UUIDCategory.objects.create(name="Category 1")
+        cat2 = UUIDCategory.objects.create(name="Category 2")
+        uuid_book = UUIDBook.objects.create(name="uuid book")
+        uuid_book.categories.add(cat1, cat2)
+        uuid_book.save()
+
+        dataset_headers = ["id", "name", "categories"]
+        dataset_row = [uuid_book.id, uuid_book.name, f"{cat1.catid},{cat2.catid}"]
+        dataset = tablib.Dataset(headers=dataset_headers)
+        dataset.append(dataset_row)
+        result = uuid_resource.import_data(dataset, dry_run=False)
+        self.assertEqual(result.rows[0].import_type, results.RowResult.IMPORT_TYPE_SKIP)
+
+    def test_skip_row_no_m2m_data_supplied(self):
+        # issue #1437
+        # test skip_row() when the model defines a m2m field
+        # but it is not present in the dataset
+        book = Book.objects.first()
+        dataset_headers = ["id", "name"]
+        dataset_row = [book.id, book.name]
+        dataset = tablib.Dataset(headers=dataset_headers)
+        dataset.append(dataset_row)
+
+        book_resource = BookResource()
+        book_resource._meta.skip_unchanged = True
+
+        self.assertEqual(1, book.categories.count())
+        result = book_resource.import_data(dataset, dry_run=False)
+        self.assertEqual(result.rows[0].import_type, results.RowResult.IMPORT_TYPE_SKIP)
+        self.assertEqual(1, book.categories.count())
+
+
 @mock.patch("import_export.resources.Diff", spec=True)
 class SkipDiffTest(TestCase):
     """
@@ -1496,6 +1947,24 @@ class SkipDiffTest(TestCase):
             self.assertEqual(2, mock_get_import_fields.call_count)
 
 
+class SkipHtmlDiffTest(TestCase):
+
+    def test_skip_html_diff(self):
+        class BookResource(resources.ModelResource):
+
+            class Meta:
+                model = Book
+                skip_html_diff = True
+
+        resource = BookResource()
+        self.dataset = tablib.Dataset(headers=['id', 'name', 'birthday'])
+        self.dataset.append(['', 'A.A.Milne', '1882test-01-18'])
+
+        with mock.patch('import_export.resources.Diff.as_html') as mock_as_html:
+            resource.import_data(self.dataset, dry_run=True)
+            mock_as_html.assert_not_called()
+
+
 class BulkTest(TestCase):
 
     def setUp(self):
@@ -1508,10 +1977,10 @@ class BulkTest(TestCase):
         rows = [('book_name',)] * 10
         self.dataset = tablib.Dataset(*rows, headers=['name'])
 
-    def init_update_test_data(self):
-        [Book.objects.create(name='book_name') for _ in range(10)]
-        self.assertEqual(10, Book.objects.count())
-        rows = Book.objects.all().values_list('id', 'name')
+    def init_update_test_data(self, model=Book):
+        [model.objects.create(name='book_name') for _ in range(10)]
+        self.assertEqual(10, model.objects.count())
+        rows = model.objects.all().values_list('id', 'name')
         updated_rows = [(r[0], 'UPDATED') for r in rows]
         self.dataset = tablib.Dataset(*updated_rows, headers=['id', 'name'])
 
@@ -1534,6 +2003,25 @@ class BulkCreateTest(BulkTest):
                 batch_size = 5
 
         resource = _BookResource()
+        result = resource.import_data(self.dataset)
+        self.assertEqual(2, mock_bulk_create.call_count)
+        mock_bulk_create.assert_called_with(mock.ANY, batch_size=5)
+        self.assertEqual(10, result.total_rows)
+
+    @mock.patch('core.models.UUIDBook.objects.bulk_create')
+    def test_bulk_create_uuid_model(self, mock_bulk_create):
+        """Test create of a Model which defines uuid not pk (issue #1274)"""
+        class _UUIDBookResource(resources.ModelResource):
+            class Meta:
+                model = UUIDBook
+                use_bulk = True
+                batch_size = 5
+                fields = (
+                    'id',
+                    'name',
+                )
+
+        resource = _UUIDBookResource()
         result = resource.import_data(self.dataset)
         self.assertEqual(2, mock_bulk_create.call_count)
         mock_bulk_create.assert_called_with(mock.ANY, batch_size=5)
@@ -1672,9 +2160,9 @@ class BulkCreateTest(BulkTest):
                 use_bulk = True
                 batch_size = 100
         resource = _BookResource()
-        with mock.patch("logging.Logger.exception") as mock_exception:
+        with mock.patch("logging.Logger.debug") as mock_exception:
             resource.import_data(self.dataset)
-            mock_exception.assert_called_with(e)
+            mock_exception.assert_called_with(e, exc_info=mock.ANY)
             self.assertEqual(1, mock_exception.call_count)
 
     @mock.patch('core.models.Book.objects.bulk_create')
@@ -1688,6 +2176,18 @@ class BulkCreateTest(BulkTest):
         resource = _BookResource()
         with self.assertRaises(ValidationError):
             resource.import_data(self.dataset, raise_errors=True)
+
+    @mock.patch('core.models.Book.objects.bulk_create')
+    def test_bulk_create_exception_gathered_on_dry_run(self, mock_bulk_create):
+        mock_bulk_create.side_effect = ValidationError("invalid field")
+        class _BookResource(resources.ModelResource):
+            class Meta:
+                model = Book
+                use_bulk = True
+                batch_size = 100
+        resource = _BookResource()
+        result = resource.import_data(self.dataset, dry_run=True, raise_errors=False)
+        self.assertTrue(result.has_errors())
 
     def test_m2m_not_called_for_bulk(self):
         mock_m2m_widget = mock.Mock(spec=widgets.ManyToManyWidget)
@@ -1717,8 +2217,18 @@ class BulkCreateTest(BulkTest):
         resource = _BookResource()
         self.assertIsNotNone(resource.get_or_init_instance(ModelInstanceLoader(resource), self.dataset[0]))
 
+    @mock.patch('import_export.resources.atomic_if_using_transaction')
+    def test_no_sub_transaction_on_row_for_bulk(self, mock_atomic_if_using_transaction):
+        class _BookResource(resources.ModelResource):
+            class Meta:
+                model = Book
+                use_bulk = True
 
-@skipIf(django.VERSION[0] == 2 and django.VERSION[1] < 2, "bulk_update not supported in this version of django")
+        resource = _BookResource()
+        resource.import_data(self.dataset)
+        self.assertIn(False, [x[0][0] for x in mock_atomic_if_using_transaction.call_args_list])
+
+
 class BulkUpdateTest(BulkTest):
     class _BookResource(resources.ModelResource):
         class Meta:
@@ -1828,9 +2338,9 @@ class BulkUpdateTest(BulkTest):
                 model = Book
                 use_bulk = True
         resource = _BookResource()
-        with mock.patch("logging.Logger.exception") as mock_exception:
+        with mock.patch("logging.Logger.debug") as mock_exception:
             resource.import_data(self.dataset)
-            mock_exception.assert_called_with(e)
+            mock_exception.assert_called_with(e, exc_info=mock.ANY)
             self.assertEqual(1, mock_exception.call_count)
 
     @mock.patch('core.models.Book.objects.bulk_update')
@@ -1845,6 +2355,32 @@ class BulkUpdateTest(BulkTest):
         with self.assertRaises(ValidationError) as raised_exc:
             resource.import_data(self.dataset, raise_errors=True)
             self.assertEqual(e, raised_exc)
+
+
+class BulkUUIDBookUpdateTest(BulkTest):
+
+    def setUp(self):
+        super().setUp()
+        self.init_update_test_data(model=UUIDBook)
+
+    @mock.patch('core.models.UUIDBook.objects.bulk_update')
+    def test_bulk_update_uuid_model(self, mock_bulk_update):
+        """Test update of a Model which defines uuid not pk (issue #1274)"""
+        class _UUIDBookResource(resources.ModelResource):
+            class Meta:
+                model = UUIDBook
+                use_bulk = True
+                batch_size = 5
+                fields = (
+                    'id',
+                    'name',
+                )
+
+        resource = _UUIDBookResource()
+        result = resource.import_data(self.dataset)
+        self.assertEqual(2, mock_bulk_update.call_count)
+        self.assertEqual(10, result.total_rows)
+        self.assertEqual(10, result.totals["update"])
 
 
 class BulkDeleteTest(BulkTest):
@@ -1946,9 +2482,9 @@ class BulkDeleteTest(BulkTest):
                 model = Book
                 use_bulk = True
         resource = _BookResource()
-        with mock.patch("logging.Logger.exception") as mock_exception:
+        with mock.patch("logging.Logger.debug") as mock_exception:
             resource.import_data(self.dataset)
-            mock_exception.assert_called_with(e)
+            mock_exception.assert_called_with(e, exc_info=mock.ANY)
             self.assertEqual(1, mock_exception.call_count)
 
     @mock.patch("core.models.Book.objects")
@@ -1963,3 +2499,74 @@ class BulkDeleteTest(BulkTest):
         with self.assertRaises(Exception) as raised_exc:
             resource.import_data(self.dataset, raise_errors=True)
             self.assertEqual(e, raised_exc)
+
+
+class BulkUUIDBookDeleteTest(BulkTest):
+    class DeleteBookResource(resources.ModelResource):
+        def for_delete(self, row, instance):
+            return True
+
+        class Meta:
+            model = UUIDBook
+            use_bulk = True
+            batch_size = 5
+
+    def setUp(self):
+        super().setUp()
+        self.resource = self.DeleteBookResource()
+        self.init_update_test_data(model=UUIDBook)
+
+    def test_bulk_delete_batch_size_of_5(self):
+        self.assertEqual(10, UUIDBook.objects.count())
+        self.resource.import_data(self.dataset)
+        self.assertEqual(0, UUIDBook.objects.count())
+
+
+class RawValueTest(TestCase):
+    def setUp(self):
+        class _BookResource(resources.ModelResource):
+            class Meta:
+                model = Book
+                store_row_values = True
+
+        self.resource = _BookResource()
+
+        self.book = Book.objects.create(name="Some book")
+        self.dataset = tablib.Dataset(headers=['id', 'name', 'author_email',
+                                               'price'])
+        row = [self.book.pk, 'Some book', 'test@example.com', "10.25"]
+        self.dataset.append(row)
+
+    def test_import_data(self):
+        result = self.resource.import_data(self.dataset, raise_errors=True)
+
+        self.assertFalse(result.has_errors())
+        self.assertEqual(len(result.rows), 1)
+        self.assertTrue(result.rows[0].diff)
+        self.assertEqual(result.rows[0].import_type,
+                         results.RowResult.IMPORT_TYPE_UPDATE)
+        self.assertEqual(result.rows[0].row_values.get('name'), 'Some book')
+        self.assertEqual(result.rows[0].row_values.get('author_email'), 'test@example.com')
+        self.assertEqual(result.rows[0].row_values.get('price'), '10.25')
+
+class ResourcesHelperFunctionsTest(TestCase):
+    """
+    Test the helper functions in resources.
+    """
+
+    def test_has_natural_foreign_key(self):
+        """
+        Ensure that resources.has_natural_foreign_key detects correctly
+        whether a model has a natural foreign key
+        """
+        cases = {
+            Book: True,
+            Author: True,
+            Category: False
+        }
+
+        for model, expected_result in cases.items():
+            self.assertEqual(
+                resources.has_natural_foreign_key(model),
+                expected_result
+            )

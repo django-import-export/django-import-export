@@ -7,16 +7,24 @@ exporting data with included admin integration.
 
 **Features:**
 
-   * support multiple formats (Excel, CSV, JSON, ...
+   * Import from / Export to multiple file formats
+
+   * Manage import / export of object relations, data types
+
+   * Handle create / update / delete / skip during imports
+
+   * Extensible API
+
+   * Support multiple formats (Excel, CSV, JSON, ...
      and everything else that `tablib`_ supports)
 
-   * admin integration for importing
+   * Bulk import
 
-   * preview import changes
+   * Admin integration for importing / exporting
 
-   * admin integration for exporting
+     * Preview import changes
 
-   * export data respecting admin filters
+     * Export data respecting admin filters
 
    .. figure:: _static/images/django-import-export-change.png
 
@@ -29,9 +37,12 @@ exporting data with included admin integration.
 
    installation
    getting_started
+   advanced_usage
    import_workflow
    bulk_import
    celery
+   testing
+   faq
    changelog
 
 .. toctree::
@@ -46,6 +57,12 @@ exporting data with included admin integration.
    api_tmp_storages
    api_results
    api_forms
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Developers
+
+   contributing
 
 
 .. _`tablib`: https://github.com/jazzband/tablib

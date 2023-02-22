@@ -1,6 +1,7 @@
-from importlib import import_module
+import html
 
 import tablib
+from tablib.formats import registry
 
 
 class Format:
@@ -13,7 +14,7 @@ class Format:
         """
         raise NotImplementedError()
 
-    def export_data(self, dataset, **kwargs):
+    def export_data(self, dataset, escape_output=False, **kwargs):
         """
         Returns format representation for given dataset.
         """
@@ -57,18 +58,17 @@ class TablibFormat(Format):
     TABLIB_MODULE = None
     CONTENT_TYPE = 'application/octet-stream'
 
+    def __init__(self, encoding=None):
+        self.encoding = encoding
+
     def get_format(self):
         """
         Import and returns tablib module.
         """
-        try:
-            # Available since tablib 1.0
-            from tablib.formats import registry
-        except ImportError:
-            return import_module(self.TABLIB_MODULE)
-        else:
-            key = self.TABLIB_MODULE.split('.')[-1].replace('_', '')
-            return registry.get_format(key)
+        if not self.TABLIB_MODULE:
+            raise AttributeError("TABLIB_MODULE must be defined")
+        key = self.TABLIB_MODULE.split('.')[-1].replace('_', '')
+        return registry.get_format(key)
 
     @classmethod
     def is_available(cls):
@@ -84,7 +84,7 @@ class TablibFormat(Format):
     def create_dataset(self, in_stream, **kwargs):
         return tablib.import_set(in_stream, format=self.get_title())
 
-    def export_data(self, dataset, **kwargs):
+    def export_data(self, dataset, escape_output=False, **kwargs):
         return dataset.export(self.get_title(), **kwargs)
 
     def get_extension(self):
@@ -101,6 +101,12 @@ class TablibFormat(Format):
 
 
 class TextFormat(TablibFormat):
+
+    def create_dataset(self, in_stream, **kwargs):
+        if isinstance(in_stream, bytes) and self.encoding:
+            in_stream = in_stream.decode(self.encoding)
+        return super().create_dataset(in_stream, **kwargs)
+
     def get_read_mode(self):
         return 'r'
 
@@ -111,9 +117,6 @@ class TextFormat(TablibFormat):
 class CSV(TextFormat):
     TABLIB_MODULE = 'tablib.formats._csv'
     CONTENT_TYPE = 'text/csv'
-
-    def create_dataset(self, in_stream, **kwargs):
-        return super().create_dataset(in_stream, **kwargs)
 
 
 class JSON(TextFormat):
@@ -143,6 +146,14 @@ class ODS(TextFormat):
 class HTML(TextFormat):
     TABLIB_MODULE = 'tablib.formats._html'
     CONTENT_TYPE = 'text/html'
+
+    def export_data(self, dataset, escape_output=False, **kwargs):
+        if escape_output:
+            for _ in dataset:
+                row = dataset.lpop()
+                row = [html.escape(str(cell)) for cell in row]
+                dataset.append(row)
+        return dataset.export(self.get_title(), **kwargs)
 
 
 class XLS(TablibFormat):
