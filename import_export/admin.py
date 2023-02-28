@@ -165,7 +165,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
             )
 
             data = tmp_storage.read()
-            dataset = input_format.create_dataset(data)
+            dataset = input_format.create_dataset(data, post_data=request.POST)
             result = self.process_dataset(dataset, confirm_form, request, *args, **kwargs)
 
             tmp_storage.remove()
@@ -516,7 +516,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
                 for chunk in import_file.chunks():
                     data += chunk
                 try:
-                    dataset = input_format.create_dataset(data)
+                    dataset = input_format.create_dataset(data, post_data=request.POST)
                 except Exception as e:
                     self.add_data_read_fail_error_to_form(import_form, e)
                 if not import_form.errors:
@@ -538,7 +538,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
                     # then read the file, using the proper format-specific mode
                     # warning, big files may exceed memory
                     data = tmp_storage.read()
-                    dataset = input_format.create_dataset(data)
+                    dataset = input_format.create_dataset(data, post_data=request.POST)
                 except Exception as e:
                     self.add_data_read_fail_error_to_form(import_form, e)
 
