@@ -426,12 +426,12 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
 
     def get_import_data_kwargs(self, request, *args, **kwargs):
         """
-        Prepare kwargs for import_data.
+        Return form data as kwargs for import_data.
         """
         form = kwargs.get('form')
         if form:
             kwargs.pop('form')
-            return kwargs
+            return form.cleaned_data
         return {}
 
     def write_to_tmp_storage(self, import_file, input_format):
