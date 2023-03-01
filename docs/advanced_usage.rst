@@ -658,7 +658,6 @@ For example, to pass extract form values (so that they get passed to the import 
             return form.cleaned_data
         return {}
 
-This means that form values are extracted and get passed to the import process.
 The parameters can then be read from ``Resource`` methods, such as:
 
 * :meth:`~import_export.resources.Resource.before_import`
