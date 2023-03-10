@@ -600,13 +600,16 @@ To use your customized form(s), change the respective attributes on your
 For example, imagine you want to import books for a specific author. You can
 extend the import forms to include ``author`` field to select the author from.
 
+.. note::
+
+    Importing an E-Book using the :ref:`example application<exampleapp>`
+    demonstrates this.
+
 .. figure:: _static/images/custom-import-form.png
 
    A screenshot of a customized import view.
 
-Customize forms::
-
-    from django import forms
+Customize forms (for example see ``tests/core/forms.py``)::
 
     class CustomImportForm(ImportForm):
         author = forms.ModelChoiceField(
@@ -618,7 +621,7 @@ Customize forms::
             queryset=Author.objects.all(),
             required=True)
 
-Customize ``ModelAdmin``::
+Customize ``ModelAdmin`` (for example see ``tests/core/admin.py``)::
 
     class CustomBookAdmin(ImportMixin, admin.ModelAdmin):
         resource_classes = [BookResource]
@@ -643,6 +646,22 @@ To further customize the import forms, you might like to consider overriding the
 * :meth:`~import_export.admin.ImportMixin.get_import_form_initial`
 * :meth:`~import_export.admin.ImportMixin.get_confirm_form_class`
 * :meth:`~import_export.admin.ImportMixin.get_confirm_form_kwargs`
+
+For example, to pass extract form values (so that they get passed to the import process)::
+
+    def get_import_data_kwargs(self, request, *args, **kwargs):
+        """
+        Return form data as kwargs for import_data.
+        """
+        form = kwargs.get('form')
+        if form:
+            return form.cleaned_data
+        return {}
+
+The parameters can then be read from ``Resource`` methods, such as:
+
+* :meth:`~import_export.resources.Resource.before_import`
+* :meth:`~import_export.resources.Resource.before_import_row`
 
 .. seealso::
 
