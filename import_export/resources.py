@@ -627,7 +627,7 @@ class Resource(metaclass=DeclarativeMetaclass):
                 # m2m instance values are taken from the 'row' because they
                 # have not been written to the 'instance' at this point
                 instance_values = list(field.clean(row))
-                original_values = list(field.get_value(original).all())
+                original_values = list() if original.pk is None else list(field.get_value(original).all())
                 if len(instance_values) != len(original_values):
                     return False
 

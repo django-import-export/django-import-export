@@ -1740,6 +1740,21 @@ class ManyToManyWidgetDiffTest(TestCase):
         self.assertEqual(result.rows[0].import_type, results.RowResult.IMPORT_TYPE_UPDATE)
         self.assertEqual(Category.objects.first(), book.categories.first())
 
+    def test_many_to_many_widget_create_with_m2m_being_compared(self):
+        # issue 1558 - when the object is a new instance and m2m is evaluated for differences
+        dataset_headers = ["categories"]
+        dataset_row = ["1"]
+        dataset = tablib.Dataset(headers=dataset_headers)
+        dataset.append(dataset_row)
+        book_resource = BookResource()
+        book_resource._meta.skip_unchanged = True
+
+        result = book_resource.import_data(dataset, dry_run=False)
+
+        self.assertFalse(result.has_errors())
+        self.assertEqual(len(result.rows), 1)
+        self.assertEqual(result.rows[0].import_type, results.RowResult.IMPORT_TYPE_NEW)
+
     def test_many_to_many_widget_update(self):
         # the book is associated with 1 category ('Category 2')
         # when we import a book with category 1, the book
