@@ -163,3 +163,10 @@ How to use field other than `id` in Foreign Key lookup
 ------------------------------------------------------
 
 See :ref:`advanced_usage:Foreign key relations`.
+
+``RelatedObjectDoesNotExist`` exception during import
+-----------------------------------------------------
+
+This can occur if a model defines a ``__str__()`` method which references a primary key or
+foreign key relation, and which is ``None`` during import.  There is a workaround to deal
+with this issue.  Refer to `this comment <https://github.com/django-import-export/django-import-export/issues/1556#issuecomment-1466980421>`_.
