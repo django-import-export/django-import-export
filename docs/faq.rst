@@ -111,6 +111,8 @@ When importing using the Admin site, it can be that the ids of the imported inst
 in the preview step.  This occurs because the rows are imported during 'confirm', and then the transaction is rolled
 back prior to the confirm step.  Database implementations mean that sequence numbers may not be reused.
 
+Consider enabling :ref:`IMPORT_EXPORT_SKIP_ADMIN_CONFIRM` as a workaround.
+
 See `this issue <https://github.com/django-import-export/django-import-export/issues/560>`_ for more detailed
 discussion.
 
