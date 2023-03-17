@@ -503,7 +503,7 @@ class ModelResourceTest(TestCase):
         with self.assertWarns(DeprecationWarning) as w:
             self.resource.export(Book.objects.none())
             self.assertEqual(
-                "queryset must be supplied as a named parameter",
+                "'queryset' must be supplied as a named parameter",
                  str(w.warnings[0].message)
             )
 

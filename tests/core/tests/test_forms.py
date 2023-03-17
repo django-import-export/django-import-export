@@ -1,5 +1,6 @@
 from django.test import TestCase
 
+from core import admin
 from import_export import forms, resources
 
 
@@ -34,11 +35,11 @@ class FormTest(TestCase):
                 self.args_ = args
                 super().__init__(*args, resources=resources, **kwargs)
 
-        resource_list = [resources.ModelResource]
+        resource_list = [resources.ModelResource, admin.BookResource]
         with self.assertWarns(DeprecationWarning) as w:
             f = TestForm(resource_list)
             self.assertEqual(
-                "resources must be supplied as a named parameter",
+                "'resources' must be supplied as a named parameter",
                 str(w.warnings[0].message)
             )
             self.assertEqual(f.args_, (resource_list, ))

@@ -978,7 +978,7 @@ class Resource(metaclass=DeclarativeMetaclass):
             # if the method is being called without a named parameter, add a warning
             # this check should be removed in a future release
             warnings.warn(
-                "queryset must be supplied as a named parameter",
+                "'queryset' must be supplied as a named parameter",
                 category=DeprecationWarning
             )
             queryset = args[0]
