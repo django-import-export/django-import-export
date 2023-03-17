@@ -22,7 +22,7 @@ class FormTest(TestCase):
 
     def test_formbase_init_two_resources(self):
         resource_list = [resources.ModelResource, MyResource]
-        form = forms.ImportExportFormBase(resource_list)
+        form = forms.ImportExportFormBase(resources=resource_list)
         self.assertEqual(
             form.fields['resource'].choices,
             [(0, 'ModelResource'), (1, "My super resource")],

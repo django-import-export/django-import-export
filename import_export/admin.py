@@ -299,7 +299,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
                 category=DeprecationWarning
             )
             return form_class(formats, **kwargs)
-        return form_class(formats, self.get_import_resource_classes(), **kwargs)
+        return form_class(formats, resources=self.get_import_resource_classes(), **kwargs)
 
     def get_import_form_class(self, request):
         """
@@ -480,9 +480,9 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
             if issubclass(form_class, ImportExportFormBase):
                 import_form = form_class(
                     import_formats,
-                    self.get_import_resource_classes(),
                     request.POST or None,
                     request.FILES or None,
+                    resources=self.get_import_resource_classes(),
                     **form_kwargs
                 )
             else:
@@ -723,7 +723,7 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
         else:
             form_type = self.get_export_form()
         formats = self.get_export_formats()
-        form = form_type(formats, self.get_export_resource_classes(), request.POST or None)
+        form = form_type(formats,  request.POST or None, resources=self.get_export_resource_classes())
         if form.is_valid():
             file_format = formats[
                 int(form.cleaned_data['file_format'])
