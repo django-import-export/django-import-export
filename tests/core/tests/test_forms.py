@@ -1,6 +1,6 @@
+from core import admin
 from django.test import TestCase
 
-from core import admin
 from import_export import forms, resources
 
 
