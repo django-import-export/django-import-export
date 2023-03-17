@@ -4,8 +4,15 @@ Changelog
 3.1.1 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Refactor methods so that ``args`` are declared correctly (#1566)
 
+  - This includes deprecations to be aware of if you have overridden :meth:`~import_export.resources.Resource.export`
+    or :class:`~import_export.forms.ImportExportFormBase`.
+
+    - ``export()``: If passing ``queryset`` as the first arg, ensure this is passed as a named parameter.
+
+    - ``ImportExportFormBase``: If passing ``resources`` to ``__init__`` as the first arg, ensure this is
+      passed as a named parameter.
 
 3.1.0 (2023-02-21)
 ------------------

@@ -18,9 +18,10 @@ class ImportExportFormBase(forms.Form):
         super().__init__(*args, **kwargs)
         if len(args) > 0 and resources is None:
             # issue 1565: definition of __init__() was incorrect
+            # this logic included to try to aid backwards compatibility
             # this check can be removed in a future release
             warnings.warn(
-                "resources must be supplied as a named parameter - this will be enforced in a future release",
+                "resources must be supplied as a named parameter",
                 category=DeprecationWarning
             )
             resources = args

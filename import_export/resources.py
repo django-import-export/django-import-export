@@ -974,9 +974,11 @@ class Resource(metaclass=DeclarativeMetaclass):
         if len(args) == 1 and (isinstance(args[0], QuerySet) or isinstance(args[0], list)):
             # issue 1565: definition of export() was incorrect
             # if queryset is being passed, it must be as the first arg or named parameter
-            # this check can be removed in a future release
+            # this logic is included for backwards compatibility:
+            # if the method is being called without a named parameter, add a warning
+            # this check should be removed in a future release
             warnings.warn(
-                "queryset must be supplied as a named parameter - this will be enforced in a future release",
+                "queryset must be supplied as a named parameter",
                 category=DeprecationWarning
             )
             queryset = args[0]
