@@ -498,6 +498,29 @@ class ModelResourceTest(TestCase):
             dataset = self.resource.export(Book.objects.prefetch_related("categories").all())
             self.assertEqual(len(dataset), 1)
 
+    def test_export_handles_args(self):
+        # issue 1565
+        with self.assertWarns(DeprecationWarning) as w:
+            self.resource.export(Book.objects.none())
+            self.assertEqual(
+                "queryset must be supplied as a named parameter - this will be enforced in a future release",
+                 str(w.warnings[0].message)
+            )
+
+    def test_export_handles_named_queryset_parameter(self):
+        class _BookResource(BookResource):
+            def before_export(self, queryset, *args, **kwargs):
+                self.qs = queryset
+                self.args_ = args
+                self.kwargs_ = kwargs
+
+        self.resource = _BookResource()
+        # when queryset is supplied, it should be passed to before_export()
+        self.resource.export(1, 2, 3, queryset=Book.objects.all(), **{'a': 1})
+        self.assertEqual(Book.objects.count(), len(self.resource.qs))
+        self.assertEqual((1, 2, 3), self.resource.args_)
+        self.assertEqual(dict(a=1), self.resource.kwargs_)
+
     def test_iter_queryset(self):
         qs = Book.objects.all()
         with mock.patch.object(qs, "iterator") as mocked_method:
@@ -1397,6 +1420,7 @@ class ModelResourceTest(TestCase):
         resource = TestModelResource()
         related_field_widget = resource.fields["related_field"].widget
         self.assertFalse(related_field_widget.use_natural_foreign_keys)
+
 
 class ModelResourceTransactionTest(TransactionTestCase):
     @skipUnlessDBFeature('supports_transactions')

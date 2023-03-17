@@ -174,9 +174,9 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
 
     def process_dataset(self, dataset, confirm_form, request, *args, rollback_on_validation_errors=False, **kwargs):
 
-        res_kwargs = self.get_import_resource_kwargs(request, form=confirm_form, *args, **kwargs)
+        res_kwargs = self.get_import_resource_kwargs(request, *args, form=confirm_form, **kwargs)
         resource = self.choose_import_resource_class(confirm_form)(**res_kwargs)
-        imp_kwargs = self.get_import_data_kwargs(request, form=confirm_form, *args, **kwargs)
+        imp_kwargs = self.get_import_data_kwargs(request, *args, form=confirm_form, **kwargs)
 
         return resource.import_data(dataset,
                                     dry_run=False,
@@ -544,12 +544,12 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
 
                 if not import_form.errors:
                     # prepare kwargs for import data, if needed
-                    res_kwargs = self.get_import_resource_kwargs(request, form=import_form, *args, **kwargs)
+                    res_kwargs = self.get_import_resource_kwargs(request, *args, form=import_form, **kwargs)
                     resource = self.choose_import_resource_class(import_form)(**res_kwargs)
                     resources = [resource]
 
                     # prepare additional kwargs for import_data, if needed
-                    imp_kwargs = self.get_import_data_kwargs(request, form=import_form, *args, **kwargs)
+                    imp_kwargs = self.get_import_data_kwargs(request, *args, form=import_form, **kwargs)
                     result = resource.import_data(dataset, dry_run=True,
                                                   raise_errors=False,
                                                   file_name=import_file.name,
@@ -571,7 +571,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
                                 initial=self.get_form_kwargs(form=import_form, **initial)
                             )
         else:
-            res_kwargs = self.get_import_resource_kwargs(request, form=import_form, *args, **kwargs)
+            res_kwargs = self.get_import_resource_kwargs(request, *args, form=import_form, **kwargs)
             resource_classes = self.get_import_resource_classes()
             resources = [resource_class(**res_kwargs) for resource_class in resource_classes]
 

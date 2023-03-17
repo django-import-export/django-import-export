@@ -966,10 +966,20 @@ class Resource(metaclass=DeclarativeMetaclass):
         else:
             yield from queryset.iterator(chunk_size=self.get_chunk_size())
 
-    def export(self, queryset=None, *args, **kwargs):
+    def export(self, *args, queryset=None, **kwargs):
         """
         Exports a resource.
+        :returns: Dataset object.
         """
+        if len(args) == 1 and (isinstance(args[0], QuerySet) or isinstance(args[0], list)):
+            # issue 1565: definition of export() was incorrect
+            # if queryset is being passed, it must be as the first arg or named parameter
+            # this check can be removed in a future release
+            warnings.warn(
+                "queryset must be supplied as a named parameter - this will be enforced in a future release",
+                category=DeprecationWarning
+            )
+            queryset = args[0]
 
         self.before_export(queryset, *args, **kwargs)
 
