@@ -1,7 +1,7 @@
 Changelog
 =========
 
-3.1.1 (unreleased)
+3.2.0 (unreleased)
 ------------------
 
 - Refactor methods so that ``args`` are declared correctly (#1566)
@@ -13,6 +13,13 @@ Changelog
 
     - ``ImportExportFormBase``: If passing ``resources`` to ``__init__`` as the first arg, ensure this is
       passed as a named parameter.
+
+- Updated ``setup.py`` (#1564)
+- Added ``SECURITY.md``
+- updated FAQ to include workaround for `RelatedObjectDoesNotExist` exception (#1562)
+- Prevent error comparing m2m field of the new objects (#1560)
+- Add documentation for passing data from admin form to Resource  (#1555)
+- Added new translations to Spanish and Spanish (Argentina) (#1552)
 
 3.1.0 (2023-02-21)
 ------------------
