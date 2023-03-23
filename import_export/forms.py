@@ -1,4 +1,5 @@
 import os.path
+import warnings
 
 from django import forms
 from django.conf import settings
@@ -13,8 +14,19 @@ class ImportExportFormBase(forms.Form):
         required=False,
     )
 
-    def __init__(self, resources=None, *args, **kwargs):
+    def __init__(self,  *args, resources=None, **kwargs):
         super().__init__(*args, **kwargs)
+        if len(args) == 1 and resources is None:
+            # issue 1565: definition of __init__() was incorrect
+            # this logic included to aid backwards compatibility,
+            # for cases where users are calling with the original form.
+            # this check can be removed in a future release
+            warnings.warn(
+                "'resources' must be supplied as a named parameter",
+                category=DeprecationWarning
+            )
+            resources = args
+
         if resources and len(resources) > 1:
             resource_choices = []
             for i, resource in enumerate(resources):
@@ -34,7 +46,8 @@ class ImportForm(ImportExportFormBase):
     )
 
     def __init__(self, import_formats, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        resources = kwargs.pop("resources", None)
+        super().__init__(*args, resources=resources, **kwargs)
         choices = [
             (str(i), f().get_title())
             for i, f in enumerate(import_formats)
@@ -77,7 +90,8 @@ class ExportForm(ImportExportFormBase):
         )
 
     def __init__(self, formats, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        resources = kwargs.pop("resources", None)
+        super().__init__(*args, resources=resources, **kwargs)
         choices = []
         for i, f in enumerate(formats):
             choices.append((str(i), f().get_title(),))

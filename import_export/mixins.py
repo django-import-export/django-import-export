@@ -129,7 +129,7 @@ class BaseExportMixin(BaseImportExportMixin):
         export_form = kwargs.pop('export_form', None)
         return self.choose_export_resource_class(export_form)\
             (**self.get_export_resource_kwargs(request, *args, **kwargs))\
-            .export(queryset, *args, **kwargs)
+            .export(*args, queryset=queryset, **kwargs)
 
     def get_export_filename(self, file_format):
         date_str = now().strftime('%Y-%m-%d')

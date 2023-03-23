@@ -174,9 +174,9 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
 
     def process_dataset(self, dataset, confirm_form, request, *args, rollback_on_validation_errors=False, **kwargs):
 
-        res_kwargs = self.get_import_resource_kwargs(request, form=confirm_form, *args, **kwargs)
+        res_kwargs = self.get_import_resource_kwargs(request, *args, form=confirm_form, **kwargs)
         resource = self.choose_import_resource_class(confirm_form)(**res_kwargs)
-        imp_kwargs = self.get_import_data_kwargs(request, form=confirm_form, *args, **kwargs)
+        imp_kwargs = self.get_import_data_kwargs(request, *args, form=confirm_form, **kwargs)
 
         return resource.import_data(dataset,
                                     dry_run=False,
@@ -299,7 +299,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
                 category=DeprecationWarning
             )
             return form_class(formats, **kwargs)
-        return form_class(formats, self.get_import_resource_classes(), **kwargs)
+        return form_class(formats, resources=self.get_import_resource_classes(), **kwargs)
 
     def get_import_form_class(self, request):
         """
@@ -480,9 +480,9 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
             if issubclass(form_class, ImportExportFormBase):
                 import_form = form_class(
                     import_formats,
-                    self.get_import_resource_classes(),
                     request.POST or None,
                     request.FILES or None,
+                    resources=self.get_import_resource_classes(),
                     **form_kwargs
                 )
             else:
@@ -544,12 +544,12 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
 
                 if not import_form.errors:
                     # prepare kwargs for import data, if needed
-                    res_kwargs = self.get_import_resource_kwargs(request, form=import_form, *args, **kwargs)
+                    res_kwargs = self.get_import_resource_kwargs(request, *args, form=import_form, **kwargs)
                     resource = self.choose_import_resource_class(import_form)(**res_kwargs)
                     resources = [resource]
 
                     # prepare additional kwargs for import_data, if needed
-                    imp_kwargs = self.get_import_data_kwargs(request, form=import_form, *args, **kwargs)
+                    imp_kwargs = self.get_import_data_kwargs(request, *args, form=import_form, **kwargs)
                     result = resource.import_data(dataset, dry_run=True,
                                                   raise_errors=False,
                                                   file_name=import_file.name,
@@ -571,7 +571,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
                                 initial=self.get_form_kwargs(form=import_form, **initial)
                             )
         else:
-            res_kwargs = self.get_import_resource_kwargs(request, form=import_form, *args, **kwargs)
+            res_kwargs = self.get_import_resource_kwargs(request, *args, form=import_form, **kwargs)
             resource_classes = self.get_import_resource_classes()
             resources = [resource_class(**res_kwargs) for resource_class in resource_classes]
 
@@ -723,7 +723,7 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
         else:
             form_type = self.get_export_form()
         formats = self.get_export_formats()
-        form = form_type(formats, self.get_export_resource_classes(), request.POST or None)
+        form = form_type(formats,  request.POST or None, resources=self.get_export_resource_classes())
         if form.is_valid():
             file_format = formats[
                 int(form.cleaned_data['file_format'])
