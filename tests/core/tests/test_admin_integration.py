@@ -1,6 +1,7 @@
 import os.path
 import warnings
 from datetime import datetime
+from io import BytesIO
 from unittest import mock
 from unittest.mock import MagicMock, patch
 
@@ -16,6 +17,7 @@ from django.http import HttpRequest
 from django.test.testcases import TestCase, TransactionTestCase
 from django.test.utils import override_settings
 from django.utils.translation import gettext_lazy as _
+from openpyxl.reader.excel import load_workbook
 from tablib import Dataset
 
 from import_export import formats
@@ -432,6 +434,34 @@ class ImportExportAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertTrue(response.has_header("Content-Disposition"))
         self.assertEqual(response['Content-Type'],
                          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+
+    def test_export_does_not_escape_excel_formulae_by_default(self):
+        Book.objects.create(id=1, name="=SUM(1+1)")
+        response = self.client.get('/admin/core/book/export/')
+        self.assertEqual(response.status_code, 200)
+
+        xlsx_index = self._get_input_format_index("xlsx")
+        data = {'file_format': str(xlsx_index)}
+        response = self.client.post('/admin/core/book/export/', data)
+        self.assertEqual(response.status_code, 200)
+        content = response.content
+        wb = load_workbook(filename=BytesIO(content))
+        self.assertEqual('=SUM(1+1)', wb.active['B2'].value)
+
+    @override_settings(IMPORT_EXPORT_ESCAPE_OUTPUT_ON_EXPORT=True)
+    def test_export_escape_excel_formulae(self):
+        Book.objects.create(id=1, name="=SUM(1+1)")
+        response = self.client.get('/admin/core/book/export/')
+        self.assertEqual(response.status_code, 200)
+
+        xlsx_index = self._get_input_format_index("xlsx")
+        data = {'file_format': str(xlsx_index)}
+        response = self.client.post('/admin/core/book/export/', data)
+        self.assertEqual(response.status_code, 200)
+        content = response.content
+        wb = load_workbook(filename=BytesIO(content))
+        self.assertEqual('SUM(1+1)', wb.active['B2'].value)
+
 
     def test_import_export_buttons_visible_without_add_permission(self):
         # issue 38 - Export button not visible when no add permission

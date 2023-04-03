@@ -20,6 +20,7 @@ Changelog
 - Prevent error comparing m2m field of the new objects (#1560)
 - Add documentation for passing data from admin form to Resource  (#1555)
 - Added new translations to Spanish and Spanish (Argentina) (#1552)
+- Escape formulae on export to XLSX ()
 
 3.1.0 (2023-02-21)
 ------------------
