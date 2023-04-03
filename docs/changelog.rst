@@ -21,7 +21,7 @@ Changelog
 - Add documentation for passing data from admin form to Resource  (#1555)
 - Added new translations to Spanish and Spanish (Argentina) (#1552)
 
-- Escape formulae on export to XLSX ()
+- Escape formulae on export to XLSX (#1568)
 
   - This includes deprecation of :ref:`IMPORT_EXPORT_ESCAPE_OUTPUT_ON_EXPORT`
     Refer to :ref:`installation` for alternatives.
