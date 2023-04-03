@@ -679,7 +679,10 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
             raise PermissionDenied
 
         data = self.get_data_for_export(request, queryset, *args, **kwargs)
-        export_data = file_format.export_data(data, escape_output=self.should_escape_output)
+        export_data = file_format.export_data(data,
+                                              escape_output=self.should_escape_output,
+                                              escape_html=self.should_escape_html,
+                                              escape_formulae=self.should_escape_formulae)
         encoding = kwargs.get("encoding")
         if not file_format.is_binary() and encoding:
             export_data = export_data.encode(encoding)

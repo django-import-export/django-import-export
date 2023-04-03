@@ -20,7 +20,11 @@ Changelog
 - Prevent error comparing m2m field of the new objects (#1560)
 - Add documentation for passing data from admin form to Resource  (#1555)
 - Added new translations to Spanish and Spanish (Argentina) (#1552)
+
 - Escape formulae on export to XLSX ()
+
+  - This includes deprecation of :ref:`IMPORT_EXPORT_ESCAPE_OUTPUT_ON_EXPORT`
+    Refer to :ref:`installation` for alternatives.
 
 3.1.0 (2023-02-21)
 ------------------

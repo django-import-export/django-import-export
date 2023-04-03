@@ -91,10 +91,26 @@ class BaseImportMixin(BaseImportExportMixin):
 class BaseExportMixin(BaseImportExportMixin):
     model = None
     escape_exported_data = False
+    escape_html = False
+    escape_formulae = False
 
     @property
     def should_escape_output(self):
+        if hasattr(settings, 'IMPORT_EXPORT_ESCAPE_OUTPUT_ON_EXPORT'):
+            warnings.warn(
+                "IMPORT_EXPORT_ESCAPE_OUTPUT_ON_EXPORT will be deprecated in a future release. "
+                "Refer to docs for new attributes.",
+                DeprecationWarning,
+            )
         return getattr(settings, 'IMPORT_EXPORT_ESCAPE_OUTPUT_ON_EXPORT', self.escape_exported_data)
+
+    @property
+    def should_escape_html(self):
+        return getattr(settings, 'IMPORT_EXPORT_ESCAPE_HTML_ON_EXPORT', self.escape_html)
+
+    @property
+    def should_escape_formulae(self):
+        return getattr(settings, 'IMPORT_EXPORT_ESCAPE_FORMULAE_ON_EXPORT', self.escape_formulae)
 
     def get_export_formats(self):
         """

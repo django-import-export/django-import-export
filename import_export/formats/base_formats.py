@@ -85,6 +85,13 @@ class TablibFormat(Format):
         return tablib.import_set(in_stream, format=self.get_title())
 
     def export_data(self, dataset, escape_output=False, **kwargs):
+        if escape_output:
+            # escape_output flag now deprecated
+            self._escape_html(dataset)
+        if kwargs.pop("escape_html", None):
+            self._escape_html(dataset)
+        if kwargs.pop("escape_formulae", None):
+            self._escape_formulae(dataset)
         return dataset.export(self.get_title(), **kwargs)
 
     def get_extension(self):
@@ -98,6 +105,21 @@ class TablibFormat(Format):
 
     def can_export(self):
         return hasattr(self.get_format(), 'export_set')
+
+    def _escape_html(self, dataset):
+        for _ in dataset:
+            row = dataset.lpop()
+            row = [html.escape(str(cell)) for cell in row]
+            dataset.append(row)
+
+    def _escape_formulae(self, dataset):
+        def _do_escape(s):
+            return s.replace("=", "", 1) if s.startswith("=") else s
+
+        for _ in dataset:
+            row = dataset.lpop()
+            row = [_do_escape(str(cell)) for cell in row]
+            dataset.append(row)
 
 
 class TextFormat(TablibFormat):
@@ -147,14 +169,6 @@ class HTML(TextFormat):
     TABLIB_MODULE = 'tablib.formats._html'
     CONTENT_TYPE = 'text/html'
 
-    def export_data(self, dataset, escape_output=False, **kwargs):
-        if escape_output:
-            for _ in dataset:
-                row = dataset.lpop()
-                row = [html.escape(str(cell)) for cell in row]
-                dataset.append(row)
-        return dataset.export(self.get_title(), **kwargs)
-
 
 class XLS(TablibFormat):
     TABLIB_MODULE = 'tablib.formats._xls'
@@ -201,10 +215,6 @@ class XLSX(TablibFormat):
             row_values = [cell.value for cell in row]
             dataset.append(row_values)
         return dataset
-
-    def export_data(self, dataset, escape_output=False, **kwargs):
-        return dataset.export(self.get_title(), escape=escape_output, **kwargs)
-
 
 #: These are the default formats for import and export. Whether they can be
 #: used or not is depending on their implementation in the tablib library.
