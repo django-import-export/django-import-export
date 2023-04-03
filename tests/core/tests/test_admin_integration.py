@@ -462,7 +462,6 @@ class ImportExportAdminIntegrationTest(AdminTestMixin, TestCase):
         wb = load_workbook(filename=BytesIO(content))
         self.assertEqual('SUM(1+1)', wb.active['B2'].value)
 
-
     def test_import_export_buttons_visible_without_add_permission(self):
         # issue 38 - Export button not visible when no add permission
         original = BookAdmin.has_add_permission
