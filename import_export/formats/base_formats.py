@@ -1,4 +1,5 @@
 import html
+import warnings
 
 import tablib
 from tablib.formats import registry
@@ -86,8 +87,14 @@ class TablibFormat(Format):
 
     def export_data(self, dataset, escape_output=False, **kwargs):
         if escape_output:
-            # escape_output flag now deprecated
+            warnings.warn(
+                "escape_output flag now deprecated - "
+                "this will be removed in a future release",
+                DeprecationWarning,
+            )
             self._escape_html(dataset)
+            # remove flag if present to avoid double escaping
+            kwargs.pop("escape_html", None)
         if kwargs.pop("escape_html", None):
             self._escape_html(dataset)
         if kwargs.pop("escape_formulae", None):

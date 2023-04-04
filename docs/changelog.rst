@@ -23,8 +23,12 @@ Changelog
 
 - Escape formulae on export to XLSX (#1568)
 
-  - This includes deprecation of :ref:`IMPORT_EXPORT_ESCAPE_OUTPUT_ON_EXPORT`
+  - This includes deprecation of :ref:`IMPORT_EXPORT_ESCAPE_OUTPUT_ON_EXPORT`.
+
     Refer to :ref:`installation` for alternatives.
+
+  - :meth:`import_export.formats.TablibFormat.export()`: ``escape_output`` flag now deprecated in favour of
+    ``escape_html`` and ``escape_formulae``.
 
 3.1.0 (2023-02-21)
 ------------------
