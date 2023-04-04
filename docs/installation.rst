@@ -123,7 +123,9 @@ but valid rows will have imported.
 ``IMPORT_EXPORT_ESCAPE_OUTPUT_ON_EXPORT``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If set to ``True``, strings will be HTML escaped. By default this is ``False``.
+If set to ``True``, export output will be sanitized. By default this is set to ``False``.
+
+Note: currently this only works for ``HTML`` output, and only for exports done via the admin UI.
 
 This setting is deprecated and will be replaced by ``IMPORT_EXPORT_ESCAPE_HTML_ON_EXPORT``.
 
