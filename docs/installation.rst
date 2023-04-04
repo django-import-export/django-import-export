@@ -121,7 +121,7 @@ does not support transactions), then validation errors will still be presented t
 but valid rows will have imported.
 
 ``IMPORT_EXPORT_ESCAPE_OUTPUT_ON_EXPORT``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If set to ``True``, export output will be sanitized. By default this is set to ``False``.
 
