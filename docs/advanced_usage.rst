@@ -743,3 +743,53 @@ return books for the publisher::
 
         class Meta:
             model = Book
+
+Security
+--------
+
+Enabling the Admin interface means that you should consider the security implications.  Some or all of the following
+points may be relevant:
+
+Is there potential for untrusted imports?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* What is the source of your import file?
+
+* Is this coming from an external source where the data could be untrusted?
+
+* Could source data potentially contain malicious content such as script directives or Excel formulae?
+
+* Even if data comes from a trusted source, is there any content such as HTML which could cause issues when rendered
+  in a web page?
+
+What is the potential risk for exported data?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* If there is malicious content in stored data, what is the risk of exporting this data?
+
+* Could untrusted input be executed within a spreadsheet?
+
+* Are spreadsheets sent to other parties who could inadvertently execute malicious content?
+
+* Could data be exported to other formats, such as CSV, TSV or ODS, and then opened using Excel?
+
+* Could any exported data be rendered in HTML? For example, csv is exported and then loaded into another
+  web application.  In this case, untrusted input could contain malicious code such as active script content.
+
+Mitigating security risks
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+By default, import-export does not sanitize or process imported data.  Malicious content, such as script directives,
+can be imported into the database, and can be exported without any modification.
+
+You can optionally configure import-export to sanitize data on export.  There are two settings which enable this:
+
+#. :ref:`IMPORT_EXPORT_ESCAPE_HTML_ON_EXPORT`
+
+#. :ref:`IMPORT_EXPORT_ESCAPE_FORMULAE_ON_EXPORT`
+
+You should in all cases review `Django security documentation <https://docs.djangoproject.com/en/dev/topics/security/>`_
+before deploying a live Admin interface instance.
+
+Please refer to `SECURITY.md <https://github.com/django-import-export/django-import-export/blob/main/SECURITY.md>`_ for
+details on how to escalate security issues.
