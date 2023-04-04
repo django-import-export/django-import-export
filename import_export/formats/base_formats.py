@@ -85,16 +85,9 @@ class TablibFormat(Format):
     def create_dataset(self, in_stream, **kwargs):
         return tablib.import_set(in_stream, format=self.get_title())
 
-    def export_data(self, dataset, escape_output=False, **kwargs):
-        if escape_output:
-            warnings.warn(
-                "escape_output flag now deprecated - "
-                "this will be removed in a future release",
-                DeprecationWarning,
-            )
-            self._escape_html(dataset)
-            # remove flag if present to avoid double escaping
-            kwargs.pop("escape_html", None)
+    def export_data(self, dataset, **kwargs):
+        # remove the deprecated `escape_output` param if present
+        kwargs.pop("escape_output", None)
         if kwargs.pop("escape_html", None):
             self._escape_html(dataset)
         if kwargs.pop("escape_formulae", None):
@@ -175,6 +168,16 @@ class ODS(TextFormat):
 class HTML(TextFormat):
     TABLIB_MODULE = 'tablib.formats._html'
     CONTENT_TYPE = 'text/html'
+
+    def export_data(self, dataset, escape_output=False, **kwargs):
+        if escape_output:
+            warnings.warn(
+                "escape_output flag now deprecated - "
+                "this will be removed in a future release",
+                DeprecationWarning,
+            )
+            super()._escape_html(dataset)
+        return super().export_data(dataset, **kwargs)
 
 
 class XLS(TablibFormat):

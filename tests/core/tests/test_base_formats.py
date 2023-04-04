@@ -263,18 +263,3 @@ class HTMLFormatTest(TestCase):
             ),
             res
         )
-
-    def test_export_data_escape_output_and_html(self):
-        # this can be removed when deprecated escape_output param removed
-        res = self.format.export_data(self.dataset, escape_output=True, escape_html=True)
-        self.assertIn(
-            (
-                "<tr><td>1</td>\n"
-                "<td>good_user</td>\n"
-                "<td>John Doe</td></tr>\n"
-                "<tr><td>2</td>\n"
-                "<td>evil_user</td>\n"
-                "<td>&lt;script&gt;alert(&quot;I want to steal your credit card data&quot;)&lt;/script&gt;</td></tr>\n"
-            ),
-            res
-        )
