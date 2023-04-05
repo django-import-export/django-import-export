@@ -1,3 +1,4 @@
+import logging
 import warnings
 
 from django.conf import settings
@@ -9,6 +10,8 @@ from .formats import base_formats
 from .forms import ExportForm
 from .resources import modelresource_factory
 from .signals import post_export
+
+logger = logging.getLogger(__name__)
 
 
 class BaseImportExportMixin:
@@ -106,11 +109,17 @@ class BaseExportMixin(BaseImportExportMixin):
 
     @property
     def should_escape_html(self):
-        return getattr(settings, 'IMPORT_EXPORT_ESCAPE_HTML_ON_EXPORT', self.escape_html)
+        v = getattr(settings, 'IMPORT_EXPORT_ESCAPE_HTML_ON_EXPORT', self.escape_html)
+        if v is True:
+            logger.debug('IMPORT_EXPORT_ESCAPE_HTML_ON_EXPORT is enabled')
+        return v
 
     @property
     def should_escape_formulae(self):
-        return getattr(settings, 'IMPORT_EXPORT_ESCAPE_FORMULAE_ON_EXPORT', self.escape_formulae)
+        v = getattr(settings, 'IMPORT_EXPORT_ESCAPE_FORMULAE_ON_EXPORT', self.escape_formulae)
+        if v is True:
+            logger.debug('IMPORT_EXPORT_ESCAPE_FORMULAE_ON_EXPORT is enabled')
+        return v
 
     def get_export_formats(self):
         """
