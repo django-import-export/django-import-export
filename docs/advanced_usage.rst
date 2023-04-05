@@ -744,6 +744,8 @@ return books for the publisher::
         class Meta:
             model = Book
 
+.. _admin_security:
+
 Security
 --------
 
@@ -785,8 +787,12 @@ can be imported into the database, and can be exported without any modification.
 You can optionally configure import-export to sanitize data on export.  There are two settings which enable this:
 
 #. :ref:`IMPORT_EXPORT_ESCAPE_HTML_ON_EXPORT`
-
 #. :ref:`IMPORT_EXPORT_ESCAPE_FORMULAE_ON_EXPORT`
+
+.. warning::
+
+    Enabling these settings only sanitizes data exported using the Admin Interface.
+    If exporting data :ref:`programmatically<exporting_data>`, then you will need to apply your own sanitization.
 
 You should in all cases review `Django security documentation <https://docs.djangoproject.com/en/dev/topics/security/>`_
 before deploying a live Admin interface instance.
