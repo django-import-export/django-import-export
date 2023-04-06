@@ -216,7 +216,28 @@ class HTMLFormatTest(TestCase):
         self.dataset.append(('2', 'evil_user', '<script>alert("I want to steal your credit card data")</script>'))
 
     def test_export_data_escape(self):
-        res = self.format.export_data(self.dataset, escape_output=True)
+        # deprecated
+        # this test can be removed in a future release because the param
+        # is replaced by `escape_html`
+        with self.assertWarnsRegex(
+                DeprecationWarning,
+                "escape_output flag now deprecated - this will be removed in a future release"
+                ):
+            res = self.format.export_data(self.dataset, escape_output=True)
+            self.assertIn(
+                (
+                    "<tr><td>1</td>\n"
+                    "<td>good_user</td>\n"
+                    "<td>John Doe</td></tr>\n"
+                    "<tr><td>2</td>\n"
+                    "<td>evil_user</td>\n"
+                    "<td>&lt;script&gt;alert(&quot;I want to steal your credit card data&quot;)&lt;/script&gt;</td></tr>\n"
+                ),
+                res
+            )
+
+    def test_export_html_escape(self):
+        res = self.format.export_data(self.dataset, escape_html=True)
         self.assertIn(
             (
                 "<tr><td>1</td>\n"

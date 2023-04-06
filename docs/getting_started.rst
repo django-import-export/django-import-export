@@ -129,6 +129,8 @@ that have their column ``delete`` set to ``1``::
             model = Book
 
 
+.. _exporting_data:
+
 Exporting data
 ==============
 
@@ -141,3 +143,8 @@ we can export books::
     id,name,author,author_email,imported,published,price,categories
     2,Some book,1,,0,2012-12-05,8.85,1
 
+.. warning::
+
+    Data exported programmatically is not sanitized for malicious content.
+    You will need to understand the implications of this and handle accordingly.
+    See :ref:`admin_security`.

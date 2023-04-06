@@ -1,6 +1,7 @@
 import os.path
 import warnings
 from datetime import datetime
+from io import BytesIO
 from unittest import mock
 from unittest.mock import MagicMock, patch
 
@@ -16,6 +17,7 @@ from django.http import HttpRequest
 from django.test.testcases import TestCase, TransactionTestCase
 from django.test.utils import override_settings
 from django.utils.translation import gettext_lazy as _
+from openpyxl.reader.excel import load_workbook
 from tablib import Dataset
 
 from import_export import formats
@@ -432,6 +434,58 @@ class ImportExportAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertTrue(response.has_header("Content-Disposition"))
         self.assertEqual(response['Content-Type'],
                          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+
+    @override_settings(IMPORT_EXPORT_ESCAPE_HTML_ON_EXPORT=True)
+    @patch("import_export.mixins.logger")
+    def test_export_escape_html(self, mock_logger):
+        Book.objects.create(id=1, name="=SUM(1+1)")
+        Book.objects.create(id=2, name="<script>alert(1)</script>")
+        response = self.client.get('/admin/core/book/export/')
+        self.assertEqual(response.status_code, 200)
+
+        xlsx_index = self._get_input_format_index("xlsx")
+        data = {'file_format': str(xlsx_index)}
+        response = self.client.post('/admin/core/book/export/', data)
+        self.assertEqual(response.status_code, 200)
+        content = response.content
+        wb = load_workbook(filename=BytesIO(content))
+        self.assertEqual('&lt;script&gt;alert(1)&lt;/script&gt;', wb.active['B2'].value)
+        self.assertEqual('=SUM(1+1)', wb.active['B3'].value)
+
+        mock_logger.debug.assert_called_once_with("IMPORT_EXPORT_ESCAPE_HTML_ON_EXPORT is enabled")
+
+    @override_settings(IMPORT_EXPORT_ESCAPE_FORMULAE_ON_EXPORT=True)
+    @patch("import_export.mixins.logger")
+    def test_export_escape_formulae(self, mock_logger):
+        Book.objects.create(id=1, name="=SUM(1+1)")
+        Book.objects.create(id=2, name="<script>alert(1)</script>")
+        response = self.client.get('/admin/core/book/export/')
+        self.assertEqual(response.status_code, 200)
+
+        xlsx_index = self._get_input_format_index("xlsx")
+        data = {'file_format': str(xlsx_index)}
+        response = self.client.post('/admin/core/book/export/', data)
+        self.assertEqual(response.status_code, 200)
+        content = response.content
+        wb = load_workbook(filename=BytesIO(content))
+        self.assertEqual('<script>alert(1)</script>', wb.active['B2'].value)
+        self.assertEqual('SUM(1+1)', wb.active['B3'].value)
+
+        mock_logger.debug.assert_called_once_with("IMPORT_EXPORT_ESCAPE_FORMULAE_ON_EXPORT is enabled")
+
+    @override_settings(IMPORT_EXPORT_ESCAPE_OUTPUT_ON_EXPORT=True)
+    def test_export_escape_deprecation_warning(self):
+        response = self.client.get('/admin/core/book/export/')
+        self.assertEqual(response.status_code, 200)
+
+        xlsx_index = self._get_input_format_index("xlsx")
+        data = {'file_format': str(xlsx_index)}
+        with self.assertWarnsRegex(
+                DeprecationWarning,
+                r"IMPORT_EXPORT_ESCAPE_OUTPUT_ON_EXPORT will be deprecated in a future release. "
+                r"Refer to docs for new attributes."
+        ):
+            self.client.post('/admin/core/book/export/', data)
 
     def test_import_export_buttons_visible_without_add_permission(self):
         # issue 38 - Export button not visible when no add permission

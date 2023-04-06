@@ -1,4 +1,5 @@
 import html
+import warnings
 
 import tablib
 from tablib.formats import registry
@@ -84,7 +85,13 @@ class TablibFormat(Format):
     def create_dataset(self, in_stream, **kwargs):
         return tablib.import_set(in_stream, format=self.get_title(), **kwargs)
 
-    def export_data(self, dataset, escape_output=False, **kwargs):
+    def export_data(self, dataset, **kwargs):
+        # remove the deprecated `escape_output` param if present
+        kwargs.pop("escape_output", None)
+        if kwargs.pop("escape_html", None):
+            self._escape_html(dataset)
+        if kwargs.pop("escape_formulae", None):
+            self._escape_formulae(dataset)
         return dataset.export(self.get_title(), **kwargs)
 
     def get_extension(self):
@@ -98,6 +105,21 @@ class TablibFormat(Format):
 
     def can_export(self):
         return hasattr(self.get_format(), 'export_set')
+
+    def _escape_html(self, dataset):
+        for _ in dataset:
+            row = dataset.lpop()
+            row = [html.escape(str(cell)) for cell in row]
+            dataset.append(row)
+
+    def _escape_formulae(self, dataset):
+        def _do_escape(s):
+            return s.replace("=", "", 1) if s.startswith("=") else s
+
+        for _ in dataset:
+            row = dataset.lpop()
+            row = [_do_escape(str(cell)) for cell in row]
+            dataset.append(row)
 
 
 class TextFormat(TablibFormat):
@@ -149,11 +171,13 @@ class HTML(TextFormat):
 
     def export_data(self, dataset, escape_output=False, **kwargs):
         if escape_output:
-            for _ in dataset:
-                row = dataset.lpop()
-                row = [html.escape(str(cell)) for cell in row]
-                dataset.append(row)
-        return dataset.export(self.get_title(), **kwargs)
+            warnings.warn(
+                "escape_output flag now deprecated - "
+                "this will be removed in a future release",
+                DeprecationWarning,
+            )
+            super()._escape_html(dataset)
+        return super().export_data(dataset, **kwargs)
 
 
 class XLS(TablibFormat):
@@ -201,7 +225,6 @@ class XLSX(TablibFormat):
             row_values = [cell.value for cell in row]
             dataset.append(row_values)
         return dataset
-
 
 #: These are the default formats for import and export. Whether they can be
 #: used or not is depending on their implementation in the tablib library.

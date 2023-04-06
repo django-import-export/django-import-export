@@ -1,3 +1,4 @@
+import logging
 import warnings
 
 from django.conf import settings
@@ -9,6 +10,8 @@ from .formats import base_formats
 from .forms import ExportForm
 from .resources import modelresource_factory
 from .signals import post_export
+
+logger = logging.getLogger(__name__)
 
 
 class BaseImportExportMixin:
@@ -91,10 +94,32 @@ class BaseImportMixin(BaseImportExportMixin):
 class BaseExportMixin(BaseImportExportMixin):
     model = None
     escape_exported_data = False
+    escape_html = False
+    escape_formulae = False
 
     @property
     def should_escape_output(self):
+        if hasattr(settings, 'IMPORT_EXPORT_ESCAPE_OUTPUT_ON_EXPORT'):
+            warnings.warn(
+                "IMPORT_EXPORT_ESCAPE_OUTPUT_ON_EXPORT will be deprecated in a future release. "
+                "Refer to docs for new attributes.",
+                DeprecationWarning,
+            )
         return getattr(settings, 'IMPORT_EXPORT_ESCAPE_OUTPUT_ON_EXPORT', self.escape_exported_data)
+
+    @property
+    def should_escape_html(self):
+        v = getattr(settings, 'IMPORT_EXPORT_ESCAPE_HTML_ON_EXPORT', self.escape_html)
+        if v is True:
+            logger.debug('IMPORT_EXPORT_ESCAPE_HTML_ON_EXPORT is enabled')
+        return v
+
+    @property
+    def should_escape_formulae(self):
+        v = getattr(settings, 'IMPORT_EXPORT_ESCAPE_FORMULAE_ON_EXPORT', self.escape_formulae)
+        if v is True:
+            logger.debug('IMPORT_EXPORT_ESCAPE_FORMULAE_ON_EXPORT is enabled')
+        return v
 
     def get_export_formats(self):
         """

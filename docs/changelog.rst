@@ -4,6 +4,15 @@ Changelog
 3.2.0 (unreleased)
 ------------------
 
+- Escape formulae on export to XLSX (#1568)
+
+  - This includes deprecation of :ref:`IMPORT_EXPORT_ESCAPE_OUTPUT_ON_EXPORT`.
+
+    Refer to :ref:`installation` for alternatives.
+
+  - :meth:`import_export.formats.TablibFormat.export()`: ``escape_output`` flag now deprecated in favour of
+    ``escape_html`` and ``escape_formulae``.
+
 - Refactor methods so that ``args`` are declared correctly (#1566)
 
   - This includes deprecations to be aware of if you have overridden :meth:`~import_export.resources.Resource.export`
@@ -15,11 +24,12 @@ Changelog
       passed as a named parameter.
 
 - Updated ``setup.py`` (#1564)
-- Added ``SECURITY.md``
-- updated FAQ to include workaround for `RelatedObjectDoesNotExist` exception (#1562)
+- Added ``SECURITY.md`` (#1563)
+- Updated FAQ to include workaround for `RelatedObjectDoesNotExist` exception (#1562)
 - Prevent error comparing m2m field of the new objects (#1560)
 - Add documentation for passing data from admin form to Resource  (#1555)
 - Added new translations to Spanish and Spanish (Argentina) (#1552)
+- Pass kwargs to import_set function (#1448)
 
 3.1.0 (2023-02-21)
 ------------------
