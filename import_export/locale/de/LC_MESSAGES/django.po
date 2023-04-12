@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-02-21 18:05+0000\n"
+"POT-Creation-Date: 2023-04-12 18:40+0100\n"
 "PO-Revision-Date: 2022-10-17 17:42+0200\n"
 "Last-Translator: Jannes Blobel <jannes.blobel@inlang.com>\n"
 "Language-Team: \n"
@@ -40,29 +40,29 @@ msgstr ""
 msgid "Import"
 msgstr "Importieren"
 
-#: admin.py:749 templates/admin/import_export/change_list_export_item.html:5
+#: admin.py:752 templates/admin/import_export/change_list_export_item.html:5
 #: templates/admin/import_export/export.html:12
 msgid "Export"
 msgstr "Exportieren"
 
-#: admin.py:812
+#: admin.py:815
 msgid "You must select an export format."
 msgstr "Es muss ein Exportformat ausgewählt werden."
 
-#: admin.py:835
+#: admin.py:838
 #, python-format
 msgid "Export selected %(verbose_name_plural)s"
 msgstr "Ausgewählte %(verbose_name_plural)s exportieren"
 
-#: forms.py:11
+#: forms.py:12
 msgid "Resource"
 msgstr "Ressource"
 
-#: forms.py:29
+#: forms.py:41
 msgid "File to import"
 msgstr "Zu importierende Datei"
 
-#: forms.py:32 forms.py:75 forms.py:100
+#: forms.py:44 forms.py:88 forms.py:114
 msgid "Format"
 msgstr "Dateiformat"
 

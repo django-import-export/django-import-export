@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 0.0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-02-21 18:05+0000\n"
+"POT-Creation-Date: 2023-04-12 18:40+0100\n"
 "PO-Revision-Date: 2021-03-09 00:29+0030\n"
 "Last-Translator: Yazdan Ranjbar <Yazdan_ra@icloud.com>\n"
 "Language-Team: Persain/Farsi <kde-i18n-it@kde.org>\n"
@@ -37,29 +37,29 @@ msgstr ""
 msgid "Import"
 msgstr "بارگذاری"
 
-#: admin.py:749 templates/admin/import_export/change_list_export_item.html:5
+#: admin.py:752 templates/admin/import_export/change_list_export_item.html:5
 #: templates/admin/import_export/export.html:12
 msgid "Export"
 msgstr "خروجی"
 
-#: admin.py:812
+#: admin.py:815
 msgid "You must select an export format."
 msgstr "شما باید یک فرمت خروجی انتخاب کنید"
 
-#: admin.py:835
+#: admin.py:838
 #, python-format
 msgid "Export selected %(verbose_name_plural)s"
 msgstr "خروجی %(verbose_name_plural)s انتخاب شده"
 
-#: forms.py:11
+#: forms.py:12
 msgid "Resource"
 msgstr ""
 
-#: forms.py:29
+#: forms.py:41
 msgid "File to import"
 msgstr "قایل برای بارگذاری"
 
-#: forms.py:32 forms.py:75 forms.py:100
+#: forms.py:44 forms.py:88 forms.py:114
 msgid "Format"
 msgstr "فرمت"
 

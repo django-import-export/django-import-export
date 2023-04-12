@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-02-21 18:05+0000\n"
+"POT-Creation-Date: 2023-04-12 18:40+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -38,29 +38,29 @@ msgstr ""
 msgid "Import"
 msgstr "Importovať"
 
-#: admin.py:749 templates/admin/import_export/change_list_export_item.html:5
+#: admin.py:752 templates/admin/import_export/change_list_export_item.html:5
 #: templates/admin/import_export/export.html:12
 msgid "Export"
 msgstr "Exportovať"
 
-#: admin.py:812
+#: admin.py:815
 msgid "You must select an export format."
 msgstr "Je potrebné vybrať formát exportu."
 
-#: admin.py:835
+#: admin.py:838
 #, python-format
 msgid "Export selected %(verbose_name_plural)s"
 msgstr "Exportovať vybrané %(verbose_name_plural)s"
 
-#: forms.py:11
+#: forms.py:12
 msgid "Resource"
 msgstr ""
 
-#: forms.py:29
+#: forms.py:41
 msgid "File to import"
 msgstr "Importovať súbor"
 
-#: forms.py:32 forms.py:75 forms.py:100
+#: forms.py:44 forms.py:88 forms.py:114
 msgid "Format"
 msgstr "Formát"
 
