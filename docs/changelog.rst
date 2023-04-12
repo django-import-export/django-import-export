@@ -1,7 +1,7 @@
 Changelog
 =========
 
-3.2.0 (unreleased)
+3.2.0 (2023-04-12)
 ------------------
 
 - Escape formulae on export to XLSX (#1568)
