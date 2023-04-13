@@ -4,7 +4,7 @@ Changelog
 3.2.1 (unreleased)
 ------------------
 
-- Added support for Django 4.2 ()
+- Added support for Django 4.2 (#1570)
 
 
 3.2.0 (2023-04-12)
