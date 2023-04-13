@@ -11,6 +11,7 @@ class atomic_if_using_transaction:
                 return something()
         return something()
     """
+
     def __init__(self, using_transactions, using):
         self.using_transactions = using_transactions
         if using_transactions:

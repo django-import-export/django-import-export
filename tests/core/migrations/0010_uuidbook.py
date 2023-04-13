@@ -5,17 +5,21 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('core', '0009_auto_20211111_0807'),
+        ("core", "0009_auto_20211111_0807"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='UUIDBook',
+            name="UUIDBook",
             fields=[
-                ('id', models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)),
-                ('name', models.CharField(max_length=100, verbose_name='Book name')),
+                (
+                    "id",
+                    models.UUIDField(
+                        primary_key=True, default=uuid.uuid4, editable=False
+                    ),
+                ),
+                ("name", models.CharField(max_length=100, verbose_name="Book name")),
             ],
         ),
     ]

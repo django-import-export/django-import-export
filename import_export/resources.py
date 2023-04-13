@@ -34,14 +34,18 @@ logger.addHandler(logging.NullHandler())
 
 
 def get_related_model(field):
-    if hasattr(field, 'related_model'):
+    if hasattr(field, "related_model"):
         return field.related_model
+
 
 def has_natural_foreign_key(model):
     """
     Determine if a model has natural foreign key functions
     """
-    return (hasattr(model, "natural_key") and hasattr(model.objects, "get_by_natural_key"))
+    return hasattr(model, "natural_key") and hasattr(
+        model.objects, "get_by_natural_key"
+    )
+
 
 class ResourceOptions:
     """
@@ -73,7 +77,7 @@ class ResourceOptions:
     care of loading existing objects.
     """
 
-    import_id_fields = ['id']
+    import_id_fields = ["id"]
     """
     Controls which object fields will be used to
     identify existing instances.
@@ -124,10 +128,11 @@ class ResourceOptions:
     """
     Controls whether or not an instance should be diffed following import.
     By default, an instance is copied prior to insert, update or delete.
-    After each row is processed, the instance's copy is diffed against the original, and the value
-    stored in each ``RowResult``.
-    If diffing is not required, then disabling the diff operation by setting this value to ``True``
-    improves performance, because the copy and comparison operations are skipped for each row.
+    After each row is processed, the instance's copy is diffed against the original,
+    and the value stored in each ``RowResult``.
+    If diffing is not required, then disabling the diff operation by setting this value
+    to ``True`` improves performance, because the copy and comparison operations are
+    skipped for each row.
     If enabled, then ``skip_row()`` checks do not execute, because 'skip' logic requires
     comparison between the stored and imported versions of a row.
     If enabled, then HTML row reports are also not generated (see ``skip_html_diff``).
@@ -139,11 +144,11 @@ class ResourceOptions:
     Controls whether or not a HTML report is generated after each row.
     By default, the difference between a stored copy and an imported instance
     is generated in HTML form and stored in each ``RowResult``.
-    The HTML report is used to present changes on the confirmation screen in the admin site,
-    hence when this value is ``True``, then changes will not be presented on the confirmation
-    screen.
-    If the HTML report is not required, then setting this value to ``True`` improves performance,
-    because the HTML generation is skipped for each row.
+    The HTML report is used to present changes on the confirmation screen in the admin
+    site, hence when this value is ``True``, then changes will not be presented on the
+    confirmation screen.
+    If the HTML report is not required, then setting this value to ``True`` improves
+    performance, because the HTML generation is skipped for each row.
     This is a useful optimization when importing large datasets.
     The default value is False.
     """
@@ -159,15 +164,17 @@ class ResourceOptions:
     """
     The batch_size parameter controls how many objects are created in a single query.
     The default is to create objects in batches of 1000.
-    See `bulk_create() <https://docs.djangoproject.com/en/dev/ref/models/querysets/#bulk-create>`_.
+    See `bulk_create()
+    <https://docs.djangoproject.com/en/dev/ref/models/querysets/#bulk-create>`_.
     This parameter is only used if ``use_bulk`` is True.
     """
 
     force_init_instance = False
     """
-    If True, this parameter will prevent imports from checking the database for existing instances.
-    Enabling this parameter is a performance enhancement if your import dataset is guaranteed to
-    contain new instances.
+    If True, this parameter will prevent imports from checking the database for existing
+    instances.
+    Enabling this parameter is a performance enhancement if your import dataset is
+    guaranteed to contain new instances.
     """
 
     using_db = None
@@ -189,12 +196,11 @@ class ResourceOptions:
     If True, use_natural_foreign_keys = True will be passed to all foreign
     key widget fields whose models support natural foreign keys. That is,
     the model has a natural_key function and the manager has a
-    get_by_natural_key function. 
+    get_by_natural_key function.
     """
 
 
 class DeclarativeMetaclass(type):
-
     def __new__(cls, name, bases, attrs):
         declared_fields = []
         meta = ResourceOptions()
@@ -203,12 +209,15 @@ class DeclarativeMetaclass(type):
         # fields. Note that we loop over the bases in *reverse*. This is
         # necessary in order to preserve the correct order of fields.
         for base in bases[::-1]:
-            if hasattr(base, 'fields'):
+            if hasattr(base, "fields"):
                 declared_fields = list(base.fields.items()) + declared_fields
                 # Collect the Meta options
-                options = getattr(base, 'Meta', None)
-                for option in [option for option in dir(options)
-                               if not option.startswith('_') and hasattr(options, option)]:
+                options = getattr(base, "Meta", None)
+                for option in [
+                    option
+                    for option in dir(options)
+                    if not option.startswith("_") and hasattr(options, option)
+                ]:
                     setattr(meta, option, getattr(options, option))
 
         # Add direct fields
@@ -219,13 +228,16 @@ class DeclarativeMetaclass(type):
                     field.column_name = field_name
                 declared_fields.append((field_name, field))
 
-        attrs['fields'] = OrderedDict(declared_fields)
+        attrs["fields"] = OrderedDict(declared_fields)
         new_class = super().__new__(cls, name, bases, attrs)
 
         # Add direct options
-        options = getattr(new_class, 'Meta', None)
-        for option in [option for option in dir(options)
-                       if not option.startswith('_') and hasattr(options, option)]:
+        options = getattr(new_class, "Meta", None)
+        for option in [
+            option
+            for option in dir(options)
+            if not option.startswith("_") and hasattr(options, option)
+        ]:
             setattr(meta, option, getattr(options, option))
         new_class._meta = meta
 
@@ -255,7 +267,10 @@ class Diff:
         return data
 
     def _export_resource_fields(self, resource, instance):
-        return [resource.export_field(f, instance) if instance else "" for f in resource.get_user_visible_fields()]
+        return [
+            resource.export_field(f, instance) if instance else ""
+            for f in resource.get_user_visible_fields()
+        ]
 
 
 class Resource(metaclass=DeclarativeMetaclass):
@@ -319,13 +334,13 @@ class Resource(metaclass=DeclarativeMetaclass):
 
     def get_use_transactions(self):
         if self._meta.use_transactions is None:
-            return getattr(settings, 'IMPORT_EXPORT_USE_TRANSACTIONS', True)
+            return getattr(settings, "IMPORT_EXPORT_USE_TRANSACTIONS", True)
         else:
             return self._meta.use_transactions
 
     def get_chunk_size(self):
         if self._meta.chunk_size is None:
-            return getattr(settings, 'IMPORT_EXPORT_CHUNK_SIZE', 100)
+            return getattr(settings, "IMPORT_EXPORT_CHUNK_SIZE", 100)
         else:
             return self._meta.chunk_size
 
@@ -343,8 +358,9 @@ class Resource(metaclass=DeclarativeMetaclass):
         for field_name, f in self.fields.items():
             if f == field:
                 return field_name
-        raise AttributeError("Field %s does not exists in %s resource" % (
-            field, self.__class__))
+        raise AttributeError(
+            "Field %s does not exists in %s resource" % (field, self.__class__)
+        )
 
     def init_instance(self, row=None):
         """
@@ -359,9 +375,7 @@ class Resource(metaclass=DeclarativeMetaclass):
         the :doc:`InstanceLoader <api_instance_loaders>`. Otherwise,
         returns `None`.
         """
-        import_id_fields = [
-            self.fields[f] for f in self.get_import_id_fields()
-        ]
+        import_id_fields = [self.fields[f] for f in self.get_import_id_fields()]
         for field in import_id_fields:
             if field.column_name not in row:
                 return
@@ -378,18 +392,20 @@ class Resource(metaclass=DeclarativeMetaclass):
         return (self.init_instance(row), True)
 
     def get_import_id_fields(self):
-        """
-        """
+        """ """
         return self._meta.import_id_fields
 
     def get_bulk_update_fields(self):
         """
         Returns the fields to be included in calls to bulk_update().
-        ``import_id_fields`` are removed because `id` fields cannot be supplied to bulk_update().
+        ``import_id_fields`` are removed because `id` fields cannot be supplied to
+        bulk_update().
         """
         return [f for f in self.fields if f not in self._meta.import_id_fields]
 
-    def bulk_create(self, using_transactions, dry_run, raise_errors, batch_size=None, result=None):
+    def bulk_create(
+        self, using_transactions, dry_run, raise_errors, batch_size=None, result=None
+    ):
         """
         Creates objects by calling ``bulk_create``.
         """
@@ -398,13 +414,17 @@ class Resource(metaclass=DeclarativeMetaclass):
                 if not using_transactions and dry_run:
                     pass
                 else:
-                    self._meta.model.objects.bulk_create(self.create_instances, batch_size=batch_size)
+                    self._meta.model.objects.bulk_create(
+                        self.create_instances, batch_size=batch_size
+                    )
         except Exception as e:
             self.handle_import_error(result, e, raise_errors)
         finally:
             self.create_instances.clear()
 
-    def bulk_update(self, using_transactions, dry_run, raise_errors, batch_size=None, result=None):
+    def bulk_update(
+        self, using_transactions, dry_run, raise_errors, batch_size=None, result=None
+    ):
         """
         Updates objects by calling ``bulk_update``.
         """
@@ -413,8 +433,11 @@ class Resource(metaclass=DeclarativeMetaclass):
                 if not using_transactions and dry_run:
                     pass
                 else:
-                    self._meta.model.objects.bulk_update(self.update_instances, self.get_bulk_update_fields(),
-                                                         batch_size=batch_size)
+                    self._meta.model.objects.bulk_update(
+                        self.update_instances,
+                        self.get_bulk_update_fields(),
+                        batch_size=batch_size,
+                    )
         except Exception as e:
             self.handle_import_error(result, e, raise_errors)
         finally:
@@ -437,7 +460,9 @@ class Resource(metaclass=DeclarativeMetaclass):
         finally:
             self.delete_instances.clear()
 
-    def validate_instance(self, instance, import_validation_errors=None, validate_unique=True):
+    def validate_instance(
+        self, instance, import_validation_errors=None, validate_unique=True
+    ):
         """
         Takes any validation errors that were raised by
         :meth:`~import_export.resources.Resource.import_obj`, and combines them
@@ -465,7 +490,9 @@ class Resource(metaclass=DeclarativeMetaclass):
         if errors:
             raise ValidationError(errors)
 
-    def save_instance(self, instance, is_create, using_transactions=True, dry_run=False):
+    def save_instance(
+        self, instance, is_create, using_transactions=True, dry_run=False
+    ):
         """
         Takes care of saving the object to the database.
 
@@ -556,8 +583,7 @@ class Resource(metaclass=DeclarativeMetaclass):
             try:
                 self.import_field(field, obj, data, **kwargs)
             except ValueError as e:
-                errors[field.attribute] = ValidationError(
-                    force_str(e), code="invalid")
+                errors[field.attribute] = ValidationError(force_str(e), code="invalid")
         if errors:
             raise ValidationError(errors)
 
@@ -570,7 +596,8 @@ class Resource(metaclass=DeclarativeMetaclass):
         """
         if (not using_transactions and dry_run) or self._meta.use_bulk:
             # we don't have transactions and we want to do a dry_run
-            # OR use_bulk is enabled (m2m operations are not supported for bulk operations)
+            # OR use_bulk is enabled (m2m operations are not supported
+            # for bulk operations)
             pass
         else:
             for field in self.get_import_fields():
@@ -597,7 +624,7 @@ class Resource(metaclass=DeclarativeMetaclass):
         If skip_diff is True, then no comparisons can be made because ``original``
         will be None.
 
-        When left unspecified, skip_diff and skip_unchanged both default to ``False``, 
+        When left unspecified, skip_diff and skip_unchanged both default to ``False``,
         and rows are never skipped.
 
         By default, rows are not skipped if validation errors have been detected
@@ -609,13 +636,17 @@ class Resource(metaclass=DeclarativeMetaclass):
 
         Use ``super`` if you want to preserve default handling while overriding
         ::
-            class YourResource(ModelResource):
-                def skip_row(self, instance, original, row, import_validation_errors=None):
-                    # Add code here
-                    return super().skip_row(instance, original, row, import_validation_errors=import_validation_errors)
-
+          class YourResource(ModelResource):
+            def skip_row(self, instance, original, row, import_validation_errors=None):
+                # Add code here
+                return super().skip_row(instance, original, row,
+                  import_validation_errors=import_validation_errors)
         """
-        if not self._meta.skip_unchanged or self._meta.skip_diff or import_validation_errors:
+        if (
+            not self._meta.skip_unchanged
+            or self._meta.skip_diff
+            or import_validation_errors
+        ):
             return False
         for field in self.get_import_fields():
             # For fields that are models.fields.related.ManyRelatedManager
@@ -627,11 +658,17 @@ class Resource(metaclass=DeclarativeMetaclass):
                 # m2m instance values are taken from the 'row' because they
                 # have not been written to the 'instance' at this point
                 instance_values = list(field.clean(row))
-                original_values = list() if original.pk is None else list(field.get_value(original).all())
+                original_values = (
+                    list()
+                    if original.pk is None
+                    else list(field.get_value(original).all())
+                )
                 if len(instance_values) != len(original_values):
                     return False
 
-                if sorted(v.pk for v in instance_values) != sorted(v.pk for v in original_values):
+                if sorted(v.pk for v in instance_values) != sorted(
+                    v.pk for v in original_values
+                ):
                     return False
             else:
                 if field.get_value(instance) != field.get_value(original):
@@ -682,7 +719,15 @@ class Resource(metaclass=DeclarativeMetaclass):
         if raise_errors:
             raise
 
-    def import_row(self, row, instance_loader, using_transactions=True, dry_run=False, raise_errors=None, **kwargs):
+    def import_row(
+        self,
+        row,
+        instance_loader,
+        using_transactions=True,
+        dry_run=False,
+        raise_errors=None,
+        **kwargs
+    ):
         """
         Imports data from ``tablib.Dataset``. Refer to :doc:`import_workflow`
         for a more complete description of the whole import process.
@@ -699,8 +744,9 @@ class Resource(metaclass=DeclarativeMetaclass):
         """
         if raise_errors is not None:
             warnings.warn(
-                "raise_errors argument is deprecated and will be removed in a future release.",
-                category=DeprecationWarning
+                "raise_errors argument is deprecated and "
+                "will be removed in a future release.",
+                category=DeprecationWarning,
             )
 
         skip_diff = self._meta.skip_diff
@@ -739,7 +785,9 @@ class Resource(metaclass=DeclarativeMetaclass):
                     # Validation errors from import_obj() are passed on to
                     # validate_instance(), where they can be combined with model
                     # instance validation errors if necessary
-                    import_validation_errors = e.update_error_dict(import_validation_errors)
+                    import_validation_errors = e.update_error_dict(
+                        import_validation_errors
+                    )
 
                 if self.skip_row(instance, original, row, import_validation_errors):
                     row_result.import_type = RowResult.IMPORT_TYPE_SKIP
@@ -769,9 +817,16 @@ class Resource(metaclass=DeclarativeMetaclass):
 
         return row_result
 
-    def import_data(self, dataset, dry_run=False, raise_errors=False,
-                    use_transactions=None, collect_failed_rows=False,
-                    rollback_on_validation_errors=False, **kwargs):
+    def import_data(
+        self,
+        dataset,
+        dry_run=False,
+        raise_errors=False,
+        use_transactions=None,
+        collect_failed_rows=False,
+        rollback_on_validation_errors=False,
+        **kwargs
+    ):
         """
         Imports data from ``tablib.Dataset``. Refer to :doc:`import_workflow`
         for a more complete description of the whole import process.
@@ -787,8 +842,9 @@ class Resource(metaclass=DeclarativeMetaclass):
         :param collect_failed_rows: If ``True`` the import process will collect
             failed rows.
 
-        :param rollback_on_validation_errors: If both ``use_transactions`` and ``rollback_on_validation_errors``
-            are set to ``True``, the import process will be rolled back in case of ValidationError.
+        :param rollback_on_validation_errors: If both ``use_transactions`` and
+        ``rollback_on_validation_errors`` are set to ``True``, the import process will
+        be rolled back in case of ValidationError.
 
         :param dry_run: If ``dry_run`` is set, or an error occurs, if a transaction
             is being used, it will be rolled back.
@@ -799,32 +855,52 @@ class Resource(metaclass=DeclarativeMetaclass):
 
         db_connection = self.get_db_connection_name()
         connection = connections[db_connection]
-        supports_transactions = getattr(connection.features, "supports_transactions", False)
+        supports_transactions = getattr(
+            connection.features, "supports_transactions", False
+        )
 
         if use_transactions and not supports_transactions:
             raise ImproperlyConfigured
 
         using_transactions = (use_transactions or dry_run) and supports_transactions
 
-        if self._meta.batch_size is not None and (not isinstance(self._meta.batch_size, int) or self._meta.batch_size < 0):
+        if self._meta.batch_size is not None and (
+            not isinstance(self._meta.batch_size, int) or self._meta.batch_size < 0
+        ):
             raise ValueError("Batch size must be a positive integer")
 
         with atomic_if_using_transaction(using_transactions, using=db_connection):
             result = self.import_data_inner(
-                dataset, dry_run, raise_errors, using_transactions, collect_failed_rows, **kwargs)
-            if using_transactions and (dry_run or result.has_errors() or
-                                       (rollback_on_validation_errors and result.has_validation_errors())):
+                dataset,
+                dry_run,
+                raise_errors,
+                using_transactions,
+                collect_failed_rows,
+                **kwargs
+            )
+            if using_transactions and (
+                dry_run
+                or result.has_errors()
+                or (rollback_on_validation_errors and result.has_validation_errors())
+            ):
                 set_rollback(True, using=db_connection)
             return result
 
     def import_data_inner(
-            self, dataset, dry_run, raise_errors, using_transactions,
-            collect_failed_rows, rollback_on_validation_errors=None, **kwargs):
-
+        self,
+        dataset,
+        dry_run,
+        raise_errors,
+        using_transactions,
+        collect_failed_rows,
+        rollback_on_validation_errors=None,
+        **kwargs
+    ):
         if rollback_on_validation_errors is not None:
             warnings.warn(
-                "rollback_on_validation_errors argument is deprecated and will be removed in a future release.",
-                category=DeprecationWarning
+                "rollback_on_validation_errors argument is deprecated and will be "
+                "removed in a future release.",
+                category=DeprecationWarning,
             )
 
         result = self.get_result_class()()
@@ -848,7 +924,9 @@ class Resource(metaclass=DeclarativeMetaclass):
 
         for i, data_row in enumerate(dataset, 1):
             row = OrderedDict(zip(dataset.headers, data_row))
-            with atomic_if_using_transaction(using_transactions and not self._meta.use_bulk, using=db_connection):
+            with atomic_if_using_transaction(
+                using_transactions and not self._meta.use_bulk, using=db_connection
+            ):
                 row_result = self.import_row(
                     row,
                     instance_loader,
@@ -862,16 +940,34 @@ class Resource(metaclass=DeclarativeMetaclass):
                 # because this is a batch, any exceptions are logged and not associated
                 # with a specific row
                 if len(self.create_instances) == self._meta.batch_size:
-                    with atomic_if_using_transaction(using_transactions, using=db_connection):
-                        self.bulk_create(using_transactions, dry_run, raise_errors,
-                                         batch_size=self._meta.batch_size, result=result)
+                    with atomic_if_using_transaction(
+                        using_transactions, using=db_connection
+                    ):
+                        self.bulk_create(
+                            using_transactions,
+                            dry_run,
+                            raise_errors,
+                            batch_size=self._meta.batch_size,
+                            result=result,
+                        )
                 if len(self.update_instances) == self._meta.batch_size:
-                    with atomic_if_using_transaction(using_transactions, using=db_connection):
-                        self.bulk_update(using_transactions, dry_run, raise_errors,
-                                         batch_size=self._meta.batch_size, result=result)
+                    with atomic_if_using_transaction(
+                        using_transactions, using=db_connection
+                    ):
+                        self.bulk_update(
+                            using_transactions,
+                            dry_run,
+                            raise_errors,
+                            batch_size=self._meta.batch_size,
+                            result=result,
+                        )
                 if len(self.delete_instances) == self._meta.batch_size:
-                    with atomic_if_using_transaction(using_transactions, using=db_connection):
-                        self.bulk_delete(using_transactions, dry_run, raise_errors, result=result)
+                    with atomic_if_using_transaction(
+                        using_transactions, using=db_connection
+                    ):
+                        self.bulk_delete(
+                            using_transactions, dry_run, raise_errors, result=result
+                        )
 
             result.increment_row_result_total(row_result)
 
@@ -886,20 +982,30 @@ class Resource(metaclass=DeclarativeMetaclass):
                     result.append_failed_row(row, row_result.validation_error)
                 if raise_errors:
                     raise row_result.validation_error
-            if (row_result.import_type != RowResult.IMPORT_TYPE_SKIP or
-                    self._meta.report_skipped):
+            if (
+                row_result.import_type != RowResult.IMPORT_TYPE_SKIP
+                or self._meta.report_skipped
+            ):
                 result.append_row_result(row_result)
 
         if self._meta.use_bulk:
             # bulk persist any instances which are still pending
             with atomic_if_using_transaction(using_transactions, using=db_connection):
-                self.bulk_create(using_transactions, dry_run, raise_errors, result=result)
-                self.bulk_update(using_transactions, dry_run, raise_errors, result=result)
-                self.bulk_delete(using_transactions, dry_run, raise_errors, result=result)
+                self.bulk_create(
+                    using_transactions, dry_run, raise_errors, result=result
+                )
+                self.bulk_update(
+                    using_transactions, dry_run, raise_errors, result=result
+                )
+                self.bulk_delete(
+                    using_transactions, dry_run, raise_errors, result=result
+                )
 
         try:
             with atomic_if_using_transaction(using_transactions, using=db_connection):
-                self.after_import(dataset, result, using_transactions, dry_run, **kwargs)
+                self.after_import(
+                    dataset, result, using_transactions, dry_run, **kwargs
+                )
         except Exception as e:
             self.handle_import_error(result, e, raise_errors)
 
@@ -937,13 +1043,13 @@ class Resource(metaclass=DeclarativeMetaclass):
         return [self.export_field(field, obj) for field in self.get_export_fields()]
 
     def get_export_headers(self):
-        headers = [
-            force_str(field.column_name) for field in self.get_export_fields()]
+        headers = [force_str(field.column_name) for field in self.get_export_fields()]
         return headers
 
     def get_user_visible_headers(self):
         headers = [
-            force_str(field.column_name) for field in self.get_user_visible_fields()]
+            force_str(field.column_name) for field in self.get_user_visible_fields()
+        ]
         return headers
 
     def get_user_visible_fields(self):
@@ -959,7 +1065,7 @@ class Resource(metaclass=DeclarativeMetaclass):
             if not queryset.query.order_by:
                 # Paginator() throws a warning if there is no sorting
                 # attached to the queryset
-                queryset = queryset.order_by('pk')
+                queryset = queryset.order_by("pk")
             paginator = Paginator(queryset, self.get_chunk_size())
             for index in range(paginator.num_pages):
                 yield from paginator.get_page(index + 1)
@@ -971,15 +1077,18 @@ class Resource(metaclass=DeclarativeMetaclass):
         Exports a resource.
         :returns: Dataset object.
         """
-        if len(args) == 1 and (isinstance(args[0], QuerySet) or isinstance(args[0], list)):
+        if len(args) == 1 and (
+            isinstance(args[0], QuerySet) or isinstance(args[0], list)
+        ):
             # issue 1565: definition of export() was incorrect
-            # if queryset is being passed, it must be as the first arg or named parameter
+            # if queryset is being passed, it must be as the first arg or named
+            # parameter
             # this logic is included for backwards compatibility:
             # if the method is being called without a named parameter, add a warning
             # this check should be removed in a future release
             warnings.warn(
                 "'queryset' must be supplied as a named parameter",
-                category=DeprecationWarning
+                category=DeprecationWarning,
             )
             queryset = args[0]
 
@@ -999,7 +1108,6 @@ class Resource(metaclass=DeclarativeMetaclass):
 
 
 class ModelDeclarativeMetaclass(DeclarativeMetaclass):
-
     def __new__(cls, name, bases, attrs):
         new_class = super().__new__(cls, name, bases, attrs)
 
@@ -1014,16 +1122,20 @@ class ModelDeclarativeMetaclass(DeclarativeMetaclass):
 
             field_list = []
             for f in sorted(model_opts.fields + model_opts.many_to_many):
-                if opts.fields is not None and not f.name in opts.fields:
+                if opts.fields is not None and f.name not in opts.fields:
                     continue
                 if opts.exclude and f.name in opts.exclude:
                     continue
                 if f.name in declared_fields:
                     continue
 
-                field = new_class.field_from_django_field(f.name, f,
-                                                          readonly=False)
-                field_list.append((f.name, field, ))
+                field = new_class.field_from_django_field(f.name, f, readonly=False)
+                field_list.append(
+                    (
+                        f.name,
+                        field,
+                    )
+                )
 
             new_class.fields.update(OrderedDict(field_list))
 
@@ -1033,21 +1145,24 @@ class ModelDeclarativeMetaclass(DeclarativeMetaclass):
                 for field_name in opts.fields:
                     if field_name in declared_fields:
                         continue
-                    if field_name.find('__') == -1:
+                    if field_name.find("__") == -1:
                         continue
 
                     model = opts.model
-                    attrs = field_name.split('__')
+                    attrs = field_name.split("__")
                     for i, attr in enumerate(attrs):
-                        verbose_path = ".".join([opts.model.__name__] + attrs[0:i+1])
+                        verbose_path = ".".join(
+                            [opts.model.__name__] + attrs[0 : i + 1]
+                        )
 
                         try:
                             f = model._meta.get_field(attr)
                         except FieldDoesNotExist as e:
                             logger.debug(e, exc_info=e)
                             raise FieldDoesNotExist(
-                                "%s: %s has no field named '%s'" %
-                                (verbose_path, model.__name__, attr))
+                                "%s: %s has no field named '%s'"
+                                % (verbose_path, model.__name__, attr)
+                            )
 
                         if i < len(attrs) - 1:
                             # We're not at the last attribute yet, so check
@@ -1058,14 +1173,16 @@ class ModelDeclarativeMetaclass(DeclarativeMetaclass):
                             else:
                                 if get_related_model(f) is None:
                                     raise KeyError(
-                                        '%s is not a relation' % verbose_path)
+                                        "%s is not a relation" % verbose_path
+                                    )
                                 model = get_related_model(f)
 
                     if isinstance(f, ForeignObjectRel):
                         f = f.field
 
-                    field = new_class.field_from_django_field(field_name, f,
-                                                              readonly=True)
+                    field = new_class.field_from_django_field(
+                        field_name, f, readonly=True
+                    )
                     field_list.append((field_name, field))
 
                 new_class.fields.update(OrderedDict(field_list))
@@ -1081,27 +1198,27 @@ class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
     DEFAULT_RESOURCE_FIELD = Field
 
     WIDGETS_MAP = {
-        'ManyToManyField': 'get_m2m_widget',
-        'OneToOneField': 'get_fk_widget',
-        'ForeignKey': 'get_fk_widget',
-        'CharField': widgets.CharWidget,
-        'DecimalField': widgets.DecimalWidget,
-        'DateTimeField': widgets.DateTimeWidget,
-        'DateField': widgets.DateWidget,
-        'TimeField': widgets.TimeWidget,
-        'DurationField': widgets.DurationWidget,
-        'FloatField': widgets.FloatWidget,
-        'IntegerField': widgets.IntegerWidget,
-        'PositiveIntegerField': widgets.IntegerWidget,
-        'BigIntegerField': widgets.IntegerWidget,
-        'PositiveSmallIntegerField': widgets.IntegerWidget,
-        'SmallIntegerField': widgets.IntegerWidget,
-        'SmallAutoField': widgets.IntegerWidget,
-        'AutoField': widgets.IntegerWidget,
-        'BigAutoField': widgets.IntegerWidget,
-        'NullBooleanField': widgets.BooleanWidget,
-        'BooleanField': widgets.BooleanWidget,
-        'JSONField': widgets.JSONWidget,
+        "ManyToManyField": "get_m2m_widget",
+        "OneToOneField": "get_fk_widget",
+        "ForeignKey": "get_fk_widget",
+        "CharField": widgets.CharWidget,
+        "DecimalField": widgets.DecimalWidget,
+        "DateTimeField": widgets.DateTimeWidget,
+        "DateField": widgets.DateWidget,
+        "TimeField": widgets.TimeWidget,
+        "DurationField": widgets.DurationWidget,
+        "FloatField": widgets.FloatWidget,
+        "IntegerField": widgets.IntegerWidget,
+        "PositiveIntegerField": widgets.IntegerWidget,
+        "BigIntegerField": widgets.IntegerWidget,
+        "PositiveSmallIntegerField": widgets.IntegerWidget,
+        "SmallIntegerField": widgets.IntegerWidget,
+        "SmallAutoField": widgets.IntegerWidget,
+        "AutoField": widgets.IntegerWidget,
+        "BigAutoField": widgets.IntegerWidget,
+        "NullBooleanField": widgets.BooleanWidget,
+        "BooleanField": widgets.BooleanWidget,
+        "JSONField": widgets.JSONWidget,
     }
 
     @classmethod
@@ -1110,8 +1227,8 @@ class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
         Prepare widget for m2m field
         """
         return functools.partial(
-            widgets.ManyToManyWidget,
-            model=get_related_model(field))
+            widgets.ManyToManyWidget, model=get_related_model(field)
+        )
 
     @classmethod
     def get_fk_widget(cls, field):
@@ -1121,14 +1238,15 @@ class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
 
         model = get_related_model(field)
 
-        use_natural_foreign_keys = ( 
+        use_natural_foreign_keys = (
             has_natural_foreign_key(model) and cls._meta.use_natural_foreign_keys
         )
 
         return functools.partial(
             widgets.ForeignKeyWidget,
             model=model,
-            use_natural_foreign_keys=use_natural_foreign_keys)
+            use_natural_foreign_keys=use_natural_foreign_keys,
+        )
 
     @classmethod
     def widget_from_django_field(cls, f, default=widgets.Widget):
@@ -1206,10 +1324,14 @@ class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
         Reset the SQL sequences after new objects are imported
         """
         # Adapted from django's loaddata
-        if not dry_run and any(r.import_type == RowResult.IMPORT_TYPE_NEW for r in result.rows):
+        if not dry_run and any(
+            r.import_type == RowResult.IMPORT_TYPE_NEW for r in result.rows
+        ):
             db_connection = self.get_db_connection_name()
             connection = connections[db_connection]
-            sequence_sql = connection.ops.sequence_reset_sql(no_style(), [self._meta.model])
+            sequence_sql = connection.ops.sequence_reset_sql(
+                no_style(), [self._meta.model]
+            )
             if sequence_sql:
                 cursor = connection.cursor()
                 try:
@@ -1220,7 +1342,7 @@ class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
 
     @classmethod
     def get_display_name(cls):
-        if hasattr(cls._meta, 'name'):
+        if hasattr(cls._meta, "name"):
             return cls._meta.name
         return cls.__name__
 
@@ -1229,13 +1351,13 @@ def modelresource_factory(model, resource_class=ModelResource):
     """
     Factory for creating ``ModelResource`` class for given Django model.
     """
-    attrs = {'model': model}
-    Meta = type(str('Meta'), (object,), attrs)
+    attrs = {"model": model}
+    Meta = type(str("Meta"), (object,), attrs)
 
-    class_name = model.__name__ + str('Resource')
+    class_name = model.__name__ + str("Resource")
 
     class_attrs = {
-        'Meta': Meta,
+        "Meta": Meta,
     }
 
     metaclass = ModelDeclarativeMetaclass

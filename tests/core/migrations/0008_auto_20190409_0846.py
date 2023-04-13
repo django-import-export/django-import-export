@@ -4,25 +4,23 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('core', '0007_auto_20180628_0411'),
+        ("core", "0007_auto_20180628_0411"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='EBook',
-            fields=[
-            ],
+            name="EBook",
+            fields=[],
             options={
-                'proxy': True,
-                'indexes': [],
+                "proxy": True,
+                "indexes": [],
             },
-            bases=('core.book',),
+            bases=("core.book",),
         ),
         migrations.AddField(
-            model_name='book',
-            name='added',
+            model_name="book",
+            name="added",
             field=models.DateTimeField(blank=True, null=True),
         ),
     ]

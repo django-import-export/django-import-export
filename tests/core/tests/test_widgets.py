@@ -36,7 +36,6 @@ class CharWidgetTest(TestCase):
 
 
 class BooleanWidgetTest(TestCase):
-
     def setUp(self):
         self.widget = widgets.BooleanWidget()
 
@@ -71,20 +70,27 @@ class FormatDatetimeTest(TestCase):
     target_dt = "02.08.0010"
     format = "%d.%m.%Y"
 
-    @skipUnless(django.VERSION[0] < 4, f"skipping django {django.VERSION} version specific test")
+    @skipUnless(
+        django.VERSION[0] < 4, f"skipping django {django.VERSION} version specific test"
+    )
     def test_format_datetime_lt_django4(self):
-        self.assertEqual(self.target_dt, widgets.format_datetime(self.date, self.format))
+        self.assertEqual(
+            self.target_dt, widgets.format_datetime(self.date, self.format)
+        )
 
-    @skipUnless(django.VERSION[0] >= 4, f"running django {django.VERSION} version specific test")
+    @skipUnless(
+        django.VERSION[0] >= 4, f"running django {django.VERSION} version specific test"
+    )
     def test_format_datetime_gte_django4(self):
-        self.assertEqual(self.target_dt, widgets.format_datetime(self.date, self.format))
+        self.assertEqual(
+            self.target_dt, widgets.format_datetime(self.date, self.format)
+        )
 
 
 class DateWidgetTest(TestCase):
-
     def setUp(self):
         self.date = date(2012, 8, 13)
-        self.widget = widgets.DateWidget('%d.%m.%Y')
+        self.widget = widgets.DateWidget("%d.%m.%Y")
 
     def test_render(self):
         self.assertEqual(self.widget.render(self.date), "13.08.2012")
@@ -107,9 +113,9 @@ class DateWidgetTest(TestCase):
         self.assertEqual(self.date, self.widget.clean(self.date))
 
     def test_clean_raises_ValueError(self):
-        self.widget = widgets.DateWidget('x')
+        self.widget = widgets.DateWidget("x")
         with self.assertRaisesRegex(ValueError, "Enter a valid date."):
-            self.widget.clean('2021-05-01')
+            self.widget.clean("2021-05-01")
 
     @override_settings(USE_TZ=True)
     def test_use_tz(self):
@@ -123,42 +129,40 @@ class DateWidgetTest(TestCase):
 
 
 class DateTimeWidgetTest(TestCase):
-
     def setUp(self):
         self.datetime = datetime(2012, 8, 13, 18, 0, 0)
-        self.widget = widgets.DateTimeWidget('%d.%m.%Y %H:%M:%S')
+        self.widget = widgets.DateTimeWidget("%d.%m.%Y %H:%M:%S")
 
     def test_render(self):
-        self.assertEqual(self.widget.render(self.datetime),
-                         "13.08.2012 18:00:00")
+        self.assertEqual(self.widget.render(self.datetime), "13.08.2012 18:00:00")
 
     def test_render_none(self):
         self.assertEqual(self.widget.render(None), "")
 
     def test_clean(self):
-        self.assertEqual(self.widget.clean("13.08.2012 18:00:00"),
-                         self.datetime)
+        self.assertEqual(self.widget.clean("13.08.2012 18:00:00"), self.datetime)
 
-    @override_settings(USE_TZ=True, TIME_ZONE='Europe/Ljubljana')
+    @override_settings(USE_TZ=True, TIME_ZONE="Europe/Ljubljana")
     def test_use_tz(self):
         utc_dt = timezone.make_aware(self.datetime, pytz.UTC)
         self.assertEqual(self.widget.render(utc_dt), "13.08.2012 20:00:00")
         self.assertEqual(self.widget.clean("13.08.2012 20:00:00"), utc_dt)
 
-    @override_settings(USE_TZ=True, TIME_ZONE='Europe/Ljubljana')
+    @override_settings(USE_TZ=True, TIME_ZONE="Europe/Ljubljana")
     def test_clean_returns_tz_aware_datetime_when_naive_datetime_passed(self):
         # issue 1165
         if django.VERSION >= (5, 0):
             from zoneinfo import ZoneInfo
+
             tz = ZoneInfo("Europe/Ljubljana")
         else:
-            tz = pytz.timezone('Europe/Ljubljana')
+            tz = pytz.timezone("Europe/Ljubljana")
         target_dt = timezone.make_aware(self.datetime, tz)
         self.assertEqual(target_dt, self.widget.clean(self.datetime))
 
-    @override_settings(USE_TZ=True, TIME_ZONE='Europe/Ljubljana')
+    @override_settings(USE_TZ=True, TIME_ZONE="Europe/Ljubljana")
     def test_clean_handles_tz_aware_datetime(self):
-        self.datetime = datetime(2012, 8, 13, 18, 0, 0, tzinfo=pytz.timezone('UTC'))
+        self.datetime = datetime(2012, 8, 13, 18, 0, 0, tzinfo=pytz.timezone("UTC"))
         self.assertEqual(self.datetime, self.widget.clean(self.datetime))
 
     @override_settings(DATETIME_INPUT_FORMATS=None)
@@ -177,9 +181,10 @@ class DateTimeWidgetTest(TestCase):
 
 class DateWidgetBefore1900Test(TestCase):
     """https://github.com/django-import-export/django-import-export/pull/94"""
+
     def setUp(self):
         self.date = date(1868, 8, 13)
-        self.widget = widgets.DateWidget('%d.%m.%Y')
+        self.widget = widgets.DateWidget("%d.%m.%Y")
 
     def test_render(self):
         self.assertEqual(self.widget.render(self.date), "13.08.1868")
@@ -189,10 +194,9 @@ class DateWidgetBefore1900Test(TestCase):
 
 
 class DateTimeWidgetBefore1900Test(TestCase):
-
     def setUp(self):
         self.datetime = datetime(1868, 8, 13)
-        self.widget = widgets.DateTimeWidget('%d.%m.%Y')
+        self.widget = widgets.DateTimeWidget("%d.%m.%Y")
 
     def test_render(self):
         self.assertEqual("13.08.1868", self.widget.render(self.datetime))
@@ -202,10 +206,9 @@ class DateTimeWidgetBefore1900Test(TestCase):
 
 
 class TimeWidgetTest(TestCase):
-
     def setUp(self):
         self.time = time(20, 15, 0)
-        self.widget = widgets.TimeWidget('%H:%M:%S')
+        self.widget = widgets.TimeWidget("%H:%M:%S")
 
     def test_render(self):
         self.assertEqual(self.widget.render(self.time), "20:15:00")
@@ -222,7 +225,7 @@ class TimeWidgetTest(TestCase):
         self.assertEqual(("%H:%M:%S",), self.widget.formats)
 
     def test_clean_raises_ValueError(self):
-        self.widget = widgets.TimeWidget('x')
+        self.widget = widgets.TimeWidget("x")
         with self.assertRaisesRegex(ValueError, "Enter a valid time."):
             self.widget.clean("20:15:00")
 
@@ -231,7 +234,6 @@ class TimeWidgetTest(TestCase):
 
 
 class DurationWidgetTest(TestCase):
-
     def setUp(self):
         self.duration = timedelta(hours=1, minutes=57, seconds=0)
         self.widget = widgets.DurationWidget()
@@ -261,7 +263,6 @@ class DurationWidgetTest(TestCase):
 
 
 class NumberWidgetTest(TestCase):
-
     def setUp(self):
         self.value = 11.111
         self.widget = widgets.NumberWidget()
@@ -282,19 +283,23 @@ class NumberWidgetTest(TestCase):
     def test_render(self):
         self.assertEqual(self.widget.render(self.value), self.value)
 
-    @skipUnless(django.VERSION[0] < 4, f"skipping django {django.VERSION} version specific test")
-    @override_settings(LANGUAGE_CODE='fr-fr', USE_L10N=True)
-    def test_locale_render_coerce_to_string(self):
+    @skipUnless(
+        django.VERSION[0] < 4, f"skipping django {django.VERSION} version specific test"
+    )
+    @override_settings(LANGUAGE_CODE="fr-fr", USE_L10N=True)
+    def test_locale_render_coerce_to_string_lt4(self):
         self.assertEqual(self.widget_coerce_to_string.render(self.value), "11,111")
 
-    @skipUnless(django.VERSION[0] >= 4, f"skipping django {django.VERSION} version specific test")
-    @override_settings(LANGUAGE_CODE='fr-fr')
-    def test_locale_render_coerce_to_string(self):
+    @skipUnless(
+        django.VERSION[0] >= 4,
+        f"skipping django {django.VERSION} version specific test",
+    )
+    @override_settings(LANGUAGE_CODE="fr-fr")
+    def test_locale_render_coerce_to_string_gte4(self):
         self.assertEqual(self.widget_coerce_to_string.render(self.value), "11,111")
 
 
 class FloatWidgetTest(TestCase):
-
     def setUp(self):
         self.value = 11.111
         self.widget = widgets.FloatWidget()
@@ -315,20 +320,23 @@ class FloatWidgetTest(TestCase):
         self.assertEqual(self.widget.clean(" "), None)
         self.assertEqual(self.widget.clean("\r\n\t"), None)
 
-    @skipUnless(django.VERSION[0] < 4, f"skipping django {django.VERSION} version specific test")
-    @override_settings(LANGUAGE_CODE='fr-fr', USE_L10N=True)
-    def test_locale_render_coerce_to_string(self):
+    @skipUnless(
+        django.VERSION[0] < 4, f"skipping django {django.VERSION} version specific test"
+    )
+    @override_settings(LANGUAGE_CODE="fr-fr", USE_L10N=True)
+    def test_locale_render_coerce_to_string_lt4(self):
         self.assertEqual(self.widget_coerce_to_string.render(self.value), "11,111")
 
-    @skipUnless(django.VERSION[0] >= 4, f"skipping django {django.VERSION} version specific test")
-    @override_settings(LANGUAGE_CODE='fr-fr')
-    def test_locale_render_coerce_to_string(self):
+    @skipUnless(
+        django.VERSION[0] >= 4,
+        f"skipping django {django.VERSION} version specific test",
+    )
+    @override_settings(LANGUAGE_CODE="fr-fr")
+    def test_locale_render_coerce_to_string_gte4(self):
         self.assertEqual(self.widget_coerce_to_string.render(self.value), "11,111")
-
 
 
 class DecimalWidgetTest(TestCase):
-
     def setUp(self):
         self.value = Decimal("11.111")
         self.widget = widgets.DecimalWidget()
@@ -350,19 +358,23 @@ class DecimalWidgetTest(TestCase):
         self.assertEqual(self.widget.clean(" "), None)
         self.assertEqual(self.widget.clean("\r\n\t"), None)
 
-    @skipUnless(django.VERSION[0] < 4, f"skipping django {django.VERSION} version specific test")
-    @override_settings(LANGUAGE_CODE='fr-fr', USE_L10N=True)
-    def test_locale_render_coerce_to_string(self):
+    @skipUnless(
+        django.VERSION[0] < 4, f"skipping django {django.VERSION} version specific test"
+    )
+    @override_settings(LANGUAGE_CODE="fr-fr", USE_L10N=True)
+    def test_locale_render_coerce_to_string_lt4(self):
         self.assertEqual(self.widget_coerce_to_string.render(self.value), "11,111")
 
-    @skipUnless(django.VERSION[0] >= 4, f"skipping django {django.VERSION} version specific test")
-    @override_settings(LANGUAGE_CODE='fr-fr')
-    def test_locale_render_coerce_to_string(self):
+    @skipUnless(
+        django.VERSION[0] >= 4,
+        f"skipping django {django.VERSION} version specific test",
+    )
+    @override_settings(LANGUAGE_CODE="fr-fr")
+    def test_locale_render_coerce_to_string_gte4(self):
         self.assertEqual(self.widget_coerce_to_string.render(self.value), "11,111")
 
 
 class IntegerWidgetTest(TestCase):
-
     def setUp(self):
         self.value = 0
         self.widget = widgets.IntegerWidget()
@@ -383,25 +395,33 @@ class IntegerWidgetTest(TestCase):
         self.assertEqual(self.widget.clean(""), None)
         self.assertEqual(self.widget.clean(" "), None)
         self.assertEqual(self.widget.clean("\n\t\r"), None)
-    
-    @skipUnless(django.VERSION[0] < 4, f"skipping django {django.VERSION} version specific test")
-    @override_settings(LANGUAGE_CODE='fr-fr', USE_L10N=True)
+
+    @skipUnless(
+        django.VERSION[0] < 4, f"skipping django {django.VERSION} version specific test"
+    )
+    @override_settings(LANGUAGE_CODE="fr-fr", USE_L10N=True)
     def test_locale_render_lt_django4(self):
         self.assertEqual(self.widget_coerce_to_string.render(self.value), "0")
 
-    @skipUnless(django.VERSION[0] >= 4, f"skipping django {django.VERSION} version specific test")
-    @override_settings(LANGUAGE_CODE='fr-fr')
+    @skipUnless(
+        django.VERSION[0] >= 4,
+        f"skipping django {django.VERSION} version specific test",
+    )
+    @override_settings(LANGUAGE_CODE="fr-fr")
     def test_locale_render_gte_django4(self):
-        self.assertEqual(self.widget_coerce_to_string.render(self.value), "0") 
+        self.assertEqual(self.widget_coerce_to_string.render(self.value), "0")
 
 
 class ForeignKeyWidgetTest(TestCase):
-
     def setUp(self):
         self.widget = widgets.ForeignKeyWidget(Author)
-        self.natural_key_author_widget = widgets.ForeignKeyWidget(Author, use_natural_foreign_keys=True)
-        self.natural_key_book_widget = widgets.ForeignKeyWidget(Book, use_natural_foreign_keys=True )
-        self.author = Author.objects.create(name='Foo')
+        self.natural_key_author_widget = widgets.ForeignKeyWidget(
+            Author, use_natural_foreign_keys=True
+        )
+        self.natural_key_book_widget = widgets.ForeignKeyWidget(
+            Book, use_natural_foreign_keys=True
+        )
+        self.author = Author.objects.create(name="Foo")
         self.book = Book.objects.create(name="Bar", author=self.author)
 
     def test_clean(self):
@@ -419,25 +439,22 @@ class ForeignKeyWidgetTest(TestCase):
     def test_clean_multi_column(self):
         class BirthdayWidget(widgets.ForeignKeyWidget):
             def get_queryset(self, value, row, *args, **kwargs):
-                return self.model.objects.filter(
-                    birthday=row['birthday']
-                )
-        author2 = Author.objects.create(name='Foo')
+                return self.model.objects.filter(birthday=row["birthday"])
+
+        author2 = Author.objects.create(name="Foo")
         author2.birthday = "2016-01-01"
         author2.save()
-        birthday_widget = BirthdayWidget(Author, 'name')
-        row_dict = {'name': "Foo", 'birthday': author2.birthday}
+        birthday_widget = BirthdayWidget(Author, "name")
+        row_dict = {"name": "Foo", "birthday": author2.birthday}
         self.assertEqual(birthday_widget.clean("Foo", row=row_dict), author2)
 
     def test_invalid_get_queryset(self):
         class BirthdayWidget(widgets.ForeignKeyWidget):
             def get_queryset(self, value, row):
-                return self.model.objects.filter(
-                    birthday=row['birthday']
-                )
+                return self.model.objects.filter(birthday=row["birthday"])
 
-        birthday_widget = BirthdayWidget(Author, 'name')
-        row_dict = {'name': "Foo", 'age': 38}
+        birthday_widget = BirthdayWidget(Author, "name")
+        row_dict = {"name": "Foo", "age": 38}
         with self.assertRaises(TypeError):
             birthday_widget.clean("Foo", row=row_dict, row_number=1)
 
@@ -450,7 +467,7 @@ class ForeignKeyWidgetTest(TestCase):
         t = TestObj()
         self.widget = widgets.ForeignKeyWidget(mock.Mock(), "attr")
         self.assertIsNone(self.widget.render(t))
-    
+
     def test_author_natural_key_clean(self):
         """
         Ensure that we can import an author by its natural key. Note that
@@ -458,23 +475,28 @@ class ForeignKeyWidgetTest(TestCase):
         Generally this will be rendered as a list.
         """
         self.assertEqual(
-            self.natural_key_author_widget.clean( json.dumps(self.author.natural_key()) ), self.author )
+            self.natural_key_author_widget.clean(json.dumps(self.author.natural_key())),
+            self.author,
+        )
 
     def test_author_natural_key_render(self):
         """
         Ensure we can render an author by its natural key. Natural keys will always be
-        tuples. 
+        tuples.
         """
         self.assertEqual(
-            self.natural_key_author_widget.render(self.author), json.dumps(self.author.natural_key()) )    
-    
+            self.natural_key_author_widget.render(self.author),
+            json.dumps(self.author.natural_key()),
+        )
+
     def test_book_natural_key_clean(self):
         """
         Use the book case to validate a composite natural key of book name and author
         can be cleaned.
         """
         self.assertEqual(
-            self.natural_key_book_widget.clean( json.dumps(self.book.natural_key())), self.book
+            self.natural_key_book_widget.clean(json.dumps(self.book.natural_key())),
+            self.book,
         )
 
     def test_book_natural_key_render(self):
@@ -483,17 +505,17 @@ class ForeignKeyWidgetTest(TestCase):
         can be rendered
         """
         self.assertEqual(
-            self.natural_key_book_widget.render(self.book), json.dumps(self.book.natural_key())
+            self.natural_key_book_widget.render(self.book),
+            json.dumps(self.book.natural_key()),
         )
 
 
 class ManyToManyWidget(TestCase):
-
     def setUp(self):
         self.widget = widgets.ManyToManyWidget(Category)
         self.widget_name = widgets.ManyToManyWidget(Category, field="name")
-        self.cat1 = Category.objects.create(name='Cat úňíčóďě')
-        self.cat2 = Category.objects.create(name='Cat 2')
+        self.cat1 = Category.objects.create(name="Cat úňíčóďě")
+        self.cat2 = Category.objects.create(name="Cat 2")
 
     def test_clean(self):
         value = "%s,%s" % (self.cat1.pk, self.cat2.pk)
@@ -540,14 +562,17 @@ class ManyToManyWidget(TestCase):
         self.assertIn(self.cat1, cleaned_data)
 
     def test_render(self):
-        self.assertEqual(self.widget.render(Category.objects.order_by('id')),
-                         "%s,%s" % (self.cat1.pk, self.cat2.pk))
-        self.assertEqual(self.widget_name.render(Category.objects.order_by('id')),
-                         "%s,%s" % (self.cat1.name, self.cat2.name))
+        self.assertEqual(
+            self.widget.render(Category.objects.order_by("id")),
+            "%s,%s" % (self.cat1.pk, self.cat2.pk),
+        )
+        self.assertEqual(
+            self.widget_name.render(Category.objects.order_by("id")),
+            "%s,%s" % (self.cat1.name, self.cat2.name),
+        )
 
 
 class JSONWidgetTest(TestCase):
-
     def setUp(self):
         self.value = {"value": 23}
         self.widget = widgets.JSONWidget()
@@ -560,11 +585,11 @@ class JSONWidgetTest(TestCase):
 
     def test_clean_single_quoted_string(self):
         self.assertEqual(self.widget.clean("{'value': 23}"), self.value)
-        self.assertEqual(self.widget.clean("{'value': null}"), {'value': None})
+        self.assertEqual(self.widget.clean("{'value': null}"), {"value": None})
 
     def test_clean_none(self):
         self.assertEqual(self.widget.clean(None), None)
-        self.assertEqual(self.widget.clean('{"value": null}'), {'value': None})
+        self.assertEqual(self.widget.clean('{"value": null}'), {"value": None})
 
     def test_render_none(self):
         self.assertEqual(self.widget.render(None), None)
@@ -573,24 +598,23 @@ class JSONWidgetTest(TestCase):
 
 
 class SimpleArrayWidgetTest(TestCase):
-
     def setUp(self):
         self.value = {"value": 23}
         self.widget = widgets.SimpleArrayWidget()
 
     def test_default_separator(self):
-        self.assertEqual(',', self.widget.separator)
+        self.assertEqual(",", self.widget.separator)
 
     def test_arg_separator(self):
-        self.widget = widgets.SimpleArrayWidget('|')
-        self.assertEqual('|', self.widget.separator)
+        self.widget = widgets.SimpleArrayWidget("|")
+        self.assertEqual("|", self.widget.separator)
 
     def test_clean_splits_str(self):
         s = "a,b,c"
         self.assertEqual(["a", "b", "c"], self.widget.clean(s))
 
     def test_clean_returns_empty_list_for_empty_arg(self):
-        s = ''
+        s = ""
         self.assertEqual([], self.widget.clean(s))
 
     def test_render(self):
