@@ -82,7 +82,7 @@ If you're ready to take the plunge and contribute back some code or documentatio
 * For substantial changes, we recommend raising a question_ first so that we can offer any advice or pointers based on
   previous experience.
 
-the process should look like:
+The process should look like:
 
 * Fork the project on GitHub into your own account.
 
@@ -108,7 +108,8 @@ In order to be merged into django-import-export, contributions must have the fol
 
   * works across all supported versions of Python/Django.
 
-  * follows the existing style of the code base (mostly PEP-8).
+  * follows the existing style of the code base (mostly PEP-8).  We recommend setting up your editor to automatically
+    indicate non-conforming styles (see `Development`_).
 
   * comments included as needed to explain why the code functions as it does
 
@@ -124,3 +125,14 @@ If your contribution lacks any of these things, they will have to be added by a 
 into django-import-export proper, which may take substantial time for the all-volunteer team to get to.
 
 .. _`AUTHORS`: https://github.com/django-import-export/django-import-export/blob/main/AUTHORS
+
+Development
+-----------
+
+To ensure your code follows existing guidelines::
+
+  python -m pip install pre-commit
+
+Then run::
+
+  pre-commit install
