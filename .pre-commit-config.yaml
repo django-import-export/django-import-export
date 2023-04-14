@@ -3,7 +3,6 @@ repos:
     rev: 23.3.0
     hooks:
     - id: black
-      exclude: \.py-tpl$
   - repo: https://github.com/PyCQA/isort
     rev: 5.12.0
     hooks:
