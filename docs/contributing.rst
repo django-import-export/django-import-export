@@ -29,6 +29,8 @@ Philosophy
 Questions
 ---------
 
+Please check the :ref:`common issues <common_issues>` section of the :doc:`FAQ <faq>` to see if your question already has an answer.
+
 For general questions about usage, we recommend posting to Stack Overflow, using the
 `django-import-export <https://stackoverflow.com/questions/tagged/django-import-export/>`_ tag.  Please search existing
 answers to see if any match your problem.  If not, post a new question including as much relevant detail as you can.
