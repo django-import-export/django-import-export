@@ -130,6 +130,8 @@ class ResourceOptions:
     improves performance, because the copy and comparison operations are skipped for each row.
     If enabled, then ``skip_row()`` checks do not execute, because 'skip' logic requires
     comparison between the stored and imported versions of a row.
+    Custom `dehydrate` methods for fields will be called during import process while skip_diff
+    is set to ``False``.
     If enabled, then HTML row reports are also not generated (see ``skip_html_diff``).
     The default value is False.
     """
