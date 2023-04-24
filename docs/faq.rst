@@ -25,6 +25,8 @@ You can help in the following ways:
 
 We encourage you to read the :doc:`contributing guidelines <contributing>`.
 
+.. _common_issues:
+
 Common issues
 =============
 

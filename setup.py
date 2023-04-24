@@ -9,6 +9,7 @@ CLASSIFIERS = [
     "Framework :: Django :: 3.2",
     "Framework :: Django :: 4.0",
     "Framework :: Django :: 4.1",
+    "Framework :: Django :: 4.2",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: BSD License",
     "Operating System :: OS Independent",
@@ -42,12 +43,14 @@ setup(
     version=VERSION,
     author="Bojan Mihelač",
     author_email="djangoimportexport@gmail.com",
+    maintainer="Matthew Hegarty",
+    maintainer_email="djangoimportexport@gmail.com",
     license="BSD License",
     platforms=["OS Independent"],
     url="https://github.com/django-import-export/django-import-export",
     project_urls={
         "Documentation": "https://django-import-export.readthedocs.io/en/stable/",
-        "Changelog": "https://django-import-export.readthedocs.io/en/stable/changelog.html",
+        "Changelog": "https://django-import-export.readthedocs.io/en/stable/changelog.html",  # noqa: E501
     },
     packages=find_packages(exclude=["tests"]),
     include_package_data=True,
