@@ -10,4 +10,5 @@ class ExceptionTest(TestCase):
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", category=DeprecationWarning)
             from import_export import exceptions
+
             exceptions.FieldError()

@@ -14,7 +14,6 @@ from import_export.tmp_storages import (
 
 
 class TestBaseStorage(TestCase):
-
     def setUp(self):
         self.storage = BaseStorage()
 
@@ -33,16 +32,15 @@ class TestBaseStorage(TestCase):
 
 class TestTempFolderStorage(TempFolderStorage):
     def get_full_path(self):
-        return '/tmp/f'
+        return "/tmp/f"
 
 
 class TestMediaStorage(MediaStorage):
     def get_full_path(self):
-        return 'f'
+        return "f"
 
 
 class TempStoragesTest(TestCase):
-
     def setUp(self):
         self.test_string = b"""
 id,name,author,author_email,imported,published,price,categories
@@ -63,11 +61,11 @@ id,name,author,author_email,imported,published,price,categories
         self.assertFalse(os.path.isfile(tmp_storage.get_full_path()))
 
     def test_temp_folder_storage_read_with_encoding(self):
-        tmp_storage = TestTempFolderStorage(encoding='utf-8')
-        tmp_storage.name = 'f'
+        tmp_storage = TestTempFolderStorage(encoding="utf-8")
+        tmp_storage.name = "f"
         with patch("builtins.open", mock_open(read_data="data")) as mock_file:
             tmp_storage.read()
-            mock_file.assert_called_with("/tmp/f", 'r', encoding='utf-8')
+            mock_file.assert_called_with("/tmp/f", "r", encoding="utf-8")
 
     def test_cache_storage(self):
         tmp_storage = CacheStorage()
@@ -77,21 +75,20 @@ id,name,author,author_email,imported,published,price,categories
         tmp_storage = CacheStorage(name=name)
         self.assertEqual(self.test_string, tmp_storage.read())
 
-        self.assertNotEqual(cache.get(tmp_storage.CACHE_PREFIX,
-                                      tmp_storage.name), None)
+        self.assertNotEqual(cache.get(tmp_storage.CACHE_PREFIX, tmp_storage.name), None)
         tmp_storage.remove()
         self.assertEqual(cache.get(tmp_storage.name), None)
 
     def test_cache_storage_read_with_encoding(self):
         tmp_storage = CacheStorage()
-        tmp_storage.name = 'f'
+        tmp_storage.name = "f"
         cache.set("django-import-export-f", 101)
         res = tmp_storage.read()
         self.assertEqual(101, res)
 
     def test_cache_storage_read_with_encoding_unicode_chars(self):
         tmp_storage = CacheStorage()
-        tmp_storage.name = 'f'
+        tmp_storage.name = "f"
         tmp_storage.save("àèìòùçñ")
         res = tmp_storage.read()
         self.assertEqual("àèìòùçñ", res)
@@ -110,20 +107,21 @@ id,name,author,author_email,imported,published,price,categories
 
     def test_media_storage_read_mode(self):
         # issue 416 - MediaStorage does not respect the read_mode parameter.
-        # tests that platform specific line endings are converted when reading in text mode
-        # see https://docs.python.org/3/tutorial/inputoutput.html#reading-and-writing-files
-        test_string = self.test_string.replace(b'\n', b'\r')
+        # tests that platform specific line endings are converted
+        # when reading in text mode, see
+        # https://docs.python.org/3/tutorial/inputoutput.html#reading-and-writing-files
+        test_string = self.test_string.replace(b"\n", b"\r")
 
         tmp_storage = MediaStorage()
         tmp_storage.save(test_string)
         name = tmp_storage.name
 
-        tmp_storage = MediaStorage(name=name, read_mode='r')
+        tmp_storage = MediaStorage(name=name, read_mode="r")
         self.assertEqual(self.test_string.decode(), tmp_storage.read())
 
     def test_media_storage_read_with_encoding(self):
         tmp_storage = TestMediaStorage()
-        tmp_storage.name = 'f'
+        tmp_storage.name = "f"
         with patch("import_export.tmp_storages.default_storage.open") as mock_open:
             tmp_storage.read()
-            mock_open.assert_called_with("f", mode='rb')
+            mock_open.assert_called_with("f", mode="rb")

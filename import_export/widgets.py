@@ -29,6 +29,7 @@ class Widget:
     :meth:`~import_export.widgets.Widget.clean` and
     :meth:`~import_export.widgets.Widget.render`.
     """
+
     def clean(self, value, row=None, **kwargs):
         """
         Returns an appropriate Python object for an imported value.
@@ -55,7 +56,7 @@ class Widget:
 
 class NumberWidget(Widget):
     """
-    Takes optional ``coerce_to_string`` parameter, set to ``True`` the 
+    Takes optional ``coerce_to_string`` parameter, set to ``True`` the
     :meth:`~import_export.widgets.Widget.render` method will return a string
     else it will return a value.
     """
@@ -110,6 +111,7 @@ class CharWidget(Widget):
     """
     Widget for converting text fields.
     """
+
     pass
 
 
@@ -142,6 +144,7 @@ class BooleanWidget(Widget):
 
                 return super().before_import_row(row, row_number, **kwargs)
     """
+
     TRUE_VALUES = ["1", 1, True, "true", "TRUE", "True"]
     FALSE_VALUES = ["0", 0, False, "false", "FALSE", "False"]
     NULL_VALUES = ["", None, "null", "NULL", "none", "NONE", "None"]
@@ -308,7 +311,7 @@ class SimpleArrayWidget(Widget):
 
     def __init__(self, separator=None):
         if separator is None:
-            separator = ','
+            separator = ","
         self.separator = separator
         super().__init__()
 
@@ -321,7 +324,8 @@ class SimpleArrayWidget(Widget):
 
 class JSONWidget(Widget):
     """
-    Widget for a JSON object (especially required for jsonb fields in PostgreSQL database.)
+    Widget for a JSON object
+    (especially required for jsonb fields in PostgreSQL database.)
 
     :param value: Defaults to JSON format.
     The widget covers two cases: Proper JSON string with double quotes, else it
@@ -334,7 +338,7 @@ class JSONWidget(Widget):
             try:
                 return json.loads(val)
             except json.decoder.JSONDecodeError:
-                return json.loads(val.replace("'", "\""))
+                return json.loads(val.replace("'", '"'))
 
     def render(self, value, obj=None):
         if value:
@@ -383,7 +387,8 @@ class ForeignKeyWidget(Widget):
     :param use_natural_foreign_keys: Use natural key functions to identify
         related object, default to False
     """
-    def __init__(self, model, field='pk', use_natural_foreign_keys=False, **kwargs):
+
+    def __init__(self, model, field="pk", use_natural_foreign_keys=False, **kwargs):
         self.model = model
         self.field = field
         self.use_natural_foreign_keys = use_natural_foreign_keys
@@ -428,7 +433,7 @@ class ForeignKeyWidget(Widget):
         if value is None:
             return ""
 
-        attrs = self.field.split('__')
+        attrs = self.field.split("__")
         for attr in attrs:
             try:
                 if self.use_natural_foreign_keys:
@@ -458,9 +463,9 @@ class ManyToManyWidget(Widget):
 
     def __init__(self, model, separator=None, field=None, **kwargs):
         if separator is None:
-            separator = ','
+            separator = ","
         if field is None:
-            field = 'pk'
+            field = "pk"
         self.model = model
         self.separator = separator
         self.field = field
@@ -474,9 +479,7 @@ class ManyToManyWidget(Widget):
         else:
             ids = value.split(self.separator)
             ids = filter(None, [i.strip() for i in ids])
-        return self.model.objects.filter(**{
-            '%s__in' % self.field: ids
-        })
+        return self.model.objects.filter(**{"%s__in" % self.field: ids})
 
     def render(self, value, obj=None):
         ids = [smart_str(getattr(obj, self.field)) for obj in value.all()]

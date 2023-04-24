@@ -16,25 +16,23 @@ class ChildAdmin(ImportMixin, admin.ModelAdmin):
 
 
 class BookResource(ModelResource):
-
     class Meta:
         model = Book
 
     def for_delete(self, row, instance):
-        return self.fields['name'].clean(row) == ''
+        return self.fields["name"].clean(row) == ""
 
 
 class BookNameResource(ModelResource):
-
     class Meta:
         model = Book
-        fields = ['id', 'name']
+        fields = ["id", "name"]
         name = "Export/Import only book names"
 
 
 class BookAdmin(ImportExportModelAdmin):
-    list_display = ('name', 'author', 'added')
-    list_filter = ['categories', 'author']
+    list_display = ("name", "author", "added")
+    list_filter = ["categories", "author"]
     resource_classes = [BookResource, BookNameResource]
     change_list_template = "core/admin/change_list.html"
 
@@ -49,6 +47,7 @@ class AuthorAdmin(ImportMixin, admin.ModelAdmin):
 
 class CustomBookAdmin(BookAdmin):
     """BookAdmin with custom import forms"""
+
     import_form_class = CustomImportForm
     confirm_form_class = CustomConfirmImportForm
     export_form_class = CustomExportForm
@@ -58,12 +57,13 @@ class CustomBookAdmin(BookAdmin):
         # Pass on the `author` value from the import form to
         # the confirm form (if provided)
         if import_form:
-            initial['author'] = import_form.cleaned_data['author'].id
+            initial["author"] = import_form.cleaned_data["author"].id
         return initial
 
     def get_import_resource_kwargs(self, request, *args, **kwargs):
         # update resource kwargs so that the Resource is passed the authenticated user
-        # This is included as an example of how dynamic values can be passed to resources
+        # This is included as an example of how dynamic values
+        # can be passed to resources
         kwargs = super().get_resource_kwargs(request, *args, **kwargs)
         kwargs.update({"user": request.user})
         return kwargs
