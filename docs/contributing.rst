@@ -29,6 +29,8 @@ Philosophy
 Questions
 ---------
 
+Please check the :ref:`common issues <common_issues>` section of the :doc:`FAQ <faq>` to see if your question already has an answer.
+
 For general questions about usage, we recommend posting to Stack Overflow, using the
 `django-import-export <https://stackoverflow.com/questions/tagged/django-import-export/>`_ tag.  Please search existing
 answers to see if any match your problem.  If not, post a new question including as much relevant detail as you can.
@@ -82,7 +84,7 @@ If you're ready to take the plunge and contribute back some code or documentatio
 * For substantial changes, we recommend raising a question_ first so that we can offer any advice or pointers based on
   previous experience.
 
-the process should look like:
+The process should look like:
 
 * Fork the project on GitHub into your own account.
 
@@ -99,6 +101,8 @@ the process should look like:
 
 * Create a new pull request (based on your branch), including what the problem/feature is, versions of your software
   and referencing any related issues/pull requests.
+
+* We recommend setting up your editor to automatically indicate non-conforming styles (see `Development`_).
 
 In order to be merged into django-import-export, contributions must have the following:
 
@@ -124,3 +128,22 @@ If your contribution lacks any of these things, they will have to be added by a 
 into django-import-export proper, which may take substantial time for the all-volunteer team to get to.
 
 .. _`AUTHORS`: https://github.com/django-import-export/django-import-export/blob/main/AUTHORS
+
+Development
+-----------
+
+* All files should be formatted using the black auto-formatter. This will be run by pre-commit if configured.
+
+* The project repository includes an ``.editorconfig`` file. We recommend using a text editor with EditorConfig support
+  to avoid indentation and whitespace issues.
+
+* We allow up to 88 characters as this is the line length used by black. This check is included when you run flake8.
+  Documentation, comments, and docstrings should be wrapped at 79 characters, even though PEP 8 suggests 72.
+
+* To install pre-commit::
+
+    python -m pip install pre-commit
+
+  Then run::
+
+    pre-commit install
