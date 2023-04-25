@@ -68,6 +68,13 @@ class CustomBookAdmin(BookAdmin):
         kwargs.update({"user": request.user})
         return kwargs
 
+    def get_export_resource_kwargs(self, request, *args, **kwargs):
+        form = kwargs.get("form")
+        if form:
+            return form.cleaned_data
+        else:
+            raise ValueError("no form")
+
 
 class LegacyBookAdmin(BookAdmin):
     """
