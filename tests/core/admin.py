@@ -45,9 +45,22 @@ class AuthorAdmin(ImportMixin, admin.ModelAdmin):
     pass
 
 
-class CustomBookAdmin(BookAdmin):
-    """BookAdmin with custom import forms"""
+class EBookResource(ModelResource):
+    def __init__(self, **kwargs):
+        super().__init__()
+        self.author_id = kwargs.get("author_id")
 
+    def filter_export(self, queryset, *args, **kwargs):
+        return queryset.filter(author_id=self.author_id)
+
+    class Meta:
+        model = EBook
+
+
+class CustomBookAdmin(ImportExportModelAdmin):
+    """Example usage of custom import / export forms"""
+
+    resource_classes = [EBookResource]
     import_form_class = CustomImportForm
     confirm_form_class = CustomConfirmImportForm
     export_form_class = CustomExportForm
@@ -67,6 +80,15 @@ class CustomBookAdmin(BookAdmin):
         kwargs = super().get_resource_kwargs(request, *args, **kwargs)
         kwargs.update({"user": request.user})
         return kwargs
+
+    def get_export_resource_kwargs(self, request, *args, **kwargs):
+        # this is overridden to demonstrate that custom form fields can be used
+        # to override the export query.
+        # The dict returned here will be passed as kwargs to EBookResource
+        export_form = kwargs["export_form"]
+        if export_form:
+            return dict(author_id=export_form.cleaned_data["author"].id)
+        return {}
 
 
 class LegacyBookAdmin(BookAdmin):

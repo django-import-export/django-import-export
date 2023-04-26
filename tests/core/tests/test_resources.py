@@ -1791,7 +1791,7 @@ class ForeignKeyWidgetFollowRelationship(TestCase):
 
 
 class ManyRelatedManagerDiffTest(TestCase):
-    fixtures = ["category", "book"]
+    fixtures = ["category", "book", "author"]
 
     def setUp(self):
         pass
@@ -1827,7 +1827,7 @@ class ManyRelatedManagerDiffTest(TestCase):
 class ManyToManyWidgetDiffTest(TestCase):
     # issue #1270 - ensure ManyToMany fields are correctly checked for
     # changes when skip_unchanged=True
-    fixtures = ["category", "book"]
+    fixtures = ["category", "book", "author"]
 
     def setUp(self):
         pass
