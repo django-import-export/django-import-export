@@ -1027,6 +1027,12 @@ class Resource(metaclass=DeclarativeMetaclass):
         """
         pass
 
+    def filter_export(self, queryset, *args, **kwargs):
+        """
+        Override to filter an export queryset.
+        """
+        return queryset
+
     def export_field(self, field, obj):
         field_name = self.get_field_name(field)
         dehydrate_method = field.get_dehydrate_method(field_name)
@@ -1096,6 +1102,7 @@ class Resource(metaclass=DeclarativeMetaclass):
 
         if queryset is None:
             queryset = self.get_queryset()
+        queryset = self.filter_export(queryset, *args, **kwargs)
         headers = self.get_export_headers()
         data = tablib.Dataset(headers=headers)
 

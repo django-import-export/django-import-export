@@ -99,7 +99,7 @@ class AdminTestMixin(object):
         return xlsx_index
 
 
-class ImportExportAdminIntegrationTest(AdminTestMixin, TestCase):
+class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
     def test_import_export_template(self):
         response = self.client.get("/admin/core/book/")
         self.assertEqual(response.status_code, 200)
@@ -415,145 +415,6 @@ class ImportExportAdminIntegrationTest(AdminTestMixin, TestCase):
             ),
         )
 
-    def test_export(self):
-        response = self.client.get("/admin/core/book/export/")
-        self.assertEqual(response.status_code, 200)
-
-        data = {
-            "file_format": "0",
-        }
-        date_str = datetime.now().strftime("%Y-%m-%d")
-        response = self.client.post("/admin/core/book/export/", data)
-        self.assertEqual(response.status_code, 200)
-        self.assertTrue(response.has_header("Content-Disposition"))
-        self.assertEqual(response["Content-Type"], "text/csv")
-        self.assertEqual(
-            response["Content-Disposition"],
-            'attachment; filename="Book-{}.csv"'.format(date_str),
-        )
-        self.assertEqual(
-            b"id,name,author,author_email,imported,published,"
-            b"published_time,price,added,categories\r\n",
-            response.content,
-        )
-
-    def test_export_second_resource(self):
-        response = self.client.get("/admin/core/book/export/")
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Export/Import only book names")
-
-        data = {
-            "file_format": "0",
-            "resource": 1,
-        }
-        date_str = datetime.now().strftime("%Y-%m-%d")
-        response = self.client.post("/admin/core/book/export/", data)
-        self.assertEqual(response.status_code, 200)
-        self.assertTrue(response.has_header("Content-Disposition"))
-        self.assertEqual(response["Content-Type"], "text/csv")
-        self.assertEqual(
-            response["Content-Disposition"],
-            'attachment; filename="Book-{}.csv"'.format(date_str),
-        )
-        self.assertEqual(b"id,name\r\n", response.content)
-
-    def test_export_legacy_resource(self):
-        """
-        This test exists solely to test import works correctly using the deprecated
-        functions.
-        This test can be removed when the deprecated code is removed.
-        """
-        warnings.filterwarnings("ignore", category=DeprecationWarning)
-        response = self.client.get("/admin/core/legacybook/export/")
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Export/Import only book names")
-
-        data = {
-            "file_format": "0",
-            "resource": 1,
-        }
-        date_str = datetime.now().strftime("%Y-%m-%d")
-        response = self.client.post("/admin/core/legacybook/export/", data)
-        self.assertEqual(response.status_code, 200)
-        self.assertTrue(response.has_header("Content-Disposition"))
-        self.assertEqual(response["Content-Type"], "text/csv")
-        self.assertEqual(
-            response["Content-Disposition"],
-            'attachment; filename="LegacyBook-{}.csv"'.format(date_str),
-        )
-        self.assertEqual(b"id,name\r\n", response.content)
-
-    def test_returns_xlsx_export(self):
-        response = self.client.get("/admin/core/book/export/")
-        self.assertEqual(response.status_code, 200)
-
-        xlsx_index = self._get_input_format_index("xlsx")
-        data = {"file_format": str(xlsx_index)}
-        response = self.client.post("/admin/core/book/export/", data)
-        self.assertEqual(response.status_code, 200)
-        self.assertTrue(response.has_header("Content-Disposition"))
-        self.assertEqual(
-            response["Content-Type"],
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        )
-
-    @override_settings(IMPORT_EXPORT_ESCAPE_HTML_ON_EXPORT=True)
-    @patch("import_export.mixins.logger")
-    def test_export_escape_html(self, mock_logger):
-        Book.objects.create(id=1, name="=SUM(1+1)")
-        Book.objects.create(id=2, name="<script>alert(1)</script>")
-        response = self.client.get("/admin/core/book/export/")
-        self.assertEqual(response.status_code, 200)
-
-        xlsx_index = self._get_input_format_index("xlsx")
-        data = {"file_format": str(xlsx_index)}
-        response = self.client.post("/admin/core/book/export/", data)
-        self.assertEqual(response.status_code, 200)
-        content = response.content
-        wb = load_workbook(filename=BytesIO(content))
-        self.assertEqual("&lt;script&gt;alert(1)&lt;/script&gt;", wb.active["B2"].value)
-        self.assertEqual("=SUM(1+1)", wb.active["B3"].value)
-
-        mock_logger.debug.assert_called_once_with(
-            "IMPORT_EXPORT_ESCAPE_HTML_ON_EXPORT is enabled"
-        )
-
-    @override_settings(IMPORT_EXPORT_ESCAPE_FORMULAE_ON_EXPORT=True)
-    @patch("import_export.mixins.logger")
-    def test_export_escape_formulae(self, mock_logger):
-        Book.objects.create(id=1, name="=SUM(1+1)")
-        Book.objects.create(id=2, name="<script>alert(1)</script>")
-        response = self.client.get("/admin/core/book/export/")
-        self.assertEqual(response.status_code, 200)
-
-        xlsx_index = self._get_input_format_index("xlsx")
-        data = {"file_format": str(xlsx_index)}
-        response = self.client.post("/admin/core/book/export/", data)
-        self.assertEqual(response.status_code, 200)
-        content = response.content
-        wb = load_workbook(filename=BytesIO(content))
-        self.assertEqual("<script>alert(1)</script>", wb.active["B2"].value)
-        self.assertEqual("SUM(1+1)", wb.active["B3"].value)
-
-        mock_logger.debug.assert_called_once_with(
-            "IMPORT_EXPORT_ESCAPE_FORMULAE_ON_EXPORT is enabled"
-        )
-
-    @override_settings(IMPORT_EXPORT_ESCAPE_OUTPUT_ON_EXPORT=True)
-    def test_export_escape_deprecation_warning(self):
-        response = self.client.get("/admin/core/book/export/")
-        self.assertEqual(response.status_code, 200)
-
-        xlsx_index = self._get_input_format_index("xlsx")
-        data = {"file_format": str(xlsx_index)}
-        with self.assertWarnsRegex(
-            DeprecationWarning,
-            r"IMPORT_EXPORT_ESCAPE_OUTPUT_ON_EXPORT will be "
-            "deprecated in a future release. "
-            r"Refer to docs for new attributes.",
-        ):
-            self.client.post("/admin/core/book/export/", data)
-
     def test_import_export_buttons_visible_without_add_permission(self):
         # issue 38 - Export button not visible when no add permission
         original = BookAdmin.has_add_permission
@@ -778,6 +639,173 @@ class ImportExportAdminIntegrationTest(AdminTestMixin, TestCase):
         TestImportCls()
         mock_logger.warning.assert_called_once_with(
             "failed to assign change_list_template attribute (see issue 1521)"
+        )
+
+
+class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
+    def test_export(self):
+        response = self.client.get("/admin/core/book/export/")
+        self.assertEqual(response.status_code, 200)
+
+        data = {
+            "file_format": "0",
+        }
+        date_str = datetime.now().strftime("%Y-%m-%d")
+        response = self.client.post("/admin/core/book/export/", data)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.has_header("Content-Disposition"))
+        self.assertEqual(response["Content-Type"], "text/csv")
+        self.assertEqual(
+            response["Content-Disposition"],
+            'attachment; filename="Book-{}.csv"'.format(date_str),
+        )
+        self.assertEqual(
+            b"id,name,author,author_email,imported,published,"
+            b"published_time,price,added,categories\r\n",
+            response.content,
+        )
+
+    def test_export_second_resource(self):
+        response = self.client.get("/admin/core/book/export/")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Export/Import only book names")
+
+        data = {
+            "file_format": "0",
+            "resource": 1,
+        }
+        date_str = datetime.now().strftime("%Y-%m-%d")
+        response = self.client.post("/admin/core/book/export/", data)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.has_header("Content-Disposition"))
+        self.assertEqual(response["Content-Type"], "text/csv")
+        self.assertEqual(
+            response["Content-Disposition"],
+            'attachment; filename="Book-{}.csv"'.format(date_str),
+        )
+        self.assertEqual(b"id,name\r\n", response.content)
+
+    def test_export_legacy_resource(self):
+        """
+        This test exists solely to test import works correctly using the deprecated
+        functions.
+        This test can be removed when the deprecated code is removed.
+        """
+        warnings.filterwarnings("ignore", category=DeprecationWarning)
+        response = self.client.get("/admin/core/legacybook/export/")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Export/Import only book names")
+
+        data = {
+            "file_format": "0",
+            "resource": 1,
+        }
+        date_str = datetime.now().strftime("%Y-%m-%d")
+        response = self.client.post("/admin/core/legacybook/export/", data)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.has_header("Content-Disposition"))
+        self.assertEqual(response["Content-Type"], "text/csv")
+        self.assertEqual(
+            response["Content-Disposition"],
+            'attachment; filename="LegacyBook-{}.csv"'.format(date_str),
+        )
+        self.assertEqual(b"id,name\r\n", response.content)
+
+    def test_returns_xlsx_export(self):
+        response = self.client.get("/admin/core/book/export/")
+        self.assertEqual(response.status_code, 200)
+
+        xlsx_index = self._get_input_format_index("xlsx")
+        data = {"file_format": str(xlsx_index)}
+        response = self.client.post("/admin/core/book/export/", data)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.has_header("Content-Disposition"))
+        self.assertEqual(
+            response["Content-Type"],
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
+
+    @override_settings(IMPORT_EXPORT_ESCAPE_HTML_ON_EXPORT=True)
+    @patch("import_export.mixins.logger")
+    def test_export_escape_html(self, mock_logger):
+        Book.objects.create(id=1, name="=SUM(1+1)")
+        Book.objects.create(id=2, name="<script>alert(1)</script>")
+        response = self.client.get("/admin/core/book/export/")
+        self.assertEqual(response.status_code, 200)
+
+        xlsx_index = self._get_input_format_index("xlsx")
+        data = {"file_format": str(xlsx_index)}
+        response = self.client.post("/admin/core/book/export/", data)
+        self.assertEqual(response.status_code, 200)
+        content = response.content
+        wb = load_workbook(filename=BytesIO(content))
+        self.assertEqual("&lt;script&gt;alert(1)&lt;/script&gt;", wb.active["B2"].value)
+        self.assertEqual("=SUM(1+1)", wb.active["B3"].value)
+
+        mock_logger.debug.assert_called_once_with(
+            "IMPORT_EXPORT_ESCAPE_HTML_ON_EXPORT is enabled"
+        )
+
+    @override_settings(IMPORT_EXPORT_ESCAPE_FORMULAE_ON_EXPORT=True)
+    @patch("import_export.mixins.logger")
+    def test_export_escape_formulae(self, mock_logger):
+        Book.objects.create(id=1, name="=SUM(1+1)")
+        Book.objects.create(id=2, name="<script>alert(1)</script>")
+        response = self.client.get("/admin/core/book/export/")
+        self.assertEqual(response.status_code, 200)
+
+        xlsx_index = self._get_input_format_index("xlsx")
+        data = {"file_format": str(xlsx_index)}
+        response = self.client.post("/admin/core/book/export/", data)
+        self.assertEqual(response.status_code, 200)
+        content = response.content
+        wb = load_workbook(filename=BytesIO(content))
+        self.assertEqual("<script>alert(1)</script>", wb.active["B2"].value)
+        self.assertEqual("SUM(1+1)", wb.active["B3"].value)
+
+        mock_logger.debug.assert_called_once_with(
+            "IMPORT_EXPORT_ESCAPE_FORMULAE_ON_EXPORT is enabled"
+        )
+
+    @override_settings(IMPORT_EXPORT_ESCAPE_OUTPUT_ON_EXPORT=True)
+    def test_export_escape_deprecation_warning(self):
+        response = self.client.get("/admin/core/book/export/")
+        self.assertEqual(response.status_code, 200)
+
+        xlsx_index = self._get_input_format_index("xlsx")
+        data = {"file_format": str(xlsx_index)}
+        with self.assertWarnsRegex(
+            DeprecationWarning,
+            r"IMPORT_EXPORT_ESCAPE_OUTPUT_ON_EXPORT will be "
+            "deprecated in a future release. "
+            r"Refer to docs for new attributes.",
+        ):
+            self.client.post("/admin/core/book/export/", data)
+
+
+class FilteredExportAdminIntegrationTest(AdminTestMixin, TestCase):
+    fixtures = ["category", "book", "author"]
+
+    def test_export_filters_by_form_param(self):
+        # issue 1578
+        author = Author.objects.get(name="Ian Fleming")
+
+        data = {"file_format": "0", "author": str(author.id)}
+        date_str = datetime.now().strftime("%Y-%m-%d")
+        response = self.client.post("/admin/core/ebook/export/", data)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.has_header("Content-Disposition"))
+        self.assertEqual(response["Content-Type"], "text/csv")
+        self.assertEqual(
+            response["Content-Disposition"],
+            'attachment; filename="EBook-{}.csv"'.format(date_str),
+        )
+        self.assertEqual(
+            b"id,name,author,author_email,imported,published,"
+            b"published_time,price,added,categories\r\n"
+            b"5,The Man with the Golden Gun,5,ian@example.com,"
+            b"0,1965-04-01,21:00:00,5.00,,2\r\n",
+            response.content,
         )
 
 
