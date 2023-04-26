@@ -438,6 +438,12 @@ It is also possible to pass a method name in to the :meth:`~import_export.fields
 name is supplied, then that method
 will be called as the 'dehydrate' method.
 
+Filtering querysets during export
+=================================
+
+You can use :meth:`~import_export.resources.Resource.filter_export` to filter querysets
+during export.  See also `Customize admin export forms`_.
+
 Signals
 =======
 
@@ -668,6 +674,62 @@ The parameters can then be read from ``Resource`` methods, such as:
     :doc:`/api_admin`
         available mixins and options.
 
+Customize admin export forms
+----------------------------
+
+It is also possible to add fields to the export form so that export data can be
+filtered.  For example, we can filter exports by Author.
+
+.. figure:: _static/images/custom-export-form.png
+
+   A screenshot of a customized export view.
+
+Customize forms (for example see ``tests/core/forms.py``)::
+
+    class CustomExportForm(AuthorFormMixin, ExportForm):
+        """Customized ExportForm, with author field required."""
+        author = forms.ModelChoiceField(
+            queryset=Author.objects.all(),
+            required=True)
+
+Customize ``ModelAdmin`` (for example see ``tests/core/admin.py``)::
+
+    class CustomBookAdmin(ImportMixin, ImportExportModelAdmin):
+        resource_classes = [EBookResource]
+        export_form_class = CustomExportForm
+
+        def get_export_resource_kwargs(self, request, *args, **kwargs):
+            export_form = kwargs["export_form"]
+            if export_form:
+                return dict(author_id=export_form.cleaned_data["author"].id)
+            return {}
+
+    admin.site.register(Book, CustomBookAdmin)
+
+Create a Resource subclass to apply the filter
+(for example see ``tests/core/admin.py``)::
+
+    class EBookResource(ModelResource):
+        def __init__(self, **kwargs):
+            super().__init__()
+            self.author_id = kwargs.get("author_id")
+
+        def filter_export(self, queryset, *args, **kwargs):
+            return queryset.filter(author_id=self.author_id)
+
+        class Meta:
+            model = EBook
+
+In this example, we can filter an EBook export using the author's name.
+
+1. Create a custom form which defines 'author' as a required field.
+2. Create a 'CustomBookAdmin' class which defines a
+   :class:`~import_export.resources.Resource`, and overrides
+   :meth:`~import_export.mixins.BaseExportMixin.get_export_resource_kwargs`.
+   This ensures that the author id will be passed to the
+   :class:`~import_export.resources.Resource` constructor.
+3. Create a :class:`~import_export.resources.Resource` which is instantiated with the
+   ``author_id``, and can filter the queryset as required.
 
 Using multiple resources
 ------------------------

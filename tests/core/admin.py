@@ -64,9 +64,6 @@ class CustomBookAdmin(ImportExportModelAdmin):
     """Example usage of custom import / export forms"""
 
     resource_classes = [EBookResource]
-    list_filter = ["categories", "author"]
-    change_list_template = "core/admin/change_list.html"
-
     import_form_class = CustomImportForm
     confirm_form_class = CustomConfirmImportForm
     export_form_class = CustomExportForm
@@ -89,7 +86,7 @@ class CustomBookAdmin(ImportExportModelAdmin):
 
     def get_export_resource_kwargs(self, request, *args, **kwargs):
         # this is overridden to demonstrate that custom form fields can be used
-        # to override the export query
+        # to override the export query.
         # The dict returned here will be passed as kwargs to EBookResource
         export_form = kwargs["export_form"]
         if export_form:
