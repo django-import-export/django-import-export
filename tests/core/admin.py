@@ -51,9 +51,6 @@ class EBookResource(ModelResource):
         self.author_id = kwargs.get("author_id")
 
     def filter_export(self, queryset, *args, **kwargs):
-        """
-        Override to filter an export queryset.
-        """
         return queryset.filter(author_id=self.author_id)
 
     class Meta:
