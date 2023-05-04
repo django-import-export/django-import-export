@@ -757,7 +757,7 @@ class Resource(metaclass=DeclarativeMetaclass):
         try:
             self.before_import_row(row, **kwargs)
             instance, new = self.get_or_init_instance(instance_loader, row)
-            self.after_import_instance(instance, new, **kwargs)
+            self.after_import_instance(instance, new, row=row, **kwargs)
             if new:
                 row_result.import_type = RowResult.IMPORT_TYPE_NEW
             else:
