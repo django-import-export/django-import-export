@@ -89,6 +89,39 @@ column name (i.e. row header)::
     :doc:`/api_fields`
         Available field types and options.
 
+Custom workflow based on update values
+--------------------------------------
+
+You can extend the import process to add workflow based on changes on incoming rows.
+
+For example, suppose you are importing a list of books and you require additional workflow if the book is set to
+'out of print'.
+
+You can override the :meth:`~import_export.resources.ModelResource.after_import_instance` method to check if the
+value changes::
+
+  class BookResource(resources.ModelResource):
+    def after_import_instance(self, instance, new, **kwargs):
+        # check to see if the 'out of print' value has changed in the import row
+        if not new and instance.is_out_of_print is False:
+            row = kwargs["row"]
+            is_out_of_print = row["out_of_print"]
+            # add custom workflow...
+
+It might be a good idea to delay the custom workflow until after the instance has been saved successfully.  To achieve
+this, set a temporary flag on the instance, which can be read later in the import process::
+
+  class BookResource(resources.ModelResource):
+
+    def after_import_instance(self, instance, new, **kwargs):
+        if not new and instance.is_out_of_print is False:
+            row = kwargs["row"]
+            instance.is_out_of_print = row["out_of_print"]
+
+    def after_save_instance(self, instance, using_transactions, dry_run):
+        if getattr(instance, "is_out_of_print", False):
+            # add custom workflow
+
 Field widgets
 =============
 

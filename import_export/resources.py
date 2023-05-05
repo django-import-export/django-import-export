@@ -705,7 +705,7 @@ class Resource(metaclass=DeclarativeMetaclass):
         """
         pass
 
-    def after_import_instance(self, instance, new, row_number=None, **kwargs):
+    def after_import_instance(self, instance, new, row_number=None, row=None, **kwargs):
         """
         Override to add additional logic. Does nothing by default.
         """
