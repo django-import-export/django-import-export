@@ -98,8 +98,9 @@ For example, suppose you are importing a list of books and you require additiona
 'out of print'.  This will be a one-off operation to take place on the first occasion when the book is set to 'out of
 print'.
 
-To achieve this, we need to check the existing value taken from the persisted instance with the incoming value in the
-dataset row.
+To achieve this, we need to check the existing value taken from the previous persisted instance (i.e. prior to import
+changes) with the incoming value on the updated instance (i.e. ``instance``).
+The ``instance`` is a property of ``row_result``.
 
 You can override the :meth:`~import_export.resources.Resource.after_import_row` method to check if the
 value changes::
@@ -107,8 +108,13 @@ value changes::
   class BookResource(resources.ModelResource):
     def after_import_row(self, row, row_result, row_number=None, original=None, **kwargs):
         # for updates, check to see if the 'out of print' value has changed in the import row
-        if original and original.out_of_print is False and instance.is_out_of_print is True:
+        if original and original.out_of_print is False \
+            and row_result.instance.is_out_of_print is True:
             # add custom workflow...
+
+.. note::
+
+  The ``original`` parameter will be None if :attr:`~import_export.resources.ResourceOptions.skip_diff` is True.
 
 Field widgets
 =============
