@@ -95,18 +95,23 @@ Custom workflow based on update values
 You can extend the import process to add workflow based on changes on incoming rows.
 
 For example, suppose you are importing a list of books and you require additional workflow if the book is set to
-'out of print'.
+'out of print'.  This will be a one-off operation to take place on the first occasion when the book is set to 'out of
+print'.
+
+To achieve this, we need to check the existing value taken from the persisted instance with the incoming value in the
+row.
 
 You can override the :meth:`~import_export.resources.Resource.after_import_instance` method to check if the
 value changes::
 
   class BookResource(resources.ModelResource):
     def after_import_instance(self, instance, new, **kwargs):
-        # check to see if the 'out of print' value has changed in the import row
-        if not new and instance.is_out_of_print is False:
+        # for updates, check to see if the 'out of print' value has changed in the import row
+        if not new:
             row = kwargs["row"]
             is_out_of_print = row["out_of_print"]
-            # add custom workflow...
+            if is_out_of_print and instance.is_out_of_print is False:
+                # add custom workflow...
 
 It might be a good idea to delay the custom workflow until after the instance has been saved successfully.  To achieve
 this, set a temporary flag on the instance, which can be read later in the import process::
@@ -114,13 +119,14 @@ this, set a temporary flag on the instance, which can be read later in the impor
   class BookResource(resources.ModelResource):
 
     def after_import_instance(self, instance, new, **kwargs):
-        if not new and instance.is_out_of_print is False:
-            row = kwargs["row"]
-            instance.is_out_of_print = row["out_of_print"]
+        # compare instance with incoming row value
 
     def after_save_instance(self, instance, using_transactions, dry_run):
         if getattr(instance, "is_out_of_print", False):
             # add custom workflow
+
+Note that if there is concurrent access to the underlying db table then this logic could be vulnerable to race
+conditions.
 
 Field widgets
 =============
