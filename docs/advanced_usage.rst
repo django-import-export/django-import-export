@@ -97,7 +97,7 @@ You can extend the import process to add workflow based on changes on incoming r
 For example, suppose you are importing a list of books and you require additional workflow if the book is set to
 'out of print'.
 
-You can override the :meth:`~import_export.resources.ModelResource.after_import_instance` method to check if the
+You can override the :meth:`~import_export.resources.Resource.after_import_instance` method to check if the
 value changes::
 
   class BookResource(resources.ModelResource):
