@@ -753,8 +753,6 @@ class Resource(metaclass=DeclarativeMetaclass):
 
         :param dry_run: If ``dry_run`` is set, or error occurs, transaction
             will be rolled back.
-
-        :param row_number: The row number.
         """
         if raise_errors is not None:
             warnings.warn(
@@ -771,7 +769,7 @@ class Resource(metaclass=DeclarativeMetaclass):
         try:
             self.before_import_row(row, **kwargs)
             instance, new = self.get_or_init_instance(instance_loader, row)
-            self.after_import_instance(instance, new, row=row, **kwargs)
+            self.after_import_instance(instance, new, **kwargs)
             if new:
                 row_result.import_type = RowResult.IMPORT_TYPE_NEW
             else:
