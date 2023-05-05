@@ -89,44 +89,26 @@ column name (i.e. row header)::
     :doc:`/api_fields`
         Available field types and options.
 
-Custom workflow based on update values
+Custom workflow based on import values
 --------------------------------------
 
-You can extend the import process to add workflow based on changes on incoming rows.
+You can extend the import process to add workflow based on changes to persisted model instances.
 
 For example, suppose you are importing a list of books and you require additional workflow if the book is set to
 'out of print'.  This will be a one-off operation to take place on the first occasion when the book is set to 'out of
 print'.
 
 To achieve this, we need to check the existing value taken from the persisted instance with the incoming value in the
-row.
+dataset row.
 
-You can override the :meth:`~import_export.resources.Resource.after_import_instance` method to check if the
+You can override the :meth:`~import_export.resources.Resource.after_import_row` method to check if the
 value changes::
 
   class BookResource(resources.ModelResource):
-    def after_import_instance(self, instance, new, **kwargs):
+    def after_import_row(self, row, row_result, row_number=None, original=None, **kwargs):
         # for updates, check to see if the 'out of print' value has changed in the import row
-        if not new:
-            row = kwargs["row"]
-            is_out_of_print = row["out_of_print"]
-            if is_out_of_print and instance.is_out_of_print is False:
-                # add custom workflow...
-
-It might be a good idea to delay the custom workflow until after the instance has been saved successfully.  To achieve
-this, set a temporary flag on the instance, which can be read later in the import process::
-
-  class BookResource(resources.ModelResource):
-
-    def after_import_instance(self, instance, new, **kwargs):
-        # compare instance with incoming row value
-
-    def after_save_instance(self, instance, using_transactions, dry_run):
-        if getattr(instance, "is_out_of_print", False):
-            # add custom workflow
-
-Note that if there is concurrent access to the underlying db table then this logic could be vulnerable to race
-conditions.
+        if original and original.out_of_print is False and instance.is_out_of_print is True:
+            # add custom workflow...
 
 Field widgets
 =============

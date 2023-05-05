@@ -477,20 +477,24 @@ class ModelResourceTest(TestCase):
         instance = resource.get_instance(instance_loader, self.dataset.dict[0])
         self.assertEqual(instance, self.book)
 
-    def test_after_import_instance_row_param(self):
-        # issue 1583 - assert that row is passed to after_import_instance()
+    def test_after_import_row_kwargs(self):
+        # issue 1583 - assert that `original` object passed to after_import_row()
+        # issue 1585 - assert that row_number is passed
         class BookResource(resources.ModelResource):
-            row = None
+            original = None
+            row_number = None
 
-            def after_import_instance(self, instance, new, row_number=None, **kwargs):
-                self.row = kwargs["row"]
+            def after_import_row(self, row, row_result, original=None, **kwargs):
+                self.original = original
+                self.row_number = kwargs["row_number"]
 
             class Meta:
                 model = Book
 
         resource = BookResource()
         resource.import_data(self.dataset, raise_errors=True)
-        self.assertEqual(self.dataset.dict[0], resource.row)
+        self.assertEqual(self.book.pk, resource.original.pk)
+        self.assertEqual(1, resource.row_number)
 
     def test_get_instance_import_id_fields_with_custom_column_name(self):
         class BookResource(resources.ModelResource):

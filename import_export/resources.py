@@ -699,13 +699,25 @@ class Resource(metaclass=DeclarativeMetaclass):
         """
         pass
 
-    def after_import_row(self, row, row_result, row_number=None, **kwargs):
+    def after_import_row(
+        self, row, row_result, row_number=None, original=None, **kwargs
+    ):
         """
         Override to add additional logic. Does nothing by default.
+
+        :param row: A ``dict`` of the import row.
+
+        :param row_result: A ``RowResult`` instance.
+
+        :param row_number: The row number from the dataset.
+
+        :param original: The model instance read from db prior to changes
+          (may be None).
+          This value will be None if ``skip_diff`` is enabled.
         """
         pass
 
-    def after_import_instance(self, instance, new, row_number=None, row=None, **kwargs):
+    def after_import_instance(self, instance, new, row_number=None, **kwargs):
         """
         Override to add additional logic. Does nothing by default.
         """
@@ -741,6 +753,8 @@ class Resource(metaclass=DeclarativeMetaclass):
 
         :param dry_run: If ``dry_run`` is set, or error occurs, transaction
             will be rolled back.
+
+        :param row_number: The row number.
         """
         if raise_errors is not None:
             warnings.warn(
@@ -801,7 +815,7 @@ class Resource(metaclass=DeclarativeMetaclass):
 
             if not skip_diff and not self._meta.skip_html_diff:
                 row_result.diff = diff.as_html()
-            self.after_import_row(row, row_result, **kwargs)
+            self.after_import_row(row, row_result, original=original, **kwargs)
 
         except ValidationError as e:
             row_result.import_type = RowResult.IMPORT_TYPE_INVALID
