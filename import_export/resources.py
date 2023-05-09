@@ -708,6 +708,7 @@ class Resource(metaclass=DeclarativeMetaclass):
         :param row: A ``dict`` of the import row.
 
         :param row_result: A ``RowResult`` instance.
+          References the persisted ``instance`` as an attribute.
 
         :param row_number: The row number from the dataset.
 
