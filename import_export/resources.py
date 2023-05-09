@@ -699,9 +699,7 @@ class Resource(metaclass=DeclarativeMetaclass):
         """
         pass
 
-    def after_import_row(
-        self, row, row_result, row_number=None, original=None, **kwargs
-    ):
+    def after_import_row(self, row, row_result, row_number=None, **kwargs):
         """
         Override to add additional logic. Does nothing by default.
 
@@ -711,10 +709,6 @@ class Resource(metaclass=DeclarativeMetaclass):
           References the persisted ``instance`` as an attribute.
 
         :param row_number: The row number from the dataset.
-
-        :param original: The model instance read from db prior to changes
-          (may be None).
-          This value will be None if ``skip_diff`` is enabled.
         """
         pass
 
@@ -789,6 +783,7 @@ class Resource(metaclass=DeclarativeMetaclass):
                     row_result.add_instance_info(instance)
                     self.delete_instance(instance, using_transactions, dry_run)
                     if not skip_diff:
+                        row_result.original = original
                         diff.compare_with(self, None, dry_run)
             else:
                 import_validation_errors = {}
@@ -810,11 +805,12 @@ class Resource(metaclass=DeclarativeMetaclass):
                     self.save_m2m(instance, row, using_transactions, dry_run)
                 row_result.add_instance_info(instance)
                 if not skip_diff:
+                    row_result.original = original
                     diff.compare_with(self, instance, dry_run)
 
             if not skip_diff and not self._meta.skip_html_diff:
                 row_result.diff = diff.as_html()
-            self.after_import_row(row, row_result, original=original, **kwargs)
+            self.after_import_row(row, row_result, **kwargs)
 
         except ValidationError as e:
             row_result.import_type = RowResult.IMPORT_TYPE_INVALID

@@ -94,28 +94,30 @@ Custom workflow based on import values
 
 You can extend the import process to add workflow based on changes to persisted model instances.
 
-For example, suppose you are importing a list of books and you require additional workflow if the book is set to
-'out of print'.  This will be a one-off operation to take place on the first occasion when the book is set to 'out of
-print'.
+For example, suppose you are importing a list of books and you require additional workflow on the date of publication.
+In this example, we assume there is an existing unpublished book instance which has a null 'published' field.
 
-To achieve this, we need to check the existing value taken from the previous persisted instance (i.e. prior to import
-changes) with the incoming value on the updated instance.  The ``instance`` is an attribute of ``row_result``.
+There will be a one-off operation to take place on the date of publication, which will be identified by the presence of
+the 'published' field in the import file.
+
+To achieve this, we need to test the existing value taken from the persisted instance (i.e. prior to import
+changes) against the incoming value on the updated instance.
+Both ``instance`` and ``original`` are attributes of :class:`~import_export.results.RowResult`.
 
 You can override the :meth:`~import_export.resources.Resource.after_import_row` method to check if the
 value changes::
 
   class BookResource(resources.ModelResource):
 
-    def after_import_row(self, row, row_result, row_number=None, original=None, **kwargs):
-        # for updates, check to see if the 'out of print' value has changed in the import row
-        if original and original.out_of_print is False \
-            and row_result.instance.is_out_of_print is True:
+    def after_import_row(self, row, row_result, **kwargs):
+        if getattr(row_result.original, "published") is None \
+            and getattr(row_result.instance, "published") is not None:
             # import value is different from stored value.
             # exec custom workflow...
 
 .. note::
 
-Refer to the docstring for :meth:`~import_export.resources.Resource.after_import_row` for additional notes.
+  The ``original`` attribute will be null if :attr:`~import_export.resources.ResourceOptions.skip_diff` is True.
 
 Field widgets
 =============

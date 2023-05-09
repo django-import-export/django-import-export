@@ -37,12 +37,15 @@ class RowResult:
         self.row_values = {}
         self.object_id = None
         self.object_repr = None
+        self.instance = None
+        self.original = None
 
     def add_instance_info(self, instance):
         if instance is not None:
             # Add object info to RowResult (e.g. for LogEntry)
             self.object_id = getattr(instance, "pk", None)
             self.object_repr = force_str(instance)
+            self.instance = instance
 
 
 class InvalidRow:

@@ -477,22 +477,6 @@ class ModelResourceTest(TestCase):
         instance = resource.get_instance(instance_loader, self.dataset.dict[0])
         self.assertEqual(instance, self.book)
 
-    def test_after_import_row_kwargs(self):
-        # issue 1583 - assert that `original` object passed to after_import_row()
-        class BookResource(resources.ModelResource):
-            original = None
-            row_number = None
-
-            def after_import_row(self, row, row_result, original=None, **kwargs):
-                self.original = original
-
-            class Meta:
-                model = Book
-
-        resource = BookResource()
-        resource.import_data(self.dataset, raise_errors=True)
-        self.assertEqual(self.book.pk, resource.original.pk)
-
     def test_get_instance_import_id_fields_with_custom_column_name(self):
         class BookResource(resources.ModelResource):
             name = fields.Field(
@@ -657,6 +641,9 @@ class ModelResourceTest(TestCase):
         instance = Book.objects.get(pk=self.book.pk)
         self.assertEqual(instance.author_email, "test@example.com")
         self.assertEqual(instance.price, Decimal("10.25"))
+
+        self.assertIsNotNone(result.rows[0].instance)
+        self.assertIsNotNone(result.rows[0].original)
 
     @skipUnlessDBFeature("supports_transactions")
     @mock.patch("import_export.resources.connections")
@@ -922,6 +909,8 @@ class ModelResourceTest(TestCase):
             result.rows[0].import_type, results.RowResult.IMPORT_TYPE_DELETE
         )
         self.assertFalse(Book.objects.filter(pk=self.book.pk))
+        self.assertIsNotNone(result.rows[0].instance)
+        self.assertIsNotNone(result.rows[0].original)
 
     def test_save_instance_with_dry_run_flag(self):
         class B(BookResource):
@@ -2768,3 +2757,31 @@ class ResourcesHelperFunctionsTest(TestCase):
 
         for model, expected_result in cases.items():
             self.assertEqual(resources.has_natural_foreign_key(model), expected_result)
+
+
+class AfterImportComparisonTest(TestCase):
+    class BookResource(resources.ModelResource):
+        is_published = False
+
+        def after_import_row(self, row, row_result, **kwargs):
+            if (
+                getattr(row_result.original, "published") is None
+                and getattr(row_result.instance, "published") is not None
+            ):
+                self.is_published = True
+
+        class Meta:
+            model = Book
+
+    def setUp(self):
+        super().setUp()
+        self.resource = AfterImportComparisonTest.BookResource()
+        self.book = Book.objects.create(name="Some book")
+        self.dataset = tablib.Dataset(headers=["id", "name", "published"])
+        row = [self.book.pk, "Some book", "2023-05-09"]
+        self.dataset.append(row)
+
+    def test_after_import_row_check_for_change(self):
+        # issue 1583 - assert that `original` object passed to after_import_row()
+        self.resource.import_data(self.dataset, raise_errors=True)
+        self.assertTrue(self.resource.is_published)
