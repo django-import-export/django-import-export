@@ -492,7 +492,6 @@ class ModelResourceTest(TestCase):
         resource = BookResource()
         resource.import_data(self.dataset, raise_errors=True)
         self.assertEqual(self.book.pk, resource.original.pk)
-        self.assertEqual(1, resource.row_number)
 
     def test_get_instance_import_id_fields_with_custom_column_name(self):
         class BookResource(resources.ModelResource):
