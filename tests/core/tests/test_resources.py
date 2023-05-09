@@ -316,6 +316,12 @@ class BookResource(resources.ModelResource):
         exclude = ("imported",)
 
 
+class BookResourceWithStoreInstance(resources.ModelResource):
+    class Meta:
+        model = Book
+        store_instance = True
+
+
 class BookResourceWithLineNumberLogger(BookResource):
     def __init__(self, *args, **kwargs):
         self.before_lines = []
@@ -666,9 +672,9 @@ class ModelResourceTest(TestCase):
         self.assertEqual(instance.price, Decimal("10.25"))
 
     def test_import_data_new_store_instance(self):
+        self.resource = BookResourceWithStoreInstance()
         Book.objects.all().delete()
         self.assertEqual(0, Book.objects.count())
-        self.resource._meta.store_instance = True
         result = self.resource.import_data(self.dataset, raise_errors=True)
 
         self.assertEqual(result.rows[0].import_type, results.RowResult.IMPORT_TYPE_NEW)
@@ -676,7 +682,7 @@ class ModelResourceTest(TestCase):
         self.assertIsNone(result.rows[0].original)
 
     def test_import_data_update_store_instance(self):
-        self.resource._meta.store_instance = True
+        self.resource = BookResourceWithStoreInstance()
         result = self.resource.import_data(self.dataset, raise_errors=True)
         self.assertEqual(
             result.rows[0].import_type, results.RowResult.IMPORT_TYPE_UPDATE
