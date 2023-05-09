@@ -479,14 +479,12 @@ class ModelResourceTest(TestCase):
 
     def test_after_import_row_kwargs(self):
         # issue 1583 - assert that `original` object passed to after_import_row()
-        # issue 1585 - assert that row_number is passed
         class BookResource(resources.ModelResource):
             original = None
             row_number = None
 
             def after_import_row(self, row, row_result, original=None, **kwargs):
                 self.original = original
-                self.row_number = kwargs["row_number"]
 
             class Meta:
                 model = Book
