@@ -186,7 +186,16 @@ class ResourceOptions:
 
     store_row_values = False
     """
-    If True, each row's raw data will be stored in each row result.
+    If True, each row's raw data will be stored in each
+    :class:`~import_export.results.RowResult`.
+    Enabling this parameter will increase the memory usage during import
+    which should be considered when importing large datasets.
+    """
+
+    store_instance = False
+    """
+    If True, the created, updated or deleted instance will be stored in
+    each :class:`~import_export.results.RowResult`.
     Enabling this parameter will increase the memory usage during import
     which should be considered when importing large datasets.
     """
@@ -781,6 +790,8 @@ class Resource(metaclass=DeclarativeMetaclass):
                 else:
                     row_result.import_type = RowResult.IMPORT_TYPE_DELETE
                     row_result.add_instance_info(instance)
+                    if self._meta.store_instance:
+                        row_result.instance = instance
                     self.delete_instance(instance, using_transactions, dry_run)
                     if not skip_diff:
                         diff.compare_with(self, None, dry_run)
@@ -803,6 +814,8 @@ class Resource(metaclass=DeclarativeMetaclass):
                     self.save_instance(instance, new, using_transactions, dry_run)
                     self.save_m2m(instance, row, using_transactions, dry_run)
                 row_result.add_instance_info(instance)
+                if self._meta.store_instance:
+                    row_result.instance = instance
                 if not skip_diff:
                     diff.compare_with(self, instance, dry_run)
                     if not new:

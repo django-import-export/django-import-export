@@ -638,12 +638,12 @@ class ModelResourceTest(TestCase):
         self.assertEqual(result.rows[0].row_values.get("name"), None)
         self.assertEqual(result.rows[0].row_values.get("author_email"), None)
 
+        self.assertIsNone(result.rows[0].instance)
+        self.assertIsNotNone(result.rows[0].original)
+
         instance = Book.objects.get(pk=self.book.pk)
         self.assertEqual(instance.author_email, "test@example.com")
         self.assertEqual(instance.price, Decimal("10.25"))
-
-        self.assertIsNotNone(result.rows[0].instance)
-        self.assertIsNotNone(result.rows[0].original)
 
     def test_import_data_new(self):
         Book.objects.all().delete()
@@ -657,13 +657,32 @@ class ModelResourceTest(TestCase):
         self.assertEqual(result.rows[0].row_values.get("name"), None)
         self.assertEqual(result.rows[0].row_values.get("author_email"), None)
 
+        self.assertIsNone(result.rows[0].instance)
+        self.assertIsNone(result.rows[0].original)
+
         self.assertEqual(1, Book.objects.count())
         instance = Book.objects.first()
         self.assertEqual(instance.author_email, "test@example.com")
         self.assertEqual(instance.price, Decimal("10.25"))
 
+    def test_import_data_new_store_instance(self):
+        Book.objects.all().delete()
+        self.assertEqual(0, Book.objects.count())
+        self.resource._meta.store_instance = True
+        result = self.resource.import_data(self.dataset, raise_errors=True)
+
+        self.assertEqual(result.rows[0].import_type, results.RowResult.IMPORT_TYPE_NEW)
         self.assertIsNotNone(result.rows[0].instance)
         self.assertIsNone(result.rows[0].original)
+
+    def test_import_data_update_store_instance(self):
+        self.resource._meta.store_instance = True
+        result = self.resource.import_data(self.dataset, raise_errors=True)
+        self.assertEqual(
+            result.rows[0].import_type, results.RowResult.IMPORT_TYPE_UPDATE
+        )
+        self.assertIsNotNone(result.rows[0].instance)
+        self.assertIsNotNone(result.rows[0].original)
 
     @skipUnlessDBFeature("supports_transactions")
     @mock.patch("import_export.resources.connections")
@@ -929,8 +948,26 @@ class ModelResourceTest(TestCase):
             result.rows[0].import_type, results.RowResult.IMPORT_TYPE_DELETE
         )
         self.assertFalse(Book.objects.filter(pk=self.book.pk))
-        self.assertIsNotNone(result.rows[0].instance)
+        self.assertIsNone(result.rows[0].instance)
         self.assertIsNone(result.rows[0].original)
+
+    def test_import_data_delete_store_instance(self):
+        class B(BookResource):
+            delete = fields.Field(widget=widgets.BooleanWidget())
+
+            def for_delete(self, row, instance):
+                return self.fields["delete"].clean(row)
+
+            class Meta:
+                store_instance = True
+
+        row = [self.book.pk, self.book.name, "1"]
+        dataset = tablib.Dataset(*[row], headers=["id", "name", "delete"])
+        result = B().import_data(dataset, raise_errors=True)
+        self.assertEqual(
+            result.rows[0].import_type, results.RowResult.IMPORT_TYPE_DELETE
+        )
+        self.assertIsNotNone(result.rows[0].instance)
 
     def test_save_instance_with_dry_run_flag(self):
         class B(BookResource):
@@ -2792,6 +2829,7 @@ class AfterImportComparisonTest(TestCase):
 
         class Meta:
             model = Book
+            store_instance = True
 
     def setUp(self):
         super().setUp()

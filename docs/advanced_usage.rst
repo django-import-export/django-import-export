@@ -117,7 +117,8 @@ value changes::
 
 .. note::
 
-  The ``original`` attribute will be null if :attr:`~import_export.resources.ResourceOptions.skip_diff` is True.
+  * The ``original`` attribute will be null if :attr:`~import_export.resources.ResourceOptions.skip_diff` is True.
+  * The ``instance`` attribute will be null if :attr:`~import_export.resources.ResourceOptions.store_instance` is False.
 
 Field widgets
 =============
