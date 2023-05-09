@@ -115,6 +115,10 @@ value changes::
             # import value is different from stored value.
             # exec custom workflow...
 
+    class Meta:
+        model = Book
+        store_instance = True
+
 .. note::
 
   * The ``original`` attribute will be null if :attr:`~import_export.resources.ResourceOptions.skip_diff` is True.
