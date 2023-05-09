@@ -626,7 +626,7 @@ class ModelResourceTest(TestCase):
         )
         self.assertFalse(html[headers.index("author_email")])
 
-    def test_import_data(self):
+    def test_import_data_update(self):
         result = self.resource.import_data(self.dataset, raise_errors=True)
 
         self.assertFalse(result.has_errors())
@@ -644,6 +644,26 @@ class ModelResourceTest(TestCase):
 
         self.assertIsNotNone(result.rows[0].instance)
         self.assertIsNotNone(result.rows[0].original)
+
+    def test_import_data_new(self):
+        Book.objects.all().delete()
+        self.assertEqual(0, Book.objects.count())
+        result = self.resource.import_data(self.dataset, raise_errors=True)
+
+        self.assertFalse(result.has_errors())
+        self.assertEqual(len(result.rows), 1)
+        self.assertTrue(result.rows[0].diff)
+        self.assertEqual(result.rows[0].import_type, results.RowResult.IMPORT_TYPE_NEW)
+        self.assertEqual(result.rows[0].row_values.get("name"), None)
+        self.assertEqual(result.rows[0].row_values.get("author_email"), None)
+
+        self.assertEqual(1, Book.objects.count())
+        instance = Book.objects.first()
+        self.assertEqual(instance.author_email, "test@example.com")
+        self.assertEqual(instance.price, Decimal("10.25"))
+
+        self.assertIsNotNone(result.rows[0].instance)
+        self.assertIsNone(result.rows[0].original)
 
     @skipUnlessDBFeature("supports_transactions")
     @mock.patch("import_export.resources.connections")
@@ -910,7 +930,7 @@ class ModelResourceTest(TestCase):
         )
         self.assertFalse(Book.objects.filter(pk=self.book.pk))
         self.assertIsNotNone(result.rows[0].instance)
-        self.assertIsNotNone(result.rows[0].original)
+        self.assertIsNone(result.rows[0].original)
 
     def test_save_instance_with_dry_run_flag(self):
         class B(BookResource):
@@ -2782,6 +2802,6 @@ class AfterImportComparisonTest(TestCase):
         self.dataset.append(row)
 
     def test_after_import_row_check_for_change(self):
-        # issue 1583 - assert that `original` object passed to after_import_row()
+        # issue 1583 - assert that `original` object is available to after_import_row()
         self.resource.import_data(self.dataset, raise_errors=True)
         self.assertTrue(self.resource.is_published)

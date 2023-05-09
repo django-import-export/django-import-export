@@ -783,7 +783,6 @@ class Resource(metaclass=DeclarativeMetaclass):
                     row_result.add_instance_info(instance)
                     self.delete_instance(instance, using_transactions, dry_run)
                     if not skip_diff:
-                        row_result.original = original
                         diff.compare_with(self, None, dry_run)
             else:
                 import_validation_errors = {}
@@ -805,8 +804,9 @@ class Resource(metaclass=DeclarativeMetaclass):
                     self.save_m2m(instance, row, using_transactions, dry_run)
                 row_result.add_instance_info(instance)
                 if not skip_diff:
-                    row_result.original = original
                     diff.compare_with(self, instance, dry_run)
+                    if not new:
+                        row_result.original = original
 
             if not skip_diff and not self._meta.skip_html_diff:
                 row_result.diff = diff.as_html()
