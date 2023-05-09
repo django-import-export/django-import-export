@@ -129,7 +129,7 @@ class ResourceOptions:
     Controls whether or not an instance should be diffed following import.
     By default, an instance is copied prior to insert, update or delete.
     After each row is processed, the instance's copy is diffed against the original,
-    and the value stored in each ``RowResult``.
+    and the value stored in each :class:`~import_export.results.RowResult`.
     If diffing is not required, then disabling the diff operation by setting this value
     to ``True`` improves performance, because the copy and comparison operations are
     skipped for each row.
@@ -143,7 +143,8 @@ class ResourceOptions:
     """
     Controls whether or not a HTML report is generated after each row.
     By default, the difference between a stored copy and an imported instance
-    is generated in HTML form and stored in each ``RowResult``.
+    is generated in HTML form and stored in each
+    :class:`~import_export.results.RowResult`.
     The HTML report is used to present changes on the confirmation screen in the admin
     site, hence when this value is ``True``, then changes will not be presented on the
     confirmation screen.
