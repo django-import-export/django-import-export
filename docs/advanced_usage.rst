@@ -99,22 +99,23 @@ For example, suppose you are importing a list of books and you require additiona
 print'.
 
 To achieve this, we need to check the existing value taken from the previous persisted instance (i.e. prior to import
-changes) with the incoming value on the updated instance (i.e. ``instance``).
-The ``instance`` is a property of ``row_result``.
+changes) with the incoming value on the updated instance.  The ``instance`` is an attribute of ``row_result``.
 
 You can override the :meth:`~import_export.resources.Resource.after_import_row` method to check if the
 value changes::
 
   class BookResource(resources.ModelResource):
+
     def after_import_row(self, row, row_result, row_number=None, original=None, **kwargs):
         # for updates, check to see if the 'out of print' value has changed in the import row
         if original and original.out_of_print is False \
             and row_result.instance.is_out_of_print is True:
-            # add custom workflow...
+            # import value is different from stored value.
+            # exec custom workflow...
 
 .. note::
 
-  The ``original`` parameter will be None if :attr:`~import_export.resources.ResourceOptions.skip_diff` is True.
+Refer to the docstring for :meth:`~import_export.resources.Resource.after_import_row` for additional notes.
 
 Field widgets
 =============
