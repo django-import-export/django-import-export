@@ -129,7 +129,7 @@ class ResourceOptions:
     Controls whether or not an instance should be diffed following import.
     By default, an instance is copied prior to insert, update or delete.
     After each row is processed, the instance's copy is diffed against the original,
-    and the value stored in each ``RowResult``.
+    and the value stored in each :class:`~import_export.results.RowResult`.
     If diffing is not required, then disabling the diff operation by setting this value
     to ``True`` improves performance, because the copy and comparison operations are
     skipped for each row.
@@ -143,7 +143,8 @@ class ResourceOptions:
     """
     Controls whether or not a HTML report is generated after each row.
     By default, the difference between a stored copy and an imported instance
-    is generated in HTML form and stored in each ``RowResult``.
+    is generated in HTML form and stored in each
+    :class:`~import_export.results.RowResult`.
     The HTML report is used to present changes on the confirmation screen in the admin
     site, hence when this value is ``True``, then changes will not be presented on the
     confirmation screen.
@@ -186,7 +187,16 @@ class ResourceOptions:
 
     store_row_values = False
     """
-    If True, each row's raw data will be stored in each row result.
+    If True, each row's raw data will be stored in each
+    :class:`~import_export.results.RowResult`.
+    Enabling this parameter will increase the memory usage during import
+    which should be considered when importing large datasets.
+    """
+
+    store_instance = False
+    """
+    If True, the row instance will be stored in each
+    :class:`~import_export.results.RowResult`.
     Enabling this parameter will increase the memory usage during import
     which should be considered when importing large datasets.
     """
@@ -702,6 +712,13 @@ class Resource(metaclass=DeclarativeMetaclass):
     def after_import_row(self, row, row_result, row_number=None, **kwargs):
         """
         Override to add additional logic. Does nothing by default.
+
+        :param row: A ``dict`` of the import row.
+
+        :param row_result: A ``RowResult`` instance.
+          References the persisted ``instance`` as an attribute.
+
+        :param row_number: The row number from the dataset.
         """
         pass
 
@@ -774,6 +791,8 @@ class Resource(metaclass=DeclarativeMetaclass):
                 else:
                     row_result.import_type = RowResult.IMPORT_TYPE_DELETE
                     row_result.add_instance_info(instance)
+                    if self._meta.store_instance:
+                        row_result.instance = instance
                     self.delete_instance(instance, using_transactions, dry_run)
                     if not skip_diff:
                         diff.compare_with(self, None, dry_run)
@@ -796,8 +815,12 @@ class Resource(metaclass=DeclarativeMetaclass):
                     self.save_instance(instance, new, using_transactions, dry_run)
                     self.save_m2m(instance, row, using_transactions, dry_run)
                 row_result.add_instance_info(instance)
+                if self._meta.store_instance:
+                    row_result.instance = instance
                 if not skip_diff:
                     diff.compare_with(self, instance, dry_run)
+                    if not new:
+                        row_result.original = original
 
             if not skip_diff and not self._meta.skip_html_diff:
                 row_result.diff = diff.as_html()

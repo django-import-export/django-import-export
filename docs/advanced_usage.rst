@@ -89,6 +89,41 @@ column name (i.e. row header)::
     :doc:`/api_fields`
         Available field types and options.
 
+Custom workflow based on import values
+--------------------------------------
+
+You can extend the import process to add workflow based on changes to persisted model instances.
+
+For example, suppose you are importing a list of books and you require additional workflow on the date of publication.
+In this example, we assume there is an existing unpublished book instance which has a null 'published' field.
+
+There will be a one-off operation to take place on the date of publication, which will be identified by the presence of
+the 'published' field in the import file.
+
+To achieve this, we need to test the existing value taken from the persisted instance (i.e. prior to import
+changes) against the incoming value on the updated instance.
+Both ``instance`` and ``original`` are attributes of :class:`~import_export.results.RowResult`.
+
+You can override the :meth:`~import_export.resources.Resource.after_import_row` method to check if the
+value changes::
+
+  class BookResource(resources.ModelResource):
+
+    def after_import_row(self, row, row_result, **kwargs):
+        if getattr(row_result.original, "published") is None \
+            and getattr(row_result.instance, "published") is not None:
+            # import value is different from stored value.
+            # exec custom workflow...
+
+    class Meta:
+        model = Book
+        store_instance = True
+
+.. note::
+
+  * The ``original`` attribute will be null if :attr:`~import_export.resources.ResourceOptions.skip_diff` is True.
+  * The ``instance`` attribute will be null if :attr:`~import_export.resources.ResourceOptions.store_instance` is False.
+
 Field widgets
 =============
 

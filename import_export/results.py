@@ -13,6 +13,8 @@ class Error:
 
 
 class RowResult:
+    """Container for values relating to a row import."""
+
     IMPORT_TYPE_UPDATE = "update"
     IMPORT_TYPE_NEW = "new"
     IMPORT_TYPE_DELETE = "delete"
@@ -30,13 +32,40 @@ class RowResult:
     )
 
     def __init__(self):
+        #: An instance of :class:`~import_export.results.Error` which may have been
+        #: raised during import.
         self.errors = []
+
+        #: Contains any ValidationErrors which may have been raised during import.
         self.validation_error = None
+
+        #: A HTML representation of the difference between the 'original' and
+        #: 'updated' model instance.
         self.diff = None
+
+        #: A string identifier which identifies what type of import was performed.
         self.import_type = None
+
+        #: Can the raw values associated with each imported row.
         self.row_values = {}
+
+        #: The instance id (used in Admin UI)
         self.object_id = None
+
+        #: The object representation (used in Admin UI)
         self.object_repr = None
+
+        #: A reference to the model instance which was created, updated or deleted.
+        self.instance = None
+
+        #: A reference to the model instance before updates were applied.
+        #: This value is only set for updates.
+        self.original = None
+
+        #: A boolean flag indicating whether the record is `new` or not.
+        #: Deprecated: use the value of ``import_type`` instead.
+        #: See issue 1586.
+        self.new_record = None
 
     def add_instance_info(self, instance):
         if instance is not None:

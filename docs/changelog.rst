@@ -6,7 +6,7 @@ Changelog
 
 - Added support for Django 4.2 (#1570)
 - Refactoring and fix to support filtering exports (#1579)
-
+- Store ``instance`` and ``original`` object in :class:`~import_export.results.RowResult` (#1584)
 
 3.2.0 (2023-04-12)
 ------------------
