@@ -195,8 +195,8 @@ class ResourceOptions:
 
     store_instance = False
     """
-    If True, the created, updated or deleted instance will be stored in
-    each :class:`~import_export.results.RowResult`.
+    If True, the row instance will be stored in each
+    :class:`~import_export.results.RowResult`.
     Enabling this parameter will increase the memory usage during import
     which should be considered when importing large datasets.
     """
