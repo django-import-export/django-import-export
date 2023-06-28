@@ -39,39 +39,45 @@
     <form action="" method="post" enctype="multipart/form-data">
       {% csrf_token %}
 
-      <p>
-        {% trans "This importer will import the following fields: " %}
-        {% if fields_list|length <= 1 %}
-           <code>{{ fields_list.0.1|join:", " }}</code>
-        {% else %}
-           <dl>
-              {% for resource, fields in fields_list %}
-                  <dt>{{ resource }}</dt>
-                  <dd><code>{{ fields|join:", " }}</code></dd>
-              {% endfor %}
-           </dl>
-        {% endif %}
-      </p>
+      {% block fields_help %}
+        <p>
+          {% trans "This importer will import the following fields: " %}
+          {% if fields_list|length <= 1 %}
+             <code>{{ fields_list.0.1|join:", " }}</code>
+          {% else %}
+             <dl>
+                {% for resource, fields in fields_list %}
+                    <dt>{{ resource }}</dt>
+                    <dd><code>{{ fields|join:", " }}</code></dd>
+                {% endfor %}
+             </dl>
+          {% endif %}
+        </p>
+      {% endblock %}
 
-      <fieldset class="module aligned">
-        {% for field in form %}
-          <div class="form-row">
-            {{ field.errors }}
+      {% block form_detail %}
+          <fieldset class="module aligned">
+          {% for field in form %}
+            <div class="form-row">
+              {{ field.errors }}
 
-            {{ field.label_tag }}
+              {{ field.label_tag }}
 
-            {{ field }}
+              {{ field }}
 
-            {% if field.field.help_text %}
-            <p class="help">{{ field.field.help_text|safe }}</p>
-            {% endif %}
-          </div>
-        {% endfor %}
-      </fieldset>
+              {% if field.field.help_text %}
+              <p class="help">{{ field.field.help_text|safe }}</p>
+              {% endif %}
+            </div>
+          {% endfor %}
+        </fieldset>
+      {% endblock %}
 
-      <div class="submit-row">
-        <input type="submit" class="default" value="{% trans "Submit" %}">
-      </div>
+      {% block form_submit_button %}
+        <div class="submit-row">
+          <input type="submit" class="default" value="{% trans "Submit" %}">
+        </div>
+      {% endblock %}
     </form>
     {% endblock %}
   {% endif %}
@@ -156,7 +162,7 @@
         </tbody>
       </table>
       {% endblock %}
-  
+
     {% else %}
 
       {% block preview %}
