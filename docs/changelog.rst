@@ -8,6 +8,7 @@ Changelog
 - Refactoring and fix to support filtering exports (#1579)
 - Store ``instance`` and ``original`` object in :class:`~import_export.results.RowResult` (#1584)
 - Removed reference to tablib dev from tox build (#1603)
+- Add customizable blocks in import.html (#1598)
 
 3.2.0 (2023-04-12)
 ------------------
