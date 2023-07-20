@@ -1,12 +1,13 @@
 Changelog
 =========
 
-3.2.1 (unreleased)
+3.3.0 (unreleased)
 ------------------
 
 - Added support for Django 4.2 (#1570)
 - Refactoring and fix to support filtering exports (#1579)
 - Store ``instance`` and ``original`` object in :class:`~import_export.results.RowResult` (#1584)
+- Removed reference to tablib dev from tox build (#)
 
 3.2.0 (2023-04-12)
 ------------------
