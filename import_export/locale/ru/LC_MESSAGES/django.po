@@ -79,7 +79,7 @@ msgid ""
 "Below is a preview of data to be imported. If you are satisfied with the "
 "results, click 'Confirm import'"
 msgstr ""
-"Ниже показано то, что будет импортировано. Нажмите 'Подтвердить импорт',если "
+"Ниже показано то, что будет импортировано. Нажмите 'Подтвердить импорт', если "
 "Вас устраивает результат"
 
 #: templates/admin/import_export/import.html:33
