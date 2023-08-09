@@ -140,6 +140,18 @@ If set to ``True``, strings will be HTML escaped. By default this is ``False``.
 If set to ``True``, strings will be sanitized by removing any leading '=' character.  This is to prevent execution of
  Excel formulae.  By default this is ``False``.
 
+``IMPORT_FORMATS``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Defines which file formats will be allowed during imports. Defaults
+to ``import_export.formats.base_formats.DEFAULT_FORMATS``.
+
+``EXPORT_FORMATS``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Defines which file formats will be allowed during exports. Defaults
+to ``import_export.formats.base_formats.DEFAULT_FORMATS``.
+
 .. _exampleapp:
 
 Example app
