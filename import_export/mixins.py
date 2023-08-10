@@ -14,40 +14,21 @@ from .signals import post_export
 logger = logging.getLogger(__name__)
 
 
-if getattr(settings, "EXPORT_FORMATS", None):
-    export_formats = settings.EXPORT_FORMATS
-
-    if not isinstance(export_formats, list):
-        raise Exception("The EXPORT_FORMATS value must be a list")
-
-    if not set(export_formats).issubset(set(base_formats.DEFAULT_FORMATS)):
-        raise Exception(
-            "The provided EXPORT_FORMATS values must be one of the available "
-            "formats in 'base_formats.DEFAULT_FORMATS'"
-        )
-else:
-    export_formats = base_formats.DEFAULT_FORMATS
-
-
-if getattr(settings, "IMPORT_FORMATS", None):
-    import_formats = settings.IMPORT_FORMAT
-
-    if not isinstance(import_formats, list):
-        raise Exception("The IMPORT_FORMATS value must be a list")
-
-    if not set(export_formats).issubset(set(base_formats.DEFAULT_FORMATS)):
-        raise Exception(
-            "The provided IMPORT_FORMATS values must be one of the available "
-            "formats in 'base_formats.DEFAULT_FORMATS'"
-        )
-else:
-    import_formats = base_formats.DEFAULT_FORMATS
-
-
 class BaseImportExportMixin:
-    formats = base_formats.DEFAULT_FORMATS
     resource_class = None
     resource_classes = []
+
+    @property
+    def formats(self):
+        return getattr(settings, "IMPORT_EXPORT_FORMATS", base_formats.DEFAULT_FORMATS)
+
+    @property
+    def export_formats(self):
+        return getattr(settings, "EXPORT_FORMATS", self.formats)
+
+    @property
+    def import_formats(self):
+        return getattr(settings, "IMPORT_FORMATS", self.formats)
 
     def check_resource_classes(self, resource_classes):
         if resource_classes and not hasattr(resource_classes, "__getitem__"):
@@ -95,8 +76,6 @@ class BaseImportExportMixin:
 
 
 class BaseImportMixin(BaseImportExportMixin):
-    formats = import_formats
-
     def get_import_resource_classes(self):
         """
         Returns ResourceClass subscriptable (list, tuple, ...) to use for import.
@@ -117,7 +96,7 @@ class BaseImportMixin(BaseImportExportMixin):
         """
         Returns available import formats.
         """
-        return [f for f in self.formats if f().can_import()]
+        return [f for f in self.import_formats if f().can_import()]
 
     def get_import_resource_kwargs(self, request, *args, **kwargs):
         return self.get_resource_kwargs(request, *args, **kwargs)
@@ -132,7 +111,6 @@ class BaseExportMixin(BaseImportExportMixin):
     escape_exported_data = False
     escape_html = False
     escape_formulae = False
-    formats = export_formats
 
     @property
     def should_escape_output(self):
@@ -167,7 +145,7 @@ class BaseExportMixin(BaseImportExportMixin):
         """
         Returns available export formats.
         """
-        return [f for f in self.formats if f().can_export()]
+        return [f for f in self.export_formats if f().can_export()]
 
     def get_export_resource_classes(self):
         """

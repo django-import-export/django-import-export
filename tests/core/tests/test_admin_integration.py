@@ -641,6 +641,25 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
             "failed to assign change_list_template attribute (see issue 1521)"
         )
 
+    @override_settings(IMPORT_FORMATS=[base_formats.XLSX, base_formats.XLS])
+    def test_import_admin_uses_import_format_settings(self):
+        """
+        Test that import form only avails the formats provided by the
+        IMPORT_FORMATS setting
+        """
+        request = self.client.get(self.book_import_url).wsgi_request
+        mock_site = mock.MagicMock()
+        import_form = BookAdmin(Book, mock_site).create_import_form(request)
+
+        items = list(import_form.fields.items())
+        file_format = items[len(items) - 1][1]
+        choices = file_format.choices
+
+        self.assertEqual(len(choices), 3)
+        self.assertEqual(choices[0][1], "---")
+        self.assertEqual(choices[1][1], "xlsx")
+        self.assertEqual(choices[2][1], "xls")
+
 
 class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
     def test_export(self):
@@ -1052,7 +1071,7 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
             def __init__(self):
                 super().__init__(mock_model, mock_site)
 
-            formats = [base_formats.CSV]
+            export_formats = [base_formats.CSV]
 
         m = TestCategoryAdmin()
         action_form = m.action_form
@@ -1076,7 +1095,7 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
             def __init__(self):
                 super().__init__(mock_model, mock_site)
 
-            formats = [base_formats.CSV, base_formats.JSON]
+            export_formats = [base_formats.CSV, base_formats.JSON]
 
         m = TestCategoryAdmin()
         action_form = m.action_form
@@ -1096,10 +1115,60 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
         choices = file_format.choices
 
         self.assertEqual(choices[0][1], "---")
-        self.assertEqual(len(m.formats) + 1, len(choices))
+        self.assertEqual(len(m.export_formats) + 1, len(choices))
 
         self.assertIn("csv", [c[1] for c in choices])
         self.assertIn("json", [c[1] for c in choices])
+
+    @override_settings(EXPORT_FORMATS=[base_formats.XLSX, base_formats.CSV])
+    def test_export_admin_action_uses_export_format_settings(self):
+        """
+        Test that export action only avails the formats provided by the
+        EXPORT_FORMATS setting
+        """
+        mock_model = mock.MagicMock()
+        mock_site = mock.MagicMock()
+
+        class TestCategoryAdmin(ExportActionModelAdmin):
+            def __init__(self):
+                super().__init__(mock_model, mock_site)
+
+        m = TestCategoryAdmin()
+        action_form = m.action_form
+
+        items = list(action_form.base_fields.items())
+        file_format = items[len(items) - 1][1]
+        choices = file_format.choices
+
+        self.assertEqual(len(choices), 3)
+        self.assertEqual(choices[0][1], "---")
+        self.assertEqual(choices[1][1], "xlsx")
+        self.assertEqual(choices[2][1], "csv")
+
+    @override_settings(IMPORT_EXPORT_FORMATS=[base_formats.XLS, base_formats.CSV])
+    def test_export_admin_action_uses_import_export_format_settings(self):
+        """
+        Test that export action only avails the formats provided by the
+        IMPORT_EXPORT_FORMATS setting
+        """
+        mock_model = mock.MagicMock()
+        mock_site = mock.MagicMock()
+
+        class TestCategoryAdmin(ExportActionModelAdmin):
+            def __init__(self):
+                super().__init__(mock_model, mock_site)
+
+        m = TestCategoryAdmin()
+        action_form = m.action_form
+
+        items = list(action_form.base_fields.items())
+        file_format = items[len(items) - 1][1]
+        choices = file_format.choices
+
+        self.assertEqual(len(choices), 3)
+        self.assertEqual(choices[0][1], "---")
+        self.assertEqual(choices[1][1], "xls")
+        self.assertEqual(choices[2][1], "csv")
 
 
 class TestExportEncoding(TestCase):

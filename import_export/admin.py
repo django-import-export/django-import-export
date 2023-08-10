@@ -17,7 +17,6 @@ from django.utils.module_loading import import_string
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_POST
 
-from .formats.base_formats import DEFAULT_FORMATS
 from .forms import (
     ConfirmImportForm,
     ExportForm,
@@ -84,8 +83,6 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
     import_export_change_list_template = "admin/import_export/change_list_import.html"
     #: template for import view
     import_template_name = "admin/import_export/import.html"
-    #: available import formats
-    formats = DEFAULT_FORMATS
     #: form class to use for the initial import step
     import_form_class = ImportForm
     #: form class to use for the confirm import step
