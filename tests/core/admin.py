@@ -2,6 +2,7 @@ from django.contrib import admin
 
 from import_export.admin import (
     ExportActionModelAdmin,
+    ImportExportMixin,
     ImportExportModelAdmin,
     ImportMixin,
 )
@@ -35,6 +36,18 @@ class BookAdmin(ImportExportModelAdmin):
     list_filter = ["categories", "author"]
     resource_classes = [BookResource, BookNameResource]
     change_list_template = "core/admin/change_list.html"
+
+
+class ApplicationAdminMixin:
+    # This simulates another application which overrides change_list change_list
+    # This configuration is taken from django-admin-sortable2
+    @property
+    def change_list_template(self):
+        return "core/admin/change_list.html"
+
+
+class ApplicationModelAdmin(ImportExportMixin, ApplicationAdminMixin, admin.ModelAdmin):
+    pass
 
 
 class CategoryAdmin(ExportActionModelAdmin):

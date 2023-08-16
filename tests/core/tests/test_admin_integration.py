@@ -10,10 +10,12 @@ import django
 import tablib
 from core.admin import AuthorAdmin, BookAdmin, CustomBookAdmin, ImportMixin
 from core.models import Author, Book, Category, EBook, Parent
+from django.contrib import admin
 from django.contrib.admin.models import DELETION, LogEntry
 from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied
 from django.http import HttpRequest
+from django.test import RequestFactory
 from django.test.testcases import TestCase, TransactionTestCase
 from django.test.utils import override_settings
 from django.utils.translation import gettext_lazy as _
@@ -30,6 +32,8 @@ from import_export.admin import (
 from import_export.formats import base_formats
 from import_export.formats.base_formats import DEFAULT_FORMATS
 from import_export.tmp_storages import TempFolderStorage
+
+from ..admin import ApplicationModelAdmin
 
 
 class AdminTestMixin(object):
@@ -111,6 +115,41 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertContains(response, _("Import"))
         self.assertContains(response, _("Export"))
         self.assertContains(response, "Custom change list item")
+
+    def test_changelist_view_test_admin_mixin_elements(self):
+        """
+        Simulate external application also overriding the changelist template.
+        Both applications should be able to use the mixin elements.
+        """
+        self.model_admin = ApplicationModelAdmin(Book, admin.site)
+        factory = RequestFactory()
+        request = factory.get("/admin/")
+        request.user = User.objects.create_superuser(
+            username="testuser", password="password", email="test@example.com"
+        )
+
+        # Call the changelist_view method
+        response = self.model_admin.changelist_view(request)
+
+        # Render will throw an exception if the default for {% extends %} is not set
+        response.render()
+
+        # Check that the original content is still present
+        self.assertContains(response, "Custom change list item")
+
+        # Check if the import/export buttons are present in the response
+        self.assertContains(
+            response,
+            '<li><a href="/admin/core/book/import/" '
+            'class="import_link">Import</a></li>',
+            html=True,
+        )
+        self.assertContains(
+            response,
+            '<li><a href="/admin/core/book/export/?" '
+            'class="export_link">Export</a></li>',
+            html=True,
+        )
 
     @override_settings(TEMPLATE_STRING_IF_INVALID="INVALID_VARIABLE")
     def test_import(self):
@@ -628,18 +667,6 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         m = TestExportActionModelAdmin()
         target_media = m.media
         self.assertEqual("import_export/action_formats.js", target_media._js[-1])
-
-    @patch("import_export.admin.logger")
-    def test_issue_1521_change_list_template_as_property(self, mock_logger):
-        class TestImportCls(ImportMixin):
-            @property
-            def change_list_template(self):
-                return ["x"]
-
-        TestImportCls()
-        mock_logger.warning.assert_called_once_with(
-            "failed to assign change_list_template attribute (see issue 1521)"
-        )
 
 
 class ExportAdminIntegrationTest(AdminTestMixin, TestCase):

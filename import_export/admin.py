@@ -35,6 +35,15 @@ logger = logging.getLogger(__name__)
 
 
 class ImportExportMixinBase:
+    @property
+    def change_list_template(self):
+        try:
+            self.base_change_list_template = super().change_list_template
+        except AttributeError:
+            pass
+        self.property_called = True
+        return getattr(self, "import_export_change_list_template", None)
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.init_change_list_template()
@@ -45,22 +54,14 @@ class ImportExportMixinBase:
         # `self.change_list_template` is `None` (the default in `ModelAdmin`) or
         # where `self.import_export_change_list_template` is `None` as falling
         # back on the default templates.
-        if getattr(self, "change_list_template", None):
+        self.change_list_template
+        if not hasattr(self, "property_called"):
             self.base_change_list_template = self.change_list_template
-        else:
-            self.base_change_list_template = "admin/change_list.html"
-
-        try:
             self.change_list_template = getattr(
                 self, "import_export_change_list_template", None
             )
-        except AttributeError:
-            logger.warning(
-                "failed to assign change_list_template attribute (see issue 1521)"
-            )
-
-        if self.change_list_template is None:
-            self.change_list_template = self.base_change_list_template
+        if not getattr(self, "base_change_list_template", None):
+            self.base_change_list_template = "admin/change_list.html"
 
     def get_model_info(self):
         app_label = self.model._meta.app_label
