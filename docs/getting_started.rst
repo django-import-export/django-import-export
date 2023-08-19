@@ -137,7 +137,7 @@ Exporting data
 Now that we have defined a :class:`~import_export.resources.ModelResource` class,
 we can export books::
 
-    >>> from app.admin import BookResource
+    >>> from core.admin import BookResource
     >>> dataset = BookResource().export()
     >>> print(dataset.csv)
     id,name,author,author_email,imported,published,price,categories
