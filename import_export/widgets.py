@@ -145,9 +145,11 @@ class BooleanWidget(Widget):
                 return super().before_import_row(row, row_number, **kwargs)
     """
 
-    TRUE_VALUES = ["1", 1, True, "true", "TRUE", "True"]
-    FALSE_VALUES = ["0", 0, False, "false", "FALSE", "False"]
-    NULL_VALUES = ["", None, "null", "NULL", "none", "NONE", "None"]
+    TRUE_VALUES = {"1", 1, True, "true", "TRUE", "True"}
+    FALSE_VALUES = {"0", 0, False, "false", "FALSE", "False"}
+    NULL_VALUES = {"", None, "null", "NULL", "none", "NONE", "None"}
+    TRUE_RENDER_VALUE = "1"
+    FALSE_RENDER_VALUE = "0"
 
     def render(self, value, obj=None):
         """
@@ -158,7 +160,7 @@ class BooleanWidget(Widget):
         """
         if value in self.NULL_VALUES:
             return ""
-        return self.TRUE_VALUES[0] if value else self.FALSE_VALUES[0]
+        return self.TRUE_RENDER_VALUE if value else self.FALSE_RENDER_VALUE
 
     def clean(self, value, row=None, **kwargs):
         if value in self.NULL_VALUES:
