@@ -155,7 +155,7 @@ You can run the example application as follows::
     ./manage.py makemigrations
     ./manage.py migrate
     ./manage.py createsuperuser
-    ./manage.py loaddata category.json book.json
+    ./manage.py loaddata author.json category.json book.json
     ./manage.py runserver
 
 Go to http://127.0.0.1:8000
