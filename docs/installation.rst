@@ -143,20 +143,44 @@ If set to ``True``, strings will be sanitized by removing any leading '=' charac
 ``IMPORT_EXPORT_FORMATS``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Defines which file formats will be allowed during imports and exports. Defaults
+A list that defines which file formats will be allowed during imports and exports. Defaults
 to ``import_export.formats.base_formats.DEFAULT_FORMATS``.
+The values must be those provided in ``import_export.formats.base_formats`` e.g
+
+.. code-block:: python
+
+    # settings.py
+    from import_export.formats.base_formats import XLSX
+    IMPORT_EXPORT_FORMATS = [XLSX]
+
 
 ``IMPORT_FORMATS``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Defines which file formats will be allowed during imports. Defaults
+A list that defines which file formats will be allowed during imports. Defaults
 to ``IMPORT_EXPORT_FORMATS``.
+The values must be those provided in ``import_export.formats.base_formats`` e.g
+
+.. code-block:: python
+
+    # settings.py
+    from import_export.formats.base_formats import CSV, XLSX
+    IMPORT_FORMATS = [CSV, XLSX]
+
 
 ``EXPORT_FORMATS``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Defines which file formats will be allowed during exports. Defaults
+A list that defines which file formats will be allowed during exports. Defaults
 to ``IMPORT_EXPORT_FORMATS``.
+The values must be those provided in ``import_export.formats.base_formats`` e.g
+
+.. code-block:: python
+
+    # settings.py
+    from import_export.formats.base_formats import XLSX
+    EXPORT_FORMATS = [XLSX]
+
 
 .. _exampleapp:
 
