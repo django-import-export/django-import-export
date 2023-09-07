@@ -140,6 +140,48 @@ If set to ``True``, strings will be HTML escaped. By default this is ``False``.
 If set to ``True``, strings will be sanitized by removing any leading '=' character.  This is to prevent execution of
  Excel formulae.  By default this is ``False``.
 
+``IMPORT_EXPORT_FORMATS``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A list that defines which file formats will be allowed during imports and exports. Defaults
+to ``import_export.formats.base_formats.DEFAULT_FORMATS``.
+The values must be those provided in ``import_export.formats.base_formats`` e.g
+
+.. code-block:: python
+
+    # settings.py
+    from import_export.formats.base_formats import XLSX
+    IMPORT_EXPORT_FORMATS = [XLSX]
+
+
+``IMPORT_FORMATS``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A list that defines which file formats will be allowed during imports. Defaults
+to ``IMPORT_EXPORT_FORMATS``.
+The values must be those provided in ``import_export.formats.base_formats`` e.g
+
+.. code-block:: python
+
+    # settings.py
+    from import_export.formats.base_formats import CSV, XLSX
+    IMPORT_FORMATS = [CSV, XLSX]
+
+
+``EXPORT_FORMATS``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A list that defines which file formats will be allowed during exports. Defaults
+to ``IMPORT_EXPORT_FORMATS``.
+The values must be those provided in ``import_export.formats.base_formats`` e.g
+
+.. code-block:: python
+
+    # settings.py
+    from import_export.formats.base_formats import XLSX
+    EXPORT_FORMATS = [XLSX]
+
+
 .. _exampleapp:
 
 Example app

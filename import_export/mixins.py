@@ -15,9 +15,20 @@ logger = logging.getLogger(__name__)
 
 
 class BaseImportExportMixin:
-    formats = base_formats.DEFAULT_FORMATS
     resource_class = None
     resource_classes = []
+
+    @property
+    def formats(self):
+        return getattr(settings, "IMPORT_EXPORT_FORMATS", base_formats.DEFAULT_FORMATS)
+
+    @property
+    def export_formats(self):
+        return getattr(settings, "EXPORT_FORMATS", self.formats)
+
+    @property
+    def import_formats(self):
+        return getattr(settings, "IMPORT_FORMATS", self.formats)
 
     def check_resource_classes(self, resource_classes):
         if resource_classes and not hasattr(resource_classes, "__getitem__"):
@@ -85,7 +96,7 @@ class BaseImportMixin(BaseImportExportMixin):
         """
         Returns available import formats.
         """
-        return [f for f in self.formats if f().can_import()]
+        return [f for f in self.import_formats if f().can_import()]
 
     def get_import_resource_kwargs(self, request, *args, **kwargs):
         return self.get_resource_kwargs(request, *args, **kwargs)
@@ -134,7 +145,7 @@ class BaseExportMixin(BaseImportExportMixin):
         """
         Returns available export formats.
         """
-        return [f for f in self.formats if f().can_export()]
+        return [f for f in self.export_formats if f().can_export()]
 
     def get_export_resource_classes(self):
         """

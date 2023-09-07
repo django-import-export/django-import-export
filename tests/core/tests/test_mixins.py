@@ -111,8 +111,12 @@ class BaseImportMixinTest(TestCase):
             def __init__(self):
                 super().__init__(2, False)
 
-        m = mixins.BaseImportMixin()
-        m.formats = [CanImportFormat, CannotImportFormat]
+        class TestBaseImportMixin(mixins.BaseImportMixin):
+            @property
+            def import_formats(self):
+                return [CanImportFormat, CannotImportFormat]
+
+        m = TestBaseImportMixin()
 
         formats = m.get_import_formats()
         self.assertEqual(1, len(formats))
@@ -337,8 +341,12 @@ class BaseExportMixinTest(TestCase):
             def __init__(self):
                 super().__init__(False)
 
-        m = mixins.BaseExportMixin()
-        m.formats = [CanExportFormat, CannotExportFormat]
+        class TestBaseExportMixin(mixins.BaseExportMixin):
+            @property
+            def export_formats(self):
+                return [CanExportFormat, CannotExportFormat]
+
+        m = TestBaseExportMixin()
 
         formats = m.get_export_formats()
         self.assertEqual(1, len(formats))
