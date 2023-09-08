@@ -10,6 +10,7 @@ Changelog
 - Removed reference to tablib dev from tox build (#1603)
 - Add customizable blocks in import.html (#1598)
 - Updated ru translation (#1604)
+- Do not decode bytes when writing to MediaStorage (#1615)
 
 3.2.0 (2023-04-12)
 ------------------
