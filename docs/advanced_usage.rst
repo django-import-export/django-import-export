@@ -841,6 +841,26 @@ return books for the publisher::
         class Meta:
             model = Book
 
+.. _interoperability:
+
+Interoperability with 3rd party libraries
+-----------------------------------------
+
+import_export extends the Django Admin interface.  There is therefore a possibility that clashes may occur with other
+3rd party libraries which use the admin interface.
+
+django-admin-sortable2
+^^^^^^^^^^^^^^^^^^^^^^
+
+Issues have been raised due to conflicts with setting `change_list_template <https://docs.djangoproject.com/en/dev/ref/contrib/admin/#django.contrib.admin.ModelAdmin.change_list_template>`_.  There is a workaround listed `here <https://github.com/jrief/django-admin-sortable2/issues/345#issuecomment-1680271337>`_.
+Also, refer to `this issue <https://github.com/django-import-export/django-import-export/issues/1531>`_.
+If you won't to patch your own installation to fix this, a patch is available `here <https://github.com/django-import-export/django-import-export/pull/1607>`_.
+
+django-polymorphic
+^^^^^^^^^^^^^^^^^^
+
+Refer to `this issue <https://github.com/django-import-export/django-import-export/issues/1521>`_.
+
 .. _admin_security:
 
 Security

@@ -10,6 +10,7 @@ Changelog
 - Removed reference to tablib dev from tox build (#1603)
 - Add customizable blocks in import.html (#1598)
 - Updated ru translation (#1604)
+- Updated documentation for interoperability with third party libraries (#)
 
 3.2.0 (2023-04-12)
 ------------------
