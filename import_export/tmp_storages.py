@@ -71,7 +71,7 @@ class MediaStorage(BaseStorage):
     MEDIA_FOLDER = "django-import-export"
 
     def __init__(self, name=None, read_mode="rb", encoding=None):
-        super().__init__(name, read_mode=read_mode, encoding=encoding)
+        super().__init__(name, read_mode="rb", encoding=None)
 
     def save(self, data):
         if not self.name:
