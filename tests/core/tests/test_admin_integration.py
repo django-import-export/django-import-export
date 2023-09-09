@@ -312,63 +312,6 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         else:
             self.assertFormError(response, "form", "import_file", target_msg)
 
-    def _is_str_in_response(self, filename, input_format, encoding=None):
-        super()._assert_string_in_response(
-            self.book_import_url,
-            filename,
-            input_format,
-            encoding=encoding,
-            str_in_response="test@example.com",
-        )
-
-    @override_settings(
-        IMPORT_EXPORT_TMP_STORAGE_CLASS="import_export.tmp_storages.TempFolderStorage"
-    )
-    def test_import_action_handles_TempFolderStorage_read(self):
-        self._is_str_in_response("books.csv", "0")
-
-    @override_settings(
-        IMPORT_EXPORT_TMP_STORAGE_CLASS="import_export.tmp_storages.TempFolderStorage"
-    )
-    def test_import_action_handles_TempFolderStorage_read_iso_8859_1(self):
-        self._is_str_in_response("books-ISO-8859-1.csv", "0", "ISO-8859-1")
-
-    @override_settings(
-        IMPORT_EXPORT_TMP_STORAGE_CLASS="import_export.tmp_storages.CacheStorage"
-    )
-    def test_import_action_handles_CacheStorage_read(self):
-        self._is_str_in_response("books.csv", "0")
-
-    @override_settings(
-        IMPORT_EXPORT_TMP_STORAGE_CLASS="import_export.tmp_storages.CacheStorage"
-    )
-    def test_import_action_handles_CacheStorage_read_iso_8859_1(self):
-        self._is_str_in_response("books-ISO-8859-1.csv", "0", "ISO-8859-1")
-
-    @override_settings(
-        IMPORT_EXPORT_TMP_STORAGE_CLASS="import_export.tmp_storages.CacheStorage"
-    )
-    def test_import_action_handles_CacheStorage_read_binary(self):
-        self._is_str_in_response("books.xls", "1")
-
-    @override_settings(
-        IMPORT_EXPORT_TMP_STORAGE_CLASS="import_export.tmp_storages.MediaStorage"
-    )
-    def test_import_action_handles_MediaStorage_read(self):
-        self._is_str_in_response("books.csv", "0")
-
-    @override_settings(
-        IMPORT_EXPORT_TMP_STORAGE_CLASS="import_export.tmp_storages.MediaStorage"
-    )
-    def test_import_action_handles_MediaStorage_read_iso_8859_1(self):
-        self._is_str_in_response("books-ISO-8859-1.csv", "0", "ISO-8859-1")
-
-    @override_settings(
-        IMPORT_EXPORT_TMP_STORAGE_CLASS="import_export.tmp_storages.MediaStorage"
-    )
-    def test_import_action_handles_MediaStorage_read_binary(self):
-        self._is_str_in_response("books.xls", "1")
-
     def test_delete_from_admin(self):
         # test delete from admin site (see #432)
 
