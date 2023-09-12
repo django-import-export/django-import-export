@@ -14,9 +14,7 @@ Changelog
 
   - Removal of deprecated :ref:`IMPORT_EXPORT_ESCAPE_OUTPUT_ON_EXPORT`.
 
-  - Deprecation of :ref:`IMPORT_EXPORT_ESCAPE_HTML_ON_EXPORT`.
-
-    Refer to :ref:`installation`.
+  - Deprecation of :ref:`IMPORT_EXPORT_ESCAPE_HTML_ON_EXPORT`.  Refer to :ref:`installation`.
 
 3.2.0 (2023-04-12)
 ------------------
