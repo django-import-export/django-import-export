@@ -7,14 +7,16 @@ Changelog
 - Added support for Django 4.2 (#1570)
 - Refactoring and fix to support filtering exports (#1579)
 - Store ``instance`` and ``original`` object in :class:`~import_export.results.RowResult` (#1584)
-- Removed reference to tablib dev from tox build (#1603)
 - Add customizable blocks in import.html (#1598)
+- Removed reference to tablib dev from tox build (#1603)
 - Updated ru translation (#1604)
 - Remove 'escape output' deprecation (#1618)
 
   - Removal of deprecated :ref:`IMPORT_EXPORT_ESCAPE_OUTPUT_ON_EXPORT`.
 
   - Deprecation of :ref:`IMPORT_EXPORT_ESCAPE_HTML_ON_EXPORT`.  Refer to :ref:`installation`.
+
+- Removed support for python3.7 and django4.0 (past EOL) (#1618)
 
 3.2.0 (2023-04-12)
 ------------------
