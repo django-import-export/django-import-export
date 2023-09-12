@@ -112,7 +112,16 @@ class CharWidget(Widget):
     Widget for converting text fields.
     """
 
-    pass
+    def __init__(self, coerce_to_string=False):
+        self.coerce_to_string = coerce_to_string
+
+    def clean(self, value, row=None, **kwargs):
+        val = super().clean(value, row, **kwargs)
+        if self.coerce_to_string is True:
+            if val is None:
+                return ""
+            return force_str(val)
+        return val
 
 
 class BooleanWidget(Widget):
