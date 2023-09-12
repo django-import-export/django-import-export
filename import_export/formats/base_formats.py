@@ -14,7 +14,6 @@ class Format:
         """
         raise NotImplementedError()
 
-    # def export_data(self, dataset, escape_output=False, **kwargs):
     def export_data(self, dataset, **kwargs):
         """
         Returns format representation for given dataset.
@@ -86,8 +85,6 @@ class TablibFormat(Format):
         return tablib.import_set(in_stream, format=self.get_title(), **kwargs)
 
     def export_data(self, dataset, **kwargs):
-        # remove the deprecated `escape_output` param if present
-        # kwargs.pop("escape_output", None)
         if kwargs.pop("escape_html", None):
             self._escape_html(dataset)
         if kwargs.pop("escape_formulae", None):
