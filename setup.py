@@ -24,10 +24,11 @@ CLASSIFIERS = [
     "Topic :: Software Development",
 ]
 
+# tablib temporarily pinned to 3.5.0 - see issue #1602
 install_requires = [
     "diff-match-patch",
     "Django>=3.2",
-    "tablib[html,ods,xls,xlsx,yaml]>=3.4.0",
+    "tablib[html,ods,xls,xlsx,yaml]==3.5.0",
 ]
 
 

@@ -113,20 +113,13 @@ class BaseExportMixin(BaseImportExportMixin):
     escape_formulae = False
 
     @property
-    def should_escape_output(self):
-        if hasattr(settings, "IMPORT_EXPORT_ESCAPE_OUTPUT_ON_EXPORT"):
+    def should_escape_html(self):
+        if hasattr(settings, "IMPORT_EXPORT_ESCAPE_HTML_ON_EXPORT"):
             warnings.warn(
-                "IMPORT_EXPORT_ESCAPE_OUTPUT_ON_EXPORT will be deprecated "
-                "in a future release. "
-                "Refer to docs for new attributes.",
+                "IMPORT_EXPORT_ESCAPE_HTML_ON_EXPORT is deprecated and "
+                "will be removed in a future release.",
                 DeprecationWarning,
             )
-        return getattr(
-            settings, "IMPORT_EXPORT_ESCAPE_OUTPUT_ON_EXPORT", self.escape_exported_data
-        )
-
-    @property
-    def should_escape_html(self):
         v = getattr(settings, "IMPORT_EXPORT_ESCAPE_HTML_ON_EXPORT", self.escape_html)
         if v is True:
             logger.debug("IMPORT_EXPORT_ESCAPE_HTML_ON_EXPORT is enabled")
@@ -198,9 +191,7 @@ class ExportViewMixin(BaseExportMixin):
         Returns file_format representation for given queryset.
         """
         data = self.get_data_for_export(self.request, queryset, *args, **kwargs)
-        export_data = file_format.export_data(
-            data, escape_output=self.should_escape_output
-        )
+        export_data = file_format.export_data(data)
         return export_data
 
     def get_context_data(self, **kwargs):

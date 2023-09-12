@@ -786,8 +786,8 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
             "IMPORT_EXPORT_ESCAPE_FORMULAE_ON_EXPORT is enabled"
         )
 
-    @override_settings(IMPORT_EXPORT_ESCAPE_OUTPUT_ON_EXPORT=True)
-    def test_export_escape_deprecation_warning(self):
+    @override_settings(IMPORT_EXPORT_ESCAPE_HTML_ON_EXPORT=True)
+    def test_export_escape_html_deprecation_warning(self):
         response = self.client.get("/admin/core/book/export/")
         self.assertEqual(response.status_code, 200)
 
@@ -795,9 +795,8 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
         data = {"file_format": str(xlsx_index)}
         with self.assertWarnsRegex(
             DeprecationWarning,
-            r"IMPORT_EXPORT_ESCAPE_OUTPUT_ON_EXPORT will be "
-            "deprecated in a future release. "
-            r"Refer to docs for new attributes.",
+            r"IMPORT_EXPORT_ESCAPE_HTML_ON_EXPORT is deprecated "
+            "and will be removed in a future release.",
         ):
             self.client.post("/admin/core/book/export/", data)
 

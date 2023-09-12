@@ -120,25 +120,19 @@ Note that if you disable transaction support via configuration (or if your datab
 does not support transactions), then validation errors will still be presented to the user
 but valid rows will have imported.
 
-``IMPORT_EXPORT_ESCAPE_OUTPUT_ON_EXPORT``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-If set to ``True``, export output will be sanitized. By default this is set to ``False``.
-
-Note: currently this only works for ``HTML`` output, and only for exports done via the admin UI.
-
-This setting is deprecated and will be replaced by ``IMPORT_EXPORT_ESCAPE_HTML_ON_EXPORT``.
-
 ``IMPORT_EXPORT_ESCAPE_HTML_ON_EXPORT``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If set to ``True``, strings will be HTML escaped. By default this is ``False``.
 
+This is deprecated and will be removed in a future release.  Future releases will
+escape strings by default.
+
 ``IMPORT_EXPORT_ESCAPE_FORMULAE_ON_EXPORT``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If set to ``True``, strings will be sanitized by removing any leading '=' character.  This is to prevent execution of
- Excel formulae.  By default this is ``False``.
+Excel formulae.  By default this is ``False``.
 
 ``IMPORT_EXPORT_FORMATS``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
