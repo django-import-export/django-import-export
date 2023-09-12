@@ -10,7 +10,7 @@ Changelog
 - Removed reference to tablib dev from tox build (#1603)
 - Add customizable blocks in import.html (#1598)
 - Updated ru translation (#1604)
-- Remove 'escape output' deprecation (#)
+- Remove 'escape output' deprecation (#1618)
 
   - Removal of deprecated :ref:`IMPORT_EXPORT_ESCAPE_OUTPUT_ON_EXPORT`.
 
