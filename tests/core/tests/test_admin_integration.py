@@ -268,8 +268,7 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertEqual(response.status_code, 200)
         target_msg = (
             "'UnicodeDecodeError' encountered while trying to read file. "
-            "Ensure you have chosen the correct format for the file. "
-            "'codec' codec can't decode bytes in position 1-1: fail!"
+            "Ensure you have chosen the correct format for the file."
         )
         # required for testing via tox
         # remove after django 5.0 released
@@ -294,8 +293,7 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertEqual(response.status_code, 200)
         target_msg = (
             "'ValueError' encountered while trying to read file. "
-            "Ensure you have chosen the correct format for the file. "
-            "some unknown error"
+            "Ensure you have chosen the correct format for the file."
         )
 
         # required for testing via tox
