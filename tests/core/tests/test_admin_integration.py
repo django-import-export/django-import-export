@@ -312,6 +312,33 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         else:
             self.assertFormError(response, "form", "import_file", target_msg)
 
+    @override_settings(LANGUAGE_CODE="es")
+    def test_import_action_handles_ValueError_as_form_error_with_translation(self):
+        with mock.patch(
+            "import_export.admin.TempFolderStorage.read"
+        ) as mock_tmp_folder_storage:
+            mock_tmp_folder_storage.side_effect = ValueError("some unknown error")
+            response = self._do_import_post(self.book_import_url, "books.csv")
+        self.assertEqual(response.status_code, 200)
+        target_msg = (
+            "Se encontró 'ValueError' mientras se intentaba leer el archivo."
+            "Asegúrese que seleccionó el formato correcto para el archivo."
+        )
+
+        # required for testing via tox
+        # remove after django 5.0 released
+        if django.VERSION >= (4, 0):
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", category=DeprecationWarning)
+                try:
+                    self.assertFormError(
+                        response.context["form"], "import_file", target_msg
+                    )
+                except TypeError:
+                    self.assertFormError(response, "form", "import_file", target_msg)
+        else:
+            self.assertFormError(response, "form", "import_file", target_msg)
+
     def _is_str_in_response(self, filename, input_format, encoding=None):
         super()._assert_string_in_response(
             self.book_import_url,
