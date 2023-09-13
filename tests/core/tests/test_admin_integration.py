@@ -638,7 +638,7 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
 
         TestImportCls()
         mock_logger.warning.assert_called_once_with(
-            "failed to assign change_list_template attribute (see issue 1521)"
+            "failed to assign change_list_template attribute"
         )
 
     @override_settings(IMPORT_FORMATS=[base_formats.XLSX, base_formats.XLS])
