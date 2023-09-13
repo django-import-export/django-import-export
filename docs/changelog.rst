@@ -10,7 +10,6 @@ Changelog
 - Add customizable blocks in import.html (#1598)
 - Removed reference to tablib dev from tox build (#1603)
 - Updated ru translation (#1604)
-
 - Remove 'escape output' deprecation (#1618)
 
   - Removal of deprecated :ref:`IMPORT_EXPORT_ESCAPE_OUTPUT_ON_EXPORT`.
@@ -18,6 +17,7 @@ Changelog
   - Deprecation of :ref:`IMPORT_EXPORT_ESCAPE_HTML_ON_EXPORT`.  Refer to :ref:`installation`.
 
 - Removed support for python3.7 and django4.0 (past EOL) (#1618)
+- removed duplicate admin integration tests (#1616)
 - Fix for cache entries not removed (#1621)
 - Fixed badly formatted translation string (#1622)
 - Add kwargs to enable CharWidget to return values as strings (#1623)
