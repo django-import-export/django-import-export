@@ -10,6 +10,7 @@ Changelog
 - Removed reference to tablib dev from tox build (#1603)
 - Add customizable blocks in import.html (#1598)
 - Updated ru translation (#1604)
+- Add kwargs to enable CharWidget to return values as strings (#1623)
 
 3.2.0 (2023-04-12)
 ------------------
