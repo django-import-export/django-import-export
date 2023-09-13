@@ -75,9 +75,9 @@ id,name,author,author_email,imported,published,price,categories
         tmp_storage = CacheStorage(name=name)
         self.assertEqual(self.test_string, tmp_storage.read())
 
-        self.assertNotEqual(cache.get(tmp_storage.CACHE_PREFIX, tmp_storage.name), None)
+        self.assertIsNotNone(cache.get(tmp_storage.CACHE_PREFIX + tmp_storage.name))
         tmp_storage.remove()
-        self.assertEqual(cache.get(tmp_storage.name), None)
+        self.assertIsNone(cache.get(tmp_storage.CACHE_PREFIX + tmp_storage.name))
 
     def test_cache_storage_read_with_encoding(self):
         tmp_storage = CacheStorage()
