@@ -110,17 +110,25 @@ class DecimalWidget(NumberWidget):
 class CharWidget(Widget):
     """
     Widget for converting text fields.
+
+    :param coerce_to_string: If True, the value returned by clean() is cast to a
+        string.
+    :param allow_blank:  If True, and if coerce_to_string is True, then clean() will
+        return null values as empty strings, otherwise as null.
     """
 
-    def __init__(self, coerce_to_string=False):
+    def __init__(self, coerce_to_string=False, allow_blank=False):
         self.coerce_to_string = coerce_to_string
+        self.allow_blank = allow_blank
 
     def clean(self, value, row=None, **kwargs):
         val = super().clean(value, row, **kwargs)
         if self.coerce_to_string is True:
             if val is None:
-                return ""
-            return force_str(val)
+                if self.allow_blank is True:
+                    return ""
+            else:
+                return force_str(val)
         return val
 
 
