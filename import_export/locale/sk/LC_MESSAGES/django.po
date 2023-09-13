@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-04-12 18:40+0100\n"
+"POT-Creation-Date: 2023-09-12 15:15+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,36 +18,37 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
 
-#: admin.py:214
+#: admin.py:241
 #, python-format
 msgid "%s through import_export"
 msgstr ""
 
-#: admin.py:220
+#: admin.py:248
 msgid "Import finished, with {} new and {} updated {}."
 msgstr ""
 
-#: admin.py:456
+#: admin.py:496
+#, python-format
 msgid ""
-"'{type(e).__name__}' encountered while trying to read file. Ensure you have "
-"chosen the correct format for the file. "
+"%(exc_name)s encountered while trying to read file. Ensure you have chosen "
+"the correct format for the file."
 msgstr ""
 
-#: admin.py:580 templates/admin/import_export/change_list_import_item.html:5
+#: admin.py:650 templates/admin/import_export/change_list_import_item.html:5
 #: templates/admin/import_export/import.html:19
 msgid "Import"
 msgstr "Importovať"
 
-#: admin.py:752 templates/admin/import_export/change_list_export_item.html:5
+#: admin.py:836 templates/admin/import_export/change_list_export_item.html:5
 #: templates/admin/import_export/export.html:12
 msgid "Export"
 msgstr "Exportovať"
 
-#: admin.py:815
+#: admin.py:901
 msgid "You must select an export format."
 msgstr "Je potrebné vybrať formát exportu."
 
-#: admin.py:838
+#: admin.py:926
 #, python-format
 msgid "Export selected %(verbose_name_plural)s"
 msgstr "Exportovať vybrané %(verbose_name_plural)s"
@@ -56,11 +57,11 @@ msgstr "Exportovať vybrané %(verbose_name_plural)s"
 msgid "Resource"
 msgstr ""
 
-#: forms.py:41
+#: forms.py:40
 msgid "File to import"
 msgstr "Importovať súbor"
 
-#: forms.py:44 forms.py:88 forms.py:114
+#: forms.py:42 forms.py:83 forms.py:116
 msgid "Format"
 msgstr "Formát"
 
@@ -69,7 +70,7 @@ msgid "Home"
 msgstr "Domov"
 
 #: templates/admin/import_export/export.html:36
-#: templates/admin/import_export/import.html:73
+#: templates/admin/import_export/import.html:78
 msgid "Submit"
 msgstr "Odoslať"
 
@@ -85,53 +86,53 @@ msgstr ""
 msgid "Confirm import"
 msgstr "Potvrdiť import"
 
-#: templates/admin/import_export/import.html:43
+#: templates/admin/import_export/import.html:44
 msgid "This importer will import the following fields: "
 msgstr "Budú importované nasledujúce polia: "
 
-#: templates/admin/import_export/import.html:83
-#: templates/admin/import_export/import.html:114
+#: templates/admin/import_export/import.html:89
+#: templates/admin/import_export/import.html:120
 msgid "Errors"
 msgstr "Chyby"
 
-#: templates/admin/import_export/import.html:94
+#: templates/admin/import_export/import.html:100
 msgid "Line number"
 msgstr "Číslo riadku"
 
-#: templates/admin/import_export/import.html:106
+#: templates/admin/import_export/import.html:112
 msgid "Some rows failed to validate"
 msgstr ""
 
-#: templates/admin/import_export/import.html:108
+#: templates/admin/import_export/import.html:114
 msgid ""
 "Please correct these errors in your data where possible, then reupload it "
 "using the form above."
 msgstr ""
 
-#: templates/admin/import_export/import.html:113
+#: templates/admin/import_export/import.html:119
 msgid "Row"
 msgstr ""
 
-#: templates/admin/import_export/import.html:140
+#: templates/admin/import_export/import.html:146
 msgid "Non field specific"
 msgstr ""
 
-#: templates/admin/import_export/import.html:163
+#: templates/admin/import_export/import.html:169
 msgid "Preview"
 msgstr "Náhľad"
 
-#: templates/admin/import_export/import.html:178
+#: templates/admin/import_export/import.html:184
 msgid "New"
 msgstr "Nový"
 
-#: templates/admin/import_export/import.html:180
+#: templates/admin/import_export/import.html:186
 msgid "Skipped"
 msgstr "Preskočený"
 
-#: templates/admin/import_export/import.html:182
+#: templates/admin/import_export/import.html:188
 msgid "Delete"
 msgstr "Vymazaný"
 
-#: templates/admin/import_export/import.html:184
+#: templates/admin/import_export/import.html:190
 msgid "Update"
 msgstr "Aktualizovaný"
