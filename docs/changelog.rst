@@ -11,6 +11,8 @@ Changelog
 - Add customizable blocks in import.html (#1598)
 - Updated ru translation (#1604)
 - Fixed badly formatted translation string (#1622)
+- Add kwargs to enable CharWidget to return values as strings (#1623)
+- Updated documentation for interoperability with third party libraries (#1614)
 
 3.2.0 (2023-04-12)
 ------------------
