@@ -852,7 +852,7 @@ libraries which also use the admin interface.
 django-admin-sortable2
 ^^^^^^^^^^^^^^^^^^^^^^
 
-Issues have been raised due to conflicts with setting `change_list_template <https://docs.djangoproject.com/en/dev/ref/contrib/admin/#django.contrib.admin.ModelAdmin.change_list_template>`_.  There is a workaround listed `here <https://github.com/jrief/django-admin-sortable2/issues/345#issuecomment-1680271337>`_.
+Issues have been raised due to conflicts with setting `change_list_template <https://docs.djangoproject.com/en/stable/ref/contrib/admin/#django.contrib.admin.ModelAdmin.change_list_template>`_.  There is a workaround listed `here <https://github.com/jrief/django-admin-sortable2/issues/345#issuecomment-1680271337>`_.
 Also, refer to `this issue <https://github.com/django-import-export/django-import-export/issues/1531>`_.
 If you want to patch your own installation to fix this, a patch is available `here <https://github.com/django-import-export/django-import-export/pull/1607>`_.
 
