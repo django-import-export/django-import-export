@@ -268,8 +268,7 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertEqual(response.status_code, 200)
         target_msg = (
             "'UnicodeDecodeError' encountered while trying to read file. "
-            "Ensure you have chosen the correct format for the file. "
-            "'codec' codec can't decode bytes in position 1-1: fail!"
+            "Ensure you have chosen the correct format for the file."
         )
         # required for testing via tox
         # remove after django 5.0 released
@@ -294,8 +293,34 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertEqual(response.status_code, 200)
         target_msg = (
             "'ValueError' encountered while trying to read file. "
-            "Ensure you have chosen the correct format for the file. "
-            "some unknown error"
+            "Ensure you have chosen the correct format for the file."
+        )
+
+        # required for testing via tox
+        # remove after django 5.0 released
+        if django.VERSION >= (4, 0):
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", category=DeprecationWarning)
+                try:
+                    self.assertFormError(
+                        response.context["form"], "import_file", target_msg
+                    )
+                except TypeError:
+                    self.assertFormError(response, "form", "import_file", target_msg)
+        else:
+            self.assertFormError(response, "form", "import_file", target_msg)
+
+    @override_settings(LANGUAGE_CODE="es")
+    def test_import_action_handles_ValueError_as_form_error_with_translation(self):
+        with mock.patch(
+            "import_export.admin.TempFolderStorage.read"
+        ) as mock_tmp_folder_storage:
+            mock_tmp_folder_storage.side_effect = ValueError("some unknown error")
+            response = self._do_import_post(self.book_import_url, "books.csv")
+        self.assertEqual(response.status_code, 200)
+        target_msg = (
+            "Se encontró 'ValueError' mientras se intentaba leer el archivo."
+            "Asegúrese que seleccionó el formato correcto para el archivo."
         )
 
         # required for testing via tox
@@ -581,7 +606,7 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
 
         TestImportCls()
         mock_logger.warning.assert_called_once_with(
-            "failed to assign change_list_template attribute (see issue 1521)"
+            "failed to assign change_list_template attribute"
         )
 
     @override_settings(IMPORT_FORMATS=[base_formats.XLSX, base_formats.XLS])

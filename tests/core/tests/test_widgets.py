@@ -34,6 +34,25 @@ class CharWidgetTest(TestCase):
     def test_render(self):
         self.assertEqual("1", self.widget.render(1))
 
+    def test_clean_coerce_to_string(self):
+        self.widget = widgets.CharWidget(coerce_to_string=True)
+        self.assertEqual("1", self.widget.clean(1))
+
+    def test_clean_no_coerce_to_string(self):
+        self.assertEqual(1, self.widget.clean(1))
+
+    def test_clean_coerce_to_string_None(self):
+        self.widget = widgets.CharWidget(coerce_to_string=True)
+        self.assertIsNone(self.widget.clean(None))
+
+    def test_clean_coerce_to_string_with_allow_blank(self):
+        self.widget = widgets.CharWidget(coerce_to_string=True, allow_blank=True)
+        self.assertEqual("", self.widget.clean(None))
+
+    def test_clean_coerce_to_string_is_False_with_allow_blank(self):
+        self.widget = widgets.CharWidget(coerce_to_string=False, allow_blank=True)
+        self.assertIsNone(self.widget.clean(None))
+
 
 class BooleanWidgetTest(TestCase):
     def setUp(self):
