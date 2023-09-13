@@ -753,7 +753,6 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
         data = self.get_data_for_export(request, queryset, *args, **kwargs)
         export_data = file_format.export_data(
             data,
-            escape_output=self.should_escape_output,
             escape_html=self.should_escape_html,
             escape_formulae=self.should_escape_formulae,
         )
