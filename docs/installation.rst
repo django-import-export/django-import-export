@@ -138,7 +138,7 @@ If set to ``True``, strings will be HTML escaped. By default this is ``False``.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If set to ``True``, strings will be sanitized by removing any leading '=' character.  This is to prevent execution of
- Excel formulae.  By default this is ``False``.
+Excel formulae.  By default this is ``False``.
 
 ``IMPORT_EXPORT_FORMATS``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
