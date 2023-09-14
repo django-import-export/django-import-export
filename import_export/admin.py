@@ -27,7 +27,7 @@ from .forms import (
 from .mixins import BaseExportMixin, BaseImportMixin
 from .results import RowResult
 from .signals import post_export, post_import
-from .tmp_storages import MediaStorage, TempFolderStorage
+from .tmp_storages import TempFolderStorage
 from .utils import original
 
 logger = logging.getLogger(__name__)
@@ -481,9 +481,6 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         data = bytes()
         for chunk in import_file.chunks():
             data += chunk
-
-        if tmp_storage_cls == MediaStorage and not input_format.is_binary():
-            data = data.decode(self.from_encoding)
 
         tmp_storage.save(data)
         return tmp_storage

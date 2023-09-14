@@ -28,10 +28,12 @@ Internationalization
 - Add Finnish translation (#1588)
 - Updated ru translation (#1604)
 - Fixed badly formatted translation string (#1622)
+- Remove 'escape output' deprecation (#1618)
 
 Fixes
 #####
 
+- Do not decode bytes when writing to MediaStorage (#1615)
 - Fix for cache entries not removed (#1621)
 
 Development
