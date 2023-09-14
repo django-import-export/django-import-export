@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-05-10 15:23+0300\n"
+"POT-Creation-Date: 2023-09-12 15:28+0100\n"
 "PO-Revision-Date: 2023-05-10 15:23+0300\n"
 "Last-Translator: Lauri Virtanen <lauri.virtanen@iki.fi>\n"
 "Language-Team: \n"
@@ -12,38 +12,39 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: admin.py:244
+#: admin.py:241
 #, python-format
 msgid "%s through import_export"
 msgstr "%s käyttäen import_export"
 
-#: admin.py:251
+#: admin.py:248
 msgid "Import finished, with {} new and {} updated {}."
 msgstr "Tuonti valmis. Lisätty {} ja päivitetty {} kohteita {}."
 
-#: admin.py:500
+#: admin.py:496
+#, python-format
 msgid ""
-"'{type(e).__name__}' encountered while trying to read file. Ensure you have "
-"chosen the correct format for the file. "
+"%(exc_name)s encountered while trying to read file. Ensure you have chosen "
+"the correct format for the file."
 msgstr ""
-"Kohdattiin '{type(e).__name__}' tiedostoa lukiessa. Varmista, että olet "
-"valinnut oikean tiedostotyypin. "
+"Kohdattiin %(exc_name)s tiedostoa lukiessa. Varmista, että olet valinnut "
+"oikean tiedostotyypin. "
 
-#: admin.py:652 templates/admin/import_export/change_list_import_item.html:5
+#: admin.py:650 templates/admin/import_export/change_list_import_item.html:5
 #: templates/admin/import_export/import.html:19
 msgid "Import"
 msgstr "Tuo"
 
-#: admin.py:838 templates/admin/import_export/change_list_export_item.html:5
+#: admin.py:836 templates/admin/import_export/change_list_export_item.html:5
 #: templates/admin/import_export/export.html:12
 msgid "Export"
 msgstr "Vie"
 
-#: admin.py:903
+#: admin.py:901
 msgid "You must select an export format."
 msgstr "Sinun täytyy valita tiedostotyyppi."
 
-#: admin.py:928
+#: admin.py:926
 #, python-format
 msgid "Export selected %(verbose_name_plural)s"
 msgstr "Vie valitut %(verbose_name_plural)s"
@@ -65,7 +66,7 @@ msgid "Home"
 msgstr "Etusivu"
 
 #: templates/admin/import_export/export.html:36
-#: templates/admin/import_export/import.html:73
+#: templates/admin/import_export/import.html:78
 msgid "Submit"
 msgstr "Lähetä"
 
@@ -81,24 +82,24 @@ msgstr ""
 msgid "Confirm import"
 msgstr "Vahvista tuonti"
 
-#: templates/admin/import_export/import.html:43
+#: templates/admin/import_export/import.html:44
 msgid "This importer will import the following fields: "
 msgstr "Tämä tuonti tuo seuraavat kentät: "
 
-#: templates/admin/import_export/import.html:83
-#: templates/admin/import_export/import.html:114
+#: templates/admin/import_export/import.html:89
+#: templates/admin/import_export/import.html:120
 msgid "Errors"
 msgstr "Virheet"
 
-#: templates/admin/import_export/import.html:94
+#: templates/admin/import_export/import.html:100
 msgid "Line number"
 msgstr "Rivinumero"
 
-#: templates/admin/import_export/import.html:106
+#: templates/admin/import_export/import.html:112
 msgid "Some rows failed to validate"
 msgstr "Joitakin rivejä ei voitu vahvistaa"
 
-#: templates/admin/import_export/import.html:108
+#: templates/admin/import_export/import.html:114
 msgid ""
 "Please correct these errors in your data where possible, then reupload it "
 "using the form above."
@@ -106,30 +107,30 @@ msgstr ""
 "Korjaa nämä virheet tiedoissasi ja lähetä uudelleen käyttäen yllä olevaa "
 "lomaketta."
 
-#: templates/admin/import_export/import.html:113
+#: templates/admin/import_export/import.html:119
 msgid "Row"
 msgstr "Rivi"
 
-#: templates/admin/import_export/import.html:140
+#: templates/admin/import_export/import.html:146
 msgid "Non field specific"
 msgstr "Ei liity mihinkään kenttään"
 
-#: templates/admin/import_export/import.html:163
+#: templates/admin/import_export/import.html:169
 msgid "Preview"
 msgstr "Esikatselu"
 
-#: templates/admin/import_export/import.html:178
+#: templates/admin/import_export/import.html:184
 msgid "New"
 msgstr "Uusi"
 
-#: templates/admin/import_export/import.html:180
+#: templates/admin/import_export/import.html:186
 msgid "Skipped"
 msgstr "Ohitettu"
 
-#: templates/admin/import_export/import.html:182
+#: templates/admin/import_export/import.html:188
 msgid "Delete"
 msgstr "Poisto"
 
-#: templates/admin/import_export/import.html:184
+#: templates/admin/import_export/import.html:190
 msgid "Update"
 msgstr "Päivitys"

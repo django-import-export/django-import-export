@@ -54,9 +54,7 @@ class ImportExportMixinBase:
                 self, "import_export_change_list_template", None
             )
         except AttributeError:
-            logger.warning(
-                "failed to assign change_list_template attribute (see issue 1521)"
-            )
+            logger.warning("failed to assign change_list_template attribute")
 
         if self.change_list_template is None:
             self.change_list_template = self.base_change_list_template
@@ -488,14 +486,12 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         return tmp_storage
 
     def add_data_read_fail_error_to_form(self, form, e):
-        form.add_error(
-            "import_file",
-            _(
-                f"'{type(e).__name__}' encountered while trying to read file. "
-                "Ensure you have chosen the correct format for the file. "
-                f"{str(e)}"
-            ),
-        )
+        exc_name = repr(type(e).__name__)
+        msg = _(
+            "%(exc_name)s encountered while trying to read file. "
+            "Ensure you have chosen the correct format for the file."
+        ) % {"exc_name": exc_name}
+        form.add_error("import_file", msg)
 
     def import_action(self, request, *args, **kwargs):
         """
