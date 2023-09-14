@@ -1,2 +1,3 @@
+-r base.txt
 sphinx
 sphinx-rtd-theme
