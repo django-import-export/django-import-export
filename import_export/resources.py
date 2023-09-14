@@ -256,12 +256,12 @@ class DeclarativeMetaclass(type):
 
 class Diff:
     def __init__(self, resource, instance, new):
-        self.left = self._export_resource_fields(resource, instance)
+        self.left = Diff._read_field_values(resource, instance)
         self.right = []
         self.new = new
 
-    def compare_with(self, resource, instance, dry_run=False):
-        self.right = self._export_resource_fields(resource, instance)
+    def compare_with(self, resource, instance):
+        self.right = Diff._read_field_values(resource, instance)
 
     def as_html(self):
         data = []
@@ -276,11 +276,9 @@ class Diff:
             data.append(html)
         return data
 
-    def _export_resource_fields(self, resource, instance):
-        return [
-            resource.export_field(f, instance) if instance else ""
-            for f in resource.get_user_visible_fields()
-        ]
+    @classmethod
+    def _read_field_values(cls, resource, instance):
+        return [f.export(instance) for f in resource.get_import_fields()]
 
 
 class Resource(metaclass=DeclarativeMetaclass):
@@ -577,7 +575,7 @@ class Resource(metaclass=DeclarativeMetaclass):
             field.save(obj, data, is_m2m, **kwargs)
 
     def get_import_fields(self):
-        return self.get_fields()
+        return [self.fields[f] for f in self.fields]
 
     def import_obj(self, obj, data, dry_run, **kwargs):
         """
@@ -787,7 +785,7 @@ class Resource(metaclass=DeclarativeMetaclass):
                 if new:
                     row_result.import_type = RowResult.IMPORT_TYPE_SKIP
                     if not skip_diff:
-                        diff.compare_with(self, None, dry_run)
+                        diff.compare_with(self, None)
                 else:
                     row_result.import_type = RowResult.IMPORT_TYPE_DELETE
                     row_result.add_instance_info(instance)
@@ -795,7 +793,7 @@ class Resource(metaclass=DeclarativeMetaclass):
                         row_result.instance = instance
                     self.delete_instance(instance, using_transactions, dry_run)
                     if not skip_diff:
-                        diff.compare_with(self, None, dry_run)
+                        diff.compare_with(self, None)
             else:
                 import_validation_errors = {}
                 try:
@@ -818,7 +816,7 @@ class Resource(metaclass=DeclarativeMetaclass):
                 if self._meta.store_instance:
                     row_result.instance = instance
                 if not skip_diff:
-                    diff.compare_with(self, instance, dry_run)
+                    diff.compare_with(self, instance)
                     if not new:
                         row_result.original = original
 
