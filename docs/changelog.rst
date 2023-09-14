@@ -4,23 +4,47 @@ Changelog
 3.3.0 (unreleased)
 ------------------
 
-- Added support for Django 4.2 (#1570)
-- Refactoring and fix to support filtering exports (#1579)
-- Store ``instance`` and ``original`` object in :class:`~import_export.results.RowResult` (#1584)
-- Add customizable blocks in import.html (#1598)
-- Removed reference to tablib dev from tox build (#1603)
-- Updated ru translation (#1604)
+Deprecations
+############
+
 - Remove 'escape output' deprecation (#1618)
 
   - Removal of deprecated :ref:`IMPORT_EXPORT_ESCAPE_OUTPUT_ON_EXPORT`.
 
-  - Deprecation of :ref:`IMPORT_EXPORT_ESCAPE_HTML_ON_EXPORT`.  Refer to :ref:`installation`.
+  - Deprecation of :ref:`IMPORT_EXPORT_ESCAPE_HTML_ON_EXPORT`.  Refer to :ref:`installation` docs.
 
-- Removed support for python3.7 and django4.0 (past EOL) (#1618)
-- removed duplicate admin integration tests (#1616)
-- Fix for cache entries not removed (#1621)
-- Fixed badly formatted translation string (#1622)
+Enhancements
+############
+
+- Refactoring and fix to support filtering exports (#1579)
+- Store ``instance`` and ``original`` object in :class:`~import_export.results.RowResult` (#1584)
+- Add customizable blocks in import.html (#1598)
+- Include 'allowed formats' settings (#1606)
 - Add kwargs to enable CharWidget to return values as strings (#1623)
+
+Internationalization
+####################
+
+- Add Finnish translation (#1588)
+- Updated ru translation (#1604)
+- Fixed badly formatted translation string (#1622)
+
+Fixes
+#####
+
+- Fix for cache entries not removed (#1621)
+
+Development
+###########
+
+- Added support for Django 4.2 (#1570)
+- Add automatic formatting and linting (#1571)
+- removed duplicate admin integration tests (#1616)
+- Removed support for python3.7 and django4.0 (past EOL) (#1618)
+
+Documentation
+#############
+
 - Updated documentation for interoperability with third party libraries (#1614)
 
 3.2.0 (2023-04-12)
