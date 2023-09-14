@@ -7,7 +7,6 @@ VERSION = __import__("import_export").__version__
 CLASSIFIERS = [
     "Framework :: Django",
     "Framework :: Django :: 3.2",
-    "Framework :: Django :: 4.0",
     "Framework :: Django :: 4.1",
     "Framework :: Django :: 4.2",
     "Intended Audience :: Developers",
@@ -15,7 +14,6 @@ CLASSIFIERS = [
     "Operating System :: OS Independent",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
@@ -24,10 +22,11 @@ CLASSIFIERS = [
     "Topic :: Software Development",
 ]
 
+# tablib temporarily pinned to 3.5.0 - see issue #1602
 install_requires = [
     "diff-match-patch",
     "Django>=3.2",
-    "tablib[html,ods,xls,xlsx,yaml]>=3.4.0",
+    "tablib[html,ods,xls,xlsx,yaml]==3.5.0",
 ]
 
 
@@ -55,7 +54,7 @@ setup(
     packages=find_packages(exclude=["tests"]),
     include_package_data=True,
     install_requires=install_requires,
-    python_requires=">=3.7",
+    python_requires=">=3.8",
     classifiers=CLASSIFIERS,
     zip_safe=False,
 )
