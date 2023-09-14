@@ -62,4 +62,4 @@ rm -rf django-import-export-rel
 
 ### Check readthedocs
 
-Login to readthedocs.org to check that the build ran OK.
+Login to [readthedocs.org](https://readthedocs.org) to check that the build ran OK (click on 'Builds' tab).
