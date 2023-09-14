@@ -4,7 +4,7 @@ Changelog
 3.4.0 (unreleased)
 ------------------
 
-- Refactor 'diff' logic to avoid calling dehydrate methods (#1576)
+- Refactor 'diff' logic to avoid calling dehydrate methods (#1626)
 
 3.3.1 (2023-09-14)
 ------------------
