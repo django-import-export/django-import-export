@@ -4,7 +4,7 @@ Changelog
 3.3.1 (unreleased)
 ------------------
 
-- Added `.readthedocs.yaml`
+- Added `.readthedocs.yaml` (#1625)
 
 3.3.0 (2023-09-14)
 ------------------
