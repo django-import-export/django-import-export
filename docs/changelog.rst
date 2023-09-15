@@ -93,6 +93,7 @@ Documentation
 3.1.0 (2023-02-21)
 ------------------
 
+- Float and Decimal widgets use LANGUAGE_CODE on export (#1501)
 - Add optional dehydrate method param (#1536)
 
   - ``exceptions`` module has been undeprecated
