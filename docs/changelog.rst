@@ -1,10 +1,10 @@
 Changelog
 =========
 
-3.3.2 (unreleased)
+4.0.0 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Port setup.cfg to pyproject.toml (#1630)
 
 
 3.3.1 (2023-09-14)
