@@ -1,6 +1,11 @@
 Changelog
 =========
 
+4.0.0 (unreleased)
+------------------
+
+- Removed v3 deprecations (#1629)
+
 3.3.2 (unreleased)
 ------------------
 
