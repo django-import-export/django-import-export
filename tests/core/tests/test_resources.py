@@ -193,108 +193,6 @@ class ResourceTestCase(TestCase):
             exclude=target.keys(), validate_unique=True
         )
 
-    def test_raise_errors_deprecation_import_row(
-        self,
-    ):
-        target_msg = (
-            "raise_errors argument is deprecated and "
-            "will be removed in a future release."
-        )
-        dataset = tablib.Dataset(headers=["name", "email", "extra"])
-        dataset.append(["Some book", "test@example.com", "10.25"])
-
-        class Loader:
-            def __init__(self, *args, **kwargs):
-                pass
-
-        class A(MyResource):
-            class Meta:
-                instance_loader_class = Loader
-                force_init_instance = True
-
-            def init_instance(self, row=None):
-                return row or {}
-
-            def import_row(
-                self,
-                row,
-                instance_loader,
-                using_transactions=True,
-                dry_run=False,
-                raise_errors=False,
-                **kwargs,
-            ):
-                return super().import_row(
-                    row,
-                    instance_loader,
-                    using_transactions,
-                    dry_run,
-                    raise_errors,
-                    **kwargs,
-                )
-
-            def save_instance(
-                self, instance, is_create, using_transactions=True, dry_run=False
-            ):
-                pass
-
-        resource = A()
-        with self.assertWarns(DeprecationWarning) as w:
-            resource.import_data(dataset, raise_errors=True)
-            self.assertEqual(target_msg, str(w.warnings[0].message))
-
-    def test_rollback_on_validation_errors_deprecation_import_inner(
-        self,
-    ):
-        target_msg = (
-            "rollback_on_validation_errors argument is deprecated "
-            "and will be removed in a future release."
-        )
-        dataset = tablib.Dataset(headers=["name", "email", "extra"])
-        dataset.append(["Some book", "test@example.com", "10.25"])
-
-        class Loader:
-            def __init__(self, *args, **kwargs):
-                pass
-
-        class A(MyResource):
-            class Meta:
-                instance_loader_class = Loader
-                force_init_instance = True
-
-            def init_instance(self, row=None):
-                return row or {}
-
-            def import_data_inner(
-                self,
-                dataset,
-                dry_run,
-                raise_errors,
-                using_transactions,
-                collect_failed_rows,
-                rollback_on_validation_errors=False,
-                **kwargs,
-            ):
-                return super().import_data_inner(
-                    dataset,
-                    dry_run,
-                    raise_errors,
-                    using_transactions,
-                    collect_failed_rows,
-                    rollback_on_validation_errors,
-                    **kwargs,
-                )
-
-            def save_instance(
-                self, instance, is_create, using_transactions=True, dry_run=False
-            ):
-                pass
-
-        resource = A()
-        with self.assertWarns(DeprecationWarning) as w:
-            resource.import_data(dataset, raise_errors=True)
-            self.assertEqual(target_msg, str(w.warnings[0].message))
-
 
 class AuthorResource(resources.ModelResource):
     books = fields.Field(
@@ -548,29 +446,20 @@ class ModelResourceTest(TestCase):
 
     def test_export(self):
         with self.assertNumQueries(2):
-            dataset = self.resource.export(Book.objects.all())
+            dataset = self.resource.export(queryset=Book.objects.all())
             self.assertEqual(len(dataset), 1)
 
     def test_export_iterable(self):
         with self.assertNumQueries(2):
-            dataset = self.resource.export(list(Book.objects.all()))
+            dataset = self.resource.export(queryset=list(Book.objects.all()))
             self.assertEqual(len(dataset), 1)
 
     def test_export_prefetch_related(self):
         with self.assertNumQueries(3):
             dataset = self.resource.export(
-                Book.objects.prefetch_related("categories").all()
+                queryset=Book.objects.prefetch_related("categories").all()
             )
             self.assertEqual(len(dataset), 1)
-
-    def test_export_handles_args(self):
-        # issue 1565
-        with self.assertWarns(DeprecationWarning) as w:
-            self.resource.export(Book.objects.none())
-            self.assertEqual(
-                "'queryset' must be supplied as a named parameter",
-                str(w.warnings[0].message),
-            )
 
     def test_export_handles_named_queryset_parameter(self):
         class _BookResource(BookResource):
@@ -1286,7 +1175,7 @@ class ModelResourceTest(TestCase):
     def test_empty_get_queryset(self):
         # issue #25 - Overriding queryset on export() fails when passed
         # queryset has zero elements
-        dataset = self.resource.export(Book.objects.none())
+        dataset = self.resource.export(queryset=Book.objects.none())
         self.assertEqual(len(dataset), 0)
 
     def test_import_data_skip_unchanged(self):
@@ -1432,7 +1321,7 @@ class ModelResourceTest(TestCase):
 
         # Verify that the annotated field is correctly exported
         dataset = resource.export(
-            Book.objects.annotate(total_categories=Count("categories"))
+            queryset=Book.objects.annotate(total_categories=Count("categories"))
         )
         self.assertEqual(int(dataset.dict[0]["total_categories"]), 1)
 

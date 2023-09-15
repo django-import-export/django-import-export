@@ -8,7 +8,7 @@ from import_export.admin import (
 from import_export.resources import ModelResource
 
 from .forms import CustomConfirmImportForm, CustomExportForm, CustomImportForm
-from .models import Author, Book, Category, Child, EBook, LegacyBook
+from .models import Author, Book, Category, Child, EBook
 
 
 class ChildAdmin(ImportMixin, admin.ModelAdmin):
@@ -91,30 +91,8 @@ class CustomBookAdmin(ImportExportModelAdmin):
         return {}
 
 
-class LegacyBookAdmin(BookAdmin):
-    """
-    BookAdmin with deprecated function overrides.
-    This class exists solely to test import works correctly using the deprecated
-    functions.
-    This class can be removed when the deprecated code is removed.
-    """
-
-    def get_import_form(self):
-        return super().get_import_form()
-
-    def get_confirm_import_form(self):
-        return super().get_confirm_import_form()
-
-    def get_form_kwargs(self, form, *args, **kwargs):
-        return super().get_form_kwargs(form, *args, **kwargs)
-
-    def get_export_form(self):
-        return super().get_export_form()
-
-
 admin.site.register(Book, BookAdmin)
 admin.site.register(Category, CategoryAdmin)
 admin.site.register(Author, AuthorAdmin)
 admin.site.register(Child, ChildAdmin)
 admin.site.register(EBook, CustomBookAdmin)
-admin.site.register(LegacyBook, LegacyBookAdmin)

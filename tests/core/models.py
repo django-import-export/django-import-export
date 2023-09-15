@@ -153,18 +153,6 @@ class EBook(Book):
         proxy = True
 
 
-class LegacyBook(Book):
-    """
-    Book proxy model to have a separate admin url access and name.
-    This class exists solely to test import works correctly using the deprecated
-    functions.
-    This class can be removed when the deprecated code is removed.
-    """
-
-    class Meta:
-        proxy = True
-
-
 class UUIDCategory(models.Model):
     catid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=32)
