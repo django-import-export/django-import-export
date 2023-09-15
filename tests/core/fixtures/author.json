@@ -1,0 +1,18 @@
+[
+    {
+        "model": "core.author",
+        "pk": 11,
+        "fields": {
+            "name": "George R. R. Martin",
+            "birthday": "1948-09-20"
+        }
+    },
+    {
+        "model": "core.author",
+        "pk": 5,
+        "fields": {
+            "name": "Ian Fleming",
+            "birthday": "1908-05-28"
+        }
+    }
+]

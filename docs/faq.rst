@@ -25,6 +25,8 @@ You can help in the following ways:
 
 We encourage you to read the :doc:`contributing guidelines <contributing>`.
 
+.. _common_issues:
+
 Common issues
 =============
 
@@ -111,6 +113,8 @@ When importing using the Admin site, it can be that the ids of the imported inst
 in the preview step.  This occurs because the rows are imported during 'confirm', and then the transaction is rolled
 back prior to the confirm step.  Database implementations mean that sequence numbers may not be reused.
 
+Consider enabling :ref:`IMPORT_EXPORT_SKIP_ADMIN_CONFIRM` as a workaround.
+
 See `this issue <https://github.com/django-import-export/django-import-export/issues/560>`_ for more detailed
 discussion.
 
@@ -163,3 +167,16 @@ How to use field other than `id` in Foreign Key lookup
 ------------------------------------------------------
 
 See :ref:`advanced_usage:Foreign key relations`.
+
+``RelatedObjectDoesNotExist`` exception during import
+-----------------------------------------------------
+
+This can occur if a model defines a ``__str__()`` method which references a primary key or
+foreign key relation, and which is ``None`` during import.  There is a workaround to deal
+with this issue.  Refer to `this comment <https://github.com/django-import-export/django-import-export/issues/1556#issuecomment-1466980421>`_.
+
+'failed to assign change_list_template attribute' warning in logs
+-----------------------------------------------------------------
+
+This indicates that the change_list_template attribute could not be set, most likely due to a clash with a third party
+library.  Refer to :ref:`interoperability`.

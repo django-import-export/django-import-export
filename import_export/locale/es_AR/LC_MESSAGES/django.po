@@ -2,14 +2,15 @@
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the PACKAGE package.
 # Gonzalo Bustos, 2015.
+# Santiago Muñoz <smunoz@mythologylabs.com.uy>, 2023.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-02-21 18:05+0000\n"
-"PO-Revision-Date: 2015-10-11 18:49-0300\n"
-"Last-Translator: Gonzalo Bustos\n"
+"POT-Creation-Date: 2023-09-12 15:28+0100\n"
+"PO-Revision-Date: 2023-02-22 10:44-0300\n"
+"Last-Translator: Santiago Muñoz <smunoz@mythologylabs.com.uy>\n"
 "Language-Team: Spanish (Argentina)\n"
 "Language: es_AR\n"
 "MIME-Version: 1.0\n"
@@ -18,49 +19,52 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Poedit 1.6.10\n"
 
-#: admin.py:214
+#: admin.py:241
 #, python-format
 msgid "%s through import_export"
 msgstr ""
 
-#: admin.py:220
+#: admin.py:248
 msgid "Import finished, with {} new and {} updated {}."
-msgstr ""
+msgstr "Proceso de importación finalizado, con {} nuevos y {} actualizados"
 
-#: admin.py:456
+#: admin.py:496
+#, python-format
 msgid ""
-"'{type(e).__name__}' encountered while trying to read file. Ensure you have "
-"chosen the correct format for the file. "
+"%(exc_name)s encountered while trying to read file. Ensure you have chosen "
+"the correct format for the file."
 msgstr ""
+"Se encontró %(exc_name)s mientras se intentaba leer el archivo.Asegúrese que "
+"seleccionó el formato correcto para el archivo."
 
-#: admin.py:580 templates/admin/import_export/change_list_import_item.html:5
+#: admin.py:650 templates/admin/import_export/change_list_import_item.html:5
 #: templates/admin/import_export/import.html:19
 msgid "Import"
 msgstr "Importar"
 
-#: admin.py:749 templates/admin/import_export/change_list_export_item.html:5
+#: admin.py:836 templates/admin/import_export/change_list_export_item.html:5
 #: templates/admin/import_export/export.html:12
 msgid "Export"
 msgstr "Exportar"
 
-#: admin.py:812
+#: admin.py:901
 msgid "You must select an export format."
 msgstr "Debe seleccionar un formato de exportación."
 
-#: admin.py:835
+#: admin.py:926
 #, python-format
 msgid "Export selected %(verbose_name_plural)s"
 msgstr "Exportar %(verbose_name_plural)s seleccionados"
 
-#: forms.py:11
+#: forms.py:12
 msgid "Resource"
-msgstr ""
+msgstr "Recurso"
 
-#: forms.py:29
+#: forms.py:40
 msgid "File to import"
 msgstr "Archivo a importar"
 
-#: forms.py:32 forms.py:75 forms.py:100
+#: forms.py:42 forms.py:83 forms.py:116
 msgid "Format"
 msgstr "Formato"
 
@@ -69,7 +73,7 @@ msgid "Home"
 msgstr "Inicio"
 
 #: templates/admin/import_export/export.html:36
-#: templates/admin/import_export/import.html:73
+#: templates/admin/import_export/import.html:78
 msgid "Submit"
 msgstr "Enviar"
 
@@ -85,53 +89,56 @@ msgstr ""
 msgid "Confirm import"
 msgstr "Confirmar importación"
 
-#: templates/admin/import_export/import.html:43
+#: templates/admin/import_export/import.html:44
 msgid "This importer will import the following fields: "
 msgstr "Este importador importará los siguientes campos:"
 
-#: templates/admin/import_export/import.html:83
-#: templates/admin/import_export/import.html:114
+#: templates/admin/import_export/import.html:89
+#: templates/admin/import_export/import.html:120
 msgid "Errors"
 msgstr "Errores"
 
-#: templates/admin/import_export/import.html:94
+#: templates/admin/import_export/import.html:100
 msgid "Line number"
 msgstr "Número de línea"
 
-#: templates/admin/import_export/import.html:106
+#: templates/admin/import_export/import.html:112
 msgid "Some rows failed to validate"
-msgstr ""
+msgstr "Falló la validación de algunas filas"
 
-#: templates/admin/import_export/import.html:108
+#: templates/admin/import_export/import.html:114
 msgid ""
 "Please correct these errors in your data where possible, then reupload it "
 "using the form above."
 msgstr ""
+"Por favor corrija los siguientes errores en la información ingresada "
+"dondesea posible, luego vuelva a subir el archivo utilizando el formulario "
+"de laparte superior."
 
-#: templates/admin/import_export/import.html:113
+#: templates/admin/import_export/import.html:119
 msgid "Row"
-msgstr ""
+msgstr "Fila"
 
-#: templates/admin/import_export/import.html:140
+#: templates/admin/import_export/import.html:146
 msgid "Non field specific"
-msgstr ""
+msgstr "No específico del campo"
 
-#: templates/admin/import_export/import.html:163
+#: templates/admin/import_export/import.html:169
 msgid "Preview"
 msgstr "Vista previa"
 
-#: templates/admin/import_export/import.html:178
+#: templates/admin/import_export/import.html:184
 msgid "New"
 msgstr "Nuevo"
 
-#: templates/admin/import_export/import.html:180
+#: templates/admin/import_export/import.html:186
 msgid "Skipped"
 msgstr "Omitido"
 
-#: templates/admin/import_export/import.html:182
+#: templates/admin/import_export/import.html:188
 msgid "Delete"
 msgstr "Borrar"
 
-#: templates/admin/import_export/import.html:184
+#: templates/admin/import_export/import.html:190
 msgid "Update"
 msgstr "Actualizar"

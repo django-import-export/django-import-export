@@ -1,3 +1,4 @@
+import logging
 import warnings
 
 from django.conf import settings
@@ -10,21 +11,39 @@ from .forms import ExportForm
 from .resources import modelresource_factory
 from .signals import post_export
 
+logger = logging.getLogger(__name__)
+
 
 class BaseImportExportMixin:
-    formats = base_formats.DEFAULT_FORMATS
     resource_class = None
     resource_classes = []
 
+    @property
+    def formats(self):
+        return getattr(settings, "IMPORT_EXPORT_FORMATS", base_formats.DEFAULT_FORMATS)
+
+    @property
+    def export_formats(self):
+        return getattr(settings, "EXPORT_FORMATS", self.formats)
+
+    @property
+    def import_formats(self):
+        return getattr(settings, "IMPORT_FORMATS", self.formats)
+
     def check_resource_classes(self, resource_classes):
-        if resource_classes and not hasattr(resource_classes, '__getitem__'):
-            raise Exception("The resource_classes field type must be subscriptable (list, tuple, ...)")
+        if resource_classes and not hasattr(resource_classes, "__getitem__"):
+            raise Exception(
+                "The resource_classes field type must be "
+                "subscriptable (list, tuple, ...)"
+            )
 
     def get_resource_classes(self):
-        """ Return subscriptable type (list, tuple, ...) containing resource classes """
+        """Return subscriptable type (list, tuple, ...) containing resource classes"""
         if self.resource_classes and self.resource_class:
-            raise Exception("Only one of 'resource_class' and 'resource_classes' can be set")
-        if hasattr(self, 'get_resource_class'):
+            raise Exception(
+                "Only one of 'resource_class' and 'resource_classes' can be set"
+            )
+        if hasattr(self, "get_resource_class"):
             warnings.warn(
                 "The 'get_resource_class()' method has been deprecated. "
                 "Please implement the new 'get_resource_classes()' method",
@@ -48,21 +67,20 @@ class BaseImportExportMixin:
 
     def get_resource_index(self, form):
         resource_index = 0
-        if form and 'resource' in form.cleaned_data:
+        if form and "resource" in form.cleaned_data:
             try:
-                resource_index = int(form.cleaned_data['resource'])
+                resource_index = int(form.cleaned_data["resource"])
             except ValueError:
                 pass
         return resource_index
 
 
 class BaseImportMixin(BaseImportExportMixin):
-
     def get_import_resource_classes(self):
         """
         Returns ResourceClass subscriptable (list, tuple, ...) to use for import.
         """
-        if hasattr(self, 'get_import_resource_class'):
+        if hasattr(self, "get_import_resource_class"):
             warnings.warn(
                 "The 'get_import_resource_class()' method has been deprecated. "
                 "Please implement the new 'get_import_resource_classes()' method",
@@ -78,7 +96,7 @@ class BaseImportMixin(BaseImportExportMixin):
         """
         Returns available import formats.
         """
-        return [f for f in self.formats if f().can_import()]
+        return [f for f in self.import_formats if f().can_import()]
 
     def get_import_resource_kwargs(self, request, *args, **kwargs):
         return self.get_resource_kwargs(request, *args, **kwargs)
@@ -91,22 +109,42 @@ class BaseImportMixin(BaseImportExportMixin):
 class BaseExportMixin(BaseImportExportMixin):
     model = None
     escape_exported_data = False
+    escape_html = False
+    escape_formulae = False
 
     @property
-    def should_escape_output(self):
-        return getattr(settings, 'IMPORT_EXPORT_ESCAPE_OUTPUT_ON_EXPORT', self.escape_exported_data)
+    def should_escape_html(self):
+        if hasattr(settings, "IMPORT_EXPORT_ESCAPE_HTML_ON_EXPORT"):
+            warnings.warn(
+                "IMPORT_EXPORT_ESCAPE_HTML_ON_EXPORT is deprecated and "
+                "will be removed in a future release.",
+                DeprecationWarning,
+            )
+        v = getattr(settings, "IMPORT_EXPORT_ESCAPE_HTML_ON_EXPORT", self.escape_html)
+        if v is True:
+            logger.debug("IMPORT_EXPORT_ESCAPE_HTML_ON_EXPORT is enabled")
+        return v
+
+    @property
+    def should_escape_formulae(self):
+        v = getattr(
+            settings, "IMPORT_EXPORT_ESCAPE_FORMULAE_ON_EXPORT", self.escape_formulae
+        )
+        if v is True:
+            logger.debug("IMPORT_EXPORT_ESCAPE_FORMULAE_ON_EXPORT is enabled")
+        return v
 
     def get_export_formats(self):
         """
         Returns available export formats.
         """
-        return [f for f in self.formats if f().can_export()]
+        return [f for f in self.export_formats if f().can_export()]
 
     def get_export_resource_classes(self):
         """
         Returns ResourceClass subscriptable (list, tuple, ...) to use for export.
         """
-        if hasattr(self, 'get_export_resource_class'):
+        if hasattr(self, "get_export_resource_class"):
             warnings.warn(
                 "The 'get_export_resource_class()' method has been deprecated. "
                 "Please implement the new 'get_export_resource_classes()' method",
@@ -126,16 +164,22 @@ class BaseExportMixin(BaseImportExportMixin):
         return self.get_resource_kwargs(request, *args, **kwargs)
 
     def get_data_for_export(self, request, queryset, *args, **kwargs):
-        export_form = kwargs.pop('export_form', None)
-        return self.choose_export_resource_class(export_form)\
-            (**self.get_export_resource_kwargs(request, *args, **kwargs))\
-            .export(queryset, *args, **kwargs)
+        export_form = kwargs.get("export_form")
+        export_class = self.choose_export_resource_class(export_form)
+        export_resource_kwargs = self.get_export_resource_kwargs(
+            request, *args, **kwargs
+        )
+        cls = export_class(**export_resource_kwargs)
+        export_data = cls.export(*args, queryset=queryset, **kwargs)
+        return export_data
 
     def get_export_filename(self, file_format):
-        date_str = now().strftime('%Y-%m-%d')
-        filename = "%s-%s.%s" % (self.model.__name__,
-                                 date_str,
-                                 file_format.get_extension())
+        date_str = now().strftime("%Y-%m-%d")
+        filename = "%s-%s.%s" % (
+            self.model.__name__,
+            date_str,
+            file_format.get_extension(),
+        )
         return filename
 
 
@@ -147,7 +191,7 @@ class ExportViewMixin(BaseExportMixin):
         Returns file_format representation for given queryset.
         """
         data = self.get_data_for_export(self.request, queryset, *args, **kwargs)
-        export_data = file_format.export_data(data, escape_output=self.should_escape_output)
+        export_data = file_format.export_data(data)
         return export_data
 
     def get_context_data(self, **kwargs):
@@ -156,17 +200,15 @@ class ExportViewMixin(BaseExportMixin):
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs['formats'] = self.get_export_formats()
+        kwargs["formats"] = self.get_export_formats()
         return kwargs
 
 
 class ExportViewFormMixin(ExportViewMixin, FormView):
     def form_valid(self, form):
         formats = self.get_export_formats()
-        file_format = formats[
-            int(form.cleaned_data['file_format'])
-        ]()
-        if hasattr(self, 'get_filterset'):
+        file_format = formats[int(form.cleaned_data["file_format"])]()
+        if hasattr(self, "get_filterset"):
             queryset = self.get_filterset(self.get_filterset_class()).qs
         else:
             queryset = self.get_queryset()
@@ -177,7 +219,7 @@ class ExportViewFormMixin(ExportViewMixin, FormView):
             response = HttpResponse(export_data, content_type=content_type)
         except TypeError:
             response = HttpResponse(export_data, mimetype=content_type)
-        response['Content-Disposition'] = 'attachment; filename="%s"' % (
+        response["Content-Disposition"] = 'attachment; filename="%s"' % (
             self.get_export_filename(file_format),
         )
 

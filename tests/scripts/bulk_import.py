@@ -12,7 +12,7 @@ from memory_profiler import memory_usage
 from import_export import resources
 from import_export.instance_loaders import CachedInstanceLoader
 
-from core.models import Book    # isort:skip
+from core.models import Book  # isort:skip
 
 # The number of rows to be created on each profile run.
 # Increase this value for greater load testing.
@@ -20,14 +20,13 @@ NUM_ROWS = 10000
 
 
 class _BookResource(resources.ModelResource):
-
     class Meta:
         model = Book
-        fields = ('id', 'name', 'author_email', 'price')
+        fields = ("id", "name", "author_email", "price")
         use_bulk = True
         batch_size = 1000
         skip_unchanged = True
-        #skip_diff = True
+        # skip_diff = True
         # This flag can speed up imports
         # Cannot be used when performing updates
         # force_init_instance = True
@@ -39,9 +38,9 @@ def profile_duration(fn):
     def inner(*args, **kwargs):
         # Measure duration
         t = time.perf_counter()
-        retval = fn(*args, **kwargs)
+        fn(*args, **kwargs)
         elapsed = time.perf_counter() - t
-        print(f'Time   {elapsed:0.4}')
+        print(f"Time   {elapsed:0.4}")
 
     return inner
 
@@ -50,8 +49,10 @@ def profile_mem(fn):
     @wraps(fn)
     def inner(*args, **kwargs):
         # Measure memory
-        mem, retval = memory_usage((fn, args, kwargs), retval=True, timeout=200, interval=1e-7)
-        print(f'Memory {max(mem) - min(mem)}')
+        mem, retval = memory_usage(
+            (fn, args, kwargs), retval=True, timeout=200, interval=1e-7
+        )
+        print(f"Memory {max(mem) - min(mem)}")
         return retval
 
     return inner
@@ -71,7 +72,7 @@ def do_create():
     class _BookResource(resources.ModelResource):
         class Meta:
             model = Book
-            fields = ('id', 'name', 'author_email', 'price')
+            fields = ("id", "name", "author_email", "price")
             use_bulk = True
             batch_size = 1000
             skip_unchanged = True
@@ -83,14 +84,15 @@ def do_create():
     books = Book.objects.all()
     books._raw_delete(books.db)
 
-    rows = [('', 'Some new book', 'email@example.com', '10.25')] * NUM_ROWS
-    dataset = tablib.Dataset(*rows, headers=['id', 'name', 'author_email', 'price'])
+    rows = [("", "Some new book", "email@example.com", "10.25")] * NUM_ROWS
+    dataset = tablib.Dataset(*rows, headers=["id", "name", "author_email", "price"])
 
     book_resource = _BookResource()
     do_import_duration(book_resource, dataset)
     do_import_mem(book_resource, dataset)
 
-    # Book objects are created once for the 'duration' run, and once for the 'memory' run
+    # Book objects are created once for the 'duration' run,
+    # and once for the 'memory' run
     assert Book.objects.count() == NUM_ROWS * 2
     books._raw_delete(books.db)
 
@@ -102,7 +104,7 @@ def do_update():
     books = Book.objects.all()
     books._raw_delete(books.db)
 
-    rows = [('', 'Some new book', 'email@example.com', '10.25')] * NUM_ROWS
+    rows = [("", "Some new book", "email@example.com", "10.25")] * NUM_ROWS
     books = [Book(name=r[1], author_email=r[2], price=r[3]) for r in rows]
 
     # run 'update' - there must be existing rows in the DB...
@@ -113,7 +115,7 @@ def do_update():
     # find the ids, so that we can perform the update
     all_books = Book.objects.all()
     rows = [(b.id, b.name, b.author_email, b.price) for b in all_books]
-    dataset = tablib.Dataset(*rows, headers=['id', 'name', 'author_email', 'price'])
+    dataset = tablib.Dataset(*rows, headers=["id", "name", "author_email", "price"])
 
     book_resource = _BookResource()
     do_import_duration(book_resource, dataset)
@@ -126,13 +128,12 @@ def do_update():
 
 def do_delete():
     class _BookResource(resources.ModelResource):
-
         def for_delete(self, row, instance):
             return True
 
         class Meta:
             model = Book
-            fields = ('id', 'name', 'author_email', 'price')
+            fields = ("id", "name", "author_email", "price")
             use_bulk = True
             batch_size = 1000
             skip_diff = True
@@ -144,7 +145,7 @@ def do_delete():
     books = Book.objects.all()
     books._raw_delete(books.db)
 
-    rows = [('', 'Some new book', 'email@example.com', '10.25')] * NUM_ROWS
+    rows = [("", "Some new book", "email@example.com", "10.25")] * NUM_ROWS
     books = [Book(name=r[1], author_email=r[2], price=r[3]) for r in rows]
 
     # deletes - there must be existing rows in the DB...
@@ -154,7 +155,7 @@ def do_delete():
 
     all_books = Book.objects.all()
     rows = [(b.id, b.name, b.author_email, b.price) for b in all_books]
-    dataset = tablib.Dataset(*rows, headers=['id', 'name', 'author_email', 'price'])
+    dataset = tablib.Dataset(*rows, headers=["id", "name", "author_email", "price"])
 
     book_resource = _BookResource()
     do_import_duration(book_resource, dataset)
@@ -167,7 +168,7 @@ def do_delete():
 
     all_books = Book.objects.all()
     rows = [(b.id, b.name, b.author_email, b.price) for b in all_books]
-    dataset = tablib.Dataset(*rows, headers=['id', 'name', 'author_email', 'price'])
+    dataset = tablib.Dataset(*rows, headers=["id", "name", "author_email", "price"])
     do_import_mem(book_resource, dataset)
     assert 0 == Book.objects.count()
 

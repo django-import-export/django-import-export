@@ -89,6 +89,41 @@ column name (i.e. row header)::
     :doc:`/api_fields`
         Available field types and options.
 
+Custom workflow based on import values
+--------------------------------------
+
+You can extend the import process to add workflow based on changes to persisted model instances.
+
+For example, suppose you are importing a list of books and you require additional workflow on the date of publication.
+In this example, we assume there is an existing unpublished book instance which has a null 'published' field.
+
+There will be a one-off operation to take place on the date of publication, which will be identified by the presence of
+the 'published' field in the import file.
+
+To achieve this, we need to test the existing value taken from the persisted instance (i.e. prior to import
+changes) against the incoming value on the updated instance.
+Both ``instance`` and ``original`` are attributes of :class:`~import_export.results.RowResult`.
+
+You can override the :meth:`~import_export.resources.Resource.after_import_row` method to check if the
+value changes::
+
+  class BookResource(resources.ModelResource):
+
+    def after_import_row(self, row, row_result, **kwargs):
+        if getattr(row_result.original, "published") is None \
+            and getattr(row_result.instance, "published") is not None:
+            # import value is different from stored value.
+            # exec custom workflow...
+
+    class Meta:
+        model = Book
+        store_instance = True
+
+.. note::
+
+  * The ``original`` attribute will be null if :attr:`~import_export.resources.ResourceOptions.skip_diff` is True.
+  * The ``instance`` attribute will be null if :attr:`~import_export.resources.ResourceOptions.store_instance` is False.
+
 Field widgets
 =============
 
@@ -438,6 +473,12 @@ It is also possible to pass a method name in to the :meth:`~import_export.fields
 name is supplied, then that method
 will be called as the 'dehydrate' method.
 
+Filtering querysets during export
+=================================
+
+You can use :meth:`~import_export.resources.Resource.filter_export` to filter querysets
+during export.  See also `Customize admin export forms`_.
+
 Signals
 =======
 
@@ -600,13 +641,16 @@ To use your customized form(s), change the respective attributes on your
 For example, imagine you want to import books for a specific author. You can
 extend the import forms to include ``author`` field to select the author from.
 
+.. note::
+
+    Importing an E-Book using the :ref:`example application<exampleapp>`
+    demonstrates this.
+
 .. figure:: _static/images/custom-import-form.png
 
    A screenshot of a customized import view.
 
-Customize forms::
-
-    from django import forms
+Customize forms (for example see ``tests/core/forms.py``)::
 
     class CustomImportForm(ImportForm):
         author = forms.ModelChoiceField(
@@ -618,7 +662,7 @@ Customize forms::
             queryset=Author.objects.all(),
             required=True)
 
-Customize ``ModelAdmin``::
+Customize ``ModelAdmin`` (for example see ``tests/core/admin.py``)::
 
     class CustomBookAdmin(ImportMixin, admin.ModelAdmin):
         resource_classes = [BookResource]
@@ -644,11 +688,83 @@ To further customize the import forms, you might like to consider overriding the
 * :meth:`~import_export.admin.ImportMixin.get_confirm_form_class`
 * :meth:`~import_export.admin.ImportMixin.get_confirm_form_kwargs`
 
+For example, to pass extract form values (so that they get passed to the import process)::
+
+    def get_import_data_kwargs(self, request, *args, **kwargs):
+        """
+        Return form data as kwargs for import_data.
+        """
+        form = kwargs.get('form')
+        if form:
+            return form.cleaned_data
+        return {}
+
+The parameters can then be read from ``Resource`` methods, such as:
+
+* :meth:`~import_export.resources.Resource.before_import`
+* :meth:`~import_export.resources.Resource.before_import_row`
+
 .. seealso::
 
     :doc:`/api_admin`
         available mixins and options.
 
+Customize admin export forms
+----------------------------
+
+It is also possible to add fields to the export form so that export data can be
+filtered.  For example, we can filter exports by Author.
+
+.. figure:: _static/images/custom-export-form.png
+
+   A screenshot of a customized export view.
+
+Customize forms (for example see ``tests/core/forms.py``)::
+
+    class CustomExportForm(AuthorFormMixin, ExportForm):
+        """Customized ExportForm, with author field required."""
+        author = forms.ModelChoiceField(
+            queryset=Author.objects.all(),
+            required=True)
+
+Customize ``ModelAdmin`` (for example see ``tests/core/admin.py``)::
+
+    class CustomBookAdmin(ImportMixin, ImportExportModelAdmin):
+        resource_classes = [EBookResource]
+        export_form_class = CustomExportForm
+
+        def get_export_resource_kwargs(self, request, *args, **kwargs):
+            export_form = kwargs["export_form"]
+            if export_form:
+                return dict(author_id=export_form.cleaned_data["author"].id)
+            return {}
+
+    admin.site.register(Book, CustomBookAdmin)
+
+Create a Resource subclass to apply the filter
+(for example see ``tests/core/admin.py``)::
+
+    class EBookResource(ModelResource):
+        def __init__(self, **kwargs):
+            super().__init__()
+            self.author_id = kwargs.get("author_id")
+
+        def filter_export(self, queryset, *args, **kwargs):
+            return queryset.filter(author_id=self.author_id)
+
+        class Meta:
+            model = EBook
+
+In this example, we can filter an EBook export using the author's name.
+
+1. Create a custom form which defines 'author' as a required field.
+2. Create a 'CustomBookAdmin' class which defines a
+   :class:`~import_export.resources.Resource`, and overrides
+   :meth:`~import_export.mixins.BaseExportMixin.get_export_resource_kwargs`.
+   This ensures that the author id will be passed to the
+   :class:`~import_export.resources.Resource` constructor.
+3. Create a :class:`~import_export.resources.Resource` which is instantiated with the
+   ``author_id``, and can filter the queryset as required.
 
 Using multiple resources
 ------------------------
@@ -724,3 +840,90 @@ return books for the publisher::
 
         class Meta:
             model = Book
+
+.. _interoperability:
+
+Interoperability with 3rd party libraries
+-----------------------------------------
+
+import_export extends the Django Admin interface.  There is a possibility that clashes may occur with other 3rd party
+libraries which also use the admin interface.
+
+django-admin-sortable2
+^^^^^^^^^^^^^^^^^^^^^^
+
+Issues have been raised due to conflicts with setting `change_list_template <https://docs.djangoproject.com/en/stable/ref/contrib/admin/#django.contrib.admin.ModelAdmin.change_list_template>`_.  There is a workaround listed `here <https://github.com/jrief/django-admin-sortable2/issues/345#issuecomment-1680271337>`_.
+Also, refer to `this issue <https://github.com/django-import-export/django-import-export/issues/1531>`_.
+If you want to patch your own installation to fix this, a patch is available `here <https://github.com/django-import-export/django-import-export/pull/1607>`_.
+
+django-polymorphic
+^^^^^^^^^^^^^^^^^^
+
+Refer to `this issue <https://github.com/django-import-export/django-import-export/issues/1521>`_.
+
+template skipped due to recursion issue
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Refer to `this issue <https://github.com/django-import-export/django-import-export/issues/1514#issuecomment-1344200867>`_.
+
+.. _admin_security:
+
+Security
+--------
+
+Enabling the Admin interface means that you should consider the security implications.  Some or all of the following
+points may be relevant:
+
+Is there potential for untrusted imports?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* What is the source of your import file?
+
+* Is this coming from an external source where the data could be untrusted?
+
+* Could source data potentially contain malicious content such as script directives or Excel formulae?
+
+* Even if data comes from a trusted source, is there any content such as HTML which could cause issues when rendered
+  in a web page?
+
+What is the potential risk for exported data?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* If there is malicious content in stored data, what is the risk of exporting this data?
+
+* Could untrusted input be executed within a spreadsheet?
+
+* Are spreadsheets sent to other parties who could inadvertently execute malicious content?
+
+* Could data be exported to other formats, such as CSV, TSV or ODS, and then opened using Excel?
+
+* Could any exported data be rendered in HTML? For example, csv is exported and then loaded into another
+  web application.  In this case, untrusted input could contain malicious code such as active script content.
+
+Mitigating security risks
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+By default, import-export does not sanitize or process imported data.  Malicious content, such as script directives,
+can be imported into the database, and can be exported without any modification.
+
+You can optionally configure import-export to sanitize data on export.  There are two settings which enable this:
+
+#. :ref:`IMPORT_EXPORT_ESCAPE_HTML_ON_EXPORT`
+#. :ref:`IMPORT_EXPORT_ESCAPE_FORMULAE_ON_EXPORT`
+
+.. warning::
+
+    Enabling these settings only sanitizes data exported using the Admin Interface.
+    If exporting data :ref:`programmatically<exporting_data>`, then you will need to apply your own sanitization.
+
+Limiting the available import or export types can be considered. This can be done using either of the following settings:
+
+#. :ref:`IMPORT_EXPORT_FORMATS`
+#. :ref:`IMPORT_FORMATS`
+#. :ref:`EXPORT_FORMATS`
+
+You should in all cases review `Django security documentation <https://docs.djangoproject.com/en/dev/topics/security/>`_
+before deploying a live Admin interface instance.
+
+Please refer to `SECURITY.md <https://github.com/django-import-export/django-import-export/blob/main/SECURITY.md>`_ for
+details on how to escalate security issues.

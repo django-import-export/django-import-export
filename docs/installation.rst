@@ -120,13 +120,60 @@ Note that if you disable transaction support via configuration (or if your datab
 does not support transactions), then validation errors will still be presented to the user
 but valid rows will have imported.
 
-``IMPORT_EXPORT_ESCAPE_OUTPUT_ON_EXPORT``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``IMPORT_EXPORT_ESCAPE_HTML_ON_EXPORT``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If set to ``True``, export output will be sanitized. By default this is set to ``False``.
+If set to ``True``, strings will be HTML escaped. By default this is ``False``.
 
-Note: currently this only works for ``HTML`` output, and only for exports done via the admin UI.
+This is deprecated and will be removed in a future release.  Future releases will
+escape strings by default.
 
+``IMPORT_EXPORT_ESCAPE_FORMULAE_ON_EXPORT``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If set to ``True``, strings will be sanitized by removing any leading '=' character.  This is to prevent execution of
+Excel formulae.  By default this is ``False``.
+
+``IMPORT_EXPORT_FORMATS``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A list that defines which file formats will be allowed during imports and exports. Defaults
+to ``import_export.formats.base_formats.DEFAULT_FORMATS``.
+The values must be those provided in ``import_export.formats.base_formats`` e.g
+
+.. code-block:: python
+
+    # settings.py
+    from import_export.formats.base_formats import XLSX
+    IMPORT_EXPORT_FORMATS = [XLSX]
+
+
+``IMPORT_FORMATS``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A list that defines which file formats will be allowed during imports. Defaults
+to ``IMPORT_EXPORT_FORMATS``.
+The values must be those provided in ``import_export.formats.base_formats`` e.g
+
+.. code-block:: python
+
+    # settings.py
+    from import_export.formats.base_formats import CSV, XLSX
+    IMPORT_FORMATS = [CSV, XLSX]
+
+
+``EXPORT_FORMATS``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A list that defines which file formats will be allowed during exports. Defaults
+to ``IMPORT_EXPORT_FORMATS``.
+The values must be those provided in ``import_export.formats.base_formats`` e.g
+
+.. code-block:: python
+
+    # settings.py
+    from import_export.formats.base_formats import XLSX
+    EXPORT_FORMATS = [XLSX]
 
 
 .. _exampleapp:
@@ -144,7 +191,7 @@ You can run the example application as follows::
     ./manage.py makemigrations
     ./manage.py migrate
     ./manage.py createsuperuser
-    ./manage.py loaddata category.json book.json
+    ./manage.py loaddata author.json category.json book.json
     ./manage.py runserver
 
 Go to http://127.0.0.1:8000

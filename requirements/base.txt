@@ -1,4 +1,5 @@
 Django>=3.2
-tablib[html,ods,xls,xlsx,yaml]>=3.2.1
+# tablib temporarily pinned to 3.5.0 - see issue #1602
+tablib[html,ods,xls,xlsx,yaml]==3.5.0
 diff-match-patch
 setuptools_scm

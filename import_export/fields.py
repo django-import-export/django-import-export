@@ -34,11 +34,20 @@ class Field:
         to a ManyToMany field instead of setting all values.  Only useful if field is
         a ManyToMany field.
     """
-    empty_values = [None, '']
 
-    def __init__(self, attribute=None, column_name=None, widget=None,
-                 default=NOT_PROVIDED, readonly=False, saves_null_values=True,
-                 dehydrate_method=None, m2m_add=False):
+    empty_values = [None, ""]
+
+    def __init__(
+        self,
+        attribute=None,
+        column_name=None,
+        widget=None,
+        default=NOT_PROVIDED,
+        readonly=False,
+        saves_null_values=True,
+        dehydrate_method=None,
+        m2m_add=False,
+    ):
         self.attribute = attribute
         self.default = default
         self.column_name = column_name
@@ -54,11 +63,11 @@ class Field:
         """
         Displays the module, class and name of the field.
         """
-        path = '%s.%s' % (self.__class__.__module__, self.__class__.__name__)
-        column_name = getattr(self, 'column_name', None)
+        path = "%s.%s" % (self.__class__.__module__, self.__class__.__name__)
+        column_name = getattr(self, "column_name", None)
         if column_name is not None:
-            return '<%s: %s>' % (path, column_name)
-        return '<%s>' % path
+            return "<%s: %s>" % (path, column_name)
+        return "<%s>" % path
 
     def clean(self, data, **kwargs):
         """
@@ -68,8 +77,10 @@ class Field:
         try:
             value = data[self.column_name]
         except KeyError:
-            raise KeyError("Column '%s' not found in dataset. Available "
-                           "columns are: %s" % (self.column_name, list(data)))
+            raise KeyError(
+                "Column '%s' not found in dataset. Available "
+                "columns are: %s" % (self.column_name, list(data))
+            )
 
         # If ValueError is raised here, import_obj() will handle it
         value = self.widget.clean(value, row=data, **kwargs)
@@ -88,7 +99,7 @@ class Field:
         if self.attribute is None:
             return None
 
-        attrs = self.attribute.split('__')
+        attrs = self.attribute.split("__")
         value = obj
 
         for attr in attrs:
@@ -113,7 +124,7 @@ class Field:
         be set to the value returned by :meth:`~import_export.fields.Field.clean`.
         """
         if not self.readonly:
-            attrs = self.attribute.split('__')
+            attrs = self.attribute.split("__")
             for attr in attrs[:-1]:
                 obj = getattr(obj, attr, None)
             cleaned = self.clean(data, **kwargs)

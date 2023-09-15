@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-02-21 18:05+0000\n"
+"POT-Creation-Date: 2023-09-12 15:28+0100\n"
 "PO-Revision-Date: 2022-10-17 17:42+0200\n"
 "Last-Translator: Jannes Blobel <jannes.blobel@inlang.com>\n"
 "Language-Team: \n"
@@ -18,51 +18,52 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Poedit 3.1.1\n"
 
-#: admin.py:214
+#: admin.py:241
 #, python-format
 msgid "%s through import_export"
 msgstr "%s durch import_export"
 
-#: admin.py:220
+#: admin.py:248
 msgid "Import finished, with {} new and {} updated {}."
 msgstr "Import fertiggestellt, mit {} neuen und {} aktualisierten {}."
 
-#: admin.py:456
+#: admin.py:496
+#, python-format
 msgid ""
-"'{type(e).__name__}' encountered while trying to read file. Ensure you have "
-"chosen the correct format for the file. "
+"%(exc_name)s encountered while trying to read file. Ensure you have chosen "
+"the correct format for the file."
 msgstr ""
-"'{type(e).__name__}' beim Versuch, die Datei zu lesen ist aufgetretten. "
-"Stellen Sie sicher, dass du  das richtige Format für deine Datei gewählt hast"
+"%(exc_name)s beim Versuch, die Datei zu lesen ist aufgetretten. Stellen Sie "
+"sicher, dass du  das richtige Format für deine Datei gewählt hast"
 
-#: admin.py:580 templates/admin/import_export/change_list_import_item.html:5
+#: admin.py:650 templates/admin/import_export/change_list_import_item.html:5
 #: templates/admin/import_export/import.html:19
 msgid "Import"
 msgstr "Importieren"
 
-#: admin.py:749 templates/admin/import_export/change_list_export_item.html:5
+#: admin.py:836 templates/admin/import_export/change_list_export_item.html:5
 #: templates/admin/import_export/export.html:12
 msgid "Export"
 msgstr "Exportieren"
 
-#: admin.py:812
+#: admin.py:901
 msgid "You must select an export format."
 msgstr "Es muss ein Exportformat ausgewählt werden."
 
-#: admin.py:835
+#: admin.py:926
 #, python-format
 msgid "Export selected %(verbose_name_plural)s"
 msgstr "Ausgewählte %(verbose_name_plural)s exportieren"
 
-#: forms.py:11
+#: forms.py:12
 msgid "Resource"
 msgstr "Ressource"
 
-#: forms.py:29
+#: forms.py:40
 msgid "File to import"
 msgstr "Zu importierende Datei"
 
-#: forms.py:32 forms.py:75 forms.py:100
+#: forms.py:42 forms.py:83 forms.py:116
 msgid "Format"
 msgstr "Dateiformat"
 
@@ -71,7 +72,7 @@ msgid "Home"
 msgstr "Start"
 
 #: templates/admin/import_export/export.html:36
-#: templates/admin/import_export/import.html:73
+#: templates/admin/import_export/import.html:78
 msgid "Submit"
 msgstr "Absenden"
 
@@ -87,24 +88,24 @@ msgstr ""
 msgid "Confirm import"
 msgstr "Import bestätigen"
 
-#: templates/admin/import_export/import.html:43
+#: templates/admin/import_export/import.html:44
 msgid "This importer will import the following fields: "
 msgstr "Es werden die folgenden Felder importiert: "
 
-#: templates/admin/import_export/import.html:83
-#: templates/admin/import_export/import.html:114
+#: templates/admin/import_export/import.html:89
+#: templates/admin/import_export/import.html:120
 msgid "Errors"
 msgstr "Fehler"
 
-#: templates/admin/import_export/import.html:94
+#: templates/admin/import_export/import.html:100
 msgid "Line number"
 msgstr "Zeilennummer"
 
-#: templates/admin/import_export/import.html:106
+#: templates/admin/import_export/import.html:112
 msgid "Some rows failed to validate"
 msgstr "Die Validierung einiger Zeilen schlug fehl"
 
-#: templates/admin/import_export/import.html:108
+#: templates/admin/import_export/import.html:114
 msgid ""
 "Please correct these errors in your data where possible, then reupload it "
 "using the form above."
@@ -112,30 +113,30 @@ msgstr ""
 "Bitte korrigiere falls möglich diese Fehler in deiner Datei und lade sie "
 "anschließend erneut mit dem obigen Formular hoch."
 
-#: templates/admin/import_export/import.html:113
+#: templates/admin/import_export/import.html:119
 msgid "Row"
 msgstr "Zeile"
 
-#: templates/admin/import_export/import.html:140
+#: templates/admin/import_export/import.html:146
 msgid "Non field specific"
 msgstr "Nicht feldspezifisch"
 
-#: templates/admin/import_export/import.html:163
+#: templates/admin/import_export/import.html:169
 msgid "Preview"
 msgstr "Vorschau"
 
-#: templates/admin/import_export/import.html:178
+#: templates/admin/import_export/import.html:184
 msgid "New"
 msgstr "Neu"
 
-#: templates/admin/import_export/import.html:180
+#: templates/admin/import_export/import.html:186
 msgid "Skipped"
 msgstr "Übersprungen"
 
-#: templates/admin/import_export/import.html:182
+#: templates/admin/import_export/import.html:188
 msgid "Delete"
 msgstr "Löschen"
 
-#: templates/admin/import_export/import.html:184
+#: templates/admin/import_export/import.html:190
 msgid "Update"
 msgstr "Update"

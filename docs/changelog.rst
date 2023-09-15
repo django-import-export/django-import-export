@@ -1,11 +1,94 @@
 Changelog
 =========
 
-3.1.1 (unreleased)
+3.3.2 (unreleased)
 ------------------
 
 - Added 'build-n-release' step to Github CI workflow (#1332)
 
+
+3.3.1 (2023-09-14)
+------------------
+
+- Added `.readthedocs.yaml` (#1625)
+
+3.3.0 (2023-09-14)
+------------------
+
+Deprecations
+############
+
+- Remove 'escape output' deprecation (#1618)
+
+  - Removal of deprecated :ref:`IMPORT_EXPORT_ESCAPE_OUTPUT_ON_EXPORT`.
+
+  - Deprecation of :ref:`IMPORT_EXPORT_ESCAPE_HTML_ON_EXPORT`.  Refer to :ref:`installation` docs.
+
+Enhancements
+############
+
+- Refactoring and fix to support filtering exports (#1579)
+- Store ``instance`` and ``original`` object in :class:`~import_export.results.RowResult` (#1584)
+- Add customizable blocks in import.html (#1598)
+- Include 'allowed formats' settings (#1606)
+- Add kwargs to enable CharWidget to return values as strings (#1623)
+
+Internationalization
+####################
+
+- Add Finnish translation (#1588)
+- Updated ru translation (#1604)
+- Fixed badly formatted translation string (#1622)
+- Remove 'escape output' deprecation (#1618)
+
+Fixes
+#####
+
+- Do not decode bytes when writing to MediaStorage (#1615)
+- Fix for cache entries not removed (#1621)
+
+Development
+###########
+
+- Added support for Django 4.2 (#1570)
+- Add automatic formatting and linting (#1571)
+- removed duplicate admin integration tests (#1616)
+- Removed support for python3.7 and django4.0 (past EOL) (#1618)
+
+Documentation
+#############
+
+- Updated documentation for interoperability with third party libraries (#1614)
+
+3.2.0 (2023-04-12)
+------------------
+
+- Escape formulae on export to XLSX (#1568)
+
+  - This includes deprecation of :ref:`IMPORT_EXPORT_ESCAPE_OUTPUT_ON_EXPORT`.
+
+    Refer to :ref:`installation` for alternatives.
+
+  - :meth:`import_export.formats.TablibFormat.export()`: ``escape_output`` flag now deprecated in favour of
+    ``escape_html`` and ``escape_formulae``.
+
+- Refactor methods so that ``args`` are declared correctly (#1566)
+
+  - This includes deprecations to be aware of if you have overridden :meth:`~import_export.resources.Resource.export`
+    or :class:`~import_export.forms.ImportExportFormBase`.
+
+    - ``export()``: If passing ``queryset`` as the first arg, ensure this is passed as a named parameter.
+
+    - ``ImportExportFormBase``: If passing ``resources`` to ``__init__`` as the first arg, ensure this is
+      passed as a named parameter.
+
+- Updated ``setup.py`` (#1564)
+- Added ``SECURITY.md`` (#1563)
+- Updated FAQ to include workaround for `RelatedObjectDoesNotExist` exception (#1562)
+- Prevent error comparing m2m field of the new objects (#1560)
+- Add documentation for passing data from admin form to Resource  (#1555)
+- Added new translations to Spanish and Spanish (Argentina) (#1552)
+- Pass kwargs to import_set function (#1448)
 
 3.1.0 (2023-02-21)
 ------------------

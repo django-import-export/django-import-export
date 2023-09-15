@@ -13,28 +13,59 @@ class Error:
 
 
 class RowResult:
-    IMPORT_TYPE_UPDATE = 'update'
-    IMPORT_TYPE_NEW = 'new'
-    IMPORT_TYPE_DELETE = 'delete'
-    IMPORT_TYPE_SKIP = 'skip'
-    IMPORT_TYPE_ERROR = 'error'
-    IMPORT_TYPE_INVALID = 'invalid'
+    """Container for values relating to a row import."""
 
-    valid_import_types = frozenset([
-        IMPORT_TYPE_NEW,
-        IMPORT_TYPE_UPDATE,
-        IMPORT_TYPE_DELETE,
-        IMPORT_TYPE_SKIP,
-    ])
+    IMPORT_TYPE_UPDATE = "update"
+    IMPORT_TYPE_NEW = "new"
+    IMPORT_TYPE_DELETE = "delete"
+    IMPORT_TYPE_SKIP = "skip"
+    IMPORT_TYPE_ERROR = "error"
+    IMPORT_TYPE_INVALID = "invalid"
+
+    valid_import_types = frozenset(
+        [
+            IMPORT_TYPE_NEW,
+            IMPORT_TYPE_UPDATE,
+            IMPORT_TYPE_DELETE,
+            IMPORT_TYPE_SKIP,
+        ]
+    )
 
     def __init__(self):
+        #: An instance of :class:`~import_export.results.Error` which may have been
+        #: raised during import.
         self.errors = []
+
+        #: Contains any ValidationErrors which may have been raised during import.
         self.validation_error = None
+
+        #: A HTML representation of the difference between the 'original' and
+        #: 'updated' model instance.
         self.diff = None
+
+        #: A string identifier which identifies what type of import was performed.
         self.import_type = None
+
+        #: Can the raw values associated with each imported row.
         self.row_values = {}
+
+        #: The instance id (used in Admin UI)
         self.object_id = None
+
+        #: The object representation (used in Admin UI)
         self.object_repr = None
+
+        #: A reference to the model instance which was created, updated or deleted.
+        self.instance = None
+
+        #: A reference to the model instance before updates were applied.
+        #: This value is only set for updates.
+        self.original = None
+
+        #: A boolean flag indicating whether the record is `new` or not.
+        #: Deprecated: use the value of ``import_type`` instead.
+        #: See issue 1586.
+        self.new_record = None
 
     def add_instance_info(self, instance):
         if instance is not None:
@@ -44,7 +75,8 @@ class RowResult:
 
 
 class InvalidRow:
-    """A row that resulted in one or more ``ValidationError`` being raised during import."""
+    """A row that resulted in one or more ``ValidationError``
+    being raised during import."""
 
     def __init__(self, number, validation_error, values):
         self.number = number
@@ -59,7 +91,8 @@ class InvalidRow:
     def field_specific_errors(self):
         """Returns a dictionary of field-specific validation errors for this row."""
         return {
-            key: value for key, value in self.error_dict.items()
+            key: value
+            for key, value in self.error_dict.items()
             if key != NON_FIELD_ERRORS
         }
 
@@ -85,19 +118,20 @@ class Result:
         self.rows = []  # RowResults
         self.invalid_rows = []  # InvalidRow
         self.failed_dataset = Dataset()
-        self.totals = OrderedDict([(RowResult.IMPORT_TYPE_NEW, 0),
-                                   (RowResult.IMPORT_TYPE_UPDATE, 0),
-                                   (RowResult.IMPORT_TYPE_DELETE, 0),
-                                   (RowResult.IMPORT_TYPE_SKIP, 0),
-                                   (RowResult.IMPORT_TYPE_ERROR, 0),
-                                   (RowResult.IMPORT_TYPE_INVALID, 0)])
+        self.totals = OrderedDict(
+            [
+                (RowResult.IMPORT_TYPE_NEW, 0),
+                (RowResult.IMPORT_TYPE_UPDATE, 0),
+                (RowResult.IMPORT_TYPE_DELETE, 0),
+                (RowResult.IMPORT_TYPE_SKIP, 0),
+                (RowResult.IMPORT_TYPE_ERROR, 0),
+                (RowResult.IMPORT_TYPE_INVALID, 0),
+            ]
+        )
         self.total_rows = 0
 
     def valid_rows(self):
-        return [
-            r for r in self.rows
-            if r.import_type in RowResult.valid_import_types
-        ]
+        return [r for r in self.rows if r.import_type in RowResult.valid_import_types]
 
     def append_row_result(self, row_result):
         self.rows.append(row_result)
@@ -130,8 +164,7 @@ class Result:
             self.totals[row_result.import_type] += 1
 
     def row_errors(self):
-        return [(i + 1, row.errors)
-                for i, row in enumerate(self.rows) if row.errors]
+        return [(i + 1, row.errors) for i, row in enumerate(self.rows) if row.errors]
 
     def has_errors(self):
         """Returns a boolean indicating whether the import process resulted in
