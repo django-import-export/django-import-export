@@ -4,7 +4,9 @@ Changelog
 3.4.0 (unreleased)
 ------------------
 
-- Refactor 'diff' logic to avoid calling dehydrate methods (#1626)
+- Refactor ordering logic (#1626)
+  - Refactor 'diff' logic to avoid calling dehydrate methods
+  - Refactor declarations of ``fields``, ``import_order`` and ``export_order`` to fix ordering issues
 
 3.3.1 (2023-09-14)
 ------------------

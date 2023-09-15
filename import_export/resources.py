@@ -1037,10 +1037,10 @@ class Resource(metaclass=DeclarativeMetaclass):
         return result
 
     def get_import_order(self):
-        return self._get_fields_by_order("import_order")
+        return self._get_ordered_field_names("import_order")
 
     def get_export_order(self):
-        return self._get_fields_by_order("export_order")
+        return self._get_ordered_field_names("export_order")
 
     def before_export(self, queryset, *args, **kwargs):
         """
@@ -1140,23 +1140,18 @@ class Resource(metaclass=DeclarativeMetaclass):
 
         return data
 
-    def _get_fields_by_order(self, order_field):
+    def _get_ordered_field_names(self, order_field):
         """
-        Return a list of Fields taken from those defined in 'fields'.
-        If an 'order field' (e.g. 'import_order') is defined in the
-        Meta class, then the returned tuple contains those fields first,
-        followed by those defined in 'fields'.
-        Example:
-            fields = ('id', 'name', 'price')
-            import_order = ('price', 'name')
-        Returned tuple is: ('price', 'name', 'id')
+        Return a list of field names, respecting any defined ordering.
+        """
+        # get any declared 'order' fields
+        order_fields = getattr(self._meta, order_field) or ()
+        # get any defined fields
+        defined_fields = order_fields + tuple(getattr(self._meta, "fields") or ())
 
-        If no 'order field' is supplied, and there is a 'fields' declaration,
-        then the ordering of 'fields' is used.
-        """
-        order_fields = getattr(self._meta, order_field) or getattr(self._meta, "fields")
-        order = tuple(order_fields or ())
-        return order + tuple(k for k in self.fields if k not in order)
+        order = list()
+        [order.append(f) for f in defined_fields if f not in order]
+        return tuple(order) + tuple(k for k in self.fields if k not in order)
 
 
 class ModelDeclarativeMetaclass(DeclarativeMetaclass):
