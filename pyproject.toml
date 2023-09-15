@@ -45,8 +45,8 @@ Repository = "https://github.com/django-import-export/django-import-export"
 Changelog = "https://github.com/django-import-export/django-import-export/blob/main/docs/changelog.rst"
 
 [tool.setuptools]
-packages = ["import_export"]
 platforms=["OS Independent"]
+license-files = ["LICENSE"]
 
 [tool.setuptools.dynamic]
 version = {attr = "import_export.__init__.__version__"}
