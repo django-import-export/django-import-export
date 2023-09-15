@@ -1150,6 +1150,9 @@ class Resource(metaclass=DeclarativeMetaclass):
             fields = ('id', 'name', 'price')
             import_order = ('price', 'name')
         Returned tuple is: ('price', 'name', 'id')
+
+        If no 'order field' is supplied, and there is a 'fields' declaration,
+        then the ordering of 'fields' is used.
         """
         order_fields = getattr(self._meta, order_field) or getattr(self._meta, "fields")
         order = tuple(order_fields or ())
