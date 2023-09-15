@@ -50,9 +50,10 @@ try:
     # The full version, including alpha/beta/rc tags.
     release = __version__
     from importlib.metadata import version
-    release = version('import-export')
+
+    release = version("import-export")
     # for example take major/minor
-    version = '.'.join(release.split('.')[:2])
+    version = ".".join(release.split(".")[:2])
 except ImportError:
     version = release = "dev"
 

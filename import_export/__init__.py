@@ -9,4 +9,5 @@ except ImportError:
     from os import path as _path
 
     from setuptools_scm import get_version as _gv
+
     __version__ = _gv(_path.join(_path.dirname(__file__), _path.pardir))

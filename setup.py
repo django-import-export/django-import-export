@@ -34,9 +34,9 @@ with open(os.path.join(os.path.dirname(__file__), "README.rst")) as f:
 
 def local_scheme(_):
     """Enables a version format so that upload to TestPyPI is successful.
-     For example: 2.6.2.dev8
-     See https://github.com/pypa/setuptools_scm/issues/342.
-     """
+    For example: 2.6.2.dev8
+    See https://github.com/pypa/setuptools_scm/issues/342.
+    """
     return ""
 
 
@@ -63,6 +63,9 @@ setup(
     python_requires=">=3.8",
     classifiers=CLASSIFIERS,
     zip_safe=False,
-    use_scm_version={"local_scheme": local_scheme, "write_to": "import_export/_version.py"},
-    setup_requires=['setuptools_scm'],
+    use_scm_version={
+        "local_scheme": local_scheme,
+        "write_to": "import_export/_version.py",
+    },
+    setup_requires=["setuptools_scm"],
 )
