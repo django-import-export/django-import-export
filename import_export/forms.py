@@ -1,5 +1,4 @@
 import os.path
-import warnings
 
 from django import forms
 from django.conf import settings
@@ -16,17 +15,6 @@ class ImportExportFormBase(forms.Form):
 
     def __init__(self, *args, resources=None, **kwargs):
         super().__init__(*args, **kwargs)
-        if len(args) == 1 and resources is None:
-            # issue 1565: definition of __init__() was incorrect
-            # this logic included to aid backwards compatibility,
-            # for cases where users are calling with the original form.
-            # this check can be removed in a future release
-            warnings.warn(
-                "'resources' must be supplied as a named parameter",
-                category=DeprecationWarning,
-            )
-            resources = args
-
         if resources and len(resources) > 1:
             resource_choices = []
             for i, resource in enumerate(resources):

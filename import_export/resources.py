@@ -904,13 +904,6 @@ class Resource(metaclass=DeclarativeMetaclass):
         collect_failed_rows,
         **kwargs
     ):
-        # if rollback_on_validation_errors is not None:
-        #     warnings.warn(
-        #         "rollback_on_validation_errors argument is deprecated and will be "
-        #         "removed in a future release.",
-        #         category=DeprecationWarning,
-        #     )
-
         result = self.get_result_class()()
         result.diff_headers = self.get_diff_headers()
         result.total_rows = len(dataset)
