@@ -83,6 +83,11 @@ class ResourceOptions:
     identify existing instances.
     """
 
+    import_order = None
+    """
+    Controls import order for columns.
+    """
+
     export_order = None
     """
     Controls export order for columns.
@@ -354,10 +359,9 @@ class Resource(metaclass=DeclarativeMetaclass):
 
     def get_fields(self, **kwargs):
         """
-        Returns fields sorted according to
-        :attr:`~import_export.resources.ResourceOptions.export_order`.
+        Returns list of fields (unordered).
         """
-        return [self.fields[f] for f in self.get_export_order()]
+        return list(self.fields.values())
 
     def get_field_name(self, field):
         """
@@ -575,7 +579,7 @@ class Resource(metaclass=DeclarativeMetaclass):
             field.save(obj, data, is_m2m, **kwargs)
 
     def get_import_fields(self):
-        return [self.fields[f] for f in self.fields]
+        return [self.fields[f] for f in self.get_import_order()]
 
     def import_obj(self, obj, data, dry_run, **kwargs):
         """
@@ -1032,9 +1036,11 @@ class Resource(metaclass=DeclarativeMetaclass):
 
         return result
 
+    def get_import_order(self):
+        return self._get_fields_by_order("import_order")
+
     def get_export_order(self):
-        order = tuple(self._meta.export_order or ())
-        return order + tuple(k for k in self.fields if k not in order)
+        return self._get_fields_by_order("export_order")
 
     def before_export(self, queryset, *args, **kwargs):
         """
@@ -1064,7 +1070,7 @@ class Resource(metaclass=DeclarativeMetaclass):
         return field.export(obj)
 
     def get_export_fields(self):
-        return self.get_fields()
+        return [self.fields[f] for f in self.get_export_order()]
 
     def export_resource(self, obj):
         return [self.export_field(field, obj) for field in self.get_export_fields()]
@@ -1133,6 +1139,21 @@ class Resource(metaclass=DeclarativeMetaclass):
         self.after_export(queryset, data, *args, **kwargs)
 
         return data
+
+    def _get_fields_by_order(self, order_field):
+        """
+        Return a list of Fields taken from those defined in 'fields'.
+        If an 'order field' (e.g. 'import_order') is defined in the
+        Meta class, then the returned tuple contains those fields first,
+        followed by those defined in 'fields'.
+        Example:
+            fields = ('id', 'name', 'price')
+            import_order = ('price', 'name')
+        Returned tuple is: ('price', 'name', 'id')
+        """
+        order_fields = getattr(self._meta, order_field) or getattr(self._meta, "fields")
+        order = tuple(order_fields or ())
+        return order + tuple(k for k in self.fields if k not in order)
 
 
 class ModelDeclarativeMetaclass(DeclarativeMetaclass):
