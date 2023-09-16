@@ -1,4 +1,4 @@
-.PHONY: clean-pyc clean-build release docs help
+.PHONY: clean-pyc clean-build docs help
 .PHONY: lint test coverage test-codecov
 .DEFAULT_GOAL := help
 RUN_TEST_COMMAND=PYTHONPATH=".:tests:${PYTHONPATH}" django-admin test core --settings=settings
@@ -29,7 +29,7 @@ messages: ## generate locale file translations
 	cd import_export && django-admin makemessages -a && django-admin compilemessages && cd ..
 
 coverage: ## generates codecov report
-	coverage run --omit='setup.py,tests/*' --source=. tests/manage.py test core --settings=
+	coverage run tests/manage.py test core --settings=
 	coverage combine
 	coverage report
 
@@ -37,22 +37,16 @@ sdist: clean ## package
 	python setup.py sdist
 	ls -l dist
 
-release: clean install-deploy-requirements sdist ## package and upload a release
-	fullrelease
-
 install-base-requirements: ## install package requirements
 	pip install -r requirements/base.txt
 
 install-test-requirements: ## install requirements for testing
 	pip install -r requirements/test.txt
 
-install-deploy-requirements:  ## install requirements for deployment
-	pip install -r requirements/deploy.txt
-
 install-docs-requirements:  ## install requirements for docs
 	pip install -r requirements/docs.txt
 
-install-requirements: install-base-requirements install-test-requirements install-deploy-requirements install-docs-requirements
+install-requirements: install-base-requirements install-test-requirements install-docs-requirements
 
 build-html-doc: ## builds the project documentation in HTML format
 	DJANGO_SETTINGS_MODULE=tests.settings make html -C docs
