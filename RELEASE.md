@@ -1,65 +1,14 @@
 ## Release process
 
-#### Pre release
-
-- Set up `.pypirc` file to reference both pypi and testpypi.
-
-#### Release
-
-- Ensure that all code has been committed and integration tests have run on Github.
-  - If pushing directly to `main` branch, ensure this is done on the correct remote repo.
-- `make messages` is intended to be run now to keep the translation files up-to-date.
-  - Run this if there have been any translations updates for the release.  It is recommended to run this prior to any minor release.
-  - This creates updates to all translation files so there is no need to commit these unless there have been any translation changes.
-  - If 'no module named settings' error is seen, try unsetting `DJANGO_SETTINGS_MODULE` environment variable.
-
-```bash
-# check out clean version
-# all git operations will be run against this source repo
-git clone git@github.com:django-import-export/django-import-export.git django-import-export-rel
-
-cd django-import-export-rel
-
-# checkout any feature branch at this point
-# git checkout develop
-
-python3 -m venv venv
-source venv/bin/activate
-pip install -U pip setuptools wheel
-
-pip install --exists-action=w --no-cache-dir -r requirements/deploy.txt
-
-# zest.releaser pre-release
-# (you can set the correct version in this step)
-prerelease
-```
+The existing manual release process has been replaced with Github Actions as part of the CI / CD workflow.
+This has been implemented using [this guide](https://packaging.python.org/en/latest/guides/publishing-package-distribution-releases-using-github-actions-ci-cd-workflows/)
 
 #### Perform the release
 
-For the first pass you may choose not to upload only to testpypi (not pypi) so that you can check the release. You can check the release by manually downloading the files from testPyPI and checking the contents.
+Now the release will be triggered on any commit to main and uploaded to TestPypi.
+If the release is tagged, then a release to Pypi will occur.
 
-Once the test file have been checked, run again to upload to PyPI.
+To create a new published release, follow the instructions [here](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository).
+Ensure you create the new tag to correspond with the release as required.
 
-```bash
-release
 
-# resets the version and pushes changes to origin
-postrelease
-
-# remove the rel copy - no longer required
-deactivate
-cd ..
-rm -rf django-import-export-rel
-```
-
-#### Add Release to Github
-
-- Go to [Github releases](https://github.com/django-import-export/django-import-export/releases)
-- Click 'Draft a new release'
-- Enter the version number (e.g. 3.1.0)
-- Select the correct tag
-- Publish the release
-
-### Check readthedocs
-
-Login to [readthedocs.org](https://readthedocs.org) to check that the build ran OK (click on 'Builds' tab).

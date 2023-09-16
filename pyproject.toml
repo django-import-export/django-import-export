@@ -55,11 +55,6 @@ readme = {file = ["README.rst"]}
 [tool.setuptools_scm]
 write_to = "import_export/_version.py"
 
-[tool.zest-releaser]
-python-file-with-version = "import_export/__init__.py"
-release = false
-create-wheel = false
-
 [tool.isort]
 profile = "black"
 
