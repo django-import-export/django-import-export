@@ -4,7 +4,7 @@ Changelog
 4.0.0 (unreleased)
 ------------------
 
-- Port setup.cfg to pyproject.toml (#1630)
+- Refactor build process (#1630)
 
 
 3.3.1 (2023-09-14)
