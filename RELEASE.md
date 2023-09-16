@@ -10,5 +10,3 @@ If the release is tagged, then a release to Pypi will occur.
 
 To create a new published release, follow the instructions [here](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository).
 Ensure you create the new tag to correspond with the release as required.
-
-
