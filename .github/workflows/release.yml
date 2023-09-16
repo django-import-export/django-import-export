@@ -5,7 +5,7 @@ on:
     branches:
     - main
     # for testing only
-    - issue-1572-port-to-pyproject-toml
+    - release-4
 
 jobs:
   build:
