@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools"]
+requires = ["setuptools>=45", "setuptools_scm[toml]>=6.2"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -52,9 +52,13 @@ license-files = ["LICENSE"]
 version = {attr = "import_export.__init__.__version__"}
 readme = {file = ["README.rst"]}
 
+[tool.setuptools_scm]
+write_to = "import_export/_version.py"
+
 [tool.zest-releaser]
-create-wheel = true
 python-file-with-version = "import_export/__init__.py"
+release = false
+create-wheel = false
 
 [tool.isort]
 profile = "black"

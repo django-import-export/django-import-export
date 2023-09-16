@@ -1,5 +1,6 @@
 import os
 import sys
+from importlib.metadata import version
 
 import django
 
@@ -41,16 +42,9 @@ copyright = "2012–2023, Bojan Mihelac"
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
-#
-try:
-    from import_export import __version__
-
-    # The short X.Y version.
-    version = ".".join(__version__.split(".")[:2])
-    # The full version, including alpha/beta/rc tags.
-    release = __version__
-except ImportError:
-    version = release = "dev"
+release = version("django-import-export")
+# for example take major/minor
+version = ".".join(release.split(".")[:2])
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = "sphinx"
