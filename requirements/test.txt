@@ -4,4 +4,4 @@ chardet
 pytz
 memory-profiler
 django-extensions
-coverage[toml]
+coverage
