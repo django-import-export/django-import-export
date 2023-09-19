@@ -745,7 +745,7 @@ class Resource(metaclass=DeclarativeMetaclass):
         using_transactions=True,
         dry_run=False,
         raise_errors=None,
-        **kwargs
+        **kwargs,
     ):
         """
         Imports data from ``tablib.Dataset``. Refer to :doc:`import_workflow`
@@ -850,7 +850,7 @@ class Resource(metaclass=DeclarativeMetaclass):
         use_transactions=None,
         collect_failed_rows=False,
         rollback_on_validation_errors=False,
-        **kwargs
+        **kwargs,
     ):
         """
         Imports data from ``tablib.Dataset``. Refer to :doc:`import_workflow`
@@ -901,7 +901,7 @@ class Resource(metaclass=DeclarativeMetaclass):
                 raise_errors,
                 using_transactions,
                 collect_failed_rows,
-                **kwargs
+                **kwargs,
             )
             if using_transactions and (
                 dry_run
@@ -919,7 +919,7 @@ class Resource(metaclass=DeclarativeMetaclass):
         using_transactions,
         collect_failed_rows,
         rollback_on_validation_errors=None,
-        **kwargs
+        **kwargs,
     ):
         if rollback_on_validation_errors is not None:
             warnings.warn(
@@ -958,7 +958,7 @@ class Resource(metaclass=DeclarativeMetaclass):
                     using_transactions=using_transactions,
                     dry_run=dry_run,
                     row_number=i,
-                    **kwargs
+                    **kwargs,
                 )
             if self._meta.use_bulk:
                 # persist a batch of rows
