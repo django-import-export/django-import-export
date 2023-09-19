@@ -1,4 +1,4 @@
-name: django-import-export CI
+name: test
 
 on:
   push:

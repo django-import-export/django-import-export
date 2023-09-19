@@ -834,7 +834,7 @@ class Resource(metaclass=DeclarativeMetaclass):
         use_transactions=None,
         collect_failed_rows=False,
         rollback_on_validation_errors=False,
-        **kwargs
+        **kwargs,
     ):
         """
         Imports data from ``tablib.Dataset``. Refer to :doc:`import_workflow`
@@ -885,7 +885,7 @@ class Resource(metaclass=DeclarativeMetaclass):
                 raise_errors,
                 using_transactions,
                 collect_failed_rows,
-                **kwargs
+                **kwargs,
             )
             if using_transactions and (
                 dry_run
@@ -902,7 +902,8 @@ class Resource(metaclass=DeclarativeMetaclass):
         raise_errors,
         using_transactions,
         collect_failed_rows,
-        **kwargs
+        rollback_on_validation_errors=None,
+        **kwargs,
     ):
         result = self.get_result_class()()
         result.diff_headers = self.get_diff_headers()
@@ -934,7 +935,7 @@ class Resource(metaclass=DeclarativeMetaclass):
                     using_transactions=using_transactions,
                     dry_run=dry_run,
                     row_number=i,
-                    **kwargs
+                    **kwargs,
                 )
             if self._meta.use_bulk:
                 # persist a batch of rows
