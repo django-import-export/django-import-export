@@ -1,10 +1,11 @@
 Changelog
 =========
 
-4.0.0 (unreleased)
+4.0.0-alpha.0 (2023-09-19)
 ------------------
 
 - Refactor build process (#1630)
+- fix cooperation with adminsortable2 (#1633)
 
 
 3.3.1 (2023-09-14)
