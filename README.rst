@@ -33,3 +33,4 @@ and exporting data from a variety of formats.  Includes Django Admin site integr
 * GitHub: https://github.com/django-import-export/django-import-export/
 * Free software: BSD license
 * PyPI: https://pypi.org/project/django-import-export/
+* Twitter / X: https://twitter.com/django_import
