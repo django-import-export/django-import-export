@@ -39,15 +39,22 @@ Or the ``exclude`` option to blacklist fields::
             model = Book
             exclude = ('imported', )
 
-An explicit order for exporting fields can be set using the ``export_order``
-option::
+When importing or exporting, the ordering defined by ``fields`` is used, however an explicit order for importing or
+exporting fields can be set using the either the ``import_order`` or ``export_order`` options::
 
     class BookResource(resources.ModelResource):
 
         class Meta:
             model = Book
             fields = ('id', 'name', 'author', 'price',)
+            import_order = ('id', 'price',)
             export_order = ('id', 'price', 'author', 'name')
+
+Where ``import_order`` or ``export_order`` contains a subset of ``fields`` then the ``import_order`` and
+``export_order`` will be processed first.
+
+If no ``fields``, ``import_order`` or ``export_order`` is defined then fields are created via introspection of the model
+class.
 
 .. _field_declaration:
 
