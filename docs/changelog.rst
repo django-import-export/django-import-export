@@ -5,7 +5,9 @@ Changelog
 --------------------------
 
 - Refactor ordering logic (#1626)
+
   - Refactor 'diff' logic to avoid calling dehydrate methods
+  
   - Refactor declarations of ``fields``, ``import_order`` and ``export_order`` to fix ordering issues
 
 - Removed v3 deprecations (#1629)
