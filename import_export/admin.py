@@ -45,9 +45,9 @@ class ImportExportMixinBase:
         # where `self.import_export_change_list_template` is `None` as falling
         # back on the default templates.
         if getattr(self, "change_list_template", None):
-            self.base_change_list_template = self.change_list_template
+            self.ie_base_change_list_template = self.change_list_template
         else:
-            self.base_change_list_template = "admin/change_list.html"
+            self.ie_base_change_list_template = "admin/change_list.html"
 
         try:
             self.change_list_template = getattr(
@@ -57,7 +57,7 @@ class ImportExportMixinBase:
             logger.warning("failed to assign change_list_template attribute")
 
         if self.change_list_template is None:
-            self.change_list_template = self.base_change_list_template
+            self.change_list_template = self.ie_base_change_list_template
 
     def get_model_info(self):
         app_label = self.model._meta.app_label
@@ -65,7 +65,9 @@ class ImportExportMixinBase:
 
     def changelist_view(self, request, extra_context=None):
         extra_context = extra_context or {}
-        extra_context["base_change_list_template"] = self.base_change_list_template
+        extra_context[
+            "ie_base_change_list_template"
+        ] = self.ie_base_change_list_template
         return super().changelist_view(request, extra_context)
 
 
