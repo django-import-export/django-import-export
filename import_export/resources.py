@@ -1,7 +1,6 @@
 import functools
 import logging
 import traceback
-import warnings
 from collections import OrderedDict
 from copy import deepcopy
 
@@ -739,13 +738,7 @@ class Resource(metaclass=DeclarativeMetaclass):
             raise
 
     def import_row(
-        self,
-        row,
-        instance_loader,
-        using_transactions=True,
-        dry_run=False,
-        raise_errors=None,
-        **kwargs,
+        self, row, instance_loader, using_transactions=True, dry_run=False, **kwargs
     ):
         """
         Imports data from ``tablib.Dataset``. Refer to :doc:`import_workflow`
@@ -761,13 +754,6 @@ class Resource(metaclass=DeclarativeMetaclass):
         :param dry_run: If ``dry_run`` is set, or error occurs, transaction
             will be rolled back.
         """
-        if raise_errors is not None:
-            warnings.warn(
-                "raise_errors argument is deprecated and "
-                "will be removed in a future release.",
-                category=DeprecationWarning,
-            )
-
         skip_diff = self._meta.skip_diff
         row_result = self.get_row_result_class()()
         if self._meta.store_row_values:
@@ -921,13 +907,6 @@ class Resource(metaclass=DeclarativeMetaclass):
         rollback_on_validation_errors=None,
         **kwargs,
     ):
-        if rollback_on_validation_errors is not None:
-            warnings.warn(
-                "rollback_on_validation_errors argument is deprecated and will be "
-                "removed in a future release.",
-                category=DeprecationWarning,
-            )
-
         result = self.get_result_class()()
         result.diff_headers = self.get_diff_headers()
         result.total_rows = len(dataset)
@@ -1110,21 +1089,6 @@ class Resource(metaclass=DeclarativeMetaclass):
         Exports a resource.
         :returns: Dataset object.
         """
-        if len(args) == 1 and (
-            isinstance(args[0], QuerySet) or isinstance(args[0], list)
-        ):
-            # issue 1565: definition of export() was incorrect
-            # if queryset is being passed, it must be as the first arg or named
-            # parameter
-            # this logic is included for backwards compatibility:
-            # if the method is being called without a named parameter, add a warning
-            # this check should be removed in a future release
-            warnings.warn(
-                "'queryset' must be supplied as a named parameter",
-                category=DeprecationWarning,
-            )
-            queryset = args[0]
-
         self.before_export(queryset, *args, **kwargs)
 
         if queryset is None:
