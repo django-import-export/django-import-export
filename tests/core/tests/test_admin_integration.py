@@ -1464,7 +1464,7 @@ class TestImportSkipConfirm(AdminTestMixin, TransactionTestCase):
 
 
 class MockModelAdmin(ImportExportMixinBase, ModelAdmin):
-    pass
+    change_list_template = "admin/import_export/change_list.html"
 
 
 class TestChangeListView(TestCase):
@@ -1480,7 +1480,7 @@ class TestChangeListView(TestCase):
         request.user = self.user
 
         # Call the changelist_view method
-        self.model_admin.base_change_list_template = None
+        self.model_admin.ie_base_change_list_template = None
         response = self.model_admin.changelist_view(request)
 
         # Render will throw an exception if the default for {% extends %} is not set
