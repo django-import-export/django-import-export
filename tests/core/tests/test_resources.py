@@ -2858,6 +2858,9 @@ class ImportExportFieldOrderTest(TestCase):
         def __init__(self):
             self.field_names = list()
 
+        def get_queryset(self):
+            return Book.objects.all().order_by("id")
+
         def import_field(self, field, obj, data, is_m2m=False, **kwargs):
             # mock out import_field() so that we can see the order
             # fields were called

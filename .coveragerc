@@ -1,7 +1,5 @@
 [run]
 branch = False
-debug =
-  config
 source =
   import_export
 parallel = True
