@@ -107,7 +107,7 @@ class ResourceTestCase(TestCase):
 
         A()
 
-    def test_get_export_order(self):
+    def test_get_export_headers_order(self):
         self.assertEqual(
             self.my_resource.get_export_headers(), ["email", "name", "extra"]
         )
@@ -1847,7 +1847,8 @@ class ForeignKeyWidgetFollowRelationship(TestCase):
         resource = MyPersonResource()
         dataset = resource.export(Person.objects.all())
         self.assertEqual(len(dataset), 1)
-        self.assertEqual(dataset[0][0], "foo")
+        self.assertEqual(1, dataset[0][0])
+        self.assertEqual("foo", dataset[0][1])
 
         self.role.user = None
         self.role.save()
@@ -1855,7 +1856,8 @@ class ForeignKeyWidgetFollowRelationship(TestCase):
         resource = MyPersonResource()
         dataset = resource.export(Person.objects.all())
         self.assertEqual(len(dataset), 1)
-        self.assertEqual(dataset[0][0], None)
+        self.assertEqual(1, dataset[0][0])
+        self.assertEqual(None, dataset[0][1])
 
 
 class ManyRelatedManagerDiffTest(TestCase):
@@ -2849,3 +2851,109 @@ class AfterImportComparisonTest(TestCase):
         # issue 1583 - assert that `original` object is available to after_import_row()
         self.resource.import_data(self.dataset, raise_errors=True)
         self.assertTrue(self.resource.is_published)
+
+
+class ImportExportFieldOrderTest(TestCase):
+    class BaseBookResource(resources.ModelResource):
+        def __init__(self):
+            self.field_names = list()
+
+        def import_field(self, field, obj, data, is_m2m=False, **kwargs):
+            # mock out import_field() so that we can see the order
+            # fields were called
+            self.field_names.append(field.column_name)
+
+    class UnorderedBookResource(BaseBookResource):
+        class Meta:
+            fields = ("price", "id", "name")
+            model = Book
+
+    class OrderedBookResource(BaseBookResource):
+        class Meta:
+            fields = ("price", "id", "name")
+            import_order = ("price", "name", "id")
+            export_order = ("price", "name", "id")
+            model = Book
+
+    class SubsetOrderedBookResource(BaseBookResource):
+        class Meta:
+            fields = ("price", "id", "name", "published")
+            import_order = ("name",)
+            export_order = ("published",)
+            model = Book
+
+    class DuplicateFieldsBookResource(BaseBookResource):
+        class Meta:
+            fields = ("id", "price", "name", "price")
+            model = Book
+
+    class FieldsAsListBookResource(BaseBookResource):
+        class Meta:
+            fields = ["id", "price", "name"]
+            model = Book
+
+    def setUp(self):
+        super().setUp()
+        Book.objects.create(name="Ulysses", price="1.99")
+        self.dataset = tablib.Dataset(headers=["id", "name", "price"])
+        row = [1, "Some book", "19.99"]
+        self.dataset.append(row)
+
+    def test_defined_import_order(self):
+        self.resource = ImportExportFieldOrderTest.OrderedBookResource()
+        self.resource.import_data(self.dataset)
+        self.assertEqual(["price", "name", "id"], self.resource.field_names)
+
+    def test_undefined_import_order(self):
+        self.resource = ImportExportFieldOrderTest.UnorderedBookResource()
+        self.resource.import_data(self.dataset)
+        self.assertEqual(["price", "id", "name"], self.resource.field_names)
+
+    def test_defined_export_order(self):
+        self.resource = ImportExportFieldOrderTest.OrderedBookResource()
+        data = self.resource.export()
+        target = "price,name,id\r\n1.99,Ulysses,1\r\n"
+        self.assertEqual(target, data.csv)
+
+    def test_undefined_export_order(self):
+        # When export order is not defined,
+        # exported order should correspond with 'fields' definition
+        self.resource = ImportExportFieldOrderTest.UnorderedBookResource()
+        data = self.resource.export()
+        target = "price,id,name\r\n1.99,1,Ulysses\r\n"
+        self.assertEqual(target, data.csv)
+
+    def test_subset_import_order(self):
+        self.resource = ImportExportFieldOrderTest.SubsetOrderedBookResource()
+        self.resource.import_data(self.dataset)
+        self.assertEqual(
+            ["name", "price", "id", "published"], self.resource.field_names
+        )
+
+    def test_subset_export_order(self):
+        self.resource = ImportExportFieldOrderTest.SubsetOrderedBookResource()
+        data = self.resource.export()
+        target = "published,price,id,name\r\n,1.99,1,Ulysses\r\n"
+        self.assertEqual(target, data.csv)
+
+    def test_duplicate_import_order(self):
+        self.resource = ImportExportFieldOrderTest.DuplicateFieldsBookResource()
+        self.resource.import_data(self.dataset)
+        self.assertEqual(["id", "price", "name"], self.resource.field_names)
+
+    def test_duplicate_export_order(self):
+        self.resource = ImportExportFieldOrderTest.DuplicateFieldsBookResource()
+        data = self.resource.export()
+        target = "id,price,name\r\n1,1.99,Ulysses\r\n"
+        self.assertEqual(target, data.csv)
+
+    def test_fields_as_list_import_order(self):
+        self.resource = ImportExportFieldOrderTest.FieldsAsListBookResource()
+        self.resource.import_data(self.dataset)
+        self.assertEqual(["id", "price", "name"], self.resource.field_names)
+
+    def test_fields_as_list_export_order(self):
+        self.resource = ImportExportFieldOrderTest.FieldsAsListBookResource()
+        data = self.resource.export()
+        target = "id,price,name\r\n1,1.99,Ulysses\r\n"
+        self.assertEqual(target, data.csv)

@@ -2,11 +2,17 @@ Changelog
 =========
 
 4.0.0-alpha.0 (2023-09-19)
-------------------
+--------------------------
 
+- Refactor ordering logic (#1626)
+
+  - Refactor 'diff' logic to avoid calling dehydrate methods
+  
+  - Refactor declarations of ``fields``, ``import_order`` and ``export_order`` to fix ordering issues
+
+- Removed v3 deprecations (#1629)
 - Refactor build process (#1630)
 - fix cooperation with adminsortable2 (#1633)
-
 
 3.3.1 (2023-09-14)
 ------------------

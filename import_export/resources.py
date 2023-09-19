@@ -83,6 +83,11 @@ class ResourceOptions:
     identify existing instances.
     """
 
+    import_order = None
+    """
+    Controls import order for columns.
+    """
+
     export_order = None
     """
     Controls export order for columns.
@@ -256,12 +261,12 @@ class DeclarativeMetaclass(type):
 
 class Diff:
     def __init__(self, resource, instance, new):
-        self.left = self._export_resource_fields(resource, instance)
+        self.left = Diff._read_field_values(resource, instance)
         self.right = []
         self.new = new
 
-    def compare_with(self, resource, instance, dry_run=False):
-        self.right = self._export_resource_fields(resource, instance)
+    def compare_with(self, resource, instance):
+        self.right = Diff._read_field_values(resource, instance)
 
     def as_html(self):
         data = []
@@ -276,11 +281,9 @@ class Diff:
             data.append(html)
         return data
 
-    def _export_resource_fields(self, resource, instance):
-        return [
-            resource.export_field(f, instance) if instance else ""
-            for f in resource.get_user_visible_fields()
-        ]
+    @classmethod
+    def _read_field_values(cls, resource, instance):
+        return [f.export(instance) for f in resource.get_import_fields()]
 
 
 class Resource(metaclass=DeclarativeMetaclass):
@@ -356,10 +359,9 @@ class Resource(metaclass=DeclarativeMetaclass):
 
     def get_fields(self, **kwargs):
         """
-        Returns fields sorted according to
-        :attr:`~import_export.resources.ResourceOptions.export_order`.
+        Returns list of fields (unordered).
         """
-        return [self.fields[f] for f in self.get_export_order()]
+        return list(self.fields.values())
 
     def get_field_name(self, field):
         """
@@ -577,7 +579,7 @@ class Resource(metaclass=DeclarativeMetaclass):
             field.save(obj, data, is_m2m, **kwargs)
 
     def get_import_fields(self):
-        return self.get_fields()
+        return [self.fields[f] for f in self.get_import_order()]
 
     def import_obj(self, obj, data, dry_run, **kwargs):
         """
@@ -787,7 +789,7 @@ class Resource(metaclass=DeclarativeMetaclass):
                 if new:
                     row_result.import_type = RowResult.IMPORT_TYPE_SKIP
                     if not skip_diff:
-                        diff.compare_with(self, None, dry_run)
+                        diff.compare_with(self, None)
                 else:
                     row_result.import_type = RowResult.IMPORT_TYPE_DELETE
                     row_result.add_instance_info(instance)
@@ -795,7 +797,7 @@ class Resource(metaclass=DeclarativeMetaclass):
                         row_result.instance = instance
                     self.delete_instance(instance, using_transactions, dry_run)
                     if not skip_diff:
-                        diff.compare_with(self, None, dry_run)
+                        diff.compare_with(self, None)
             else:
                 import_validation_errors = {}
                 try:
@@ -818,7 +820,7 @@ class Resource(metaclass=DeclarativeMetaclass):
                 if self._meta.store_instance:
                     row_result.instance = instance
                 if not skip_diff:
-                    diff.compare_with(self, instance, dry_run)
+                    diff.compare_with(self, instance)
                     if not new:
                         row_result.original = original
 
@@ -1034,9 +1036,11 @@ class Resource(metaclass=DeclarativeMetaclass):
 
         return result
 
+    def get_import_order(self):
+        return self._get_ordered_field_names("import_order")
+
     def get_export_order(self):
-        order = tuple(self._meta.export_order or ())
-        return order + tuple(k for k in self.fields if k not in order)
+        return self._get_ordered_field_names("export_order")
 
     def before_export(self, queryset, *args, **kwargs):
         """
@@ -1066,7 +1070,7 @@ class Resource(metaclass=DeclarativeMetaclass):
         return field.export(obj)
 
     def get_export_fields(self):
-        return self.get_fields()
+        return [self.fields[f] for f in self.get_export_order()]
 
     def export_resource(self, obj):
         return [self.export_field(field, obj) for field in self.get_export_fields()]
@@ -1135,6 +1139,19 @@ class Resource(metaclass=DeclarativeMetaclass):
         self.after_export(queryset, data, *args, **kwargs)
 
         return data
+
+    def _get_ordered_field_names(self, order_field):
+        """
+        Return a list of field names, respecting any defined ordering.
+        """
+        # get any declared 'order' fields
+        order_fields = getattr(self._meta, order_field) or ()
+        # get any defined fields
+        defined_fields = order_fields + tuple(getattr(self._meta, "fields") or ())
+
+        order = list()
+        [order.append(f) for f in defined_fields if f not in order]
+        return tuple(order) + tuple(k for k in self.fields if k not in order)
 
 
 class ModelDeclarativeMetaclass(DeclarativeMetaclass):
