@@ -73,6 +73,7 @@ jobs:
     - name: Upload coverage data to coveralls.io
       run: coveralls --service=github
       env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         COVERALLS_FLAG_NAME: ${{ matrix.python-version }}
         COVERALLS_PARALLEL: true
 
@@ -86,3 +87,5 @@ jobs:
         run: |
           pip3 install --upgrade coveralls
           coveralls --service=github --finish
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
