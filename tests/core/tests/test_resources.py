@@ -2897,9 +2897,9 @@ class ImportExportFieldOrderTest(TestCase):
 
     def setUp(self):
         super().setUp()
-        Book.objects.create(name="Ulysses", price="1.99")
+        self.pk = Book.objects.create(name="Ulysses", price="1.99").pk
         self.dataset = tablib.Dataset(headers=["id", "name", "price"])
-        row = [1, "Some book", "19.99"]
+        row = [self.pk, "Some book", "19.99"]
         self.dataset.append(row)
 
     def test_defined_import_order(self):
@@ -2915,7 +2915,7 @@ class ImportExportFieldOrderTest(TestCase):
     def test_defined_export_order(self):
         self.resource = ImportExportFieldOrderTest.OrderedBookResource()
         data = self.resource.export()
-        target = "price,name,id\r\n1.99,Ulysses,1\r\n"
+        target = f"price,name,id\r\n1.99,Ulysses,{self.pk}\r\n"
         self.assertEqual(target, data.csv)
 
     def test_undefined_export_order(self):
@@ -2923,7 +2923,7 @@ class ImportExportFieldOrderTest(TestCase):
         # exported order should correspond with 'fields' definition
         self.resource = ImportExportFieldOrderTest.UnorderedBookResource()
         data = self.resource.export()
-        target = "price,id,name\r\n1.99,1,Ulysses\r\n"
+        target = f"price,id,name\r\n1.99,{self.pk},Ulysses\r\n"
         self.assertEqual(target, data.csv)
 
     def test_subset_import_order(self):
@@ -2936,7 +2936,7 @@ class ImportExportFieldOrderTest(TestCase):
     def test_subset_export_order(self):
         self.resource = ImportExportFieldOrderTest.SubsetOrderedBookResource()
         data = self.resource.export()
-        target = "published,price,id,name\r\n,1.99,1,Ulysses\r\n"
+        target = f"published,price,id,name\r\n,1.99,{self.pk},Ulysses\r\n"
         self.assertEqual(target, data.csv)
 
     def test_duplicate_import_order(self):
@@ -2947,7 +2947,7 @@ class ImportExportFieldOrderTest(TestCase):
     def test_duplicate_export_order(self):
         self.resource = ImportExportFieldOrderTest.DuplicateFieldsBookResource()
         data = self.resource.export()
-        target = "id,price,name\r\n1,1.99,Ulysses\r\n"
+        target = f"id,price,name\r\n{self.pk},1.99,Ulysses\r\n"
         self.assertEqual(target, data.csv)
 
     def test_fields_as_list_import_order(self):
@@ -2958,5 +2958,5 @@ class ImportExportFieldOrderTest(TestCase):
     def test_fields_as_list_export_order(self):
         self.resource = ImportExportFieldOrderTest.FieldsAsListBookResource()
         data = self.resource.export()
-        target = "id,price,name\r\n1,1.99,Ulysses\r\n"
+        target = f"id,price,name\r\n{self.pk},1.99,Ulysses\r\n"
         self.assertEqual(target, data.csv)
