@@ -13,8 +13,8 @@ The release workflow will only run when a tagged commit is pushed.
 # create an annotated tag
 git tag  -a <tag_name> -m "v<tag>"
 
-# push the tagged commit to main
-git push upstream main
+# push the tagged commit to branch (e.g. 'main')
+git push --atomic upstream <branch> <tag>
 ```
 
 #### Workflow
