@@ -17,8 +17,13 @@ git push upstream <tag_name>
 
 #### Workflow
 
-- When any commit is pushed to the 'main' branch this will cause the 'release' workflow to be run.
+- When any commit is pushed this will cause the 'release' workflow to be run.
   - This will upload the release files to TestPyPI.
   - The release version will be determined from the git commit log.
-  - When a published release is identified (i.e. by the presence of a git tag), then the distribution files will
-    be uploaded to PyPI as a release.
+  - When a published release is identified (i.e. by the presence of a git tag):
+    - Then the distribution files will be uploaded to PyPI as a release.
+    - A github release will be created
+
+### Check readthedocs
+
+Login to [readthedocs.org](https://readthedocs.org) to check that the build ran OK (click on 'Builds' tab).
