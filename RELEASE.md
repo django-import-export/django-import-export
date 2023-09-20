@@ -5,12 +5,16 @@ This has been implemented using [this guide](https://packaging.python.org/en/lat
 
 #### Perform the release
 
+The release workflow will only run when a tagged commit is pushed.
+
 ```bash
+# create a commit for the release (e.g. update changelog)
+
 # create an annotated tag
 git tag  -a <tag_name> -m "v<tag>"
 
-# push this tag only to upstream
-git push upstream <tag_name>
+# push the tagged commit to main
+git push upstream main
 ```
 
 #### Workflow
