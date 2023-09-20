@@ -2,10 +2,10 @@ name: Release
 
 on:
   push:
-    branches:
-    - main
-    # for testing only
-    - release-4
+#    branches:
+#    - main
+#    # for testing only
+#    - release-4
 
 jobs:
   build:
