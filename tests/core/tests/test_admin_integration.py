@@ -10,10 +10,13 @@ import django
 import tablib
 from core.admin import AuthorAdmin, BookAdmin, CustomBookAdmin, ImportMixin
 from core.models import Author, Book, Category, EBook, Parent
+from django.contrib import admin
 from django.contrib.admin.models import DELETION, LogEntry
+from django.contrib.admin.options import ModelAdmin
 from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied
 from django.http import HttpRequest
+from django.test import RequestFactory
 from django.test.testcases import TestCase, TransactionTestCase
 from django.test.utils import override_settings
 from django.utils.translation import gettext_lazy as _
@@ -26,6 +29,7 @@ from import_export.admin import (
     ExportActionModelAdmin,
     ExportMixin,
     ImportExportActionModelAdmin,
+    ImportExportMixinBase,
 )
 from import_export.formats import base_formats
 from import_export.formats.base_formats import DEFAULT_FORMATS
@@ -1233,4 +1237,34 @@ class TestImportSkipConfirm(AdminTestMixin, TransactionTestCase):
             "1",
             follow=True,
             str_in_response="Import finished, with 1 new and 0 updated books.",
+        )
+
+
+class MockModelAdmin(ImportExportMixinBase, ModelAdmin):
+    change_list_template = "admin/import_export/change_list.html"
+
+
+class TestChangeListView(TestCase):
+    def setUp(self):
+        self.factory = RequestFactory()
+        self.user = User.objects.create_superuser(
+            username="testuser", password="password", email="test@example.com"
+        )
+        self.model_admin = MockModelAdmin(User, admin.site)
+
+    def test_changelist_view_context(self):
+        request = self.factory.get("/admin/")
+        request.user = self.user
+
+        # Call the changelist_view method
+        self.model_admin.ie_base_change_list_template = None
+        response = self.model_admin.changelist_view(request)
+
+        # Render will throw an exception if the default for {% extends %} is not set
+        response.render()
+
+        # Check if the base_change_list_template context variable is set to None
+        self.assertIsNone(response.context_data.get("base_change_list_template"))
+        self.assertContains(
+            response, '<a href="/admin/">Django administration</a>', html=True
         )
