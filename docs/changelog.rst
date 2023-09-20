@@ -1,7 +1,7 @@
 Changelog
 =========
 
-4.0.0-alpha.0 (2023-09-19)
+4.0.0-alpha.0 (2023-09-20)
 --------------------------
 
 - change_list.html: add default base_template value to fix django-compress (#1605)

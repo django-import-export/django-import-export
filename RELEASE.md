@@ -5,8 +5,13 @@ This has been implemented using [this guide](https://packaging.python.org/en/lat
 
 #### Perform the release
 
-To create a new published release, follow the instructions [here](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository).
-Ensure you create the new tag to correspond with the release as required.
+```bash
+# create an annotated tag
+git tag  -a <tag_name> -m "v<tag>"
+
+# push this tag only to upstream
+git push upstream <tag_name>
+```
 
 #### Workflow
 
