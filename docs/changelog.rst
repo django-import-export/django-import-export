@@ -4,10 +4,11 @@ Changelog
 4.0.0-alpha.0 (2023-09-19)
 --------------------------
 
+- change_list.html: add default base_template value to fix django-compress (#1605)
 - Refactor ordering logic (#1626)
 
   - Refactor 'diff' logic to avoid calling dehydrate methods
-  
+
   - Refactor declarations of ``fields``, ``import_order`` and ``export_order`` to fix ordering issues
 
 - Removed v3 deprecations (#1629)
