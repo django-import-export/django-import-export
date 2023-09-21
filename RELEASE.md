@@ -5,24 +5,15 @@ This has been implemented using [this guide](https://packaging.python.org/en/lat
 
 #### Perform the release
 
-The release workflow will only run when a tagged commit is pushed.
+To create a new published release, follow the instructions [here](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository).
+Ensure you create the new tag to correspond with the release as required.
 
-```bash
-# create an annotated tag
-git tag  -a <tag_name> -m "v<tag>"
-
-# push this tag only to upstream
-git push upstream <tag_name>
-```
-
-#### Workflow
-
-- When any commit is pushed this will cause the 'release' workflow to be run.
-  - This will upload the release files to TestPyPI.
-  - The release version will be determined from the git commit log.
-  - When a published release is identified (i.e. by the presence of a git tag):
-    - Then the distribution files will be uploaded to PyPI as a release.
-    - A github release will be created
+1. Go to the [Releases](https://github.com/django-import-export/django-import-export/releases) page
+2. Click 'Draft a new release'
+3. Choose or create a new tag
+4. Check 'Set as a pre-release' or 'Set as the latest release' as approriate
+5. Generate release notes if desired.
+6. Click 'publish'
 
 ### Check readthedocs
 
