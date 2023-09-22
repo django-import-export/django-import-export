@@ -767,7 +767,6 @@ class Resource(metaclass=DeclarativeMetaclass):
                 row_result.import_type = RowResult.IMPORT_TYPE_NEW
             else:
                 row_result.import_type = RowResult.IMPORT_TYPE_UPDATE
-            row_result.new_record = new
             if not skip_diff:
                 original = deepcopy(instance)
                 diff = self.get_diff_class()(self, original, new)
