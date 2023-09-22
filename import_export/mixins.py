@@ -79,8 +79,6 @@ class BaseImportMixin(BaseImportExportMixin):
 
 class BaseExportMixin(BaseImportExportMixin):
     model = None
-    escape_exported_data = False
-    escape_html = False
     escape_formulae = False
 
     @property
