@@ -4,7 +4,7 @@ Changelog
 4.0.0-alpha.5 (2023-09-22)
 --------------------------
 
-- removed unused variable ``Result.new_record``
+- removed unused variable ``Result.new_record`` (#)
 
 4.0.0-alpha.0 (2023-09-20)
 --------------------------
