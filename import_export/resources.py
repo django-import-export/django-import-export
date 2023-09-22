@@ -1100,21 +1100,9 @@ class Resource(metaclass=DeclarativeMetaclass):
         for obj in self.iter_queryset(queryset):
             dataset.append(self.export_resource(obj))
 
-        if kwargs.get("escape_formulae") is True:
-            self._escape_formulae(dataset)
-
         self.after_export(queryset, dataset, *args, **kwargs)
 
         return dataset
-
-    def _escape_formulae(self, dataset):
-        def _do_escape(s):
-            return s.replace("=", "", 1) if s.startswith("=") else s
-
-        for _ in dataset:
-            row = dataset.lpop()
-            row = [_do_escape(str(cell)) for cell in row]
-            dataset.append(row)
 
     def _get_ordered_field_names(self, order_field):
         """

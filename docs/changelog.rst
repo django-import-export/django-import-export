@@ -1,15 +1,10 @@
 Changelog
 =========
 
-4.0.0-alpha.2 (2023-09-20)
+4.0.0-alpha.5 (2023-09-22)
 --------------------------
 
-- doc updates only
-
-4.0.0-alpha.1 (2023-09-20)
---------------------------
-
-- doc updates only
+- refactor to export HTML / formulae escaping updates (#1638)
 
 4.0.0-alpha.0 (2023-09-20)
 --------------------------

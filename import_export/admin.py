@@ -621,11 +621,10 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
             request,
             queryset,
             *args,
-            escape_formulae=self.should_escape_formulae,
             **kwargs,
         )
         export_data = file_format.export_data(
-            data,
+            data, **{"escape": True} if self.should_escape_formulae else {}
         )
         encoding = kwargs.get("encoding")
         if not file_format.is_binary() and encoding:
