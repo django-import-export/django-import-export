@@ -196,9 +196,8 @@ class XLSX(TablibFormat):
         return dataset
 
     def export_data(self, dataset, **kwargs):
-        kwargs.setdefault(
-            "escape",
-            getattr(settings, "IMPORT_EXPORT_ESCAPE_FORMULAE_ON_EXPORT", False),
+        kwargs.update(
+            escape=getattr(settings, "IMPORT_EXPORT_ESCAPE_FORMULAE_ON_EXPORT", False)
         )
         return super().export_data(dataset, **kwargs)
 
