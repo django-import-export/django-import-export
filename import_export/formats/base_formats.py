@@ -84,7 +84,7 @@ class TablibFormat(Format):
         return tablib.import_set(in_stream, format=self.get_title(), **kwargs)
 
     def export_data(self, dataset, **kwargs):
-        if getattr(settings, "IMPORT_EXPORT_ESCAPE_FORMULAE_ON_EXPORT") is True:
+        if getattr(settings, "IMPORT_EXPORT_ESCAPE_FORMULAE_ON_EXPORT", False) is True:
             self._escape_formulae(dataset)
         return dataset.export(self.get_title(), **kwargs)
 
