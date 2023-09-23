@@ -501,9 +501,7 @@ class Resource(metaclass=DeclarativeMetaclass):
         if errors:
             raise ValidationError(errors)
 
-    def save_instance(
-        self, instance, is_create, using_transactions=True, dry_run=False
-    ):
+    def save_instance(self, instance, is_create, **kwargs):
         """
         Takes care of saving the object to the database.
 
@@ -512,58 +510,62 @@ class Resource(metaclass=DeclarativeMetaclass):
         :param instance: The instance of the object to be persisted.
         :param is_create: A boolean flag to indicate whether this is a new object
         to be created, or an existing object to be updated.
-        :param using_transactions: A flag to indicate whether db transactions are used.
-        :param dry_run: A flag to indicate dry-run mode.
         """
-        self.before_save_instance(instance, using_transactions, dry_run)
+        self.before_save_instance(instance, **kwargs)
         if self._meta.use_bulk:
             if is_create:
                 self.create_instances.append(instance)
             else:
                 self.update_instances.append(instance)
         else:
-            if not using_transactions and dry_run:
+            if not self._is_using_transactions(kwargs) and self._is_dry_run(kwargs):
                 # we don't have transactions and we want to do a dry_run
                 pass
             else:
                 instance.save()
-        self.after_save_instance(instance, using_transactions, dry_run)
+        self.after_save_instance(instance, **kwargs)
 
-    def before_save_instance(self, instance, using_transactions, dry_run):
+    def _is_using_transactions(self, kwargs):
+        return kwargs.get("using_transactions", False)
+
+    def _is_dry_run(self, kwargs):
+        return kwargs.get("dry_run", False)
+
+    def before_save_instance(self, instance, **kwargs):
         """
         Override to add additional logic. Does nothing by default.
         """
         pass
 
-    def after_save_instance(self, instance, using_transactions, dry_run):
+    def after_save_instance(self, instance, **kwargs):
         """
         Override to add additional logic. Does nothing by default.
         """
         pass
 
-    def delete_instance(self, instance, using_transactions=True, dry_run=False):
+    def delete_instance(self, instance, **kwargs):
         """
         Calls :meth:`instance.delete` as long as ``dry_run`` is not set.
         If ``use_bulk`` then instances are appended to a list for bulk import.
         """
-        self.before_delete_instance(instance, dry_run)
+        self.before_delete_instance(instance, **kwargs)
         if self._meta.use_bulk:
             self.delete_instances.append(instance)
         else:
-            if not using_transactions and dry_run:
+            if not self._is_using_transactions(kwargs) and self._is_dry_run(kwargs):
                 # we don't have transactions and we want to do a dry_run
                 pass
             else:
                 instance.delete()
-        self.after_delete_instance(instance, dry_run)
+        self.after_delete_instance(instance, **kwargs)
 
-    def before_delete_instance(self, instance, dry_run):
+    def before_delete_instance(self, instance, **kwargs):
         """
         Override to add additional logic. Does nothing by default.
         """
         pass
 
-    def after_delete_instance(self, instance, dry_run):
+    def after_delete_instance(self, instance, **kwargs):
         """
         Override to add additional logic. Does nothing by default.
         """
@@ -580,7 +582,7 @@ class Resource(metaclass=DeclarativeMetaclass):
     def get_import_fields(self):
         return [self.fields[f] for f in self.get_import_order()]
 
-    def import_obj(self, obj, data, dry_run, **kwargs):
+    def import_obj(self, obj, data, **kwargs):
         """
         Traverses every field in this Resource and calls
         :meth:`~import_export.resources.Resource.import_field`. If
@@ -598,13 +600,15 @@ class Resource(metaclass=DeclarativeMetaclass):
         if errors:
             raise ValidationError(errors)
 
-    def save_m2m(self, obj, data, using_transactions, dry_run):
+    def save_m2m(self, obj, data, **kwargs):
         """
         Saves m2m fields.
 
         Model instance need to have a primary key value before
         a many-to-many relationship can be used.
         """
+        using_transactions = self._is_using_transactions(kwargs)
+        dry_run = self._is_dry_run(kwargs)
         if (not using_transactions and dry_run) or self._meta.use_bulk:
             # we don't have transactions and we want to do a dry_run
             # OR use_bulk is enabled (m2m operations are not supported
@@ -692,19 +696,19 @@ class Resource(metaclass=DeclarativeMetaclass):
         """
         return self.get_user_visible_headers()
 
-    def before_import(self, dataset, using_transactions, dry_run, **kwargs):
+    def before_import(self, dataset, **kwargs):
         """
         Override to add additional logic. Does nothing by default.
         """
         pass
 
-    def after_import(self, dataset, result, using_transactions, dry_run, **kwargs):
+    def after_import(self, dataset, result, **kwargs):
         """
         Override to add additional logic. Does nothing by default.
         """
         pass
 
-    def before_import_row(self, row, row_number=None, **kwargs):
+    def before_import_row(self, row, **kwargs):
         """
         Override to add additional logic. Does nothing by default.
         """
@@ -721,7 +725,7 @@ class Resource(metaclass=DeclarativeMetaclass):
         """
         pass
 
-    def after_import_instance(self, instance, new, row_number=None, **kwargs):
+    def after_import_instance(self, instance, new, **kwargs):
         """
         Override to add additional logic. Does nothing by default.
         """
@@ -735,9 +739,7 @@ class Resource(metaclass=DeclarativeMetaclass):
         if raise_errors:
             raise
 
-    def import_row(
-        self, row, instance_loader, using_transactions=True, dry_run=False, **kwargs
-    ):
+    def import_row(self, row, instance_loader, **kwargs):
         """
         Imports data from ``tablib.Dataset``. Refer to :doc:`import_workflow`
         for a more complete description of the whole import process.
@@ -745,12 +747,6 @@ class Resource(metaclass=DeclarativeMetaclass):
         :param row: A ``dict`` of the row to import
 
         :param instance_loader: The instance loader to be used to load the row
-
-        :param using_transactions: If ``using_transactions`` is set, a transaction
-            is being used to wrap the import
-
-        :param dry_run: If ``dry_run`` is set, or error occurs, transaction
-            will be rolled back.
         """
         skip_diff = self._meta.skip_diff
         row_result = self.get_row_result_class()()
@@ -779,13 +775,13 @@ class Resource(metaclass=DeclarativeMetaclass):
                     row_result.add_instance_info(instance)
                     if self._meta.store_instance:
                         row_result.instance = instance
-                    self.delete_instance(instance, using_transactions, dry_run)
+                    self.delete_instance(instance, **kwargs)
                     if not skip_diff:
                         diff.compare_with(self, None)
             else:
                 import_validation_errors = {}
                 try:
-                    self.import_obj(instance, row, dry_run, **kwargs)
+                    self.import_obj(instance, row, **kwargs)
                 except ValidationError as e:
                     # Validation errors from import_obj() are passed on to
                     # validate_instance(), where they can be combined with model
@@ -798,8 +794,8 @@ class Resource(metaclass=DeclarativeMetaclass):
                     row_result.import_type = RowResult.IMPORT_TYPE_SKIP
                 else:
                     self.validate_instance(instance, import_validation_errors)
-                    self.save_instance(instance, new, using_transactions, dry_run)
-                    self.save_m2m(instance, row, using_transactions, dry_run)
+                    self.save_instance(instance, new, **kwargs)
+                    self.save_m2m(instance, row, **kwargs)
                 row_result.add_instance_info(instance)
                 if self._meta.store_instance:
                     row_result.instance = instance
@@ -911,7 +907,7 @@ class Resource(metaclass=DeclarativeMetaclass):
 
         try:
             with atomic_if_using_transaction(using_transactions, using=db_connection):
-                self.before_import(dataset, using_transactions, dry_run, **kwargs)
+                self.before_import(dataset, **kwargs)
         except Exception as e:
             self.handle_import_error(result, e, raise_errors)
 
@@ -928,12 +924,16 @@ class Resource(metaclass=DeclarativeMetaclass):
             with atomic_if_using_transaction(
                 using_transactions and not self._meta.use_bulk, using=db_connection
             ):
+                kwargs.update(
+                    {
+                        "dry_run": dry_run,
+                        "using_transactions": using_transactions,
+                        "row_number": i,
+                    }
+                )
                 row_result = self.import_row(
                     row,
                     instance_loader,
-                    using_transactions=using_transactions,
-                    dry_run=dry_run,
-                    row_number=i,
                     **kwargs,
                 )
             if self._meta.use_bulk:
@@ -1004,9 +1004,7 @@ class Resource(metaclass=DeclarativeMetaclass):
 
         try:
             with atomic_if_using_transaction(using_transactions, using=db_connection):
-                self.after_import(
-                    dataset, result, using_transactions, dry_run, **kwargs
-                )
+                self.after_import(dataset, result, **kwargs)
         except Exception as e:
             self.handle_import_error(result, e, raise_errors)
 
