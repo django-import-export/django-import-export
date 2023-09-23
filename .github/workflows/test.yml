@@ -7,6 +7,8 @@ on:
   pull_request:
     branches:
     - main
+    # temp
+    - release-4
 
 jobs:
   test:
