@@ -79,18 +79,6 @@ class BaseImportMixin(BaseImportExportMixin):
 
 class BaseExportMixin(BaseImportExportMixin):
     model = None
-    escape_exported_data = False
-    escape_html = False
-    escape_formulae = False
-
-    @property
-    def should_escape_formulae(self):
-        v = getattr(
-            settings, "IMPORT_EXPORT_ESCAPE_FORMULAE_ON_EXPORT", self.escape_formulae
-        )
-        if v is True:
-            logger.debug("IMPORT_EXPORT_ESCAPE_FORMULAE_ON_EXPORT is enabled")
-        return v
 
     def get_export_formats(self):
         """
