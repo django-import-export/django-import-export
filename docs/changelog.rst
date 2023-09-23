@@ -1,10 +1,10 @@
 Changelog
 =========
 
-4.0.0-alpha.2 (2023-09-20)
+4.0.0-alpha.5 (2023-09-22)
 --------------------------
 
-- doc updates only
+- Refactor ``resources.py`` to standardise method args (#1641)
 
 4.0.0-alpha.1 (2023-09-20)
 --------------------------
