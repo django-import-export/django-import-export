@@ -879,7 +879,7 @@ Security
 --------
 
 Enabling the Admin interface means that you should consider the security implications.  Some or all of the following
-points may be relevant:
+points may be relevant.
 
 Is there potential for untrusted imports?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -907,30 +907,54 @@ What is the potential risk for exported data?
 * Could any exported data be rendered in HTML? For example, csv is exported and then loaded into another
   web application.  In this case, untrusted input could contain malicious code such as active script content.
 
+You should in all cases review `Django security documentation <https://docs.djangoproject.com/en/stable/topics/security/>`_
+before deploying a live Admin interface instance.
+
 Mitigating security risks
 ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Please read the following topics carefully to understand how you can improve the security of your implementation.
+
+Sanitize exports
+""""""""""""""""
 
 By default, import-export does not sanitize or process imported data.  Malicious content, such as script directives,
 can be imported into the database, and can be exported without any modification.
 
-You can optionally configure import-export to sanitize data on export.  There are two settings which enable this:
+.. note::
 
-#. :ref:`IMPORT_EXPORT_ESCAPE_HTML_ON_EXPORT`
-#. :ref:`IMPORT_EXPORT_ESCAPE_FORMULAE_ON_EXPORT`
+  HTML content, if exported into 'html' format, will be sanitized to remove scriptable content.
+  This sanitization is performed by the ``tablib`` library.
 
-.. warning::
+You can optionally configure import-export to sanitize Excel formula data on export.  See
+:ref:`IMPORT_EXPORT_ESCAPE_FORMULAE_ON_EXPORT`.
 
-    Enabling these settings only sanitizes data exported using the Admin Interface.
-    If exporting data :ref:`programmatically<exporting_data>`, then you will need to apply your own sanitization.
+Enabling this setting only sanitizes data exported using the Admin Interface.
+If exporting data :ref:`programmatically<exporting_data>`, then you will need to apply your own sanitization.
 
-Limiting the available import or export types can be considered. This can be done using either of the following settings:
+Limit formats
+"""""""""""""
+
+Limiting the available import or export format types can be considered. For example, if you never need to support
+import or export of spreadsheet data, you can remove this format from the application.
+
+Imports and exports can be restricted using the following settings:
 
 #. :ref:`IMPORT_EXPORT_FORMATS`
 #. :ref:`IMPORT_FORMATS`
 #. :ref:`EXPORT_FORMATS`
 
-You should in all cases review `Django security documentation <https://docs.djangoproject.com/en/dev/topics/security/>`_
-before deploying a live Admin interface instance.
+Set permissions
+"""""""""""""""
 
-Please refer to `SECURITY.md <https://github.com/django-import-export/django-import-export/blob/main/SECURITY.md>`_ for
-details on how to escalate security issues.
+Consider setting `permissions <https://docs.djangoproject.com/en/stable/topics/auth/default/>`_ to define which
+users can import and export.
+
+#. :ref:`IMPORT_EXPORT_IMPORT_PERMISSION_CODE`
+#. :ref:`IMPORT_EXPORT_EXPORT_PERMISSION_CODE`
+
+Raising security issues
+^^^^^^^^^^^^^^^^^^^^^^^
+
+Refer to `SECURITY.md <https://github.com/django-import-export/django-import-export/blob/main/SECURITY.md>`_ for
+details on how to escalate security issues you may have found in import-export.

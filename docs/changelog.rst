@@ -5,11 +5,8 @@ Changelog
 --------------------------
 
 - Refactor ``resources.py`` to standardise method args (#1641)
-
-4.0.0-alpha.1 (2023-09-20)
---------------------------
-
 - doc updates only
+- refactor to export HTML / formulae escaping updates (#1638)
 
 4.0.0-alpha.0 (2023-09-20)
 --------------------------

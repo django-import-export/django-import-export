@@ -76,25 +76,45 @@ during imports. Defaults to ``import_export.tmp_storages.TempFolderStorage``.
 Can be overridden on a ``ModelAdmin`` class inheriting from ``ImportMixin`` by
 setting the ``tmp_storage_class`` class attribute.
 
+.. _IMPORT_EXPORT_IMPORT_PERMISSION_CODE:
+
 ``IMPORT_EXPORT_IMPORT_PERMISSION_CODE``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If set, lists the permission code that is required for users to perform the
-“import” action. Defaults to ``None``, which means everybody can perform
+'import' action. Defaults to ``None``, which means all users can perform
 imports.
 
 Django’s built-in permissions have the codes ``add``, ``change``, ``delete``,
-and ``view``. You can also add your own permissions.
+and ``view``.  You can also add your own permissions.  For example, if you set this
+value to 'import', then you can define an explicit permission for import in the example
+app with:
+
+.. code-block:: python
+
+  from core.models import Book
+  from django.contrib.auth.models import Permission
+  from django.contrib.contenttypes.models import ContentType
+
+  content_type = ContentType.objects.get_for_model(Book)
+  permission = Permission.objects.create(
+    codename="import_book",
+    name="Can import book",
+    content_type=content_type,
+  )
+
+Now only users who are assigned 'import_book' permission will be able to perform
+imports.  For more information refer to the
+`Django auth <https://docs.djangoproject.com/en/stable/topics/auth/default/>`_
+documentation.
+
+.. _IMPORT_EXPORT_EXPORT_PERMISSION_CODE:
 
 ``IMPORT_EXPORT_EXPORT_PERMISSION_CODE``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If set, lists the permission code that is required for users to perform the
-“export” action. Defaults to ``None``, which means everybody can perform
-exports.
-
-Django’s built-in permissions have the codes ``add``, ``change``, ``delete``,
-and ``view``. You can also add your own permissions.
+Defines the same behaviour as :ref:`IMPORT_EXPORT_IMPORT_PERMISSION_CODE`, but for
+export.
 
 ``IMPORT_EXPORT_CHUNK_SIZE``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -120,13 +140,7 @@ Note that if you disable transaction support via configuration (or if your datab
 does not support transactions), then validation errors will still be presented to the user
 but valid rows will have imported.
 
-``IMPORT_EXPORT_ESCAPE_HTML_ON_EXPORT``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-If set to ``True``, strings will be HTML escaped. By default this is ``False``.
-
-This is deprecated and will be removed in a future release.  Future releases will
-escape strings by default.
+.. _IMPORT_EXPORT_ESCAPE_FORMULAE_ON_EXPORT:
 
 ``IMPORT_EXPORT_ESCAPE_FORMULAE_ON_EXPORT``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -134,8 +148,10 @@ escape strings by default.
 If set to ``True``, strings will be sanitized by removing any leading '=' character.  This is to prevent execution of
 Excel formulae.  By default this is ``False``.
 
+.. _IMPORT_EXPORT_FORMATS:
+
 ``IMPORT_EXPORT_FORMATS``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 A list that defines which file formats will be allowed during imports and exports. Defaults
 to ``import_export.formats.base_formats.DEFAULT_FORMATS``.
@@ -147,9 +163,10 @@ The values must be those provided in ``import_export.formats.base_formats`` e.g
     from import_export.formats.base_formats import XLSX
     IMPORT_EXPORT_FORMATS = [XLSX]
 
+.. _IMPORT_FORMATS:
 
 ``IMPORT_FORMATS``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
 
 A list that defines which file formats will be allowed during imports. Defaults
 to ``IMPORT_EXPORT_FORMATS``.
@@ -161,6 +178,7 @@ The values must be those provided in ``import_export.formats.base_formats`` e.g
     from import_export.formats.base_formats import CSV, XLSX
     IMPORT_FORMATS = [CSV, XLSX]
 
+.. _EXPORT_FORMATS:
 
 ``EXPORT_FORMATS``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
