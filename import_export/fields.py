@@ -118,7 +118,7 @@ class Field:
             value = value()
         return value
 
-    def save(self, obj, data, is_m2m=False, **kwargs):
+    def save(self, instance, row, is_m2m=False, **kwargs):
         """
         If this field is not declared readonly, the object's attribute will
         be set to the value returned by :meth:`~import_export.fields.Field.clean`.
@@ -126,16 +126,16 @@ class Field:
         if not self.readonly:
             attrs = self.attribute.split("__")
             for attr in attrs[:-1]:
-                obj = getattr(obj, attr, None)
-            cleaned = self.clean(data, **kwargs)
+                instance = getattr(instance, attr, None)
+            cleaned = self.clean(row, **kwargs)
             if cleaned is not None or self.saves_null_values:
                 if not is_m2m:
-                    setattr(obj, attrs[-1], cleaned)
+                    setattr(instance, attrs[-1], cleaned)
                 else:
                     if self.m2m_add:
-                        getattr(obj, attrs[-1]).add(*cleaned)
+                        getattr(instance, attrs[-1]).add(*cleaned)
                     else:
-                        getattr(obj, attrs[-1]).set(cleaned)
+                        getattr(instance, attrs[-1]).set(cleaned)
 
     def export(self, obj):
         """
