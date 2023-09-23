@@ -538,7 +538,7 @@ class Resource(metaclass=DeclarativeMetaclass):
         :param instance: A new or existing model instance.
 
         :param \**kwargs:
-            See :meth:`import_row
+            See :meth:`import_row`
         """
         pass
 
@@ -549,8 +549,7 @@ class Resource(metaclass=DeclarativeMetaclass):
         :param instance: A new or existing model instance.
 
         :param \**kwargs:
-            See :meth:`import_row
-
+            See :meth:`import_row`
         """
         pass
 
@@ -562,7 +561,7 @@ class Resource(metaclass=DeclarativeMetaclass):
         :param instance: A new or existing model instance.
 
         :param \**kwargs:
-            See :meth:`import_row
+            See :meth:`import_row`
         """
         self.before_delete_instance(instance, **kwargs)
         if self._meta.use_bulk:
