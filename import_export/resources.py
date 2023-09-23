@@ -710,7 +710,7 @@ class Resource(metaclass=DeclarativeMetaclass):
         """
         pass
 
-    def after_import_row(self, row, row_result, row_number=None, **kwargs):
+    def after_import_row(self, row, row_result, **kwargs):
         """
         Override to add additional logic. Does nothing by default.
 
@@ -718,8 +718,6 @@ class Resource(metaclass=DeclarativeMetaclass):
 
         :param row_result: A ``RowResult`` instance.
           References the persisted ``instance`` as an attribute.
-
-        :param row_number: The row number from the dataset.
         """
         pass
 
@@ -904,7 +902,6 @@ class Resource(metaclass=DeclarativeMetaclass):
         raise_errors,
         using_transactions,
         collect_failed_rows,
-        rollback_on_validation_errors=None,
         **kwargs,
     ):
         result = self.get_result_class()()
