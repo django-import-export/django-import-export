@@ -614,8 +614,7 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
         )
 
     @override_settings(IMPORT_EXPORT_ESCAPE_FORMULAE_ON_EXPORT=True)
-    @patch("import_export.mixins.logger")
-    def test_export_escape_formulae(self, mock_logger):
+    def test_export_escape_formulae(self):
         Book.objects.create(id=1, name="=SUM(1+1)")
         Book.objects.create(id=2, name="<script>alert(1)</script>")
         response = self.client.get("/admin/core/book/export/")
@@ -630,8 +629,23 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertEqual("<script>alert(1)</script>", wb.active["B2"].value)
         self.assertEqual("SUM(1+1)", wb.active["B3"].value)
 
-        mock_logger.debug.assert_called_once_with(
-            "IMPORT_EXPORT_ESCAPE_FORMULAE_ON_EXPORT is enabled"
+    @override_settings(IMPORT_EXPORT_ESCAPE_FORMULAE_ON_EXPORT=True)
+    def test_export_escape_formulae_csv(self):
+        b1 = Book.objects.create(id=1, name="=SUM(1+1)")
+        b2 = Book.objects.create(id=2, name="<script>alert(1)</script>")
+        response = self.client.get("/admin/core/book/export/")
+        self.assertEqual(response.status_code, 200)
+
+        index = self._get_input_format_index("csv")
+        data = {"file_format": str(index)}
+        response = self.client.post("/admin/core/book/export/", data)
+        self.assertIn(
+            f"{b1.id},=SUM(1+1),,,0,,,,,\r\n".encode(),
+            response.content,
+        )
+        self.assertIn(
+            f"{b2.id},<script>alert(1)</script>,,,0,,,,,\r\n".encode(),
+            response.content,
         )
 
 

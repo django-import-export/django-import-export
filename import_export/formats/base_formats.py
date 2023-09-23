@@ -1,4 +1,5 @@
 import tablib
+from django.conf import settings
 from tablib.formats import registry
 
 
@@ -144,9 +145,6 @@ class HTML(TextFormat):
     TABLIB_MODULE = "tablib.formats._html"
     CONTENT_TYPE = "text/html"
 
-    def export_data(self, dataset, **kwargs):
-        return super().export_data(dataset, **kwargs)
-
 
 class XLS(TablibFormat):
     TABLIB_MODULE = "tablib.formats._xls"
@@ -196,6 +194,13 @@ class XLSX(TablibFormat):
             row_values = [cell.value for cell in row]
             dataset.append(row_values)
         return dataset
+
+    def export_data(self, dataset, **kwargs):
+        kwargs.setdefault(
+            "escape",
+            getattr(settings, "IMPORT_EXPORT_ESCAPE_FORMULAE_ON_EXPORT", False),
+        )
+        return super().export_data(dataset, **kwargs)
 
 
 #: These are the default formats for import and export. Whether they can be

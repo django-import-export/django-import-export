@@ -623,9 +623,7 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
             *args,
             **kwargs,
         )
-        export_data = file_format.export_data(
-            data, **{"escape": True} if self.should_escape_formulae else {}
-        )
+        export_data = file_format.export_data(data)
         encoding = kwargs.get("encoding")
         if not file_format.is_binary() and encoding:
             export_data = export_data.encode(encoding)
