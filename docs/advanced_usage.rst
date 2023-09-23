@@ -910,27 +910,41 @@ What is the potential risk for exported data?
 Mitigating security risks
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
+You should in all cases review `Django security documentation <https://docs.djangoproject.com/en/stable/topics/security/>`_
+before deploying a live Admin interface instance.
+
+Refer to `SECURITY.md <https://github.com/django-import-export/django-import-export/blob/main/SECURITY.md>`_ for
+details on how to escalate security issues.
+
+Sanitize exports
+""""""""""""""""
+
 By default, import-export does not sanitize or process imported data.  Malicious content, such as script directives,
 can be imported into the database, and can be exported without any modification.
 
-You can optionally configure import-export to sanitize data on export.  There are two settings which enable this:
-
-#. :ref:`IMPORT_EXPORT_ESCAPE_HTML_ON_EXPORT`
-#. :ref:`IMPORT_EXPORT_ESCAPE_FORMULAE_ON_EXPORT`
+You can optionally configure import-export to sanitize Excel formula data on export.  See
+:ref:`IMPORT_EXPORT_ESCAPE_FORMULAE_ON_EXPORT`.
 
 .. warning::
 
-    Enabling these settings only sanitizes data exported using the Admin Interface.
+    Enabling this setting only sanitizes data exported using the Admin Interface.
     If exporting data :ref:`programmatically<exporting_data>`, then you will need to apply your own sanitization.
 
-Limiting the available import or export types can be considered. This can be done using either of the following settings:
+Limit formats
+"""""""""""""
+
+Limiting the available import or export types can be considered. This can be done using either of the following
+settings:
 
 #. :ref:`IMPORT_EXPORT_FORMATS`
 #. :ref:`IMPORT_FORMATS`
 #. :ref:`EXPORT_FORMATS`
 
-You should in all cases review `Django security documentation <https://docs.djangoproject.com/en/dev/topics/security/>`_
-before deploying a live Admin interface instance.
+Set permissions
+"""""""""""""""
 
-Please refer to `SECURITY.md <https://github.com/django-import-export/django-import-export/blob/main/SECURITY.md>`_ for
-details on how to escalate security issues.
+Consider setting `permissions <https://docs.djangoproject.com/en/stable/topics/auth/default/>`_ to define which
+users can import and export.
+
+#. :ref:`IMPORT_EXPORT_IMPORT_PERMISSION_CODE`
+#. :ref:`IMPORT_EXPORT_EXPORT_PERMISSION_CODE`

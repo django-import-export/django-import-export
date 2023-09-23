@@ -84,6 +84,8 @@ class TablibFormat(Format):
         return tablib.import_set(in_stream, format=self.get_title(), **kwargs)
 
     def export_data(self, dataset, **kwargs):
+        if getattr(settings, "IMPORT_EXPORT_ESCAPE_FORMULAE_ON_EXPORT") is True:
+            self._escape_formulae(dataset)
         return dataset.export(self.get_title(), **kwargs)
 
     def get_extension(self):
@@ -97,6 +99,15 @@ class TablibFormat(Format):
 
     def can_export(self):
         return hasattr(self.get_format(), "export_set")
+
+    def _escape_formulae(self, dataset):
+        def _do_escape(s):
+            return s.replace("=", "", 1) if s.startswith("=") else s
+
+        for _ in dataset:
+            row = dataset.lpop()
+            row = [_do_escape(str(cell)) for cell in row]
+            dataset.append(row)
 
 
 class TextFormat(TablibFormat):
@@ -194,12 +205,6 @@ class XLSX(TablibFormat):
             row_values = [cell.value for cell in row]
             dataset.append(row_values)
         return dataset
-
-    def export_data(self, dataset, **kwargs):
-        kwargs.update(
-            escape=getattr(settings, "IMPORT_EXPORT_ESCAPE_FORMULAE_ON_EXPORT", False)
-        )
-        return super().export_data(dataset, **kwargs)
 
 
 #: These are the default formats for import and export. Whether they can be

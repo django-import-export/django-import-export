@@ -76,6 +76,8 @@ during imports. Defaults to ``import_export.tmp_storages.TempFolderStorage``.
 Can be overridden on a ``ModelAdmin`` class inheriting from ``ImportMixin`` by
 setting the ``tmp_storage_class`` class attribute.
 
+.. _IMPORT_EXPORT_IMPORT_PERMISSION_CODE:
+
 ``IMPORT_EXPORT_IMPORT_PERMISSION_CODE``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -85,6 +87,9 @@ imports.
 
 Django’s built-in permissions have the codes ``add``, ``change``, ``delete``,
 and ``view``. You can also add your own permissions.
+
+
+.. _IMPORT_EXPORT_EXPORT_PERMISSION_CODE:
 
 ``IMPORT_EXPORT_EXPORT_PERMISSION_CODE``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -120,13 +125,7 @@ Note that if you disable transaction support via configuration (or if your datab
 does not support transactions), then validation errors will still be presented to the user
 but valid rows will have imported.
 
-``IMPORT_EXPORT_ESCAPE_HTML_ON_EXPORT``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-If set to ``True``, strings will be HTML escaped. By default this is ``False``.
-
-This is deprecated and will be removed in a future release.  Future releases will
-escape strings by default.
+.. _IMPORT_EXPORT_ESCAPE_FORMULAE_ON_EXPORT:
 
 ``IMPORT_EXPORT_ESCAPE_FORMULAE_ON_EXPORT``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -134,8 +133,10 @@ escape strings by default.
 If set to ``True``, strings will be sanitized by removing any leading '=' character.  This is to prevent execution of
 Excel formulae.  By default this is ``False``.
 
+.. _IMPORT_EXPORT_FORMATS:
+
 ``IMPORT_EXPORT_FORMATS``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 A list that defines which file formats will be allowed during imports and exports. Defaults
 to ``import_export.formats.base_formats.DEFAULT_FORMATS``.
@@ -147,9 +148,10 @@ The values must be those provided in ``import_export.formats.base_formats`` e.g
     from import_export.formats.base_formats import XLSX
     IMPORT_EXPORT_FORMATS = [XLSX]
 
+.. _IMPORT_FORMATS:
 
 ``IMPORT_FORMATS``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
 
 A list that defines which file formats will be allowed during imports. Defaults
 to ``IMPORT_EXPORT_FORMATS``.
@@ -161,6 +163,7 @@ The values must be those provided in ``import_export.formats.base_formats`` e.g
     from import_export.formats.base_formats import CSV, XLSX
     IMPORT_FORMATS = [CSV, XLSX]
 
+.. _EXPORT_FORMATS:
 
 ``EXPORT_FORMATS``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

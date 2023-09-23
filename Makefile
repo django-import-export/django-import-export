@@ -48,5 +48,7 @@ install-docs-requirements:  ## install requirements for docs
 
 install-requirements: install-base-requirements install-test-requirements install-docs-requirements
 
-build-html-doc: ## builds the project documentation in HTML format
+## builds the project documentation in HTML format
+## run `pip install -e .` first if running locally
+build-html-doc:
 	DJANGO_SETTINGS_MODULE=tests.settings make html -C docs
