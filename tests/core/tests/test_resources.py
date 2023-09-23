@@ -466,16 +466,14 @@ class ModelResourceTest(TestCase):
 
     def test_export_handles_named_queryset_parameter(self):
         class _BookResource(BookResource):
-            def before_export(self, queryset, *args, **kwargs):
+            def before_export(self, queryset, **kwargs):
                 self.qs = queryset
-                self.args_ = args
                 self.kwargs_ = kwargs
 
         self.resource = _BookResource()
         # when queryset is supplied, it should be passed to before_export()
-        self.resource.export(1, 2, 3, queryset=Book.objects.all(), **{"a": 1})
+        self.resource.export(queryset=Book.objects.all(), **{"a": 1})
         self.assertEqual(Book.objects.count(), len(self.resource.qs))
-        self.assertEqual((1, 2, 3), self.resource.args_)
         self.assertEqual(dict(a=1), self.resource.kwargs_)
 
     def test_iter_queryset(self):
@@ -869,16 +867,16 @@ class ModelResourceTest(TestCase):
 
     def test_save_instance_with_dry_run_flag(self):
         class B(BookResource):
-            def before_save_instance(self, instance, **kwargs):
-                super().before_save_instance(instance, **kwargs)
+            def before_save_instance(self, instance, row=None, **kwargs):
+                super().before_save_instance(instance, row, **kwargs)
                 dry_run = kwargs.get("dry_run", False)
                 if dry_run:
                     self.before_save_instance_dry_run = True
                 else:
                     self.before_save_instance_dry_run = False
 
-            def save_instance(self, instance, new, **kwargs):
-                super().save_instance(instance, new, **kwargs)
+            def save_instance(self, instance, new, row=None, **kwargs):
+                super().save_instance(instance, new, row, **kwargs)
                 dry_run = kwargs.get("dry_run", False)
                 if dry_run:
                     self.save_instance_dry_run = True

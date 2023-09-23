@@ -69,21 +69,21 @@ class Field:
             return "<%s: %s>" % (path, column_name)
         return "<%s>" % path
 
-    def clean(self, data, **kwargs):
+    def clean(self, row, **kwargs):
         """
         Translates the value stored in the imported datasource to an
         appropriate Python object and returns it.
         """
         try:
-            value = data[self.column_name]
+            value = row[self.column_name]
         except KeyError:
             raise KeyError(
                 "Column '%s' not found in dataset. Available "
-                "columns are: %s" % (self.column_name, list(data))
+                "columns are: %s" % (self.column_name, list(row))
             )
 
         # If ValueError is raised here, import_obj() will handle it
-        value = self.widget.clean(value, row=data, **kwargs)
+        value = self.widget.clean(value, row=row, **kwargs)
 
         if value in self.empty_values and self.default != NOT_PROVIDED:
             if callable(self.default):
@@ -92,7 +92,7 @@ class Field:
 
         return value
 
-    def get_value(self, obj):
+    def get_value(self, instance):
         """
         Returns the value of the object's attribute.
         """
@@ -100,7 +100,7 @@ class Field:
             return None
 
         attrs = self.attribute.split("__")
-        value = obj
+        value = instance
 
         for attr in attrs:
             try:
@@ -137,15 +137,15 @@ class Field:
                     else:
                         getattr(instance, attrs[-1]).set(cleaned)
 
-    def export(self, obj):
+    def export(self, instance):
         """
-        Returns value from the provided object converted to export
+        Returns value from the provided instance converted to export
         representation.
         """
-        value = self.get_value(obj)
+        value = self.get_value(instance)
         if value is None:
             return ""
-        return self.widget.render(value, obj)
+        return self.widget.render(value, instance)
 
     def get_dehydrate_method(self, field_name=None):
         """
