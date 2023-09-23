@@ -525,12 +525,6 @@ class Resource(metaclass=DeclarativeMetaclass):
                 instance.save()
         self.after_save_instance(instance, **kwargs)
 
-    def _is_using_transactions(self, kwargs):
-        return kwargs.get("using_transactions", False)
-
-    def _is_dry_run(self, kwargs):
-        return kwargs.get("dry_run", False)
-
     def before_save_instance(self, instance, **kwargs):
         """
         Override to add additional logic. Does nothing by default.
@@ -1111,6 +1105,12 @@ class Resource(metaclass=DeclarativeMetaclass):
         order = list()
         [order.append(f) for f in defined_fields if f not in order]
         return tuple(order) + tuple(k for k in self.fields if k not in order)
+
+    def _is_using_transactions(self, kwargs):
+        return kwargs.get("using_transactions", False)
+
+    def _is_dry_run(self, kwargs):
+        return kwargs.get("dry_run", False)
 
 
 class ModelDeclarativeMetaclass(DeclarativeMetaclass):
