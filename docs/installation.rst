@@ -82,24 +82,19 @@ setting the ``tmp_storage_class`` class attribute.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If set, lists the permission code that is required for users to perform the
-“import” action. Defaults to ``None``, which means everybody can perform
+'import' action. Defaults to ``None``, which means everybody can perform
 imports.
 
 Django’s built-in permissions have the codes ``add``, ``change``, ``delete``,
 and ``view``. You can also add your own permissions.
-
 
 .. _IMPORT_EXPORT_EXPORT_PERMISSION_CODE:
 
 ``IMPORT_EXPORT_EXPORT_PERMISSION_CODE``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If set, lists the permission code that is required for users to perform the
-“export” action. Defaults to ``None``, which means everybody can perform
-exports.
-
-Django’s built-in permissions have the codes ``add``, ``change``, ``delete``,
-and ``view``. You can also add your own permissions.
+Defines the same behaviour as :ref:`IMPORT_EXPORT_IMPORT_PERMISSION_CODE`, but for
+export.
 
 ``IMPORT_EXPORT_CHUNK_SIZE``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
