@@ -1,3 +1,4 @@
 Django>=3.2
+# # tablib temporarily using master before v4
 tablib[html,ods,xls,xlsx,yaml]@git+https://github.com/jazzband/tablib.git@master#egg=tablib
 diff-match-patch
