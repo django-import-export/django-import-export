@@ -33,6 +33,7 @@ classifiers = [
     "Topic :: Software Development",
 ]
 
+# tablib temporarily using master before v4
 dependencies = [
     "diff-match-patch",
     "Django>=3.2",
