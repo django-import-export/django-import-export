@@ -502,15 +502,20 @@ class Resource(metaclass=DeclarativeMetaclass):
             raise ValidationError(errors)
 
     def save_instance(self, instance, is_create, row=None, **kwargs):
-        """
+        r"""
         Takes care of saving the object to the database.
 
         Objects can be created in bulk if ``use_bulk`` is enabled.
 
         :param instance: The instance of the object to be persisted.
+
         :param is_create: A boolean flag to indicate whether this is a new object
         to be created, or an existing object to be updated.
+
         :param row: A dict representing the import row.
+
+        :param \**kwargs:
+            See :meth:`import_row
         """
         self.before_save_instance(instance, row, **kwargs)
         if self._meta.use_bulk:
@@ -527,23 +532,37 @@ class Resource(metaclass=DeclarativeMetaclass):
         self.after_save_instance(instance, **kwargs)
 
     def before_save_instance(self, instance, row=None, **kwargs):
-        """
+        r"""
         Override to add additional logic. Does nothing by default.
-        :param instance: The instance of the object to be persisted.
-        :param row: A dict representing the import row.
+
+        :param instance: A new or existing model instance.
+
+        :param \**kwargs:
+            See :meth:`import_row
         """
         pass
 
     def after_save_instance(self, instance, **kwargs):
-        """
+        r"""
         Override to add additional logic. Does nothing by default.
+
+        :param instance: A new or existing model instance.
+
+        :param \**kwargs:
+            See :meth:`import_row
+
         """
         pass
 
     def delete_instance(self, instance, **kwargs):
-        """
+        r"""
         Calls :meth:`instance.delete` as long as ``dry_run`` is not set.
         If ``use_bulk`` then instances are appended to a list for bulk import.
+
+        :param instance: A new or existing model instance.
+
+        :param \**kwargs:
+            See :meth:`import_row
         """
         self.before_delete_instance(instance, **kwargs)
         if self._meta.use_bulk:
@@ -557,19 +576,29 @@ class Resource(metaclass=DeclarativeMetaclass):
         self.after_delete_instance(instance, **kwargs)
 
     def before_delete_instance(self, instance, **kwargs):
-        """
+        r"""
         Override to add additional logic. Does nothing by default.
+
+        :param instance: A new or existing model instance.
+
+        :param \**kwargs:
+            See :meth:`import_row`
         """
         pass
 
     def after_delete_instance(self, instance, **kwargs):
-        """
+        r"""
         Override to add additional logic. Does nothing by default.
+
+        :param instance: A new or existing model instance.
+
+        :param \**kwargs:
+            See :meth:`import_row`
         """
         pass
 
     def import_field(self, field, instance, row, is_m2m=False, **kwargs):
-        """
+        r"""
         Handles persistence of the field data.
 
         :param field: A :class:`import_export.fields.Field` instance.
@@ -581,7 +610,7 @@ class Resource(metaclass=DeclarativeMetaclass):
         :param is_m2m: A boolean value indicating whether or not this is a
           many-to-many field.
 
-        :param **kwargs:
+        :param \**kwargs:
             See :meth:`import_row`
         """
         if field.attribute and field.column_name in row:
@@ -591,7 +620,7 @@ class Resource(metaclass=DeclarativeMetaclass):
         return [self.fields[f] for f in self.get_import_order()]
 
     def import_instance(self, instance, row, **kwargs):
-        """
+        r"""
         Traverses every field in this Resource and calls
         :meth:`~import_export.resources.Resource.import_field`. If
         ``import_field()`` results in a ``ValueError`` being raised for
@@ -602,7 +631,7 @@ class Resource(metaclass=DeclarativeMetaclass):
 
         :param row: A ``dict`` containing key / value data for the row to be imported.
 
-        :param **kwargs:
+        :param \**kwargs:
             See :meth:`import_row`
         """
         errors = {}
@@ -617,7 +646,7 @@ class Resource(metaclass=DeclarativeMetaclass):
             raise ValidationError(errors)
 
     def save_m2m(self, instance, row, **kwargs):
-        """
+        r"""
         Saves m2m fields.
 
         Model instance need to have a primary key value before
@@ -627,7 +656,7 @@ class Resource(metaclass=DeclarativeMetaclass):
 
         :param row: A ``dict`` containing key / value data for the row to be imported.
 
-        :param **kwargs:
+        :param \**kwargs:
             See :meth:`import_row`
         """
         using_transactions = self._is_using_transactions(kwargs)
@@ -733,18 +762,18 @@ class Resource(metaclass=DeclarativeMetaclass):
         return self.get_user_visible_headers()
 
     def before_import(self, dataset, **kwargs):
-        """
+        r"""
         Override to add additional logic. Does nothing by default.
 
         :param dataset: A ``tablib.Dataset``.
 
-        :param **kwargs:
+        :param \**kwargs:
             See :meth:`import_row`
         """
         pass
 
     def after_import(self, dataset, result, **kwargs):
-        """
+        r"""
         Override to add additional logic. Does nothing by default.
 
         :param dataset: A ``tablib.Dataset``.
@@ -752,24 +781,24 @@ class Resource(metaclass=DeclarativeMetaclass):
         :param result: A :class:`import_export.results.Result` implementation
           containing a summary of the import.
 
-        :param **kwargs:
+        :param \**kwargs:
             See :meth:`import_row`
         """
         pass
 
     def before_import_row(self, row, **kwargs):
-        """
+        r"""
         Override to add additional logic. Does nothing by default.
 
         :param row: A ``dict`` containing key / value data for the row to be imported.
 
-        :param **kwargs:
+        :param \**kwargs:
             See :meth:`import_row`
         """
         pass
 
     def after_import_row(self, row, row_result, **kwargs):
-        """
+        r"""
         Override to add additional logic. Does nothing by default.
 
         :param row: A ``dict`` containing key / value data for the row to be imported.
@@ -777,20 +806,20 @@ class Resource(metaclass=DeclarativeMetaclass):
         :param row_result: A ``RowResult`` instance.
           References the persisted ``instance`` as an attribute.
 
-        :param **kwargs:
+        :param \**kwargs:
             See :meth:`import_row`
         """
         pass
 
     def after_init_instance(self, instance, new, **kwargs):
-        """
+        r"""
         Override to add additional logic. Does nothing by default.
 
         :param instance: A new or existing model instance.
 
         :param new: a boolean flag indicating whether instance is new or existing.
 
-        :param **kwargs:
+        :param \**kwargs:
             See :meth:`import_row`
         """
         pass
@@ -804,7 +833,7 @@ class Resource(metaclass=DeclarativeMetaclass):
             raise
 
     def import_row(self, row, instance_loader, **kwargs):
-        """
+        r"""
         Imports data from ``tablib.Dataset``. Refer to :doc:`import_workflow`
         for a more complete description of the whole import process.
 
@@ -814,7 +843,7 @@ class Resource(metaclass=DeclarativeMetaclass):
 
         :param instance_loader: The instance loader to be used to load the row.
 
-        :param **kwargs:
+        :param \**kwargs:
             See below.
 
         :Keyword Arguments:
@@ -909,7 +938,7 @@ class Resource(metaclass=DeclarativeMetaclass):
         rollback_on_validation_errors=False,
         **kwargs,
     ):
-        """
+        r"""
         Imports data from ``tablib.Dataset``. Refer to :doc:`import_workflow`
         for a more complete description of the whole import process.
 
@@ -931,7 +960,7 @@ class Resource(metaclass=DeclarativeMetaclass):
         :param dry_run: If ``dry_run`` is set, or an error occurs, if a transaction
             is being used, it will be rolled back.
 
-        :param **kwargs:
+        :param \**kwargs:
             Metadata which may be associated with the import.
         """
 
@@ -1097,36 +1126,36 @@ class Resource(metaclass=DeclarativeMetaclass):
         return self._get_ordered_field_names("export_order")
 
     def before_export(self, queryset, **kwargs):
-        """
+        r"""
         Override to add additional logic. Does nothing by default.
 
         :param queryset: The queryset for export.
 
-        :param **kwargs:
+        :param \**kwargs:
             Metadata which may be associated with the export.
         """
         pass
 
     def after_export(self, queryset, dataset, **kwargs):
-        """
+        r"""
         Override to add additional logic. Does nothing by default.
 
         :param queryset: The queryset for export.
 
         :param dataset: A ``tablib.Dataset``.
 
-        :param **kwargs:
+        :param \**kwargs:
             Metadata which may be associated with the export.
         """
         pass
 
     def filter_export(self, queryset, **kwargs):
-        """
+        r"""
         Override to filter an export queryset.
 
         :param queryset: The queryset for export (optional).
 
-        :param **kwargs:
+        :param \**kwargs:
             Metadata which may be associated with the export.
 
         :returns: The filtered queryset.
