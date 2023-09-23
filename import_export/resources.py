@@ -1094,14 +1094,14 @@ class Resource(metaclass=DeclarativeMetaclass):
             queryset = self.get_queryset()
         queryset = self.filter_export(queryset, *args, **kwargs)
         headers = self.get_export_headers()
-        data = tablib.Dataset(headers=headers)
+        dataset = tablib.Dataset(headers=headers)
 
         for obj in self.iter_queryset(queryset):
-            data.append(self.export_resource(obj))
+            dataset.append(self.export_resource(obj))
 
-        self.after_export(queryset, data, *args, **kwargs)
+        self.after_export(queryset, dataset, *args, **kwargs)
 
-        return data
+        return dataset
 
     def _get_ordered_field_names(self, order_field):
         """

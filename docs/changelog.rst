@@ -5,6 +5,8 @@ Changelog
 --------------------------
 
 - removed unused variable ``Result.new_record`` (#1640)
+- refactor to export HTML / formulae escaping updates (#1638)
+
 
 4.0.0-alpha.0 (2023-09-20)
 --------------------------
