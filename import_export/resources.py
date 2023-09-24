@@ -15,6 +15,7 @@ from django.core.exceptions import (
 from django.core.management.color import no_style
 from django.core.paginator import Paginator
 from django.db import connections, router
+from django.db.models import fields
 from django.db.models.fields.related import ForeignObjectRel
 from django.db.models.query import QuerySet
 from django.db.transaction import TransactionManagementError, set_rollback
@@ -1292,13 +1293,20 @@ class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
         return result
 
     @classmethod
-    def widget_kwargs_for_field(self, field_name):
+    def widget_kwargs_for_field(cls, field_name, django_field):
         """
         Returns widget kwargs for given field_name.
         """
-        if self._meta.widgets:
-            return self._meta.widgets.get(field_name, {})
-        return {}
+        widget_kwargs = {}
+        if cls._meta.widgets:
+            cls_kwargs = cls._meta.widgets.get(field_name, {})
+            widget_kwargs.update(cls_kwargs)
+        if (
+            issubclass(django_field.__class__, fields.CharField)
+            and django_field.blank is True
+        ):
+            widget_kwargs.update({"coerce_to_string": True, "allow_blank": True})
+        return widget_kwargs
 
     @classmethod
     def field_from_django_field(cls, field_name, django_field, readonly):
@@ -1307,7 +1315,7 @@ class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
         """
 
         FieldWidget = cls.widget_from_django_field(django_field)
-        widget_kwargs = cls.widget_kwargs_for_field(field_name)
+        widget_kwargs = cls.widget_kwargs_for_field(field_name, django_field)
         field = cls.DEFAULT_RESOURCE_FIELD(
             attribute=field_name,
             column_name=field_name,
