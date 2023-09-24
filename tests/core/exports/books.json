@@ -1,0 +1,38 @@
+[
+  {
+    "id": 11,
+    "name": "A Game of Thrones",
+    "author": 11,
+    "author_email": "martin@got.com",
+    "imported": "0",
+    "published": "1996-08-01",
+    "published_time": "21:00:00",
+    "price": "25.00",
+    "added": "",
+    "categories": "1"
+  },
+  {
+    "id": 6,
+    "name": "Circles",
+    "author": 11,
+    "author_email": "geo@met.ry",
+    "imported": "0",
+    "published": "2020-08-01",
+    "published_time": "21:00:00",
+    "price": "15.00",
+    "added": "",
+    "categories": "2"
+  },
+  {
+    "id": 5,
+    "name": "Squares",
+    "author": 5,
+    "author_email": "geo@met.ry",
+    "imported": "0",
+    "published": "1999-08-01",
+    "published_time": "21:00:00",
+    "price": "5.00",
+    "added": "",
+    "categories": "2"
+  }
+]
