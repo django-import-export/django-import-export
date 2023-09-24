@@ -440,7 +440,7 @@ You can define your resource to take the associated instance as a param, and the
         def __init__(self, publisher_id):
             self.publisher_id = publisher_id
 
-        def before_save_instance(self, instance, using_transactions, dry_run):
+        def before_save_instance(self, instance, row, **kwargs):
             instance.publisher_id = self.publisher_id
 
         class Meta:

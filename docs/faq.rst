@@ -52,9 +52,9 @@ There is a workaround, which is to set a temporary flag on the instance being sa
 
     class BookResource(resources.ModelResource):
 
-        def before_save_instance(self, instance, using_transactions, dry_run):
+        def before_save_instance(self, instance, row, **kwargs):
             # during 'confirm' step, dry_run is True
-            instance.dry_run = dry_run
+            instance.dry_run = kwargs.get("dry_run", False)
 
         class Meta:
             model = Book

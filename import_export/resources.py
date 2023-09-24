@@ -852,7 +852,8 @@ class Resource(metaclass=DeclarativeMetaclass):
           A row is a dict of data fields so can be a csv line, a JSON object,
           a YAML object etc.
 
-        :param instance_loader: The instance loader to be used to load the row.
+        :param instance_loader: The instance loader to be used to load the model
+          instance associated with the row (if there is one).
 
         :param \**kwargs:
             See below.
