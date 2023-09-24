@@ -867,7 +867,7 @@ class ModelResourceTest(TestCase):
 
     def test_save_instance_with_dry_run_flag(self):
         class B(BookResource):
-            def before_save_instance(self, instance, row=None, **kwargs):
+            def before_save_instance(self, instance, row, **kwargs):
                 super().before_save_instance(instance, row, **kwargs)
                 dry_run = kwargs.get("dry_run", False)
                 if dry_run:
@@ -875,7 +875,7 @@ class ModelResourceTest(TestCase):
                 else:
                     self.before_save_instance_dry_run = False
 
-            def save_instance(self, instance, new, row=None, **kwargs):
+            def save_instance(self, instance, new, row, **kwargs):
                 super().save_instance(instance, new, row, **kwargs)
                 dry_run = kwargs.get("dry_run", False)
                 if dry_run:
@@ -883,8 +883,8 @@ class ModelResourceTest(TestCase):
                 else:
                     self.save_instance_dry_run = False
 
-            def after_save_instance(self, instance, **kwargs):
-                super().after_save_instance(instance, **kwargs)
+            def after_save_instance(self, instance, row, **kwargs):
+                super().after_save_instance(instance, row, **kwargs)
                 dry_run = kwargs.get("dry_run", False)
                 if dry_run:
                     self.after_save_instance_dry_run = True
@@ -906,14 +906,16 @@ class ModelResourceTest(TestCase):
     def test_save_instance_noop(self, mock_book):
         book = Book.objects.first()
         self.resource.save_instance(
-            book, is_create=False, using_transactions=False, dry_run=True
+            book, False, None, using_transactions=False, dry_run=True
         )
         self.assertEqual(0, mock_book.call_count)
 
     @mock.patch("core.models.Book.save")
     def test_delete_instance_noop(self, mock_book):
         book = Book.objects.first()
-        self.resource.delete_instance(book, using_transactions=False, dry_run=True)
+        self.resource.delete_instance(
+            book, None, using_transactions=False, dry_run=True
+        )
         self.assertEqual(0, mock_book.call_count)
 
     def test_delete_instance_with_dry_run_flag(self):
@@ -923,24 +925,24 @@ class ModelResourceTest(TestCase):
             def for_delete(self, row, instance):
                 return self.fields["delete"].clean(row)
 
-            def before_delete_instance(self, instance, **kwargs):
-                super().before_delete_instance(instance, **kwargs)
+            def before_delete_instance(self, instance, row, **kwargs):
+                super().before_delete_instance(instance, row, **kwargs)
                 dry_run = kwargs.get("dry_run", False)
                 if dry_run:
                     self.before_delete_instance_dry_run = True
                 else:
                     self.before_delete_instance_dry_run = False
 
-            def delete_instance(self, instance, **kwargs):
-                super().delete_instance(instance, **kwargs)
+            def delete_instance(self, instance, row, **kwargs):
+                super().delete_instance(instance, row, **kwargs)
                 dry_run = kwargs.get("dry_run", False)
                 if dry_run:
                     self.delete_instance_dry_run = True
                 else:
                     self.delete_instance_dry_run = False
 
-            def after_delete_instance(self, instance, **kwargs):
-                super().after_delete_instance(instance, **kwargs)
+            def after_delete_instance(self, instance, row, **kwargs):
+                super().after_delete_instance(instance, row, **kwargs)
                 dry_run = kwargs.get("dry_run", False)
                 if dry_run:
                     self.after_delete_instance_dry_run = True
@@ -1345,7 +1347,7 @@ class ModelResourceTest(TestCase):
                 model = Entry
                 fields = ("id",)
 
-            def after_save_instance(self, instance, **kwargs):
+            def after_save_instance(self, instance, row, **kwargs):
                 using_transactions = kwargs.get("using_transactions", False)
                 dry_run = kwargs.get("dry_run", False)
                 if not using_transactions and dry_run:

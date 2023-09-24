@@ -399,8 +399,8 @@ class Resource(metaclass=DeclarativeMetaclass):
         if not self._meta.force_init_instance:
             instance = self.get_instance(instance_loader, row)
             if instance:
-                return (instance, False)
-        return (self.init_instance(row), True)
+                return instance, False
+        return self.init_instance(row), True
 
     def get_import_id_fields(self):
         """ """
@@ -501,7 +501,7 @@ class Resource(metaclass=DeclarativeMetaclass):
         if errors:
             raise ValidationError(errors)
 
-    def save_instance(self, instance, is_create, row=None, **kwargs):
+    def save_instance(self, instance, is_create, row, **kwargs):
         r"""
         Takes care of saving the object to the database.
 
@@ -529,41 +529,47 @@ class Resource(metaclass=DeclarativeMetaclass):
                 pass
             else:
                 instance.save()
-        self.after_save_instance(instance, **kwargs)
+        self.after_save_instance(instance, row, **kwargs)
 
-    def before_save_instance(self, instance, row=None, **kwargs):
+    def before_save_instance(self, instance, row, **kwargs):
         r"""
         Override to add additional logic. Does nothing by default.
 
         :param instance: A new or existing model instance.
+
+        :param row: A ``dict`` containing key / value data for the row to be imported.
 
         :param \**kwargs:
             See :meth:`import_row`
         """
         pass
 
-    def after_save_instance(self, instance, **kwargs):
+    def after_save_instance(self, instance, row, **kwargs):
         r"""
         Override to add additional logic. Does nothing by default.
 
         :param instance: A new or existing model instance.
+
+        :param row: A ``dict`` containing key / value data for the row to be imported.
 
         :param \**kwargs:
             See :meth:`import_row`
         """
         pass
 
-    def delete_instance(self, instance, **kwargs):
+    def delete_instance(self, instance, row, **kwargs):
         r"""
         Calls :meth:`instance.delete` as long as ``dry_run`` is not set.
         If ``use_bulk`` then instances are appended to a list for bulk import.
 
         :param instance: A new or existing model instance.
 
+        :param row: A ``dict`` containing key / value data for the row to be imported.
+
         :param \**kwargs:
             See :meth:`import_row`
         """
-        self.before_delete_instance(instance, **kwargs)
+        self.before_delete_instance(instance, row, **kwargs)
         if self._meta.use_bulk:
             self.delete_instances.append(instance)
         else:
@@ -572,24 +578,28 @@ class Resource(metaclass=DeclarativeMetaclass):
                 pass
             else:
                 instance.delete()
-        self.after_delete_instance(instance, **kwargs)
+        self.after_delete_instance(instance, row, **kwargs)
 
-    def before_delete_instance(self, instance, **kwargs):
+    def before_delete_instance(self, instance, row, **kwargs):
         r"""
         Override to add additional logic. Does nothing by default.
 
         :param instance: A new or existing model instance.
+
+        :param row: A ``dict`` containing key / value data for the row to be imported.
 
         :param \**kwargs:
             See :meth:`import_row`
         """
         pass
 
-    def after_delete_instance(self, instance, **kwargs):
+    def after_delete_instance(self, instance, row, **kwargs):
         r"""
         Override to add additional logic. Does nothing by default.
 
         :param instance: A new or existing model instance.
+
+        :param row: A ``dict`` containing key / value data for the row to be imported.
 
         :param \**kwargs:
             See :meth:`import_row`
@@ -810,13 +820,15 @@ class Resource(metaclass=DeclarativeMetaclass):
         """
         pass
 
-    def after_init_instance(self, instance, new, **kwargs):
+    def after_init_instance(self, instance, new, row, **kwargs):
         r"""
         Override to add additional logic. Does nothing by default.
 
         :param instance: A new or existing model instance.
 
         :param new: a boolean flag indicating whether instance is new or existing.
+
+        :param row: A ``dict`` containing key / value data for the row to be imported.
 
         :param \**kwargs:
             See :meth:`import_row`
@@ -861,7 +873,7 @@ class Resource(metaclass=DeclarativeMetaclass):
         try:
             self.before_import_row(row, **kwargs)
             instance, new = self.get_or_init_instance(instance_loader, row)
-            self.after_init_instance(instance, new, **kwargs)
+            self.after_init_instance(instance, new, row, **kwargs)
             if new:
                 row_result.import_type = RowResult.IMPORT_TYPE_NEW
             else:
@@ -880,7 +892,7 @@ class Resource(metaclass=DeclarativeMetaclass):
                     row_result.add_instance_info(instance)
                     if self._meta.store_instance:
                         row_result.instance = instance
-                    self.delete_instance(instance, **kwargs)
+                    self.delete_instance(instance, row, **kwargs)
                     if not skip_diff:
                         diff.compare_with(self, None)
             else:
@@ -1461,11 +1473,12 @@ class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
         """
         return self._meta.model()
 
-    def after_import(self, dataset, result, using_transactions, dry_run, **kwargs):
+    def after_import(self, dataset, result, **kwargs):
         """
         Reset the SQL sequences after new objects are imported
         """
         # Adapted from django's loaddata
+        dry_run = self._is_dry_run(kwargs)
         if not dry_run and any(
             r.import_type == RowResult.IMPORT_TYPE_NEW for r in result.rows
         ):
