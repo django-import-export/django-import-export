@@ -4,14 +4,16 @@ v4 upgrade guide
 
 v4 of import-export (released Q4 2023) contains a number of minor changes to the API.
 
-Refer to
-`this PR <https://github.com/django-import-export/django-import-export/pull/1641/>`_
-for more information.
-
 If you have customized import-export by overriding methods, then you will have to
 modify your installation before working with v4.  If you have not overridden any
 methods then you should not be affected by these changes and no changes to your code
 should be necessary.
+
+In both cases, please test thoroughly before deploying v4 to production.
+
+Refer to
+`this PR <https://github.com/django-import-export/django-import-export/pull/1641/>`_
+for more information.
 
 This guide describes the major changes and how to upgrade.
 
