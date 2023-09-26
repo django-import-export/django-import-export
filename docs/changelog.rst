@@ -7,7 +7,7 @@ Please refer to :ref:`v4_upgrade:v4 upgrade guide`.
 --------------------------
 
 - Refactor ``resources.py`` to standardise method args (#1641)
-- doc updates only
+- dynamic widget parameters for CharField fixes 'NOT NULL constraint' error in xlsx (#1485)
 - refactor to export HTML / formulae escaping updates (#1638)
 
 4.0.0-alpha.0 (2023-09-20)

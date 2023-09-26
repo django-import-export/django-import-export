@@ -1115,6 +1115,29 @@ class ModelResourceTest(TestCase):
         self.assertIn(cat1, book.categories.all())
         self.assertIn(cat2, book.categories.all())
 
+    def test_import_null_django_CharField_saved_as_empty_string(self):
+        # issue 1485
+        resource = BookResource()
+        self.assertTrue(resource._meta.model.author_email.field.blank)
+        self.assertFalse(resource._meta.model.author_email.field.null)
+        headers = ["id", "author_email"]
+        row = [1, None]
+        dataset = tablib.Dataset(row, headers=headers)
+        resource.import_data(dataset, raise_errors=True)
+        book = Book.objects.get(id=1)
+        self.assertEqual("", book.author_email)
+
+    def test_import_empty_django_CharField_saved_as_empty_string(self):
+        resource = BookResource()
+        self.assertTrue(resource._meta.model.author_email.field.blank)
+        self.assertFalse(resource._meta.model.author_email.field.null)
+        headers = ["id", "author_email"]
+        row = [1, ""]
+        dataset = tablib.Dataset(row, headers=headers)
+        resource.import_data(dataset, raise_errors=True)
+        book = Book.objects.get(id=1)
+        self.assertEqual("", book.author_email)
+
     def test_m2m_add(self):
         cat1 = Category.objects.create(name="Cat 1")
         cat2 = Category.objects.create(name="Cat 2")

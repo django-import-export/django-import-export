@@ -46,10 +46,10 @@ class AdminTestMixin(object):
 
     def setUp(self):
         super().setUp()
-        user = User.objects.create_user("admin", "admin@example.com", "password")
-        user.is_staff = True
-        user.is_superuser = True
-        user.save()
+        self.user = User.objects.create_user("admin", "admin@example.com", "password")
+        self.user.is_staff = True
+        self.user.is_superuser = True
+        self.user.save()
         self.client.login(username="admin", password="password")
 
     def _do_import_post(
@@ -1119,6 +1119,8 @@ class TestExportEncoding(TestCase):
 
 @override_settings(IMPORT_EXPORT_SKIP_ADMIN_CONFIRM=True)
 class TestImportSkipConfirm(AdminTestMixin, TransactionTestCase):
+    fixtures = ["author"]
+
     def _is_str_in_response(
         self,
         filename,
@@ -1170,8 +1172,9 @@ class TestImportSkipConfirm(AdminTestMixin, TransactionTestCase):
 
     def test_import_action_invalid_date(self):
         # test that a row with an invalid date redirects to errors page
+        index = self._get_input_format_index("csv")
         response = self._do_import_post(
-            self.book_import_url, "books-invalid-date.csv", "0"
+            self.book_import_url, "books-invalid-date.csv", index
         )
         result = response.context["result"]
         # there should be a single invalid row
@@ -1182,15 +1185,11 @@ class TestImportSkipConfirm(AdminTestMixin, TransactionTestCase):
         # no rows should be imported because we rollback on validation errors
         self.assertEqual(0, Book.objects.count())
 
-    def test_import_action_empty_author_email(self):
-        xlsx_index = self._get_input_format_index("xlsx")
-        # sqlite / MySQL / Postgres have different error messages
-        self._is_regex_in_response(
-            "books-empty-author-email.xlsx",
-            xlsx_index,
-            follow=True,
-            regex_in_response=r"(NOT NULL|null value in column|cannot be null)",
-        )
+    def test_import_action_error_on_save(self):
+        with mock.patch("core.models.Book.save") as mock_save:
+            mock_save.side_effect = ValueError("some unknown error")
+            response = self._do_import_post(self.book_import_url, "books.csv")
+        self.assertIn("some unknown error", str(response.content))
 
     @override_settings(IMPORT_EXPORT_USE_TRANSACTIONS=True)
     def test_import_transaction_enabled_validation_error(self):
@@ -1208,22 +1207,26 @@ class TestImportSkipConfirm(AdminTestMixin, TransactionTestCase):
 
     @override_settings(IMPORT_EXPORT_USE_TRANSACTIONS=True)
     def test_import_transaction_enabled_core_error(self):
-        # with transactions enabled, a core error should cause the entire import to fail
-        xlsx_index = self._get_input_format_index("xlsx")
-        self._do_import_post(
-            self.book_import_url, "books-empty-author-email.xlsx", xlsx_index
-        )
+        # test that if we send a file with multiple rows,
+        # and transactions is enabled, a core error means that
+        # no instances are persisted
+        index = self._get_input_format_index("json")
+        with mock.patch("core.admin.BookResource.skip_row") as mock_skip:
+            mock_skip.side_effect = [None, ValueError("some unknown error"), None]
+            response = self._do_import_post(self.book_import_url, "books.json", index)
+        self.assertIn("some unknown error", str(response.content))
         self.assertEqual(0, Book.objects.count())
 
     @override_settings(IMPORT_EXPORT_USE_TRANSACTIONS=False)
     def test_import_transaction_disabled_core_error(self):
-        # with transactions disabled, a core (db contraint) error should not cause the
+        # with transactions disabled, a core (db constraint) error should not cause the
         # entire import to fail
-        xlsx_index = self._get_input_format_index("xlsx")
-        self._do_import_post(
-            self.book_import_url, "books-empty-author-email.xlsx", xlsx_index
-        )
-        self.assertEqual(1, Book.objects.count())
+        index = self._get_input_format_index("json")
+        with mock.patch("core.admin.BookResource.skip_row") as mock_skip:
+            mock_skip.side_effect = [None, ValueError("some unknown error"), None]
+            response = self._do_import_post(self.book_import_url, "books.json", index)
+        self.assertIn("some unknown error", str(response.content))
+        self.assertEqual(2, Book.objects.count())
 
     def test_import_action_mac(self):
         self._is_str_in_response(
@@ -1267,12 +1270,10 @@ class MockModelAdmin(ImportExportMixinBase, ModelAdmin):
     change_list_template = "admin/import_export/change_list.html"
 
 
-class TestChangeListView(TestCase):
+class TestChangeListView(AdminTestMixin, TestCase):
     def setUp(self):
+        super().setUp()
         self.factory = RequestFactory()
-        self.user = User.objects.create_superuser(
-            username="testuser", password="password", email="test@example.com"
-        )
         self.model_admin = MockModelAdmin(User, admin.site)
 
     def test_changelist_view_context(self):
