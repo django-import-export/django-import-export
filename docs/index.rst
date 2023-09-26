@@ -43,6 +43,7 @@ exporting data with included admin integration.
    celery
    testing
    faq
+   v4_upgrade
    changelog
 
 .. toctree::
@@ -54,6 +55,7 @@ exporting data with included admin integration.
    api_widgets
    api_fields
    api_instance_loaders
+   api_mixins
    api_tmp_storages
    api_results
    api_forms
