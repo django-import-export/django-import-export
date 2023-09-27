@@ -1,7 +1,7 @@
 Changelog
 =========
 
-Please refer to :ref:`release_notes:v4`.
+Please refer to :doc:`release notes<release_notes>`.
 
 4.0.0-alpha.5 (2023-09-22)
 --------------------------
