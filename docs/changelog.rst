@@ -1,7 +1,7 @@
 Changelog
 =========
 
-Please refer to :ref:`v4_upgrade:v4 upgrade guide`.
+Please refer to :ref:`release_notes:v4`.
 
 4.0.0-alpha.5 (2023-09-22)
 --------------------------

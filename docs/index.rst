@@ -43,7 +43,7 @@ exporting data with included admin integration.
    celery
    testing
    faq
-   v4_upgrade
+   release_notes
    changelog
 
 .. toctree::
