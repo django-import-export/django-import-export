@@ -902,9 +902,9 @@ class Resource(metaclass=DeclarativeMetaclass):
                 try:
                     self.import_instance(instance, row, **kwargs)
                 except ValidationError as e:
-                    # Validation errors from import_obj() are passed on to
-                    # validate_instance(), where they can be combined with model
-                    # instance validation errors if necessary
+                    # Validation errors are passed on to validate_instance(),
+                    # where they can be combined with model instance validation
+                    # errors if necessary
                     import_validation_errors = e.update_error_dict(
                         import_validation_errors
                     )
