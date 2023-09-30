@@ -680,6 +680,9 @@ class ModelResourceTest(TestCase):
         self.assertEqual(result.rows[0].import_type, results.RowResult.IMPORT_TYPE_NEW)
         self.assertIsNotNone(result.rows[0].instance)
         self.assertIsNone(result.rows[0].original)
+        self.assertEqual(1, Book.objects.count())
+        book = Book.objects.first()
+        self.assertEqual(book.pk, result.rows[0].instance.pk)
 
     def test_import_data_update_store_instance(self):
         self.resource = BookResourceWithStoreInstance()
@@ -689,6 +692,9 @@ class ModelResourceTest(TestCase):
         )
         self.assertIsNotNone(result.rows[0].instance)
         self.assertIsNotNone(result.rows[0].original)
+        self.assertEqual(1, Book.objects.count())
+        book = Book.objects.first()
+        self.assertEqual(book.pk, result.rows[0].instance.pk)
 
     @skipUnlessDBFeature("supports_transactions")
     @mock.patch("import_export.resources.connections")
