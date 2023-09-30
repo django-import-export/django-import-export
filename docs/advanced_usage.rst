@@ -415,7 +415,7 @@ The instance pk and representation (i.e. output from ``repr()``) can be accessed
 Access full instance data
 -------------------------
 
-Both 'new', 'updated' and 'deleted' instances can be accessed after import if the
+All 'new', 'updated' and 'deleted' instances can be accessed after import if the
 :attr:`~import_export.resources.ResourceOptions.store_instance` meta attribute is set.
 
 For example, this snippet shows how you can retrieve persisted row data from a result::
