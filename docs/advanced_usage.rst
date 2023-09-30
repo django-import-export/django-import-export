@@ -410,8 +410,6 @@ The instance pk and representation (i.e. output from ``repr()``) can be accessed
     for row_result in result:
         print("%d: %s" % (row_result.object_id, row_result.object_repr))
 
-
-
 Access full instance data
 -------------------------
 
