@@ -2054,7 +2054,7 @@ class BulkTest(TestCase):
                 use_bulk = True
 
         self.resource = _BookResource()
-        rows = [(i, "book_name") for i in range(10)]
+        rows = [(i + 1, "book_name") for i in range(10)]
         self.dataset = tablib.Dataset(*rows, headers=["id", "name"])
 
     def init_update_test_data(self, model=Book):
