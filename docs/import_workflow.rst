@@ -2,25 +2,18 @@
 Import data workflow
 ====================
 
-This document describes the import data workflow in detail, with hooks that
-enable customization of the import process. The central aspect of the import
-process is a resource's :meth:`~import_export.resources.Resource.import_data`
-method which is explained below.
+This document describes the import data workflow in detail, with hooks that enable
+customization of the import process.  Customization of the import process is possible.
+
+Methods highlighted in yellow in the sequence diagram indicate public methods which can
+be overridden.
+
+.. image:: images/import_workflow.svg
+  :alt: Import workflow sequence diagram
 
 The :meth:`~import_export.resources.Resource.import_data` method of
 :class:`~import_export.resources.Resource` is responsible for importing data
-from a given dataset.
-
-``dataset`` is required and expected to be a :class:`tablib.Dataset` with
-a header row.
-
-``dry_run`` is a Boolean which determines if changes to the database are
-made or if the import is only simulated. It defaults to ``False``.
-
-``raise_errors`` is a Boolean. If ``True``, import should raise errors.
-The default is ``False``, which means that eventual errors and traceback
-will be saved in ``Result`` instance.
-
+from a given dataset.  Refer to the method documentation for parameters to this method.
 
 This is what happens when the method is invoked:
 
@@ -34,7 +27,7 @@ This is what happens when the method is invoked:
    ``instance_loader_class`` attribute. A
    :class:`~import_export.instance_loaders.CachedInstanceLoader` can be used to
    reduce number of database queries. See the `source
-   <https://github.com/django-import-export/django-import-export/blob/master/import_export/instance_loaders.py>`_
+   <https://github.com/django-import-export/django-import-export/blob/main/import_export/instance_loaders.py>`_
    for available implementations.
 
 #. The :meth:`~import_export.resources.Resource.before_import` hook is called.
