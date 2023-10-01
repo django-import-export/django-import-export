@@ -3,6 +3,7 @@ import logging
 import traceback
 from collections import OrderedDict
 from copy import deepcopy
+from html import escape
 
 import tablib
 from diff_match_patch import diff_match_patch
@@ -21,6 +22,7 @@ from django.db.models.query import QuerySet
 from django.db.transaction import TransactionManagementError, set_rollback
 from django.utils.encoding import force_str
 from django.utils.safestring import mark_safe
+from exceptions import FieldError
 
 from . import widgets
 from .fields import Field
@@ -383,14 +385,8 @@ class Resource(metaclass=DeclarativeMetaclass):
 
     def get_instance(self, instance_loader, row):
         """
-        If all 'import_id_fields' are present in the dataset, calls
-        the :doc:`InstanceLoader <api_instance_loaders>`. Otherwise,
-        returns `None`.
+        Calls the :doc:`InstanceLoader <api_instance_loaders>`.
         """
-        import_id_fields = [self.fields[f] for f in self.get_import_id_fields()]
-        for field in import_id_fields:
-            if field.column_name not in row:
-                return
         return instance_loader.get_instance(row)
 
     def get_or_init_instance(self, instance_loader, row):
@@ -919,6 +915,7 @@ class Resource(metaclass=DeclarativeMetaclass):
         except Exception as e:
             self.handle_import_error(result, e, raise_errors)
 
+        self._check_import_id_fields(dataset.headers)
         instance_loader = self._meta.instance_loader_class(self, dataset)
 
         # Update the total in case the dataset was altered by before_import()
@@ -1117,6 +1114,17 @@ class Resource(metaclass=DeclarativeMetaclass):
         order = list()
         [order.append(f) for f in defined_fields if f not in order]
         return tuple(order) + tuple(k for k in self.fields if k not in order)
+
+    def _check_import_id_fields(self, headers):
+        import_id_fields = [self.fields[f] for f in self.get_import_id_fields()]
+        for field in import_id_fields:
+            if not headers or field.column_name not in headers:
+                # escape to be safe (exception could end up in logs)
+                col = escape(field.column_name)
+                raise FieldError(
+                    "Field named '%s' is defined as an import_id_field "
+                    "but is not present in dataset" % col
+                )
 
 
 class ModelDeclarativeMetaclass(DeclarativeMetaclass):

@@ -22,6 +22,7 @@ from django.db.utils import ConnectionDoesNotExist
 from django.test import TestCase, TransactionTestCase, skipUnlessDBFeature
 from django.utils.encoding import force_str
 from django.utils.html import strip_tags
+from exceptions import FieldError
 
 from import_export import fields, resources, results, widgets
 from import_export.instance_loaders import ModelInstanceLoader
@@ -400,6 +401,25 @@ class ModelResourceTest(TestCase):
         instance = resource.get_instance(instance_loader, dataset.dict[0])
         self.assertEqual(instance, self.book)
 
+    def test_get_instance_with_custom_column_name_warns_if_not_present(self):
+        class BookResource(resources.ModelResource):
+            name = fields.Field(attribute="name", column_name="book_name")
+
+            class Meta:
+                model = Book
+                import_id_fields = ["name"]
+
+        dataset = tablib.Dataset(
+            *[(self.book.pk, "Some book")], headers=["id", "wrong_name"]
+        )
+        resource = BookResource()
+        with self.assertRaisesRegex(
+            FieldError,
+            "Field named 'book_name' is defined as an import_id_field "
+            "but is not present in dataset",
+        ):
+            resource.import_data(dataset)
+
     def test_get_instance_usually_defers_to_instance_loader(self):
         self.resource._meta.import_id_fields = ["id"]
 
@@ -411,21 +431,21 @@ class ModelResourceTest(TestCase):
             # instance_loader.get_instance() should have been called
             mocked_method.assert_called_once_with(row)
 
-    def test_get_instance_when_id_fields_not_in_dataset(self):
-        self.resource._meta.import_id_fields = ["id"]
-
-        # construct a dataset with a missing "id" column
-        dataset = tablib.Dataset(headers=["name", "author_email", "price"])
-        dataset.append(["Some book", "test@example.com", "10.25"])
-
-        instance_loader = self.resource._meta.instance_loader_class(self.resource)
-
-        with mock.patch.object(instance_loader, "get_instance") as mocked_method:
-            result = self.resource.get_instance(instance_loader, dataset.dict[0])
-            # Resource.get_instance() should return None
-            self.assertIs(result, None)
-            # instance_loader.get_instance() should NOT have been called
-            mocked_method.assert_not_called()
+    # def test_get_instance_when_id_fields_not_in_dataset(self):
+    #     self.resource._meta.import_id_fields = ["id"]
+    #
+    #     # construct a dataset with a missing "id" column
+    #     dataset = tablib.Dataset(headers=["name", "author_email", "price"])
+    #     dataset.append(["Some book", "test@example.com", "10.25"])
+    #
+    #     instance_loader = self.resource._meta.instance_loader_class(self.resource)
+    #
+    #     with mock.patch.object(instance_loader, "get_instance") as mocked_method:
+    #         result = self.resource.get_instance(instance_loader, dataset.dict[0])
+    #         # Resource.get_instance() should return None
+    #         self.assertIs(result, None)
+    #         # instance_loader.get_instance() should NOT have been called
+    #         mocked_method.assert_not_called()
 
     def test_get_export_headers(self):
         headers = self.resource.get_export_headers()
@@ -657,8 +677,12 @@ class ModelResourceTest(TestCase):
 
     def test_import_data_empty_dataset_with_collect_failed_rows(self):
         resource = AuthorResource()
-        result = resource.import_data(tablib.Dataset(), collect_failed_rows=True)
-        self.assertEqual(["Error"], result.failed_dataset.headers)
+        with self.assertRaisesRegex(
+            FieldError,
+            "Field named 'id' is defined as an import_id_field"
+            " but is not present in dataset",
+        ):
+            resource.import_data(tablib.Dataset(), collect_failed_rows=True)
 
     def test_collect_failed_rows(self):
         resource = ProfileResource()
@@ -1841,8 +1865,8 @@ class ManyToManyWidgetDiffTest(TestCase):
     def test_many_to_many_widget_create_with_m2m_being_compared(self):
         # issue 1558 - when the object is a new instance and m2m is
         # evaluated for differences
-        dataset_headers = ["categories"]
-        dataset_row = ["1"]
+        dataset_headers = ["id", "categories"]
+        dataset_row = ["1", "1"]
         dataset = tablib.Dataset(headers=dataset_headers)
         dataset.append(dataset_row)
         book_resource = BookResource()
@@ -2086,8 +2110,8 @@ class BulkTest(TestCase):
                 use_bulk = True
 
         self.resource = _BookResource()
-        rows = [("book_name",)] * 10
-        self.dataset = tablib.Dataset(*rows, headers=["name"])
+        rows = [(i, "book_name") for i in range(10)]
+        self.dataset = tablib.Dataset(*rows, headers=["id", "name"])
 
     def init_update_test_data(self, model=Book):
         [model.objects.create(name="book_name") for _ in range(10)]
