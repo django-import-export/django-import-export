@@ -1277,7 +1277,6 @@ class Resource(metaclass=DeclarativeMetaclass):
             )
 
 
-
 class ModelDeclarativeMetaclass(DeclarativeMetaclass):
     def __new__(cls, name, bases, attrs):
         new_class = super().__new__(cls, name, bases, attrs)
