@@ -1,10 +1,12 @@
 Changelog
 =========
 
+- removed unused variable ``Result.new_record`` (#1640)
+
 4.0.0-alpha.5 (2023-09-22)
 --------------------------
 
-- removed unused variable ``Result.new_record`` (#1640)
+- dynamic widget parameters for CharField fixes 'NOT NULL constraint' error in xlsx (#1485)
 - refactor to export HTML / formulae escaping updates (#1638)
 
 
