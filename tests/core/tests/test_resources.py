@@ -431,22 +431,6 @@ class ModelResourceTest(TestCase):
             # instance_loader.get_instance() should have been called
             mocked_method.assert_called_once_with(row)
 
-    # def test_get_instance_when_id_fields_not_in_dataset(self):
-    #     self.resource._meta.import_id_fields = ["id"]
-    #
-    #     # construct a dataset with a missing "id" column
-    #     dataset = tablib.Dataset(headers=["name", "author_email", "price"])
-    #     dataset.append(["Some book", "test@example.com", "10.25"])
-    #
-    #     instance_loader = self.resource._meta.instance_loader_class(self.resource)
-    #
-    #     with mock.patch.object(instance_loader, "get_instance") as mocked_method:
-    #         result = self.resource.get_instance(instance_loader, dataset.dict[0])
-    #         # Resource.get_instance() should return None
-    #         self.assertIs(result, None)
-    #         # instance_loader.get_instance() should NOT have been called
-    #         mocked_method.assert_not_called()
-
     def test_get_export_headers(self):
         headers = self.resource.get_export_headers()
         self.assertEqual(
