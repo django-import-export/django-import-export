@@ -1,3 +1,6 @@
+# sequence diagram source
+# sequencediagram.org
+
 participant Resource
 participant Result
 participant RowResult
