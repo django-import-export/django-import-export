@@ -3,10 +3,16 @@ Changelog
 
 Please refer to :doc:`release notes<release_notes>`.
 
+4.0.0-alpha.6 (unreleased)
+--------------------------
+
+- removed unused variable ``Result.new_record`` (#1640)
+- Refactor ``resources.py`` to standardise method args (#1641)
+- added specific check for missing ``import_id_fields`` (#1645)
+
 4.0.0-alpha.5 (2023-09-22)
 --------------------------
 
-- Refactor ``resources.py`` to standardise method args (#1641)
 - dynamic widget parameters for CharField fixes 'NOT NULL constraint' error in xlsx (#1485)
 - refactor to export HTML / formulae escaping updates (#1638)
 

@@ -3,6 +3,7 @@ import logging
 import traceback
 from collections import OrderedDict
 from copy import deepcopy
+from html import escape
 
 import tablib
 from diff_match_patch import diff_match_patch
@@ -21,8 +22,10 @@ from django.db.models.query import QuerySet
 from django.db.transaction import TransactionManagementError, set_rollback
 from django.utils.encoding import force_str
 from django.utils.safestring import mark_safe
+from django.utils.translation import gettext_lazy as _
 
 from . import widgets
+from .exceptions import FieldError
 from .fields import Field
 from .instance_loaders import ModelInstanceLoader
 from .results import Error, Result, RowResult
@@ -383,14 +386,8 @@ class Resource(metaclass=DeclarativeMetaclass):
 
     def get_instance(self, instance_loader, row):
         """
-        If all 'import_id_fields' are present in the dataset, calls
-        the :doc:`InstanceLoader <api_instance_loaders>`. Otherwise,
-        returns `None`.
+        Calls the :doc:`InstanceLoader <api_instance_loaders>`.
         """
-        import_id_fields = [self.fields[f] for f in self.get_import_id_fields()]
-        for field in import_id_fields:
-            if field.column_name not in row:
-                return
         return instance_loader.get_instance(row)
 
     def get_or_init_instance(self, instance_loader, row):
@@ -880,7 +877,6 @@ class Resource(metaclass=DeclarativeMetaclass):
                 row_result.import_type = RowResult.IMPORT_TYPE_NEW
             else:
                 row_result.import_type = RowResult.IMPORT_TYPE_UPDATE
-            row_result.new_record = new
             if not skip_diff:
                 original = deepcopy(instance)
                 diff = self.get_diff_class()(self, original, new)
@@ -1033,6 +1029,7 @@ class Resource(metaclass=DeclarativeMetaclass):
         except Exception as e:
             self.handle_import_error(result, e, raise_errors)
 
+        self._check_import_id_fields(dataset.headers)
         instance_loader = self._meta.instance_loader_class(self, dataset)
 
         # Update the total in case the dataset was altered by before_import()
@@ -1261,6 +1258,24 @@ class Resource(metaclass=DeclarativeMetaclass):
 
     def _is_dry_run(self, kwargs):
         return kwargs.get("dry_run", False)
+
+    def _check_import_id_fields(self, headers):
+        import_id_fields = [self.fields[f] for f in self.get_import_id_fields()]
+        missing_fields = list()
+        for field in import_id_fields:
+            if not headers or field.column_name not in headers:
+                # escape to be safe (exception could end up in logs)
+                col = escape(field.column_name)
+                missing_fields.append(col)
+
+        if missing_fields:
+            raise FieldError(
+                _(
+                    "The following import_id_fields are not present in the dataset: %s"
+                    % ", ".join(missing_fields)
+                )
+            )
+
 
 
 class ModelDeclarativeMetaclass(DeclarativeMetaclass):
