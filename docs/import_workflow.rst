@@ -3,7 +3,7 @@ Import data workflow
 ====================
 
 This document describes the import data workflow in detail, with hooks that enable
-customization of the import process.  Customization of the import process is possible.
+customization of the import process.
 
 Methods highlighted in yellow in the sequence diagram indicate public methods which can
 be overridden.
@@ -20,14 +20,13 @@ This is what happens when the method is invoked:
 #. First, a new :class:`~import_export.results.Result` instance, which holds
    errors and other information gathered during the import, is initialized.
 
-   Then, an :class:`~import_export.instance_loaders.InstanceLoader` responsible
+   Then, an :class:`~import_export.instance_loaders.BaseInstanceLoader` responsible
    for loading existing instances is initialized. A different
    :class:`~import_export.instance_loaders.BaseInstanceLoader` can be specified
    via :class:`~import_export.resources.ResourceOptions`'s
    ``instance_loader_class`` attribute. A
    :class:`~import_export.instance_loaders.CachedInstanceLoader` can be used to
-   reduce number of database queries. See the `source
-   <https://github.com/django-import-export/django-import-export/blob/main/import_export/instance_loaders.py>`_
+   reduce number of database queries. See the :mod:`~import_export.instance_loaders`
    for available implementations.
 
 #. The :meth:`~import_export.resources.Resource.before_import` hook is called.
@@ -58,8 +57,8 @@ This is what happens when the method is invoked:
      is stopped at this point.
 
    * If the instance was not deleted in the previous step,
-     :meth:`~import_export.resources.Resource.import_obj` is called with the
-     ``instance`` as current object, ``row`` as current row and ``dry run``.
+     :meth:`~import_export.resources.Resource.import_row` is called with the
+     ``instance`` as current object instance, ``row`` as current row.
 
      :meth:`~import_export.resources.Resource.import_field` is called for
      each field in :class:`~import_export.resources.Resource` skipping many-
@@ -90,8 +89,6 @@ This is what happens when the method is invoked:
        * :meth:`~import_export.resources.Resource.before_save_instance`
        * :meth:`~import_export.resources.Resource.after_save_instance`
 
-     Both methods receive ``instance`` and ``dry_run`` arguments.
-
    * :meth:`~import_export.resources.Resource.save_m2m` is called to save
      many to many fields.
 
@@ -101,7 +98,7 @@ This is what happens when the method is invoked:
      skipped or deleted.
 
      If an exception is raised during row processing and
-     :meth:`~import_export.resources.Resource.import_data` was invoked with
+     :meth:`~import_export.resources.Resource.import_row` was invoked with
      ``raise_errors=False`` (which is the default) the particular traceback
      is appended to :class:`~import_export.results.RowResult` as well.
 
@@ -118,8 +115,8 @@ Transaction support
 -------------------
 
 If transaction support is enabled, whole import process is wrapped inside
-transaction and rollbacked or committed respectively.
-All methods called from inside of ``import_data`` (create / delete / update)
-receive ``False`` for ``dry_run`` argument.
+transaction and rolled back or committed respectively.
+All methods called from inside of :meth:`~import_export.resources.Resource.import_data`
+(create / delete / update) receive ``False`` for ``dry_run`` argument.
 
 .. _Dataset: https://tablib.readthedocs.io/en/stable/api/#dataset-object
