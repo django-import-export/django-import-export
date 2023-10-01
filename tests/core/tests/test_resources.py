@@ -22,9 +22,8 @@ from django.db.utils import ConnectionDoesNotExist
 from django.test import TestCase, TransactionTestCase, skipUnlessDBFeature
 from django.utils.encoding import force_str
 from django.utils.html import strip_tags
-from exceptions import FieldError
 
-from import_export import fields, resources, results, widgets
+from import_export import exceptions, fields, resources, results, widgets
 from import_export.instance_loaders import ModelInstanceLoader
 from import_export.resources import Diff
 
@@ -414,7 +413,7 @@ class ModelResourceTest(TestCase):
         )
         resource = BookResource()
         with self.assertRaisesRegex(
-            FieldError,
+            exceptions.FieldError,
             "Field named 'book_name' is defined as an import_id_field "
             "but is not present in dataset",
         ):
@@ -662,7 +661,7 @@ class ModelResourceTest(TestCase):
     def test_import_data_empty_dataset_with_collect_failed_rows(self):
         resource = AuthorResource()
         with self.assertRaisesRegex(
-            FieldError,
+            exceptions.FieldError,
             "Field named 'id' is defined as an import_id_field"
             " but is not present in dataset",
         ):
