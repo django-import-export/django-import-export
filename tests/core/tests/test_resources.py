@@ -381,44 +381,6 @@ class ModelResourceTest(TestCase):
         instance = resource.get_instance(instance_loader, self.dataset.dict[0])
         self.assertEqual(instance, self.book)
 
-    def test_get_instance_import_id_fields_with_custom_column_name(self):
-        class BookResource(resources.ModelResource):
-            name = fields.Field(
-                attribute="name", column_name="book_name", widget=widgets.CharWidget()
-            )
-
-            class Meta:
-                model = Book
-                import_id_fields = ["name"]
-
-        dataset = tablib.Dataset(headers=["id", "book_name", "author_email", "price"])
-        row = [self.book.pk, "Some book", "test@example.com", "10.25"]
-        dataset.append(row)
-
-        resource = BookResource()
-        instance_loader = resource._meta.instance_loader_class(resource)
-        instance = resource.get_instance(instance_loader, dataset.dict[0])
-        self.assertEqual(instance, self.book)
-
-    def test_get_instance_with_custom_column_name_warns_if_not_present(self):
-        class BookResource(resources.ModelResource):
-            name = fields.Field(attribute="name", column_name="book_name")
-
-            class Meta:
-                model = Book
-                import_id_fields = ["name"]
-
-        dataset = tablib.Dataset(
-            *[(self.book.pk, "Some book")], headers=["id", "wrong_name"]
-        )
-        resource = BookResource()
-        with self.assertRaisesRegex(
-            exceptions.FieldError,
-            "Field named 'book_name' is defined as an import_id_field "
-            "but is not present in dataset",
-        ):
-            resource.import_data(dataset)
-
     def test_get_instance_usually_defers_to_instance_loader(self):
         self.resource._meta.import_id_fields = ["id"]
 
@@ -662,8 +624,7 @@ class ModelResourceTest(TestCase):
         resource = AuthorResource()
         with self.assertRaisesRegex(
             exceptions.FieldError,
-            "Field named 'id' is defined as an import_id_field"
-            " but is not present in dataset",
+            "The following import_id_fields are not present in the dataset: id",
         ):
             resource.import_data(tablib.Dataset(), collect_failed_rows=True)
 
@@ -2879,3 +2840,46 @@ class ImportExportFieldOrderTest(TestCase):
         data = self.resource.export()
         target = f"id,price,name\r\n{self.pk},1.99,Ulysses\r\n"
         self.assertEqual(target, data.csv)
+
+
+class ImportIdFieldsTestCase(TestCase):
+    class BookResource(resources.ModelResource):
+        name = fields.Field(attribute="name", column_name="book_name")
+
+        class Meta:
+            model = Book
+            import_id_fields = ["name"]
+
+    def setUp(self):
+        super().setUp()
+        self.book = Book.objects.create(name="The Hobbit")
+        self.resource = ImportIdFieldsTestCase.BookResource()
+
+    def test_custom_column_name_warns_if_not_present(self):
+        dataset = tablib.Dataset(
+            *[(self.book.pk, "Some book")], headers=["id", "wrong_name"]
+        )
+        with self.assertRaisesRegex(
+            exceptions.FieldError,
+            "The following import_id_fields are not present "
+            "in the dataset: book_name",
+        ):
+            self.resource.import_data(dataset)
+
+    def test_multiple_import_id_fields(self):
+        class BookResource(resources.ModelResource):
+            class Meta:
+                model = Book
+                import_id_fields = ("id", "name", "author_email")
+
+        self.resource = BookResource()
+        dataset = tablib.Dataset(
+            *[(self.book.pk, "Goldeneye", "ian.fleming@example.com")],
+            headers=["A", "name", "B"],
+        )
+        with self.assertRaisesRegex(
+            exceptions.FieldError,
+            "The following import_id_fields are not present "
+            "in the dataset: id, author_email",
+        ):
+            self.resource.import_data(dataset)

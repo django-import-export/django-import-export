@@ -1118,16 +1118,20 @@ class Resource(metaclass=DeclarativeMetaclass):
 
     def _check_import_id_fields(self, headers):
         import_id_fields = [self.fields[f] for f in self.get_import_id_fields()]
+        missing_fields = list()
         for field in import_id_fields:
             if not headers or field.column_name not in headers:
                 # escape to be safe (exception could end up in logs)
                 col = escape(field.column_name)
-                raise FieldError(
-                    _(
-                        "Field named '%s' is defined as an import_id_field "
-                        "but is not present in dataset" % col
-                    )
+                missing_fields.append(col)
+
+        if missing_fields:
+            raise FieldError(
+                _(
+                    "The following import_id_fields are not present in the dataset: %s"
+                    % ", ".join(missing_fields)
                 )
+            )
 
 
 class ModelDeclarativeMetaclass(DeclarativeMetaclass):
