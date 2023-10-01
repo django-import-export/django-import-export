@@ -62,11 +62,6 @@ class RowResult:
         #: This value is only set for updates.
         self.original = None
 
-        #: A boolean flag indicating whether the record is `new` or not.
-        #: Deprecated: use the value of ``import_type`` instead.
-        #: See issue 1586.
-        self.new_record = None
-
     def add_instance_info(self, instance):
         if instance is not None:
             # Add object info to RowResult (e.g. for LogEntry)
