@@ -22,6 +22,7 @@ from django.db.models.query import QuerySet
 from django.db.transaction import TransactionManagementError, set_rollback
 from django.utils.encoding import force_str
 from django.utils.safestring import mark_safe
+from django.utils.translation import gettext_lazy as _
 from exceptions import FieldError
 
 from . import widgets
@@ -1122,8 +1123,10 @@ class Resource(metaclass=DeclarativeMetaclass):
                 # escape to be safe (exception could end up in logs)
                 col = escape(field.column_name)
                 raise FieldError(
-                    "Field named '%s' is defined as an import_id_field "
-                    "but is not present in dataset" % col
+                    _(
+                        "Field named '%s' is defined as an import_id_field "
+                        "but is not present in dataset" % col
+                    )
                 )
 
 
