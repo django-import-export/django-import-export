@@ -1,6 +1,10 @@
 Changelog
 =========
 
+4.0.0-alpha.6 (unreleased)
+--------------------------
+
+- added specific check for missing ``import_id_fields`` (#1645)
 - removed unused variable ``Result.new_record`` (#1640)
 
 4.0.0-alpha.5 (2023-09-22)
