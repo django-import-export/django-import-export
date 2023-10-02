@@ -39,6 +39,7 @@ exporting data with included admin integration.
    getting_started
    advanced_usage
    import_workflow
+   export_workflow
    bulk_import
    celery
    testing

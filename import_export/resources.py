@@ -1184,8 +1184,10 @@ class Resource(metaclass=DeclarativeMetaclass):
     def get_export_fields(self):
         return [self.fields[f] for f in self.get_export_order()]
 
-    def export_resource(self, obj):
-        return [self.export_field(field, obj) for field in self.get_export_fields()]
+    def export_resource(self, instance):
+        return [
+            self.export_field(field, instance) for field in self.get_export_fields()
+        ]
 
     def get_export_headers(self):
         headers = [force_str(field.column_name) for field in self.get_export_fields()]

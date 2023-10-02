@@ -1,5 +1,5 @@
 ====================
-Import data workflow
+Import workflow
 ====================
 
 This document describes the import data workflow in detail, with hooks that enable
