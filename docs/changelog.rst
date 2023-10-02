@@ -1,6 +1,11 @@
 Changelog
 =========
 
+4.0.0-alpha.6 (unreleased)
+--------------------------
+
+- Enable optional tablib dependencies (#1647)
+
 4.0.0-alpha.5 (2023-09-22)
 --------------------------
 
