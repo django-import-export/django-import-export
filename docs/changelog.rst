@@ -6,6 +6,8 @@ Changelog
 
 - Updated Spanish translations (#1639)
 - Added documentation and tests for retrieving instance information after import (#1643)
+- :meth:`~import_export.widgets.NumberWidget.render` returns ``None`` as empty string
+  if ``coerce_to_string`` is True (#)
 
 
 3.3.1 (2023-09-14)

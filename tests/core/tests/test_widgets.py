@@ -300,14 +300,14 @@ class NumberWidgetTest(TestCase):
         self.assertFalse(self.widget.is_empty(0))
 
     def test_render(self):
-        self.assertEqual(self.widget.render(self.value), self.value)
+        self.assertEqual(self.value, self.widget.render(self.value))
 
     @skipUnless(
         django.VERSION[0] < 4, f"skipping django {django.VERSION} version specific test"
     )
     @override_settings(LANGUAGE_CODE="fr-fr", USE_L10N=True)
     def test_locale_render_coerce_to_string_lt4(self):
-        self.assertEqual(self.widget_coerce_to_string.render(self.value), "11,111")
+        self.assertEqual("11,111", self.widget_coerce_to_string.render(self.value))
 
     @skipUnless(
         django.VERSION[0] >= 4,
@@ -315,7 +315,10 @@ class NumberWidgetTest(TestCase):
     )
     @override_settings(LANGUAGE_CODE="fr-fr")
     def test_locale_render_coerce_to_string_gte4(self):
-        self.assertEqual(self.widget_coerce_to_string.render(self.value), "11,111")
+        self.assertEqual("11,111", self.widget_coerce_to_string.render(self.value))
+
+    def test_coerce_to_string_value_is_None(self):
+        self.assertEqual("", self.widget_coerce_to_string.render(None))
 
 
 class FloatWidgetTest(TestCase):
