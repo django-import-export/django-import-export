@@ -448,6 +448,8 @@ You can define your resource to take the associated instance as a param, and the
 
 See also :ref:`advanced_usage:How to dynamically set resource values`.
 
+.. _advanced_data_manipulation_on_export:
+
 Advanced data manipulation on export
 ====================================
 
