@@ -302,6 +302,9 @@ class NumberWidgetTest(TestCase):
     def test_render(self):
         self.assertEqual(self.value, self.widget.render(self.value))
 
+    def test_render_None_coerce_to_string_False(self):
+        self.assertIsNone(self.widget.render(None))
+
     @skipUnless(
         django.VERSION[0] < 4, f"skipping django {django.VERSION} version specific test"
     )
