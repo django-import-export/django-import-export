@@ -503,7 +503,5 @@ class ManyToManyWidget(Widget):
         return self.model.objects.filter(**{"%s__in" % self.field: ids})
 
     def render(self, value, obj=None):
-        if value is None:
-            return ""
         ids = [smart_str(getattr(obj, self.field)) for obj in value.all()]
         return self.separator.join(ids)
