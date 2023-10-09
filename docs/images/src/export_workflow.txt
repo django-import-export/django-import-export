@@ -1,4 +1,4 @@
-# sequencediagram.org
+# see import_workflow.txt
 
 participant Resource
 participant Field

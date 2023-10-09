@@ -1,4 +1,7 @@
-# sequencediagram.org
+# Source for import workflow sequence diagram.
+# This source can be loaded into sequencediagram.org (web app).
+# If this source is changed, then the svg image in 'images/' dir should be regenerated
+# by exporting from the web app.
 
 participant Resource
 participant Result
@@ -37,9 +40,9 @@ activate InstanceLoader
 note over InstanceLoader: Existing Instance is returned if exists,\n otherwise a new Instance is created.
 
 Resource<--InstanceLoader:""Instance""
+deactivate InstanceLoader
 Resource-->Resource:""Instance""
 deactivate Resource
-deactivate InstanceLoader
 Resource-->Resource:""Instance, bool""
 deactivate Resource
 
