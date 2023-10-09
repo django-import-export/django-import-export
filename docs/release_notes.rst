@@ -12,7 +12,7 @@ modify your installation before working with v4.  If you have not overridden any
 methods then you should not be affected by these changes and no changes to your code
 should be necessary.
 
-In both cases, please test thoroughly before deploying v4 to production.
+Test thoroughly before deploying v4 to production.
 
 Refer to
 `this PR <https://github.com/django-import-export/django-import-export/pull/1641/>`_
