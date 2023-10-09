@@ -82,7 +82,6 @@ class Field:
                 "columns are: %s" % (self.column_name, list(row))
             )
 
-        # If ValueError is raised here, import_obj() will handle it
         value = self.widget.clean(value, row=row, **kwargs)
 
         if value in self.empty_values and self.default != NOT_PROVIDED:

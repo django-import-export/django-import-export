@@ -474,14 +474,14 @@ class Resource(metaclass=DeclarativeMetaclass):
     ):
         """
         Takes any validation errors that were raised by
-        :meth:`~import_export.resources.Resource.import_obj`, and combines them
+        :meth:`~import_export.resources.Resource.import_instance`, and combines them
         with validation errors raised by the instance's ``full_clean()``
         method. The combined errors are then re-raised as single, multi-field
         ValidationError.
 
         If the ``clean_model_instances`` option is False, the instances's
         ``full_clean()`` method is not called, and only the errors raised by
-        ``import_obj()`` are re-raised.
+        ``import_instance()`` are re-raised.
         """
         if import_validation_errors is None:
             errors = {}
