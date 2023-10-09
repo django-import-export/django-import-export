@@ -10,9 +10,10 @@ be overridden.
 
 .. image:: images/export_workflow.svg
   :alt: Export workflow sequence diagram
+  :scale: 75%
 
-The :meth:`~import_export.resources.Resource.export` method retrieves a QuerySet from
-the database and formats into a :class:`tablib.Dataset`.
+The :meth:`~import_export.resources.Resource.export` method retrieves a ``QuerySet``
+from the database and formats into a :class:`tablib.Dataset`.
 
 Various hook methods are defined to allow you to customize the export data.
 

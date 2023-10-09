@@ -1,3 +1,5 @@
+# sequencediagram.org
+
 participant Resource
 participant Field
 participant Widget

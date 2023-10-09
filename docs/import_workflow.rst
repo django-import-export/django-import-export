@@ -10,6 +10,7 @@ be overridden.
 
 .. image:: images/import_workflow.svg
   :alt: Import workflow sequence diagram
+  :scale: 75%
 
 The :meth:`~import_export.resources.Resource.import_data` method of
 :class:`~import_export.resources.Resource` is responsible for importing data

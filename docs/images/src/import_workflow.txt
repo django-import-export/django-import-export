@@ -1,4 +1,3 @@
-# sequence diagram source
 # sequencediagram.org
 
 participant Resource
@@ -6,6 +5,7 @@ participant Result
 participant RowResult
 participant InstanceLoader
 participant Field
+participant Widget
 
 Resource->Resource:""import_data(data, \*\*kwargs)""
 activate Resource
@@ -27,7 +27,7 @@ deactivate RowResult
 Resource->Resource:<background:#yellow>""before_import_row(row, \*\*kwargs)""
 
 
-Resource->Resource:<background:#yellow>""get_or_init_instance(instance_loader, row)""
+Resource->Resource:<background:#yellow>""get_or_init_instance(instance_loader, \n    row)""
 activate Resource #lightgrey
 
 Resource->Resource:<background:#yellow>""get_instance(instance_loader, row)""
@@ -43,10 +43,7 @@ deactivate InstanceLoader
 Resource-->Resource:""Instance, bool""
 deactivate Resource
 
-
-
 Resource->Resource:<background:#yellow>""after_init_instance(instance, new, row \n   \*\*kwargs)""
-
 
 Resource->Resource:<background:#yellow>""for_delete(row, instance)""
 activate Resource #lightgrey
@@ -55,14 +52,21 @@ Resource-->Resource:""bool""
 
 deactivate Resource
 
-
 Resource->Resource:""import_instance(instance, row, \*\*kwargs)""
 activate Resource #lightgrey
 
 loop #green each field in row
 Resource->Field:""save(instance, row, is_m2m, \*\*kwargs)""
+note over Field: save logic determines the correct value\nand sets attribute on instance.
+Field->Field:""clean(row, \*\*kwargs)""
+activate Field
+Field->Widget:""clean(value, row, \*\*kwargs)""
+activate Widget
+Field<--Widget:""value""
+deactivate Widget
+deactivate Field
 end
-space
+
 deactivate Resource
 
 Resource->Resource:<background:#yellow>""skip_row(instance, original, row, \n    import_validation_errors)""
