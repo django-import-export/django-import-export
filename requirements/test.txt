@@ -5,4 +5,5 @@ pytz==2023.3
 memory-profiler==0.61.0
 django-extensions==3.2.3
 coverage==7.3.1
+# tablib temporarily using master before v4
 tablib[all]@git+https://github.com/jazzband/tablib.git@master#egg=tablib
