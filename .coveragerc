@@ -5,3 +5,4 @@ source =
 parallel = True
 omit =
   __init__.py
+  _version.py
