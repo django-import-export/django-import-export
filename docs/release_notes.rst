@@ -16,8 +16,8 @@ Installation
 We have modified installation methods to allow for optional dependencies.
 This means that you have to explicitly declare dependencies when installing import_export.
 
-If you are not sure, or want to preserve the pre-v4 behaviour, then ensure that 
-import_export is installed as follows (either in your requirements file (or during 
+If you are not sure, or want to preserve the pre-v4 behaviour, then ensure that
+import_export is installed as follows (either in your requirements file or during
 installation)::
 
   django-import-export[all]
