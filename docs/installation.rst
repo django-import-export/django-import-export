@@ -2,24 +2,26 @@
 Installation and configuration
 ==============================
 
-django-import-export is available on the Python Package Index (PyPI), so it
+import_export is available on the Python Package Index (PyPI), so it
 can be installed with standard Python tools like ``pip`` or ``easy_install``::
 
-    $ pip install django-import-export
+  pip install django-import-export
 
-This will automatically install many formats supported by tablib. If you need
-additional formats like ``cli`` or ``Pandas DataFrame``, you should install the
-appropriate tablib dependencies (e.g. ``pip install tablib[pandas]``). Read
-more on the `tablib format documentation page`_.
+This will automatically install the default formats supported by tablib.
+If you need additional formats you should install the extra dependencies as required
+appropriate tablib dependencies (e.g. ``pip install django-import-export[xlsx]``).
 
-.. _tablib format documentation page: https://tablib.readthedocs.io/en/stable/formats.html
+To install all available formats, use ``pip install django-import-export[all]``.
+
+For all formats, see the
+`tablib documentation <https://tablib.readthedocs.io/en/stable/formats.html>`_.
 
 Alternatively, you can install the git repository directly to obtain the
 development version::
 
-    $ pip install -e git+https://github.com/django-import-export/django-import-export.git#egg=django-import-export
+  pip install -e git+https://github.com/django-import-export/django-import-export.git#egg=django-import-export
 
-Now, you're good to go, unless you want to use django-import-export from the
+Now, you're good to go, unless you want to use import_export from the
 admin as well. In this case, you need to add it to your ``INSTALLED_APPS`` and
 let Django collect its static files.
 
@@ -36,7 +38,7 @@ let Django collect its static files.
     $ python manage.py collectstatic
 
 All prerequisites are set up! See :doc:`getting_started` to learn how to use
-django-import-export in your project.
+import_export in your project.
 
 
 
@@ -199,7 +201,7 @@ The values must be those provided in ``import_export.formats.base_formats`` e.g
 Example app
 ===========
 
-There's an example application that showcases what django-import-export can do.
+There's an example application that showcases what import_export can do.
 It's assumed that you have set up a Python ``venv`` with all required dependencies
 (from ``test.txt`` requirements file) and are able to run Django locally.
 

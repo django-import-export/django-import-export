@@ -5,25 +5,41 @@ Release Notes
 v4
 ==
 
-v4 of import-export (released Q4 2023) contains a number of minor changes to the API.
+v4 introduces breaking changes in order to address some long-standing issues.
+In all cases, please test thoroughly before deploying v4 to production.
+
+This guide describes the major changes and how to upgrade.
+
+Installation
+============
+
+We have modified installation methods to allow for optional dependencies.
+This means that you have to explicitly declare dependencies when installing import_export.
+
+If you are not sure, or want to preserve the pre-v4 behaviour, then ensure that 
+import_export is installed as follows (either in your requirements file (or during 
+installation)::
+
+  django-import-export[all]
+
+API changes
+===========
+
+v4 of import_export (released Q4 2023) contains a number of minor changes to the API.
 
 If you have customized import-export by overriding methods, then you will have to
 modify your installation before working with v4.  If you have not overridden any
 methods then you should not be affected by these changes and no changes to your code
 should be necessary.
 
+The API changes include changes to method arguments, although some method names have
+changed.
+
 Test thoroughly before deploying v4 to production.
 
 Refer to
 `this PR <https://github.com/django-import-export/django-import-export/pull/1641/>`_
 for more information.
-
-This guide describes the major changes and how to upgrade.
-
-API changes
-===========
-
-The API changes mostly change method arguments, although some method names have changed.
 
 Methods which process row data have been updated so that method args are standardized.
 This has been done to resolve inconsistency issues where the parameters differed between
