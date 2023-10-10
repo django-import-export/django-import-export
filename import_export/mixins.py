@@ -69,8 +69,8 @@ class BaseImportMixin(BaseImportExportMixin):
         """
         return [f for f in self.import_formats if f().can_import()]
 
-    def get_import_resource_kwargs(self, request, *args, **kwargs):
-        return self.get_resource_kwargs(request, *args, **kwargs)
+    def get_import_resource_kwargs(self, request, **kwargs):
+        return self.get_resource_kwargs(request, **kwargs)
 
     def choose_import_resource_class(self, form):
         resource_index = self.get_resource_index(form)
@@ -98,17 +98,15 @@ class BaseExportMixin(BaseImportExportMixin):
         resource_index = self.get_resource_index(form)
         return self.get_export_resource_classes()[resource_index]
 
-    def get_export_resource_kwargs(self, request, *args, **kwargs):
-        return self.get_resource_kwargs(request, *args, **kwargs)
+    def get_export_resource_kwargs(self, request, **kwargs):
+        return self.get_resource_kwargs(request, **kwargs)
 
-    def get_data_for_export(self, request, queryset, *args, **kwargs):
+    def get_data_for_export(self, request, queryset, **kwargs):
         export_form = kwargs.get("export_form")
         export_class = self.choose_export_resource_class(export_form)
-        export_resource_kwargs = self.get_export_resource_kwargs(
-            request, *args, **kwargs
-        )
+        export_resource_kwargs = self.get_export_resource_kwargs(request, **kwargs)
         cls = export_class(**export_resource_kwargs)
-        export_data = cls.export(*args, queryset=queryset, **kwargs)
+        export_data = cls.export(queryset=queryset, **kwargs)
         return export_data
 
     def get_export_filename(self, file_format):

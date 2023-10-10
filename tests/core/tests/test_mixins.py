@@ -218,12 +218,11 @@ class MixinModelAdminTest(TestCase):
 
 class BaseExportMixinTest(TestCase):
     class TestBaseExportMixin(mixins.BaseExportMixin):
-        def get_export_resource_kwargs(self, request, *args, **kwargs):
-            self.args = args
+        def get_export_resource_kwargs(self, request, **kwargs):
             self.kwargs = kwargs
-            return super().get_resource_kwargs(request, *args, **kwargs)
+            return super().get_resource_kwargs(request, **kwargs)
 
-    def test_get_data_for_export_sets_args_and_kwargs(self):
+    def test_get_data_for_export_sets_kwargs(self):
         """
         issue 1268
         Ensure that get_export_resource_kwargs() handles the args and kwargs arguments.
@@ -231,12 +230,8 @@ class BaseExportMixinTest(TestCase):
         request = MagicMock(spec=HttpRequest)
         m = self.TestBaseExportMixin()
         m.model = Book
-        target_args = (1,)
         target_kwargs = {"a": 1}
-        m.get_data_for_export(
-            request, Book.objects.none(), *target_args, **target_kwargs
-        )
-        self.assertEqual(m.args, target_args)
+        m.get_data_for_export(request, Book.objects.none(), **target_kwargs)
         self.assertEqual(m.kwargs, target_kwargs)
 
     def test_get_export_formats(self):

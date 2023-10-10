@@ -16,8 +16,9 @@ Installation
 We have modified installation methods to allow for optional dependencies.
 This means that you have to explicitly declare dependencies when installing import-export.
 
-If you are not sure, or want to preserve the pre-v4 behaviour, then change the following
-in your requirements file (or during installation)::
+If you are not sure, or want to preserve the pre-v4 behaviour, then ensure that 
+import-export is installed as follows (either in your requirements file (or during 
+installation)::
 
   django-import-export[all]
 
@@ -31,7 +32,10 @@ modify your installation before working with v4.  If you have not overridden any
 methods then you should not be affected by these changes and no changes to your code
 should be necessary.
 
-The API changes mostly change method arguments, although some method names have changed.
+The API changes include changes to method arguments, although some method names have
+changed.
+
+Test thoroughly before deploying v4 to production.
 
 Refer to
 `this PR <https://github.com/django-import-export/django-import-export/pull/1641/>`_
