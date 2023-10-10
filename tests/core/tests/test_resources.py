@@ -115,7 +115,8 @@ class ResourceTestCase(TestCase):
     def test_default_after_import(self):
         self.assertIsNone(
             self.my_resource.after_import(
-                tablib.Dataset(), results.Result(), False, False
+                tablib.Dataset(),
+                results.Result(),
             )
         )
 
@@ -226,10 +227,12 @@ class BookResourceWithLineNumberLogger(BookResource):
         self.after_lines = []
         return super().__init__(*args, **kwargs)
 
-    def before_import_row(self, row, row_number=None, **kwargs):
+    def before_import_row(self, row, **kwargs):
+        row_number = kwargs.pop("row_number")
         self.before_lines.append(row_number)
 
-    def after_import_row(self, row, row_result, row_number=None, **kwargs):
+    def after_import_row(self, row, row_result, **kwargs):
+        row_number = kwargs.pop("row_number")
         self.after_lines.append(row_number)
 
 
@@ -428,16 +431,14 @@ class ModelResourceTest(TestCase):
 
     def test_export_handles_named_queryset_parameter(self):
         class _BookResource(BookResource):
-            def before_export(self, queryset, *args, **kwargs):
+            def before_export(self, queryset, **kwargs):
                 self.qs = queryset
-                self.args_ = args
                 self.kwargs_ = kwargs
 
         self.resource = _BookResource()
         # when queryset is supplied, it should be passed to before_export()
-        self.resource.export(1, 2, 3, queryset=Book.objects.all(), **{"a": 1})
+        self.resource.export(queryset=Book.objects.all(), **{"a": 1})
         self.assertEqual(Book.objects.count(), len(self.resource.qs))
-        self.assertEqual((1, 2, 3), self.resource.args_)
         self.assertEqual(dict(a=1), self.resource.kwargs_)
 
     def test_iter_queryset(self):
@@ -834,24 +835,25 @@ class ModelResourceTest(TestCase):
 
     def test_save_instance_with_dry_run_flag(self):
         class B(BookResource):
-            def before_save_instance(self, instance, using_transactions, dry_run):
-                super().before_save_instance(instance, using_transactions, dry_run)
+            def before_save_instance(self, instance, row, **kwargs):
+                super().before_save_instance(instance, row, **kwargs)
+                dry_run = kwargs.get("dry_run", False)
                 if dry_run:
                     self.before_save_instance_dry_run = True
                 else:
                     self.before_save_instance_dry_run = False
 
-            def save_instance(
-                self, instance, new, using_transactions=True, dry_run=False
-            ):
-                super().save_instance(instance, new, using_transactions, dry_run)
+            def save_instance(self, instance, new, row, **kwargs):
+                super().save_instance(instance, new, row, **kwargs)
+                dry_run = kwargs.get("dry_run", False)
                 if dry_run:
                     self.save_instance_dry_run = True
                 else:
                     self.save_instance_dry_run = False
 
-            def after_save_instance(self, instance, using_transactions, dry_run):
-                super().after_save_instance(instance, using_transactions, dry_run)
+            def after_save_instance(self, instance, row, **kwargs):
+                super().after_save_instance(instance, row, **kwargs)
+                dry_run = kwargs.get("dry_run", False)
                 if dry_run:
                     self.after_save_instance_dry_run = True
                 else:
@@ -872,14 +874,16 @@ class ModelResourceTest(TestCase):
     def test_save_instance_noop(self, mock_book):
         book = Book.objects.first()
         self.resource.save_instance(
-            book, is_create=False, using_transactions=False, dry_run=True
+            book, False, None, using_transactions=False, dry_run=True
         )
         self.assertEqual(0, mock_book.call_count)
 
     @mock.patch("core.models.Book.save")
     def test_delete_instance_noop(self, mock_book):
         book = Book.objects.first()
-        self.resource.delete_instance(book, using_transactions=False, dry_run=True)
+        self.resource.delete_instance(
+            book, None, using_transactions=False, dry_run=True
+        )
         self.assertEqual(0, mock_book.call_count)
 
     def test_delete_instance_with_dry_run_flag(self):
@@ -889,22 +893,25 @@ class ModelResourceTest(TestCase):
             def for_delete(self, row, instance):
                 return self.fields["delete"].clean(row)
 
-            def before_delete_instance(self, instance, dry_run):
-                super().before_delete_instance(instance, dry_run)
+            def before_delete_instance(self, instance, row, **kwargs):
+                super().before_delete_instance(instance, row, **kwargs)
+                dry_run = kwargs.get("dry_run", False)
                 if dry_run:
                     self.before_delete_instance_dry_run = True
                 else:
                     self.before_delete_instance_dry_run = False
 
-            def delete_instance(self, instance, using_transactions=True, dry_run=False):
-                super().delete_instance(instance, using_transactions, dry_run)
+            def delete_instance(self, instance, row, **kwargs):
+                super().delete_instance(instance, row, **kwargs)
+                dry_run = kwargs.get("dry_run", False)
                 if dry_run:
                     self.delete_instance_dry_run = True
                 else:
                     self.delete_instance_dry_run = False
 
-            def after_delete_instance(self, instance, dry_run):
-                super().after_delete_instance(instance, dry_run)
+            def after_delete_instance(self, instance, row, **kwargs):
+                super().after_delete_instance(instance, row, **kwargs)
+                dry_run = kwargs.get("dry_run", False)
                 if dry_run:
                     self.after_delete_instance_dry_run = True
                 else:
@@ -1201,7 +1208,7 @@ class ModelResourceTest(TestCase):
 
     def test_before_import_access_to_kwargs(self):
         class B(BookResource):
-            def before_import(self, dataset, using_transactions, dry_run, **kwargs):
+            def before_import(self, dataset, **kwargs):
                 if "extra_arg" in kwargs:
                     dataset.headers[dataset.headers.index("author_email")] = "old_email"
                     dataset.insert_col(
@@ -1219,7 +1226,7 @@ class ModelResourceTest(TestCase):
 
     def test_before_import_raises_error(self):
         class B(BookResource):
-            def before_import(self, dataset, using_transactions, dry_run, **kwargs):
+            def before_import(self, dataset, **kwargs):
                 raise Exception("This is an invalid dataset")
 
         resource = B()
@@ -1331,7 +1338,9 @@ class ModelResourceTest(TestCase):
                 model = Entry
                 fields = ("id",)
 
-            def after_save_instance(self, instance, using_transactions, dry_run):
+            def after_save_instance(self, instance, row, **kwargs):
+                using_transactions = kwargs.get("using_transactions", False)
+                dry_run = kwargs.get("dry_run", False)
                 if not using_transactions and dry_run:
                     # we don't have transactions and we want to do a dry_run
                     pass

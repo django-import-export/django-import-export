@@ -177,12 +177,10 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         **kwargs,
     ):
         res_kwargs = self.get_import_resource_kwargs(
-            request, *args, form=confirm_form, **kwargs
+            request, form=confirm_form, **kwargs
         )
         resource = self.choose_import_resource_class(confirm_form)(**res_kwargs)
-        imp_kwargs = self.get_import_data_kwargs(
-            request, *args, form=confirm_form, **kwargs
-        )
+        imp_kwargs = self.get_import_data_kwargs(request, form=confirm_form, **kwargs)
 
         return resource.import_data(
             dataset,
@@ -472,7 +470,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
                 if not import_form.errors:
                     # prepare kwargs for import data, if needed
                     res_kwargs = self.get_import_resource_kwargs(
-                        request, *args, form=import_form, **kwargs
+                        request, form=import_form, **kwargs
                     )
                     resource = self.choose_import_resource_class(import_form)(
                         **res_kwargs
@@ -500,7 +498,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
                         )
         else:
             res_kwargs = self.get_import_resource_kwargs(
-                request, *args, form=import_form, **kwargs
+                request, form=import_form, **kwargs
             )
             resource_classes = self.get_import_resource_classes()
             resources = [
