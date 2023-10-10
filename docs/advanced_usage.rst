@@ -399,6 +399,47 @@ For example, you can use the 'isbn' number instead of 'id' to uniquely identify 
     field(s) select more than one row, then a ``MultipleObjectsReturned`` exception will be raised.  If no row is
     identified, then ``DoesNotExist`` exception will be raised.
 
+Access instances after import
+=============================
+
+Access instance summary data
+----------------------------
+
+The instance pk and representation (i.e. output from ``repr()``) can be accessed after import::
+
+    rows = [
+        (1, 'Lord of the Rings'),
+    ]
+    dataset = tablib.Dataset(*rows, headers=['id', 'name'])
+    resource = BookResource()
+    result = resource.import_data(dataset)
+
+    for row_result in result:
+        print("%d: %s" % (row_result.object_id, row_result.object_repr))
+
+Access full instance data
+-------------------------
+
+All 'new', 'updated' and 'deleted' instances can be accessed after import if the
+:attr:`~import_export.resources.ResourceOptions.store_instance` meta attribute is set.
+
+For example, this snippet shows how you can retrieve persisted row data from a result::
+
+    class BookResourceWithStoreInstance(resources.ModelResource):
+        class Meta:
+            model = Book
+            store_instance = True
+
+    rows = [
+        (1, 'Lord of the Rings'),
+    ]
+    dataset = tablib.Dataset(*rows, headers=['id', 'name'])
+    resource = BookResourceWithStoreInstance()
+    result = resource.import_data(dataset)
+
+    for row_result in result:
+        print(row_result.instance.pk)
+
 Handling duplicate data
 =======================
 
