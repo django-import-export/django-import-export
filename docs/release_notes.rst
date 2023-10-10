@@ -14,10 +14,10 @@ Installation
 ============
 
 We have modified installation methods to allow for optional dependencies.
-This means that you have to explicitly declare dependencies when installing import-export.
+This means that you have to explicitly declare dependencies when installing import_export.
 
 If you are not sure, or want to preserve the pre-v4 behaviour, then ensure that 
-import-export is installed as follows (either in your requirements file (or during 
+import_export is installed as follows (either in your requirements file (or during 
 installation)::
 
   django-import-export[all]
@@ -25,7 +25,7 @@ installation)::
 API changes
 ===========
 
-v4 of import-export (released Q4 2023) contains a number of minor changes to the API.
+v4 of import_export (released Q4 2023) contains a number of minor changes to the API.
 
 If you have customized import-export by overriding methods, then you will have to
 modify your installation before working with v4.  If you have not overridden any
