@@ -10,6 +10,7 @@ Please refer to :doc:`release notes<release_notes>`.
 - Refactor ``resources.py`` to standardise method args (#1641)
 - added specific check for missing ``import_id_fields`` (#1645)
 - Enable optional tablib dependencies (#1647)
+- Removed unused method ``utils.original()``
 
 4.0.0-alpha.5 (2023-09-22)
 --------------------------
@@ -24,9 +25,9 @@ Please refer to :doc:`release notes<release_notes>`.
 - Refactor ordering logic (#1626)
 
   - Refactor 'diff' logic to avoid calling dehydrate methods
-  
+
   - Refactor declarations of ``fields``, ``import_order`` and ``export_order`` to fix ordering issues
-  
+
 - Updated Spanish translations (#1639)
 - Added documentation and tests for retrieving instance information after import (#1643)
 - :meth:`~import_export.widgets.NumberWidget.render` returns ``None`` as empty string
