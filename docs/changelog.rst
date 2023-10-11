@@ -6,6 +6,8 @@ Please refer to :doc:`release notes<release_notes>`.
 4.0.0-alpha.6 (unreleased)
 --------------------------
 
+- added :meth:`~import_export.widgets.ForeignKeyWidget.get_lookup_kwargs` to make it easier to override object
+  lookup (#)
 - removed unused variable ``Result.new_record`` (#1640)
 - Refactor ``resources.py`` to standardise method args (#1641)
 - added specific check for missing ``import_id_fields`` (#1645)

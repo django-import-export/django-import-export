@@ -483,6 +483,19 @@ class ForeignKeyWidgetTest(TestCase):
         with self.assertRaises(TypeError):
             birthday_widget.clean("Foo", row=row_dict, row_number=1)
 
+    def test_lookup_multiple_columns(self):
+        # issue 1516 - override the values used to lookup an entry
+        class BirthdayWidget(widgets.ForeignKeyWidget):
+            def get_lookup_kwargs(self, value, row, *args, **kwargs):
+                return {"name": row["name"], "birthday": row["birthday"]}
+
+        target_author = Author.objects.create(name="James Joyce", birthday="1882-02-02")
+        row_dict = {"name": "James Joyce", "birthday": "1882-02-02"}
+        birthday_widget = BirthdayWidget(Author, "name")
+        # prove that the overridden kwargs identify a row
+        res = birthday_widget.clean("non-existent name", row=row_dict)
+        self.assertEqual(target_author, res)
+
     def test_render_handles_value_error(self):
         class TestObj(object):
             @property
