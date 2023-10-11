@@ -4,6 +4,7 @@ import uuid
 
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils import timezone
 
 
 class AuthorManager(models.Manager):
@@ -24,7 +25,7 @@ class Author(models.Model):
     objects = AuthorManager()
 
     name = models.CharField(max_length=100)
-    birthday = models.DateTimeField(auto_now_add=True)
+    birthday = models.DateTimeField(default=timezone.now)
 
     def natural_key(self):
         """

@@ -422,8 +422,12 @@ class ForeignKeyWidget(Widget):
         Overwrite this method if you want to limit the pool of objects from
         which the related object is retrieved.
 
-        :param value: The field's value in the datasource.
-        :param row: The datasource's current row.
+        :param value: The field's value in the dataset.
+        :param row: The dataset's current row.
+        :param \\*args:
+            Optional args.
+        :param \\**kwargs:
+            Optional kwargs.
 
         As an example; if you'd like to have ForeignKeyWidget look up a Person
         by their pre- **and** lastname column, you could subclass the widget
@@ -439,6 +443,16 @@ class ForeignKeyWidget(Widget):
         return self.model.objects.all()
 
     def clean(self, value, row=None, **kwargs):
+        """
+        Return a single Foreign Key instance derived from the args.
+        ``None`` can be returned if the value passed is a null value.
+
+        :param value: The field's value in the dataset.
+        :param row: The dataset's current row.
+        :param \\**kwargs:
+            Optional kwargs.
+        :raises: ``ObjectDoesNotExist`` if no valid instance can be found.
+        """
         val = super().clean(value)
         if val:
             if self.use_natural_foreign_keys:
@@ -446,9 +460,22 @@ class ForeignKeyWidget(Widget):
                 value = json.loads(value)
                 return self.model.objects.get_by_natural_key(*value)
             else:
-                return self.get_queryset(value, row, **kwargs).get(**{self.field: val})
+                lookup_kwargs = self.get_lookup_kwargs(value, row, **kwargs)
+                return self.get_queryset(value, row, **kwargs).get(**lookup_kwargs)
         else:
             return None
+
+    def get_lookup_kwargs(self, value, row, **kwargs):
+        """
+        Returns the key value pairs used to identify a model instance.
+        Override this to customize instance look up.
+
+        :param value: The field's value in the dataset.
+        :param row: The dataset's current row.
+        :param \\**kwargs:
+            Optional kwargs.
+        """
+        return {self.field: value}
 
     def render(self, value, obj=None):
         if value is None:
