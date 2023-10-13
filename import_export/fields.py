@@ -142,8 +142,8 @@ class Field:
         representation.
         """
         value = self.get_value(instance)
-        if value is None:
-            return ""
+        # if value is None:
+        #     return ""
         return self.widget.render(value, instance)
 
     def get_dehydrate_method(self, field_name=None):

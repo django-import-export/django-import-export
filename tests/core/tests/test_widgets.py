@@ -609,6 +609,9 @@ class ManyToManyWidget(TestCase):
             "%s,%s" % (self.cat1.name, self.cat2.name),
         )
 
+    def test_render_value_is_None(self):
+        self.assertEquals("", self.widget.render(None))
+
 
 class JSONWidgetTest(TestCase):
     def setUp(self):
