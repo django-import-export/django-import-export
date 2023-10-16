@@ -14,25 +14,27 @@ class ExportViewMixinTest(TestCase):
         cleaned_data = dict()
 
     def setUp(self):
-        self.url = reverse('export-category')
-        self.cat1 = Category.objects.create(name='Cat 1')
-        self.cat2 = Category.objects.create(name='Cat 2')
-        self.form = ExportViewMixinTest.TestExportForm(formats.base_formats.DEFAULT_FORMATS)
+        self.url = reverse("export-category")
+        self.cat1 = Category.objects.create(name="Cat 1")
+        self.cat2 = Category.objects.create(name="Cat 2")
+        self.form = ExportViewMixinTest.TestExportForm(
+            formats.base_formats.DEFAULT_FORMATS
+        )
         self.form.cleaned_data["file_format"] = "0"
 
     def test_get(self):
         response = self.client.get(self.url)
         self.assertContains(response, self.cat1.name, status_code=200)
-        self.assertEqual(response['Content-Type'], 'text/html; charset=utf-8')
+        self.assertEqual(response["Content-Type"], "text/html; charset=utf-8")
 
     def test_post(self):
         data = {
-            'file_format': '0',
+            "file_format": "0",
         }
         response = self.client.post(self.url, data)
         self.assertContains(response, self.cat1.name, status_code=200)
         self.assertTrue(response.has_header("Content-Disposition"))
-        self.assertEqual(response['Content-Type'], 'text/csv')
+        self.assertEqual(response["Content-Type"], "text/csv")
 
     def test_get_response_raises_TypeError_when_content_type_kwarg_used(self):
         """
@@ -54,14 +56,19 @@ class ExportViewMixinTest(TestCase):
             # on first instantiation, raise TypeError, on second, return mock
             mock_http_response.side_effect = [TypeError(), mock_http_response]
             m.form_valid(self.form)
-            self.assertEqual(content_type, mock_http_response.call_args_list[0][1]["content_type"])
-            self.assertEqual(content_type, mock_http_response.call_args_list[1][1]["mimetype"])
+            self.assertEqual(
+                content_type, mock_http_response.call_args_list[0][1]["content_type"]
+            )
+            self.assertEqual(
+                content_type, mock_http_response.call_args_list[1][1]["mimetype"]
+            )
 
     def test_implements_get_filterset(self):
         """
         test that if the class-under-test defines a get_filterset()
         method, then this is called as required.
         """
+
         class TestMixin(mixins.ExportViewFormMixin):
             mock_get_filterset_call_count = 0
             mock_get_filterset_class_call_count = 0
@@ -87,7 +94,6 @@ class ExportViewMixinTest(TestCase):
 
 
 class BaseImportMixinTest(TestCase):
-
     def test_get_import_formats(self):
         class Format(object):
             def __init__(self, id, can_import):
@@ -105,12 +111,16 @@ class BaseImportMixinTest(TestCase):
             def __init__(self):
                 super().__init__(2, False)
 
-        m = mixins.BaseImportMixin()
-        m.formats = [CanImportFormat, CannotImportFormat]
+        class TestBaseImportMixin(mixins.BaseImportMixin):
+            @property
+            def import_formats(self):
+                return [CanImportFormat, CannotImportFormat]
+
+        m = TestBaseImportMixin()
 
         formats = m.get_import_formats()
         self.assertEqual(1, len(formats))
-        self.assertEqual('CanImportFormat', formats[0].__name__)
+        self.assertEqual("CanImportFormat", formats[0].__name__)
 
 
 class FooResource(resources.Resource):
@@ -119,10 +129,11 @@ class FooResource(resources.Resource):
 
 class MixinModelAdminTest(TestCase):
     """
-    Tests for regression where methods in ModelAdmin with BaseImportMixin / BaseExportMixin
-    do not get called.
+    Tests for regression where methods in ModelAdmin with
+    BaseImportMixin / BaseExportMixin do not get called.
     see #1315.
     """
+
     request = MagicMock(spec=HttpRequest)
 
     class BaseImportModelAdminTest(mixins.BaseImportMixin):
@@ -175,24 +186,28 @@ class MixinModelAdminTest(TestCase):
             self.import_call_count += 1
 
     def test_deprecated_resource_class_raises_warning(self):
-        """ Test that the mixin throws error if user didn't migrate to resource_classes """
+        """Test that the mixin throws error if user didn't
+        migrate to resource_classes"""
         admin = self.BaseModelResourceClassTest()
         with self.assertWarnsRegex(
-                DeprecationWarning,
-                r"^The 'get_export_resource_class\(\)' method has been deprecated. "
-                r"Please implement the new 'get_export_resource_classes\(\)' method$"):
+            DeprecationWarning,
+            r"^The 'get_export_resource_class\(\)' method has been deprecated. "
+            r"Please implement the new 'get_export_resource_classes\(\)' method$",
+        ):
             admin.get_export_resource_classes()
 
         with self.assertWarnsRegex(
-                DeprecationWarning,
-                r"^The 'get_import_resource_class\(\)' method has been deprecated. "
-                r"Please implement the new 'get_import_resource_classes\(\)' method$"):
+            DeprecationWarning,
+            r"^The 'get_import_resource_class\(\)' method has been deprecated. "
+            r"Please implement the new 'get_import_resource_classes\(\)' method$",
+        ):
             admin.get_import_resource_classes()
 
         with self.assertWarnsRegex(
-                DeprecationWarning,
-                r"^The 'resource_class' field has been deprecated. "
-                r"Please implement the new 'resource_classes' field$"):
+            DeprecationWarning,
+            r"^The 'resource_class' field has been deprecated. "
+            r"Please implement the new 'resource_classes' field$",
+        ):
             self.assertEqual(admin.get_resource_classes(), [resources.Resource])
 
         self.assertEqual(1, admin.export_call_count)
@@ -203,23 +218,25 @@ class MixinModelAdminTest(TestCase):
             pass
 
     def test_deprecated_get_resource_class_raises_warning(self):
-        """ Test that the mixin throws error if user didn't migrate to resource_classes """
+        """Test that the mixin throws error if user
+        didn't migrate to resource_classes"""
         admin = self.BaseModelGetExportResourceClassTest()
         with self.assertWarnsRegex(
-                DeprecationWarning,
-                r"^The 'get_resource_class\(\)' method has been deprecated. "
-                r"Please implement the new 'get_resource_classes\(\)' method$"):
+            DeprecationWarning,
+            r"^The 'get_resource_class\(\)' method has been deprecated. "
+            r"Please implement the new 'get_resource_classes\(\)' method$",
+        ):
             admin.get_resource_classes()
 
     class BaseModelAdminFaultyResourceClassesTest(mixins.BaseExportMixin):
         resource_classes = resources.Resource
 
     def test_faulty_resource_class_raises_exception(self):
-        """ Test fallback mechanism to old get_export_resource_class() method """
+        """Test fallback mechanism to old get_export_resource_class() method"""
         admin = self.BaseModelAdminFaultyResourceClassesTest()
         with self.assertRaisesRegex(
-                Exception,
-                r"^The resource_classes field type must be subscriptable"):
+            Exception, r"^The resource_classes field type must be subscriptable"
+        ):
             admin.get_export_resource_classes()
 
     class BaseModelAdminBothResourceTest(mixins.BaseExportMixin):
@@ -229,11 +246,11 @@ class MixinModelAdminTest(TestCase):
         resource_classes = [resources.Resource]
 
     def test_both_resource_class_raises_exception(self):
-        """ Test fallback mechanism to old get_export_resource_class() method """
+        """Test fallback mechanism to old get_export_resource_class() method"""
         admin = self.BaseModelAdminBothResourceTest()
         with self.assertRaisesRegex(
-                Exception,
-                "Only one of 'resource_class' and 'resource_classes' can be set"):
+            Exception, "Only one of 'resource_class' and 'resource_classes' can be set"
+        ):
             admin.get_export_resource_classes()
 
     class BaseModelExportChooseTest(mixins.BaseExportMixin):
@@ -241,11 +258,11 @@ class MixinModelAdminTest(TestCase):
 
     @mock.patch("import_export.admin.ExportForm")
     def test_choose_export_resource_class(self, form):
-        """ Test choose_export_resource_class() method """
+        """Test choose_export_resource_class() method"""
         admin = self.BaseModelExportChooseTest()
         self.assertEqual(admin.choose_export_resource_class(form), resources.Resource)
 
-        form.cleaned_data = {'resource': 1}
+        form.cleaned_data = {"resource": 1}
         self.assertEqual(admin.choose_export_resource_class(form), FooResource)
 
     class BaseModelImportChooseTest(mixins.BaseImportMixin):
@@ -253,15 +270,14 @@ class MixinModelAdminTest(TestCase):
 
     @mock.patch("import_export.admin.ImportForm")
     def test_choose_import_resource_class(self, form):
-        """ Test choose_import_resource_class() method """
+        """Test choose_import_resource_class() method"""
         admin = self.BaseModelImportChooseTest()
         self.assertEqual(admin.choose_import_resource_class(form), resources.Resource)
 
-        form.cleaned_data = {'resource': 1}
+        form.cleaned_data = {"resource": 1}
         self.assertEqual(admin.choose_import_resource_class(form), FooResource)
 
     class BaseModelResourceClassOldTest(mixins.BaseImportMixin, mixins.BaseExportMixin):
-
         def get_resource_class(self):
             return FooResource
 
@@ -273,14 +289,16 @@ class MixinModelAdminTest(TestCase):
         """
         admin = self.BaseModelResourceClassOldTest()
         with self.assertWarnsRegex(
-                DeprecationWarning,
-                r"^The 'get_resource_class\(\)' method has been deprecated. "
-                r"Please implement the new 'get_resource_classes\(\)' method$"):
+            DeprecationWarning,
+            r"^The 'get_resource_class\(\)' method has been deprecated. "
+            r"Please implement the new 'get_resource_classes\(\)' method$",
+        ):
             self.assertEqual(admin.get_export_resource_classes(), [FooResource])
         with self.assertWarnsRegex(
-                DeprecationWarning,
-                r"^The 'get_resource_class\(\)' method has been deprecated. "
-                r"Please implement the new 'get_resource_classes\(\)' method$"):
+            DeprecationWarning,
+            r"^The 'get_resource_class\(\)' method has been deprecated. "
+            r"Please implement the new 'get_resource_classes\(\)' method$",
+        ):
             self.assertEqual(admin.get_import_resource_classes(), [FooResource])
 
 
@@ -301,7 +319,9 @@ class BaseExportMixinTest(TestCase):
         m.model = Book
         target_args = (1,)
         target_kwargs = {"a": 1}
-        m.get_data_for_export(request, Book.objects.none(), *target_args, **target_kwargs)
+        m.get_data_for_export(
+            request, Book.objects.none(), *target_args, **target_kwargs
+        )
         self.assertEqual(m.args, target_args)
         self.assertEqual(m.kwargs, target_kwargs)
 
@@ -321,12 +341,16 @@ class BaseExportMixinTest(TestCase):
             def __init__(self):
                 super().__init__(False)
 
-        m = mixins.BaseExportMixin()
-        m.formats = [CanExportFormat, CannotExportFormat]
+        class TestBaseExportMixin(mixins.BaseExportMixin):
+            @property
+            def export_formats(self):
+                return [CanExportFormat, CannotExportFormat]
+
+        m = TestBaseExportMixin()
 
         formats = m.get_export_formats()
         self.assertEqual(1, len(formats))
-        self.assertEqual('CanExportFormat', formats[0].__name__)
+        self.assertEqual("CanExportFormat", formats[0].__name__)
 
 
 class ExportMixinTest(TestCase):

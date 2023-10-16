@@ -21,7 +21,6 @@ class AuthorManager(models.Manager):
 
 
 class Author(models.Model):
-
     objects = AuthorManager()
 
     name = models.CharField(max_length=100)
@@ -30,7 +29,7 @@ class Author(models.Model):
     def natural_key(self):
         """
         Django pattern function for serializing a model by its natural key
-        Used only by the ForeignKeyWidget using use_natural_foreign_keys.    
+        Used only by the ForeignKeyWidget using use_natural_foreign_keys.
         """
         return (self.name,)
 
@@ -43,8 +42,8 @@ class Author(models.Model):
             exclude = []
         else:
             exclude = list(exclude)
-        if 'name' not in exclude and self.name == '123':
-            raise ValidationError({'name': "'123' is not a valid value"})
+        if "name" not in exclude and self.name == "123":
+            raise ValidationError({"name": "'123' is not a valid value"})
 
 
 class Category(models.Model):
@@ -72,15 +71,14 @@ class BookManager(models.Manager):
 
 
 class Book(models.Model):
-
     objects = BookManager()
 
-    name = models.CharField('Book name', max_length=100)
+    name = models.CharField("Book name", max_length=100)
     author = models.ForeignKey(Author, blank=True, null=True, on_delete=models.CASCADE)
-    author_email = models.EmailField('Author email', max_length=75, blank=True)
+    author_email = models.EmailField("Author email", max_length=75, blank=True)
     imported = models.BooleanField(default=False)
-    published = models.DateField('Published', blank=True, null=True)
-    published_time = models.TimeField('Time published', blank=True, null=True)
+    published = models.DateField("Published", blank=True, null=True)
+    published_time = models.TimeField("Time published", blank=True, null=True)
     price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     added = models.DateTimeField(blank=True, null=True)
 
@@ -88,12 +86,12 @@ class Book(models.Model):
 
     def natural_key(self):
         """
-        Django pattern function for serializing a book by its natural key. 
+        Django pattern function for serializing a book by its natural key.
         Used only by the ForeignKeyWidget using use_natural_foreign_keys.
         """
-        return (self.name,) +  self.author.natural_key()
+        return (self.name,) + self.author.natural_key()
 
-    natural_key.dependencies = ['core.Author']
+    natural_key.dependencies = ["core.Author"]
 
     def __str__(self):
         return self.name
@@ -111,20 +109,20 @@ class Child(models.Model):
     name = models.CharField(max_length=100)
 
     def __str__(self):
-        return '%s - child of %s' % (self.name, self.parent.name)
+        return "%s - child of %s" % (self.name, self.parent.name)
 
 
 class Profile(models.Model):
-    user = models.OneToOneField('auth.User', on_delete=models.CASCADE)
+    user = models.OneToOneField("auth.User", on_delete=models.CASCADE)
     is_private = models.BooleanField(default=True)
 
 
 class Entry(models.Model):
-    user = models.ForeignKey('auth.User', on_delete=models.CASCADE)
+    user = models.ForeignKey("auth.User", on_delete=models.CASCADE)
 
 
 class Role(models.Model):
-    user = models.OneToOneField('auth.User', on_delete=models.CASCADE, null=True)
+    user = models.OneToOneField("auth.User", on_delete=models.CASCADE, null=True)
 
 
 class Person(models.Model):
@@ -132,19 +130,16 @@ class Person(models.Model):
 
 
 class WithDefault(models.Model):
-    name = models.CharField('Default', max_length=75, blank=True,
-                            default='foo_bar')
+    name = models.CharField("Default", max_length=75, blank=True, default="foo_bar")
 
 
 def random_name():
     chars = string.ascii_lowercase
-    return ''.join(random.SystemRandom().choice(chars) for _ in range(100))
+    return "".join(random.SystemRandom().choice(chars) for _ in range(100))
 
 
 class WithDynamicDefault(models.Model):
-
-    name = models.CharField('Dyn Default', max_length=100,
-            default=random_name)
+    name = models.CharField("Dyn Default", max_length=100, default=random_name)
 
 
 class WithFloatField(models.Model):
@@ -153,6 +148,7 @@ class WithFloatField(models.Model):
 
 class EBook(Book):
     """Book proxy model to have a separate admin url access and name"""
+
     class Meta:
         proxy = True
 
@@ -164,6 +160,7 @@ class LegacyBook(Book):
     functions.
     This class can be removed when the deprecated code is removed.
     """
+
     class Meta:
         proxy = True
 
@@ -175,6 +172,7 @@ class UUIDCategory(models.Model):
 
 class UUIDBook(models.Model):
     """A model which uses a UUID pk (issue 1274)"""
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    name = models.CharField('Book name', max_length=100)
+    name = models.CharField("Book name", max_length=100)
     categories = models.ManyToManyField(UUIDCategory, blank=True)

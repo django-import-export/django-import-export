@@ -1,3 +1,5 @@
+import html
+
 import tablib
 from tablib.formats import registry
 
@@ -28,7 +30,7 @@ class Format:
         """
         Returns mode for opening files.
         """
-        return 'rb'
+        return "rb"
 
     def get_extension(self):
         """
@@ -39,7 +41,7 @@ class Format:
     def get_content_type(self):
         # For content types see
         # https://www.iana.org/assignments/media-types/media-types.xhtml
-        return 'application/octet-stream'
+        return "application/octet-stream"
 
     @classmethod
     def is_available(cls):
@@ -54,7 +56,7 @@ class Format:
 
 class TablibFormat(Format):
     TABLIB_MODULE = None
-    CONTENT_TYPE = 'application/octet-stream'
+    CONTENT_TYPE = "application/octet-stream"
 
     def __init__(self, encoding=None):
         self.encoding = encoding
@@ -65,7 +67,7 @@ class TablibFormat(Format):
         """
         if not self.TABLIB_MODULE:
             raise AttributeError("TABLIB_MODULE must be defined")
-        key = self.TABLIB_MODULE.split('.')[-1].replace('_', '')
+        key = self.TABLIB_MODULE.split(".")[-1].replace("_", "")
         return registry.get_format(key)
 
     @classmethod
@@ -80,9 +82,13 @@ class TablibFormat(Format):
         return self.get_format().title
 
     def create_dataset(self, in_stream, **kwargs):
-        return tablib.import_set(in_stream, format=self.get_title())
+        return tablib.import_set(in_stream, format=self.get_title(), **kwargs)
 
     def export_data(self, dataset, **kwargs):
+        if kwargs.pop("escape_html", None):
+            self._escape_html(dataset)
+        if kwargs.pop("escape_formulae", None):
+            self._escape_formulae(dataset)
         return dataset.export(self.get_title(), **kwargs)
 
     def get_extension(self):
@@ -92,69 +98,87 @@ class TablibFormat(Format):
         return self.CONTENT_TYPE
 
     def can_import(self):
-        return hasattr(self.get_format(), 'import_set')
+        return hasattr(self.get_format(), "import_set")
 
     def can_export(self):
-        return hasattr(self.get_format(), 'export_set')
+        return hasattr(self.get_format(), "export_set")
+
+    def _escape_html(self, dataset):
+        for _ in dataset:
+            row = dataset.lpop()
+            row = [html.escape(str(cell)) for cell in row]
+            dataset.append(row)
+
+    def _escape_formulae(self, dataset):
+        def _do_escape(s):
+            return s.replace("=", "", 1) if s.startswith("=") else s
+
+        for _ in dataset:
+            row = dataset.lpop()
+            row = [_do_escape(str(cell)) for cell in row]
+            dataset.append(row)
 
 
 class TextFormat(TablibFormat):
-
     def create_dataset(self, in_stream, **kwargs):
         if isinstance(in_stream, bytes) and self.encoding:
             in_stream = in_stream.decode(self.encoding)
         return super().create_dataset(in_stream, **kwargs)
 
     def get_read_mode(self):
-        return 'r'
+        return "r"
 
     def is_binary(self):
         return False
 
 
 class CSV(TextFormat):
-    TABLIB_MODULE = 'tablib.formats._csv'
-    CONTENT_TYPE = 'text/csv'
+    TABLIB_MODULE = "tablib.formats._csv"
+    CONTENT_TYPE = "text/csv"
 
 
 class JSON(TextFormat):
-    TABLIB_MODULE = 'tablib.formats._json'
-    CONTENT_TYPE = 'application/json'
+    TABLIB_MODULE = "tablib.formats._json"
+    CONTENT_TYPE = "application/json"
 
 
 class YAML(TextFormat):
-    TABLIB_MODULE = 'tablib.formats._yaml'
+    TABLIB_MODULE = "tablib.formats._yaml"
     # See https://stackoverflow.com/questions/332129/yaml-mime-type
-    CONTENT_TYPE = 'text/yaml'
+    CONTENT_TYPE = "text/yaml"
 
 
 class TSV(TextFormat):
-    TABLIB_MODULE = 'tablib.formats._tsv'
-    CONTENT_TYPE = 'text/tab-separated-values'
+    TABLIB_MODULE = "tablib.formats._tsv"
+    CONTENT_TYPE = "text/tab-separated-values"
 
     def create_dataset(self, in_stream, **kwargs):
         return super().create_dataset(in_stream, **kwargs)
 
 
 class ODS(TextFormat):
-    TABLIB_MODULE = 'tablib.formats._ods'
-    CONTENT_TYPE = 'application/vnd.oasis.opendocument.spreadsheet'
+    TABLIB_MODULE = "tablib.formats._ods"
+    CONTENT_TYPE = "application/vnd.oasis.opendocument.spreadsheet"
 
 
 class HTML(TextFormat):
-    TABLIB_MODULE = 'tablib.formats._html'
-    CONTENT_TYPE = 'text/html'
+    TABLIB_MODULE = "tablib.formats._html"
+    CONTENT_TYPE = "text/html"
+
+    def export_data(self, dataset, **kwargs):
+        return super().export_data(dataset, **kwargs)
 
 
 class XLS(TablibFormat):
-    TABLIB_MODULE = 'tablib.formats._xls'
-    CONTENT_TYPE = 'application/vnd.ms-excel'
+    TABLIB_MODULE = "tablib.formats._xls"
+    CONTENT_TYPE = "application/vnd.ms-excel"
 
     def create_dataset(self, in_stream):
         """
         Create dataset from first sheet.
         """
         import xlrd
+
         xls_book = xlrd.open_workbook(file_contents=in_stream)
         dataset = tablib.Dataset()
         sheet = xls_book.sheets()[0]
@@ -166,8 +190,8 @@ class XLS(TablibFormat):
 
 
 class XLSX(TablibFormat):
-    TABLIB_MODULE = 'tablib.formats._xlsx'
-    CONTENT_TYPE = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    TABLIB_MODULE = "tablib.formats._xlsx"
+    CONTENT_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
     def create_dataset(self, in_stream):
         """
@@ -178,7 +202,9 @@ class XLSX(TablibFormat):
         import openpyxl
 
         # 'data_only' means values are read from formula cells, not the formula itself
-        xlsx_book = openpyxl.load_workbook(BytesIO(in_stream), read_only=True, data_only=True)
+        xlsx_book = openpyxl.load_workbook(
+            BytesIO(in_stream), read_only=True, data_only=True
+        )
 
         dataset = tablib.Dataset()
         sheet = xlsx_book.active
@@ -195,13 +221,17 @@ class XLSX(TablibFormat):
 
 #: These are the default formats for import and export. Whether they can be
 #: used or not is depending on their implementation in the tablib library.
-DEFAULT_FORMATS = [fmt for fmt in (
-    CSV,
-    XLS,
-    XLSX,
-    TSV,
-    ODS,
-    JSON,
-    YAML,
-    HTML,
-) if fmt.is_available()]
+DEFAULT_FORMATS = [
+    fmt
+    for fmt in (
+        CSV,
+        XLS,
+        XLSX,
+        TSV,
+        ODS,
+        JSON,
+        YAML,
+        HTML,
+    )
+    if fmt.is_available()
+]
