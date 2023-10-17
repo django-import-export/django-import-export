@@ -148,3 +148,7 @@ we can export books::
     Data exported programmatically is not sanitized for malicious content.
     You will need to understand the implications of this and handle accordingly.
     See :ref:`admin_security`.
+
+    If you use django-import-export using with https://pypi.org/project/django-debug-toolbar
+    then you need to configure debug_toolbar=False or DEBUG=False,
+    otherwise the import/export time will increase ~10 times.
