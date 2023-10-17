@@ -125,12 +125,9 @@ class ResourceOptions:
     #. Skipped records are clearly visible in the
        :ref:`import confirmation page<import-process>`.
 
-    For the default ``skip_unchanged`` logic to work, the following options must also
-    be ``False`` (which is the default):
-
-    #. :attr:`~import_export.resources.ResourceOptions.skip_diff`
-
-    #. :attr:`~import_export.resources.ResourceOptions.skip_html_diff`
+    For the default ``skip_unchanged`` logic to work, the
+    :attr:`~import_export.resources.ResourceOptions.skip_diff` must also be ``False``
+    (which is the default):
 
     Default value is ``False``.
     """
@@ -156,6 +153,7 @@ class ResourceOptions:
     skip_diff = False
     """
     Controls whether or not an instance should be diffed following import.
+
     By default, an instance is copied prior to insert, update or delete.
     After each row is processed, the instance's copy is diffed against the original,
     and the value stored in each :class:`~import_export.results.RowResult`.
@@ -167,8 +165,8 @@ class ResourceOptions:
     execute, because 'skip' logic requires comparison between the stored and imported
     versions of a row.
 
-    If enabled, then HTML row reports are also not generated (see
-    :attr:`~import_export.resources.ResourceOptions.skip_html_diff`).
+    If enabled, then HTML row reports are also not generated, meaning that the
+    :attr:`~import_export.resources.ResourceOptions.skip_html_diff` value is ignored.
 
     The default value is ``False``.
     """
