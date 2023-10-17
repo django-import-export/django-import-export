@@ -202,13 +202,13 @@ class ResourceOptions:
     The default is to create objects in batches of 1000.
     See `bulk_create()
     <https://docs.djangoproject.com/en/dev/ref/models/querysets/#bulk-create>`_.
-    This parameter is only used if ``use_bulk`` is True.
+    This parameter is only used if ``use_bulk`` is ``True``.
     """
 
     force_init_instance = False
     """
-    If True, this parameter will prevent imports from checking the database for existing
-    instances.
+    If ``True``, this parameter will prevent imports from checking the database for
+    existing instances.
     Enabling this parameter is a performance enhancement if your import dataset is
     guaranteed to contain new instances.
     """
@@ -217,7 +217,7 @@ class ResourceOptions:
     """
     DB Connection name to use for db transactions. If not provided,
     ``router.db_for_write(model)`` will be evaluated and if it's missing,
-    DEFAULT_DB_ALIAS constant ("default") is used.
+    ``DEFAULT_DB_ALIAS`` constant ("default") is used.
     """
 
     store_row_values = False
@@ -238,10 +238,10 @@ class ResourceOptions:
 
     use_natural_foreign_keys = False
     """
-    If True, use_natural_foreign_keys = True will be passed to all foreign
+    If ``True``, this value will be passed to all foreign
     key widget fields whose models support natural foreign keys. That is,
     the model has a natural_key function and the manager has a
-    get_by_natural_key function.
+    ``get_by_natural_key()`` function.
     """
 
 
