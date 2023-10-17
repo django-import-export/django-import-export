@@ -110,20 +110,41 @@ class ResourceOptions:
 
     skip_unchanged = False
     """
-    Controls if the import should skip unchanged records. Default value is
-    False
+    Controls if the import should skip unchanged records.
+    If ``True``, then each existing instance is compared with the instance to be
+    imported, and if there are no changes detected, the row is recorded as skipped,
+    and no database update takes place.
+
+    The advantages of enabling this option are:
+
+    #. Avoids unnecessary database operations which can result in performance
+       improvements for large datasets.
+
+    #. Skipped records are recorded in each :class:`~import_export.results.RowResult`.
+
+    #. Skipped records are clearly visible in the
+       :ref:`import confirmation page<import-process>`.
+
+    For the default ``skip_unchanged`` logic to work, the following options must also
+    be ``False`` (which is the default):
+
+    #. :attr:`~import_export.resources.ResourceOptions.skip_diff`
+
+    #. :attr:`~import_export.resources.ResourceOptions.skip_html_diff`
+
+    Default value is ``False``.
     """
 
     report_skipped = True
     """
-    Controls if the result reports skipped rows. Default value is True
+    Controls if the result reports skipped rows. Default value is ``True``.
     """
 
     clean_model_instances = False
     """
     Controls whether ``instance.full_clean()`` is called during the import
     process to identify potential validation errors for each (non skipped) row.
-    The default value is False.
+    The default value is ``False``.
     """
 
     chunk_size = None
@@ -141,10 +162,15 @@ class ResourceOptions:
     If diffing is not required, then disabling the diff operation by setting this value
     to ``True`` improves performance, because the copy and comparison operations are
     skipped for each row.
-    If enabled, then ``skip_row()`` checks do not execute, because 'skip' logic requires
-    comparison between the stored and imported versions of a row.
-    If enabled, then HTML row reports are also not generated (see ``skip_html_diff``).
-    The default value is False.
+
+    If enabled, then :meth:`~import_export.resources.Resource.skip_row` checks do not
+    execute, because 'skip' logic requires comparison between the stored and imported
+    versions of a row.
+
+    If enabled, then HTML row reports are also not generated (see
+    :attr:`~import_export.resources.ResourceOptions.skip_html_diff`).
+
+    The default value is ``False``.
     """
 
     skip_html_diff = False
@@ -153,13 +179,16 @@ class ResourceOptions:
     By default, the difference between a stored copy and an imported instance
     is generated in HTML form and stored in each
     :class:`~import_export.results.RowResult`.
-    The HTML report is used to present changes on the confirmation screen in the admin
-    site, hence when this value is ``True``, then changes will not be presented on the
-    confirmation screen.
+
+    The HTML report is used to present changes in the
+    :ref:`import confirmation page<import-process>` in the admin site, hence when this
+    value is ``True``, then changes will not be presented on the confirmation screen.
+
     If the HTML report is not required, then setting this value to ``True`` improves
     performance, because the HTML generation is skipped for each row.
     This is a useful optimization when importing large datasets.
-    The default value is False.
+
+    The default value is ``False``.
     """
 
     use_bulk = False
