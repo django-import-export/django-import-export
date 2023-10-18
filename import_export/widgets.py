@@ -62,7 +62,7 @@ class NumberWidget(Widget):
         of the value (None is returned as ""), otherwise the value is returned.
     """
 
-    def __init__(self, coerce_to_string=False):
+    def __init__(self, coerce_to_string=True):
         self.coerce_to_string = coerce_to_string
 
     def is_empty(self, value):
@@ -120,7 +120,7 @@ class CharWidget(Widget):
       return null values as empty strings, otherwise as null.
     """
 
-    def __init__(self, coerce_to_string=False, allow_blank=False):
+    def __init__(self, coerce_to_string=True, allow_blank=True):
         """ """
         self.coerce_to_string = coerce_to_string
         self.allow_blank = allow_blank
@@ -134,6 +134,11 @@ class CharWidget(Widget):
             else:
                 return force_str(val)
         return val
+
+    def render(self, value, obj=None):
+        if self.coerce_to_string:
+            return "" if value is None else value
+        return value
 
 
 class BooleanWidget(Widget):
