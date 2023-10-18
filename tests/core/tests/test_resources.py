@@ -2534,7 +2534,6 @@ class BulkDeleteTest(BulkTest):
         self.resource = self.DeleteBookResource()
         self.resource._meta.batch_size = 1000
         self.resource._meta.use_bulk = True
-        print(self.resource._meta.batch_size)
         self.init_update_test_data()
 
     @mock.patch("core.models.Book.delete")
