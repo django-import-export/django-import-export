@@ -5,8 +5,9 @@ Release Notes
 v4
 ==
 
-v4 introduces breaking changes in order to address some long-standing issues.
-In all cases, please test thoroughly before deploying v4 to production.
+v4 introduces breaking changes in order to fix some long-standing issues.
+Refer to the :doc:`changelog<changelog>` for more information. Please ensure you test
+thoroughly before deploying v4 to production.
 
 This guide describes the major changes and how to upgrade.
 
@@ -14,18 +15,30 @@ Installation
 ============
 
 We have modified installation methods to allow for optional dependencies.
-This means that you have to explicitly declare dependencies when installing import_export.
+This means that you have to explicitly declare dependencies when installing import-export.
 
 If you are not sure, or want to preserve the pre-v4 behaviour, then ensure that
-import_export is installed as follows (either in your requirements file or during
+import-export is installed as follows (either in your requirements file or during
 installation)::
 
   django-import-export[all]
 
+Export format
+=============
+
+We have standardized the export output which is returned from
+:meth:`~import_export.widgets.Widget.render`.
+
+Prior to v4, the export format returned from ``render()`` varied between Widget implementations.
+In v4, return values are rendered as strings by default (where applicable), with
+``None`` values returned as empty strings.  Widget params can modify this behavior.
+
+Refer to the :doc:`documentation<api_widgets>` for more information.
+
 API changes
 ===========
 
-v4 of import_export (released Q4 2023) contains a number of minor changes to the API.
+v4 of import-export contains a number of minor changes to the API.
 
 If you have customized import-export by overriding methods, then you will have to
 modify your installation before working with v4.  If you have not overridden any
@@ -34,8 +47,6 @@ should be necessary.
 
 The API changes include changes to method arguments, although some method names have
 changed.
-
-Test thoroughly before deploying v4 to production.
 
 Refer to
 `this PR <https://github.com/django-import-export/django-import-export/pull/1641/>`_

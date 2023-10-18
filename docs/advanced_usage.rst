@@ -896,7 +896,7 @@ return books for the publisher::
 Interoperability with 3rd party libraries
 -----------------------------------------
 
-import_export extends the Django Admin interface.  There is a possibility that clashes may occur with other 3rd party
+import-export extends the Django Admin interface.  There is a possibility that clashes may occur with other 3rd party
 libraries which also use the admin interface.
 
 django-admin-sortable2
