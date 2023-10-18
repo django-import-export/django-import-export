@@ -37,9 +37,6 @@ class Widget:
         For example, if you import a value from a spreadsheet,
         :meth:`~import_export.widgets.Widget.clean` handles conversion
         of this value into the corresponding Python object.
-
-        Numbers or dates can be *cleaned* to their respective data types and
-        don't have to be imported as Strings.
         """
         return value
 
@@ -114,10 +111,10 @@ class CharWidget(Widget):
     """
     Widget for converting text fields.
 
-    :param coerce_to_string: If True, the value returned by clean() is cast to a
+    :param coerce_to_string: If True, the value returned by render() is cast to a
       string.
-    :param allow_blank:  If True, and if coerce_to_string is True, then clean() will
-      return null values as empty strings, otherwise as null.
+    :param allow_blank:  If True, then clean() will return null values as empty strings,
+       otherwise as None.
     """
 
     def __init__(self, coerce_to_string=True, allow_blank=True):
@@ -127,13 +124,9 @@ class CharWidget(Widget):
 
     def clean(self, value, row=None, **kwargs):
         val = super().clean(value, row, **kwargs)
-        if self.coerce_to_string is True:
-            if val is None:
-                if self.allow_blank is True:
-                    return ""
-            else:
-                return force_str(val)
-        return val
+        if val is None:
+            return "" if self.allow_blank is True else None
+        return force_str(val)
 
     def render(self, value, obj=None):
         if self.coerce_to_string:
