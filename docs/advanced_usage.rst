@@ -918,6 +918,11 @@ Refer to `this issue <https://github.com/django-import-export/django-import-expo
 
 .. _admin_security:
 
+.. warning::
+    If you use django-import-export using with `django-debug-toolbar <https://pypi.org/project/django-debug-toolbar>`_.
+    then you need to configure debug_toolbar=False or DEBUG=False,
+    otherwise the import/export time will increase ~10 times.
+
 Security
 --------
 
