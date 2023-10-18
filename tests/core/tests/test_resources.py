@@ -1742,7 +1742,7 @@ class ForeignKeyWidgetFollowRelationship(TestCase):
         resource = MyPersonResource()
         dataset = resource.export(Person.objects.all())
         self.assertEqual(len(dataset), 1)
-        self.assertEqual(1, dataset[0][0])
+        self.assertEqual("1", dataset[0][0])
         self.assertEqual("foo", dataset[0][1])
 
         self.role.user = None
@@ -1751,7 +1751,7 @@ class ForeignKeyWidgetFollowRelationship(TestCase):
         resource = MyPersonResource()
         dataset = resource.export(Person.objects.all())
         self.assertEqual(len(dataset), 1)
-        self.assertEqual(1, dataset[0][0])
+        self.assertEqual("1", dataset[0][0])
         self.assertEqual(None, dataset[0][1])
 
 
@@ -2525,32 +2525,27 @@ class BulkDeleteTest(BulkTest):
         class Meta:
             model = Book
             use_bulk = True
+            # there are errors when diffing with mocks
+            # therefore disable diff with this flag
+            skip_diff = True
 
     def setUp(self):
         super().setUp()
         self.resource = self.DeleteBookResource()
+        self.resource._meta.batch_size = 1000
+        self.resource._meta.use_bulk = True
+        print(self.resource._meta.batch_size)
         self.init_update_test_data()
 
     @mock.patch("core.models.Book.delete")
     def test_bulk_delete_use_bulk_is_false(self, mock_obj_delete):
-        class _BookResource(self.DeleteBookResource):
-            class Meta:
-                model = Book
-                use_bulk = False
-
-        self.resource = _BookResource()
+        self.resource._meta.use_bulk = False
         self.resource.import_data(self.dataset)
         self.assertEqual(10, mock_obj_delete.call_count)
 
     @mock.patch("core.models.Book.objects")
     def test_bulk_delete_batch_size_of_4(self, mock_obj_manager):
-        class _BookResource(self.DeleteBookResource):
-            class Meta:
-                model = Book
-                use_bulk = True
-                batch_size = 4
-
-        self.resource = _BookResource()
+        self.resource._meta.batch_size = 4
         result = self.resource.import_data(self.dataset)
         self.assertEqual(3, mock_obj_manager.filter.return_value.delete.call_count)
         self.assertEqual(10, result.total_rows)
@@ -2558,13 +2553,7 @@ class BulkDeleteTest(BulkTest):
 
     @mock.patch("core.models.Book.objects")
     def test_bulk_delete_batch_size_of_5(self, mock_obj_manager):
-        class _BookResource(self.DeleteBookResource):
-            class Meta:
-                model = Book
-                use_bulk = True
-                batch_size = 5
-
-        self.resource = _BookResource()
+        self.resource._meta.batch_size = 5
         result = self.resource.import_data(self.dataset)
         self.assertEqual(2, mock_obj_manager.filter.return_value.delete.call_count)
         self.assertEqual(10, result.total_rows)
@@ -2572,13 +2561,7 @@ class BulkDeleteTest(BulkTest):
 
     @mock.patch("core.models.Book.objects")
     def test_bulk_delete_batch_size_is_none(self, mock_obj_manager):
-        class _BookResource(self.DeleteBookResource):
-            class Meta:
-                model = Book
-                use_bulk = True
-                batch_size = None
-
-        self.resource = _BookResource()
+        self.resource._meta.batch_size = None
         result = self.resource.import_data(self.dataset)
         self.assertEqual(1, mock_obj_manager.filter.return_value.delete.call_count)
         self.assertEqual(10, result.total_rows)
@@ -2607,10 +2590,6 @@ class BulkDeleteTest(BulkTest):
                     **kwargs,
                 )
 
-            class Meta:
-                model = Book
-                use_bulk = True
-
         resource = _BookResource()
         resource.import_data(self.dataset, dry_run=True)
         self.assertEqual(0, mock_obj_manager.filter.return_value.delete.call_count)
@@ -2625,14 +2604,8 @@ class BulkDeleteTest(BulkTest):
         e = Exception("invalid")
         mock_obj_manager.filter.return_value.delete.side_effect = e
 
-        class _BookResource(self.DeleteBookResource):
-            class Meta:
-                model = Book
-                use_bulk = True
-
-        resource = _BookResource()
         with mock.patch("logging.Logger.debug") as mock_exception:
-            resource.import_data(self.dataset)
+            self.resource.import_data(self.dataset)
             mock_exception.assert_called_with(e, exc_info=mock.ANY)
             self.assertEqual(1, mock_exception.call_count)
 
@@ -2641,14 +2614,8 @@ class BulkDeleteTest(BulkTest):
         e = Exception("invalid")
         mock_obj_manager.filter.return_value.delete.side_effect = e
 
-        class _BookResource(self.DeleteBookResource):
-            class Meta:
-                model = Book
-                use_bulk = True
-
-        resource = _BookResource()
         with self.assertRaises(Exception) as raised_exc:
-            resource.import_data(self.dataset, raise_errors=True)
+            self.resource.import_data(self.dataset, raise_errors=True)
             self.assertEqual(e, raised_exc)
 
 

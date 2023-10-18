@@ -39,10 +39,11 @@ class CharWidgetTest(TestCase):
         self.assertEqual("1", self.widget.clean(1))
 
     def test_clean_no_coerce_to_string(self):
+        self.widget = widgets.CharWidget(coerce_to_string=False)
         self.assertEqual(1, self.widget.clean(1))
 
     def test_clean_coerce_to_string_None(self):
-        self.widget = widgets.CharWidget(coerce_to_string=True)
+        self.widget = widgets.CharWidget(coerce_to_string=False)
         self.assertIsNone(self.widget.clean(None))
 
     def test_clean_coerce_to_string_with_allow_blank(self):
@@ -300,10 +301,10 @@ class NumberWidgetTest(TestCase):
         self.assertFalse(self.widget.is_empty(0))
 
     def test_render(self):
-        self.assertEqual(self.value, self.widget.render(self.value))
+        self.assertEqual("11.111", self.widget.render(self.value))
 
     def test_render_None_coerce_to_string_False(self):
-        self.assertIsNone(self.widget.render(None))
+        self.assertEqual("", self.widget.render(None))
 
     @skipUnless(
         django.VERSION[0] < 4, f"skipping django {django.VERSION} version specific test"
@@ -334,7 +335,7 @@ class FloatWidgetTest(TestCase):
         self.assertEqual(self.widget.clean(11.111), self.value)
 
     def test_render(self):
-        self.assertEqual(self.widget.render(self.value), self.value)
+        self.assertEqual(self.widget.render(self.value), "11.111")
 
     def test_clean_string_zero(self):
         self.assertEqual(self.widget.clean("0"), 0.0)
@@ -365,14 +366,17 @@ class DecimalWidgetTest(TestCase):
     def setUp(self):
         self.value = Decimal("11.111")
         self.widget = widgets.DecimalWidget()
-        self.widget_coerce_to_string = widgets.DecimalWidget(coerce_to_string=True)
 
     def test_clean(self):
         self.assertEqual(self.widget.clean("11.111"), self.value)
         self.assertEqual(self.widget.clean(11.111), self.value)
 
-    def test_render(self):
+    def test_render_coerce_to_string_is_False(self):
+        self.widget = widgets.DecimalWidget(coerce_to_string=False)
         self.assertEqual(self.widget.render(self.value), self.value)
+
+    def test_render(self):
+        self.assertEqual(self.widget.render(self.value), "11.111")
 
     def test_clean_string_zero(self):
         self.assertEqual(self.widget.clean("0"), Decimal("0"))
@@ -388,7 +392,7 @@ class DecimalWidgetTest(TestCase):
     )
     @override_settings(LANGUAGE_CODE="fr-fr", USE_L10N=True)
     def test_locale_render_coerce_to_string_lt4(self):
-        self.assertEqual(self.widget_coerce_to_string.render(self.value), "11,111")
+        self.assertEqual(self.widget.render(self.value), "11,111")
 
     @skipUnless(
         django.VERSION[0] >= 4,
@@ -396,7 +400,7 @@ class DecimalWidgetTest(TestCase):
     )
     @override_settings(LANGUAGE_CODE="fr-fr")
     def test_locale_render_coerce_to_string_gte4(self):
-        self.assertEqual(self.widget_coerce_to_string.render(self.value), "11,111")
+        self.assertEqual(self.widget.render(self.value), "11,111")
 
 
 class IntegerWidgetTest(TestCase):

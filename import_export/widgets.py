@@ -137,7 +137,7 @@ class CharWidget(Widget):
 
     def render(self, value, obj=None):
         if self.coerce_to_string:
-            return "" if value is None else value
+            return "" if value is None else force_str(value)
         return value
 
 
@@ -178,7 +178,7 @@ class BooleanWidget(Widget):
     def render(self, value, obj=None):
         """
         On export, ``True`` is represented as ``1``, ``False`` as ``0``, and
-        ``None``/NULL as a empty string.
+        ``None``/NULL as an empty string.
 
         Note that these values are also used on the import confirmation view.
         """
