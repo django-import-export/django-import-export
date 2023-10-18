@@ -445,16 +445,17 @@ Handling duplicate data
 
 If an existing instance is identified during import, then the existing instance will be updated, regardless of whether
 the data in the import row is the same as the persisted data or not.  You can configure the import process to skip the
-row if it is duplicate by using setting ``skip_unchanged``.
+row if it is duplicate by using setting :attr:`~import_export.resources.ResourceOptions.skip_unchanged`.
 
-If ``skip_unchanged`` is enabled, then the import process will check each defined import field and perform a simple
-comparison with the existing instance, and if all comparisons are equal, then the row is skipped.  Skipped rows are
-recorded in the row ``Result`` object.
+If :attr:`~import_export.resources.ResourceOptions.skip_unchanged` is enabled, then the import process will check each
+defined import field and perform a simple comparison with the existing instance, and if all comparisons are equal, then
+the row is skipped.  Skipped rows are recorded in the row :class:`~import_export.results.RowResult` object.
 
 You can override the :meth:`~.skip_row` method to have full control over the skip row implementation.
 
-Also, the ``report_skipped`` option controls whether skipped records appear in the import
-``Result`` object, and whether skipped records will show in the import preview page in the Admin UI::
+Also, the :attr:`~import_export.resources.ResourceOptions.report_skipped` option controls whether skipped records appear
+in the import :class:`~import_export.results.RowResult` object, and whether skipped records will show in the import
+preview page in the Admin UI::
 
     class BookResource(resources.ModelResource):
 
@@ -612,6 +613,8 @@ objects selected on the change list page::
 Note that to use the :class:`~import_export.admin.ExportMixin` or
 :class:`~import_export.admin.ExportActionMixin`, you must declare this mixin
 **before** ``admin.ModelAdmin``.
+
+.. _import-process:
 
 Importing
 ---------
