@@ -23,7 +23,7 @@ from django.test import TestCase, TransactionTestCase, skipUnlessDBFeature
 from django.utils.encoding import force_str
 from django.utils.html import strip_tags
 
-from import_export import fields, resources, results, widgets
+from import_export import exceptions, fields, resources, results, widgets
 from import_export.instance_loaders import ModelInstanceLoader
 from import_export.resources import Diff
 
@@ -107,7 +107,7 @@ class ResourceTestCase(TestCase):
 
         A()
 
-    def test_get_export_order(self):
+    def test_get_export_headers_order(self):
         self.assertEqual(
             self.my_resource.get_export_headers(), ["email", "name", "extra"]
         )
@@ -115,7 +115,8 @@ class ResourceTestCase(TestCase):
     def test_default_after_import(self):
         self.assertIsNone(
             self.my_resource.after_import(
-                tablib.Dataset(), results.Result(), False, False
+                tablib.Dataset(),
+                results.Result(),
             )
         )
 
@@ -193,108 +194,6 @@ class ResourceTestCase(TestCase):
             exclude=target.keys(), validate_unique=True
         )
 
-    def test_raise_errors_deprecation_import_row(
-        self,
-    ):
-        target_msg = (
-            "raise_errors argument is deprecated and "
-            "will be removed in a future release."
-        )
-        dataset = tablib.Dataset(headers=["name", "email", "extra"])
-        dataset.append(["Some book", "test@example.com", "10.25"])
-
-        class Loader:
-            def __init__(self, *args, **kwargs):
-                pass
-
-        class A(MyResource):
-            class Meta:
-                instance_loader_class = Loader
-                force_init_instance = True
-
-            def init_instance(self, row=None):
-                return row or {}
-
-            def import_row(
-                self,
-                row,
-                instance_loader,
-                using_transactions=True,
-                dry_run=False,
-                raise_errors=False,
-                **kwargs,
-            ):
-                return super().import_row(
-                    row,
-                    instance_loader,
-                    using_transactions,
-                    dry_run,
-                    raise_errors,
-                    **kwargs,
-                )
-
-            def save_instance(
-                self, instance, is_create, using_transactions=True, dry_run=False
-            ):
-                pass
-
-        resource = A()
-        with self.assertWarns(DeprecationWarning) as w:
-            resource.import_data(dataset, raise_errors=True)
-            self.assertEqual(target_msg, str(w.warnings[0].message))
-
-    def test_rollback_on_validation_errors_deprecation_import_inner(
-        self,
-    ):
-        target_msg = (
-            "rollback_on_validation_errors argument is deprecated "
-            "and will be removed in a future release."
-        )
-        dataset = tablib.Dataset(headers=["name", "email", "extra"])
-        dataset.append(["Some book", "test@example.com", "10.25"])
-
-        class Loader:
-            def __init__(self, *args, **kwargs):
-                pass
-
-        class A(MyResource):
-            class Meta:
-                instance_loader_class = Loader
-                force_init_instance = True
-
-            def init_instance(self, row=None):
-                return row or {}
-
-            def import_data_inner(
-                self,
-                dataset,
-                dry_run,
-                raise_errors,
-                using_transactions,
-                collect_failed_rows,
-                rollback_on_validation_errors=False,
-                **kwargs,
-            ):
-                return super().import_data_inner(
-                    dataset,
-                    dry_run,
-                    raise_errors,
-                    using_transactions,
-                    collect_failed_rows,
-                    rollback_on_validation_errors,
-                    **kwargs,
-                )
-
-            def save_instance(
-                self, instance, is_create, using_transactions=True, dry_run=False
-            ):
-                pass
-
-        resource = A()
-        with self.assertWarns(DeprecationWarning) as w:
-            resource.import_data(dataset, raise_errors=True)
-            self.assertEqual(target_msg, str(w.warnings[0].message))
-
 
 class AuthorResource(resources.ModelResource):
     books = fields.Field(
@@ -328,10 +227,12 @@ class BookResourceWithLineNumberLogger(BookResource):
         self.after_lines = []
         return super().__init__(*args, **kwargs)
 
-    def before_import_row(self, row, row_number=None, **kwargs):
+    def before_import_row(self, row, **kwargs):
+        row_number = kwargs.pop("row_number")
         self.before_lines.append(row_number)
 
-    def after_import_row(self, row, row_result, row_number=None, **kwargs):
+    def after_import_row(self, row, row_result, **kwargs):
+        row_number = kwargs.pop("row_number")
         self.after_lines.append(row_number)
 
 
@@ -483,25 +384,6 @@ class ModelResourceTest(TestCase):
         instance = resource.get_instance(instance_loader, self.dataset.dict[0])
         self.assertEqual(instance, self.book)
 
-    def test_get_instance_import_id_fields_with_custom_column_name(self):
-        class BookResource(resources.ModelResource):
-            name = fields.Field(
-                attribute="name", column_name="book_name", widget=widgets.CharWidget()
-            )
-
-            class Meta:
-                model = Book
-                import_id_fields = ["name"]
-
-        dataset = tablib.Dataset(headers=["id", "book_name", "author_email", "price"])
-        row = [self.book.pk, "Some book", "test@example.com", "10.25"]
-        dataset.append(row)
-
-        resource = BookResource()
-        instance_loader = resource._meta.instance_loader_class(resource)
-        instance = resource.get_instance(instance_loader, dataset.dict[0])
-        self.assertEqual(instance, self.book)
-
     def test_get_instance_usually_defers_to_instance_loader(self):
         self.resource._meta.import_id_fields = ["id"]
 
@@ -512,22 +394,6 @@ class ModelResourceTest(TestCase):
             self.resource.get_instance(instance_loader, row)
             # instance_loader.get_instance() should have been called
             mocked_method.assert_called_once_with(row)
-
-    def test_get_instance_when_id_fields_not_in_dataset(self):
-        self.resource._meta.import_id_fields = ["id"]
-
-        # construct a dataset with a missing "id" column
-        dataset = tablib.Dataset(headers=["name", "author_email", "price"])
-        dataset.append(["Some book", "test@example.com", "10.25"])
-
-        instance_loader = self.resource._meta.instance_loader_class(self.resource)
-
-        with mock.patch.object(instance_loader, "get_instance") as mocked_method:
-            result = self.resource.get_instance(instance_loader, dataset.dict[0])
-            # Resource.get_instance() should return None
-            self.assertIs(result, None)
-            # instance_loader.get_instance() should NOT have been called
-            mocked_method.assert_not_called()
 
     def test_get_export_headers(self):
         headers = self.resource.get_export_headers()
@@ -548,42 +414,31 @@ class ModelResourceTest(TestCase):
 
     def test_export(self):
         with self.assertNumQueries(2):
-            dataset = self.resource.export(Book.objects.all())
+            dataset = self.resource.export(queryset=Book.objects.all())
             self.assertEqual(len(dataset), 1)
 
     def test_export_iterable(self):
         with self.assertNumQueries(2):
-            dataset = self.resource.export(list(Book.objects.all()))
+            dataset = self.resource.export(queryset=list(Book.objects.all()))
             self.assertEqual(len(dataset), 1)
 
     def test_export_prefetch_related(self):
         with self.assertNumQueries(3):
             dataset = self.resource.export(
-                Book.objects.prefetch_related("categories").all()
+                queryset=Book.objects.prefetch_related("categories").all()
             )
             self.assertEqual(len(dataset), 1)
 
-    def test_export_handles_args(self):
-        # issue 1565
-        with self.assertWarns(DeprecationWarning) as w:
-            self.resource.export(Book.objects.none())
-            self.assertEqual(
-                "'queryset' must be supplied as a named parameter",
-                str(w.warnings[0].message),
-            )
-
     def test_export_handles_named_queryset_parameter(self):
         class _BookResource(BookResource):
-            def before_export(self, queryset, *args, **kwargs):
+            def before_export(self, queryset, **kwargs):
                 self.qs = queryset
-                self.args_ = args
                 self.kwargs_ = kwargs
 
         self.resource = _BookResource()
         # when queryset is supplied, it should be passed to before_export()
-        self.resource.export(1, 2, 3, queryset=Book.objects.all(), **{"a": 1})
+        self.resource.export(queryset=Book.objects.all(), **{"a": 1})
         self.assertEqual(Book.objects.count(), len(self.resource.qs))
-        self.assertEqual((1, 2, 3), self.resource.args_)
         self.assertEqual(dict(a=1), self.resource.kwargs_)
 
     def test_iter_queryset(self):
@@ -774,8 +629,11 @@ class ModelResourceTest(TestCase):
 
     def test_import_data_empty_dataset_with_collect_failed_rows(self):
         resource = AuthorResource()
-        result = resource.import_data(tablib.Dataset(), collect_failed_rows=True)
-        self.assertEqual(["Error"], result.failed_dataset.headers)
+        with self.assertRaisesRegex(
+            exceptions.FieldError,
+            "The following import_id_fields are not present in the dataset: id",
+        ):
+            resource.import_data(tablib.Dataset(), collect_failed_rows=True)
 
     def test_collect_failed_rows(self):
         resource = ProfileResource()
@@ -983,24 +841,25 @@ class ModelResourceTest(TestCase):
 
     def test_save_instance_with_dry_run_flag(self):
         class B(BookResource):
-            def before_save_instance(self, instance, using_transactions, dry_run):
-                super().before_save_instance(instance, using_transactions, dry_run)
+            def before_save_instance(self, instance, row, **kwargs):
+                super().before_save_instance(instance, row, **kwargs)
+                dry_run = kwargs.get("dry_run", False)
                 if dry_run:
                     self.before_save_instance_dry_run = True
                 else:
                     self.before_save_instance_dry_run = False
 
-            def save_instance(
-                self, instance, new, using_transactions=True, dry_run=False
-            ):
-                super().save_instance(instance, new, using_transactions, dry_run)
+            def save_instance(self, instance, new, row, **kwargs):
+                super().save_instance(instance, new, row, **kwargs)
+                dry_run = kwargs.get("dry_run", False)
                 if dry_run:
                     self.save_instance_dry_run = True
                 else:
                     self.save_instance_dry_run = False
 
-            def after_save_instance(self, instance, using_transactions, dry_run):
-                super().after_save_instance(instance, using_transactions, dry_run)
+            def after_save_instance(self, instance, row, **kwargs):
+                super().after_save_instance(instance, row, **kwargs)
+                dry_run = kwargs.get("dry_run", False)
                 if dry_run:
                     self.after_save_instance_dry_run = True
                 else:
@@ -1021,14 +880,16 @@ class ModelResourceTest(TestCase):
     def test_save_instance_noop(self, mock_book):
         book = Book.objects.first()
         self.resource.save_instance(
-            book, is_create=False, using_transactions=False, dry_run=True
+            book, False, None, using_transactions=False, dry_run=True
         )
         self.assertEqual(0, mock_book.call_count)
 
     @mock.patch("core.models.Book.save")
     def test_delete_instance_noop(self, mock_book):
         book = Book.objects.first()
-        self.resource.delete_instance(book, using_transactions=False, dry_run=True)
+        self.resource.delete_instance(
+            book, None, using_transactions=False, dry_run=True
+        )
         self.assertEqual(0, mock_book.call_count)
 
     def test_delete_instance_with_dry_run_flag(self):
@@ -1038,22 +899,25 @@ class ModelResourceTest(TestCase):
             def for_delete(self, row, instance):
                 return self.fields["delete"].clean(row)
 
-            def before_delete_instance(self, instance, dry_run):
-                super().before_delete_instance(instance, dry_run)
+            def before_delete_instance(self, instance, row, **kwargs):
+                super().before_delete_instance(instance, row, **kwargs)
+                dry_run = kwargs.get("dry_run", False)
                 if dry_run:
                     self.before_delete_instance_dry_run = True
                 else:
                     self.before_delete_instance_dry_run = False
 
-            def delete_instance(self, instance, using_transactions=True, dry_run=False):
-                super().delete_instance(instance, using_transactions, dry_run)
+            def delete_instance(self, instance, row, **kwargs):
+                super().delete_instance(instance, row, **kwargs)
+                dry_run = kwargs.get("dry_run", False)
                 if dry_run:
                     self.delete_instance_dry_run = True
                 else:
                     self.delete_instance_dry_run = False
 
-            def after_delete_instance(self, instance, dry_run):
-                super().after_delete_instance(instance, dry_run)
+            def after_delete_instance(self, instance, row, **kwargs):
+                super().after_delete_instance(instance, row, **kwargs)
+                dry_run = kwargs.get("dry_run", False)
                 if dry_run:
                     self.after_delete_instance_dry_run = True
                 else:
@@ -1225,6 +1089,29 @@ class ModelResourceTest(TestCase):
         self.assertIn(cat1, book.categories.all())
         self.assertIn(cat2, book.categories.all())
 
+    def test_import_null_django_CharField_saved_as_empty_string(self):
+        # issue 1485
+        resource = BookResource()
+        self.assertTrue(resource._meta.model.author_email.field.blank)
+        self.assertFalse(resource._meta.model.author_email.field.null)
+        headers = ["id", "author_email"]
+        row = [1, None]
+        dataset = tablib.Dataset(row, headers=headers)
+        resource.import_data(dataset, raise_errors=True)
+        book = Book.objects.get(id=1)
+        self.assertEqual("", book.author_email)
+
+    def test_import_empty_django_CharField_saved_as_empty_string(self):
+        resource = BookResource()
+        self.assertTrue(resource._meta.model.author_email.field.blank)
+        self.assertFalse(resource._meta.model.author_email.field.null)
+        headers = ["id", "author_email"]
+        row = [1, ""]
+        dataset = tablib.Dataset(row, headers=headers)
+        resource.import_data(dataset, raise_errors=True)
+        book = Book.objects.get(id=1)
+        self.assertEqual("", book.author_email)
+
     def test_m2m_add(self):
         cat1 = Category.objects.create(name="Cat 1")
         cat2 = Category.objects.create(name="Cat 2")
@@ -1292,7 +1179,7 @@ class ModelResourceTest(TestCase):
     def test_empty_get_queryset(self):
         # issue #25 - Overriding queryset on export() fails when passed
         # queryset has zero elements
-        dataset = self.resource.export(Book.objects.none())
+        dataset = self.resource.export(queryset=Book.objects.none())
         self.assertEqual(len(dataset), 0)
 
     def test_import_data_skip_unchanged(self):
@@ -1327,7 +1214,7 @@ class ModelResourceTest(TestCase):
 
     def test_before_import_access_to_kwargs(self):
         class B(BookResource):
-            def before_import(self, dataset, using_transactions, dry_run, **kwargs):
+            def before_import(self, dataset, **kwargs):
                 if "extra_arg" in kwargs:
                     dataset.headers[dataset.headers.index("author_email")] = "old_email"
                     dataset.insert_col(
@@ -1345,7 +1232,7 @@ class ModelResourceTest(TestCase):
 
     def test_before_import_raises_error(self):
         class B(BookResource):
-            def before_import(self, dataset, using_transactions, dry_run, **kwargs):
+            def before_import(self, dataset, **kwargs):
                 raise Exception("This is an invalid dataset")
 
         resource = B()
@@ -1438,7 +1325,7 @@ class ModelResourceTest(TestCase):
 
         # Verify that the annotated field is correctly exported
         dataset = resource.export(
-            Book.objects.annotate(total_categories=Count("categories"))
+            queryset=Book.objects.annotate(total_categories=Count("categories"))
         )
         self.assertEqual(int(dataset.dict[0]["total_categories"]), 1)
 
@@ -1457,7 +1344,9 @@ class ModelResourceTest(TestCase):
                 model = Entry
                 fields = ("id",)
 
-            def after_save_instance(self, instance, using_transactions, dry_run):
+            def after_save_instance(self, instance, row, **kwargs):
+                using_transactions = kwargs.get("using_transactions", False)
+                dry_run = kwargs.get("dry_run", False)
                 if not using_transactions and dry_run:
                     # we don't have transactions and we want to do a dry_run
                     pass
@@ -1853,7 +1742,8 @@ class ForeignKeyWidgetFollowRelationship(TestCase):
         resource = MyPersonResource()
         dataset = resource.export(Person.objects.all())
         self.assertEqual(len(dataset), 1)
-        self.assertEqual(dataset[0][0], "foo")
+        self.assertEqual(1, dataset[0][0])
+        self.assertEqual("foo", dataset[0][1])
 
         self.role.user = None
         self.role.save()
@@ -1861,7 +1751,8 @@ class ForeignKeyWidgetFollowRelationship(TestCase):
         resource = MyPersonResource()
         dataset = resource.export(Person.objects.all())
         self.assertEqual(len(dataset), 1)
-        self.assertEqual(dataset[0][0], None)
+        self.assertEqual(1, dataset[0][0])
+        self.assertEqual(None, dataset[0][1])
 
 
 class ManyRelatedManagerDiffTest(TestCase):
@@ -1933,8 +1824,8 @@ class ManyToManyWidgetDiffTest(TestCase):
     def test_many_to_many_widget_create_with_m2m_being_compared(self):
         # issue 1558 - when the object is a new instance and m2m is
         # evaluated for differences
-        dataset_headers = ["categories"]
-        dataset_row = ["1"]
+        dataset_headers = ["id", "categories"]
+        dataset_row = ["1", "1"]
         dataset = tablib.Dataset(headers=dataset_headers)
         dataset.append(dataset_row)
         book_resource = BookResource()
@@ -2178,8 +2069,8 @@ class BulkTest(TestCase):
                 use_bulk = True
 
         self.resource = _BookResource()
-        rows = [("book_name",)] * 10
-        self.dataset = tablib.Dataset(*rows, headers=["name"])
+        rows = [(i + 1, "book_name") for i in range(10)]
+        self.dataset = tablib.Dataset(*rows, headers=["id", "name"])
 
     def init_update_test_data(self, model=Book):
         [model.objects.create(name="book_name") for _ in range(10)]
@@ -2855,3 +2746,155 @@ class AfterImportComparisonTest(TestCase):
         # issue 1583 - assert that `original` object is available to after_import_row()
         self.resource.import_data(self.dataset, raise_errors=True)
         self.assertTrue(self.resource.is_published)
+
+
+class ImportExportFieldOrderTest(TestCase):
+    class BaseBookResource(resources.ModelResource):
+        def __init__(self):
+            self.field_names = list()
+
+        def get_queryset(self):
+            return Book.objects.all().order_by("id")
+
+        def import_field(self, field, obj, data, is_m2m=False, **kwargs):
+            # mock out import_field() so that we can see the order
+            # fields were called
+            self.field_names.append(field.column_name)
+
+    class UnorderedBookResource(BaseBookResource):
+        class Meta:
+            fields = ("price", "id", "name")
+            model = Book
+
+    class OrderedBookResource(BaseBookResource):
+        class Meta:
+            fields = ("price", "id", "name")
+            import_order = ("price", "name", "id")
+            export_order = ("price", "name", "id")
+            model = Book
+
+    class SubsetOrderedBookResource(BaseBookResource):
+        class Meta:
+            fields = ("price", "id", "name", "published")
+            import_order = ("name",)
+            export_order = ("published",)
+            model = Book
+
+    class DuplicateFieldsBookResource(BaseBookResource):
+        class Meta:
+            fields = ("id", "price", "name", "price")
+            model = Book
+
+    class FieldsAsListBookResource(BaseBookResource):
+        class Meta:
+            fields = ["id", "price", "name"]
+            model = Book
+
+    def setUp(self):
+        super().setUp()
+        self.pk = Book.objects.create(name="Ulysses", price="1.99").pk
+        self.dataset = tablib.Dataset(headers=["id", "name", "price"])
+        row = [self.pk, "Some book", "19.99"]
+        self.dataset.append(row)
+
+    def test_defined_import_order(self):
+        self.resource = ImportExportFieldOrderTest.OrderedBookResource()
+        self.resource.import_data(self.dataset)
+        self.assertEqual(["price", "name", "id"], self.resource.field_names)
+
+    def test_undefined_import_order(self):
+        self.resource = ImportExportFieldOrderTest.UnorderedBookResource()
+        self.resource.import_data(self.dataset)
+        self.assertEqual(["price", "id", "name"], self.resource.field_names)
+
+    def test_defined_export_order(self):
+        self.resource = ImportExportFieldOrderTest.OrderedBookResource()
+        data = self.resource.export()
+        target = f"price,name,id\r\n1.99,Ulysses,{self.pk}\r\n"
+        self.assertEqual(target, data.csv)
+
+    def test_undefined_export_order(self):
+        # When export order is not defined,
+        # exported order should correspond with 'fields' definition
+        self.resource = ImportExportFieldOrderTest.UnorderedBookResource()
+        data = self.resource.export()
+        target = f"price,id,name\r\n1.99,{self.pk},Ulysses\r\n"
+        self.assertEqual(target, data.csv)
+
+    def test_subset_import_order(self):
+        self.resource = ImportExportFieldOrderTest.SubsetOrderedBookResource()
+        self.resource.import_data(self.dataset)
+        self.assertEqual(
+            ["name", "price", "id", "published"], self.resource.field_names
+        )
+
+    def test_subset_export_order(self):
+        self.resource = ImportExportFieldOrderTest.SubsetOrderedBookResource()
+        data = self.resource.export()
+        target = f"published,price,id,name\r\n,1.99,{self.pk},Ulysses\r\n"
+        self.assertEqual(target, data.csv)
+
+    def test_duplicate_import_order(self):
+        self.resource = ImportExportFieldOrderTest.DuplicateFieldsBookResource()
+        self.resource.import_data(self.dataset)
+        self.assertEqual(["id", "price", "name"], self.resource.field_names)
+
+    def test_duplicate_export_order(self):
+        self.resource = ImportExportFieldOrderTest.DuplicateFieldsBookResource()
+        data = self.resource.export()
+        target = f"id,price,name\r\n{self.pk},1.99,Ulysses\r\n"
+        self.assertEqual(target, data.csv)
+
+    def test_fields_as_list_import_order(self):
+        self.resource = ImportExportFieldOrderTest.FieldsAsListBookResource()
+        self.resource.import_data(self.dataset)
+        self.assertEqual(["id", "price", "name"], self.resource.field_names)
+
+    def test_fields_as_list_export_order(self):
+        self.resource = ImportExportFieldOrderTest.FieldsAsListBookResource()
+        data = self.resource.export()
+        target = f"id,price,name\r\n{self.pk},1.99,Ulysses\r\n"
+        self.assertEqual(target, data.csv)
+
+
+class ImportIdFieldsTestCase(TestCase):
+    class BookResource(resources.ModelResource):
+        name = fields.Field(attribute="name", column_name="book_name")
+
+        class Meta:
+            model = Book
+            import_id_fields = ["name"]
+
+    def setUp(self):
+        super().setUp()
+        self.book = Book.objects.create(name="The Hobbit")
+        self.resource = ImportIdFieldsTestCase.BookResource()
+
+    def test_custom_column_name_warns_if_not_present(self):
+        dataset = tablib.Dataset(
+            *[(self.book.pk, "Some book")], headers=["id", "wrong_name"]
+        )
+        with self.assertRaisesRegex(
+            exceptions.FieldError,
+            "The following import_id_fields are not present "
+            "in the dataset: book_name",
+        ):
+            self.resource.import_data(dataset)
+
+    def test_multiple_import_id_fields(self):
+        class BookResource(resources.ModelResource):
+            class Meta:
+                model = Book
+                import_id_fields = ("id", "name", "author_email")
+
+        self.resource = BookResource()
+        dataset = tablib.Dataset(
+            *[(self.book.pk, "Goldeneye", "ian.fleming@example.com")],
+            headers=["A", "name", "B"],
+        )
+        with self.assertRaisesRegex(
+            exceptions.FieldError,
+            "The following import_id_fields are not present "
+            "in the dataset: id, author_email",
+        ):
+            self.resource.import_data(dataset)

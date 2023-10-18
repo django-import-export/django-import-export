@@ -1,22 +1,102 @@
-import os
+import os.path
 import warnings
+from datetime import datetime
+from io import BytesIO
 from unittest import mock
 from unittest.mock import MagicMock, patch
+
+import chardet
 import django
-from tests.core.tests.admin_integration.test_admin_integration_utils import AdminTestMixin
-from django.test.testcases import TestCase,TransactionTestCase
-from django.test.utils import override_settings
-from core.models import Author, Book, EBook, Parent
+import tablib
 from core.admin import AuthorAdmin, BookAdmin, CustomBookAdmin, ImportMixin
-from django.utils.translation import gettext_lazy as _
+from core.models import Author, Book, Category, EBook, Parent
 from django.contrib.admin.models import DELETION, LogEntry
+from django.contrib.auth.models import User
+from django.core.exceptions import PermissionDenied
 from django.http import HttpRequest
+from django.test.testcases import TestCase, TransactionTestCase
+from django.test.utils import override_settings
+from django.utils.translation import gettext_lazy as _
+from openpyxl.reader.excel import load_workbook
+from tablib import Dataset
+
+from import_export import formats
 from import_export.admin import (
+    ExportActionMixin,
     ExportActionModelAdmin,
     ExportMixin,
+    ImportExportActionModelAdmin,
 )
 from import_export.formats import base_formats
+from import_export.formats.base_formats import DEFAULT_FORMATS
+from import_export.tmp_storages import TempFolderStorage
 
+
+class AdminTestMixin(object):
+    book_import_url = "/admin/core/book/import/"
+    book_process_import_url = "/admin/core/book/process_import/"
+    legacybook_import_url = "/admin/core/legacybook/import/"
+    legacybook_process_import_url = "/admin/core/legacybook/process_import/"
+    child_import_url = "/admin/core/child/import/"
+    child_process_import_url = "/admin/core/child/process_import/"
+
+    def setUp(self):
+        super().setUp()
+        user = User.objects.create_user("admin", "admin@example.com", "password")
+        user.is_staff = True
+        user.is_superuser = True
+        user.save()
+        self.client.login(username="admin", password="password")
+
+    def _do_import_post(
+        self, url, filename, input_format=0, encoding=None, resource=None, follow=False
+    ):
+        input_format = input_format
+        filename = os.path.join(
+            os.path.dirname(__file__), os.path.pardir, "exports", filename
+        )
+        with open(filename, "rb") as f:
+            data = {
+                "input_format": str(input_format),
+                "import_file": f,
+            }
+            if encoding:
+                BookAdmin.from_encoding = encoding
+            if resource:
+                data.update({"resource": resource})
+            response = self.client.post(url, data, follow=follow)
+        return response
+
+    def _assert_string_in_response(
+        self,
+        url,
+        filename,
+        input_format,
+        encoding=None,
+        str_in_response=None,
+        follow=False,
+        status_code=200,
+    ):
+        response = self._do_import_post(
+            url, filename, input_format, encoding=encoding, follow=follow
+        )
+        self.assertEqual(response.status_code, status_code)
+        self.assertIn("result", response.context)
+        self.assertFalse(response.context["result"].has_errors())
+        if str_in_response is not None:
+            self.assertContains(response, str_in_response)
+
+    def _get_input_format_index(self, format):
+        for i, f in enumerate(DEFAULT_FORMATS):
+            if f().get_title() == format:
+                xlsx_index = i
+                break
+        else:
+            raise Exception(
+                "Unable to find %s format. DEFAULT_FORMATS: %r"
+                % (format, DEFAULT_FORMATS)
+            )
+        return xlsx_index
 
 
 class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
@@ -548,6 +628,152 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertEqual(choices[1][1], "xlsx")
         self.assertEqual(choices[2][1], "xls")
 
+
+class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
+    def test_export(self):
+        response = self.client.get("/admin/core/book/export/")
+        self.assertEqual(response.status_code, 200)
+
+        data = {
+            "file_format": "0",
+        }
+        date_str = datetime.now().strftime("%Y-%m-%d")
+        response = self.client.post("/admin/core/book/export/", data)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.has_header("Content-Disposition"))
+        self.assertEqual(response["Content-Type"], "text/csv")
+        self.assertEqual(
+            response["Content-Disposition"],
+            'attachment; filename="Book-{}.csv"'.format(date_str),
+        )
+        self.assertEqual(
+            b"id,name,author,author_email,imported,published,"
+            b"published_time,price,added,categories\r\n",
+            response.content,
+        )
+
+    def test_export_second_resource(self):
+        response = self.client.get("/admin/core/book/export/")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Export/Import only book names")
+
+        data = {
+            "file_format": "0",
+            "resource": 1,
+        }
+        date_str = datetime.now().strftime("%Y-%m-%d")
+        response = self.client.post("/admin/core/book/export/", data)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.has_header("Content-Disposition"))
+        self.assertEqual(response["Content-Type"], "text/csv")
+        self.assertEqual(
+            response["Content-Disposition"],
+            'attachment; filename="Book-{}.csv"'.format(date_str),
+        )
+        self.assertEqual(b"id,name\r\n", response.content)
+
+    def test_export_legacy_resource(self):
+        """
+        This test exists solely to test import works correctly using the deprecated
+        functions.
+        This test can be removed when the deprecated code is removed.
+        """
+        warnings.filterwarnings("ignore", category=DeprecationWarning)
+        response = self.client.get("/admin/core/legacybook/export/")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Export/Import only book names")
+
+        data = {
+            "file_format": "0",
+            "resource": 1,
+        }
+        date_str = datetime.now().strftime("%Y-%m-%d")
+        response = self.client.post("/admin/core/legacybook/export/", data)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.has_header("Content-Disposition"))
+        self.assertEqual(response["Content-Type"], "text/csv")
+        self.assertEqual(
+            response["Content-Disposition"],
+            'attachment; filename="LegacyBook-{}.csv"'.format(date_str),
+        )
+        self.assertEqual(b"id,name\r\n", response.content)
+
+    def test_returns_xlsx_export(self):
+        response = self.client.get("/admin/core/book/export/")
+        self.assertEqual(response.status_code, 200)
+
+        xlsx_index = self._get_input_format_index("xlsx")
+        data = {"file_format": str(xlsx_index)}
+        response = self.client.post("/admin/core/book/export/", data)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.has_header("Content-Disposition"))
+        self.assertEqual(
+            response["Content-Type"],
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
+
+    @override_settings(IMPORT_EXPORT_ESCAPE_FORMULAE_ON_EXPORT=True)
+    @patch("import_export.mixins.logger")
+    def test_export_escape_formulae(self, mock_logger):
+        Book.objects.create(id=1, name="=SUM(1+1)")
+        Book.objects.create(id=2, name="<script>alert(1)</script>")
+        response = self.client.get("/admin/core/book/export/")
+        self.assertEqual(response.status_code, 200)
+
+        xlsx_index = self._get_input_format_index("xlsx")
+        data = {"file_format": str(xlsx_index)}
+        response = self.client.post("/admin/core/book/export/", data)
+        self.assertEqual(response.status_code, 200)
+        content = response.content
+        wb = load_workbook(filename=BytesIO(content))
+        self.assertEqual("<script>alert(1)</script>", wb.active["B2"].value)
+        self.assertEqual("SUM(1+1)", wb.active["B3"].value)
+
+        mock_logger.debug.assert_called_once_with(
+            "IMPORT_EXPORT_ESCAPE_FORMULAE_ON_EXPORT is enabled"
+        )
+
+    @override_settings(IMPORT_EXPORT_ESCAPE_HTML_ON_EXPORT=True)
+    def test_export_escape_html_deprecation_warning(self):
+        response = self.client.get("/admin/core/book/export/")
+        self.assertEqual(response.status_code, 200)
+
+        xlsx_index = self._get_input_format_index("xlsx")
+        data = {"file_format": str(xlsx_index)}
+        with self.assertWarnsRegex(
+            DeprecationWarning,
+            r"IMPORT_EXPORT_ESCAPE_HTML_ON_EXPORT is deprecated "
+            "and will be removed in a future release.",
+        ):
+            self.client.post("/admin/core/book/export/", data)
+
+
+class FilteredExportAdminIntegrationTest(AdminTestMixin, TestCase):
+    fixtures = ["category", "book", "author"]
+
+    def test_export_filters_by_form_param(self):
+        # issue 1578
+        author = Author.objects.get(name="Ian Fleming")
+
+        data = {"file_format": "0", "author": str(author.id)}
+        date_str = datetime.now().strftime("%Y-%m-%d")
+        response = self.client.post("/admin/core/ebook/export/", data)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.has_header("Content-Disposition"))
+        self.assertEqual(response["Content-Type"], "text/csv")
+        self.assertEqual(
+            response["Content-Disposition"],
+            'attachment; filename="EBook-{}.csv"'.format(date_str),
+        )
+        self.assertEqual(
+            b"id,name,author,author_email,imported,published,"
+            b"published_time,price,added,categories\r\n"
+            b"5,The Man with the Golden Gun,5,ian@example.com,"
+            b"0,1965-04-01,21:00:00,5.00,,2\r\n",
+            response.content,
+        )
+
+
 class ConfirmImportEncodingTest(AdminTestMixin, TestCase):
     """Test handling 'confirm import' step using different file encodings
     and storage types.
@@ -633,6 +859,7 @@ class ConfirmImportEncodingTest(AdminTestMixin, TestCase):
     )
     def test_import_action_handles_MediaStorage_read_binary(self):
         self._is_str_in_response("books.xls", "1")
+
 
 class CompleteImportEncodingTest(AdminTestMixin, TestCase):
     """Test handling 'complete import' step using different file encodings
@@ -723,6 +950,368 @@ class CompleteImportEncodingTest(AdminTestMixin, TestCase):
     )
     def test_import_action_handles_MediaStorage_read_binary(self):
         self._is_str_in_response("books.xls", "1")
+
+
+class TestImportExportActionModelAdmin(ImportExportActionModelAdmin):
+    def __init__(self, mock_model, mock_site, error_instance):
+        self.error_instance = error_instance
+        super().__init__(mock_model, mock_site)
+
+    def write_to_tmp_storage(self, import_file, input_format):
+        mock_storage = MagicMock(spec=TempFolderStorage)
+
+        mock_storage.read.side_effect = self.error_instance
+        return mock_storage
+
+
+class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
+    def setUp(self):
+        super().setUp()
+        self.cat1 = Category.objects.create(name="Cat 1")
+        self.cat2 = Category.objects.create(name="Cat 2")
+
+    def test_export(self):
+        data = {
+            "action": ["export_admin_action"],
+            "file_format": "0",
+            "_selected_action": [str(self.cat1.id)],
+        }
+        response = self.client.post("/admin/core/category/", data)
+        self.assertContains(response, self.cat1.name, status_code=200)
+        self.assertNotContains(response, self.cat2.name, status_code=200)
+        self.assertTrue(response.has_header("Content-Disposition"))
+        date_str = datetime.now().strftime("%Y-%m-%d")
+        self.assertEqual(
+            response["Content-Disposition"],
+            'attachment; filename="Category-{}.csv"'.format(date_str),
+        )
+
+    def test_export_no_format_selected(self):
+        data = {
+            "action": ["export_admin_action"],
+            "_selected_action": [str(self.cat1.id)],
+        }
+        response = self.client.post("/admin/core/category/", data)
+        self.assertEqual(response.status_code, 302)
+
+    def test_get_export_data_raises_PermissionDenied_when_no_export_permission_assigned(
+        self,
+    ):
+        request = MagicMock(spec=HttpRequest)
+
+        class TestMixin(ExportMixin):
+            model = Book
+
+            def has_export_permission(self, request):
+                return False
+
+        m = TestMixin()
+        with self.assertRaises(PermissionDenied):
+            m.get_export_data("0", Book.objects.none(), request=request)
+
+    def test_export_admin_action_one_formats(self):
+        mock_model = mock.MagicMock()
+        mock_site = mock.MagicMock()
+
+        class TestCategoryAdmin(ExportActionModelAdmin):
+            def __init__(self):
+                super().__init__(mock_model, mock_site)
+
+            export_formats = [base_formats.CSV]
+
+        m = TestCategoryAdmin()
+        action_form = m.action_form
+
+        items = list(action_form.base_fields.items())
+        file_format = items[len(items) - 1][1]
+        choices = file_format.choices
+
+        self.assertNotEqual(choices[0][0], "---")
+        self.assertEqual(choices[0][1], "csv")
+
+    def test_export_admin_action_formats(self):
+        mock_model = mock.MagicMock()
+        mock_site = mock.MagicMock()
+
+        class TestCategoryAdmin(ExportActionModelAdmin):
+            def __init__(self):
+                super().__init__(mock_model, mock_site)
+
+        class TestFormatsCategoryAdmin(ExportActionModelAdmin):
+            def __init__(self):
+                super().__init__(mock_model, mock_site)
+
+            export_formats = [base_formats.CSV, base_formats.JSON]
+
+        m = TestCategoryAdmin()
+        action_form = m.action_form
+
+        items = list(action_form.base_fields.items())
+        file_format = items[len(items) - 1][1]
+        choices = file_format.choices
+
+        self.assertEqual(choices[0][1], "---")
+        self.assertEqual(len(choices), 9)
+
+        m = TestFormatsCategoryAdmin()
+        action_form = m.action_form
+
+        items = list(action_form.base_fields.items())
+        file_format = items[len(items) - 1][1]
+        choices = file_format.choices
+
+        self.assertEqual(choices[0][1], "---")
+        self.assertEqual(len(m.export_formats) + 1, len(choices))
+
+        self.assertIn("csv", [c[1] for c in choices])
+        self.assertIn("json", [c[1] for c in choices])
+
+    @override_settings(EXPORT_FORMATS=[base_formats.XLSX, base_formats.CSV])
+    def test_export_admin_action_uses_export_format_settings(self):
+        """
+        Test that export action only avails the formats provided by the
+        EXPORT_FORMATS setting
+        """
+        mock_model = mock.MagicMock()
+        mock_site = mock.MagicMock()
+
+        class TestCategoryAdmin(ExportActionModelAdmin):
+            def __init__(self):
+                super().__init__(mock_model, mock_site)
+
+        m = TestCategoryAdmin()
+        action_form = m.action_form
+
+        items = list(action_form.base_fields.items())
+        file_format = items[len(items) - 1][1]
+        choices = file_format.choices
+
+        self.assertEqual(len(choices), 3)
+        self.assertEqual(choices[0][1], "---")
+        self.assertEqual(choices[1][1], "xlsx")
+        self.assertEqual(choices[2][1], "csv")
+
+    @override_settings(IMPORT_EXPORT_FORMATS=[base_formats.XLS, base_formats.CSV])
+    def test_export_admin_action_uses_import_export_format_settings(self):
+        """
+        Test that export action only avails the formats provided by the
+        IMPORT_EXPORT_FORMATS setting
+        """
+        mock_model = mock.MagicMock()
+        mock_site = mock.MagicMock()
+
+        class TestCategoryAdmin(ExportActionModelAdmin):
+            def __init__(self):
+                super().__init__(mock_model, mock_site)
+
+        m = TestCategoryAdmin()
+        action_form = m.action_form
+
+        items = list(action_form.base_fields.items())
+        file_format = items[len(items) - 1][1]
+        choices = file_format.choices
+
+        self.assertEqual(len(choices), 3)
+        self.assertEqual(choices[0][1], "---")
+        self.assertEqual(choices[1][1], "xls")
+        self.assertEqual(choices[2][1], "csv")
+
+
+class TestExportEncoding(TestCase):
+    mock_request = MagicMock(spec=HttpRequest)
+    mock_request.POST = {"file_format": 0}
+
+    class TestMixin(ExportMixin):
+        model = Book
+
+        def __init__(self, test_str=None):
+            self.test_str = test_str
+
+        def get_data_for_export(self, request, queryset, *args, **kwargs):
+            dataset = Dataset(headers=["id", "name"])
+            dataset.append([1, self.test_str])
+            return dataset
+
+        def get_export_queryset(self, request):
+            return list()
+
+        def get_export_filename(self, request, queryset, file_format):
+            return "f"
+
+    def setUp(self):
+        self.file_format = formats.base_formats.CSV()
+        self.export_mixin = self.TestMixin(test_str="teststr")
+
+    def test_to_encoding_not_set_default_encoding_is_utf8(self):
+        self.export_mixin = self.TestMixin(test_str="teststr")
+        data = self.export_mixin.get_export_data(
+            self.file_format, list(), request=self.mock_request
+        )
+        csv_dataset = tablib.import_set(data)
+        self.assertEqual("teststr", csv_dataset.dict[0]["name"])
+
+    def test_to_encoding_set(self):
+        self.export_mixin = self.TestMixin(test_str="ハローワールド")
+        data = self.export_mixin.get_export_data(
+            self.file_format, list(), request=self.mock_request, encoding="shift-jis"
+        )
+        encoding = chardet.detect(bytes(data))["encoding"]
+        self.assertEqual("SHIFT_JIS", encoding)
+
+    def test_to_encoding_set_incorrect(self):
+        self.export_mixin = self.TestMixin()
+        with self.assertRaises(LookupError):
+            self.export_mixin.get_export_data(
+                self.file_format,
+                list(),
+                request=self.mock_request,
+                encoding="bad-encoding",
+            )
+
+    def test_to_encoding_not_set_for_binary_file(self):
+        self.export_mixin = self.TestMixin(test_str="teststr")
+        self.file_format = formats.base_formats.XLSX()
+        data = self.export_mixin.get_export_data(
+            self.file_format, list(), request=self.mock_request
+        )
+        binary_dataset = tablib.import_set(data)
+        self.assertEqual("teststr", binary_dataset.dict[0]["name"])
+
+    @mock.patch("import_export.admin.ImportForm")
+    def test_export_action_to_encoding(self, mock_form):
+        mock_form.is_valid.return_value = True
+        self.export_mixin.to_encoding = "utf-8"
+        with mock.patch(
+            "import_export.admin.ExportMixin.get_export_data"
+        ) as mock_get_export_data:
+            self.export_mixin.export_action(self.mock_request)
+            encoding_kwarg = mock_get_export_data.call_args_list[0][1]["encoding"]
+            self.assertEqual("utf-8", encoding_kwarg)
+
+    @mock.patch("import_export.admin.ImportForm")
+    def test_export_admin_action_to_encoding(self, mock_form):
+        class TestExportActionMixin(ExportActionMixin):
+            def get_export_filename(self, request, queryset, file_format):
+                return "f"
+
+        self.mock_request.POST = {"file_format": "1"}
+
+        self.export_mixin = TestExportActionMixin()
+        self.export_mixin.to_encoding = "utf-8"
+        mock_form.is_valid.return_value = True
+        with mock.patch(
+            "import_export.admin.ExportMixin.get_export_data"
+        ) as mock_get_export_data:
+            self.export_mixin.export_admin_action(self.mock_request, list())
+            encoding_kwarg = mock_get_export_data.call_args_list[0][1]["encoding"]
+            self.assertEqual("utf-8", encoding_kwarg)
+
+
+class TestImportMixinDeprecationWarnings(TestCase):
+    class TestMixin(ImportMixin):
+        """
+        TestMixin is a subclass which mimics a
+        class which the user may have created
+        """
+
+        def get_import_form(self):
+            return super().get_import_form()
+
+        def get_confirm_import_form(self):
+            return super().get_confirm_import_form()
+
+        def get_form_kwargs(self, form_class, **kwargs):
+            return super().get_form_kwargs(form_class, **kwargs)
+
+    def setUp(self):
+        super().setUp()
+        self.import_mixin = ImportMixin()
+
+    def test_get_import_form_warning(self):
+        target_msg = (
+            "ImportMixin.get_import_form() is deprecated and will be removed "
+            "in a future release. "
+            "Please use get_import_form_class() instead."
+        )
+        with self.assertWarns(DeprecationWarning) as w:
+            self.import_mixin.get_import_form()
+            self.assertEqual(target_msg, str(w.warnings[0].message))
+
+    def test_get_confirm_import_form_warning(self):
+        target_msg = (
+            "ImportMixin.get_confirm_import_form() is deprecated and will be removed "
+            "in a future release. "
+            "Please use get_confirm_form_class() instead."
+        )
+        with self.assertWarns(DeprecationWarning) as w:
+            self.import_mixin.get_confirm_import_form()
+            self.assertEqual(target_msg, str(w.warnings[0].message))
+
+    def test_get_form_kwargs_warning(self):
+        target_msg = (
+            "ImportMixin.get_form_kwargs() is deprecated and will be removed in a "
+            "future release. "
+            "Please use get_import_form_kwargs() or get_confirm_form_kwargs() instead."
+        )
+        with self.assertWarns(DeprecationWarning) as w:
+            self.import_mixin.get_form_kwargs(None)
+            self.assertEqual(target_msg, str(w.warnings[0].message))
+
+    def test_get_import_form_class_warning(self):
+        self.import_mixin = self.TestMixin()
+        target_msg = (
+            "ImportMixin.get_import_form() is deprecated and will be removed in a "
+            "future release. "
+            "Please use the new 'import_form_class' attribute to specify a custom form "
+            "class, "
+            "or override the get_import_form_class() method if your requirements are "
+            "more complex."
+        )
+        with self.assertWarns(DeprecationWarning) as w:
+            self.import_mixin.get_import_form_class(None)
+            self.assertEqual(target_msg, str(w.warnings[0].message))
+
+    def test_get_confirm_form_class_warning(self):
+        self.import_mixin = self.TestMixin()
+        target_msg = (
+            "ImportMixin.get_confirm_import_form() is deprecated and will be removed "
+            "in a future release. "
+            "Please use the new 'confirm_form_class' attribute to specify a custom "
+            "form class, "
+            "or override the get_confirm_form_class() method if your requirements "
+            "are more complex."
+        )
+        with self.assertWarns(DeprecationWarning) as w:
+            self.import_mixin.get_confirm_form_class(None)
+            self.assertEqual(target_msg, str(w.warnings[0].message))
+
+
+class TestExportMixinDeprecationWarnings(TestCase):
+    class TestMixin(ExportMixin):
+        """
+        TestMixin is a subclass which mimics a
+        class which the user may have created
+        """
+
+        def get_export_form(self):
+            return super().get_export_form()
+
+    def setUp(self):
+        super().setUp()
+        self.export_mixin = self.TestMixin()
+
+    def test_get_export_form_warning(self):
+        target_msg = (
+            "ExportMixin.get_export_form() is deprecated and will "
+            "be removed in a future release. Please use the new "
+            "'export_form_class' attribute to specify a custom form "
+            "class, or override the get_export_form_class() method if "
+            "your requirements are more complex."
+        )
+        with self.assertWarns(DeprecationWarning) as w:
+            self.export_mixin.get_export_form()
+            self.assertEqual(target_msg, str(w.warnings[0].message))
+
 
 @override_settings(IMPORT_EXPORT_SKIP_ADMIN_CONFIRM=True)
 class TestImportSkipConfirm(AdminTestMixin, TransactionTestCase):

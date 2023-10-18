@@ -69,21 +69,20 @@ class Field:
             return "<%s: %s>" % (path, column_name)
         return "<%s>" % path
 
-    def clean(self, data, **kwargs):
+    def clean(self, row, **kwargs):
         """
         Translates the value stored in the imported datasource to an
         appropriate Python object and returns it.
         """
         try:
-            value = data[self.column_name]
+            value = row[self.column_name]
         except KeyError:
             raise KeyError(
                 "Column '%s' not found in dataset. Available "
-                "columns are: %s" % (self.column_name, list(data))
+                "columns are: %s" % (self.column_name, list(row))
             )
 
-        # If ValueError is raised here, import_obj() will handle it
-        value = self.widget.clean(value, row=data, **kwargs)
+        value = self.widget.clean(value, row=row, **kwargs)
 
         if value in self.empty_values and self.default != NOT_PROVIDED:
             if callable(self.default):
@@ -92,7 +91,7 @@ class Field:
 
         return value
 
-    def get_value(self, obj):
+    def get_value(self, instance):
         """
         Returns the value of the object's attribute.
         """
@@ -100,7 +99,7 @@ class Field:
             return None
 
         attrs = self.attribute.split("__")
-        value = obj
+        value = instance
 
         for attr in attrs:
             try:
@@ -118,7 +117,7 @@ class Field:
             value = value()
         return value
 
-    def save(self, obj, data, is_m2m=False, **kwargs):
+    def save(self, instance, row, is_m2m=False, **kwargs):
         """
         If this field is not declared readonly, the object's attribute will
         be set to the value returned by :meth:`~import_export.fields.Field.clean`.
@@ -126,26 +125,26 @@ class Field:
         if not self.readonly:
             attrs = self.attribute.split("__")
             for attr in attrs[:-1]:
-                obj = getattr(obj, attr, None)
-            cleaned = self.clean(data, **kwargs)
+                instance = getattr(instance, attr, None)
+            cleaned = self.clean(row, **kwargs)
             if cleaned is not None or self.saves_null_values:
                 if not is_m2m:
-                    setattr(obj, attrs[-1], cleaned)
+                    setattr(instance, attrs[-1], cleaned)
                 else:
                     if self.m2m_add:
-                        getattr(obj, attrs[-1]).add(*cleaned)
+                        getattr(instance, attrs[-1]).add(*cleaned)
                     else:
-                        getattr(obj, attrs[-1]).set(cleaned)
+                        getattr(instance, attrs[-1]).set(cleaned)
 
-    def export(self, obj):
+    def export(self, instance):
         """
-        Returns value from the provided object converted to export
+        Returns value from the provided instance converted to export
         representation.
         """
-        value = self.get_value(obj)
+        value = self.get_value(instance)
         if value is None:
             return ""
-        return self.widget.render(value, obj)
+        return self.widget.render(value, instance)
 
     def get_dehydrate_method(self, field_name=None):
         """
