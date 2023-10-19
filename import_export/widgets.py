@@ -168,21 +168,30 @@ class BooleanWidget(Widget):
     FALSE_VALUES = ["0", 0, False, "false", "FALSE", "False"]
     NULL_VALUES = ["", None, "null", "NULL", "none", "NONE", "None"]
 
-    def render(self, value, obj=None):
-        """
-        On export, ``True`` is represented as ``1``, ``False`` as ``0``, and
-        ``None``/NULL as an empty string.
-
-        Note that these values are also used on the import confirmation view.
-        """
-        if value in self.NULL_VALUES:
-            return ""
-        return self.TRUE_VALUES[0] if value else self.FALSE_VALUES[0]
+    def __init__(self, coerce_to_string=True):
+        """ """
+        self.coerce_to_string = coerce_to_string
 
     def clean(self, value, row=None, **kwargs):
         if value in self.NULL_VALUES:
             return None
         return True if value in self.TRUE_VALUES else False
+
+    def render(self, value, obj=None):
+        """
+        On export, ``True`` is represented as ``1``, ``False`` as ``0``, and
+        ``None``/NULL as an empty string.
+
+        If ``coerce_to_string`` is ``False``, the python Boolean type is
+        returned (may be ``None``).
+
+        Note that these values are also used on the import confirmation view.
+        """
+        if self.coerce_to_string is False:
+            return value
+        if value in self.NULL_VALUES:
+            return ""
+        return self.TRUE_VALUES[0] if value else self.FALSE_VALUES[0]
 
 
 class DateWidget(Widget):

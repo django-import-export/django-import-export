@@ -76,6 +76,12 @@ class BooleanWidgetTest(TestCase):
         self.assertEqual(self.widget.render(False), "0")
         self.assertEqual(self.widget.render(None), "")
 
+    def test_render_coerce_to_string_is_False(self):
+        self.widget = widgets.BooleanWidget(coerce_to_string=False)
+        self.assertTrue(self.widget.render(True))
+        self.assertFalse(self.widget.render(False))
+        self.assertIsNone(self.widget.render(None))
+
 
 class FormatDatetimeTest(TestCase):
     date = date(10, 8, 2)
