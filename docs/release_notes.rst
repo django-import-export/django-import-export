@@ -42,6 +42,10 @@ In v4, return values are rendered as strings by default (where applicable), with
 
 Refer to the :doc:`documentation<api_widgets>` for more information.
 
+The ``obj`` param passed to :meth:`~import_export.widgets.Widget.render` is deprecated.
+The :meth:`~import_export.widgets.Widget.render` method should not need to have a reference to
+model instance.
+
 API changes
 ===========
 

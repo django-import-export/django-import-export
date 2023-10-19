@@ -31,7 +31,7 @@ class RowDeprecationTestMixin(object):
             r"^The 'obj' parameter is deprecated and "
             "will be removed in a future release$",
         ):
-            self.widget.render(None, obj={"a": 1})
+            self.widget.render(Book.objects.none(), obj={"a": 1})
 
 
 class CharWidgetTest(TestCase, RowDeprecationTestMixin):
@@ -465,7 +465,7 @@ class IntegerWidgetTest(TestCase, RowDeprecationTestMixin):
         self.assertEqual(self.widget_coerce_to_string.render(self.value), "0")
 
 
-class ForeignKeyWidgetTest(TestCase):
+class ForeignKeyWidgetTest(TestCase, RowDeprecationTestMixin):
     def setUp(self):
         self.widget = widgets.ForeignKeyWidget(Author)
         self.natural_key_author_widget = widgets.ForeignKeyWidget(
@@ -576,7 +576,7 @@ class ForeignKeyWidgetTest(TestCase):
         )
 
 
-class ManyToManyWidget(TestCase):
+class ManyToManyWidget(TestCase, RowDeprecationTestMixin):
     def setUp(self):
         self.widget = widgets.ManyToManyWidget(Category)
         self.widget_name = widgets.ManyToManyWidget(Category, field="name")
@@ -641,7 +641,7 @@ class ManyToManyWidget(TestCase):
         self.assertEqual("", self.widget.render(None))
 
 
-class JSONWidgetTest(TestCase):
+class JSONWidgetTest(TestCase, RowDeprecationTestMixin):
     def setUp(self):
         self.value = {"value": 23}
         self.widget = widgets.JSONWidget()
@@ -666,7 +666,7 @@ class JSONWidgetTest(TestCase):
         self.assertEqual(self.widget.render({"value": None}), '{"value": null}')
 
 
-class SimpleArrayWidgetTest(TestCase):
+class SimpleArrayWidgetTest(TestCase, RowDeprecationTestMixin):
     def setUp(self):
         self.value = {"value": 23}
         self.widget = widgets.SimpleArrayWidget()

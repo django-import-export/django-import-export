@@ -404,6 +404,7 @@ class JSONWidget(Widget):
         :return: A JSON formatted string derived from ``value``.
           ``coerce_to_string`` has no effect on the return value.
         """
+        self._obj_deprecation_warning(obj)
         if value:
             return json.dumps(value)
         return None
@@ -526,6 +527,7 @@ class ForeignKeyWidget(Widget):
           If ``use_natural_foreign_keys``, the value's natural key is returned.
           ``coerce_to_string`` has no effect on the return value.
         """
+        self._obj_deprecation_warning(obj)
         if value is None:
             return ""
 
@@ -583,6 +585,7 @@ class ManyToManyWidget(Widget):
           ``None`` values are returned as empty strings.
           ``coerce_to_string`` has no effect on the return value.
         """
+        self._obj_deprecation_warning(obj)
         if value is not None:
             ids = [smart_str(getattr(obj, self.field)) for obj in value.all()]
             return self.separator.join(ids)
