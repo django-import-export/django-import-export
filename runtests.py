@@ -13,8 +13,7 @@ def main():
     retval = os.system(
         "python -W error::DeprecationWarning -W error::PendingDeprecationWarning "
         f"{coverage_args} "
-        "./tests/manage.py test core.tests.test_resources.ModelResourceTest "
-        "--settings=settings"
+        "./tests/manage.py test core --settings=settings"
     )
     if retval != 0:
         exit(1)
