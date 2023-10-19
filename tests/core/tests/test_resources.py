@@ -41,6 +41,7 @@ from ..models import (
     WithDynamicDefault,
     WithFloatField,
 )
+from .utils import ignore_widget_deprecation_warning
 
 
 class MyResource(resources.Resource):
@@ -1484,6 +1485,7 @@ class ModelResourceTest(TestCase):
         self.assertFalse(related_field_widget.use_natural_foreign_keys)
 
 
+@ignore_widget_deprecation_warning
 class ModelResourceTransactionTest(TransactionTestCase):
     @skipUnlessDBFeature("supports_transactions")
     def test_m2m_import_with_transactions(self):
