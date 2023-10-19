@@ -3,21 +3,20 @@ from datetime import datetime
 from io import BytesIO
 from unittest import mock
 from unittest.mock import MagicMock, patch
-from core.models import  Author, Book
+
 import chardet
 import tablib
-from django.test.utils import override_settings
+from core.models import Author, Book
 from django.http import HttpRequest
-from tests.core.tests.admin_integration.test_admin_integration_utils import AdminTestMixin
 from django.test.testcases import TestCase
+from django.test.utils import override_settings
 from openpyxl.reader.excel import load_workbook
 from tablib import Dataset
-from import_export import formats
 
-from import_export.admin import (
-    ExportActionMixin,
-    ExportMixin,
-    
+from import_export import formats
+from import_export.admin import ExportActionMixin, ExportMixin
+from tests.core.tests.admin_integration.test_admin_integration_utils import (
+    AdminTestMixin,
 )
 
 
@@ -139,6 +138,7 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
         ):
             self.client.post("/admin/core/book/export/", data)
 
+
 class FilteredExportAdminIntegrationTest(AdminTestMixin, TestCase):
     fixtures = ["category", "book", "author"]
 
@@ -163,6 +163,7 @@ class FilteredExportAdminIntegrationTest(AdminTestMixin, TestCase):
             b"0,1965-04-01,21:00:00,5.00,,2\r\n",
             response.content,
         )
+
 
 class TestExportEncoding(TestCase):
     mock_request = MagicMock(spec=HttpRequest)

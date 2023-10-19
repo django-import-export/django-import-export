@@ -1,8 +1,8 @@
+from core.admin import ImportMixin
 from django.test.testcases import TestCase
-from core.admin import  ImportMixin
-from import_export.admin import (
-    ExportMixin,
-)
+
+from import_export.admin import ExportMixin
+
 
 class TestImportMixinDeprecationWarnings(TestCase):
     class TestMixin(ImportMixin):
@@ -81,6 +81,7 @@ class TestImportMixinDeprecationWarnings(TestCase):
         with self.assertWarns(DeprecationWarning) as w:
             self.import_mixin.get_confirm_form_class(None)
             self.assertEqual(target_msg, str(w.warnings[0].message))
+
 
 class TestExportMixinDeprecationWarnings(TestCase):
     class TestMixin(ExportMixin):

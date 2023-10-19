@@ -1,7 +1,10 @@
 import os
-from django.contrib.auth.models import User
+
 from core.admin import BookAdmin
+from django.contrib.auth.models import User
+
 from import_export.formats.base_formats import DEFAULT_FORMATS
+
 
 class AdminTestMixin(object):
     book_import_url = "/admin/core/book/import/"

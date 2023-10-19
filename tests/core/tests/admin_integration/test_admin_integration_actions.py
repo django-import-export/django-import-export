@@ -1,19 +1,19 @@
 from datetime import datetime
-from unittest.mock import MagicMock, patch
 from unittest import mock
+from unittest.mock import MagicMock, patch
 
-from tests.core.tests.admin_integration.test_admin_integration_utils import AdminTestMixin
-from tests.core.tests.admin_integration import AdminTestMixin
-from django.test.testcases import TestCase
-from core.models import  Book, Category
-from django.http import HttpRequest
-from django.test.utils import override_settings
+from core.models import Book, Category
 from django.core.exceptions import PermissionDenied
-from import_export.admin import (
-    ExportActionModelAdmin,
-    ExportMixin,
-)
+from django.http import HttpRequest
+from django.test.testcases import TestCase
+from django.test.utils import override_settings
+
+from import_export.admin import ExportActionModelAdmin, ExportMixin
 from import_export.formats import base_formats
+from tests.core.tests.admin_integration import AdminTestMixin
+from tests.core.tests.admin_integration.test_admin_integration_utils import (
+    AdminTestMixin,
+)
 
 
 class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
@@ -167,4 +167,3 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertEqual(choices[0][1], "---")
         self.assertEqual(choices[1][1], "xls")
         self.assertEqual(choices[2][1], "csv")
-        
