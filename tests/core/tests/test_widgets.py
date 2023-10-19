@@ -24,7 +24,17 @@ class WidgetTest(TestCase):
         self.assertEqual("1", self.widget.render(1))
 
 
-class CharWidgetTest(TestCase):
+class RowDeprecationTestMixin(object):
+    def test_render_row_deprecation(self):
+        with self.assertWarnsRegex(
+            DeprecationWarning,
+            r"^The 'obj' parameter is deprecated and "
+            "will be removed in a future release$",
+        ):
+            self.widget.render(None, obj={"a": 1})
+
+
+class CharWidgetTest(TestCase, RowDeprecationTestMixin):
     def setUp(self):
         self.widget = widgets.CharWidget()
 
@@ -47,7 +57,7 @@ class CharWidgetTest(TestCase):
         self.assertEqual("", self.widget.clean(None))
 
 
-class BooleanWidgetTest(TestCase):
+class BooleanWidgetTest(TestCase, RowDeprecationTestMixin):
     def setUp(self):
         self.widget = widgets.BooleanWidget()
 
@@ -105,7 +115,7 @@ class FormatDatetimeTest(TestCase):
         )
 
 
-class DateWidgetTest(TestCase):
+class DateWidgetTest(TestCase, RowDeprecationTestMixin):
     def setUp(self):
         self.date = date(2012, 8, 13)
         self.widget = widgets.DateWidget("%d.%m.%Y")
@@ -115,6 +125,10 @@ class DateWidgetTest(TestCase):
 
     def test_render_none(self):
         self.assertEqual(self.widget.render(None), "")
+
+    def test_render_coerce_to_string_is_False(self):
+        self.widget = widgets.DateWidget(coerce_to_string=False)
+        self.assertEqual(self.date, self.widget.render(self.date))
 
     def test_render_datetime_safe(self):
         """datetime_safe is supposed to be used to support dates older than 1000"""
@@ -146,7 +160,7 @@ class DateWidgetTest(TestCase):
         self.assertEqual(("%Y-%m-%d",), self.widget.formats)
 
 
-class DateTimeWidgetTest(TestCase):
+class DateTimeWidgetTest(TestCase, RowDeprecationTestMixin):
     def setUp(self):
         self.datetime = datetime(2012, 8, 13, 18, 0, 0)
         self.widget = widgets.DateTimeWidget("%d.%m.%Y %H:%M:%S")
@@ -156,6 +170,10 @@ class DateTimeWidgetTest(TestCase):
 
     def test_render_none(self):
         self.assertEqual(self.widget.render(None), "")
+
+    def test_render_coerce_to_string_is_False(self):
+        self.widget = widgets.DateTimeWidget(coerce_to_string=False)
+        self.assertEqual(self.datetime, self.widget.render(self.datetime))
 
     def test_clean(self):
         self.assertEqual(self.widget.clean("13.08.2012 18:00:00"), self.datetime)
@@ -223,7 +241,7 @@ class DateTimeWidgetBefore1900Test(TestCase):
         self.assertEqual(self.datetime, self.widget.clean("13.08.1868"))
 
 
-class TimeWidgetTest(TestCase):
+class TimeWidgetTest(TestCase, RowDeprecationTestMixin):
     def setUp(self):
         self.time = time(20, 15, 0)
         self.widget = widgets.TimeWidget("%H:%M:%S")
@@ -233,6 +251,10 @@ class TimeWidgetTest(TestCase):
 
     def test_render_none(self):
         self.assertEqual(self.widget.render(None), "")
+
+    def test_render_coerce_to_string_is_False(self):
+        self.widget = widgets.TimeWidget(coerce_to_string=False)
+        self.assertEqual(self.time, self.widget.render(self.time))
 
     def test_clean(self):
         self.assertEqual(self.widget.clean("20:15:00"), self.time)
@@ -251,7 +273,7 @@ class TimeWidgetTest(TestCase):
         self.assertEqual(self.time, self.widget.clean(self.time))
 
 
-class DurationWidgetTest(TestCase):
+class DurationWidgetTest(TestCase, RowDeprecationTestMixin):
     def setUp(self):
         self.duration = timedelta(hours=1, minutes=57, seconds=0)
         self.widget = widgets.DurationWidget()
@@ -264,6 +286,10 @@ class DurationWidgetTest(TestCase):
 
     def test_render_zero(self):
         self.assertEqual(self.widget.render(timedelta(0)), "0:00:00")
+
+    def test_render_coerce_to_string_is_False(self):
+        self.widget = widgets.DurationWidget(coerce_to_string=False)
+        self.assertEqual(self.duration, self.widget.render(self.duration))
 
     def test_clean(self):
         self.assertEqual(self.widget.clean("1:57:00"), self.duration)
@@ -280,7 +306,7 @@ class DurationWidgetTest(TestCase):
             self.widget.clean("x")
 
 
-class NumberWidgetTest(TestCase):
+class NumberWidgetTest(TestCase, RowDeprecationTestMixin):
     def setUp(self):
         self.value = 11.111
         self.widget = widgets.NumberWidget()
@@ -323,7 +349,7 @@ class NumberWidgetTest(TestCase):
         self.assertEqual("", self.widget_coerce_to_string.render(None))
 
 
-class FloatWidgetTest(TestCase):
+class FloatWidgetTest(TestCase, RowDeprecationTestMixin):
     def setUp(self):
         self.value = 11.111
         self.widget = widgets.FloatWidget()
@@ -360,7 +386,7 @@ class FloatWidgetTest(TestCase):
         self.assertEqual(self.widget_coerce_to_string.render(self.value), "11,111")
 
 
-class DecimalWidgetTest(TestCase):
+class DecimalWidgetTest(TestCase, RowDeprecationTestMixin):
     def setUp(self):
         self.value = Decimal("11.111")
         self.widget = widgets.DecimalWidget()
@@ -401,7 +427,7 @@ class DecimalWidgetTest(TestCase):
         self.assertEqual(self.widget.render(self.value), "11,111")
 
 
-class IntegerWidgetTest(TestCase):
+class IntegerWidgetTest(TestCase, RowDeprecationTestMixin):
     def setUp(self):
         self.value = 0
         self.widget = widgets.IntegerWidget()
