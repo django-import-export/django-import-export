@@ -13,6 +13,7 @@ Please refer to :doc:`release notes<release_notes>`.
 - added specific check for missing ``import_id_fields`` (#1645)
 - Enable optional tablib dependencies (#1647)
 - Removed unused method ``utils.original()``
+- Standardised interface of :meth:`~import_export.widgets.Widget.render` (#1657)
 
 4.0.0-alpha.5 (2023-09-22)
 --------------------------
