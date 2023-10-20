@@ -10,13 +10,10 @@ import django
 import tablib
 from core.admin import AuthorAdmin, BookAdmin, CustomBookAdmin, ImportMixin
 from core.models import Author, Book, Category, EBook, Parent
-from django.contrib import admin
 from django.contrib.admin.models import DELETION, LogEntry
-from django.contrib.admin.options import ModelAdmin
 from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied
 from django.http import HttpRequest
-from django.test import RequestFactory
 from django.test.testcases import TestCase, TransactionTestCase
 from django.test.utils import override_settings
 from django.utils.translation import gettext_lazy as _
@@ -29,7 +26,6 @@ from import_export.admin import (
     ExportActionModelAdmin,
     ExportMixin,
     ImportExportActionModelAdmin,
-    ImportExportMixinBase,
 )
 from import_export.formats import base_formats
 from import_export.formats.base_formats import DEFAULT_FORMATS
@@ -46,10 +42,10 @@ class AdminTestMixin(object):
 
     def setUp(self):
         super().setUp()
-        self.user = User.objects.create_user("admin", "admin@example.com", "password")
-        self.user.is_staff = True
-        self.user.is_superuser = True
-        self.user.save()
+        user = User.objects.create_user("admin", "admin@example.com", "password")
+        user.is_staff = True
+        user.is_superuser = True
+        user.save()
         self.client.login(username="admin", password="password")
 
     def _do_import_post(
@@ -224,6 +220,41 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         )
         # Check, that we really use second resource - author_email didn't get imported
         self.assertEqual(Book.objects.get(id=1).author_email, "")
+
+    def test_import_legacy_book(self):
+        """
+        This test exists solely to test import works correctly using the deprecated
+        functions.
+        This test can be removed when the deprecated code is removed.
+        """
+        warnings.filterwarnings("ignore", category=DeprecationWarning)
+        Book.objects.create(id=1)
+
+        # GET the import form
+        response = self.client.get(self.legacybook_import_url)
+        self.assertContains(response, "Export/Import only book names")
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "admin/import_export/import.html")
+        self.assertContains(response, 'form action=""')
+
+        response = self._do_import_post(
+            self.legacybook_import_url, "books.csv", resource=1
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("result", response.context)
+        self.assertFalse(response.context["result"].has_errors())
+        self.assertIn("confirm_form", response.context)
+        confirm_form = response.context["confirm_form"]
+
+        data = confirm_form.initial
+        self.assertEqual(data["original_file_name"], "books.csv")
+        response = self.client.post(
+            self.legacybook_process_import_url, data, follow=True
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response, "Import finished, with 0 new and 1 updated legacy books."
+        )
 
     def test_import_action_handles_UnicodeDecodeError_as_form_error(self):
         with mock.patch(
@@ -466,6 +497,48 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
             ),
         )
 
+    @mock.patch("core.admin.BookAdmin.get_import_form_class")
+    def test_deprecated_importform_new_api_raises_warning(self, mock_get_import_form):
+        class DjangoImportForm(django.forms.Form):
+            def __init__(self, import_formats, *args, **kwargs):
+                super().__init__(*args, **kwargs)
+
+        mock_get_import_form.return_value = DjangoImportForm
+
+        with self.assertWarnsRegex(
+            DeprecationWarning,
+            r"^The ImportForm class must inherit from ImportExportFormBase, "
+            r"this is needed for multiple resource classes to work properly. $",
+        ):
+            # GET the import form
+            response = self.client.get(self.book_import_url)
+            self.assertEqual(response.status_code, 200)
+            self.assertTemplateUsed(response, "admin/import_export/import.html")
+            self.assertContains(response, 'form action=""')
+
+    @mock.patch("core.admin.BookAdmin.get_import_form_class")
+    @mock.patch("core.admin.BookAdmin.get_form_kwargs")
+    def test_deprecated_importform_raises_warning(
+        self, mock_get_form_kwargs, mock_get_import_form
+    ):
+        class DjangoImportForm(django.forms.Form):
+            def __init__(self, import_formats, *args, **kwargs):
+                super().__init__(*args, **kwargs)
+
+        mock_get_form_kwargs.is_original = False
+        mock_get_import_form.return_value = DjangoImportForm
+
+        with self.assertWarnsRegex(
+            DeprecationWarning,
+            r"^The ImportForm class must inherit from ImportExportFormBase, "
+            r"this is needed for multiple resource classes to work properly. $",
+        ):
+            # GET the import form
+            response = self.client.get(self.book_import_url)
+            self.assertEqual(response.status_code, 200)
+            self.assertTemplateUsed(response, "admin/import_export/import.html")
+            self.assertContains(response, 'form action=""')
+
     def test_get_skip_admin_log_attribute(self):
         m = ImportMixin()
         m.skip_admin_log = True
@@ -599,6 +672,32 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
         )
         self.assertEqual(b"id,name\r\n", response.content)
 
+    def test_export_legacy_resource(self):
+        """
+        This test exists solely to test import works correctly using the deprecated
+        functions.
+        This test can be removed when the deprecated code is removed.
+        """
+        warnings.filterwarnings("ignore", category=DeprecationWarning)
+        response = self.client.get("/admin/core/legacybook/export/")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Export/Import only book names")
+
+        data = {
+            "file_format": "0",
+            "resource": 1,
+        }
+        date_str = datetime.now().strftime("%Y-%m-%d")
+        response = self.client.post("/admin/core/legacybook/export/", data)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.has_header("Content-Disposition"))
+        self.assertEqual(response["Content-Type"], "text/csv")
+        self.assertEqual(
+            response["Content-Disposition"],
+            'attachment; filename="LegacyBook-{}.csv"'.format(date_str),
+        )
+        self.assertEqual(b"id,name\r\n", response.content)
+
     def test_returns_xlsx_export(self):
         response = self.client.get("/admin/core/book/export/")
         self.assertEqual(response.status_code, 200)
@@ -614,7 +713,8 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
         )
 
     @override_settings(IMPORT_EXPORT_ESCAPE_FORMULAE_ON_EXPORT=True)
-    def test_export_escape_formulae(self):
+    @patch("import_export.mixins.logger")
+    def test_export_escape_formulae(self, mock_logger):
         Book.objects.create(id=1, name="=SUM(1+1)")
         Book.objects.create(id=2, name="<script>alert(1)</script>")
         response = self.client.get("/admin/core/book/export/")
@@ -629,33 +729,23 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertEqual("<script>alert(1)</script>", wb.active["B2"].value)
         self.assertEqual("SUM(1+1)", wb.active["B3"].value)
 
-    @override_settings(IMPORT_EXPORT_ESCAPE_FORMULAE_ON_EXPORT=True)
-    def test_export_escape_formulae_csv(self):
-        b1 = Book.objects.create(id=1, name="=SUM(1+1)")
+        mock_logger.debug.assert_called_once_with(
+            "IMPORT_EXPORT_ESCAPE_FORMULAE_ON_EXPORT is enabled"
+        )
+
+    @override_settings(IMPORT_EXPORT_ESCAPE_HTML_ON_EXPORT=True)
+    def test_export_escape_html_deprecation_warning(self):
         response = self.client.get("/admin/core/book/export/")
         self.assertEqual(response.status_code, 200)
 
-        index = self._get_input_format_index("csv")
-        data = {"file_format": str(index)}
-        response = self.client.post("/admin/core/book/export/", data)
-        self.assertIn(
-            f"{b1.id},SUM(1+1),,,0,,,,,\r\n".encode(),
-            response.content,
-        )
-
-    @override_settings(IMPORT_EXPORT_ESCAPE_FORMULAE_ON_EXPORT=False)
-    def test_export_escape_formulae_csv_false(self):
-        b1 = Book.objects.create(id=1, name="=SUM(1+1)")
-        response = self.client.get("/admin/core/book/export/")
-        self.assertEqual(response.status_code, 200)
-
-        index = self._get_input_format_index("csv")
-        data = {"file_format": str(index)}
-        response = self.client.post("/admin/core/book/export/", data)
-        self.assertIn(
-            f"{b1.id},=SUM(1+1),,,0,,,,,\r\n".encode(),
-            response.content,
-        )
+        xlsx_index = self._get_input_format_index("xlsx")
+        data = {"file_format": str(xlsx_index)}
+        with self.assertWarnsRegex(
+            DeprecationWarning,
+            r"IMPORT_EXPORT_ESCAPE_HTML_ON_EXPORT is deprecated "
+            "and will be removed in a future release.",
+        ):
+            self.client.post("/admin/core/book/export/", data)
 
 
 class FilteredExportAdminIntegrationTest(AdminTestMixin, TestCase):
@@ -1117,10 +1207,114 @@ class TestExportEncoding(TestCase):
             self.assertEqual("utf-8", encoding_kwarg)
 
 
+class TestImportMixinDeprecationWarnings(TestCase):
+    class TestMixin(ImportMixin):
+        """
+        TestMixin is a subclass which mimics a
+        class which the user may have created
+        """
+
+        def get_import_form(self):
+            return super().get_import_form()
+
+        def get_confirm_import_form(self):
+            return super().get_confirm_import_form()
+
+        def get_form_kwargs(self, form_class, **kwargs):
+            return super().get_form_kwargs(form_class, **kwargs)
+
+    def setUp(self):
+        super().setUp()
+        self.import_mixin = ImportMixin()
+
+    def test_get_import_form_warning(self):
+        target_msg = (
+            "ImportMixin.get_import_form() is deprecated and will be removed "
+            "in a future release. "
+            "Please use get_import_form_class() instead."
+        )
+        with self.assertWarns(DeprecationWarning) as w:
+            self.import_mixin.get_import_form()
+            self.assertEqual(target_msg, str(w.warnings[0].message))
+
+    def test_get_confirm_import_form_warning(self):
+        target_msg = (
+            "ImportMixin.get_confirm_import_form() is deprecated and will be removed "
+            "in a future release. "
+            "Please use get_confirm_form_class() instead."
+        )
+        with self.assertWarns(DeprecationWarning) as w:
+            self.import_mixin.get_confirm_import_form()
+            self.assertEqual(target_msg, str(w.warnings[0].message))
+
+    def test_get_form_kwargs_warning(self):
+        target_msg = (
+            "ImportMixin.get_form_kwargs() is deprecated and will be removed in a "
+            "future release. "
+            "Please use get_import_form_kwargs() or get_confirm_form_kwargs() instead."
+        )
+        with self.assertWarns(DeprecationWarning) as w:
+            self.import_mixin.get_form_kwargs(None)
+            self.assertEqual(target_msg, str(w.warnings[0].message))
+
+    def test_get_import_form_class_warning(self):
+        self.import_mixin = self.TestMixin()
+        target_msg = (
+            "ImportMixin.get_import_form() is deprecated and will be removed in a "
+            "future release. "
+            "Please use the new 'import_form_class' attribute to specify a custom form "
+            "class, "
+            "or override the get_import_form_class() method if your requirements are "
+            "more complex."
+        )
+        with self.assertWarns(DeprecationWarning) as w:
+            self.import_mixin.get_import_form_class(None)
+            self.assertEqual(target_msg, str(w.warnings[0].message))
+
+    def test_get_confirm_form_class_warning(self):
+        self.import_mixin = self.TestMixin()
+        target_msg = (
+            "ImportMixin.get_confirm_import_form() is deprecated and will be removed "
+            "in a future release. "
+            "Please use the new 'confirm_form_class' attribute to specify a custom "
+            "form class, "
+            "or override the get_confirm_form_class() method if your requirements "
+            "are more complex."
+        )
+        with self.assertWarns(DeprecationWarning) as w:
+            self.import_mixin.get_confirm_form_class(None)
+            self.assertEqual(target_msg, str(w.warnings[0].message))
+
+
+class TestExportMixinDeprecationWarnings(TestCase):
+    class TestMixin(ExportMixin):
+        """
+        TestMixin is a subclass which mimics a
+        class which the user may have created
+        """
+
+        def get_export_form(self):
+            return super().get_export_form()
+
+    def setUp(self):
+        super().setUp()
+        self.export_mixin = self.TestMixin()
+
+    def test_get_export_form_warning(self):
+        target_msg = (
+            "ExportMixin.get_export_form() is deprecated and will "
+            "be removed in a future release. Please use the new "
+            "'export_form_class' attribute to specify a custom form "
+            "class, or override the get_export_form_class() method if "
+            "your requirements are more complex."
+        )
+        with self.assertWarns(DeprecationWarning) as w:
+            self.export_mixin.get_export_form()
+            self.assertEqual(target_msg, str(w.warnings[0].message))
+
+
 @override_settings(IMPORT_EXPORT_SKIP_ADMIN_CONFIRM=True)
 class TestImportSkipConfirm(AdminTestMixin, TransactionTestCase):
-    fixtures = ["author"]
-
     def _is_str_in_response(
         self,
         filename,
@@ -1172,9 +1366,8 @@ class TestImportSkipConfirm(AdminTestMixin, TransactionTestCase):
 
     def test_import_action_invalid_date(self):
         # test that a row with an invalid date redirects to errors page
-        index = self._get_input_format_index("csv")
         response = self._do_import_post(
-            self.book_import_url, "books-invalid-date.csv", index
+            self.book_import_url, "books-invalid-date.csv", "0"
         )
         result = response.context["result"]
         # there should be a single invalid row
@@ -1185,11 +1378,15 @@ class TestImportSkipConfirm(AdminTestMixin, TransactionTestCase):
         # no rows should be imported because we rollback on validation errors
         self.assertEqual(0, Book.objects.count())
 
-    def test_import_action_error_on_save(self):
-        with mock.patch("core.models.Book.save") as mock_save:
-            mock_save.side_effect = ValueError("some unknown error")
-            response = self._do_import_post(self.book_import_url, "books.csv")
-        self.assertIn("some unknown error", str(response.content))
+    def test_import_action_empty_author_email(self):
+        xlsx_index = self._get_input_format_index("xlsx")
+        # sqlite / MySQL / Postgres have different error messages
+        self._is_regex_in_response(
+            "books-empty-author-email.xlsx",
+            xlsx_index,
+            follow=True,
+            regex_in_response=r"(NOT NULL|null value in column|cannot be null)",
+        )
 
     @override_settings(IMPORT_EXPORT_USE_TRANSACTIONS=True)
     def test_import_transaction_enabled_validation_error(self):
@@ -1207,26 +1404,22 @@ class TestImportSkipConfirm(AdminTestMixin, TransactionTestCase):
 
     @override_settings(IMPORT_EXPORT_USE_TRANSACTIONS=True)
     def test_import_transaction_enabled_core_error(self):
-        # test that if we send a file with multiple rows,
-        # and transactions is enabled, a core error means that
-        # no instances are persisted
-        index = self._get_input_format_index("json")
-        with mock.patch("core.admin.BookResource.skip_row") as mock_skip:
-            mock_skip.side_effect = [None, ValueError("some unknown error"), None]
-            response = self._do_import_post(self.book_import_url, "books.json", index)
-        self.assertIn("some unknown error", str(response.content))
+        # with transactions enabled, a core error should cause the entire import to fail
+        xlsx_index = self._get_input_format_index("xlsx")
+        self._do_import_post(
+            self.book_import_url, "books-empty-author-email.xlsx", xlsx_index
+        )
         self.assertEqual(0, Book.objects.count())
 
     @override_settings(IMPORT_EXPORT_USE_TRANSACTIONS=False)
     def test_import_transaction_disabled_core_error(self):
-        # with transactions disabled, a core (db constraint) error should not cause the
+        # with transactions disabled, a core (db contraint) error should not cause the
         # entire import to fail
-        index = self._get_input_format_index("json")
-        with mock.patch("core.admin.BookResource.skip_row") as mock_skip:
-            mock_skip.side_effect = [None, ValueError("some unknown error"), None]
-            response = self._do_import_post(self.book_import_url, "books.json", index)
-        self.assertIn("some unknown error", str(response.content))
-        self.assertEqual(2, Book.objects.count())
+        xlsx_index = self._get_input_format_index("xlsx")
+        self._do_import_post(
+            self.book_import_url, "books-empty-author-email.xlsx", xlsx_index
+        )
+        self.assertEqual(1, Book.objects.count())
 
     def test_import_action_mac(self):
         self._is_str_in_response(
@@ -1263,32 +1456,4 @@ class TestImportSkipConfirm(AdminTestMixin, TransactionTestCase):
             "1",
             follow=True,
             str_in_response="Import finished, with 1 new and 0 updated books.",
-        )
-
-
-class MockModelAdmin(ImportExportMixinBase, ModelAdmin):
-    change_list_template = "admin/import_export/change_list.html"
-
-
-class TestChangeListView(AdminTestMixin, TestCase):
-    def setUp(self):
-        super().setUp()
-        self.factory = RequestFactory()
-        self.model_admin = MockModelAdmin(User, admin.site)
-
-    def test_changelist_view_context(self):
-        request = self.factory.get("/admin/")
-        request.user = self.user
-
-        # Call the changelist_view method
-        self.model_admin.ie_base_change_list_template = None
-        response = self.model_admin.changelist_view(request)
-
-        # Render will throw an exception if the default for {% extends %} is not set
-        response.render()
-
-        # Check if the base_change_list_template context variable is set to None
-        self.assertIsNone(response.context_data.get("base_change_list_template"))
-        self.assertContains(
-            response, '<a href="/admin/">Django administration</a>', html=True
         )
