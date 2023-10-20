@@ -1528,9 +1528,9 @@ class ModelResourceTest(TestCase):
         self.assertFalse(related_field_widget.use_natural_foreign_keys)
 
 
-@ignore_widget_deprecation_warning
 class ModelResourceTransactionTest(TransactionTestCase):
     @skipUnlessDBFeature("supports_transactions")
+    @ignore_widget_deprecation_warning
     def test_m2m_import_with_transactions(self):
         resource = BookResource()
         cat1 = Category.objects.create(name="Cat 1")
@@ -1593,6 +1593,7 @@ class ModelResourceTransactionTest(TransactionTestCase):
         )
         self.assertTrue(result.has_errors())
 
+    @ignore_widget_deprecation_warning
     def test_rollback_on_validation_errors_false(self):
         """Should create only one instance as the second one
         raises a ``ValidationError``"""
@@ -1615,6 +1616,7 @@ class ModelResourceTransactionTest(TransactionTestCase):
         # Ensure that valid row resulted in an instance created.
         self.assertEqual(Author.objects.count(), 1)
 
+    @ignore_widget_deprecation_warning
     def test_rollback_on_validation_errors_true(self):
         """
         Should not create any instances as the second one raises a ``ValidationError``
@@ -1662,6 +1664,7 @@ class PostgresTests(TransactionTestCase):
     # Make sure to start the sequences back at 1
     reset_sequences = True
 
+    @ignore_widget_deprecation_warning
     def test_create_object_after_importing_dataset_with_id(self):
         dataset = tablib.Dataset(headers=["id", "name"])
         dataset.append([1, "Some book"])
@@ -1700,6 +1703,7 @@ if "postgresql" in settings.DATABASES["default"]["ENGINE"]:
             )
 
     class TestExportArrayField(TestCase):
+        @ignore_widget_deprecation_warning
         def test_exports_array_field(self):
             dataset_headers = ["id", "name", "chapters"]
             chapters = ["Introduction", "Middle Chapter", "Ending"]
@@ -1724,6 +1728,7 @@ if "postgresql" in settings.DATABASES["default"]["ENGINE"]:
             row = [self.book.id, "Some book", ",".join(self.chapters)]
             self.dataset.append(row)
 
+        @ignore_widget_deprecation_warning
         def test_import_of_data_with_array(self):
             self.assertListEqual(self.book.chapters, [])
             result = self.resource.import_data(self.dataset, raise_errors=True)
@@ -1739,6 +1744,7 @@ if "postgresql" in settings.DATABASES["default"]["ENGINE"]:
             self.json_data = {"some_key": "some_value"}
             self.book = BookWithChapters.objects.create(name="foo", data=self.json_data)
 
+        @ignore_widget_deprecation_warning
         def test_export_field_with_appropriate_format(self):
             resource = resources.modelresource_factory(model=BookWithChapters)()
             result = resource.export(BookWithChapters.objects.all())
@@ -1755,6 +1761,7 @@ if "postgresql" in settings.DATABASES["default"]["ENGINE"]:
             row = [self.book.id, "Some book", self.json_data]
             self.dataset.append(row)
 
+        @ignore_widget_deprecation_warning
         def test_sets_json_data_when_model_field_is_empty(self):
             self.assertIsNone(self.book.data)
             result = self.resource.import_data(self.dataset, raise_errors=True)

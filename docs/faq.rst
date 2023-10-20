@@ -182,7 +182,7 @@ This indicates that the change_list_template attribute could not be set, most li
 library.  Refer to :ref:`interoperability`.
 
 ``FileNotFoundError`` during Admin import 'confirm' step
--------------------------------------------------
+--------------------------------------------------------
 
 You may receive an error during import such as::
 
