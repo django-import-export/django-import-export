@@ -919,6 +919,15 @@ template skipped due to recursion issue
 
 Refer to `this issue <https://github.com/django-import-export/django-import-export/issues/1514#issuecomment-1344200867>`_.
 
+django-debug-toolbar
+^^^^^^^^^^^^^^^^^^^^
+
+If you use import-export using with `django-debug-toolbar <https://pypi.org/project/django-debug-toolbar>`_.
+then you need to configure ``debug_toolbar=False`` or ``DEBUG=False``,
+It has been reported that the the import/export time will increase ~10 times.
+
+Refer to `this PR <https://github.com/django-import-export/django-import-export/issues/1656>`_.
+
 .. _admin_security:
 
 .. warning::
