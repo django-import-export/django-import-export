@@ -363,11 +363,11 @@ class SimpleArrayWidget(Widget):
     :param separator: Defaults to ``','``
     """
 
-    def __init__(self, separator=None):
+    def __init__(self, separator=None, coerce_to_string=True):
         if separator is None:
             separator = ","
         self.separator = separator
-        super().__init__()
+        super().__init__(coerce_to_string=coerce_to_string)
 
     def clean(self, value, row=None, **kwargs):
         return value.split(self.separator) if value else []
@@ -375,9 +375,11 @@ class SimpleArrayWidget(Widget):
     def render(self, value, obj=None):
         """
         :return: A string with values separated by ``separator``.
-          ``coerce_to_string`` has no effect on the return value.
+          If ``coerce_to_string`` is ``False``, the native array will be returned.
         """
         self._obj_deprecation_warning(obj)
+        if not self.coerce_to_string:
+            return value
         return self.separator.join(str(v) for v in value)
 
 

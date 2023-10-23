@@ -690,3 +690,8 @@ class SimpleArrayWidgetTest(TestCase, RowDeprecationTestMixin):
         v = ["a", "b", "c"]
         s = "a,b,c"
         self.assertEqual(s, self.widget.render(v))
+
+    def test_render_no_coerce_to_string(self):
+        v = [1, 2, 3]
+        self.widget = widgets.SimpleArrayWidget(coerce_to_string=False)
+        self.assertEqual(v, self.widget.render(v))

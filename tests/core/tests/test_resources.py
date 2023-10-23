@@ -1692,6 +1692,10 @@ if "postgresql" in settings.DATABASES["default"]["ENGINE"]:
         chapters = ArrayField(models.CharField(max_length=100), default=list)
         data = models.JSONField(null=True)
 
+    class BookWithChapterNumbers(models.Model):
+        name = models.CharField("Book name", max_length=100)
+        chapter_numbers = ArrayField(models.PositiveSmallIntegerField(), default=list)
+
     class BookWithChaptersResource(resources.ModelResource):
         class Meta:
             model = BookWithChapters
@@ -1700,6 +1704,15 @@ if "postgresql" in settings.DATABASES["default"]["ENGINE"]:
                 "name",
                 "chapters",
                 "data",
+            )
+
+    class BookWithChapterNumbersResource(resources.ModelResource):
+        class Meta:
+            model = BookWithChapterNumbers
+            fields = (
+                "id",
+                "name",
+                "chapter_numbers",
             )
 
     class TestExportArrayField(TestCase):
@@ -1738,6 +1751,29 @@ if "postgresql" in settings.DATABASES["default"]["ENGINE"]:
 
             self.book.refresh_from_db()
             self.assertEqual(self.book.chapters, self.chapters)
+
+    class TestImportIntArrayField(TestCase):
+        def setUp(self):
+            self.resource = BookWithChapterNumbersResource()
+            self.chapter_numbers = [1, 2, 3]
+            self.book = BookWithChapterNumbers.objects.create(
+                name="foo", chapter_numbers=[]
+            )
+            self.dataset = tablib.Dataset(
+                *[(1, "some book", "1,2,3")], headers=["id", "name", "chapter_numbers"]
+            )
+
+        @ignore_widget_deprecation_warning
+        def test_import_of_data_with_int_array(self):
+            # issue #1495
+            self.assertListEqual(self.book.chapter_numbers, [])
+            result = self.resource.import_data(self.dataset, raise_errors=True)
+
+            self.assertFalse(result.has_errors())
+            self.assertEqual(len(result.rows), 1)
+
+            self.book.refresh_from_db()
+            self.assertEqual(self.book.chapter_numbers, self.chapter_numbers)
 
     class TestExportJsonField(TestCase):
         def setUp(self):
