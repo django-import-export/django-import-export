@@ -2380,8 +2380,7 @@ class BulkCreateTest(BulkTest):
         resource = _BookResource()
         with mock.patch("logging.Logger.debug") as mock_exception:
             resource.import_data(self.dataset)
-            mock_exception.assert_called_with(e, exc_info=mock.ANY)
-            self.assertEqual(1, mock_exception.call_count)
+            mock_exception.assert_called_with(e, exc_info=e)
 
     @mock.patch("core.models.Book.objects.bulk_create")
     @ignore_widget_deprecation_warning
@@ -2592,8 +2591,7 @@ class BulkUpdateTest(BulkTest):
         resource = _BookResource()
         with mock.patch("logging.Logger.debug") as mock_exception:
             resource.import_data(self.dataset)
-            mock_exception.assert_called_with(e, exc_info=mock.ANY)
-            self.assertEqual(1, mock_exception.call_count)
+            mock_exception.assert_called_with(e, exc_info=e)
 
     @mock.patch("core.models.Book.objects.bulk_update")
     @ignore_widget_deprecation_warning
@@ -3007,3 +3005,40 @@ class ImportIdFieldsTestCase(TestCase):
             "in the dataset: id, author_email",
         ):
             self.resource.import_data(dataset)
+
+
+class ImportWithMissingFields(TestCase):
+    # issue 1517
+
+    @patch("import_export.resources.logger")
+    @patch("import_export.fields.Field.save")
+    def test_import_with_missing_instance_attribute(self, mock_field_save, mock_logger):
+        class _BookResource(resources.ModelResource):
+            name = fields.Field(column_name="name")
+
+            class Meta:
+                model = Book
+
+        dataset = tablib.Dataset(*[(1, "Some book")], headers=["id", "name"])
+        self.resource = _BookResource()
+        result = self.resource.import_data(dataset)
+        self.assertFalse(result.has_errors())
+        target = (
+            "skipping field '<import_export.fields.Field: name>' "
+            "- field attribute is not defined"
+        )
+        mock_logger.debug.assert_any_call(target)
+        self.assertEqual(1, mock_field_save.call_count)
+
+    @patch("import_export.resources.logger")
+    @patch("import_export.fields.Field.save")
+    def test_import_with_missing_field_in_row(self, mock_field_save, mock_logger):
+        dataset = tablib.Dataset(*[(1, "Some book")], headers=["id", "name"])
+        self.resource = BookResource()
+        result = self.resource.import_data(dataset)
+        self.assertFalse(result.has_errors())
+        mock_logger.debug.assert_any_call(
+            "skipping field '<import_export.fields.Field: author_email>' "
+            "- column name 'author_email' is not present in row"
+        )
+        self.assertEqual(2, mock_field_save.call_count)
