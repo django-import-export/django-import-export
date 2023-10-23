@@ -651,10 +651,9 @@ class Resource(metaclass=DeclarativeMetaclass):
             logger.debug(f"skipping field '{field}' - field attribute is not defined")
             return
         if field.column_name not in row:
-            col = escape(field.column_name)
             logger.debug(
                 f"skipping field '{field}' "
-                f"- column name '{col}' is not present in row"
+                f"- column name '{field.column_name}' is not present in row"
             )
             return
         field.save(instance, row, is_m2m, **kwargs)
