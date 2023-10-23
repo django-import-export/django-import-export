@@ -3012,6 +3012,7 @@ class ImportWithMissingFields(TestCase):
 
     @patch("import_export.resources.logger")
     @patch("import_export.fields.Field.save")
+    @ignore_widget_deprecation_warning
     def test_import_with_missing_instance_attribute(self, mock_field_save, mock_logger):
         class _BookResource(resources.ModelResource):
             name = fields.Field(column_name="name")
@@ -3032,6 +3033,7 @@ class ImportWithMissingFields(TestCase):
 
     @patch("import_export.resources.logger")
     @patch("import_export.fields.Field.save")
+    @ignore_widget_deprecation_warning
     def test_import_with_missing_field_in_row(self, mock_field_save, mock_logger):
         dataset = tablib.Dataset(*[(1, "Some book")], headers=["id", "name"])
         self.resource = BookResource()
