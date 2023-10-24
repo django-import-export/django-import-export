@@ -174,6 +174,31 @@ Alternatively, widget parameters can be overridden using the widgets dict declar
 Validation during import
 ========================
 
+The import process will include basic validation during import.  This validation can be customized or extended if
+required.
+
+The import process distinguishes between:
+
+#. Validation errors which arise when failing to parse import data correctly.
+
+#. General exceptions which arise during processing.
+
+Errors are retained in each :class:`~import_export.results.RowResult` instance which is stored in the single
+:class:`~import_export.results.Result` instance which is returned from the import process.
+
+The :meth:`~import_export.resources.Resource.import_data` method takes optional parameters which can be used to
+customize the handling of errors.  Refer to the method documentation for specific details.
+
+For example, to iterate over errors produced from an import::
+
+    result = self.resource.import_data(self.dataset, raise_errors=False)
+    if result.has_errors():
+        for row in result.rows:
+            for error in row.errors:
+                print(str(error.error))
+
+If using the :ref:`Admin UI<admin-integration>`, errors are presented to the user during import (see below).
+
 Field level validation
 ----------------------
 
