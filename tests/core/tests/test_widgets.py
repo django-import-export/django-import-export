@@ -2,6 +2,7 @@ import json
 from datetime import date, datetime, time, timedelta
 from decimal import Decimal
 from unittest import mock, skipUnless
+from unittest.mock import patch
 
 import django
 import pytz
@@ -131,10 +132,16 @@ class DateWidgetTest(TestCase):
     def test_clean_returns_date_when_date_passed(self):
         self.assertEqual(self.date, self.widget.clean(self.date))
 
-    def test_clean_raises_ValueError(self):
+    @patch("import_export.widgets.logger")
+    def test_clean_raises_ValueError(self, mock_logger):
         self.widget = widgets.DateWidget("x")
-        with self.assertRaisesRegex(ValueError, "Enter a valid date."):
+        with self.assertRaisesRegex(
+            ValueError, "Value could not be parsed using defined date formats."
+        ):
             self.widget.clean("2021-05-01")
+        mock_logger.debug.assert_called_with(
+            "time data '2021-05-01' does not match format 'x'"
+        )
 
     @override_settings(USE_TZ=True)
     def test_use_tz(self):
@@ -160,6 +167,17 @@ class DateTimeWidgetTest(TestCase):
 
     def test_clean(self):
         self.assertEqual(self.widget.clean("13.08.2012 18:00:00"), self.datetime)
+
+    @patch("import_export.widgets.logger")
+    def test_clean_raises_ValueError(self, mock_logger):
+        self.widget = widgets.DateTimeWidget("x")
+        with self.assertRaisesRegex(
+            ValueError, "Value could not be parsed using defined datetime formats."
+        ):
+            self.widget.clean("2021-05-01")
+        mock_logger.debug.assert_called_with(
+            "time data '2021-05-01' does not match format 'x'"
+        )
 
     @override_settings(USE_TZ=True, TIME_ZONE="Europe/Ljubljana")
     def test_use_tz(self):
@@ -243,10 +261,16 @@ class TimeWidgetTest(TestCase):
         self.widget = widgets.TimeWidget()
         self.assertEqual(("%H:%M:%S",), self.widget.formats)
 
-    def test_clean_raises_ValueError(self):
+    @patch("import_export.widgets.logger")
+    def test_clean_raises_ValueError(self, mock_logger):
         self.widget = widgets.TimeWidget("x")
-        with self.assertRaisesRegex(ValueError, "Enter a valid time."):
+        with self.assertRaisesRegex(
+            ValueError, "Value could not be parsed using defined time formats."
+        ):
             self.widget.clean("20:15:00")
+        mock_logger.debug.assert_called_with(
+            "time data '20:15:00' does not match format 'x'"
+        )
 
     def test_clean_returns_time_when_time_passed(self):
         self.assertEqual(self.time, self.widget.clean(self.time))
@@ -275,10 +299,12 @@ class DurationWidgetTest(TestCase):
     def test_clean_zero(self):
         self.assertEqual(self.widget.clean("0:00:00"), timedelta(0))
 
-    @mock.patch("import_export.widgets.parse_duration", side_effect=ValueError("err"))
-    def test_clean_raises_ValueError(self, _):
-        with self.assertRaisesRegex(ValueError, "Enter a valid duration."):
+    @patch("import_export.widgets.parse_duration", side_effect=ValueError("err"))
+    @patch("import_export.widgets.logger")
+    def test_clean_raises_ValueError(self, mock_logger, _):
+        with self.assertRaisesRegex(ValueError, "Value could not be parsed."):
             self.widget.clean("x")
+        mock_logger.debug.assert_called_with("err")
 
 
 class NumberWidgetTest(TestCase):

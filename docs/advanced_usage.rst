@@ -366,6 +366,30 @@ for all Models that support it.
 Read more at `Django Serialization <https://docs.djangoproject.com/en/dev/topics/serialization/>`_.
 
 
+Errors and validation during import
+===================================
+
+Field level validation
+----------------------
+
+Validation of input can be performed during import by a widget's :meth:`~import_export.widgets.Widget.clean` method by
+raising a `ValueError <https://docs.python.org/3/library/exceptions.html#ValueError/>`_.
+Consult the :doc:`widget documentation </api_widgets>` for more information.
+
+You can supply your own field level validation by overriding :meth:`~import_export.widgets.Widget.clean`, for example::
+
+  class PositiveIntegerWidget(IntegerWidget):
+    """Returns a positive integer value"""
+
+    def clean(self, value, row=None, **kwargs):
+        val = super().clean(value, row=row, **kwargs)
+        if val < 0:
+            raise ValueError("value must be positive")
+        return val
+
+Instance level validation
+-------------------------
+
 Create or update model instances
 ================================
 

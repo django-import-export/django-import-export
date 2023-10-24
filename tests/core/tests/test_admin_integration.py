@@ -1180,7 +1180,8 @@ class TestImportSkipConfirm(AdminTestMixin, TransactionTestCase):
         # there should be a single invalid row
         self.assertEqual(1, len(result.invalid_rows))
         self.assertEqual(
-            "Enter a valid date.", result.invalid_rows[0].error.messages[0]
+            "Value could not be parsed using defined date formats.",
+            result.invalid_rows[0].error.messages[0],
         )
         # no rows should be imported because we rollback on validation errors
         self.assertEqual(0, Book.objects.count())
