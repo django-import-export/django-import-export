@@ -189,6 +189,85 @@ during export::
     :doc:`/api_widgets`
         Available widget types and options.
 
+Validation during import
+========================
+
+The import process will include basic validation during import.  This validation can be customized or extended if
+required.
+
+The import process distinguishes between:
+
+#. Validation errors which arise when failing to parse import data correctly.
+
+#. General exceptions which arise during processing.
+
+Errors are retained in each :class:`~import_export.results.RowResult` instance which is stored in the single
+:class:`~import_export.results.Result` instance which is returned from the import process.
+
+The :meth:`~import_export.resources.Resource.import_data` method takes optional parameters which can be used to
+customize the handling of errors.  Refer to the method documentation for specific details.
+
+For example, to iterate over errors produced from an import::
+
+    result = self.resource.import_data(self.dataset, raise_errors=False)
+    if result.has_errors():
+        for row in result.rows:
+            for error in row.errors:
+                print(str(error.error))
+
+If using the :ref:`Admin UI<admin-integration>`, errors are presented to the user during import (see below).
+
+Field level validation
+----------------------
+
+Validation of input can be performed during import by a widget's :meth:`~import_export.widgets.Widget.clean` method by
+raising a `ValueError <https://docs.python.org/3/library/exceptions.html#ValueError/>`_.
+Consult the :doc:`widget documentation </api_widgets>` for more information.
+
+You can supply your own field level validation by overriding :meth:`~import_export.widgets.Widget.clean`, for example::
+
+  class PositiveIntegerWidget(IntegerWidget):
+    """Returns a positive integer value"""
+
+    def clean(self, value, row=None, **kwargs):
+        val = super().clean(value, row=row, **kwargs)
+        if val < 0:
+            raise ValueError("value must be positive")
+        return val
+
+Field level errors will be presented in the :ref:`Admin UI<admin-integration>`, for example:
+
+.. figure:: _static/images/date-widget-validation-error.png
+
+  A screenshot showing a field specific error.
+
+Instance level validation
+-------------------------
+
+You can optionally configure import-export to perform model instance validation during import by enabling the
+:attr:`~import_export.resources.ResourceOptions.clean_model_instances` attribute.
+
+You can override the
+`full_clean() <https://docs.djangoproject.com/en/stable/ref/models/instances/#django.db.models.Model.full_clean>`_.
+method to provide extra validation, either at field or instance level::
+
+    class Book(models.Model):
+
+        def full_clean(self, exclude=None, validate_unique=True):
+            super().full_clean(exclude, validate_unique)
+
+            # non field specific validation
+            if self.published < date(1900, 1, 1):
+                raise ValidationError("book is out of print")
+
+            # field specific validation
+            if self.name == "Ulysses":
+                raise ValidationError({"name": "book has been banned"})
+
+.. figure:: _static/images/non-field-specific-validation-error.png
+
+  A screenshot showing a non field specific error.
+
 .. _import_model_relations:
 
 Importing model relations
@@ -381,8 +460,7 @@ for all Models that support it.
             model = Book
             use_natural_foreign_keys = True
 
-Read more at `Django Serialization <https://docs.djangoproject.com/en/dev/topics/serialization/>`_.
-
+Read more at `Django Serialization <https://docs.djangoproject.com/en/stable/topics/serialization/>`_.
 
 Create or update model instances
 ================================
@@ -574,7 +652,7 @@ Admin integration
 =================
 
 One of the main features of import-export is the support for integration with the
-`Django Admin site <https://docs.djangoproject.com/en/dev/ref/contrib/admin/>`_.
+`Django Admin site <https://docs.djangoproject.com/en/stable/ref/contrib/admin/>`_.
 This provides a convenient interface for importing and exporting Django objects.
 
 Please install and run the :ref:`example application<exampleapp>`  to become familiar with Admin integration.
@@ -672,9 +750,9 @@ There are three mechanisms for temporary storage.
 #. Temporary file storage on the host server (default).  This is suitable for development only.
    Use of temporary filesystem storage is not recommended for production sites.
 
-#. The `Django cache <https://docs.djangoproject.com/en/dev/topics/cache/>`_.
+#. The `Django cache <https://docs.djangoproject.com/en/stable/topics/cache/>`_.
 
-#. `Django storage <https://docs.djangoproject.com/en/dev/ref/files/storage/>`_.
+#. `Django storage <https://docs.djangoproject.com/en/stable/ref/files/storage/>`_.
 
 To modify which storage mechanism is used, please refer to the setting :ref:`IMPORT_EXPORT_TMP_STORAGE_CLASS`.
 

@@ -1,4 +1,5 @@
 import json
+import logging
 from datetime import date, datetime, time
 from decimal import Decimal
 from warnings import warn
@@ -10,6 +11,9 @@ from django.utils import timezone
 from django.utils.dateparse import parse_duration
 from django.utils.encoding import force_str, smart_str
 from django.utils.formats import number_format
+from django.utils.translation import gettext_lazy as _
+
+logger = logging.getLogger(__name__)
 
 
 def format_datetime(value, datetime_format):
@@ -225,6 +229,10 @@ class DateWidget(Widget):
         self.formats = formats
 
     def clean(self, value, row=None, **kwargs):
+        """
+        :returns: A python date instance.
+        :raises: ValueError if the value cannot be parsed using defined formats.
+        """
         if not value:
             return None
         if isinstance(value, date):
@@ -232,9 +240,9 @@ class DateWidget(Widget):
         for format in self.formats:
             try:
                 return datetime.strptime(value, format).date()
-            except (ValueError, TypeError):
-                continue
-        raise ValueError("Enter a valid date.")
+            except (ValueError, TypeError) as e:
+                logger.debug(str(e))
+        raise ValueError(_("Value could not be parsed using defined date formats."))
 
     def render(self, value, obj=None):
         self._obj_deprecation_warning(obj)
@@ -265,6 +273,10 @@ class DateTimeWidget(Widget):
         self.formats = formats
 
     def clean(self, value, row=None, **kwargs):
+        """
+        :returns: A python datetime instance.
+        :raises: ValueError if the value cannot be parsed using defined formats.
+        """
         dt = None
         if not value:
             return None
@@ -274,13 +286,13 @@ class DateTimeWidget(Widget):
             for format_ in self.formats:
                 try:
                     dt = datetime.strptime(value, format_)
-                except (ValueError, TypeError):
-                    continue
+                except (ValueError, TypeError) as e:
+                    logger.debug(str(e))
         if dt:
             if settings.USE_TZ and timezone.is_naive(dt):
                 dt = timezone.make_aware(dt)
             return dt
-        raise ValueError("Enter a valid date/time.")
+        raise ValueError(_("Value could not be parsed using defined datetime formats."))
 
     def render(self, value, obj=None):
         self._obj_deprecation_warning(obj)
@@ -313,6 +325,10 @@ class TimeWidget(Widget):
         self.formats = formats
 
     def clean(self, value, row=None, **kwargs):
+        """
+        :returns: A python time instance.
+        :raises: ValueError if the value cannot be parsed using defined formats.
+        """
         if not value:
             return None
         if isinstance(value, time):
@@ -320,9 +336,9 @@ class TimeWidget(Widget):
         for format in self.formats:
             try:
                 return datetime.strptime(value, format).time()
-            except (ValueError, TypeError):
-                continue
-        raise ValueError("Enter a valid time.")
+            except (ValueError, TypeError) as e:
+                logger.debug(str(e))
+        raise ValueError(_("Value could not be parsed using defined time formats."))
 
     def render(self, value, obj=None):
         self._obj_deprecation_warning(obj)
@@ -339,13 +355,18 @@ class DurationWidget(Widget):
     """
 
     def clean(self, value, row=None, **kwargs):
+        """
+        :returns: A python duration instance.
+        :raises: ValueError if the value cannot be parsed.
+        """
         if not value:
             return None
 
         try:
             return parse_duration(value)
-        except (ValueError, TypeError):
-            raise ValueError("Enter a valid duration.")
+        except (ValueError, TypeError) as e:
+            logger.debug(str(e))
+            raise ValueError(_("Value could not be parsed."))
 
     def render(self, value, obj=None):
         self._obj_deprecation_warning(obj)

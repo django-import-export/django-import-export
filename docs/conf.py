@@ -115,3 +115,5 @@ texinfo_appendices = []
 
 # intersphinx documentation
 intersphinx_mapping = {"tablib": ("https://tablib.readthedocs.io/en/stable/", None)}
+
+exclude_patterns = ["image_src"]

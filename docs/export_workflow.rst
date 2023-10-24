@@ -8,7 +8,7 @@ customization of the export process.
 Methods highlighted in yellow in the sequence diagram indicate public methods which can
 be overridden.
 
-.. image:: images/export_workflow.svg
+.. image:: _static/images/export_workflow.svg
   :alt: Export workflow sequence diagram
   :scale: 75%
 
