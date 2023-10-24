@@ -637,7 +637,7 @@ class ManyToManyWidget(TestCase, RowDeprecationTestMixin):
             "%s,%s" % (self.cat1.name, self.cat2.name),
         )
 
-    def test_render_value_is_None(self):
+    def test_render_value_none_as_blank(self):
         self.assertEqual("", self.widget.render(None))
 
 
