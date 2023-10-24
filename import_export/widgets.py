@@ -215,6 +215,10 @@ class DateWidget(Widget):
         self.formats = formats
 
     def clean(self, value, row=None, **kwargs):
+        """
+        :returns: A python date instance.
+        :raises: ValueError if the value cannot be parsed using defined formats.
+        """
         if not value:
             return None
         if isinstance(value, date):
@@ -251,6 +255,10 @@ class DateTimeWidget(Widget):
         self.formats = formats
 
     def clean(self, value, row=None, **kwargs):
+        """
+        :returns: A python datetime instance.
+        :raises: ValueError if the value cannot be parsed using defined formats.
+        """
         dt = None
         if not value:
             return None
@@ -295,6 +303,10 @@ class TimeWidget(Widget):
         self.formats = formats
 
     def clean(self, value, row=None, **kwargs):
+        """
+        :returns: A python time instance.
+        :raises: ValueError if the value cannot be parsed using defined formats.
+        """
         if not value:
             return None
         if isinstance(value, time):
@@ -318,6 +330,10 @@ class DurationWidget(Widget):
     """
 
     def clean(self, value, row=None, **kwargs):
+        """
+        :returns: A python duration instance.
+        :raises: ValueError if the value cannot be parsed.
+        """
         if not value:
             return None
 

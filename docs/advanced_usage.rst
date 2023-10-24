@@ -387,6 +387,10 @@ You can supply your own field level validation by overriding :meth:`~import_expo
             raise ValueError("value must be positive")
         return val
 
+Field level errors will be presented in the :ref:`Admin UI<admin-integration>`, for example:
+
+.. figure:: _static/images/date-widget-validation-error.png
+
 Instance level validation
 -------------------------
 
