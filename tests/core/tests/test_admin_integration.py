@@ -35,6 +35,8 @@ from import_export.formats import base_formats
 from import_export.formats.base_formats import DEFAULT_FORMATS
 from import_export.tmp_storages import TempFolderStorage
 
+from .utils import ignore_widget_deprecation_warning
+
 
 class AdminTestMixin(object):
     book_import_url = "/admin/core/book/import/"
@@ -117,6 +119,7 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertContains(response, "Custom change list item")
 
     @override_settings(TEMPLATE_STRING_IF_INVALID="INVALID_VARIABLE")
+    @ignore_widget_deprecation_warning
     def test_import(self):
         # GET the import form
         response = self.client.get(self.book_import_url)
@@ -195,6 +198,7 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         )
 
     @override_settings(TEMPLATE_STRING_IF_INVALID="INVALID_VARIABLE")
+    @ignore_widget_deprecation_warning
     def test_import_second_resource(self):
         Book.objects.create(id=1)
 
@@ -306,6 +310,7 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         else:
             self.assertFormError(response, "form", "import_file", target_msg)
 
+    @ignore_widget_deprecation_warning
     def test_delete_from_admin(self):
         # test delete from admin site (see #432)
 
@@ -327,6 +332,7 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertEqual("", deleted_entry.object_repr)
 
     @override_settings(TEMPLATE_STRING_IF_INVALID="INVALID_VARIABLE")
+    @ignore_widget_deprecation_warning
     def test_import_mac(self):
         # GET the import form
         response = self.client.get(self.book_import_url)
@@ -391,6 +397,7 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         response = self.client.get(self.book_process_import_url)
         self.assertEqual(response.status_code, 405)
 
+    @ignore_widget_deprecation_warning
     def test_import_log_entry(self):
         response = self._do_import_post(self.book_import_url, "books.csv")
 
@@ -403,6 +410,7 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertEqual(book.object_repr, "Some book")
         self.assertEqual(book.object_id, str(1))
 
+    @ignore_widget_deprecation_warning
     def test_import_log_entry_with_fk(self):
         Parent.objects.create(id=1234, name="Some Parent")
         response = self._do_import_post(self.child_import_url, "child.csv")
@@ -417,6 +425,7 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertEqual(child.object_repr, "Some - child of Some Parent")
         self.assertEqual(child.object_id, str(1))
 
+    @ignore_widget_deprecation_warning
     def test_import_with_customized_forms(self):
         """Test if admin import works if forms are customized"""
         # We reuse import scheme from `test_import` to import books.csv.
@@ -614,6 +623,7 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
         )
 
     @override_settings(IMPORT_EXPORT_ESCAPE_FORMULAE_ON_EXPORT=True)
+    @ignore_widget_deprecation_warning
     def test_export_escape_formulae(self):
         Book.objects.create(id=1, name="=SUM(1+1)")
         Book.objects.create(id=2, name="<script>alert(1)</script>")
@@ -630,6 +640,7 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertEqual("SUM(1+1)", wb.active["B3"].value)
 
     @override_settings(IMPORT_EXPORT_ESCAPE_FORMULAE_ON_EXPORT=True)
+    @ignore_widget_deprecation_warning
     def test_export_escape_formulae_csv(self):
         b1 = Book.objects.create(id=1, name="=SUM(1+1)")
         response = self.client.get("/admin/core/book/export/")
@@ -644,6 +655,7 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
         )
 
     @override_settings(IMPORT_EXPORT_ESCAPE_FORMULAE_ON_EXPORT=False)
+    @ignore_widget_deprecation_warning
     def test_export_escape_formulae_csv_false(self):
         b1 = Book.objects.create(id=1, name="=SUM(1+1)")
         response = self.client.get("/admin/core/book/export/")
@@ -661,6 +673,7 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
 class FilteredExportAdminIntegrationTest(AdminTestMixin, TestCase):
     fixtures = ["category", "book", "author"]
 
+    @ignore_widget_deprecation_warning
     def test_export_filters_by_form_param(self):
         # issue 1578
         author = Author.objects.get(name="Ian Fleming")
@@ -701,72 +714,84 @@ class ConfirmImportEncodingTest(AdminTestMixin, TestCase):
     @override_settings(
         IMPORT_EXPORT_TMP_STORAGE_CLASS="import_export.tmp_storages.TempFolderStorage"
     )
+    @ignore_widget_deprecation_warning
     def test_import_action_handles_TempFolderStorage_read(self):
         self._is_str_in_response("books.csv", "0")
 
     @override_settings(
         IMPORT_EXPORT_TMP_STORAGE_CLASS="import_export.tmp_storages.TempFolderStorage"
     )
+    @ignore_widget_deprecation_warning
     def test_import_action_handles_TempFolderStorage_read_mac(self):
         self._is_str_in_response("books-mac.csv", "0")
 
     @override_settings(
         IMPORT_EXPORT_TMP_STORAGE_CLASS="import_export.tmp_storages.TempFolderStorage"
     )
+    @ignore_widget_deprecation_warning
     def test_import_action_handles_TempFolderStorage_read_iso_8859_1(self):
         self._is_str_in_response("books-ISO-8859-1.csv", "0", "ISO-8859-1")
 
     @override_settings(
         IMPORT_EXPORT_TMP_STORAGE_CLASS="import_export.tmp_storages.TempFolderStorage"
     )
+    @ignore_widget_deprecation_warning
     def test_import_action_handles_TempFolderStorage_read_binary(self):
         self._is_str_in_response("books.xls", "1")
 
     @override_settings(
         IMPORT_EXPORT_TMP_STORAGE_CLASS="import_export.tmp_storages.CacheStorage"
     )
+    @ignore_widget_deprecation_warning
     def test_import_action_handles_CacheStorage_read(self):
         self._is_str_in_response("books.csv", "0")
 
     @override_settings(
         IMPORT_EXPORT_TMP_STORAGE_CLASS="import_export.tmp_storages.CacheStorage"
     )
+    @ignore_widget_deprecation_warning
     def test_import_action_handles_CacheStorage_read_mac(self):
         self._is_str_in_response("books-mac.csv", "0")
 
     @override_settings(
         IMPORT_EXPORT_TMP_STORAGE_CLASS="import_export.tmp_storages.CacheStorage"
     )
+    @ignore_widget_deprecation_warning
     def test_import_action_handles_CacheStorage_read_iso_8859_1(self):
         self._is_str_in_response("books-ISO-8859-1.csv", "0", "ISO-8859-1")
 
     @override_settings(
         IMPORT_EXPORT_TMP_STORAGE_CLASS="import_export.tmp_storages.CacheStorage"
     )
+    @ignore_widget_deprecation_warning
     def test_import_action_handles_CacheStorage_read_binary(self):
         self._is_str_in_response("books.xls", "1")
 
     @override_settings(
         IMPORT_EXPORT_TMP_STORAGE_CLASS="import_export.tmp_storages.MediaStorage"
     )
+    @ignore_widget_deprecation_warning
     def test_import_action_handles_MediaStorage_read(self):
         self._is_str_in_response("books.csv", "0")
 
     @override_settings(
         IMPORT_EXPORT_TMP_STORAGE_CLASS="import_export.tmp_storages.MediaStorage"
     )
+    @ignore_widget_deprecation_warning
     def test_import_action_handles_MediaStorage_read_mac(self):
         self._is_str_in_response("books-mac.csv", "0")
 
     @override_settings(
         IMPORT_EXPORT_TMP_STORAGE_CLASS="import_export.tmp_storages.MediaStorage"
     )
+    @ignore_widget_deprecation_warning
     def test_import_action_handles_MediaStorage_read_iso_8859_1(self):
         self._is_str_in_response("books-ISO-8859-1.csv", "0", "ISO-8859-1")
 
     @override_settings(
         IMPORT_EXPORT_TMP_STORAGE_CLASS="import_export.tmp_storages.MediaStorage"
     )
+    @ignore_widget_deprecation_warning
     def test_import_action_handles_MediaStorage_read_binary(self):
         self._is_str_in_response("books.xls", "1")
 
@@ -792,72 +817,84 @@ class CompleteImportEncodingTest(AdminTestMixin, TestCase):
     @override_settings(
         IMPORT_EXPORT_TMP_STORAGE_CLASS="import_export.tmp_storages.TempFolderStorage"
     )
+    @ignore_widget_deprecation_warning
     def test_import_action_handles_TempFolderStorage_read(self):
         self._is_str_in_response("books.csv", "0")
 
     @override_settings(
         IMPORT_EXPORT_TMP_STORAGE_CLASS="import_export.tmp_storages.TempFolderStorage"
     )
+    @ignore_widget_deprecation_warning
     def test_import_action_handles_TempFolderStorage_read_mac(self):
         self._is_str_in_response("books-mac.csv", "0")
 
     @override_settings(
         IMPORT_EXPORT_TMP_STORAGE_CLASS="import_export.tmp_storages.TempFolderStorage"
     )
+    @ignore_widget_deprecation_warning
     def test_import_action_handles_TempFolderStorage_read_iso_8859_1(self):
         self._is_str_in_response("books-ISO-8859-1.csv", "0", "ISO-8859-1")
 
     @override_settings(
         IMPORT_EXPORT_TMP_STORAGE_CLASS="import_export.tmp_storages.TempFolderStorage"
     )
+    @ignore_widget_deprecation_warning
     def test_import_action_handles_TempFolderStorage_read_binary(self):
         self._is_str_in_response("books.xls", "1")
 
     @override_settings(
         IMPORT_EXPORT_TMP_STORAGE_CLASS="import_export.tmp_storages.CacheStorage"
     )
+    @ignore_widget_deprecation_warning
     def test_import_action_handles_CacheStorage_read(self):
         self._is_str_in_response("books.csv", "0")
 
     @override_settings(
         IMPORT_EXPORT_TMP_STORAGE_CLASS="import_export.tmp_storages.CacheStorage"
     )
+    @ignore_widget_deprecation_warning
     def test_import_action_handles_CacheStorage_read_mac(self):
         self._is_str_in_response("books-mac.csv", "0")
 
     @override_settings(
         IMPORT_EXPORT_TMP_STORAGE_CLASS="import_export.tmp_storages.CacheStorage"
     )
+    @ignore_widget_deprecation_warning
     def test_import_action_handles_CacheStorage_read_iso_8859_1(self):
         self._is_str_in_response("books-ISO-8859-1.csv", "0", "ISO-8859-1")
 
     @override_settings(
         IMPORT_EXPORT_TMP_STORAGE_CLASS="import_export.tmp_storages.CacheStorage"
     )
+    @ignore_widget_deprecation_warning
     def test_import_action_handles_CacheStorage_read_binary(self):
         self._is_str_in_response("books.xls", "1")
 
     @override_settings(
         IMPORT_EXPORT_TMP_STORAGE_CLASS="import_export.tmp_storages.MediaStorage"
     )
+    @ignore_widget_deprecation_warning
     def test_import_action_handles_MediaStorage_read(self):
         self._is_str_in_response("books.csv", "0")
 
     @override_settings(
         IMPORT_EXPORT_TMP_STORAGE_CLASS="import_export.tmp_storages.MediaStorage"
     )
+    @ignore_widget_deprecation_warning
     def test_import_action_handles_MediaStorage_read_mac(self):
         self._is_str_in_response("books-mac.csv", "0")
 
     @override_settings(
         IMPORT_EXPORT_TMP_STORAGE_CLASS="import_export.tmp_storages.MediaStorage"
     )
+    @ignore_widget_deprecation_warning
     def test_import_action_handles_MediaStorage_read_iso_8859_1(self):
         self._is_str_in_response("books-ISO-8859-1.csv", "0", "ISO-8859-1")
 
     @override_settings(
         IMPORT_EXPORT_TMP_STORAGE_CLASS="import_export.tmp_storages.MediaStorage"
     )
+    @ignore_widget_deprecation_warning
     def test_import_action_handles_MediaStorage_read_binary(self):
         self._is_str_in_response("books.xls", "1")
 
@@ -880,6 +917,7 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
         self.cat1 = Category.objects.create(name="Cat 1")
         self.cat2 = Category.objects.create(name="Cat 2")
 
+    @ignore_widget_deprecation_warning
     def test_export(self):
         data = {
             "action": ["export_admin_action"],
@@ -1161,6 +1199,7 @@ class TestImportSkipConfirm(AdminTestMixin, TransactionTestCase):
         if regex_in_response is not None:
             self.assertRegex(str(response.content), regex_in_response)
 
+    @ignore_widget_deprecation_warning
     def test_import_action_create(self):
         self._is_str_in_response(
             "books.csv",
@@ -1170,6 +1209,7 @@ class TestImportSkipConfirm(AdminTestMixin, TransactionTestCase):
         )
         self.assertEqual(1, Book.objects.count())
 
+    @ignore_widget_deprecation_warning
     def test_import_action_invalid_date(self):
         # test that a row with an invalid date redirects to errors page
         index = self._get_input_format_index("csv")
@@ -1185,6 +1225,7 @@ class TestImportSkipConfirm(AdminTestMixin, TransactionTestCase):
         # no rows should be imported because we rollback on validation errors
         self.assertEqual(0, Book.objects.count())
 
+    @ignore_widget_deprecation_warning
     def test_import_action_error_on_save(self):
         with mock.patch("core.models.Book.save") as mock_save:
             mock_save.side_effect = ValueError("some unknown error")
@@ -1199,6 +1240,7 @@ class TestImportSkipConfirm(AdminTestMixin, TransactionTestCase):
         self.assertEqual(0, Book.objects.count())
 
     @override_settings(IMPORT_EXPORT_USE_TRANSACTIONS=False)
+    @ignore_widget_deprecation_warning
     def test_import_transaction_disabled_validation_error(self):
         # with transactions disabled, a validation error should not cause the entire
         # import to fail
@@ -1206,6 +1248,7 @@ class TestImportSkipConfirm(AdminTestMixin, TransactionTestCase):
         self.assertEqual(1, Book.objects.count())
 
     @override_settings(IMPORT_EXPORT_USE_TRANSACTIONS=True)
+    @ignore_widget_deprecation_warning
     def test_import_transaction_enabled_core_error(self):
         # test that if we send a file with multiple rows,
         # and transactions is enabled, a core error means that
@@ -1218,6 +1261,7 @@ class TestImportSkipConfirm(AdminTestMixin, TransactionTestCase):
         self.assertEqual(0, Book.objects.count())
 
     @override_settings(IMPORT_EXPORT_USE_TRANSACTIONS=False)
+    @ignore_widget_deprecation_warning
     def test_import_transaction_disabled_core_error(self):
         # with transactions disabled, a core (db constraint) error should not cause the
         # entire import to fail
@@ -1228,6 +1272,7 @@ class TestImportSkipConfirm(AdminTestMixin, TransactionTestCase):
         self.assertIn("some unknown error", str(response.content))
         self.assertEqual(2, Book.objects.count())
 
+    @ignore_widget_deprecation_warning
     def test_import_action_mac(self):
         self._is_str_in_response(
             "books-mac.csv",
@@ -1236,6 +1281,7 @@ class TestImportSkipConfirm(AdminTestMixin, TransactionTestCase):
             str_in_response="Import finished, with 1 new and 0 updated books.",
         )
 
+    @ignore_widget_deprecation_warning
     def test_import_action_iso_8859_1(self):
         self._is_str_in_response(
             "books-ISO-8859-1.csv",
@@ -1257,6 +1303,7 @@ class TestImportSkipConfirm(AdminTestMixin, TransactionTestCase):
             ),
         )
 
+    @ignore_widget_deprecation_warning
     def test_import_action_binary(self):
         self._is_str_in_response(
             "books.xls",

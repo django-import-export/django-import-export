@@ -2,7 +2,7 @@
 Installation and configuration
 ==============================
 
-import_export is available on the Python Package Index (PyPI), so it
+import-export is available on the Python Package Index (PyPI), so it
 can be installed with standard Python tools like ``pip`` or ``easy_install``::
 
   pip install django-import-export
@@ -38,9 +38,7 @@ let Django collect its static files.
     $ python manage.py collectstatic
 
 All prerequisites are set up! See :doc:`getting_started` to learn how to use
-import_export in your project.
-
-
+import-export in your project.
 
 Settings
 ========

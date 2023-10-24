@@ -41,6 +41,7 @@ from ..models import (
     WithDynamicDefault,
     WithFloatField,
 )
+from .utils import ignore_widget_deprecation_warning
 
 
 class MyResource(resources.Resource):
@@ -412,16 +413,19 @@ class ModelResourceTest(TestCase):
             ],
         )
 
+    @ignore_widget_deprecation_warning
     def test_export(self):
         with self.assertNumQueries(2):
             dataset = self.resource.export(queryset=Book.objects.all())
             self.assertEqual(len(dataset), 1)
 
+    @ignore_widget_deprecation_warning
     def test_export_iterable(self):
         with self.assertNumQueries(2):
             dataset = self.resource.export(queryset=list(Book.objects.all()))
             self.assertEqual(len(dataset), 1)
 
+    @ignore_widget_deprecation_warning
     def test_export_prefetch_related(self):
         with self.assertNumQueries(3):
             dataset = self.resource.export(
@@ -429,6 +433,7 @@ class ModelResourceTest(TestCase):
             )
             self.assertEqual(len(dataset), 1)
 
+    @ignore_widget_deprecation_warning
     def test_export_handles_named_queryset_parameter(self):
         class _BookResource(BookResource):
             def before_export(self, queryset, **kwargs):
@@ -474,6 +479,7 @@ class ModelResourceTest(TestCase):
             list(B().iter_queryset(qs))
             mocked_obj.assert_called_once_with(qs, 1000)
 
+    @ignore_widget_deprecation_warning
     def test_get_diff(self):
         diff = Diff(self.resource, self.book, False)
         book2 = Book(name="Some other book")
@@ -487,6 +493,7 @@ class ModelResourceTest(TestCase):
         )
         self.assertFalse(html[headers.index("author_email")])
 
+    @ignore_widget_deprecation_warning
     def test_import_data_update(self):
         result = self.resource.import_data(self.dataset, raise_errors=True)
 
@@ -506,6 +513,7 @@ class ModelResourceTest(TestCase):
         self.assertEqual(instance.author_email, "test@example.com")
         self.assertEqual(instance.price, Decimal("10.25"))
 
+    @ignore_widget_deprecation_warning
     def test_import_data_new(self):
         Book.objects.all().delete()
         self.assertEqual(0, Book.objects.count())
@@ -526,6 +534,7 @@ class ModelResourceTest(TestCase):
         self.assertEqual(instance.author_email, "test@example.com")
         self.assertEqual(instance.price, Decimal("10.25"))
 
+    @ignore_widget_deprecation_warning
     def test_import_data_new_store_instance(self):
         self.resource = BookResourceWithStoreInstance()
         Book.objects.all().delete()
@@ -539,6 +548,7 @@ class ModelResourceTest(TestCase):
         book = Book.objects.first()
         self.assertEqual(book.pk, result.rows[0].instance.pk)
 
+    @ignore_widget_deprecation_warning
     def test_import_data_update_store_instance(self):
         self.resource = BookResourceWithStoreInstance()
         result = self.resource.import_data(self.dataset, raise_errors=True)
@@ -553,6 +563,7 @@ class ModelResourceTest(TestCase):
 
     @skipUnlessDBFeature("supports_transactions")
     @mock.patch("import_export.resources.connections")
+    @ignore_widget_deprecation_warning
     def test_import_data_no_transaction(self, mock_db_connections):
         class Features:
             supports_transactions = False
@@ -593,12 +604,14 @@ class ModelResourceTest(TestCase):
                 use_transactions=True,
             )
 
+    @ignore_widget_deprecation_warning
     def test_importing_with_line_number_logging(self):
         resource = BookResourceWithLineNumberLogger()
         resource.import_data(self.dataset, raise_errors=True)
         self.assertEqual(resource.before_lines, [1])
         self.assertEqual(resource.after_lines, [1])
 
+    @ignore_widget_deprecation_warning
     def test_import_data_raises_field_specific_validation_errors(self):
         resource = AuthorResource()
         dataset = tablib.Dataset(headers=["id", "name", "birthday"])
@@ -610,6 +623,7 @@ class ModelResourceTest(TestCase):
         self.assertIs(result.rows[0].import_type, results.RowResult.IMPORT_TYPE_INVALID)
         self.assertIn("birthday", result.invalid_rows[0].field_specific_errors)
 
+    @ignore_widget_deprecation_warning
     def test_import_data_raises_field_specific_validation_errors_with_skip_unchanged(
         self,
     ):
@@ -635,6 +649,7 @@ class ModelResourceTest(TestCase):
         ):
             resource.import_data(tablib.Dataset(), collect_failed_rows=True)
 
+    @ignore_widget_deprecation_warning
     def test_collect_failed_rows(self):
         resource = ProfileResource()
         headers = ["id", "user"]
@@ -651,6 +666,7 @@ class ModelResourceTest(TestCase):
         self.assertEqual(len(result.failed_dataset), 1)
         # We can't check the error message because it's package- and version-dependent
 
+    @ignore_widget_deprecation_warning
     def test_row_result_raise_errors(self):
         resource = ProfileResource()
         headers = ["id", "user"]
@@ -665,6 +681,7 @@ class ModelResourceTest(TestCase):
                 raise_errors=True,
             )
 
+    @ignore_widget_deprecation_warning
     def test_collect_failed_rows_validation_error(self):
         resource = ProfileResource()
         row = ["1"]
@@ -688,6 +705,7 @@ class ModelResourceTest(TestCase):
             "{'__all__': ['fail!']}", result.failed_dataset.dict[0]["Error"]
         )
 
+    @ignore_widget_deprecation_warning
     def test_row_result_raise_ValidationError(self):
         resource = ProfileResource()
         row = ["1"]
@@ -703,6 +721,7 @@ class ModelResourceTest(TestCase):
                     raise_errors=True,
                 )
 
+    @ignore_widget_deprecation_warning
     def test_import_data_handles_widget_valueerrors_with_unicode_messages(self):
         resource = AuthorResourceWithCustomWidget()
         dataset = tablib.Dataset(headers=["id", "name", "birthday"])
@@ -733,6 +752,7 @@ class ModelResourceTest(TestCase):
         self.assertFalse(result.has_validation_errors())
         self.assertEqual(len(result.invalid_rows), 0)
 
+    @ignore_widget_deprecation_warning
     def test_model_validation_errors_raised_when_clean_model_instances_is_true(self):
         class TestResource(resources.ModelResource):
             class Meta:
@@ -762,6 +782,7 @@ class ModelResourceTest(TestCase):
         self.assertEqual(result.diff_headers, ["id", "name", "birthday"])
         self.assertEqual(invalid_row.values, ("1", "123", "---"))
 
+    @ignore_widget_deprecation_warning
     def test_known_invalid_fields_are_excluded_from_model_instance_cleaning(self):
         # The custom widget on the parent class should complain about
         # 'name' first, preventing Author.full_clean() from raising the
@@ -803,6 +824,7 @@ class ModelResourceTest(TestCase):
             },
         )
 
+    @ignore_widget_deprecation_warning
     def test_import_data_delete(self):
         class B(BookResource):
             delete = fields.Field(widget=widgets.BooleanWidget())
@@ -821,6 +843,7 @@ class ModelResourceTest(TestCase):
         self.assertIsNone(result.rows[0].instance)
         self.assertIsNone(result.rows[0].original)
 
+    @ignore_widget_deprecation_warning
     def test_import_data_delete_store_instance(self):
         class B(BookResource):
             delete = fields.Field(widget=widgets.BooleanWidget())
@@ -839,6 +862,7 @@ class ModelResourceTest(TestCase):
         )
         self.assertIsNotNone(result.rows[0].instance)
 
+    @ignore_widget_deprecation_warning
     def test_save_instance_with_dry_run_flag(self):
         class B(BookResource):
             def before_save_instance(self, instance, row, **kwargs):
@@ -892,6 +916,7 @@ class ModelResourceTest(TestCase):
         )
         self.assertEqual(0, mock_book.call_count)
 
+    @ignore_widget_deprecation_warning
     def test_delete_instance_with_dry_run_flag(self):
         class B(BookResource):
             delete = fields.Field(widget=widgets.BooleanWidget())
@@ -936,6 +961,7 @@ class ModelResourceTest(TestCase):
         self.assertFalse(resource.delete_instance_dry_run)
         self.assertFalse(resource.after_delete_instance_dry_run)
 
+    @ignore_widget_deprecation_warning
     def test_relationships_fields(self):
         class B(resources.ModelResource):
             class Meta:
@@ -1001,6 +1027,7 @@ class ModelResourceTest(TestCase):
         self.assertEqual(1, len(resource.fields))
         self.assertEqual("full_title", list(resource.fields.keys())[0])
 
+    @ignore_widget_deprecation_warning
     def test_widget_format_in_fk_field(self):
         class B(resources.ModelResource):
             class Meta:
@@ -1016,6 +1043,7 @@ class ModelResourceTest(TestCase):
         result = resource.fields["author__birthday"].export(self.book)
         self.assertEqual(result, str(date.today()))
 
+    @ignore_widget_deprecation_warning
     def test_widget_kwargs_for_field(self):
         class B(resources.ModelResource):
             class Meta:
@@ -1030,6 +1058,7 @@ class ModelResourceTest(TestCase):
         result = resource.fields["published"].export(self.book)
         self.assertEqual(result, "13.08.2012")
 
+    @ignore_widget_deprecation_warning
     def test_foreign_keys_export(self):
         author1 = Author.objects.create(name="Foo")
         self.book.author = author1
@@ -1038,6 +1067,7 @@ class ModelResourceTest(TestCase):
         dataset = self.resource.export(Book.objects.all())
         self.assertEqual(dataset.dict[0]["author"], author1.pk)
 
+    @ignore_widget_deprecation_warning
     def test_foreign_keys_import(self):
         author2 = Author.objects.create(name="Bar")
         headers = ["id", "name", "author"]
@@ -1048,6 +1078,7 @@ class ModelResourceTest(TestCase):
         book = Book.objects.get(name="FooBook")
         self.assertEqual(book.author, author2)
 
+    @ignore_widget_deprecation_warning
     def test_m2m_export(self):
         cat1 = Category.objects.create(name="Cat 1")
         cat2 = Category.objects.create(name="Cat 2")
@@ -1057,6 +1088,7 @@ class ModelResourceTest(TestCase):
         dataset = self.resource.export(Book.objects.all())
         self.assertEqual(dataset.dict[0]["categories"], "%d,%d" % (cat1.pk, cat2.pk))
 
+    @ignore_widget_deprecation_warning
     def test_m2m_import(self):
         cat1 = Category.objects.create(name="Cat 1")
         headers = ["id", "name", "categories"]
@@ -1067,6 +1099,7 @@ class ModelResourceTest(TestCase):
         book = Book.objects.get(name="FooBook")
         self.assertIn(cat1, book.categories.all())
 
+    @ignore_widget_deprecation_warning
     def test_m2m_options_import(self):
         cat1 = Category.objects.create(name="Cat 1")
         cat2 = Category.objects.create(name="Cat 2")
@@ -1089,6 +1122,7 @@ class ModelResourceTest(TestCase):
         self.assertIn(cat1, book.categories.all())
         self.assertIn(cat2, book.categories.all())
 
+    @ignore_widget_deprecation_warning
     def test_import_null_django_CharField_saved_as_empty_string(self):
         # issue 1485
         resource = BookResource()
@@ -1101,6 +1135,7 @@ class ModelResourceTest(TestCase):
         book = Book.objects.get(id=1)
         self.assertEqual("", book.author_email)
 
+    @ignore_widget_deprecation_warning
     def test_import_empty_django_CharField_saved_as_empty_string(self):
         resource = BookResource()
         self.assertTrue(resource._meta.model.author_email.field.blank)
@@ -1112,6 +1147,7 @@ class ModelResourceTest(TestCase):
         book = Book.objects.get(id=1)
         self.assertEqual("", book.author_email)
 
+    @ignore_widget_deprecation_warning
     def test_m2m_add(self):
         cat1 = Category.objects.create(name="Cat 1")
         cat2 = Category.objects.create(name="Cat 2")
@@ -1155,6 +1191,7 @@ class ModelResourceTest(TestCase):
         self.assertIn(cat3, book2.categories.all())
         self.assertIn(cat4, book2.categories.all())
 
+    @ignore_widget_deprecation_warning
     def test_related_one_to_one(self):
         # issue #17 - Exception when attempting access something on the
         # related_name
@@ -1182,6 +1219,7 @@ class ModelResourceTest(TestCase):
         dataset = self.resource.export(queryset=Book.objects.none())
         self.assertEqual(len(dataset), 0)
 
+    @ignore_widget_deprecation_warning
     def test_import_data_skip_unchanged(self):
         def attempted_save(instance, new, using_transactions, real_dry_run):
             self.fail("Resource attempted to save instead of skipping")
@@ -1212,6 +1250,7 @@ class ModelResourceTest(TestCase):
         self.assertFalse(result.has_errors())
         self.assertEqual(len(result.rows), 0)
 
+    @ignore_widget_deprecation_warning
     def test_before_import_access_to_kwargs(self):
         class B(BookResource):
             def before_import(self, dataset, **kwargs):
@@ -1240,6 +1279,7 @@ class ModelResourceTest(TestCase):
             resource.import_data(self.dataset, raise_errors=True)
         self.assertEqual("This is an invalid dataset", cm.exception.args[0])
 
+    @ignore_widget_deprecation_warning
     def test_after_import_raises_error(self):
         class B(BookResource):
             def after_import(
@@ -1310,6 +1350,7 @@ class ModelResourceTest(TestCase):
         B()
         self.assertEqual({"sound": "quack"}, B.fields["published"])
 
+    @ignore_widget_deprecation_warning
     def test_readonly_annotated_field_import_and_export(self):
         class B(BookResource):
             total_categories = fields.Field("total_categories", readonly=True)
@@ -1336,6 +1377,7 @@ class ModelResourceTest(TestCase):
         self.assertEqual(len(result.rows), len(dataset))
         self.assertEqual(result.rows[0].import_type, results.RowResult.IMPORT_TYPE_SKIP)
 
+    @ignore_widget_deprecation_warning
     def test_follow_relationship_for_modelresource(self):
         class EntryResource(resources.ModelResource):
             username = fields.Field(attribute="user__username", readonly=False)
@@ -1367,6 +1409,7 @@ class ModelResourceTest(TestCase):
         self.assertFalse(result.has_errors())
         self.assertEqual(User.objects.get(pk=user.pk).username, "bar")
 
+    @ignore_widget_deprecation_warning
     def test_import_data_dynamic_default_callable(self):
         class DynamicDefaultResource(resources.ModelResource):
             class Meta:
@@ -1391,6 +1434,7 @@ class ModelResourceTest(TestCase):
         objs = WithDynamicDefault.objects.all()
         self.assertNotEqual(objs[0].name, objs[1].name)
 
+    @ignore_widget_deprecation_warning
     def test_float_field(self):
         # 433
         class R(resources.ModelResource):
@@ -1486,6 +1530,7 @@ class ModelResourceTest(TestCase):
 
 class ModelResourceTransactionTest(TransactionTestCase):
     @skipUnlessDBFeature("supports_transactions")
+    @ignore_widget_deprecation_warning
     def test_m2m_import_with_transactions(self):
         resource = BookResource()
         cat1 = Category.objects.create(name="Cat 1")
@@ -1548,6 +1593,7 @@ class ModelResourceTransactionTest(TransactionTestCase):
         )
         self.assertTrue(result.has_errors())
 
+    @ignore_widget_deprecation_warning
     def test_rollback_on_validation_errors_false(self):
         """Should create only one instance as the second one
         raises a ``ValidationError``"""
@@ -1570,6 +1616,7 @@ class ModelResourceTransactionTest(TransactionTestCase):
         # Ensure that valid row resulted in an instance created.
         self.assertEqual(Author.objects.count(), 1)
 
+    @ignore_widget_deprecation_warning
     def test_rollback_on_validation_errors_true(self):
         """
         Should not create any instances as the second one raises a ``ValidationError``
@@ -1617,6 +1664,7 @@ class PostgresTests(TransactionTestCase):
     # Make sure to start the sequences back at 1
     reset_sequences = True
 
+    @ignore_widget_deprecation_warning
     def test_create_object_after_importing_dataset_with_id(self):
         dataset = tablib.Dataset(headers=["id", "name"])
         dataset.append([1, "Some book"])
@@ -1644,6 +1692,10 @@ if "postgresql" in settings.DATABASES["default"]["ENGINE"]:
         chapters = ArrayField(models.CharField(max_length=100), default=list)
         data = models.JSONField(null=True)
 
+    class BookWithChapterNumbers(models.Model):
+        name = models.CharField("Book name", max_length=100)
+        chapter_numbers = ArrayField(models.PositiveSmallIntegerField(), default=list)
+
     class BookWithChaptersResource(resources.ModelResource):
         class Meta:
             model = BookWithChapters
@@ -1654,7 +1706,17 @@ if "postgresql" in settings.DATABASES["default"]["ENGINE"]:
                 "data",
             )
 
+    class BookWithChapterNumbersResource(resources.ModelResource):
+        class Meta:
+            model = BookWithChapterNumbers
+            fields = (
+                "id",
+                "name",
+                "chapter_numbers",
+            )
+
     class TestExportArrayField(TestCase):
+        @ignore_widget_deprecation_warning
         def test_exports_array_field(self):
             dataset_headers = ["id", "name", "chapters"]
             chapters = ["Introduction", "Middle Chapter", "Ending"]
@@ -1679,6 +1741,7 @@ if "postgresql" in settings.DATABASES["default"]["ENGINE"]:
             row = [self.book.id, "Some book", ",".join(self.chapters)]
             self.dataset.append(row)
 
+        @ignore_widget_deprecation_warning
         def test_import_of_data_with_array(self):
             self.assertListEqual(self.book.chapters, [])
             result = self.resource.import_data(self.dataset, raise_errors=True)
@@ -1689,11 +1752,35 @@ if "postgresql" in settings.DATABASES["default"]["ENGINE"]:
             self.book.refresh_from_db()
             self.assertEqual(self.book.chapters, self.chapters)
 
+    class TestImportIntArrayField(TestCase):
+        def setUp(self):
+            self.resource = BookWithChapterNumbersResource()
+            self.chapter_numbers = [1, 2, 3]
+            self.book = BookWithChapterNumbers.objects.create(
+                name="foo", chapter_numbers=[]
+            )
+            self.dataset = tablib.Dataset(
+                *[(1, "some book", "1,2,3")], headers=["id", "name", "chapter_numbers"]
+            )
+
+        @ignore_widget_deprecation_warning
+        def test_import_of_data_with_int_array(self):
+            # issue #1495
+            self.assertListEqual(self.book.chapter_numbers, [])
+            result = self.resource.import_data(self.dataset, raise_errors=True)
+
+            self.assertFalse(result.has_errors())
+            self.assertEqual(len(result.rows), 1)
+
+            self.book.refresh_from_db()
+            self.assertEqual(self.book.chapter_numbers, self.chapter_numbers)
+
     class TestExportJsonField(TestCase):
         def setUp(self):
             self.json_data = {"some_key": "some_value"}
             self.book = BookWithChapters.objects.create(name="foo", data=self.json_data)
 
+        @ignore_widget_deprecation_warning
         def test_export_field_with_appropriate_format(self):
             resource = resources.modelresource_factory(model=BookWithChapters)()
             result = resource.export(BookWithChapters.objects.all())
@@ -1710,6 +1797,7 @@ if "postgresql" in settings.DATABASES["default"]["ENGINE"]:
             row = [self.book.id, "Some book", self.json_data]
             self.dataset.append(row)
 
+        @ignore_widget_deprecation_warning
         def test_sets_json_data_when_model_field_is_empty(self):
             self.assertIsNone(self.book.data)
             result = self.resource.import_data(self.dataset, raise_errors=True)
@@ -1727,6 +1815,7 @@ class ForeignKeyWidgetFollowRelationship(TestCase):
         self.role = Role.objects.create(user=self.user)
         self.person = Person.objects.create(role=self.role)
 
+    @ignore_widget_deprecation_warning
     def test_export(self):
         class MyPersonResource(resources.ModelResource):
             role = fields.Field(
@@ -1742,7 +1831,7 @@ class ForeignKeyWidgetFollowRelationship(TestCase):
         resource = MyPersonResource()
         dataset = resource.export(Person.objects.all())
         self.assertEqual(len(dataset), 1)
-        self.assertEqual(1, dataset[0][0])
+        self.assertEqual("1", dataset[0][0])
         self.assertEqual("foo", dataset[0][1])
 
         self.role.user = None
@@ -1751,7 +1840,7 @@ class ForeignKeyWidgetFollowRelationship(TestCase):
         resource = MyPersonResource()
         dataset = resource.export(Person.objects.all())
         self.assertEqual(len(dataset), 1)
-        self.assertEqual(1, dataset[0][0])
+        self.assertEqual("1", dataset[0][0])
         self.assertEqual(None, dataset[0][1])
 
 
@@ -1761,6 +1850,7 @@ class ManyRelatedManagerDiffTest(TestCase):
     def setUp(self):
         pass
 
+    @ignore_widget_deprecation_warning
     def test_related_manager_diff(self):
         dataset_headers = ["id", "name", "categories"]
         dataset_row = ["1", "Test Book", "1"]
@@ -1797,6 +1887,7 @@ class ManyToManyWidgetDiffTest(TestCase):
     def setUp(self):
         pass
 
+    @ignore_widget_deprecation_warning
     def test_many_to_many_widget_create(self):
         # the book is associated with 0 categories
         # when we import a book with category 1, the book
@@ -1821,6 +1912,7 @@ class ManyToManyWidgetDiffTest(TestCase):
         )
         self.assertEqual(Category.objects.first(), book.categories.first())
 
+    @ignore_widget_deprecation_warning
     def test_many_to_many_widget_create_with_m2m_being_compared(self):
         # issue 1558 - when the object is a new instance and m2m is
         # evaluated for differences
@@ -1837,6 +1929,7 @@ class ManyToManyWidgetDiffTest(TestCase):
         self.assertEqual(len(result.rows), 1)
         self.assertEqual(result.rows[0].import_type, results.RowResult.IMPORT_TYPE_NEW)
 
+    @ignore_widget_deprecation_warning
     def test_many_to_many_widget_update(self):
         # the book is associated with 1 category ('Category 2')
         # when we import a book with category 1, the book
@@ -1858,6 +1951,7 @@ class ManyToManyWidgetDiffTest(TestCase):
         self.assertEqual(1, book.categories.count())
         self.assertEqual(Category.objects.first(), book.categories.first())
 
+    @ignore_widget_deprecation_warning
     def test_many_to_many_widget_no_changes(self):
         # the book is associated with 1 category ('Category 2')
         # when we import a row with a book with category 1, the book
@@ -1876,6 +1970,7 @@ class ManyToManyWidgetDiffTest(TestCase):
         self.assertEqual(result.rows[0].import_type, results.RowResult.IMPORT_TYPE_SKIP)
         self.assertEqual(1, book.categories.count())
 
+    @ignore_widget_deprecation_warning
     def test_many_to_many_widget_handles_ordering(self):
         # the book is associated with 2 categories ('Category 1', 'Category 2')
         # when we import a row with a book with both categories (in any order), the book
@@ -1910,6 +2005,7 @@ class ManyToManyWidgetDiffTest(TestCase):
 
         self.assertEqual(2, book.categories.count())
 
+    @ignore_widget_deprecation_warning
     def test_many_to_many_widget_handles_uuid(self):
         # Test for #1435 - skip_row() handles M2M field when UUID pk used
         class _UUIDBookResource(resources.ModelResource):
@@ -1931,6 +2027,7 @@ class ManyToManyWidgetDiffTest(TestCase):
         result = uuid_resource.import_data(dataset, dry_run=False)
         self.assertEqual(result.rows[0].import_type, results.RowResult.IMPORT_TYPE_SKIP)
 
+    @ignore_widget_deprecation_warning
     def test_skip_row_no_m2m_data_supplied(self):
         # issue #1437
         # test skip_row() when the model defines a m2m field
@@ -2082,6 +2179,7 @@ class BulkTest(TestCase):
 
 class BulkCreateTest(BulkTest):
     @mock.patch("core.models.Book.objects.bulk_create")
+    @ignore_widget_deprecation_warning
     def test_bulk_create_does_not_call_object_save(self, mock_bulk_create):
         with mock.patch("core.models.Book.save") as mock_obj_save:
             self.resource.import_data(self.dataset)
@@ -2089,6 +2187,7 @@ class BulkCreateTest(BulkTest):
         mock_bulk_create.assert_called_with(mock.ANY, batch_size=None)
 
     @mock.patch("core.models.Book.objects.bulk_create")
+    @ignore_widget_deprecation_warning
     def test_bulk_create_batch_size_of_5(self, mock_bulk_create):
         class _BookResource(resources.ModelResource):
             class Meta:
@@ -2103,6 +2202,7 @@ class BulkCreateTest(BulkTest):
         self.assertEqual(10, result.total_rows)
 
     @mock.patch("core.models.UUIDBook.objects.bulk_create")
+    @ignore_widget_deprecation_warning
     def test_bulk_create_uuid_model(self, mock_bulk_create):
         """Test create of a Model which defines uuid not pk (issue #1274)"""
 
@@ -2123,6 +2223,7 @@ class BulkCreateTest(BulkTest):
         self.assertEqual(10, result.total_rows)
 
     @mock.patch("core.models.Book.objects.bulk_create")
+    @ignore_widget_deprecation_warning
     def test_bulk_create_no_batch_size(self, mock_bulk_create):
         class _BookResource(resources.ModelResource):
             class Meta:
@@ -2138,6 +2239,7 @@ class BulkCreateTest(BulkTest):
         self.assertEqual(10, result.totals["new"])
 
     @mock.patch("core.models.Book.objects.bulk_create")
+    @ignore_widget_deprecation_warning
     def test_bulk_create_called_dry_run(self, mock_bulk_create):
         class _BookResource(resources.ModelResource):
             class Meta:
@@ -2152,6 +2254,7 @@ class BulkCreateTest(BulkTest):
         self.assertEqual(10, result.totals["new"])
 
     @mock.patch("core.models.Book.objects.bulk_create")
+    @ignore_widget_deprecation_warning
     def test_bulk_create_not_called_when_not_using_transactions(self, mock_bulk_create):
         class _BookResource(resources.ModelResource):
             def import_data(
@@ -2183,6 +2286,7 @@ class BulkCreateTest(BulkTest):
         mock_bulk_create.assert_not_called()
 
     @mock.patch("core.models.Book.objects.bulk_create")
+    @ignore_widget_deprecation_warning
     def test_bulk_create_batch_size_of_4(self, mock_bulk_create):
         class _BookResource(resources.ModelResource):
             class Meta:
@@ -2196,6 +2300,7 @@ class BulkCreateTest(BulkTest):
         self.assertEqual(10, result.total_rows)
         self.assertEqual(10, result.totals["new"])
 
+    @ignore_widget_deprecation_warning
     def test_no_changes_for_errors_if_use_transactions_enabled(self):
         with mock.patch("import_export.results.Result.has_errors") as mock_has_errors:
             mock_has_errors.return_val = True
@@ -2203,6 +2308,7 @@ class BulkCreateTest(BulkTest):
         self.assertEqual(0, Book.objects.count())
 
     @mock.patch("core.models.Book.objects.bulk_create")
+    @ignore_widget_deprecation_warning
     def test_bulk_create_use_bulk_disabled(self, mock_bulk_create):
         class _BookResource(resources.ModelResource):
             class Meta:
@@ -2217,6 +2323,7 @@ class BulkCreateTest(BulkTest):
         self.assertEqual(10, result.totals["new"])
 
     @mock.patch("core.models.Book.objects.bulk_create")
+    @ignore_widget_deprecation_warning
     def test_bulk_create_bad_batch_size_value(self, mock_bulk_create):
         class _BookResource(resources.ModelResource):
             class Meta:
@@ -2243,6 +2350,7 @@ class BulkCreateTest(BulkTest):
         mock_bulk_create.assert_not_called()
 
     @mock.patch("core.models.Book.objects.bulk_create")
+    @ignore_widget_deprecation_warning
     def test_bulk_create_oversized_batch_size_value(self, mock_bulk_create):
         class _BookResource(resources.ModelResource):
             class Meta:
@@ -2258,6 +2366,7 @@ class BulkCreateTest(BulkTest):
         self.assertEqual(10, result.totals["new"])
 
     @mock.patch("core.models.Book.objects.bulk_create")
+    @ignore_widget_deprecation_warning
     def test_bulk_create_logs_exception(self, mock_bulk_create):
         e = ValidationError("invalid field")
         mock_bulk_create.side_effect = e
@@ -2274,6 +2383,7 @@ class BulkCreateTest(BulkTest):
             mock_exception.assert_called_with(e, exc_info=e)
 
     @mock.patch("core.models.Book.objects.bulk_create")
+    @ignore_widget_deprecation_warning
     def test_bulk_create_raises_exception(self, mock_bulk_create):
         mock_bulk_create.side_effect = ValidationError("invalid field")
 
@@ -2288,6 +2398,7 @@ class BulkCreateTest(BulkTest):
             resource.import_data(self.dataset, raise_errors=True)
 
     @mock.patch("core.models.Book.objects.bulk_create")
+    @ignore_widget_deprecation_warning
     def test_bulk_create_exception_gathered_on_dry_run(self, mock_bulk_create):
         mock_bulk_create.side_effect = ValidationError("invalid field")
 
@@ -2301,6 +2412,7 @@ class BulkCreateTest(BulkTest):
         result = resource.import_data(self.dataset, dry_run=True, raise_errors=False)
         self.assertTrue(result.has_errors())
 
+    @ignore_widget_deprecation_warning
     def test_m2m_not_called_for_bulk(self):
         mock_m2m_widget = mock.Mock(spec=widgets.ManyToManyWidget)
 
@@ -2359,6 +2471,7 @@ class BulkUpdateTest(BulkTest):
         self.init_update_test_data()
         self.resource = self._BookResource()
 
+    @ignore_widget_deprecation_warning
     def test_bulk_update(self):
         result = self.resource.import_data(self.dataset)
         [self.assertEqual("UPDATED", b.name) for b in Book.objects.all()]
@@ -2366,6 +2479,7 @@ class BulkUpdateTest(BulkTest):
         self.assertEqual(10, result.totals["update"])
 
     @mock.patch("core.models.Book.objects.bulk_update")
+    @ignore_widget_deprecation_warning
     def test_bulk_update_batch_size_of_4(self, mock_bulk_update):
         class _BookResource(resources.ModelResource):
             class Meta:
@@ -2380,6 +2494,7 @@ class BulkUpdateTest(BulkTest):
         self.assertEqual(10, result.totals["update"])
 
     @mock.patch("core.models.Book.objects.bulk_update")
+    @ignore_widget_deprecation_warning
     def test_bulk_update_batch_size_of_5(self, mock_bulk_update):
         class _BookResource(resources.ModelResource):
             class Meta:
@@ -2394,6 +2509,7 @@ class BulkUpdateTest(BulkTest):
         self.assertEqual(10, result.totals["update"])
 
     @mock.patch("core.models.Book.objects.bulk_update")
+    @ignore_widget_deprecation_warning
     def test_bulk_update_no_batch_size(self, mock_bulk_update):
         class _BookResource(resources.ModelResource):
             class Meta:
@@ -2409,6 +2525,7 @@ class BulkUpdateTest(BulkTest):
         self.assertEqual(10, result.totals["update"])
 
     @mock.patch("core.models.Book.objects.bulk_update")
+    @ignore_widget_deprecation_warning
     def test_bulk_update_not_called_when_not_using_transactions(self, mock_bulk_update):
         class _BookResource(resources.ModelResource):
             def import_data(
@@ -2440,11 +2557,13 @@ class BulkUpdateTest(BulkTest):
         mock_bulk_update.assert_not_called()
 
     @mock.patch("core.models.Book.objects.bulk_update")
+    @ignore_widget_deprecation_warning
     def test_bulk_update_called_for_dry_run(self, mock_bulk_update):
         self.resource.import_data(self.dataset, dry_run=True)
         self.assertEqual(1, mock_bulk_update.call_count)
 
     @mock.patch("core.models.Book.objects.bulk_update")
+    @ignore_widget_deprecation_warning
     def test_bulk_not_called_when_use_bulk_disabled(self, mock_bulk_update):
         class _BookResource(resources.ModelResource):
             class Meta:
@@ -2459,6 +2578,7 @@ class BulkUpdateTest(BulkTest):
         mock_bulk_update.assert_not_called()
 
     @mock.patch("core.models.Book.objects.bulk_update")
+    @ignore_widget_deprecation_warning
     def test_bulk_update_logs_exception(self, mock_bulk_update):
         e = ValidationError("invalid field")
         mock_bulk_update.side_effect = e
@@ -2474,6 +2594,7 @@ class BulkUpdateTest(BulkTest):
             mock_exception.assert_called_with(e, exc_info=e)
 
     @mock.patch("core.models.Book.objects.bulk_update")
+    @ignore_widget_deprecation_warning
     def test_bulk_update_raises_exception(self, mock_bulk_update):
         e = ValidationError("invalid field")
         mock_bulk_update.side_effect = e
@@ -2495,6 +2616,7 @@ class BulkUUIDBookUpdateTest(BulkTest):
         self.init_update_test_data(model=UUIDBook)
 
     @mock.patch("core.models.UUIDBook.objects.bulk_update")
+    @ignore_widget_deprecation_warning
     def test_bulk_update_uuid_model(self, mock_bulk_update):
         """Test update of a Model which defines uuid not pk (issue #1274)"""
 
@@ -2523,66 +2645,53 @@ class BulkDeleteTest(BulkTest):
         class Meta:
             model = Book
             use_bulk = True
+            # there are errors when diffing with mocks
+            # therefore disable diff with this flag
+            skip_diff = True
 
     def setUp(self):
         super().setUp()
         self.resource = self.DeleteBookResource()
+        self.resource._meta.batch_size = 1000
+        self.resource._meta.use_bulk = True
         self.init_update_test_data()
 
     @mock.patch("core.models.Book.delete")
+    @ignore_widget_deprecation_warning
     def test_bulk_delete_use_bulk_is_false(self, mock_obj_delete):
-        class _BookResource(self.DeleteBookResource):
-            class Meta:
-                model = Book
-                use_bulk = False
-
-        self.resource = _BookResource()
+        self.resource._meta.use_bulk = False
         self.resource.import_data(self.dataset)
         self.assertEqual(10, mock_obj_delete.call_count)
 
     @mock.patch("core.models.Book.objects")
+    @ignore_widget_deprecation_warning
     def test_bulk_delete_batch_size_of_4(self, mock_obj_manager):
-        class _BookResource(self.DeleteBookResource):
-            class Meta:
-                model = Book
-                use_bulk = True
-                batch_size = 4
-
-        self.resource = _BookResource()
+        self.resource._meta.batch_size = 4
         result = self.resource.import_data(self.dataset)
         self.assertEqual(3, mock_obj_manager.filter.return_value.delete.call_count)
         self.assertEqual(10, result.total_rows)
         self.assertEqual(10, result.totals["delete"])
 
     @mock.patch("core.models.Book.objects")
+    @ignore_widget_deprecation_warning
     def test_bulk_delete_batch_size_of_5(self, mock_obj_manager):
-        class _BookResource(self.DeleteBookResource):
-            class Meta:
-                model = Book
-                use_bulk = True
-                batch_size = 5
-
-        self.resource = _BookResource()
+        self.resource._meta.batch_size = 5
         result = self.resource.import_data(self.dataset)
         self.assertEqual(2, mock_obj_manager.filter.return_value.delete.call_count)
         self.assertEqual(10, result.total_rows)
         self.assertEqual(10, result.totals["delete"])
 
     @mock.patch("core.models.Book.objects")
+    @ignore_widget_deprecation_warning
     def test_bulk_delete_batch_size_is_none(self, mock_obj_manager):
-        class _BookResource(self.DeleteBookResource):
-            class Meta:
-                model = Book
-                use_bulk = True
-                batch_size = None
-
-        self.resource = _BookResource()
+        self.resource._meta.batch_size = None
         result = self.resource.import_data(self.dataset)
         self.assertEqual(1, mock_obj_manager.filter.return_value.delete.call_count)
         self.assertEqual(10, result.total_rows)
         self.assertEqual(10, result.totals["delete"])
 
     @mock.patch("core.models.Book.objects")
+    @ignore_widget_deprecation_warning
     def test_bulk_delete_not_called_when_not_using_transactions(self, mock_obj_manager):
         class _BookResource(self.DeleteBookResource):
             def import_data(
@@ -2605,48 +2714,35 @@ class BulkDeleteTest(BulkTest):
                     **kwargs,
                 )
 
-            class Meta:
-                model = Book
-                use_bulk = True
-
         resource = _BookResource()
         resource.import_data(self.dataset, dry_run=True)
         self.assertEqual(0, mock_obj_manager.filter.return_value.delete.call_count)
 
     @mock.patch("core.models.Book.objects")
+    @ignore_widget_deprecation_warning
     def test_bulk_delete_called_for_dry_run(self, mock_obj_manager):
         self.resource.import_data(self.dataset, dry_run=True)
         self.assertEqual(1, mock_obj_manager.filter.return_value.delete.call_count)
 
     @mock.patch("core.models.Book.objects")
+    @ignore_widget_deprecation_warning
     def test_bulk_delete_logs_exception(self, mock_obj_manager):
         e = Exception("invalid")
         mock_obj_manager.filter.return_value.delete.side_effect = e
 
-        class _BookResource(self.DeleteBookResource):
-            class Meta:
-                model = Book
-                use_bulk = True
-
-        resource = _BookResource()
         with mock.patch("logging.Logger.debug") as mock_exception:
-            resource.import_data(self.dataset)
+            self.resource.import_data(self.dataset)
             mock_exception.assert_called_with(e, exc_info=mock.ANY)
             self.assertEqual(1, mock_exception.call_count)
 
     @mock.patch("core.models.Book.objects")
+    @ignore_widget_deprecation_warning
     def test_bulk_delete_raises_exception(self, mock_obj_manager):
         e = Exception("invalid")
         mock_obj_manager.filter.return_value.delete.side_effect = e
 
-        class _BookResource(self.DeleteBookResource):
-            class Meta:
-                model = Book
-                use_bulk = True
-
-        resource = _BookResource()
         with self.assertRaises(Exception) as raised_exc:
-            resource.import_data(self.dataset, raise_errors=True)
+            self.resource.import_data(self.dataset, raise_errors=True)
             self.assertEqual(e, raised_exc)
 
 
@@ -2665,6 +2761,7 @@ class BulkUUIDBookDeleteTest(BulkTest):
         self.resource = self.DeleteBookResource()
         self.init_update_test_data(model=UUIDBook)
 
+    @ignore_widget_deprecation_warning
     def test_bulk_delete_batch_size_of_5(self):
         self.assertEqual(10, UUIDBook.objects.count())
         self.resource.import_data(self.dataset)
@@ -2685,6 +2782,7 @@ class RawValueTest(TestCase):
         row = [self.book.pk, "Some book", "test@example.com", "10.25"]
         self.dataset.append(row)
 
+    @ignore_widget_deprecation_warning
     def test_import_data(self):
         result = self.resource.import_data(self.dataset, raise_errors=True)
 
@@ -2740,6 +2838,7 @@ class AfterImportComparisonTest(TestCase):
         row = [self.book.pk, "Some book", "2023-05-09"]
         self.dataset.append(row)
 
+    @ignore_widget_deprecation_warning
     def test_after_import_row_check_for_change(self):
         # issue 1583 - assert that `original` object is available to after_import_row()
         self.resource.import_data(self.dataset, raise_errors=True)
@@ -2795,22 +2894,26 @@ class ImportExportFieldOrderTest(TestCase):
         row = [self.pk, "Some book", "19.99"]
         self.dataset.append(row)
 
+    @ignore_widget_deprecation_warning
     def test_defined_import_order(self):
         self.resource = ImportExportFieldOrderTest.OrderedBookResource()
         self.resource.import_data(self.dataset)
         self.assertEqual(["price", "name", "id"], self.resource.field_names)
 
+    @ignore_widget_deprecation_warning
     def test_undefined_import_order(self):
         self.resource = ImportExportFieldOrderTest.UnorderedBookResource()
         self.resource.import_data(self.dataset)
         self.assertEqual(["price", "id", "name"], self.resource.field_names)
 
+    @ignore_widget_deprecation_warning
     def test_defined_export_order(self):
         self.resource = ImportExportFieldOrderTest.OrderedBookResource()
         data = self.resource.export()
         target = f"price,name,id\r\n1.99,Ulysses,{self.pk}\r\n"
         self.assertEqual(target, data.csv)
 
+    @ignore_widget_deprecation_warning
     def test_undefined_export_order(self):
         # When export order is not defined,
         # exported order should correspond with 'fields' definition
@@ -2819,6 +2922,7 @@ class ImportExportFieldOrderTest(TestCase):
         target = f"price,id,name\r\n1.99,{self.pk},Ulysses\r\n"
         self.assertEqual(target, data.csv)
 
+    @ignore_widget_deprecation_warning
     def test_subset_import_order(self):
         self.resource = ImportExportFieldOrderTest.SubsetOrderedBookResource()
         self.resource.import_data(self.dataset)
@@ -2826,28 +2930,33 @@ class ImportExportFieldOrderTest(TestCase):
             ["name", "price", "id", "published"], self.resource.field_names
         )
 
+    @ignore_widget_deprecation_warning
     def test_subset_export_order(self):
         self.resource = ImportExportFieldOrderTest.SubsetOrderedBookResource()
         data = self.resource.export()
         target = f"published,price,id,name\r\n,1.99,{self.pk},Ulysses\r\n"
         self.assertEqual(target, data.csv)
 
+    @ignore_widget_deprecation_warning
     def test_duplicate_import_order(self):
         self.resource = ImportExportFieldOrderTest.DuplicateFieldsBookResource()
         self.resource.import_data(self.dataset)
         self.assertEqual(["id", "price", "name"], self.resource.field_names)
 
+    @ignore_widget_deprecation_warning
     def test_duplicate_export_order(self):
         self.resource = ImportExportFieldOrderTest.DuplicateFieldsBookResource()
         data = self.resource.export()
         target = f"id,price,name\r\n{self.pk},1.99,Ulysses\r\n"
         self.assertEqual(target, data.csv)
 
+    @ignore_widget_deprecation_warning
     def test_fields_as_list_import_order(self):
         self.resource = ImportExportFieldOrderTest.FieldsAsListBookResource()
         self.resource.import_data(self.dataset)
         self.assertEqual(["id", "price", "name"], self.resource.field_names)
 
+    @ignore_widget_deprecation_warning
     def test_fields_as_list_export_order(self):
         self.resource = ImportExportFieldOrderTest.FieldsAsListBookResource()
         data = self.resource.export()
@@ -2903,6 +3012,7 @@ class ImportWithMissingFields(TestCase):
 
     @patch("import_export.resources.logger")
     @patch("import_export.fields.Field.save")
+    @ignore_widget_deprecation_warning
     def test_import_with_missing_instance_attribute(self, mock_field_save, mock_logger):
         class _BookResource(resources.ModelResource):
             name = fields.Field(column_name="name")
@@ -2923,6 +3033,7 @@ class ImportWithMissingFields(TestCase):
 
     @patch("import_export.resources.logger")
     @patch("import_export.fields.Field.save")
+    @ignore_widget_deprecation_warning
     def test_import_with_missing_field_in_row(self, mock_field_save, mock_logger):
         dataset = tablib.Dataset(*[(1, "Some book")], headers=["id", "name"])
         self.resource = BookResource()
