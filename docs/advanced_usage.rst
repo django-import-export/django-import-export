@@ -171,6 +171,60 @@ Alternatively, widget parameters can be overridden using the widgets dict declar
     :doc:`/api_widgets`
         available widget types and options.
 
+Validation during import
+========================
+
+Field level validation
+----------------------
+
+Validation of input can be performed during import by a widget's :meth:`~import_export.widgets.Widget.clean` method by
+raising a `ValueError <https://docs.python.org/3/library/exceptions.html#ValueError/>`_.
+Consult the :doc:`widget documentation </api_widgets>` for more information.
+
+You can supply your own field level validation by overriding :meth:`~import_export.widgets.Widget.clean`, for example::
+
+  class PositiveIntegerWidget(IntegerWidget):
+    """Returns a positive integer value"""
+
+    def clean(self, value, row=None, **kwargs):
+        val = super().clean(value, row=row, **kwargs)
+        if val < 0:
+            raise ValueError("value must be positive")
+        return val
+
+Field level errors will be presented in the :ref:`Admin UI<admin-integration>`, for example:
+
+.. figure:: _static/images/date-widget-validation-error.png
+
+  A screenshot showing a field specific error.
+
+Instance level validation
+-------------------------
+
+You can optionally configure import-export to perform model instance validation during import by enabling the
+:attr:`~import_export.resources.ResourceOptions.clean_model_instances` attribute.
+
+You can override the
+`full_clean() <https://docs.djangoproject.com/en/stable/ref/models/instances/#django.db.models.Model.full_clean>`_.
+method to provide extra validation, either at field or instance level::
+
+    class Book(models.Model):
+
+        def full_clean(self, exclude=None, validate_unique=True):
+            super().full_clean(exclude, validate_unique)
+
+            # non field specific validation
+            if self.published < date(1900, 1, 1):
+                raise ValidationError("book is out of print")
+
+            # field specific validation
+            if self.name == "Ulysses":
+                raise ValidationError({"name": "book has been banned"})
+
+.. figure:: _static/images/non-field-specific-validation-error.png
+
+  A screenshot showing a non field specific error.
+
 .. _import_model_relations:
 
 Importing model relations
@@ -364,60 +418,6 @@ for all Models that support it.
             use_natural_foreign_keys = True
 
 Read more at `Django Serialization <https://docs.djangoproject.com/en/stable/topics/serialization/>`_.
-
-Validation during import
-========================
-
-Field level validation
-----------------------
-
-Validation of input can be performed during import by a widget's :meth:`~import_export.widgets.Widget.clean` method by
-raising a `ValueError <https://docs.python.org/3/library/exceptions.html#ValueError/>`_.
-Consult the :doc:`widget documentation </api_widgets>` for more information.
-
-You can supply your own field level validation by overriding :meth:`~import_export.widgets.Widget.clean`, for example::
-
-  class PositiveIntegerWidget(IntegerWidget):
-    """Returns a positive integer value"""
-
-    def clean(self, value, row=None, **kwargs):
-        val = super().clean(value, row=row, **kwargs)
-        if val < 0:
-            raise ValueError("value must be positive")
-        return val
-
-Field level errors will be presented in the :ref:`Admin UI<admin-integration>`, for example:
-
-.. figure:: _static/images/date-widget-validation-error.png
-
-  A screenshot showing a field specific error.
-
-Instance level validation
--------------------------
-
-You can optionally configure import-export to perform model instance validation during import by enabling the
-:attr:`~import_export.resources.ResourceOptions.clean_model_instances` attribute.
-
-You can override the
-`full_clean() <https://docs.djangoproject.com/en/stable/ref/models/instances/#django.db.models.Model.full_clean>`_.
-method to provide extra validation, either at field or instance level::
-
-    class Book(models.Model):
-
-        def full_clean(self, exclude=None, validate_unique=True):
-            super().full_clean(exclude, validate_unique)
-
-            # non field specific validation
-            if self.published < date(1900, 1, 1):
-                raise ValidationError("book is out of print")
-
-            # field specific validation
-            if self.name == "Ulysses":
-                raise ValidationError({"name": "book has been banned"})
-
-.. figure:: _static/images/non-field-specific-validation-error.png
-
-  A screenshot showing a non field specific error.
 
 Create or update model instances
 ================================
