@@ -25,7 +25,17 @@ class WidgetTest(TestCase):
         self.assertEqual("1", self.widget.render(1))
 
 
-class CharWidgetTest(TestCase):
+class RowDeprecationTestMixin(object):
+    def test_render_row_deprecation(self):
+        with self.assertWarnsRegex(
+            DeprecationWarning,
+            r"^The 'obj' parameter is deprecated and "
+            "will be removed in a future release$",
+        ):
+            self.widget.render(Book.objects.none(), obj={"a": 1})
+
+
+class CharWidgetTest(TestCase, RowDeprecationTestMixin):
     def setUp(self):
         self.widget = widgets.CharWidget()
 
@@ -35,27 +45,20 @@ class CharWidgetTest(TestCase):
     def test_render(self):
         self.assertEqual("1", self.widget.render(1))
 
-    def test_clean_coerce_to_string(self):
-        self.widget = widgets.CharWidget(coerce_to_string=True)
-        self.assertEqual("1", self.widget.clean(1))
+    def test_render_no_coerce_to_string(self):
+        self.widget = widgets.CharWidget(coerce_to_string=False)
+        self.assertEqual(1, self.widget.render(1))
 
-    def test_clean_no_coerce_to_string(self):
-        self.assertEqual(1, self.widget.clean(1))
-
-    def test_clean_coerce_to_string_None(self):
-        self.widget = widgets.CharWidget(coerce_to_string=True)
+    def test_clean_with_allow_blank_is_False(self):
+        self.widget = widgets.CharWidget(allow_blank=False)
         self.assertIsNone(self.widget.clean(None))
 
-    def test_clean_coerce_to_string_with_allow_blank(self):
-        self.widget = widgets.CharWidget(coerce_to_string=True, allow_blank=True)
+    def test_clean_with_allow_blank_is_True(self):
+        self.widget = widgets.CharWidget(allow_blank=True)
         self.assertEqual("", self.widget.clean(None))
 
-    def test_clean_coerce_to_string_is_False_with_allow_blank(self):
-        self.widget = widgets.CharWidget(coerce_to_string=False, allow_blank=True)
-        self.assertIsNone(self.widget.clean(None))
 
-
-class BooleanWidgetTest(TestCase):
+class BooleanWidgetTest(TestCase, RowDeprecationTestMixin):
     def setUp(self):
         self.widget = widgets.BooleanWidget()
 
@@ -84,6 +87,12 @@ class BooleanWidgetTest(TestCase):
         self.assertEqual(self.widget.render(False), "0")
         self.assertEqual(self.widget.render(None), "")
 
+    def test_render_coerce_to_string_is_False(self):
+        self.widget = widgets.BooleanWidget(coerce_to_string=False)
+        self.assertTrue(self.widget.render(True))
+        self.assertFalse(self.widget.render(False))
+        self.assertIsNone(self.widget.render(None))
+
 
 class FormatDatetimeTest(TestCase):
     date = date(10, 8, 2)
@@ -107,7 +116,7 @@ class FormatDatetimeTest(TestCase):
         )
 
 
-class DateWidgetTest(TestCase):
+class DateWidgetTest(TestCase, RowDeprecationTestMixin):
     def setUp(self):
         self.date = date(2012, 8, 13)
         self.widget = widgets.DateWidget("%d.%m.%Y")
@@ -117,6 +126,10 @@ class DateWidgetTest(TestCase):
 
     def test_render_none(self):
         self.assertEqual(self.widget.render(None), "")
+
+    def test_render_coerce_to_string_is_False(self):
+        self.widget = widgets.DateWidget(coerce_to_string=False)
+        self.assertEqual(self.date, self.widget.render(self.date))
 
     def test_render_datetime_safe(self):
         """datetime_safe is supposed to be used to support dates older than 1000"""
@@ -154,7 +167,7 @@ class DateWidgetTest(TestCase):
         self.assertEqual(("%Y-%m-%d",), self.widget.formats)
 
 
-class DateTimeWidgetTest(TestCase):
+class DateTimeWidgetTest(TestCase, RowDeprecationTestMixin):
     def setUp(self):
         self.datetime = datetime(2012, 8, 13, 18, 0, 0)
         self.widget = widgets.DateTimeWidget("%d.%m.%Y %H:%M:%S")
@@ -164,6 +177,10 @@ class DateTimeWidgetTest(TestCase):
 
     def test_render_none(self):
         self.assertEqual(self.widget.render(None), "")
+
+    def test_render_coerce_to_string_is_False(self):
+        self.widget = widgets.DateTimeWidget(coerce_to_string=False)
+        self.assertEqual(self.datetime, self.widget.render(self.datetime))
 
     def test_clean(self):
         self.assertEqual(self.widget.clean("13.08.2012 18:00:00"), self.datetime)
@@ -242,7 +259,7 @@ class DateTimeWidgetBefore1900Test(TestCase):
         self.assertEqual(self.datetime, self.widget.clean("13.08.1868"))
 
 
-class TimeWidgetTest(TestCase):
+class TimeWidgetTest(TestCase, RowDeprecationTestMixin):
     def setUp(self):
         self.time = time(20, 15, 0)
         self.widget = widgets.TimeWidget("%H:%M:%S")
@@ -252,6 +269,10 @@ class TimeWidgetTest(TestCase):
 
     def test_render_none(self):
         self.assertEqual(self.widget.render(None), "")
+
+    def test_render_coerce_to_string_is_False(self):
+        self.widget = widgets.TimeWidget(coerce_to_string=False)
+        self.assertEqual(self.time, self.widget.render(self.time))
 
     def test_clean(self):
         self.assertEqual(self.widget.clean("20:15:00"), self.time)
@@ -276,7 +297,7 @@ class TimeWidgetTest(TestCase):
         self.assertEqual(self.time, self.widget.clean(self.time))
 
 
-class DurationWidgetTest(TestCase):
+class DurationWidgetTest(TestCase, RowDeprecationTestMixin):
     def setUp(self):
         self.duration = timedelta(hours=1, minutes=57, seconds=0)
         self.widget = widgets.DurationWidget()
@@ -289,6 +310,10 @@ class DurationWidgetTest(TestCase):
 
     def test_render_zero(self):
         self.assertEqual(self.widget.render(timedelta(0)), "0:00:00")
+
+    def test_render_coerce_to_string_is_False(self):
+        self.widget = widgets.DurationWidget(coerce_to_string=False)
+        self.assertEqual(self.duration, self.widget.render(self.duration))
 
     def test_clean(self):
         self.assertEqual(self.widget.clean("1:57:00"), self.duration)
@@ -307,7 +332,7 @@ class DurationWidgetTest(TestCase):
         mock_logger.debug.assert_called_with("err")
 
 
-class NumberWidgetTest(TestCase):
+class NumberWidgetTest(TestCase, RowDeprecationTestMixin):
     def setUp(self):
         self.value = 11.111
         self.widget = widgets.NumberWidget()
@@ -326,10 +351,10 @@ class NumberWidgetTest(TestCase):
         self.assertFalse(self.widget.is_empty(0))
 
     def test_render(self):
-        self.assertEqual(self.value, self.widget.render(self.value))
+        self.assertEqual("11.111", self.widget.render(self.value))
 
     def test_render_None_coerce_to_string_False(self):
-        self.assertIsNone(self.widget.render(None))
+        self.assertEqual("", self.widget.render(None))
 
     @skipUnless(
         django.VERSION[0] < 4, f"skipping django {django.VERSION} version specific test"
@@ -350,7 +375,7 @@ class NumberWidgetTest(TestCase):
         self.assertEqual("", self.widget_coerce_to_string.render(None))
 
 
-class FloatWidgetTest(TestCase):
+class FloatWidgetTest(TestCase, RowDeprecationTestMixin):
     def setUp(self):
         self.value = 11.111
         self.widget = widgets.FloatWidget()
@@ -360,7 +385,7 @@ class FloatWidgetTest(TestCase):
         self.assertEqual(self.widget.clean(11.111), self.value)
 
     def test_render(self):
-        self.assertEqual(self.widget.render(self.value), self.value)
+        self.assertEqual(self.widget.render(self.value), "11.111")
 
     def test_clean_string_zero(self):
         self.assertEqual(self.widget.clean("0"), 0.0)
@@ -387,18 +412,21 @@ class FloatWidgetTest(TestCase):
         self.assertEqual(self.widget_coerce_to_string.render(self.value), "11,111")
 
 
-class DecimalWidgetTest(TestCase):
+class DecimalWidgetTest(TestCase, RowDeprecationTestMixin):
     def setUp(self):
         self.value = Decimal("11.111")
         self.widget = widgets.DecimalWidget()
-        self.widget_coerce_to_string = widgets.DecimalWidget(coerce_to_string=True)
 
     def test_clean(self):
         self.assertEqual(self.widget.clean("11.111"), self.value)
         self.assertEqual(self.widget.clean(11.111), self.value)
 
-    def test_render(self):
+    def test_render_coerce_to_string_is_False(self):
+        self.widget = widgets.DecimalWidget(coerce_to_string=False)
         self.assertEqual(self.widget.render(self.value), self.value)
+
+    def test_render(self):
+        self.assertEqual(self.widget.render(self.value), "11.111")
 
     def test_clean_string_zero(self):
         self.assertEqual(self.widget.clean("0"), Decimal("0"))
@@ -414,7 +442,7 @@ class DecimalWidgetTest(TestCase):
     )
     @override_settings(LANGUAGE_CODE="fr-fr", USE_L10N=True)
     def test_locale_render_coerce_to_string_lt4(self):
-        self.assertEqual(self.widget_coerce_to_string.render(self.value), "11,111")
+        self.assertEqual(self.widget.render(self.value), "11,111")
 
     @skipUnless(
         django.VERSION[0] >= 4,
@@ -422,10 +450,10 @@ class DecimalWidgetTest(TestCase):
     )
     @override_settings(LANGUAGE_CODE="fr-fr")
     def test_locale_render_coerce_to_string_gte4(self):
-        self.assertEqual(self.widget_coerce_to_string.render(self.value), "11,111")
+        self.assertEqual(self.widget.render(self.value), "11,111")
 
 
-class IntegerWidgetTest(TestCase):
+class IntegerWidgetTest(TestCase, RowDeprecationTestMixin):
     def setUp(self):
         self.value = 0
         self.widget = widgets.IntegerWidget()
@@ -463,7 +491,7 @@ class IntegerWidgetTest(TestCase):
         self.assertEqual(self.widget_coerce_to_string.render(self.value), "0")
 
 
-class ForeignKeyWidgetTest(TestCase):
+class ForeignKeyWidgetTest(TestCase, RowDeprecationTestMixin):
     def setUp(self):
         self.widget = widgets.ForeignKeyWidget(Author)
         self.natural_key_author_widget = widgets.ForeignKeyWidget(
@@ -574,7 +602,7 @@ class ForeignKeyWidgetTest(TestCase):
         )
 
 
-class ManyToManyWidget(TestCase):
+class ManyToManyWidget(TestCase, RowDeprecationTestMixin):
     def setUp(self):
         self.widget = widgets.ManyToManyWidget(Category)
         self.widget_name = widgets.ManyToManyWidget(Category, field="name")
@@ -635,8 +663,11 @@ class ManyToManyWidget(TestCase):
             "%s,%s" % (self.cat1.name, self.cat2.name),
         )
 
+    def test_render_value_none_as_blank(self):
+        self.assertEqual("", self.widget.render(None))
 
-class JSONWidgetTest(TestCase):
+
+class JSONWidgetTest(TestCase, RowDeprecationTestMixin):
     def setUp(self):
         self.value = {"value": 23}
         self.widget = widgets.JSONWidget()
@@ -661,7 +692,7 @@ class JSONWidgetTest(TestCase):
         self.assertEqual(self.widget.render({"value": None}), '{"value": null}')
 
 
-class SimpleArrayWidgetTest(TestCase):
+class SimpleArrayWidgetTest(TestCase, RowDeprecationTestMixin):
     def setUp(self):
         self.value = {"value": 23}
         self.widget = widgets.SimpleArrayWidget()
@@ -685,3 +716,8 @@ class SimpleArrayWidgetTest(TestCase):
         v = ["a", "b", "c"]
         s = "a,b,c"
         self.assertEqual(s, self.widget.render(v))
+
+    def test_render_no_coerce_to_string(self):
+        v = [1, 2, 3]
+        self.widget = widgets.SimpleArrayWidget(coerce_to_string=False)
+        self.assertEqual(v, self.widget.render(v))

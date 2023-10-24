@@ -143,7 +143,7 @@ There are widgets associated with character data, numeric values, dates, foreign
 widget and associate it with the field.
 
 A :class:`~import_export.resources.ModelResource` creates fields with a default widget for a given field type via
-instrospection.  If the widget should be initialized with different arguments, this can be done via an explicit
+introspection.  If the widget should be initialized with different arguments, this can be done via an explicit
 declaration or via the widgets dict.
 
 For example, the ``published`` field is overridden to use a different date format. This format will be used both for
@@ -156,7 +156,9 @@ importing and exporting resource::
         class Meta:
             model = Book
 
-Alternatively, widget parameters can be overridden using the widgets dict declaration::
+Declaring fields may affect the export order of the fields.  If this is an issue, you can either declare the
+:attr:`~import_export.resources.ResourceOptions.export_order` attribute, or declare widget parameters using the widgets
+dict declaration::
 
     class BookResource(resources.ModelResource):
 
@@ -166,10 +168,26 @@ Alternatively, widget parameters can be overridden using the widgets dict declar
                 'published': {'format': '%d.%m.%Y'},
             }
 
+Modify :meth:`.render` return type
+----------------------------------
+
+By default, :meth:`.render` will return a string type for export.  There may be use cases where a native type is
+required from export.  If so, you can use the ``coerce_to_string`` parameter if the widget supports it.
+
+By default, ``coerce_to_string`` is ``True``, but if you set this to ``False``, then the native type will be returned
+during export::
+
+    class BookResource(resources.ModelResource):
+        published = Field(attribute='published', column_name='published_date',
+            widget=DateWidget(format='%Y-%m-%d', coerce_to_string=False))
+
+        class Meta:
+            model = Book
+
 .. seealso::
 
     :doc:`/api_widgets`
-        available widget types and options.
+        Available widget types and options.
 
 Validation during import
 ========================
@@ -977,7 +995,7 @@ return books for the publisher::
 Interoperability with 3rd party libraries
 -----------------------------------------
 
-import_export extends the Django Admin interface.  There is a possibility that clashes may occur with other 3rd party
+import-export extends the Django Admin interface.  There is a possibility that clashes may occur with other 3rd party
 libraries which also use the admin interface.
 
 django-admin-sortable2
@@ -1007,11 +1025,6 @@ It has been reported that the the import/export time will increase ~10 times.
 Refer to `this PR <https://github.com/django-import-export/django-import-export/issues/1656>`_.
 
 .. _admin_security:
-
-.. warning::
-    If you use django-import-export using with `django-debug-toolbar <https://pypi.org/project/django-debug-toolbar>`_.
-    then you need to configure debug_toolbar=False or DEBUG=False,
-    otherwise the import/export time will increase ~10 times.
 
 Security
 --------
