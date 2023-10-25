@@ -645,6 +645,43 @@ To hook in the import-export workflow, you can connect to ``post_import``,
         # model is the actual model instance which after export
         pass
 
+.. _concurrent-writes:
+
+Concurrent writes
+=================
+
+There is specific consideration required if your application allows concurrent writes to data during imports.
+
+For example, consider this example:
+
+#. An import is run to import new books identified by title.
+#. The :meth:`~import_export.resources.Resource.get_or_init_instance` is called and identifies that there is no
+  existing book with this title.
+#. At that exact moment, another process inserts a book with the same title
+#. :meth:`~import_export.resources.Resource.save` is called and an error is thrown because the book now exists in the
+  database.
+
+import-export does not prevent this situation from happening, therefore you need to consider what processes might be
+modifying shared tables during imports, and how you can mitigate risks.
+
+Potential solutions are:
+
+* Use one of the :doc:`import workflow<import_workflow>` methods to lock a table during import, if the database supports
+  it.
+
+  * This should only be done in exceptional cases because there will be a performance impact.
+  * You will need to release the lock both in normal workflow and if there are errors.
+
+* Override :meth:`~import_export.resources.Resource.do_instance_save` to perform a
+  `update_or_create() <https://docs.djangoproject.com/en/stable/ref/models/querysets/#update_or_create>`_.
+  This may ensure that data integrity is maintained if there is concurrent access.
+
+* Modify working practices so that there is no risk of concurrent writes. For example, you could schedule imports to
+  only run at night.
+
+This issue may be more prevalent if using :doc:`bulk imports<bulk_import>`.  This is because instances are held in
+memory for longer before being written in bulk, therefore there is potentially more risk of another process modifying
+an instance before it has been persisted.
 
 .. _admin-integration:
 
