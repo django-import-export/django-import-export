@@ -652,21 +652,22 @@ Concurrent writes
 
 There is specific consideration required if your application allows concurrent writes to data during imports.
 
-For example, consider this example:
+For example, consider this scenario:
 
-#. An import is run to import new books identified by title.
+#. An import process is run to import new books identified by title.
 #. The :meth:`~import_export.resources.Resource.get_or_init_instance` is called and identifies that there is no
-  existing book with this title.
-#. At that exact moment, another process inserts a book with the same title
-#. :meth:`~import_export.resources.Resource.save` is called and an error is thrown because the book now exists in the
-  database.
+   existing book with this title, hence the import process will create it as a new record.
+#. At that exact moment, another process inserts a book with the same title.
+#. As the row import process completes, :meth:`~import_export.resources.Resource.save` is called and an error is thrown
+   because the book already exists in the database.
 
-import-export does not prevent this situation from happening, therefore you need to consider what processes might be
-modifying shared tables during imports, and how you can mitigate risks.
+By default, import-export does not prevent this situation from occurring, therefore you need to consider what processes
+might be modifying shared tables during imports, and how you can mitigate risks.  If your database enforces integrity,
+then you may get errors raised, if not then you may get duplicate data.
 
 Potential solutions are:
 
-* Use one of the :doc:`import workflow<import_workflow>` methods to lock a table during import, if the database supports
+* Use one of the :doc:`import workflow<import_workflow>` methods to lock a table during import if the database supports
   it.
 
   * This should only be done in exceptional cases because there will be a performance impact.
@@ -674,7 +675,7 @@ Potential solutions are:
 
 * Override :meth:`~import_export.resources.Resource.do_instance_save` to perform a
   `update_or_create() <https://docs.djangoproject.com/en/stable/ref/models/querysets/#update_or_create>`_.
-  This may ensure that data integrity is maintained if there is concurrent access.
+  This can ensure that data integrity is maintained if there is concurrent access.
 
 * Modify working practices so that there is no risk of concurrent writes. For example, you could schedule imports to
   only run at night.
