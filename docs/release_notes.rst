@@ -23,15 +23,17 @@ installation)::
 
   django-import-export[all]
 
+Functional changes
+==================
 
 CharWidget
-==========
+----------
 
-:meth:`~import_export.widgets.CharWidget.clean` will now return a string type as the default.
-The ``coerce_to_string`` option introduced in v3 is no longer used in this method.
+* :meth:`~import_export.widgets.CharWidget.clean` will now return a string type as the default.
+  The ``coerce_to_string`` option introduced in v3 is no longer used in this method.
 
 Export format
-=============
+-------------
 
 We have standardized the export output which is returned from
 :meth:`~import_export.widgets.Widget.render`.
@@ -42,9 +44,14 @@ In v4, return values are rendered as strings by default (where applicable), with
 
 Refer to the :doc:`documentation<api_widgets>` for more information.
 
-The ``obj`` param passed to :meth:`~import_export.widgets.Widget.render` is deprecated.
-The :meth:`~import_export.widgets.Widget.render` method should not need to have a reference to
-model instance.
+Deprecations
+============
+
+* The ``obj`` param passed to :meth:`~import_export.widgets.Widget.render` is deprecated.
+  The :meth:`~import_export.widgets.Widget.render` method should not need to have a reference to
+  model instance.
+
+* Use of ``ExportViewFormMixin`` is deprecated.  See `this issue <https://github.com/django-import-export/django-import-export/issues/1666>`_.
 
 API changes
 ===========
