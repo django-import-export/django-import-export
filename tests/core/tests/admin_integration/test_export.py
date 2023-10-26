@@ -1,8 +1,7 @@
-import warnings
 from datetime import datetime
 from io import BytesIO
 from unittest import mock
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import chardet
 import tablib
@@ -15,9 +14,8 @@ from tablib import Dataset
 
 from import_export import formats
 from import_export.admin import ExportActionMixin, ExportMixin
-from tests.core.tests.admin_integration.test_admin_integration_utils import (
-    AdminTestMixin,
-)
+from tests.core.tests.admin_integration.test_admin_integration import AdminTestMixin
+from tests.core.tests.utils import ignore_widget_deprecation_warning
 
 
 class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
@@ -63,32 +61,6 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
         )
         self.assertEqual(b"id,name\r\n", response.content)
 
-    def test_export_legacy_resource(self):
-        """
-        This test exists solely to test import works correctly using the deprecated
-        functions.
-        This test can be removed when the deprecated code is removed.
-        """
-        warnings.filterwarnings("ignore", category=DeprecationWarning)
-        response = self.client.get("/admin/core/legacybook/export/")
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Export/Import only book names")
-
-        data = {
-            "file_format": "0",
-            "resource": 1,
-        }
-        date_str = datetime.now().strftime("%Y-%m-%d")
-        response = self.client.post("/admin/core/legacybook/export/", data)
-        self.assertEqual(response.status_code, 200)
-        self.assertTrue(response.has_header("Content-Disposition"))
-        self.assertEqual(response["Content-Type"], "text/csv")
-        self.assertEqual(
-            response["Content-Disposition"],
-            'attachment; filename="LegacyBook-{}.csv"'.format(date_str),
-        )
-        self.assertEqual(b"id,name\r\n", response.content)
-
     def test_returns_xlsx_export(self):
         response = self.client.get("/admin/core/book/export/")
         self.assertEqual(response.status_code, 200)
@@ -104,8 +76,8 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
         )
 
     @override_settings(IMPORT_EXPORT_ESCAPE_FORMULAE_ON_EXPORT=True)
-    @patch("import_export.mixins.logger")
-    def test_export_escape_formulae(self, mock_logger):
+    @ignore_widget_deprecation_warning
+    def test_export_escape_formulae(self):
         Book.objects.create(id=1, name="=SUM(1+1)")
         Book.objects.create(id=2, name="<script>alert(1)</script>")
         response = self.client.get("/admin/core/book/export/")
@@ -120,28 +92,41 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertEqual("<script>alert(1)</script>", wb.active["B2"].value)
         self.assertEqual("SUM(1+1)", wb.active["B3"].value)
 
-        mock_logger.debug.assert_called_once_with(
-            "IMPORT_EXPORT_ESCAPE_FORMULAE_ON_EXPORT is enabled"
-        )
-
-    @override_settings(IMPORT_EXPORT_ESCAPE_HTML_ON_EXPORT=True)
-    def test_export_escape_html_deprecation_warning(self):
+    @override_settings(IMPORT_EXPORT_ESCAPE_FORMULAE_ON_EXPORT=True)
+    @ignore_widget_deprecation_warning
+    def test_export_escape_formulae_csv(self):
+        b1 = Book.objects.create(id=1, name="=SUM(1+1)")
         response = self.client.get("/admin/core/book/export/")
         self.assertEqual(response.status_code, 200)
 
-        xlsx_index = self._get_input_format_index("xlsx")
-        data = {"file_format": str(xlsx_index)}
-        with self.assertWarnsRegex(
-            DeprecationWarning,
-            r"IMPORT_EXPORT_ESCAPE_HTML_ON_EXPORT is deprecated "
-            "and will be removed in a future release.",
-        ):
-            self.client.post("/admin/core/book/export/", data)
+        index = self._get_input_format_index("csv")
+        data = {"file_format": str(index)}
+        response = self.client.post("/admin/core/book/export/", data)
+        self.assertIn(
+            f"{b1.id},SUM(1+1),,,0,,,,,\r\n".encode(),
+            response.content,
+        )
+
+    @override_settings(IMPORT_EXPORT_ESCAPE_FORMULAE_ON_EXPORT=False)
+    @ignore_widget_deprecation_warning
+    def test_export_escape_formulae_csv_false(self):
+        b1 = Book.objects.create(id=1, name="=SUM(1+1)")
+        response = self.client.get("/admin/core/book/export/")
+        self.assertEqual(response.status_code, 200)
+
+        index = self._get_input_format_index("csv")
+        data = {"file_format": str(index)}
+        response = self.client.post("/admin/core/book/export/", data)
+        self.assertIn(
+            f"{b1.id},=SUM(1+1),,,0,,,,,\r\n".encode(),
+            response.content,
+        )
 
 
 class FilteredExportAdminIntegrationTest(AdminTestMixin, TestCase):
     fixtures = ["category", "book", "author"]
 
+    @ignore_widget_deprecation_warning
     def test_export_filters_by_form_param(self):
         # issue 1578
         author = Author.objects.get(name="Ian Fleming")

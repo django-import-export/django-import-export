@@ -8,11 +8,15 @@ from django.http import HttpRequest
 from django.test.testcases import TestCase
 from django.test.utils import override_settings
 
-from import_export.admin import ExportActionModelAdmin, ExportMixin
-from import_export.formats import base_formats
-from tests.core.tests.admin_integration.test_admin_integration_utils import (
-    AdminTestMixin,
+from import_export.admin import (
+    ExportActionModelAdmin,
+    ExportMixin,
+    ImportExportActionModelAdmin,
 )
+from import_export.formats import base_formats
+from import_export.tmp_storages import TempFolderStorage
+from tests.core.tests.admin_integration.test_admin_integration import AdminTestMixin
+from tests.core.tests.utils import ignore_widget_deprecation_warning
 
 
 class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
@@ -21,6 +25,7 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
         self.cat1 = Category.objects.create(name="Cat 1")
         self.cat2 = Category.objects.create(name="Cat 2")
 
+    @ignore_widget_deprecation_warning
     def test_export(self):
         data = {
             "action": ["export_admin_action"],
@@ -166,3 +171,15 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertEqual(choices[0][1], "---")
         self.assertEqual(choices[1][1], "xls")
         self.assertEqual(choices[2][1], "csv")
+
+
+class TestImportExportActionModelAdmin(ImportExportActionModelAdmin):
+    def __init__(self, mock_model, mock_site, error_instance):
+        self.error_instance = error_instance
+        super().__init__(mock_model, mock_site)
+
+    def write_to_tmp_storage(self, import_file, input_format):
+        mock_storage = MagicMock(spec=TempFolderStorage)
+
+        mock_storage.read.side_effect = self.error_instance
+        return mock_storage

@@ -16,10 +16,10 @@ class AdminTestMixin(object):
 
     def setUp(self):
         super().setUp()
-        user = User.objects.create_user("admin", "admin@example.com", "password")
-        user.is_staff = True
-        user.is_superuser = True
-        user.save()
+        self.user = User.objects.create_user("admin", "admin@example.com", "password")
+        self.user.is_staff = True
+        self.user.is_superuser = True
+        self.user.save()
         self.client.login(username="admin", password="password")
 
     def _do_import_post(
