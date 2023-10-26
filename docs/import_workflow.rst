@@ -8,7 +8,7 @@ customization of the import process.
 Methods highlighted in yellow in the sequence diagram indicate public methods which can
 be overridden.
 
-.. image:: images/import_workflow.svg
+.. image:: _static/images/import_workflow.svg
   :alt: Import workflow sequence diagram
   :scale: 75%
 

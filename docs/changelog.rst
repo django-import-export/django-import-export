@@ -6,6 +6,7 @@ Please refer to :doc:`release notes<release_notes>`.
 4.0.0-alpha.6 (unreleased)
 --------------------------
 
+- Added debug for missing fields & attributes during import (#1571)
 - added :meth:`~import_export.widgets.ForeignKeyWidget.get_lookup_kwargs` to make it easier to override object
   lookup (#1651)
 - removed unused variable ``Result.new_record`` (#1640)
@@ -14,6 +15,8 @@ Please refer to :doc:`release notes<release_notes>`.
 - Enable optional tablib dependencies (#1647)
 - Removed unused method ``utils.original()``
 - Clarified ``skip_diff`` documentation (#1655)
+- Standardised interface of :meth:`~import_export.widgets.Widget.render` (#1657)
+- Improved documentation relating to validation on import (#1665)
 
 4.0.0-alpha.5 (2023-09-22)
 --------------------------

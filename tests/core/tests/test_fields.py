@@ -142,3 +142,12 @@ class FieldTest(TestCase):
         self.assertEqual(m2m_related_manager.add.call_count, 0)
         self.assertEqual(m2m_related_manager.set.call_count, 1)
         m2m_related_manager.set.assert_called_once_with(["Foo", "Bar"])
+
+    def test_get_value_with_callable(self):
+        class CallableValue:
+            def __call__(self):
+                return "some val"
+
+        self.obj.name = CallableValue()
+        val = self.field.get_value(self.obj)
+        self.assertEqual("some val", val)

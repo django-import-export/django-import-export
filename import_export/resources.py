@@ -647,8 +647,16 @@ class Resource(metaclass=DeclarativeMetaclass):
         :param \**kwargs:
             See :meth:`import_row`
         """
-        if field.attribute and field.column_name in row:
-            field.save(instance, row, is_m2m, **kwargs)
+        if not field.attribute:
+            logger.debug(f"skipping field '{field}' - field attribute is not defined")
+            return
+        if field.column_name not in row:
+            logger.debug(
+                f"skipping field '{field}' "
+                f"- column name '{field.column_name}' is not present in row"
+            )
+            return
+        field.save(instance, row, is_m2m, **kwargs)
 
     def get_import_fields(self):
         return [self.fields[f] for f in self.get_import_order()]

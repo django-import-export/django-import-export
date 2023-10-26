@@ -143,7 +143,7 @@ There are widgets associated with character data, numeric values, dates, foreign
 widget and associate it with the field.
 
 A :class:`~import_export.resources.ModelResource` creates fields with a default widget for a given field type via
-instrospection.  If the widget should be initialized with different arguments, this can be done via an explicit
+introspection.  If the widget should be initialized with different arguments, this can be done via an explicit
 declaration or via the widgets dict.
 
 For example, the ``published`` field is overridden to use a different date format. This format will be used both for
@@ -156,7 +156,9 @@ importing and exporting resource::
         class Meta:
             model = Book
 
-Alternatively, widget parameters can be overridden using the widgets dict declaration::
+Declaring fields may affect the export order of the fields.  If this is an issue, you can either declare the
+:attr:`~import_export.resources.ResourceOptions.export_order` attribute, or declare widget parameters using the widgets
+dict declaration::
 
     class BookResource(resources.ModelResource):
 
@@ -166,10 +168,105 @@ Alternatively, widget parameters can be overridden using the widgets dict declar
                 'published': {'format': '%d.%m.%Y'},
             }
 
+Modify :meth:`.render` return type
+----------------------------------
+
+By default, :meth:`.render` will return a string type for export.  There may be use cases where a native type is
+required from export.  If so, you can use the ``coerce_to_string`` parameter if the widget supports it.
+
+By default, ``coerce_to_string`` is ``True``, but if you set this to ``False``, then the native type will be returned
+during export::
+
+    class BookResource(resources.ModelResource):
+        published = Field(attribute='published', column_name='published_date',
+            widget=DateWidget(format='%Y-%m-%d', coerce_to_string=False))
+
+        class Meta:
+            model = Book
+
 .. seealso::
 
     :doc:`/api_widgets`
-        available widget types and options.
+        Available widget types and options.
+
+Validation during import
+========================
+
+The import process will include basic validation during import.  This validation can be customized or extended if
+required.
+
+The import process distinguishes between:
+
+#. Validation errors which arise when failing to parse import data correctly.
+
+#. General exceptions which arise during processing.
+
+Errors are retained in each :class:`~import_export.results.RowResult` instance which is stored in the single
+:class:`~import_export.results.Result` instance which is returned from the import process.
+
+The :meth:`~import_export.resources.Resource.import_data` method takes optional parameters which can be used to
+customize the handling of errors.  Refer to the method documentation for specific details.
+
+For example, to iterate over errors produced from an import::
+
+    result = self.resource.import_data(self.dataset, raise_errors=False)
+    if result.has_errors():
+        for row in result.rows:
+            for error in row.errors:
+                print(str(error.error))
+
+If using the :ref:`Admin UI<admin-integration>`, errors are presented to the user during import (see below).
+
+Field level validation
+----------------------
+
+Validation of input can be performed during import by a widget's :meth:`~import_export.widgets.Widget.clean` method by
+raising a `ValueError <https://docs.python.org/3/library/exceptions.html#ValueError/>`_.
+Consult the :doc:`widget documentation </api_widgets>` for more information.
+
+You can supply your own field level validation by overriding :meth:`~import_export.widgets.Widget.clean`, for example::
+
+  class PositiveIntegerWidget(IntegerWidget):
+    """Returns a positive integer value"""
+
+    def clean(self, value, row=None, **kwargs):
+        val = super().clean(value, row=row, **kwargs)
+        if val < 0:
+            raise ValueError("value must be positive")
+        return val
+
+Field level errors will be presented in the :ref:`Admin UI<admin-integration>`, for example:
+
+.. figure:: _static/images/date-widget-validation-error.png
+
+  A screenshot showing a field specific error.
+
+Instance level validation
+-------------------------
+
+You can optionally configure import-export to perform model instance validation during import by enabling the
+:attr:`~import_export.resources.ResourceOptions.clean_model_instances` attribute.
+
+You can override the
+`full_clean() <https://docs.djangoproject.com/en/stable/ref/models/instances/#django.db.models.Model.full_clean>`_.
+method to provide extra validation, either at field or instance level::
+
+    class Book(models.Model):
+
+        def full_clean(self, exclude=None, validate_unique=True):
+            super().full_clean(exclude, validate_unique)
+
+            # non field specific validation
+            if self.published < date(1900, 1, 1):
+                raise ValidationError("book is out of print")
+
+            # field specific validation
+            if self.name == "Ulysses":
+                raise ValidationError({"name": "book has been banned"})
+
+.. figure:: _static/images/non-field-specific-validation-error.png
+
+  A screenshot showing a non field specific error.
 
 .. _import_model_relations:
 
@@ -363,8 +460,7 @@ for all Models that support it.
             model = Book
             use_natural_foreign_keys = True
 
-Read more at `Django Serialization <https://docs.djangoproject.com/en/dev/topics/serialization/>`_.
-
+Read more at `Django Serialization <https://docs.djangoproject.com/en/stable/topics/serialization/>`_.
 
 Create or update model instances
 ================================
@@ -556,7 +652,7 @@ Admin integration
 =================
 
 One of the main features of import-export is the support for integration with the
-`Django Admin site <https://docs.djangoproject.com/en/dev/ref/contrib/admin/>`_.
+`Django Admin site <https://docs.djangoproject.com/en/stable/ref/contrib/admin/>`_.
 This provides a convenient interface for importing and exporting Django objects.
 
 Please install and run the :ref:`example application<exampleapp>`  to become familiar with Admin integration.
@@ -654,9 +750,9 @@ There are three mechanisms for temporary storage.
 #. Temporary file storage on the host server (default).  This is suitable for development only.
    Use of temporary filesystem storage is not recommended for production sites.
 
-#. The `Django cache <https://docs.djangoproject.com/en/dev/topics/cache/>`_.
+#. The `Django cache <https://docs.djangoproject.com/en/stable/topics/cache/>`_.
 
-#. `Django storage <https://docs.djangoproject.com/en/dev/ref/files/storage/>`_.
+#. `Django storage <https://docs.djangoproject.com/en/stable/ref/files/storage/>`_.
 
 To modify which storage mechanism is used, please refer to the setting :ref:`IMPORT_EXPORT_TMP_STORAGE_CLASS`.
 
@@ -899,7 +995,7 @@ return books for the publisher::
 Interoperability with 3rd party libraries
 -----------------------------------------
 
-import_export extends the Django Admin interface.  There is a possibility that clashes may occur with other 3rd party
+import-export extends the Django Admin interface.  There is a possibility that clashes may occur with other 3rd party
 libraries which also use the admin interface.
 
 django-admin-sortable2
@@ -929,11 +1025,6 @@ It has been reported that the the import/export time will increase ~10 times.
 Refer to `this PR <https://github.com/django-import-export/django-import-export/issues/1656>`_.
 
 .. _admin_security:
-
-.. warning::
-    If you use django-import-export using with `django-debug-toolbar <https://pypi.org/project/django-debug-toolbar>`_.
-    then you need to configure debug_toolbar=False or DEBUG=False,
-    otherwise the import/export time will increase ~10 times.
 
 Security
 --------

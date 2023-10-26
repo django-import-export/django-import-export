@@ -180,3 +180,19 @@ with this issue.  Refer to `this comment <https://github.com/django-import-expor
 
 This indicates that the change_list_template attribute could not be set, most likely due to a clash with a third party
 library.  Refer to :ref:`interoperability`.
+
+``FileNotFoundError`` during Admin import 'confirm' step
+--------------------------------------------------------
+
+You may receive an error during import such as::
+
+  FileNotFoundError [Errno 2] No such file or directory: '/tmp/tmp5abcdef'
+
+This usually happens because you are running the Admin site in a multi server or container environment.
+During import, the import file has to be stored temporarily and then retrieved for storage after confirmation.
+Therefore ``FileNotFoundError`` error can occur because the temp storage is not available to the server process after
+confirmation.
+
+To resolve this, you should avoid using temporary file system storage in multi server environments.
+
+Refer to :ref:`import process<import-process>` for more information.

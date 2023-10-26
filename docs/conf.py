@@ -24,6 +24,8 @@ extensions = [
     "sphinx.ext.autosectionlabel",
 ]
 
+autoclass_content = "both"
+
 autosectionlabel_prefix_document = True
 
 # Add any paths that contain templates here, relative to this directory.
@@ -113,3 +115,5 @@ texinfo_appendices = []
 
 # intersphinx documentation
 intersphinx_mapping = {"tablib": ("https://tablib.readthedocs.io/en/stable/", None)}
+
+exclude_patterns = ["image_src"]
