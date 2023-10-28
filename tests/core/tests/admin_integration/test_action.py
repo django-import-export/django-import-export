@@ -3,6 +3,8 @@ from unittest import mock
 from unittest.mock import MagicMock
 
 from core.models import Book, Category
+from core.tests.admin_integration.mixins import AdminTestMixin
+from core.tests.utils import ignore_widget_deprecation_warning
 from django.core.exceptions import PermissionDenied
 from django.http import HttpRequest
 from django.test.testcases import TestCase
@@ -15,8 +17,6 @@ from import_export.admin import (
 )
 from import_export.formats import base_formats
 from import_export.tmp_storages import TempFolderStorage
-from tests.core.tests.admin_integration.test_admin_integration import AdminTestMixin
-from tests.core.tests.utils import ignore_widget_deprecation_warning
 
 
 class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):

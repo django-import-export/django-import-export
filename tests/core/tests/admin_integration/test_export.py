@@ -6,6 +6,8 @@ from unittest.mock import MagicMock
 import chardet
 import tablib
 from core.models import Author, Book
+from core.tests.admin_integration.mixins import AdminTestMixin
+from core.tests.utils import ignore_widget_deprecation_warning
 from django.http import HttpRequest
 from django.test.testcases import TestCase
 from django.test.utils import override_settings
@@ -14,8 +16,6 @@ from tablib import Dataset
 
 from import_export import formats
 from import_export.admin import ExportActionMixin, ExportMixin
-from tests.core.tests.admin_integration.test_admin_integration import AdminTestMixin
-from tests.core.tests.utils import ignore_widget_deprecation_warning
 
 
 class ExportAdminIntegrationTest(AdminTestMixin, TestCase):

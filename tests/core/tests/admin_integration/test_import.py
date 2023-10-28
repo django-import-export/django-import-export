@@ -6,6 +6,8 @@ from unittest.mock import MagicMock, patch
 import django
 from core.admin import AuthorAdmin, BookAdmin, CustomBookAdmin, ImportMixin
 from core.models import Author, Book, EBook, Parent
+from core.tests.admin_integration.mixins import AdminTestMixin
+from core.tests.utils import ignore_widget_deprecation_warning
 from django.contrib.admin.models import DELETION, LogEntry
 from django.http import HttpRequest
 from django.test.testcases import TestCase, TransactionTestCase
@@ -14,8 +16,6 @@ from django.utils.translation import gettext_lazy as _
 
 from import_export.admin import ExportActionModelAdmin, ExportMixin
 from import_export.formats import base_formats
-from tests.core.tests.admin_integration.test_admin_integration import AdminTestMixin
-from tests.core.tests.utils import ignore_widget_deprecation_warning
 
 
 class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
