@@ -5,6 +5,9 @@ Widgets
 .. autoclass:: import_export.widgets.Widget
    :members:
 
+.. autoclass:: import_export.widgets.NumberWidget
+   :members:
+
 .. autoclass:: import_export.widgets.IntegerWidget
    :members:
 
