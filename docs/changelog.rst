@@ -6,6 +6,7 @@ Changelog
 
 - Updated Spanish translations (#1639)
 - Added documentation and tests for retrieving instance information after import (#1643)
+- Updated documentation to describe how to select for export in Admin UI (#)
 
 
 3.3.1 (2023-09-14)

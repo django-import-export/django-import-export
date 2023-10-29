@@ -882,6 +882,27 @@ return books for the publisher::
         class Meta:
             model = Book
 
+Select items for export
+-----------------------
+
+It's possible to configure the Admin UI so that users can select which items they want to export:
+
+.. image:: _static/images/select-for-export.png
+  :alt: Select items for export
+
+To do this, simply declare an Admin instance which includes  :class:`~import_export.admin.ExportActionMixin`::
+
+  class BookAdmin(ImportExportModelAdmin, ExportActionMixin):
+    # additional config can be supplied if required
+    pass
+
+Then register this Admin::
+
+  admin.site.register(Book, BookAdmin)
+
+Note that the above example refers specifically to the :ref:`example application<exampleapp>`, you'll have to modify
+this to refer to your own Model instances.
+
 .. _interoperability:
 
 Interoperability with 3rd party libraries
