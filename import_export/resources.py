@@ -266,8 +266,7 @@ class DeclarativeMetaclass(type):
                 ]:
                     option_value = getattr(options, option)
                     if option == "model" and isinstance(option_value, str):
-                        model = apps.get_model(option_value)
-                        setattr(options, option, model)
+                        option_value = apps.get_model(option_value)
 
                     setattr(meta, option, option_value)
 
@@ -291,8 +290,7 @@ class DeclarativeMetaclass(type):
         ]:
             option_value = getattr(options, option)
             if option == "model" and isinstance(option_value, str):
-                model = apps.get_model(option_value)
-                setattr(options, option, model)
+                option_value = apps.get_model(option_value)
 
             setattr(meta, option, option_value)
         new_class._meta = meta
