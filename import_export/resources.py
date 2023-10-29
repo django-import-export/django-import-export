@@ -264,11 +264,12 @@ class DeclarativeMetaclass(type):
                     for option in dir(options)
                     if not option.startswith("_") and hasattr(options, option)
                 ]:
-                    if option == "model" and isinstance(getattr(options, option), str):
-                        model = apps.get_model(getattr(options, option))
+                    option_value = getattr(options, option)
+                    if option == "model" and isinstance(option_value, str):
+                        model = apps.get_model(option_value)
                         setattr(options, option, model)
 
-                    setattr(meta, option, getattr(options, option))
+                    setattr(meta, option, option_value)
 
         # Add direct fields
         for field_name, obj in attrs.copy().items():
@@ -288,11 +289,12 @@ class DeclarativeMetaclass(type):
             for option in dir(options)
             if not option.startswith("_") and hasattr(options, option)
         ]:
-            if option == "model" and isinstance(getattr(options, option), str):
-                model = apps.get_model(getattr(options, option))
+            option_value = getattr(options, option)
+            if option == "model" and isinstance(option_value, str):
+                model = apps.get_model(option_value)
                 setattr(options, option, model)
 
-            setattr(meta, option, getattr(options, option))
+            setattr(meta, option, option_value)
         new_class._meta = meta
 
         return new_class
