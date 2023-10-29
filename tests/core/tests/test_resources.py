@@ -3048,3 +3048,15 @@ class ImportWithMissingFields(TestCase):
             "- column name 'author_email' is not present in row"
         )
         self.assertEqual(2, mock_field_save.call_count)
+
+
+class BookResourceWithStringModelTest(TestCase):
+    def setUp(self):
+        class BookResourceWithStringModel(resources.ModelResource):
+            class Meta:
+                model = "core.Book"
+
+        self.resource = BookResourceWithStringModel()
+
+    def test_resource_gets_correct_model_from_string(self):
+        self.assertEqual(self.resource._meta.model, Book)

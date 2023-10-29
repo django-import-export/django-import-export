@@ -7,6 +7,7 @@ from html import escape
 
 import tablib
 from diff_match_patch import diff_match_patch
+from django.apps import apps
 from django.conf import settings
 from django.core.exceptions import (
     FieldDoesNotExist,
@@ -58,8 +59,8 @@ class ResourceOptions:
 
     model = None
     """
-    Django Model class. It is used to introspect available
-    fields.
+    Django Model class or full application label string. It is used to introspect
+    available fields.
 
     """
     fields = None
@@ -263,6 +264,10 @@ class DeclarativeMetaclass(type):
                     for option in dir(options)
                     if not option.startswith("_") and hasattr(options, option)
                 ]:
+                    if option == "model" and isinstance(getattr(options, option), str):
+                        model = apps.get_model(getattr(options, option))
+                        setattr(options, option, model)
+
                     setattr(meta, option, getattr(options, option))
 
         # Add direct fields
@@ -283,6 +288,10 @@ class DeclarativeMetaclass(type):
             for option in dir(options)
             if not option.startswith("_") and hasattr(options, option)
         ]:
+            if option == "model" and isinstance(getattr(options, option), str):
+                model = apps.get_model(getattr(options, option))
+                setattr(options, option, model)
+
             setattr(meta, option, getattr(options, option))
         new_class._meta = meta
 
