@@ -15,13 +15,16 @@ class ImportExportFormBase(forms.Form):
 
     def __init__(self, *args, resources=None, **kwargs):
         super().__init__(*args, **kwargs)
-        if resources and len(resources) > 1:
+        if not resources:
+            raise ValueError("no defined resources")
+        if len(resources) > 1:
             resource_choices = []
             for i, resource in enumerate(resources):
                 resource_choices.append((i, resource.get_display_name()))
             self.fields["resource"].choices = resource_choices
         else:
-            del self.fields["resource"]
+            self.fields["resource"].value = resources[0].get_display_name()
+            self.fields["resource"].widget.attrs["readonly"] = True
 
 
 class ImportForm(ImportExportFormBase):
@@ -89,7 +92,7 @@ class ExportForm(ImportExportFormBase):
         self.fields["file_format"].choices = choices
 
 
-def export_action_form_factory(formats):
+def export_action_form_factory():
     """
     Returns an ActionForm subclass containing a ChoiceField populated with
     the given formats.
@@ -100,9 +103,8 @@ def export_action_form_factory(formats):
         Action form with export format ChoiceField.
         """
 
-        file_format = forms.ChoiceField(
-            label=_("Format"), choices=formats, required=False
-        )
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
 
     _ExportActionForm.__name__ = str("ExportActionForm")
 

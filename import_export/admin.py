@@ -16,7 +16,7 @@ from django.utils.module_loading import import_string
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_POST
 
-from .forms import ConfirmImportForm, ExportForm, ImportForm, export_action_form_factory
+from .forms import ConfirmImportForm, ExportForm, ImportForm
 from .mixins import BaseExportMixin, BaseImportMixin
 from .results import RowResult
 from .signals import post_export, post_import
@@ -599,8 +599,8 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
             "list_max_show_all": self.list_max_show_all,
             "list_editable": self.list_editable,
             "model_admin": self,
+            "sortable_by": self.sortable_by,
         }
-        changelist_kwargs["sortable_by"] = self.sortable_by
         if django.VERSION >= (4, 0):
             changelist_kwargs["search_help_text"] = self.search_help_text
         cl = ChangeList(**changelist_kwargs)
@@ -651,7 +651,16 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
         if form.is_valid():
             file_format = formats[int(form.cleaned_data["file_format"])]()
 
+            # if 'export_items' in request.session:
+            #     # this request has arisen from an Admin UI action
+            #     # export item pks are stored in session
+            #     # so generate the queryset from the stored pks
+            #     pks = request.session['export_items']
+            #     del request.session['export_items']
+            #     queryset = self.model.objects.filter(pk__in=pks)
+            # else:
             queryset = self.get_export_queryset(request)
+
             export_data = self.get_export_data(
                 file_format,
                 queryset,
@@ -711,52 +720,32 @@ class ExportActionMixin(ExportMixin):
     """
 
     # Don't use custom change list template.
-    import_export_change_list_template = None
+    # import_export_change_list_template = None
 
     def __init__(self, *args, **kwargs):
         """
         Adds a custom action form initialized with the available export
         formats.
         """
-        choices = []
-        formats = self.get_export_formats()
-        if formats:
-            for i, f in enumerate(formats):
-                choices.append((str(i), f().get_title()))
-
-        if len(formats) > 1:
-            choices.insert(0, ("", "---"))
-
-        self.action_form = export_action_form_factory(choices)
+        # self.action_form = export_action_form_factory()
         super().__init__(*args, **kwargs)
 
     def export_admin_action(self, request, queryset):
         """
-        Exports the selected rows using file_format.
+        Retrieve the selected rows and store pks in session.
         """
-        export_format = request.POST.get("file_format")
+        request.session["export_items"] = [item.pk for item in queryset]
 
-        if not export_format:
-            messages.warning(request, _("You must select an export format."))
-        else:
-            formats = self.get_export_formats()
-            file_format = formats[int(export_format)]()
-
-            export_data = self.get_export_data(
-                file_format, queryset, request=request, encoding=self.to_encoding
-            )
-            content_type = file_format.get_content_type()
-            response = HttpResponse(export_data, content_type=content_type)
-            response["Content-Disposition"] = 'attachment; filename="%s"' % (
-                self.get_export_filename(request, queryset, file_format),
-            )
-            return response
+        url = reverse(
+            "admin:%s_%s_export" % self.get_model_info(),
+            current_app=self.admin_site.name,
+        )
+        return HttpResponseRedirect(url)
 
     def get_actions(self, request):
         """
         Adds the export action to the list of available actions.
         """
-
         actions = super().get_actions(request)
         actions.update(
             export_admin_action=(
