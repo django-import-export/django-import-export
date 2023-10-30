@@ -651,15 +651,15 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
         if form.is_valid():
             file_format = formats[int(form.cleaned_data["file_format"])]()
 
-            # if 'export_items' in request.session:
-            #     # this request has arisen from an Admin UI action
-            #     # export item pks are stored in session
-            #     # so generate the queryset from the stored pks
-            #     pks = request.session['export_items']
-            #     del request.session['export_items']
-            #     queryset = self.model.objects.filter(pk__in=pks)
-            # else:
-            queryset = self.get_export_queryset(request)
+            if "export_items" in request.session:
+                # this request has arisen from an Admin UI action
+                # export item pks are stored in session
+                # so generate the queryset from the stored pks
+                pks = request.session["export_items"]
+                del request.session["export_items"]
+                queryset = self.model.objects.filter(pk__in=pks)
+            else:
+                queryset = self.get_export_queryset(request)
 
             export_data = self.get_export_data(
                 file_format,

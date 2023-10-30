@@ -19,7 +19,7 @@
     {# export request has originated from an Admin UI action #}
     {% if 'export_items' in request.session %}
       {% blocktranslate with len=request.session.export_items|length %}
-        Export {{ len }} selected items.
+        <p>Export {{ len }} selected items.</p>
       {% endblocktranslate %}
     {% endif %}
 
