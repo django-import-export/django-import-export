@@ -18,9 +18,13 @@
 
     {# export request has originated from an Admin UI action #}
     {% if 'export_items' in request.session %}
-      {% blocktranslate with len=request.session.export_items|length %}
-        <p>Export {{ len }} selected items.</p>
+      <p>
+      {% blocktranslate count len=request.session.export_items|length %}
+        Export {{ len }} selected item.
+        {% plural %}
+        Export {{ len }} selected items.
       {% endblocktranslate %}
+      </p>
     {% endif %}
 
     <fieldset class="module aligned">

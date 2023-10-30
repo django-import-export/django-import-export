@@ -722,13 +722,13 @@ class ExportActionMixin(ExportMixin):
     # Don't use custom change list template.
     # import_export_change_list_template = None
 
-    def __init__(self, *args, **kwargs):
-        """
-        Adds a custom action form initialized with the available export
-        formats.
-        """
-        # self.action_form = export_action_form_factory()
-        super().__init__(*args, **kwargs)
+    # def __init__(self, *args, **kwargs):
+    #     """
+    #     Adds a custom action form initialized with the available export
+    #     formats.
+    #     """
+    #     # self.action_form = export_action_form_factory()
+    #     super().__init__(*args, **kwargs)
 
     def export_admin_action(self, request, queryset):
         """
