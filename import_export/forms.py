@@ -2,7 +2,6 @@ import os.path
 
 from django import forms
 from django.conf import settings
-from django.contrib.admin.helpers import ActionForm
 from django.utils.translation import gettext_lazy as _
 
 
@@ -90,22 +89,3 @@ class ExportForm(ImportExportFormBase):
             choices.insert(0, ("", "---"))
 
         self.fields["file_format"].choices = choices
-
-
-def export_action_form_factory():
-    """
-    Returns an ActionForm subclass containing a ChoiceField populated with
-    the given formats.
-    """
-
-    class _ExportActionForm(ActionForm):
-        """
-        Action form with export format ChoiceField.
-        """
-
-        def __init__(self, *args, **kwargs):
-            super().__init__(*args, **kwargs)
-
-    _ExportActionForm.__name__ = str("ExportActionForm")
-
-    return _ExportActionForm
