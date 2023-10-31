@@ -639,9 +639,16 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
         """
         return self.export_form_class
 
-    def export_action(self, request, *args, **kwargs):
+    def export_action(self, request):
         if not self.has_export_permission(request):
             raise PermissionDenied
+
+        if "ia" not in request.GET and "export_items" in request.session:
+            # if there is no 'ia' param, then this request
+            # did not originate from an 'action' operation,
+            # therefore any session data will be stale and
+            # must be removed
+            del request.session["export_items"]
 
         form_type = self.get_export_form_class()
         formats = self.get_export_formats()
@@ -719,27 +726,41 @@ class ExportActionMixin(ExportMixin):
     Mixin with export functionality implemented as an admin action.
     """
 
-    # Don't use custom change list template.
-    # import_export_change_list_template = None
-
-    # def __init__(self, *args, **kwargs):
-    #     """
-    #     Adds a custom action form initialized with the available export
-    #     formats.
-    #     """
-    #     # self.action_form = export_action_form_factory()
-    #     super().__init__(*args, **kwargs)
+    # This action will receive a selection of items as a queryset,
+    # store them in the session, and then redirect to the 'export'
+    # admin page, so that users can select file format and resource
 
     def export_admin_action(self, request, queryset):
         """
         Retrieve the selected rows and store pks in session.
         """
+        formats = self.get_export_formats()
+        logger.debug(f"formats={formats}")
+        resource_classes = self.get_export_resource_classes()
+        logger.debug(f"resource_classes={resource_classes}")
+
+        if len(formats) == len(resource_classes) == 1:
+            file_format = formats[0]()
+
+            export_data = self.get_export_data(
+                file_format, queryset, request=request, encoding=self.to_encoding
+            )
+            content_type = file_format.get_content_type()
+            response = HttpResponse(export_data, content_type=content_type)
+            response["Content-Disposition"] = 'attachment; filename="%s"' % (
+                self.get_export_filename(request, queryset, file_format),
+            )
+            return response
+
         request.session["export_items"] = [item.pk for item in queryset]
 
         url = reverse(
             "admin:%s_%s_export" % self.get_model_info(),
             current_app=self.admin_site.name,
         )
+        # append an 'is action' param to indicate to the
+        # destination that this request originated from an action
+        url += "?ia=1"
         return HttpResponseRedirect(url)
 
     def get_actions(self, request):
