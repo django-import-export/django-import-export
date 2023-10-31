@@ -1,7 +1,6 @@
 import logging
 
 import django
-from django import forms
 from django.conf import settings
 from django.contrib import admin, messages
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION, LogEntry
@@ -776,14 +775,6 @@ class ExportActionMixin(ExportMixin):
             )
         )
         return actions
-
-    @property
-    def media(self):
-        super_media = super().media
-        return forms.Media(
-            js=super_media._js + ["import_export/action_formats.js"],
-            css=super_media._css,
-        )
 
 
 class ExportActionModelAdmin(ExportActionMixin, admin.ModelAdmin):
