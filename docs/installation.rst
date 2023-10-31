@@ -140,6 +140,14 @@ Note that if you disable transaction support via configuration (or if your datab
 does not support transactions), then validation errors will still be presented to the user
 but valid rows will have imported.
 
+``IMPORT_EXPORT_SKIP_ADMIN_ACTION_EXPORT_UI``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A boolean value which will skip the 'file format' and 'resource' select page in the Admin UI
+when the export is requested from an Admin UI action.
+If ``TRUE`` then the first element in the file format' and 'resource' lists will be used.
+By default this is ``FALSE``.
+
 .. _IMPORT_EXPORT_ESCAPE_FORMULAE_ON_EXPORT:
 
 ``IMPORT_EXPORT_ESCAPE_FORMULAE_ON_EXPORT``
@@ -181,7 +189,7 @@ The values must be those provided in ``import_export.formats.base_formats`` e.g
 .. _EXPORT_FORMATS:
 
 ``EXPORT_FORMATS``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
 
 A list that defines which file formats will be allowed during exports. Defaults
 to ``IMPORT_EXPORT_FORMATS``.
@@ -192,7 +200,6 @@ The values must be those provided in ``import_export.formats.base_formats`` e.g
     # settings.py
     from import_export.formats.base_formats import XLSX
     EXPORT_FORMATS = [XLSX]
-
 
 .. _exampleapp:
 

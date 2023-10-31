@@ -738,7 +738,9 @@ class ExportActionMixin(ExportMixin):
         resource_classes = self.get_export_resource_classes()
         logger.debug(f"resource_classes={resource_classes}")
 
-        if len(formats) == len(resource_classes) == 1:
+        if len(formats) == len(resource_classes) == 1 or getattr(
+            settings, "IMPORT_EXPORT_SKIP_ADMIN_ACTION_EXPORT_UI", False
+        ):
             file_format = formats[0]()
 
             export_data = self.get_export_data(
