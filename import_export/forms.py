@@ -87,5 +87,8 @@ class ExportForm(ImportExportFormBase):
             )
         if len(formats) > 1:
             choices.insert(0, ("", "---"))
+        else:
+            self.fields["file_format"].value = formats[0]
+            self.fields["file_format"].widget.attrs["readonly"] = True
 
         self.fields["file_format"].choices = choices
