@@ -219,25 +219,73 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
     def generate_log_entries(self, result, request):
         if not self.get_skip_admin_log():
             # Add imported objects to LogEntry
-            logentry_map = {
-                RowResult.IMPORT_TYPE_NEW: ADDITION,
-                RowResult.IMPORT_TYPE_UPDATE: CHANGE,
-                RowResult.IMPORT_TYPE_DELETE: DELETION,
-            }
-            content_type_id = ContentType.objects.get_for_model(self.model).pk
-            for row in result:
-                if (
-                    row.import_type != row.IMPORT_TYPE_ERROR
-                    and row.import_type != row.IMPORT_TYPE_SKIP
-                ):
-                    LogEntry.objects.log_action(
-                        user_id=request.user.pk,
-                        content_type_id=content_type_id,
-                        object_id=row.object_id,
-                        object_repr=row.object_repr,
-                        action_flag=logentry_map[row.import_type],
-                        change_message=_("%s through import_export" % row.import_type),
+            if django.VERSION >= (5, 0):
+                # issue 1673
+                new_rows = list()
+                update_rows = list()
+                delete_rows = list()
+                for row in result:
+                    if row.is_new():
+                        new_rows.append(row.object_id)
+                    if row.is_update():
+                        update_rows.append(row.object_id)
+                    if row.is_delete():
+                        print("is delete")
+                        delete_rows.append(row.object_id)
+
+                print(f"delete rows {delete_rows}")
+                if len(new_rows) > 0:
+                    LogEntry.objects.log_actions(
+                        request.user.pk,
+                        self.model.objects.filter(id__in=new_rows),
+                        ADDITION,
+                        change_message=_(
+                            "%s through import_export" % RowResult.IMPORT_TYPE_NEW
+                        ),
+                        single_object=len(new_rows) == 1,
                     )
+                if len(update_rows) > 0:
+                    LogEntry.objects.log_actions(
+                        request.user.pk,
+                        self.model.objects.filter(id__in=update_rows),
+                        CHANGE,
+                        change_message=_(
+                            "%s through import_export" % RowResult.IMPORT_TYPE_UPDATE
+                        ),
+                        single_object=len(update_rows) == 1,
+                    )
+                if len(delete_rows) > 0:
+                    LogEntry.objects.log_actions(
+                        request.user.pk,
+                        self.model.objects.filter(id__in=delete_rows),
+                        DELETION,
+                        change_message=_(
+                            "%s through import_export" % RowResult.IMPORT_TYPE_DELETE
+                        ),
+                        single_object=len(delete_rows) == 1,
+                    )
+            else:
+                logentry_map = {
+                    RowResult.IMPORT_TYPE_NEW: ADDITION,
+                    RowResult.IMPORT_TYPE_UPDATE: CHANGE,
+                    RowResult.IMPORT_TYPE_DELETE: DELETION,
+                }
+                content_type_id = ContentType.objects.get_for_model(self.model).pk
+                for row in result:
+                    if (
+                        row.import_type != row.IMPORT_TYPE_ERROR
+                        and row.import_type != row.IMPORT_TYPE_SKIP
+                    ):
+                        LogEntry.objects.log_action(
+                            user_id=request.user.pk,
+                            content_type_id=content_type_id,
+                            object_id=row.object_id,
+                            object_repr=row.object_repr,
+                            action_flag=logentry_map[row.import_type],
+                            change_message=_(
+                                "%s through import_export" % row.import_type
+                            ),
+                        )
 
     def add_success_message(self, result, request):
         opts = self.model._meta

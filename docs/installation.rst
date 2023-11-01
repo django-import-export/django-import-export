@@ -58,7 +58,8 @@ Can be overridden on a ``Resource`` class by setting the
 ``IMPORT_EXPORT_SKIP_ADMIN_LOG``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If set to ``True``, skips the creation of admin log entries when importing.
+If set to ``True``, skips the creation of admin log entries when importing via the
+:ref:`Admin UI<admin-integration>`.
 Defaults to ``False``. This can speed up importing large data sets, at the cost
 of losing an audit trail.
 
