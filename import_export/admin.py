@@ -230,10 +230,8 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
                     if row.is_update():
                         update_rows.append(row.object_id)
                     if row.is_delete():
-                        print("is delete")
                         delete_rows.append(row.object_id)
 
-                print(f"delete rows {delete_rows}")
                 if len(new_rows) > 0:
                     LogEntry.objects.log_actions(
                         request.user.pk,
