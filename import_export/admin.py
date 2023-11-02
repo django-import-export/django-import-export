@@ -252,6 +252,10 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
                         ),
                         single_object=len(update_rows) == 1,
                     )
+                # Doesn't work because the filter() will return empty row
+                # because the instance has been deleted
+                # it worked previously because the result queryset contained
+                # data pre-delete
                 if len(delete_rows) > 0:
                     LogEntry.objects.log_actions(
                         request.user.pk,
