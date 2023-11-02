@@ -162,7 +162,7 @@ class ResourceTestCase(TestCase):
     def test_get_field_name_raises_AttributeError(self):
         err = (
             "Field x does not exists in <class "
-            "'core.tests.test_resources.MyResource'> resource"
+            "'core.tests.resources.MyResource'> resource"
         )
         with self.assertRaisesRegex(AttributeError, err):
             self.my_resource.get_field_name("x")
