@@ -1,11 +1,11 @@
 import tablib
 from core.models import Book, Category, Person, Role, UUIDBook, UUIDCategory
+from core.tests.resources import BookResource
+from core.tests.utils import ignore_widget_deprecation_warning
 from django.contrib.auth.models import User
 from django.test import TestCase
 
 from import_export import fields, resources, results, widgets
-from tests.test_resources.basic_resources import BookResource
-from tests.utils import ignore_widget_deprecation_warning
 
 
 class ForeignKeyWidgetFollowRelationship(TestCase):

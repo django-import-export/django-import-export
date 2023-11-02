@@ -2,12 +2,12 @@ from unittest import mock
 
 import tablib
 from core.models import Book, UUIDBook
+from core.tests.utils import ignore_widget_deprecation_warning
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 
 from import_export import fields, resources, widgets
 from import_export.instance_loaders import ModelInstanceLoader
-from tests.utils import ignore_widget_deprecation_warning
 
 
 class BulkTest(TestCase):
