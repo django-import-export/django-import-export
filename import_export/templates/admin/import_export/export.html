@@ -15,11 +15,10 @@
 {% block content %}
 <form action="" method="POST">
   {% csrf_token %}
-
     {# export request has originated from an Admin UI action #}
-    {% if 'export_items' in request.session %}
+    {% if export_items %}
       <p>
-      {% blocktranslate count len=request.session.export_items|length %}
+      {% blocktranslate count len=export_items|length %}
         Export {{ len }} selected item.
         {% plural %}
         Export {{ len }} selected items.

@@ -9,6 +9,7 @@ from django.contrib.auth import get_permission_codename
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import PermissionDenied
 from django.http import HttpResponse, HttpResponseRedirect
+from django.shortcuts import render
 from django.template.response import TemplateResponse
 from django.urls import path, reverse
 from django.utils.decorators import method_decorator
@@ -649,13 +650,6 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
         if not self.has_export_permission(request):
             raise PermissionDenied
 
-        if "ia" not in request.GET and "export_items" in request.session:
-            # if there is no 'ia' param, then this request
-            # did not originate from an 'action' operation,
-            # therefore any session data will be stale and
-            # must be removed
-            del request.session["export_items"]
-
         form_type = self.get_export_form_class()
         formats = self.get_export_formats()
         form = form_type(
@@ -689,16 +683,9 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
 
             post_export.send(sender=None, model=self.model)
             return response
-
-        context = self.get_export_context_data()
-
-        context.update(self.admin_site.each_context(request))
-
-        context["title"] = _("Export")
-        context["form"] = form
-        context["opts"] = self.model._meta
+        context = self.init_request_context_data(request, form)
         request.current_app = self.admin_site.name
-        return TemplateResponse(request, [self.export_template_name], context)
+        return TemplateResponse(request, [self.export_template_name], context=context)
 
     def changelist_view(self, request, extra_context=None):
         if extra_context is None:
@@ -708,6 +695,14 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
 
     def get_export_filename(self, request, queryset, file_format):
         return super().get_export_filename(file_format)
+
+    def init_request_context_data(self, request, form):
+        context = self.get_export_context_data()
+        context.update(self.admin_site.each_context(request))
+        context["title"] = _("Export")
+        context["form"] = form
+        context["opts"] = self.model._meta
+        return context
 
 
 class ImportExportMixin(ImportMixin, ExportMixin):
@@ -758,16 +753,14 @@ class ExportActionMixin(ExportMixin):
             )
             return response
 
-        request.session["export_items"] = [item.pk for item in queryset]
-
-        url = reverse(
-            "admin:%s_%s_export" % self.get_model_info(),
-            current_app=self.admin_site.name,
+        form_type = self.get_export_form_class()
+        formats = self.get_export_formats()
+        form = form_type(
+            formats, request.POST or None, resources=self.get_export_resource_classes()
         )
-        # append an 'is action' param to indicate to the
-        # destination that this request originated from an action
-        url += "?ia=1"
-        return HttpResponseRedirect(url)
+        context = self.init_request_context_data(request, form)
+        context["export_items"] = [item.pk for item in queryset]
+        return render(request, "admin/import_export/export.html", context=context)
 
     def get_actions(self, request):
         """
