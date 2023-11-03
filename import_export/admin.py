@@ -225,12 +225,14 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
                 update_rows = list()
                 delete_rows = list()
                 for row in result:
+                    # TODO object repr doesn't get set
+                    instance = self.model(pk=row.object_id)
                     if row.is_new():
-                        new_rows.append(row.object_id)
+                        new_rows.append(instance)
                     if row.is_update():
-                        update_rows.append(row.object_id)
+                        update_rows.append(instance)
                     if row.is_delete():
-                        delete_rows.append(row.object_id)
+                        delete_rows.append(instance)
 
                 if len(new_rows) > 0:
                     LogEntry.objects.log_actions(
@@ -252,14 +254,10 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
                         ),
                         single_object=len(update_rows) == 1,
                     )
-                # Doesn't work because the filter() will return empty row
-                # because the instance has been deleted
-                # it worked previously because the result queryset contained
-                # data pre-delete
                 if len(delete_rows) > 0:
                     LogEntry.objects.log_actions(
                         request.user.pk,
-                        self.model.objects.filter(id__in=delete_rows),
+                        delete_rows,
                         DELETION,
                         change_message=_(
                             "%s through import_export" % RowResult.IMPORT_TYPE_DELETE
