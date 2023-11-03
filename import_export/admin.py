@@ -8,6 +8,7 @@ from django.contrib.admin.models import ADDITION, CHANGE, DELETION, LogEntry
 from django.contrib.auth import get_permission_codename
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import PermissionDenied
+from django.forms import MultipleChoiceField, MultipleHiddenInput
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.template.response import TemplateResponse
@@ -655,16 +656,21 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
         form = form_type(
             formats, request.POST or None, resources=self.get_export_resource_classes()
         )
+        form.fields["export_items"] = MultipleChoiceField(
+            widget=MultipleHiddenInput,
+            required=False,
+            choices=[(o.id, o.id) for o in self.model.objects.all()],
+        )
         if form.is_valid():
             file_format = formats[int(form.cleaned_data["file_format"])]()
 
-            if "export_items" in request.session:
+            if "export_items" in form.changed_data:
                 # this request has arisen from an Admin UI action
-                # export item pks are stored in session
+                # export item pks are stored in form data
                 # so generate the queryset from the stored pks
-                pks = request.session["export_items"]
-                del request.session["export_items"]
-                queryset = self.model.objects.filter(pk__in=pks)
+                queryset = self.model.objects.filter(
+                    pk__in=form.cleaned_data["export_items"]
+                )
             else:
                 queryset = self.get_export_queryset(request)
 
@@ -682,6 +688,7 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
             )
 
             post_export.send(sender=None, model=self.model)
+            # TODO send a message indicating success
             return response
         context = self.init_request_context_data(request, form)
         request.current_app = self.admin_site.name
@@ -728,18 +735,17 @@ class ExportActionMixin(ExportMixin):
     """
 
     # This action will receive a selection of items as a queryset,
-    # store them in the session, and then redirect to the 'export'
-    # admin page, so that users can select file format and resource
+    # store them in the context, and then render the 'export' admin form page,
+    # so that users can select file format and resource
 
     def export_admin_action(self, request, queryset):
         """
-        Retrieve the selected rows and store pks in session.
+        Action runs on POST from instance action menu (if enabled).
         """
-        formats = self.get_export_formats()
-        logger.debug(f"formats={formats}")
-        resource_classes = self.get_export_resource_classes()
-        logger.debug(f"resource_classes={resource_classes}")
+        if not self.has_export_permission(request):
+            raise PermissionDenied
 
+        formats = self.get_export_formats()
         if getattr(settings, "IMPORT_EXPORT_SKIP_ADMIN_ACTION_EXPORT_UI", False):
             file_format = formats[0]()
 
@@ -756,10 +762,22 @@ class ExportActionMixin(ExportMixin):
         form_type = self.get_export_form_class()
         formats = self.get_export_formats()
         form = form_type(
-            formats, request.POST or None, resources=self.get_export_resource_classes()
+            formats,
+            resources=self.get_export_resource_classes(),
+            initial={"export_items": list(queryset.values_list("id", flat=True))},
+        )
+        # selected items are to be stored as a hidden input on the form
+        form.fields["export_items"] = MultipleChoiceField(
+            widget=MultipleHiddenInput,
+            required=False,
+            choices=[(str(o), str(o)) for o in queryset.all()],
         )
         context = self.init_request_context_data(request, form)
-        context["export_items"] = [item.pk for item in queryset]
+
+        # this is necessary to render the FORM action correctly
+        # i.e. so the POST goes to the correct URL
+        context["export_suffix"] = "export/"
+
         return render(request, "admin/import_export/export.html", context=context)
 
     def get_actions(self, request):

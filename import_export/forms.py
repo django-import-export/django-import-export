@@ -73,6 +73,9 @@ class ExportForm(ImportExportFormBase):
         label=_("Format"),
         choices=(),
     )
+    export_items = forms.MultipleChoiceField(
+        widget=forms.MultipleHiddenInput, required=False
+    )
 
     def __init__(self, formats, *args, **kwargs):
         resources = kwargs.pop("resources", None)
