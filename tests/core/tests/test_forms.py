@@ -1,4 +1,3 @@
-from core import admin
 from django.test import TestCase
 
 from import_export import forms, resources
@@ -27,18 +26,3 @@ class FormTest(TestCase):
             form.fields["resource"].choices,
             [(0, "ModelResource"), (1, "My super resource")],
         )
-
-    def test_resources_arg_deprecation_warning(self):
-        class TestForm(forms.ImportExportFormBase):
-            def __init__(self, *args, resources=None, **kwargs):
-                self.args_ = args
-                super().__init__(*args, resources=resources, **kwargs)
-
-        resource_list = [resources.ModelResource, admin.BookResource]
-        with self.assertWarns(DeprecationWarning) as w:
-            f = TestForm(resource_list)
-            self.assertEqual(
-                "'resources' must be supplied as a named parameter",
-                str(w.warnings[0].message),
-            )
-            self.assertEqual(f.args_, (resource_list,))

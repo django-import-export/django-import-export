@@ -1,5 +1,4 @@
 import logging
-import warnings
 
 import django
 from django import forms
@@ -17,18 +16,11 @@ from django.utils.module_loading import import_string
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_POST
 
-from .forms import (
-    ConfirmImportForm,
-    ExportForm,
-    ImportExportFormBase,
-    ImportForm,
-    export_action_form_factory,
-)
+from .forms import ConfirmImportForm, ExportForm, ImportForm, export_action_form_factory
 from .mixins import BaseExportMixin, BaseImportMixin
 from .results import RowResult
 from .signals import post_export, post_import
 from .tmp_storages import TempFolderStorage
-from .utils import original
 
 logger = logging.getLogger(__name__)
 
@@ -45,9 +37,9 @@ class ImportExportMixinBase:
         # where `self.import_export_change_list_template` is `None` as falling
         # back on the default templates.
         if getattr(self, "change_list_template", None):
-            self.base_change_list_template = self.change_list_template
+            self.ie_base_change_list_template = self.change_list_template
         else:
-            self.base_change_list_template = "admin/change_list.html"
+            self.ie_base_change_list_template = "admin/change_list.html"
 
         try:
             self.change_list_template = getattr(
@@ -57,7 +49,7 @@ class ImportExportMixinBase:
             logger.warning("failed to assign change_list_template attribute")
 
         if self.change_list_template is None:
-            self.change_list_template = self.base_change_list_template
+            self.change_list_template = self.ie_base_change_list_template
 
     def get_model_info(self):
         app_label = self.model._meta.app_label
@@ -65,7 +57,9 @@ class ImportExportMixinBase:
 
     def changelist_view(self, request, extra_context=None):
         extra_context = extra_context or {}
-        extra_context["base_change_list_template"] = self.base_change_list_template
+        extra_context[
+            "ie_base_change_list_template"
+        ] = self.ie_base_change_list_template
         return super().changelist_view(request, extra_context)
 
 
@@ -150,12 +144,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         if not self.has_import_permission(request):
             raise PermissionDenied
 
-        if getattr(self.get_confirm_import_form, "is_original", False):
-            confirm_form = self.create_confirm_form(request)
-        else:
-            form_type = self.get_confirm_import_form()
-            confirm_form = form_type(request.POST)
-
+        confirm_form = self.create_confirm_form(request)
         if confirm_form.is_valid():
             import_formats = self.get_import_formats()
             input_format = import_formats[
@@ -188,9 +177,10 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         **kwargs,
     ):
         res_kwargs = self.get_import_resource_kwargs(
-            request, *args, form=confirm_form, **kwargs
+            request, form=confirm_form, **kwargs
         )
         resource = self.choose_import_resource_class(confirm_form)(**res_kwargs)
+        imp_kwargs = self.get_import_data_kwargs(request, form=confirm_form, **kwargs)
         imp_kwargs = self.get_import_data_kwargs(
             request, *args, form=confirm_form, **kwargs
         )
@@ -201,7 +191,6 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
             dry_run=False,
             file_name=confirm_form.cleaned_data.get("original_file_name"),
             user=request.user,
-            rollback_on_validation_errors=True,
             **imp_kwargs,
         )
 
@@ -304,53 +293,6 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
     def get_context_data(self, **kwargs):
         return {}
 
-    @original
-    def get_import_form(self):
-        """
-        .. deprecated:: 3.0
-            Use :meth:`~import_export.admin.ImportMixin.get_import_form_class`
-            or set the new :attr:`~import_export.admin.ImportMixin.import_form_class`
-            attribute.
-        """
-        warnings.warn(
-            "ImportMixin.get_import_form() is deprecated and will be removed in "
-            "a future release. Please use get_import_form_class() instead.",
-            category=DeprecationWarning,
-        )
-        return self.import_form_class
-
-    @original
-    def get_confirm_import_form(self):
-        """
-        .. deprecated:: 3.0
-            Use :func:`~import_export.admin.ImportMixin.get_confirm_form_class`
-            or set the new :attr:`~import_export.admin.ImportMixin.confirm_form_class`
-            attribute.
-        """
-        warnings.warn(
-            "ImportMixin.get_confirm_import_form() is deprecated "
-            "and will be removed in a future release. "
-            "Please use get_confirm_form_class() instead.",
-            category=DeprecationWarning,
-        )
-        return self.confirm_form_class
-
-    @original
-    def get_form_kwargs(self, form, *args, **kwargs):
-        """
-        .. deprecated:: 3.0
-            Use :meth:`~import_export.admin.ImportMixin.get_import_form_kwargs` or
-            :meth:`~import_export.admin.ImportMixin.get_confirm_form_kwargs`
-            instead, depending on which form you wish to customize.
-        """
-        warnings.warn(
-            "ImportMixin.get_form_kwargs() is deprecated and will be removed "
-            "in a future release. Please use get_import_form_kwargs() or "
-            "get_confirm_form_kwargs() instead.",
-            category=DeprecationWarning,
-        )
-        return kwargs
-
     def create_import_form(self, request):
         """
         .. versionadded:: 3.0
@@ -369,13 +311,6 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         form_class = self.get_import_form_class(request)
         kwargs = self.get_import_form_kwargs(request)
 
-        if not issubclass(form_class, ImportExportFormBase):
-            warnings.warn(
-                "The ImportForm class must inherit from ImportExportFormBase, "
-                "this is needed for multiple resource classes to work properly. ",
-                category=DeprecationWarning,
-            )
-            return form_class(formats, **kwargs)
         return form_class(
             formats, resources=self.get_import_resource_classes(), **kwargs
         )
@@ -388,18 +323,6 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         a single custom form class, you can set the ``import_form_class``
         attribute to change this for your subclass.
         """
-        # TODO: Remove following conditional when get_import_form() is removed
-        if not getattr(self.get_import_form, "is_original", False):
-            warnings.warn(
-                "ImportMixin.get_import_form() is deprecated and will be "
-                "removed in a future release. Please use the new "
-                "'import_form_class' attribute to specify a custom form "
-                "class, or override the get_import_form_class() method if "
-                "your requirements are more complex.",
-                category=DeprecationWarning,
-            )
-            return self.get_import_form()
-        # Return the class attribute value
         return self.import_form_class
 
     def get_import_form_kwargs(self, request):
@@ -450,18 +373,6 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         have a single custom form class, you can set the ``confirm_form_class``
         attribute to change this for your subclass.
         """
-        # TODO: Remove following conditional when get_confirm_import_form() is removed
-        if not getattr(self.get_confirm_import_form, "is_original", False):
-            warnings.warn(
-                "ImportMixin.get_confirm_import_form() is deprecated and will "
-                "be removed in a future release. Please use the new "
-                "'confirm_form_class' attribute to specify a custom form "
-                "class, or override the get_confirm_form_class() method if "
-                "your requirements are more complex.",
-                category=DeprecationWarning,
-            )
-            return self.get_confirm_import_form()
-        # Return the class attribute value
         return self.confirm_form_class
 
     def get_confirm_form_kwargs(self, request, import_form=None):
@@ -552,34 +463,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         context = self.get_import_context_data()
 
         import_formats = self.get_import_formats()
-        if getattr(self.get_form_kwargs, "is_original", False):
-            # Use new API
-            import_form = self.create_import_form(request)
-        else:
-            form_class = self.get_import_form_class(request)
-            form_kwargs = self.get_form_kwargs(form_class, *args, **kwargs)
-
-            if issubclass(form_class, ImportExportFormBase):
-                import_form = form_class(
-                    import_formats,
-                    request.POST or None,
-                    request.FILES or None,
-                    resources=self.get_import_resource_classes(),
-                    **form_kwargs,
-                )
-            else:
-                warnings.warn(
-                    "The ImportForm class must inherit from ImportExportFormBase, "
-                    "this is needed for multiple resource classes to work properly. ",
-                    category=DeprecationWarning,
-                )
-                import_form = form_class(
-                    import_formats,
-                    request.POST or None,
-                    request.FILES or None,
-                    **form_kwargs,
-                )
-
+        import_form = self.create_import_form(request)
         resources = list()
         if request.POST and import_form.is_valid():
             input_format = import_formats[
@@ -636,7 +520,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
                 if not import_form.errors:
                     # prepare kwargs for import data, if needed
                     res_kwargs = self.get_import_resource_kwargs(
-                        request, *args, form=import_form, **kwargs
+                        request, form=import_form, **kwargs
                     )
                     resource = self.choose_import_resource_class(import_form)(
                         **res_kwargs
@@ -659,24 +543,12 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
                     context["result"] = result
 
                     if not result.has_errors() and not result.has_validation_errors():
-                        if getattr(self.get_form_kwargs, "is_original", False):
-                            # Use new API
-                            context["confirm_form"] = self.create_confirm_form(
-                                request, import_form=import_form
-                            )
-                        else:
-                            confirm_form_class = self.get_confirm_form_class(request)
-                            initial = self.get_confirm_form_initial(
-                                request, import_form
-                            )
-                            context["confirm_form"] = confirm_form_class(
-                                initial=self.get_form_kwargs(
-                                    form=import_form, **initial
-                                )
-                            )
+                        context["confirm_form"] = self.create_confirm_form(
+                            request, import_form=import_form
+                        )
         else:
             res_kwargs = self.get_import_resource_kwargs(
-                request, *args, form=import_form, **kwargs
+                request, form=import_form, **kwargs
             )
             resource_classes = self.get_import_resource_classes()
             resources = [
@@ -793,12 +665,13 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
         if not self.has_export_permission(request):
             raise PermissionDenied
 
-        data = self.get_data_for_export(request, queryset, *args, **kwargs)
-        export_data = file_format.export_data(
-            data,
-            escape_html=self.should_escape_html,
-            escape_formulae=self.should_escape_formulae,
+        data = self.get_data_for_export(
+            request,
+            queryset,
+            *args,
+            **kwargs,
         )
+        export_data = file_format.export_data(data)
         encoding = kwargs.get("encoding")
         if not file_format.is_binary() and encoding:
             export_data = export_data.encode(encoding)
@@ -810,24 +683,6 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
     def get_context_data(self, **kwargs):
         return {}
 
-    @original
-    def get_export_form(self):
-        """
-        .. deprecated:: 3.0
-            Use :meth:`~import_export.admin.ExportMixin.get_export_form_class`
-            or set the new :attr:`~import_export.admin.ExportMixin.export_form_class`
-            attribute.
-        """
-        warnings.warn(
-            "ExportMixin.get_export_form() is deprecated and will "
-            "be removed in a future release. Please use the new "
-            "'export_form_class' attribute to specify a custom form "
-            "class, or override the get_export_form_class() method if "
-            "your requirements are more complex.",
-            category=DeprecationWarning,
-        )
-        return self.export_form_class
-
     def get_export_form_class(self):
         """
         Get the form class used to read the export format.
@@ -838,10 +693,7 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
         if not self.has_export_permission(request):
             raise PermissionDenied
 
-        if getattr(self.get_export_form, "is_original", False):
-            form_type = self.get_export_form_class()
-        else:
-            form_type = self.get_export_form()
+        form_type = self.get_export_form_class()
         formats = self.get_export_formats()
         form = form_type(
             formats, request.POST or None, resources=self.get_export_resource_classes()
