@@ -12,6 +12,7 @@ dist/
 *.python-version
 .coverage
 *.sw[po]
+.DS_Store
 
 # IDE support
 .vscode

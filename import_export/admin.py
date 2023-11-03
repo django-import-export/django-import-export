@@ -1,4 +1,5 @@
 import logging
+import warnings
 
 import django
 from django import forms
@@ -215,14 +216,20 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
                     row.import_type != row.IMPORT_TYPE_ERROR
                     and row.import_type != row.IMPORT_TYPE_SKIP
                 ):
-                    LogEntry.objects.log_action(
-                        user_id=request.user.pk,
-                        content_type_id=content_type_id,
-                        object_id=row.object_id,
-                        object_repr=row.object_repr,
-                        action_flag=logentry_map[row.import_type],
-                        change_message=_("%s through import_export" % row.import_type),
-                    )
+                    with warnings.catch_warnings():
+                        warnings.filterwarnings(
+                            "ignore", category=PendingDeprecationWarning
+                        )
+                        LogEntry.objects.log_action(
+                            user_id=request.user.pk,
+                            content_type_id=content_type_id,
+                            object_id=row.object_id,
+                            object_repr=row.object_repr,
+                            action_flag=logentry_map[row.import_type],
+                            change_message=_(
+                                "%s through import_export" % row.import_type
+                            ),
+                        )
 
     def add_success_message(self, result, request):
         opts = self.model._meta
