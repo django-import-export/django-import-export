@@ -766,6 +766,10 @@ class Resource(metaclass=DeclarativeMetaclass):
                 category=DeprecationWarning,
             )
 
+        if not self._meta.store_instance:
+            self._meta.store_instance = kwargs.get(
+                "retain_instance_in_row_result", False
+            )
         skip_diff = self._meta.skip_diff
         row_result = self.get_row_result_class()()
         if self._meta.store_row_values:

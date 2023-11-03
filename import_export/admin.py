@@ -185,7 +185,6 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         confirm_form,
         request,
         *args,
-        rollback_on_validation_errors=False,
         **kwargs,
     ):
         res_kwargs = self.get_import_resource_kwargs(
@@ -195,6 +194,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         imp_kwargs = self.get_import_data_kwargs(
             request, *args, form=confirm_form, **kwargs
         )
+        imp_kwargs["retain_instance_in_row_result"] = True
 
         return resource.import_data(
             dataset,
@@ -225,14 +225,12 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
                 update_rows = list()
                 delete_rows = list()
                 for row in result:
-                    # TODO object repr doesn't get set
-                    instance = self.model(pk=row.object_id)
                     if row.is_new():
-                        new_rows.append(instance)
+                        new_rows.append(row.instance)
                     if row.is_update():
-                        update_rows.append(instance)
+                        update_rows.append(row.instance)
                     if row.is_delete():
-                        delete_rows.append(instance)
+                        delete_rows.append(row.instance)
 
                 if len(new_rows) > 0:
                     LogEntry.objects.log_actions(
