@@ -209,48 +209,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         if not self.get_skip_admin_log():
             # Add imported objects to LogEntry
             if django.VERSION >= (5, 0):
-                # issue 1673
-                new_rows = list()
-                update_rows = list()
-                delete_rows = list()
-                for row in result:
-                    if row.is_new():
-                        new_rows.append(row.instance)
-                    if row.is_update():
-                        update_rows.append(row.instance)
-                    if row.is_delete():
-                        delete_rows.append(row.instance)
-
-                if len(new_rows) > 0:
-                    LogEntry.objects.log_actions(
-                        request.user.pk,
-                        self.model.objects.filter(id__in=new_rows),
-                        ADDITION,
-                        change_message=_(
-                            "%s through import_export" % RowResult.IMPORT_TYPE_NEW
-                        ),
-                        single_object=len(new_rows) == 1,
-                    )
-                if len(update_rows) > 0:
-                    LogEntry.objects.log_actions(
-                        request.user.pk,
-                        self.model.objects.filter(id__in=update_rows),
-                        CHANGE,
-                        change_message=_(
-                            "%s through import_export" % RowResult.IMPORT_TYPE_UPDATE
-                        ),
-                        single_object=len(update_rows) == 1,
-                    )
-                if len(delete_rows) > 0:
-                    LogEntry.objects.log_actions(
-                        request.user.pk,
-                        delete_rows,
-                        DELETION,
-                        change_message=_(
-                            "%s through import_export" % RowResult.IMPORT_TYPE_DELETE
-                        ),
-                        single_object=len(delete_rows) == 1,
-                    )
+                self._log_actions(result, request)
             else:
                 logentry_map = {
                     RowResult.IMPORT_TYPE_NEW: ADDITION,
@@ -577,6 +536,52 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
             extra_context = {}
         extra_context["has_import_permission"] = self.has_import_permission(request)
         return super().changelist_view(request, extra_context)
+
+    def _log_actions(self, result, request):
+        """
+        Create appropriate LogEntry instances for the result.
+        """
+        new_rows = list()
+        update_rows = list()
+        delete_rows = list()
+        for row in result:
+            if row.is_new():
+                new_rows.append(row.instance)
+            if row.is_update():
+                update_rows.append(row.instance)
+            if row.is_delete():
+                delete_rows.append(row.instance)
+
+        if len(new_rows) > 0:
+            LogEntry.objects.log_actions(
+                request.user.pk,
+                new_rows,
+                ADDITION,
+                change_message=_(
+                    "%s through import_export" % RowResult.IMPORT_TYPE_NEW
+                ),
+                single_object=len(new_rows) == 1,
+            )
+        if len(update_rows) > 0:
+            LogEntry.objects.log_actions(
+                request.user.pk,
+                update_rows,
+                CHANGE,
+                change_message=_(
+                    "%s through import_export" % RowResult.IMPORT_TYPE_UPDATE
+                ),
+                single_object=len(update_rows) == 1,
+            )
+        if len(delete_rows) > 0:
+            LogEntry.objects.log_actions(
+                request.user.pk,
+                delete_rows,
+                DELETION,
+                change_message=_(
+                    "%s through import_export" % RowResult.IMPORT_TYPE_DELETE
+                ),
+                single_object=len(delete_rows) == 1,
+            )
 
 
 class ExportMixin(BaseExportMixin, ImportExportMixinBase):

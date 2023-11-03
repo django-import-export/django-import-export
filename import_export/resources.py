@@ -234,6 +234,9 @@ class ResourceOptions:
     :class:`~import_export.results.RowResult`.
     Enabling this parameter will increase the memory usage during import
     which should be considered when importing large datasets.
+
+    This value will always be set to ``True`` when importing via the Admin UI.
+    This is so that appropriate ``LogEntry`` instances can be created.
     """
 
     use_natural_foreign_keys = False
@@ -930,7 +933,8 @@ class Resource(metaclass=DeclarativeMetaclass):
                     row_result.import_type = RowResult.IMPORT_TYPE_DELETE
                     row_result.add_instance_info(instance)
                     if self._meta.store_instance:
-                        row_result.instance = instance
+                        # create a copy before deletion so id fields are retained
+                        row_result.instance = deepcopy(instance)
                     self.delete_instance(instance, row, **kwargs)
                     if not skip_diff:
                         diff.compare_with(self, None)
