@@ -17,6 +17,7 @@ Please refer to :doc:`release notes<release_notes>`.
 - Clarified ``skip_diff`` documentation (#1655)
 - Standardised interface of :meth:`~import_export.widgets.Widget.render` (#1657)
 - Improved documentation relating to validation on import (#1665)
+- Added :meth:`~import_export.resources.Resource.do_instance_save` helper method (#1668)
 - Refactored test_admin_integration: split into smaller test modules (#1662)
 - Refactored test_resources: split into smaller test modules (#1672)
 

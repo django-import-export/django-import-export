@@ -553,8 +553,18 @@ class Resource(metaclass=DeclarativeMetaclass):
                 # we don't have transactions and we want to do a dry_run
                 pass
             else:
-                instance.save()
+                self.do_instance_save(instance)
         self.after_save_instance(instance, row, **kwargs)
+
+    def do_instance_save(self, instance):
+        """
+        A method specifically to provide a single overridable hook for the instance
+        save operation.
+        For example, this can be overridden to implement update_or_create().
+
+        :param instance: The model instance to be saved.
+        """
+        instance.save()
 
     def before_save_instance(self, instance, row, **kwargs):
         r"""
