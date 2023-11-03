@@ -36,13 +36,19 @@ Please refer to :doc:`release notes<release_notes>`.
 
   - Refactor declarations of ``fields``, ``import_order`` and ``export_order`` to fix ordering issues
 
+- Removed v3 deprecations (#1629)
+- Refactor build process (#1630)
+- fix cooperation with adminsortable2 (#1633)
+
+3.3.2 (unreleased)
+------------------
+
 - Updated Spanish translations (#1639)
 - Added documentation and tests for retrieving instance information after import (#1643)
 - :meth:`~import_export.widgets.NumberWidget.render` returns ``None`` as empty string
   if ``coerce_to_string`` is True (#1650)
-- Removed v3 deprecations (#1629)
-- Refactor build process (#1630)
-- fix cooperation with adminsortable2 (#1633)
+- Updated documentation to describe how to select for export in Admin UI (#1670)
+
 
 3.3.1 (2023-09-14)
 ------------------
