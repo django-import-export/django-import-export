@@ -9,7 +9,7 @@ Changelog
 - :meth:`~import_export.widgets.NumberWidget.render` returns ``None`` as empty string
   if ``coerce_to_string`` is True (#1650)
 - Updated documentation to describe how to select for export in Admin UI (#1670)
-- Added catch for django5 deprecation warning (#)
+- Added catch for django5 deprecation warning (#1676)
 
 3.3.1 (2023-09-14)
 ------------------
