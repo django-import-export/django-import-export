@@ -5,7 +5,9 @@ Release Notes
 v4
 ==
 
-v4 introduces breaking changes in order to fix some long-standing issues.
+v4 introduces significant updates to import-export.  We have taken the opportunity to introduce
+breaking changes in order to fix some long-standing issues.
+
 Refer to the :doc:`changelog<changelog>` for more information. Please ensure you test
 thoroughly before deploying v4 to production.
 
@@ -52,6 +54,19 @@ Deprecations
   model instance.
 
 * Use of ``ExportViewFormMixin`` is deprecated.  See `this issue <https://github.com/django-import-export/django-import-export/issues/1666>`_.
+
+Admin UI
+========
+
+LogEntry
+--------
+
+``LogEntry`` instances are created during import for creates, updates and deletes.
+The functionality to store ``LogEntry`` has changed in v4 in order to address a deprecation in Django 5.
+For this to work correctly, deleted instances are now always copied and retained in each
+:class:`~import_export.results.RowResult` so that they can be recorded in each ``LogEntry``.
+
+This only occurs for delete operations initiated from the Admin UI.
 
 API changes
 ===========
