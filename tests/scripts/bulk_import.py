@@ -40,7 +40,7 @@ def profile_duration(fn):
         t = time.perf_counter()
         fn(*args, **kwargs)
         elapsed = time.perf_counter() - t
-        print(f"Time   {elapsed:0.4}")
+        print(f"Time {elapsed: 0.4}")
 
     return inner
 
