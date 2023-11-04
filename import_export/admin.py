@@ -538,46 +538,31 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         """
         Create appropriate LogEntry instances for the result.
         """
-        new_rows = list()
-        update_rows = list()
-        delete_rows = list()
+        rows = dict()
         for row in result:
-            if row.is_new():
-                new_rows.append(row.instance)
-            if row.is_update():
-                update_rows.append(row.instance)
-            if row.is_delete():
-                delete_rows.append(row.instance)
+            rows.setdefault(row.import_type, list())
+            rows[row.import_type].append(row.instance)
 
-        if len(new_rows) > 0:
+        self._create_log_entries(request.user.pk, rows)
+
+    def _create_log_entries(self, user_pk, rows):
+        logentry_map = {
+            RowResult.IMPORT_TYPE_NEW: ADDITION,
+            RowResult.IMPORT_TYPE_UPDATE: CHANGE,
+            RowResult.IMPORT_TYPE_DELETE: DELETION,
+        }
+        for import_type, instances in rows.items():
+            action_flag = logentry_map[import_type]
+            self._create_log_entry(user_pk, rows[import_type], import_type, action_flag)
+
+    def _create_log_entry(self, user_pk, rows, import_type, action_flag):
+        if len(rows) > 0:
             LogEntry.objects.log_actions(
-                request.user.pk,
-                new_rows,
-                ADDITION,
-                change_message=_(
-                    "%s through import_export" % RowResult.IMPORT_TYPE_NEW
-                ),
-                single_object=len(new_rows) == 1,
-            )
-        if len(update_rows) > 0:
-            LogEntry.objects.log_actions(
-                request.user.pk,
-                update_rows,
-                CHANGE,
-                change_message=_(
-                    "%s through import_export" % RowResult.IMPORT_TYPE_UPDATE
-                ),
-                single_object=len(update_rows) == 1,
-            )
-        if len(delete_rows) > 0:
-            LogEntry.objects.log_actions(
-                request.user.pk,
-                delete_rows,
-                DELETION,
-                change_message=_(
-                    "%s through import_export" % RowResult.IMPORT_TYPE_DELETE
-                ),
-                single_object=len(delete_rows) == 1,
+                user_pk,
+                rows,
+                action_flag,
+                change_message=_("%s through import_export" % import_type),
+                single_object=len(rows) == 1,
             )
 
 
