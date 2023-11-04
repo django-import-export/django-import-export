@@ -5,7 +5,9 @@ Release Notes
 v4
 ==
 
-v4 introduces breaking changes in order to fix some long-standing issues.
+v4 introduces significant updates to import-export.  We have taken the opportunity to introduce
+breaking changes in order to fix some long-standing issues.
+
 Refer to the :doc:`changelog<changelog>` for more information. Please ensure you test
 thoroughly before deploying v4 to production.
 
@@ -45,6 +47,19 @@ Refer to the :doc:`documentation<api_widgets>` for more information.
 The ``obj`` param passed to :meth:`~import_export.widgets.Widget.render` is deprecated.
 The :meth:`~import_export.widgets.Widget.render` method should not need to have a reference to
 model instance.
+
+Admin UI
+========
+
+LogEntry
+--------
+
+``LogEntry`` instances are created during import for creates, updates and deletes.
+The functionality to store ``LogEntry`` has changed in v4 in order to address a deprecation in Django 5.
+For this to work correctly, deleted instances are now always copied and retained in each
+:class:`~import_export.results.RowResult` so that they can be recorded in each ``LogEntry``.
+
+This only occurs for delete operations initiated from the Admin UI.
 
 API changes
 ===========

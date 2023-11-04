@@ -46,7 +46,7 @@ class RowResult:
         #: A string identifier which identifies what type of import was performed.
         self.import_type = None
 
-        #: Can the raw values associated with each imported row.
+        #: Retain the raw values associated with each imported row.
         self.row_values = {}
 
         #: The instance id (used in Admin UI)
