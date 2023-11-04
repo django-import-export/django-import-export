@@ -23,7 +23,6 @@ Please refer to :doc:`release notes<release_notes>`.
 - Support multiple Resources for export (#1671)
 - Refactored test_resources: split into smaller test modules (#1672)
 - Fix deprecated ``log_action`` method (#1673)
-- Support multiple Resources for export (#1671)
 
 4.0.0-alpha.5 (2023-09-22)
 --------------------------
