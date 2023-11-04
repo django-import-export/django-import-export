@@ -35,9 +35,12 @@ Caveats
   the database for each row.  If this is an issue then create a subclass which caches ``get_queryset()`` results rather
   than reading for each invocation.
 
+* If there is the potential for concurrent writes to a table during a bulk operation, then you need to consider the
+  potential impact of this.  Refer to :ref:`concurrent-writes` for more information.
+
 For more information, please read the Django documentation on
-`bulk_create() <https://docs.djangoproject.com/en/dev/ref/models/querysets/#bulk-create>`_ and
-`bulk_update() <https://docs.djangoproject.com/en/dev/ref/models/querysets/#bulk-update>`_.
+`bulk_create() <https://docs.djangoproject.com/en/stable/ref/models/querysets/#bulk-create>`_ and
+`bulk_update() <https://docs.djangoproject.com/en/stable/ref/models/querysets/#bulk-update>`_.
 
 .. _performance_tuning
 Performance tuning

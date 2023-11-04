@@ -719,10 +719,6 @@ class ModelResourceTest(TestCase):
         row[0] = "foo"
         self.dataset.append(row)
         result = self.resource.import_data(self.dataset, raise_errors=False)
-        if result.has_errors():
-            for row in result.rows:
-                for error in row.errors:
-                    print(str(error.error))
 
         self.assertTrue(result.has_errors())
         self.assertTrue(result.rows[0].errors)

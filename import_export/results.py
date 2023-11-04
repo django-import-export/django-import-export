@@ -46,7 +46,7 @@ class RowResult:
         #: A string identifier which identifies what type of import was performed.
         self.import_type = None
 
-        #: Can the raw values associated with each imported row.
+        #: Retain the raw values associated with each imported row.
         self.row_values = {}
 
         #: The instance id (used in Admin UI)
@@ -61,6 +61,49 @@ class RowResult:
         #: A reference to the model instance before updates were applied.
         #: This value is only set for updates.
         self.original = None
+
+    def is_update(self):
+        """
+        :return: ``True`` if import type is 'update', otherwise ``False``.
+        """
+        return self.import_type == RowResult.IMPORT_TYPE_UPDATE
+
+    def is_new(self):
+        """
+        :return: ``True`` if import type is 'new', otherwise ``False``.
+        """
+        return self.import_type == RowResult.IMPORT_TYPE_NEW
+
+    def is_delete(self):
+        """
+        :return: ``True`` if import type is 'delete', otherwise ``False``.
+        """
+        return self.import_type == RowResult.IMPORT_TYPE_DELETE
+
+    def is_skip(self):
+        """
+        :return: ``True`` if import type is 'skip', otherwise ``False``.
+        """
+        return self.import_type == RowResult.IMPORT_TYPE_SKIP
+
+    def is_error(self):
+        """
+        :return: ``True`` if import type is 'error', otherwise ``False``.
+        """
+        return self.import_type == RowResult.IMPORT_TYPE_ERROR
+
+    def is_invalid(self):
+        """
+        :return: ``True`` if import type is 'invalid', otherwise ``False``.
+        """
+        return self.import_type == RowResult.IMPORT_TYPE_INVALID
+
+    def is_valid(self):
+        """
+        :return: ``True`` if import type is not 'error' or 'invalid', otherwise
+          ``False``.
+        """
+        return self.import_type in self.valid_import_types
 
     def add_instance_info(self, instance):
         if instance is not None:
