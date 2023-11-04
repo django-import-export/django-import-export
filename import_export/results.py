@@ -101,7 +101,7 @@ class RowResult:
     def is_valid(self):
         """
         :return: ``True`` if import type is not 'error' or 'invalid', otherwise
-        ``False``.
+          ``False``.
         """
         return self.import_type in self.valid_import_types
 
