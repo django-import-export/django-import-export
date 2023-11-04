@@ -1,3 +1,4 @@
+import warnings
 from unittest import mock
 from unittest.mock import MagicMock
 
@@ -34,7 +35,9 @@ class ExportViewMixinTest(TestCase):
         data = {
             "file_format": "0",
         }
-        response = self.client.post(self.url, data)
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=DeprecationWarning)
+            response = self.client.post(self.url, data)
         self.assertContains(response, self.cat1.name, status_code=200)
         self.assertTrue(response.has_header("Content-Disposition"))
         self.assertEqual(response["Content-Type"], "text/csv")
@@ -58,7 +61,9 @@ class ExportViewMixinTest(TestCase):
         with mock.patch("import_export.mixins.HttpResponse") as mock_http_response:
             # on first instantiation, raise TypeError, on second, return mock
             mock_http_response.side_effect = [TypeError(), mock_http_response]
-            m.form_valid(self.form)
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", category=DeprecationWarning)
+                m.form_valid(self.form)
             self.assertEqual(
                 content_type, mock_http_response.call_args_list[0][1]["content_type"]
             )
@@ -90,7 +95,9 @@ class ExportViewMixinTest(TestCase):
                 return MagicMock()
 
         m = TestMixin()
-        res = m.form_valid(self.form)
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=DeprecationWarning)
+            res = m.form_valid(self.form)
         self.assertEqual(200, res.status_code)
         self.assertEqual(1, m.mock_get_filterset_call_count)
         self.assertEqual(1, m.mock_get_filterset_class_call_count)
