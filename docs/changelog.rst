@@ -4,6 +4,7 @@ Changelog
 3.3.2 (unreleased)
 ------------------
 
+- Added support for django5 (#1634)
 - Updated Spanish translations (#1639)
 - Added documentation and tests for retrieving instance information after import (#1643)
 - :meth:`~import_export.widgets.NumberWidget.render` returns ``None`` as empty string
