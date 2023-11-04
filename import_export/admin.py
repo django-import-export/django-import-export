@@ -231,7 +231,9 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
                     and row.import_type != row.IMPORT_TYPE_SKIP
                 ):
                     with warnings.catch_warnings():
-                        warnings.filterwarnings("ignore", category=DeprecationWarning)
+                        warnings.filterwarnings(
+                            "ignore", category=PendingDeprecationWarning
+                        )
                         LogEntry.objects.log_action(
                             user_id=request.user.pk,
                             content_type_id=content_type_id,
