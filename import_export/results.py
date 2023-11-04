@@ -62,11 +62,6 @@ class RowResult:
         #: This value is only set for updates.
         self.original = None
 
-        #: A boolean flag indicating whether the record is `new` or not.
-        #: Deprecated: use the value of ``import_type`` instead.
-        #: See issue 1586.
-        self.new_record = None
-
     def is_update(self):
         """
         :return: ``True`` if import type is 'update', otherwise ``False``.
