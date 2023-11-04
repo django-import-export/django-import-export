@@ -4,8 +4,11 @@ Changelog
 3.3.2 (unreleased)
 ------------------
 
-- Nothing changed yet.
-
+- Updated Spanish translations (#1639)
+- Added documentation and tests for retrieving instance information after import (#1643)
+- :meth:`~import_export.widgets.NumberWidget.render` returns ``None`` as empty string
+  if ``coerce_to_string`` is True (#1650)
+- Updated documentation to describe how to select for export in Admin UI (#1670)
 
 3.3.1 (2023-09-14)
 ------------------

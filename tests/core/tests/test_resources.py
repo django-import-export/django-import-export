@@ -680,6 +680,9 @@ class ModelResourceTest(TestCase):
         self.assertEqual(result.rows[0].import_type, results.RowResult.IMPORT_TYPE_NEW)
         self.assertIsNotNone(result.rows[0].instance)
         self.assertIsNone(result.rows[0].original)
+        self.assertEqual(1, Book.objects.count())
+        book = Book.objects.first()
+        self.assertEqual(book.pk, result.rows[0].instance.pk)
 
     def test_import_data_update_store_instance(self):
         self.resource = BookResourceWithStoreInstance()
@@ -689,6 +692,9 @@ class ModelResourceTest(TestCase):
         )
         self.assertIsNotNone(result.rows[0].instance)
         self.assertIsNotNone(result.rows[0].original)
+        self.assertEqual(1, Book.objects.count())
+        book = Book.objects.first()
+        self.assertEqual(book.pk, result.rows[0].instance.pk)
 
     @skipUnlessDBFeature("supports_transactions")
     @mock.patch("import_export.resources.connections")
@@ -1996,7 +2002,7 @@ class ManyToManyWidgetDiffTest(TestCase):
         book_resource._meta.skip_unchanged = True
 
         # import with natural order
-        dataset_row = [book.id, book.name, f"{cat1.id},{cat2.id}"]
+        dataset_row = [book.id, book.name, f"{cat1.id}, {cat2.id}"]
         dataset = tablib.Dataset(headers=dataset_headers)
         dataset.append(dataset_row)
 
@@ -2004,7 +2010,7 @@ class ManyToManyWidgetDiffTest(TestCase):
         self.assertEqual(result.rows[0].import_type, results.RowResult.IMPORT_TYPE_SKIP)
 
         # import with reverse order
-        dataset_row = [book.id, book.name, f"{cat2.id},{cat1.id}"]
+        dataset_row = [book.id, book.name, f"{cat2.id}, {cat1.id}"]
         dataset = tablib.Dataset(headers=dataset_headers)
         dataset.append(dataset_row)
 
@@ -2028,7 +2034,7 @@ class ManyToManyWidgetDiffTest(TestCase):
         uuid_book.save()
 
         dataset_headers = ["id", "name", "categories"]
-        dataset_row = [uuid_book.id, uuid_book.name, f"{cat1.catid},{cat2.catid}"]
+        dataset_row = [uuid_book.id, uuid_book.name, f"{cat1.catid}, {cat2.catid}"]
         dataset = tablib.Dataset(headers=dataset_headers)
         dataset.append(dataset_row)
         result = uuid_resource.import_data(dataset, dry_run=False)
