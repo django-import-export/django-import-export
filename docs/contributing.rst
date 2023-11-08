@@ -147,3 +147,8 @@ Development
   Then run::
 
     pre-commit install
+
+* If using ``git blame``, you can ignore commits which made large changes to the code base, such as reformatting.
+  Run this command from the base project directory::
+
+    git config blame.ignoreRevsFile .git-blame-ignore-revs

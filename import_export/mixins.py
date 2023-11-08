@@ -1,4 +1,5 @@
 import logging
+from warnings import warn
 
 from django.conf import settings
 from django.http import HttpResponse
@@ -142,6 +143,12 @@ class ExportViewMixin(BaseExportMixin):
 
 class ExportViewFormMixin(ExportViewMixin, FormView):
     def form_valid(self, form):
+        warn(
+            "ExportViewFormMixin is deprecated and will be removed "
+            "in a future release",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         formats = self.get_export_formats()
         file_format = formats[int(form.cleaned_data["file_format"])]()
         if hasattr(self, "get_filterset"):

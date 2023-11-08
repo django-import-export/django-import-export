@@ -181,6 +181,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         )
         resource = self.choose_import_resource_class(confirm_form)(**res_kwargs)
         imp_kwargs = self.get_import_data_kwargs(request, form=confirm_form, **kwargs)
+        imp_kwargs["retain_instance_in_row_result"] = True
 
         return resource.import_data(
             dataset,
@@ -204,25 +205,30 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
     def generate_log_entries(self, result, request):
         if not self.get_skip_admin_log():
             # Add imported objects to LogEntry
-            logentry_map = {
-                RowResult.IMPORT_TYPE_NEW: ADDITION,
-                RowResult.IMPORT_TYPE_UPDATE: CHANGE,
-                RowResult.IMPORT_TYPE_DELETE: DELETION,
-            }
-            content_type_id = ContentType.objects.get_for_model(self.model).pk
-            for row in result:
-                if (
-                    row.import_type != row.IMPORT_TYPE_ERROR
-                    and row.import_type != row.IMPORT_TYPE_SKIP
-                ):
-                    LogEntry.objects.log_action(
-                        user_id=request.user.pk,
-                        content_type_id=content_type_id,
-                        object_id=row.object_id,
-                        object_repr=row.object_repr,
-                        action_flag=logentry_map[row.import_type],
-                        change_message=_("%s through import_export" % row.import_type),
-                    )
+            if django.VERSION >= (5, 0):
+                self._log_actions(result, request)
+            else:
+                logentry_map = {
+                    RowResult.IMPORT_TYPE_NEW: ADDITION,
+                    RowResult.IMPORT_TYPE_UPDATE: CHANGE,
+                    RowResult.IMPORT_TYPE_DELETE: DELETION,
+                }
+                content_type_id = ContentType.objects.get_for_model(self.model).pk
+                for row in result:
+                    if (
+                        row.import_type != row.IMPORT_TYPE_ERROR
+                        and row.import_type != row.IMPORT_TYPE_SKIP
+                    ):
+                        LogEntry.objects.log_action(
+                            user_id=request.user.pk,
+                            content_type_id=content_type_id,
+                            object_id=row.object_id,
+                            object_repr=row.object_repr,
+                            action_flag=logentry_map[row.import_type],
+                            change_message=_(
+                                "%s through import_export" % row.import_type
+                            ),
+                        )
 
     def add_success_message(self, result, request):
         opts = self.model._meta
@@ -527,6 +533,37 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
             extra_context = {}
         extra_context["has_import_permission"] = self.has_import_permission(request)
         return super().changelist_view(request, extra_context)
+
+    def _log_actions(self, result, request):
+        """
+        Create appropriate LogEntry instances for the result.
+        """
+        rows = dict()
+        for row in result:
+            rows.setdefault(row.import_type, list())
+            rows[row.import_type].append(row.instance)
+
+        self._create_log_entries(request.user.pk, rows)
+
+    def _create_log_entries(self, user_pk, rows):
+        logentry_map = {
+            RowResult.IMPORT_TYPE_NEW: ADDITION,
+            RowResult.IMPORT_TYPE_UPDATE: CHANGE,
+            RowResult.IMPORT_TYPE_DELETE: DELETION,
+        }
+        for import_type, instances in rows.items():
+            action_flag = logentry_map[import_type]
+            self._create_log_entry(user_pk, rows[import_type], import_type, action_flag)
+
+    def _create_log_entry(self, user_pk, rows, import_type, action_flag):
+        if len(rows) > 0:
+            LogEntry.objects.log_actions(
+                user_pk,
+                rows,
+                action_flag,
+                change_message=_("%s through import_export" % import_type),
+                single_object=len(rows) == 1,
+            )
 
 
 class ExportMixin(BaseExportMixin, ImportExportMixinBase):
