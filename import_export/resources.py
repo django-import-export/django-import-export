@@ -51,21 +51,6 @@ def has_natural_foreign_key(model):
     )
 
 
-def load_meta_options(base, meta):
-    options = getattr(base, "Meta", None)
-
-    for option in [
-        option
-        for option in dir(options)
-        if not option.startswith("_") and hasattr(options, option)
-    ]:
-        option_value = getattr(options, option)
-        if option == "model" and isinstance(option_value, str):
-            option_value = apps.get_model(option_value)
-
-        setattr(meta, option, option_value)
-
-
 class ResourceOptions:
     """
     The inner Meta class allows for class-level configuration of how the
@@ -266,6 +251,20 @@ class ResourceOptions:
 
 class DeclarativeMetaclass(type):
     def __new__(cls, name, bases, attrs):
+        def _load_meta_options(base_, meta_):
+            options = getattr(base_, "Meta", None)
+
+            for option in [
+                option
+                for option in dir(options)
+                if not option.startswith("_") and hasattr(options, option)
+            ]:
+                option_value = getattr(options, option)
+                if option == "model" and isinstance(option_value, str):
+                    option_value = apps.get_model(option_value)
+
+                setattr(meta_, option, option_value)
+
         declared_fields = []
         meta = ResourceOptions()
 
@@ -276,7 +275,7 @@ class DeclarativeMetaclass(type):
             if hasattr(base, "fields"):
                 declared_fields = list(base.fields.items()) + declared_fields
                 # Collect the Meta options
-                load_meta_options(base, meta)
+                _load_meta_options(base, meta)
 
         # Add direct fields
         for field_name, obj in attrs.copy().items():
@@ -289,7 +288,7 @@ class DeclarativeMetaclass(type):
         attrs["fields"] = OrderedDict(declared_fields)
         new_class = super().__new__(cls, name, bases, attrs)
         # add direct fields
-        load_meta_options(new_class, meta)
+        _load_meta_options(new_class, meta)
         new_class._meta = meta
 
         return new_class
