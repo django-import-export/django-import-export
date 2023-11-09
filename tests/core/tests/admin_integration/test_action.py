@@ -69,6 +69,7 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertEqual([2, 1], data["export_items"])
         self.assertIn("Export 2 selected items.", str(response.content))
 
+    @ignore_widget_deprecation_warning
     def test_export_post(self):
         # create a POST request with data selected from the 'action' export
         data = {"file_format": "0", "export_items": [str(self.cat1.id)]}
