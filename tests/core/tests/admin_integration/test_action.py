@@ -40,7 +40,7 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
         self._check_export_response(response)
 
     @ignore_widget_deprecation_warning
-    def test_export_redirects_to_export_ui_select_page(self):
+    def test_export_displays_ui_select_page(self):
         data = {
             "action": ["export_admin_action"],
             "_selected_action": [str(self.cat1.id)],
@@ -55,7 +55,7 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertIn("Export 1 selected item.", str(response.content))
 
     @ignore_widget_deprecation_warning
-    def test_export_redirects_to_export_ui_select_page_multiple_items(self):
+    def test_export_displays_ui_select_page_multiple_items(self):
         data = {
             "action": ["export_admin_action"],
             "_selected_action": [str(self.cat1.id), str(self.cat2.id)],
@@ -68,6 +68,21 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
         data = export_form.initial
         self.assertEqual([2, 1], data["export_items"])
         self.assertIn("Export 2 selected items.", str(response.content))
+
+    def test_export_post(self):
+        # create a POST request with data selected from the 'action' export
+        data = {"file_format": "0", "export_items": [str(self.cat1.id)]}
+        date_str = datetime.now().strftime("%Y-%m-%d")
+        response = self.client.post("/admin/core/category/export/", data)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.has_header("Content-Disposition"))
+        self.assertEqual(response["Content-Type"], "text/csv")
+        self.assertEqual(
+            response["Content-Disposition"],
+            'attachment; filename="Category-{}.csv"'.format(date_str),
+        )
+        target_str = f"id,name\r\n{self.cat1.id},Cat 1\r\n"
+        self.assertEqual(target_str.encode(), response.content)
 
     def test_get_export_data_raises_PermissionDenied_when_no_export_permission_assigned(
         self,

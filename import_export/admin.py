@@ -777,9 +777,6 @@ class ExportActionMixin(ExportMixin):
         """
         Action runs on POST from instance action menu (if enabled).
         """
-        if not self.has_export_permission(request):
-            raise PermissionDenied
-
         formats = self.get_export_formats()
         if getattr(settings, "IMPORT_EXPORT_SKIP_ADMIN_ACTION_EXPORT_UI", False):
             file_format = formats[0]()

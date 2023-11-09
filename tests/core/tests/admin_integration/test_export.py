@@ -16,12 +16,16 @@ from tablib import Dataset
 
 from import_export import formats
 from import_export.admin import ExportMixin
+from import_export.formats.base_formats import XLSX
 
 
 class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
     def test_export(self):
         response = self.client.get("/admin/core/book/export/")
         self.assertEqual(response.status_code, 200)
+        self.assertNotIn("Export 0 selected items.", str(response.content))
+        form = response.context["form"]
+        self.assertEqual(2, len(form.fields["resource"].choices))
 
         data = {
             "file_format": "0",
@@ -40,6 +44,16 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
             b"published_time,price,added,categories\r\n",
             response.content,
         )
+
+    def test_get_export_form_single_resource(self):
+        response = self.client.get("/admin/core/category/export/")
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn("Export 0 selected items.", str(response.content))
+        form = response.context["form"]
+        self.assertEqual(0, len(form.fields["resource"].choices))
+        self.assertTrue(form.fields["resource"].widget.attrs["readonly"])
+        self.assertIn("CategoryResource", str(response.content))
+        self.assertNotIn('select name="resource"', str(response.content))
 
     def test_export_second_resource(self):
         response = self.client.get("/admin/core/book/export/")
@@ -60,6 +74,15 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
             'attachment; filename="Book-{}.csv"'.format(date_str),
         )
         self.assertEqual(b"id,name\r\n", response.content)
+
+    @override_settings(EXPORT_FORMATS=[XLSX])
+    def test_get_export_form_single_format(self):
+        response = self.client.get("/admin/core/category/export/")
+        form = response.context["form"]
+        self.assertEqual(1, len(form.fields["file_format"].choices))
+        self.assertTrue(form.fields["file_format"].widget.attrs["readonly"])
+        self.assertIn("xlsx", str(response.content))
+        self.assertNotIn('select name="file_format"', str(response.content))
 
     def test_returns_xlsx_export(self):
         response = self.client.get("/admin/core/book/export/")

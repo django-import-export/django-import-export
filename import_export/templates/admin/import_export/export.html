@@ -16,7 +16,7 @@
 <form action="{{ request.path }}{{ export_suffix }}" method="POST">
   {% csrf_token %}
     {# export request has originated from an Admin UI action #}
-    {% if form.export_items %}
+    {% if form.initial.export_items %}
       <p>
       {% blocktranslate count len=form.initial.export_items|length %}
         Export {{ len }} selected item.

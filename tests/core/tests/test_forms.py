@@ -14,7 +14,7 @@ class FormTest(TestCase):
         with self.assertRaises(ValueError):
             forms.ImportExportFormBase(resources=resource_list)
 
-    def test_formbase_init_one_resources(self):
+    def test_formbase_init_one_resource(self):
         resource_list = [resources.ModelResource]
         form = forms.ImportExportFormBase(resources=resource_list)
         self.assertTrue("resource" in form.fields)
