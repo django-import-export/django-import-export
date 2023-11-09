@@ -66,7 +66,9 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertIn("form", response.context)
         export_form = response.context["form"]
         data = export_form.initial
-        self.assertEqual([2, 1], data["export_items"])
+        self.assertEqual(
+            sorted([self.cat1.id, self.cat2.id]), sorted(data["export_items"])
+        )
         self.assertIn("Export 2 selected items.", str(response.content))
 
     @ignore_widget_deprecation_warning
