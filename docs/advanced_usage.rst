@@ -356,7 +356,8 @@ data if it does not already exist.  It is possible to achieve this as follows::
 The code above can be adapted to handle m2m relationships.
 
 You can also achieve similar by subclassing the widget :meth:`~import_export.widgets.ForeignKeyWidget.clean` method to
-create the object if it does not already exist.
+create the object if it does not already exist.  An example for :class:`~import_export.widgets.ManyToManyWidget` is
+`here <https://github.com/django-import-export/django-import-export/issues/318#issuecomment-861813245>`_.
 
 Customize relation lookup
 -------------------------

@@ -7,6 +7,7 @@ from html import escape
 
 import tablib
 from diff_match_patch import diff_match_patch
+from django.apps import apps
 from django.conf import settings
 from django.core.exceptions import (
     FieldDoesNotExist,
@@ -58,8 +59,8 @@ class ResourceOptions:
 
     model = None
     """
-    Django Model class. It is used to introspect available
-    fields.
+    Django Model class or full application label string. It is used to introspect
+    available fields.
 
     """
     fields = None
@@ -250,6 +251,20 @@ class ResourceOptions:
 
 class DeclarativeMetaclass(type):
     def __new__(cls, name, bases, attrs):
+        def _load_meta_options(base_, meta_):
+            options = getattr(base_, "Meta", None)
+
+            for option in [
+                option
+                for option in dir(options)
+                if not option.startswith("_") and hasattr(options, option)
+            ]:
+                option_value = getattr(options, option)
+                if option == "model" and isinstance(option_value, str):
+                    option_value = apps.get_model(option_value)
+
+                setattr(meta_, option, option_value)
+
         declared_fields = []
         meta = ResourceOptions()
 
@@ -260,13 +275,7 @@ class DeclarativeMetaclass(type):
             if hasattr(base, "fields"):
                 declared_fields = list(base.fields.items()) + declared_fields
                 # Collect the Meta options
-                options = getattr(base, "Meta", None)
-                for option in [
-                    option
-                    for option in dir(options)
-                    if not option.startswith("_") and hasattr(options, option)
-                ]:
-                    setattr(meta, option, getattr(options, option))
+                _load_meta_options(base, meta)
 
         # Add direct fields
         for field_name, obj in attrs.copy().items():
@@ -278,15 +287,8 @@ class DeclarativeMetaclass(type):
 
         attrs["fields"] = OrderedDict(declared_fields)
         new_class = super().__new__(cls, name, bases, attrs)
-
-        # Add direct options
-        options = getattr(new_class, "Meta", None)
-        for option in [
-            option
-            for option in dir(options)
-            if not option.startswith("_") and hasattr(options, option)
-        ]:
-            setattr(meta, option, getattr(options, option))
+        # add direct fields
+        _load_meta_options(new_class, meta)
         new_class._meta = meta
 
         return new_class

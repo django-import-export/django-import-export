@@ -1715,3 +1715,15 @@ if "postgresql" in settings.DATABASES["default"]["ENGINE"]:
 
             self.book.refresh_from_db()
             self.assertEqual(self.book.data, self.data)
+
+
+class BookResourceWithStringModelTest(TestCase):
+    def setUp(self):
+        class BookResourceWithStringModel(resources.ModelResource):
+            class Meta:
+                model = "core.Book"
+
+        self.resource = BookResourceWithStringModel()
+
+    def test_resource_gets_correct_model_from_string(self):
+        self.assertEqual(self.resource._meta.model, Book)
