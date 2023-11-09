@@ -138,6 +138,7 @@ class ExportViewMixin(BaseExportMixin):
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs["formats"] = self.get_export_formats()
+        kwargs["resources"] = self.get_export_resource_classes()
         return kwargs
 
 
