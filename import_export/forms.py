@@ -74,7 +74,7 @@ class ExportForm(ImportExportFormBase):
         choices=(),
     )
     export_items = forms.MultipleChoiceField(
-        widget=forms.MultipleHiddenInput, required=False
+        widget=forms.MultipleHiddenInput(), required=False
     )
 
     def __init__(self, formats, *args, **kwargs):

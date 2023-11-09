@@ -46,9 +46,28 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
             "_selected_action": [str(self.cat1.id)],
         }
         response = self.client.post("/admin/core/category/", data)
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual("/admin/core/category/export/?ia=1", response.url)
-        self.assertEqual([self.cat1.pk], self.client.session["export_items"])
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("form", response.context)
+        export_form = response.context["form"]
+        data = export_form.initial
+        self.assertEqual([1], data["export_items"])
+        self.assertIn("Export 1 selected item.", str(response.content))
+
+    @ignore_widget_deprecation_warning
+    def test_export_redirects_to_export_ui_select_page_multiple_items(self):
+        data = {
+            "action": ["export_admin_action"],
+            "_selected_action": [str(self.cat1.id), str(self.cat2.id)],
+        }
+        response = self.client.post("/admin/core/category/", data)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("form", response.context)
+        export_form = response.context["form"]
+        data = export_form.initial
+        self.assertEqual([2, 1], data["export_items"])
+        self.assertIn("Export 2 selected items.", str(response.content))
 
     def test_get_export_data_raises_PermissionDenied_when_no_export_permission_assigned(
         self,

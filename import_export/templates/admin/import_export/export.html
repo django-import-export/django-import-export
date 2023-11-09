@@ -16,9 +16,9 @@
 <form action="{{ request.path }}{{ export_suffix }}" method="POST">
   {% csrf_token %}
     {# export request has originated from an Admin UI action #}
-    {% if export_items %}
+    {% if form.export_items %}
       <p>
-      {% blocktranslate count len=export_items|length %}
+      {% blocktranslate count len=form.initial.export_items|length %}
         Export {{ len }} selected item.
         {% plural %}
         Export {{ len }} selected items.
@@ -27,7 +27,7 @@
     {% endif %}
 
     <fieldset class="module aligned">
-      {% for field in form %}
+      {% for field in form.visible_fields %}
         <div class="form-row">
           {{ field.errors }}
 
@@ -43,6 +43,9 @@
           <p class="help">{{ field.field.help_text|safe }}</p>
           {% endif %}
         </div>
+      {% endfor %}
+      {% for field in form.hidden_fields %}
+          {{ field }}
       {% endfor %}
     </fieldset>
 

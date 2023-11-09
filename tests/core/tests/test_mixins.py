@@ -8,6 +8,7 @@ from django.test.testcases import TestCase
 from django.urls import reverse
 
 from import_export import admin, formats, forms, mixins, resources
+from import_export.resources import modelresource_factory
 
 from .utils import ignore_widget_deprecation_warning
 
@@ -21,7 +22,8 @@ class ExportViewMixinTest(TestCase):
         self.cat1 = Category.objects.create(name="Cat 1")
         self.cat2 = Category.objects.create(name="Cat 2")
         self.form = ExportViewMixinTest.TestExportForm(
-            formats.base_formats.DEFAULT_FORMATS
+            formats.base_formats.DEFAULT_FORMATS,
+            resources=[modelresource_factory(Category)],
         )
         self.form.cleaned_data["file_format"] = "0"
 
