@@ -1,7 +1,7 @@
 Changelog
 =========
 
-3.3.2 (unreleased)
+3.3.2 (2023-11-09)
 ------------------
 
 - Updated Spanish translations (#1639)
