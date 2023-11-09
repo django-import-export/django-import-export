@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 0.0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-09-12 15:15+0100\n"
+"POT-Creation-Date: 2023-11-08 18:22+0000\n"
 "PO-Revision-Date: 2021-03-09 00:29+0030\n"
 "Last-Translator: Yazdan Ranjbar <Yazdan_ra@icloud.com>\n"
 "Language-Team: Persain/Farsi <kde-i18n-it@kde.org>\n"
@@ -17,37 +17,37 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Poedit 1.5.4\n"
 
-#: admin.py:241
+#: admin.py:239
 #, python-format
 msgid "%s through import_export"
 msgstr "%s یه وسیله ورودی-خروجی"
 
-#: admin.py:248
+#: admin.py:246
 msgid "Import finished, with {} new and {} updated {}."
 msgstr "بارگذاری تمام شد، با {} مورد جدید و {} مورد به روز شده."
 
-#: admin.py:496
+#: admin.py:491
 #, python-format
 msgid ""
 "%(exc_name)s encountered while trying to read file. Ensure you have chosen "
 "the correct format for the file."
 msgstr ""
 
-#: admin.py:650 templates/admin/import_export/change_list_import_item.html:5
+#: admin.py:642 templates/admin/import_export/change_list_import_item.html:5
 #: templates/admin/import_export/import.html:19
 msgid "Import"
 msgstr "بارگذاری"
 
-#: admin.py:836 templates/admin/import_export/change_list_export_item.html:5
+#: admin.py:827 templates/admin/import_export/change_list_export_item.html:5
 #: templates/admin/import_export/export.html:12
 msgid "Export"
 msgstr "خروجی"
 
-#: admin.py:901
+#: admin.py:892
 msgid "You must select an export format."
 msgstr "شما باید یک فرمت خروجی انتخاب کنید"
 
-#: admin.py:926
+#: admin.py:917
 #, python-format
 msgid "Export selected %(verbose_name_plural)s"
 msgstr "خروجی %(verbose_name_plural)s انتخاب شده"

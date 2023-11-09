@@ -319,7 +319,7 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
             response = self._do_import_post(self.book_import_url, "books.csv")
         self.assertEqual(response.status_code, 200)
         target_msg = (
-            "Se encontró 'ValueError' mientras se intentaba leer el archivo."
+            "Se encontró 'ValueError' mientras se intentaba leer el archivo. "
             "Asegúrese que seleccionó el formato correcto para el archivo."
         )
 
