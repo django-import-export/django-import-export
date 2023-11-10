@@ -36,6 +36,7 @@ class BookAdmin(ImportExportModelAdmin):
     resource_classes = [BookResource, BookNameResource]
     change_list_template = "core/admin/change_list.html"
 
+
 class CategoryAdmin(ExportActionModelAdmin):
     def export_admin_action(self, request, queryset):
         return super().export_admin_action(request, queryset)
