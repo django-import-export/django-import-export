@@ -258,10 +258,17 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         )
 
     def test_export_admin_action(self):
-        with mock.patch("core.admin.BookAdmin.export_admin_action") as mock_export_admin_action:
+        with mock.patch(
+            "core.admin.BookAdmin.export_admin_action"
+        ) as mock_export_admin_action:
             response = self.client.post(
                 self.book_change_url,
-                {'action': 'export_admin_action', 'index': '0', 'selected_across': '0', '_selected_action': '0'}
+                {
+                    "action": "export_admin_action",
+                    "index": "0",
+                    "selected_across": "0",
+                    "_selected_action": "0",
+                },
             )
             assert 200 <= response.status_code <= 399
             mock_export_admin_action.assert_called()
