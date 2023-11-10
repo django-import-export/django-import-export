@@ -4,7 +4,7 @@ Changelog
 3.3.3 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- `.export_admin_action` can be overridden by subclassing it in the `ModelAdmin`.
 
 
 3.3.2 (2023-11-09)

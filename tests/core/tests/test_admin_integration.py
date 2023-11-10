@@ -33,6 +33,7 @@ from import_export.tmp_storages import TempFolderStorage
 
 
 class AdminTestMixin(object):
+    book_change_url = "/admin/core/book/"
     book_import_url = "/admin/core/book/import/"
     book_process_import_url = "/admin/core/book/process_import/"
     legacybook_import_url = "/admin/core/legacybook/import/"
@@ -255,6 +256,15 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertContains(
             response, "Import finished, with 0 new and 1 updated legacy books."
         )
+
+    def test_export_admin_action(self):
+        with mock.patch("core.admin.BookAdmin.export_admin_action") as mock_export_admin_action:
+            response = self.client.post(
+                self.book_change_url,
+                {'action': 'export_admin_action', 'index': '0', 'selected_across': '0', '_selected_action': '0'}
+            )
+            assert 200 <= response.status_code <= 399
+            mock_export_admin_action.assert_called()
 
     def test_import_action_handles_UnicodeDecodeError_as_form_error(self):
         with mock.patch(
