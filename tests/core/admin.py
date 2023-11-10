@@ -37,8 +37,6 @@ class BookAdmin(ExportActionMixin, ImportExportModelAdmin):
     change_list_template = "core/admin/change_list.html"
 
     def export_admin_action(self, request, queryset):
-        # just to mock
-        print('bla')
         return super().export_admin_action(request, queryset)
 
 class CategoryAdmin(ExportActionModelAdmin):
