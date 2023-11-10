@@ -33,7 +33,7 @@ from import_export.tmp_storages import TempFolderStorage
 
 
 class AdminTestMixin(object):
-    book_change_url = "/admin/core/book/"
+    category_change_url = "/admin/core/category/"
     book_import_url = "/admin/core/book/import/"
     book_process_import_url = "/admin/core/book/process_import/"
     legacybook_import_url = "/admin/core/legacybook/import/"
@@ -259,10 +259,10 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
 
     def test_export_admin_action(self):
         with mock.patch(
-            "core.admin.BookAdmin.export_admin_action"
+            "core.admin.CategoryAdmin.export_admin_action"
         ) as mock_export_admin_action:
             response = self.client.post(
-                self.book_change_url,
+                self.category_change_url,
                 {
                     "action": "export_admin_action",
                     "index": "0",

@@ -3,7 +3,7 @@ from django.contrib import admin
 from import_export.admin import (
     ExportActionModelAdmin,
     ImportExportModelAdmin,
-    ImportMixin, ExportActionMixin,
+    ImportMixin,
 )
 from import_export.resources import ModelResource
 
@@ -30,17 +30,15 @@ class BookNameResource(ModelResource):
         name = "Export/Import only book names"
 
 
-class BookAdmin(ExportActionMixin, ImportExportModelAdmin):
+class BookAdmin(ImportExportModelAdmin):
     list_display = ("name", "author", "added")
     list_filter = ["categories", "author"]
     resource_classes = [BookResource, BookNameResource]
     change_list_template = "core/admin/change_list.html"
 
+class CategoryAdmin(ExportActionModelAdmin):
     def export_admin_action(self, request, queryset):
         return super().export_admin_action(request, queryset)
-
-class CategoryAdmin(ExportActionModelAdmin):
-    pass
 
 
 class AuthorAdmin(ImportMixin, admin.ModelAdmin):
