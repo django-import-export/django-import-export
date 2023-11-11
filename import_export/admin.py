@@ -723,7 +723,6 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
             )
 
             post_export.send(sender=None, model=self.model)
-            # TODO send a message indicating success
             return response
         context = self.init_request_context_data(request, form)
         request.current_app = self.admin_site.name

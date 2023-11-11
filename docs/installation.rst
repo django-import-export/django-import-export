@@ -66,7 +66,7 @@ of losing an audit trail.
 Can be overridden on a ``ModelAdmin`` class inheriting from ``ImportMixin`` by
 setting the ``skip_admin_log`` class attribute.
 
-.. _IMPORT_EXPORT_TMP_STORAGE_CLASS:
+.. _import_export_tmp_storage_class:
 
 ``IMPORT_EXPORT_TMP_STORAGE_CLASS``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -77,7 +77,7 @@ during imports. Defaults to ``import_export.tmp_storages.TempFolderStorage``.
 Can be overridden on a ``ModelAdmin`` class inheriting from ``ImportMixin`` by
 setting the ``tmp_storage_class`` class attribute.
 
-.. _IMPORT_EXPORT_IMPORT_PERMISSION_CODE:
+.. _import_export_import_permission_code:
 
 ``IMPORT_EXPORT_IMPORT_PERMISSION_CODE``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -109,7 +109,7 @@ imports.  For more information refer to the
 `Django auth <https://docs.djangoproject.com/en/stable/topics/auth/default/>`_
 documentation.
 
-.. _IMPORT_EXPORT_EXPORT_PERMISSION_CODE:
+.. _import_export_export_permission_code:
 
 ``IMPORT_EXPORT_EXPORT_PERMISSION_CODE``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -127,6 +127,8 @@ decreasing it, or speed up exports by increasing it.
 Can be overridden on a ``Resource`` class by setting the ``chunk_size`` class
 attribute.
 
+.. _import_export_skip_admin_confirm:
+
 ``IMPORT_EXPORT_SKIP_ADMIN_CONFIRM``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -141,15 +143,17 @@ Note that if you disable transaction support via configuration (or if your datab
 does not support transactions), then validation errors will still be presented to the user
 but valid rows will have imported.
 
+.. _import_export_skip_admin_action_export_ui:
+
 ``IMPORT_EXPORT_SKIP_ADMIN_ACTION_EXPORT_UI``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 A boolean value which will skip the 'file format' and 'resource' select page in the Admin UI
 when the export is requested from an Admin UI action.
-If ``TRUE`` then the first element in the file format' and 'resource' lists will be used.
+If ``TRUE`` then the first element in the 'file format' and 'resource' lists will be used.
 By default this is ``FALSE``.
 
-.. _IMPORT_EXPORT_ESCAPE_FORMULAE_ON_EXPORT:
+.. _import_export_escape_formulae_on_export:
 
 ``IMPORT_EXPORT_ESCAPE_FORMULAE_ON_EXPORT``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -157,7 +161,7 @@ By default this is ``FALSE``.
 If set to ``True``, strings will be sanitized by removing any leading '=' character.  This is to prevent execution of
 Excel formulae.  By default this is ``False``.
 
-.. _IMPORT_EXPORT_FORMATS:
+.. _import_export_formats:
 
 ``IMPORT_EXPORT_FORMATS``
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -172,7 +176,7 @@ The values must be those provided in ``import_export.formats.base_formats`` e.g
     from import_export.formats.base_formats import XLSX
     IMPORT_EXPORT_FORMATS = [XLSX]
 
-.. _IMPORT_FORMATS:
+.. _import_formats:
 
 ``IMPORT_FORMATS``
 ~~~~~~~~~~~~~~~~~~
@@ -187,7 +191,7 @@ The values must be those provided in ``import_export.formats.base_formats`` e.g
     from import_export.formats.base_formats import CSV, XLSX
     IMPORT_FORMATS = [CSV, XLSX]
 
-.. _EXPORT_FORMATS:
+.. _export_formats:
 
 ``EXPORT_FORMATS``
 ~~~~~~~~~~~~~~~~~~

@@ -726,41 +726,22 @@ dropdown in the UI.
 
    A screenshot of the change view with Import and Export buttons.
 
-Exporting via admin action
---------------------------
-
-Another approach to exporting data is by subclassing
-:class:`~import_export.admin.ExportActionModelAdmin` which implements
-export as an admin action. As a result it's possible to export a list of
-objects selected on the change list page::
-
-    # app/admin.py
-    from import_export.admin import ExportActionModelAdmin
-
-    class BookAdmin(ExportActionModelAdmin):
-        pass
-
-
-.. figure:: _static/images/django-import-export-action.png
-
-   A screenshot of the change view with Import and Export as an admin action.
-
-Note that to use the :class:`~import_export.admin.ExportMixin` or
-:class:`~import_export.admin.ExportActionMixin`, you must declare this mixin
-**before** ``admin.ModelAdmin``.
-
 .. _import-process:
 
 Importing
 ---------
 
-It is also possible to enable data import via standard Django admin interface.
-To do this subclass :class:`~import_export.admin.ImportExportModelAdmin` or use
+To enable import, subclass :class:`~import_export.admin.ImportExportModelAdmin` or use
 one of the available mixins, i.e. :class:`~import_export.admin.ImportMixin`, or
 :class:`~import_export.admin.ImportExportMixin`.
 
-By default, import is a two step process, though it can be configured to be a single step process
-(see :ref:`IMPORT_EXPORT_SKIP_ADMIN_CONFIRM`).
+Enabling import functionality means that a UI button will automatically be presented on the Admin page:
+
+.. figure:: _static/images/import-button.png
+   :alt: The import button
+
+When clicked, the user will be directed into the import workflow.  By default, import is a two step process, though
+it can be configured to be a single step process (see :ref:`import_export_skip_admin_confirm`).
 
 The two step process is:
 
@@ -770,12 +751,14 @@ The two step process is:
 .. _confirm-import-figure:
 
 .. figure:: _static/images/django-import-export-import.png
+   :alt: A screenshot of the 'import' view
 
-   A screenshot of the import view.
+   A screenshot of the 'import' view.
 
 .. figure:: _static/images/django-import-export-import-confirm.png
+   :alt: A screenshot of the 'confirm import' view
 
-   A screenshot of the confirm import view.
+   A screenshot of the 'confirm import' view.
 
 Import confirmation
 -------------------
@@ -793,7 +776,7 @@ There are three mechanisms for temporary storage.
 
 #. `Django storage <https://docs.djangoproject.com/en/stable/ref/files/storage/>`_.
 
-To modify which storage mechanism is used, please refer to the setting :ref:`IMPORT_EXPORT_TMP_STORAGE_CLASS`.
+To modify which storage mechanism is used, please refer to the setting :ref:`import_export_tmp_storage_class`.
 
 Temporary resources are removed when data is successfully imported after the confirmation step.
 
@@ -810,6 +793,61 @@ Your choice of temporary storage will be influenced by the following factors:
     or if there are errors during import, then temporary resources may not be deleted.
     This will need to be understood and managed in production settings.
     For example, using a cache expiration policy or cron job to clear stale resources.
+
+Exporting
+---------
+
+As with import, it is also possible to configure export functionality.
+
+To do this, subclass :class:`~import_export.admin.ImportExportModelAdmin` or use
+one of the available mixins, i.e. :class:`~import_export.admin.ExportMixin`, or
+:class:`~import_export.admin.ImportExportMixin`.
+
+Enabling import functionality means that a UI button will automatically be presented on the Admin page:
+
+.. figure:: _static/images/export-button.png
+   :alt: The export button
+
+When clicked, the user will be directed into the export workflow.
+
+Export is a two step process.  When the 'export' button is clicked, the user will be directed to a new screen,
+where 'resource' and 'file format' can be selected.
+
+.. _export_confirm:
+
+.. figure:: _static/images/django-import-export-export-confirm.png
+   :alt: the export confirm page
+
+   The export 'confirm' page.
+
+Once 'submit' is clicked, the export file will be automatically downloaded to the client (usually to the 'Downloads'
+folder).
+
+Exporting via Admin action
+--------------------------
+
+It's possible to configure the Admin UI so that users can select which items they want to export:
+
+
+.. image:: _static/images/select-for-export.png
+  :alt: Select items for export
+
+To do this, simply declare an Admin instance which includes  :class:`~import_export.admin.ExportActionMixin`::
+
+  class BookAdmin(ImportExportModelAdmin, ExportActionMixin):
+    # additional config can be supplied if required
+    pass
+
+Then register this Admin::
+
+  admin.site.register(Book, BookAdmin)
+
+Note that the above example refers specifically to the :ref:`example application<exampleapp>`, you'll have to modify
+this to refer to your own model instances.  In the example application, the 'Category' model has this functionality.
+
+When 'Go' is clicked for the selected items, the user will be directed to the
+:ref:`export 'confirm' page<export_confirm>`.  It is possible to disable this extra step by setting the
+:ref:`import_export_skip_admin_action_export_ui` flag.
 
 Customize admin import forms
 ----------------------------
@@ -1028,27 +1066,6 @@ return books for the publisher::
 
         class Meta:
             model = Book
-
-Select items for export
------------------------
-
-It's possible to configure the Admin UI so that users can select which items they want to export:
-
-.. image:: _static/images/select-for-export.png
-  :alt: Select items for export
-
-To do this, simply declare an Admin instance which includes  :class:`~import_export.admin.ExportActionMixin`::
-
-  class BookAdmin(ImportExportModelAdmin, ExportActionMixin):
-    # additional config can be supplied if required
-    pass
-
-Then register this Admin::
-
-  admin.site.register(Book, BookAdmin)
-
-Note that the above example refers specifically to the :ref:`example application<exampleapp>`, you'll have to modify
-this to refer to your own Model instances.
 
 .. _interoperability:
 
