@@ -819,7 +819,7 @@ class ExportActionMixin(ExportMixin):
         actions = super().get_actions(request)
         actions.update(
             export_admin_action=(
-                ExportActionMixin.export_admin_action,
+                type(self).export_admin_action,
                 "export_admin_action",
                 _("Export selected %(verbose_name_plural)s"),
             )

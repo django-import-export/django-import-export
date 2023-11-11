@@ -1,4 +1,5 @@
 from datetime import datetime
+from unittest import mock
 from unittest.mock import MagicMock
 
 from core.models import Book, Category
@@ -86,6 +87,22 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
         )
         target_str = f"id,name\r\n{self.cat1.id},Cat 1\r\n"
         self.assertEqual(target_str.encode(), response.content)
+
+    def test_export_admin_action(self):
+        with mock.patch(
+            "core.admin.CategoryAdmin.export_admin_action"
+        ) as mock_export_admin_action:
+            response = self.client.post(
+                self.category_change_url,
+                {
+                    "action": "export_admin_action",
+                    "index": "0",
+                    "selected_across": "0",
+                    "_selected_action": "0",
+                },
+            )
+            assert 200 <= response.status_code <= 399
+            mock_export_admin_action.assert_called()
 
     def test_get_export_data_raises_PermissionDenied_when_no_export_permission_assigned(
         self,

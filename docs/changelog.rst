@@ -1,6 +1,7 @@
 Changelog
 =========
 
+
 Please refer to :doc:`release notes<release_notes>`.
 
 4.0.0-alpha.6 (unreleased)
@@ -27,7 +28,6 @@ Please refer to :doc:`release notes<release_notes>`.
 
 4.0.0-alpha.5 (2023-09-22)
 --------------------------
-
 - dynamic widget parameters for CharField fixes 'NOT NULL constraint' error in xlsx (#1485)
 - refactor to export HTML / formulae escaping updates (#1638)
 
@@ -44,6 +44,17 @@ Please refer to :doc:`release notes<release_notes>`.
 - Removed v3 deprecations (#1629)
 - Refactor build process (#1630)
 - fix cooperation with adminsortable2 (#1633)
+3.3.4 (unreleased)
+------------------
+
+- Nothing changed yet.
+
+
+3.3.3 (2023-11-11)
+------------------
+
+- :meth:`~import_export.admin.ExportActionMixin.export_admin_action` can be overridden by subclassing it in the
+  ``ModelAdmin`` (#1681)
 
 3.3.2 (2023-11-09)
 ------------------
