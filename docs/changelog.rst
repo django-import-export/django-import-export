@@ -4,7 +4,8 @@ Changelog
 3.3.3 (unreleased)
 ------------------
 
-- `.export_admin_action` can be overridden by subclassing it in the `ModelAdmin`.
+- :meth:`~import_export.admin.ExportActionMixin.export_admin_action` can be overridden by subclassing it in the
+  ``ModelAdmin`` (#1681)
 
 
 3.3.2 (2023-11-09)
