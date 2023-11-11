@@ -1,7 +1,7 @@
 Changelog
 =========
 
-3.3.3 (unreleased)
+3.3.3 (2023-11-11)
 ------------------
 
 - :meth:`~import_export.admin.ExportActionMixin.export_admin_action` can be overridden by subclassing it in the
