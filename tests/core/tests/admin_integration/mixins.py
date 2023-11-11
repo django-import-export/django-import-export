@@ -7,6 +7,7 @@ from import_export.formats.base_formats import DEFAULT_FORMATS
 
 
 class AdminTestMixin(object):
+    category_change_url = "/admin/core/category/"
     book_import_url = "/admin/core/book/import/"
     book_process_import_url = "/admin/core/book/process_import/"
     legacybook_import_url = "/admin/core/legacybook/import/"
