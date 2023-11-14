@@ -823,6 +823,8 @@ where 'resource' and 'file format' can be selected.
 Once 'submit' is clicked, the export file will be automatically downloaded to the client (usually to the 'Downloads'
 folder).
 
+.. _export_via_admin_action:
+
 Exporting via Admin action
 --------------------------
 

@@ -68,6 +68,14 @@ For this to work correctly, deleted instances are now always copied and retained
 
 This only occurs for delete operations initiated from the Admin UI.
 
+Export action
+-------------
+
+The export action has been updated to include the export workflow.  Prior to v4, it was possible to select export
+selected items using an export admin action.  However this meant that the export workflow was skipped and it was not
+possible to select the export resource.  This has been fixed in v4 so that export workflow is now present when
+exporting via the Admin UI action.  For more information see :ref:`export documentation<export_via_admin_action>`.
+
 API changes
 ===========
 
