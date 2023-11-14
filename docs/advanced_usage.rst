@@ -803,7 +803,7 @@ To do this, subclass :class:`~import_export.admin.ImportExportModelAdmin` or use
 one of the available mixins, i.e. :class:`~import_export.admin.ExportMixin`, or
 :class:`~import_export.admin.ImportExportMixin`.
 
-Enabling import functionality means that a UI button will automatically be presented on the Admin page:
+Enabling export functionality means that a UI button will automatically be presented on the Admin page:
 
 .. figure:: _static/images/export-button.png
    :alt: The export button
