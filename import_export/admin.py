@@ -777,7 +777,10 @@ class ExportActionMixin(ExportMixin):
         Action runs on POST from instance action menu (if enabled).
         """
         formats = self.get_export_formats()
-        if getattr(settings, "IMPORT_EXPORT_SKIP_ADMIN_ACTION_EXPORT_UI", False):
+        if (
+            getattr(settings, "IMPORT_EXPORT_SKIP_ADMIN_ACTION_EXPORT_UI", False)
+            is True
+        ):
             file_format = formats[0]()
 
             export_data = self.get_export_data(

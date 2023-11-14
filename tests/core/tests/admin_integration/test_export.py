@@ -15,7 +15,7 @@ from openpyxl.reader.excel import load_workbook
 from tablib import Dataset
 
 from import_export import formats
-from import_export.admin import ExportMixin
+from import_export.admin import ExportActionMixin, ExportMixin
 from import_export.formats.base_formats import XLSX
 
 
@@ -233,9 +233,7 @@ class TestExportEncoding(TestCase):
         binary_dataset = tablib.import_set(data)
         self.assertEqual("teststr", binary_dataset.dict[0]["name"])
 
-    @mock.patch("import_export.admin.ImportForm")
-    def test_export_action_to_encoding(self, mock_form):
-        mock_form.is_valid.return_value = True
+    def test_export_action_to_encoding(self):
         self.export_mixin.to_encoding = "utf-8"
         with mock.patch(
             "import_export.admin.ExportMixin.get_export_data"
@@ -244,20 +242,17 @@ class TestExportEncoding(TestCase):
             encoding_kwarg = mock_get_export_data.call_args_list[0][1]["encoding"]
             self.assertEqual("utf-8", encoding_kwarg)
 
-    # @mock.patch("import_export.admin.ImportForm")
-    # def test_export_admin_action_to_encoding(self, mock_form):
-    #     class TestExportActionMixin(ExportActionMixin):
-    #         def get_export_filename(self, request, queryset, file_format):
-    #             return "f"
-    #
-    #     self.mock_request.POST = {"file_format": "1"}
-    #
-    #     self.export_mixin = TestExportActionMixin()
-    #     self.export_mixin.to_encoding = "utf-8"
-    #     mock_form.is_valid.return_value = True
-    #     with mock.patch(
-    #         "import_export.admin.ExportMixin.get_export_data"
-    #     ) as mock_get_export_data:
-    #         self.export_mixin.export_admin_action(self.mock_request, list())
-    #         encoding_kwarg = mock_get_export_data.call_args_list[0][1]["encoding"]
-    #         self.assertEqual("utf-8", encoding_kwarg)
+    @override_settings(IMPORT_EXPORT_SKIP_ADMIN_ACTION_EXPORT_UI=True)
+    def test_export_admin_action_to_encoding(self):
+        class TestExportActionMixin(ExportActionMixin):
+            def get_export_filename(self, request, queryset, file_format):
+                return "f"
+
+        self.export_mixin = TestExportActionMixin()
+        self.export_mixin.to_encoding = "utf-8"
+        with mock.patch(
+            "import_export.admin.ExportMixin.get_export_data"
+        ) as mock_get_export_data:
+            self.export_mixin.export_admin_action(self.mock_request, list())
+            encoding_kwarg = mock_get_export_data.call_args_list[0][1]["encoding"]
+            self.assertEqual("utf-8", encoding_kwarg)

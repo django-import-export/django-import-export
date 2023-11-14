@@ -434,23 +434,6 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         m = ExportMixin()
         self.assertEqual(dict(), m.get_context_data())
 
-    # def test_media_attribute(self):
-    #     """
-    #     Test that the 'media' attribute of the ModelAdmin class is overridden to
-    #     include
-    #     the project-specific js file.
-    #     """
-    #     mock_model = mock.MagicMock()
-    #     mock_site = mock.MagicMock()
-    #
-    #     class TestExportActionModelAdmin(ExportActionModelAdmin):
-    #         def __init__(self):
-    #             super().__init__(mock_model, mock_site)
-    #
-    #     m = TestExportActionModelAdmin()
-    #     target_media = m.media
-    #     self.assertEqual("import_export/action_formats.js", target_media._js[-1])
-
     @patch("import_export.admin.logger")
     def test_issue_1521_change_list_template_as_property(self, mock_logger):
         class TestImportCls(ImportMixin):
