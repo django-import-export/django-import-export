@@ -13,22 +13,40 @@
 {% endblock %}
 
 {% block content %}
-<form action="" method="POST">
+<form action="{{ request.path }}{{ export_suffix }}" method="POST">
   {% csrf_token %}
+    {# export request has originated from an Admin UI action #}
+    {% if form.initial.export_items %}
+      <p>
+      {% blocktranslate count len=form.initial.export_items|length %}
+        Export {{ len }} selected item.
+        {% plural %}
+        Export {{ len }} selected items.
+      {% endblocktranslate %}
+      </p>
+    {% endif %}
 
     <fieldset class="module aligned">
-      {% for field in form %}
+      {% for field in form.visible_fields %}
         <div class="form-row">
           {{ field.errors }}
 
           {{ field.label_tag }}
 
-          {{ field }}
+          {% if field.field.widget.attrs.readonly %}
+            {{ field.field.value }}
+            {{ field.as_hidden }}
+            {% else %}
+            {{ field }}
+          {% endif %}
 
           {% if field.field.help_text %}
           <p class="help">{{ field.field.help_text|safe }}</p>
           {% endif %}
         </div>
+      {% endfor %}
+      {% for field in form.hidden_fields %}
+          {{ field }}
       {% endfor %}
     </fieldset>
 

@@ -2,14 +2,15 @@ import logging
 import warnings
 
 import django
-from django import forms
 from django.conf import settings
 from django.contrib import admin, messages
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION, LogEntry
 from django.contrib.auth import get_permission_codename
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import PermissionDenied
+from django.forms import MultipleChoiceField, MultipleHiddenInput
 from django.http import HttpResponse, HttpResponseRedirect
+from django.shortcuts import render
 from django.template.response import TemplateResponse
 from django.urls import path, reverse
 from django.utils.decorators import method_decorator
@@ -17,7 +18,7 @@ from django.utils.module_loading import import_string
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_POST
 
-from .forms import ConfirmImportForm, ExportForm, ImportForm, export_action_form_factory
+from .forms import ConfirmImportForm, ExportForm, ImportForm
 from .mixins import BaseExportMixin, BaseImportMixin
 from .results import RowResult
 from .signals import post_export, post_import
@@ -641,8 +642,8 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
             "list_max_show_all": self.list_max_show_all,
             "list_editable": self.list_editable,
             "model_admin": self,
+            "sortable_by": self.sortable_by,
         }
-        changelist_kwargs["sortable_by"] = self.sortable_by
         if django.VERSION >= (4, 0):
             changelist_kwargs["search_help_text"] = self.search_help_text
         cl = ChangeList(**changelist_kwargs)
@@ -681,7 +682,7 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
         """
         return self.export_form_class
 
-    def export_action(self, request, *args, **kwargs):
+    def export_action(self, request):
         if not self.has_export_permission(request):
             raise PermissionDenied
 
@@ -690,10 +691,24 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
         form = form_type(
             formats, request.POST or None, resources=self.get_export_resource_classes()
         )
+        form.fields["export_items"] = MultipleChoiceField(
+            widget=MultipleHiddenInput,
+            required=False,
+            choices=[(o.id, o.id) for o in self.model.objects.all()],
+        )
         if form.is_valid():
             file_format = formats[int(form.cleaned_data["file_format"])]()
 
-            queryset = self.get_export_queryset(request)
+            if "export_items" in form.changed_data:
+                # this request has arisen from an Admin UI action
+                # export item pks are stored in form data
+                # so generate the queryset from the stored pks
+                queryset = self.model.objects.filter(
+                    pk__in=form.cleaned_data["export_items"]
+                )
+            else:
+                queryset = self.get_export_queryset(request)
+
             export_data = self.get_export_data(
                 file_format,
                 queryset,
@@ -709,16 +724,9 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
 
             post_export.send(sender=None, model=self.model)
             return response
-
-        context = self.get_export_context_data()
-
-        context.update(self.admin_site.each_context(request))
-
-        context["title"] = _("Export")
-        context["form"] = form
-        context["opts"] = self.model._meta
+        context = self.init_request_context_data(request, form)
         request.current_app = self.admin_site.name
-        return TemplateResponse(request, [self.export_template_name], context)
+        return TemplateResponse(request, [self.export_template_name], context=context)
 
     def changelist_view(self, request, extra_context=None):
         if extra_context is None:
@@ -728,6 +736,14 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
 
     def get_export_filename(self, request, queryset, file_format):
         return super().get_export_filename(file_format)
+
+    def init_request_context_data(self, request, form):
+        context = self.get_export_context_data()
+        context.update(self.admin_site.each_context(request))
+        context["title"] = _("Export")
+        context["form"] = form
+        context["opts"] = self.model._meta
+        return context
 
 
 class ImportExportMixin(ImportMixin, ExportMixin):
@@ -752,37 +768,20 @@ class ExportActionMixin(ExportMixin):
     Mixin with export functionality implemented as an admin action.
     """
 
-    # Don't use custom change list template.
-    import_export_change_list_template = None
-
-    def __init__(self, *args, **kwargs):
-        """
-        Adds a custom action form initialized with the available export
-        formats.
-        """
-        choices = []
-        formats = self.get_export_formats()
-        if formats:
-            for i, f in enumerate(formats):
-                choices.append((str(i), f().get_title()))
-
-        if len(formats) > 1:
-            choices.insert(0, ("", "---"))
-
-        self.action_form = export_action_form_factory(choices)
-        super().__init__(*args, **kwargs)
+    # This action will receive a selection of items as a queryset,
+    # store them in the context, and then render the 'export' admin form page,
+    # so that users can select file format and resource
 
     def export_admin_action(self, request, queryset):
         """
-        Exports the selected rows using file_format.
+        Action runs on POST from instance action menu (if enabled).
         """
-        export_format = request.POST.get("file_format")
-
-        if not export_format:
-            messages.warning(request, _("You must select an export format."))
-        else:
-            formats = self.get_export_formats()
-            file_format = formats[int(export_format)]()
+        formats = self.get_export_formats()
+        if (
+            getattr(settings, "IMPORT_EXPORT_SKIP_ADMIN_ACTION_EXPORT_UI", False)
+            is True
+        ):
+            file_format = formats[0]()
 
             export_data = self.get_export_data(
                 file_format, queryset, request=request, encoding=self.to_encoding
@@ -794,11 +793,31 @@ class ExportActionMixin(ExportMixin):
             )
             return response
 
+        form_type = self.get_export_form_class()
+        formats = self.get_export_formats()
+        form = form_type(
+            formats,
+            resources=self.get_export_resource_classes(),
+            initial={"export_items": list(queryset.values_list("id", flat=True))},
+        )
+        # selected items are to be stored as a hidden input on the form
+        form.fields["export_items"] = MultipleChoiceField(
+            widget=MultipleHiddenInput,
+            required=False,
+            choices=[(str(o), str(o)) for o in queryset.all()],
+        )
+        context = self.init_request_context_data(request, form)
+
+        # this is necessary to render the FORM action correctly
+        # i.e. so the POST goes to the correct URL
+        context["export_suffix"] = "export/"
+
+        return render(request, "admin/import_export/export.html", context=context)
+
     def get_actions(self, request):
         """
         Adds the export action to the list of available actions.
         """
-
         actions = super().get_actions(request)
         actions.update(
             export_admin_action=(
@@ -808,14 +827,6 @@ class ExportActionMixin(ExportMixin):
             )
         )
         return actions
-
-    @property
-    def media(self):
-        super_media = super().media
-        return forms.Media(
-            js=super_media._js + ["import_export/action_formats.js"],
-            css=super_media._css,
-        )
 
 
 class ExportActionModelAdmin(ExportActionMixin, admin.ModelAdmin):

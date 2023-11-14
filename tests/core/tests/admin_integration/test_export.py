@@ -16,12 +16,16 @@ from tablib import Dataset
 
 from import_export import formats
 from import_export.admin import ExportActionMixin, ExportMixin
+from import_export.formats.base_formats import XLSX
 
 
 class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
     def test_export(self):
         response = self.client.get("/admin/core/book/export/")
         self.assertEqual(response.status_code, 200)
+        self.assertNotIn("Export 0 selected items.", str(response.content))
+        form = response.context["form"]
+        self.assertEqual(2, len(form.fields["resource"].choices))
 
         data = {
             "file_format": "0",
@@ -40,6 +44,16 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
             b"published_time,price,added,categories\r\n",
             response.content,
         )
+
+    def test_get_export_form_single_resource(self):
+        response = self.client.get("/admin/core/category/export/")
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn("Export 0 selected items.", str(response.content))
+        form = response.context["form"]
+        self.assertEqual(0, len(form.fields["resource"].choices))
+        self.assertTrue(form.fields["resource"].widget.attrs["readonly"])
+        self.assertIn("CategoryResource", str(response.content))
+        self.assertNotIn('select name="resource"', str(response.content))
 
     def test_export_second_resource(self):
         response = self.client.get("/admin/core/book/export/")
@@ -60,6 +74,20 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
             'attachment; filename="Book-{}.csv"'.format(date_str),
         )
         self.assertEqual(b"id,name\r\n", response.content)
+
+    @override_settings(EXPORT_FORMATS=[XLSX])
+    def test_get_export_form_single_format(self):
+        response = self.client.get("/admin/core/category/export/")
+        form = response.context["form"]
+        self.assertEqual(1, len(form.fields["file_format"].choices))
+        self.assertTrue(form.fields["file_format"].widget.attrs["readonly"])
+        self.assertIn("xlsx", str(response.content))
+        self.assertNotIn('select name="file_format"', str(response.content))
+
+    @override_settings(EXPORT_FORMATS=[])
+    def test_export_empty_export_formats(self):
+        with self.assertRaisesRegex(ValueError, "invalid export formats list"):
+            self.client.get("/admin/core/category/export/")
 
     def test_returns_xlsx_export(self):
         response = self.client.get("/admin/core/book/export/")
@@ -210,9 +238,7 @@ class TestExportEncoding(TestCase):
         binary_dataset = tablib.import_set(data)
         self.assertEqual("teststr", binary_dataset.dict[0]["name"])
 
-    @mock.patch("import_export.admin.ImportForm")
-    def test_export_action_to_encoding(self, mock_form):
-        mock_form.is_valid.return_value = True
+    def test_export_action_to_encoding(self):
         self.export_mixin.to_encoding = "utf-8"
         with mock.patch(
             "import_export.admin.ExportMixin.get_export_data"
@@ -221,17 +247,14 @@ class TestExportEncoding(TestCase):
             encoding_kwarg = mock_get_export_data.call_args_list[0][1]["encoding"]
             self.assertEqual("utf-8", encoding_kwarg)
 
-    @mock.patch("import_export.admin.ImportForm")
-    def test_export_admin_action_to_encoding(self, mock_form):
+    @override_settings(IMPORT_EXPORT_SKIP_ADMIN_ACTION_EXPORT_UI=True)
+    def test_export_admin_action_to_encoding(self):
         class TestExportActionMixin(ExportActionMixin):
             def get_export_filename(self, request, queryset, file_format):
                 return "f"
 
-        self.mock_request.POST = {"file_format": "1"}
-
         self.export_mixin = TestExportActionMixin()
         self.export_mixin.to_encoding = "utf-8"
-        mock_form.is_valid.return_value = True
         with mock.patch(
             "import_export.admin.ExportMixin.get_export_data"
         ) as mock_get_export_data:

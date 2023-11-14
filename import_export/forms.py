@@ -2,7 +2,6 @@ import os.path
 
 from django import forms
 from django.conf import settings
-from django.contrib.admin.helpers import ActionForm
 from django.utils.translation import gettext_lazy as _
 
 
@@ -15,13 +14,16 @@ class ImportExportFormBase(forms.Form):
 
     def __init__(self, *args, resources=None, **kwargs):
         super().__init__(*args, **kwargs)
-        if resources and len(resources) > 1:
+        if not resources:
+            raise ValueError("no defined resources")
+        if len(resources) > 1:
             resource_choices = []
             for i, resource in enumerate(resources):
                 resource_choices.append((i, resource.get_display_name()))
             self.fields["resource"].choices = resource_choices
         else:
-            del self.fields["resource"]
+            self.fields["resource"].value = resources[0].get_display_name()
+            self.fields["resource"].widget.attrs["readonly"] = True
 
 
 class ImportForm(ImportExportFormBase):
@@ -71,6 +73,9 @@ class ExportForm(ImportExportFormBase):
         label=_("Format"),
         choices=(),
     )
+    export_items = forms.MultipleChoiceField(
+        widget=forms.MultipleHiddenInput(), required=False
+    )
 
     def __init__(self, formats, *args, **kwargs):
         resources = kwargs.pop("resources", None)
@@ -85,25 +90,12 @@ class ExportForm(ImportExportFormBase):
             )
         if len(formats) > 1:
             choices.insert(0, ("", "---"))
+        elif len(formats) == 1:
+            field = self.fields["file_format"]
+            field.value = formats[0]().get_title()
+            field.initial = 0
+            field.widget.attrs["readonly"] = True
+        else:
+            raise ValueError("invalid export formats list")
 
         self.fields["file_format"].choices = choices
-
-
-def export_action_form_factory(formats):
-    """
-    Returns an ActionForm subclass containing a ChoiceField populated with
-    the given formats.
-    """
-
-    class _ExportActionForm(ActionForm):
-        """
-        Action form with export format ChoiceField.
-        """
-
-        file_format = forms.ChoiceField(
-            label=_("Format"), choices=formats, required=False
-        )
-
-    _ExportActionForm.__name__ = str("ExportActionForm")
-
-    return _ExportActionForm
