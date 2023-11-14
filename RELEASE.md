@@ -11,7 +11,7 @@ Ensure you create the new tag to correspond with the release as required.
 1. Go to the [Releases](https://github.com/django-import-export/django-import-export/releases) page
 2. Click 'Draft a new release'
 3. Choose or create a new tag
-4. Check 'Set as a pre-release' or 'Set as the latest release' as approriate
+4. Check 'Set as a pre-release' or 'Set as the latest release' as appropriate
 5. Generate release notes if desired.
 6. Click 'publish'
 
