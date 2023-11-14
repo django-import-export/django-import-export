@@ -4,51 +4,61 @@ Changelog
 
 Please refer to :doc:`release notes<release_notes>`.
 
-4.0.0-alpha.6 (unreleased)
+4.0.0-beta.0 (unreleased)
 --------------------------
 
-- Added debug for missing fields & attributes during import (#1571)
-- added :meth:`~import_export.widgets.ForeignKeyWidget.get_lookup_kwargs` to make it easier to override object
-  lookup (#1651)
-- removed unused variable ``Result.new_record`` (#1640)
-- Refactor ``resources.py`` to standardise method args (#1641)
-- added specific check for missing ``import_id_fields`` (#1645)
-- Enable optional tablib dependencies (#1647)
-- Removed unused method ``utils.original()``
-- Clarified ``skip_diff`` documentation (#1655)
-- Standardised interface of :meth:`~import_export.widgets.Widget.render` (#1657)
-- Improved documentation relating to validation on import (#1665)
+Deprecations
+############
+
+- Removed v3 deprecations (#1629)
 - Deprecation of ``ExportViewFormMixin`` (#1666)
-- Added :meth:`~import_export.resources.Resource.do_instance_save` helper method (#1668)
-- Refactored test_admin_integration: split into smaller test modules (#1662)
-- Support multiple Resources for export (#1671)
-- Refactored test_resources: split into smaller test modules (#1672)
-- Fix deprecated ``log_action`` method (#1673)
-- Enable defining Resource model as a string (#1669)
 
-4.0.0-alpha.5 (2023-09-22)
---------------------------
-- dynamic widget parameters for CharField fixes 'NOT NULL constraint' error in xlsx (#1485)
-- refactor to export HTML / formulae escaping updates (#1638)
+Enhancements
+############
 
-4.0.0-alpha.0 (2023-09-20)
---------------------------
-
-- change_list.html: add default base_template value to fix django-compress (#1605)
 - Refactor ordering logic (#1626)
 
   - Refactor 'diff' logic to avoid calling dehydrate methods
 
   - Refactor declarations of ``fields``, ``import_order`` and ``export_order`` to fix ordering issues
 
-- Removed v3 deprecations (#1629)
-- Refactor build process (#1630)
+- refactor to export HTML / formulae escaping updates (#1638)
+- removed unused variable ``Result.new_record`` (#1640)
+- Refactor ``resources.py`` to standardise method args (#1641)
+- added specific check for missing ``import_id_fields`` (#1645)
+- Enable optional tablib dependencies (#1647)
+- added :meth:`~import_export.widgets.ForeignKeyWidget.get_lookup_kwargs` to make it easier to override object
+  lookup (#1651)
+- Standardised interface of :meth:`~import_export.widgets.Widget.render` (#1657)
+- Added :meth:`~import_export.resources.Resource.do_instance_save` helper method (#1668)
+- Enable defining Resource model as a string (#1669)
+- Support multiple Resources for export (#1671)
+
+Fixes
+#####
+
+- dynamic widget parameters for CharField fixes 'NOT NULL constraint' error in xlsx (#1485)
 - fix cooperation with adminsortable2 (#1633)
+- Removed unused method ``utils.original()``
+- Fix deprecated ``log_action`` method (#1673)
+
+Development
+###########
+
+- Refactor build process (#1630)
+- Refactored ``test_admin_integration()``: split into smaller test modules (#1662)
+- Refactored ``test_resources()``: split into smaller test modules (#1672)
+
+Documentation
+#############
+
+- Clarified ``skip_diff`` documentation (#1655)
+- Improved documentation relating to validation on import (#1665)
+
 3.3.4 (unreleased)
 ------------------
 
 - Nothing changed yet.
-
 
 3.3.3 (2023-11-11)
 ------------------
