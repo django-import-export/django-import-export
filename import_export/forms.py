@@ -90,8 +90,12 @@ class ExportForm(ImportExportFormBase):
             )
         if len(formats) > 1:
             choices.insert(0, ("", "---"))
+        elif len(formats) == 1:
+            field = self.fields["file_format"]
+            field.value = formats[0]().get_title()
+            field.initial = 0
+            field.widget.attrs["readonly"] = True
         else:
-            self.fields["file_format"].value = formats[0]().get_title()
-            self.fields["file_format"].widget.attrs["readonly"] = True
+            raise ValueError("invalid export formats list")
 
         self.fields["file_format"].choices = choices

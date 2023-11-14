@@ -84,6 +84,11 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertIn("xlsx", str(response.content))
         self.assertNotIn('select name="file_format"', str(response.content))
 
+    @override_settings(EXPORT_FORMATS=[])
+    def test_export_empty_export_formats(self):
+        with self.assertRaisesRegex(ValueError, "invalid export formats list"):
+            self.client.get("/admin/core/category/export/")
+
     def test_returns_xlsx_export(self):
         response = self.client.get("/admin/core/book/export/")
         self.assertEqual(response.status_code, 200)

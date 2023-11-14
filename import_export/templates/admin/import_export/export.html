@@ -35,6 +35,7 @@
 
           {% if field.field.widget.attrs.readonly %}
             {{ field.field.value }}
+            {{ field.as_hidden }}
             {% else %}
             {{ field }}
           {% endif %}
