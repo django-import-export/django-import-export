@@ -4,7 +4,7 @@ Changelog
 3.3.4 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Added `CONTRIBUTING.md`
 
 
 3.3.3 (2023-11-11)
