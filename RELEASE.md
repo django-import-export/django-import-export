@@ -1,7 +1,8 @@
 ## Release process
 
-The existing manual release process has been replaced with Github Actions as part of the CI / CD workflow.
-This has been implemented using [this guide](https://packaging.python.org/en/latest/guides/publishing-package-distribution-releases-using-github-actions-ci-cd-workflows/)
+#### Pre-release
+
+Ensure that ``CHANGELOG.rst`` is up-to-date with the correct version number.
 
 #### Perform the release
 
@@ -17,4 +18,11 @@ Ensure you create the new tag to correspond with the release as required.
 
 ### Check readthedocs
 
+[readthedocs](https://readthedocs.org/projects/django-import-export/) integration is used to publish documentation.
+The webhook endpoint on readthedocs is configured using
+[these instructions](https://docs.readthedocs.io/en/latest/guides/setup/git-repo-manual.html).
+
+This is implemented using a Webhook defined in the Github repo (Settings / Webhooks).
+
+readthedocs should be checked after each release to ensure that the docs have built correctly.
 Login to [readthedocs.org](https://readthedocs.org) to check that the build ran OK (click on 'Builds' tab).
