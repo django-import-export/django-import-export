@@ -16,21 +16,7 @@
 <form action="" method="POST">
   {% csrf_token %}
 
-  {% block fields_help %}
-    <p>
-      {% trans "This exporter will export the following fields: " %}
-      {% if fields_list|length <= 1 %}
-         <code>{{ fields_list.0.1|join:", " }}</code>
-      {% else %}
-         <dl>
-            {% for resource, fields in fields_list %}
-                <dt>{{ resource }}</dt>
-                <dd><code>{{ fields|join:", " }}</code></dd>
-            {% endfor %}
-         </dl>
-      {% endif %}
-    </p>
-  {% endblock %}
+  {% include "admin/import_export/resource_fields_list.html" %}
 
     <fieldset class="module aligned">
       {% for field in form %}

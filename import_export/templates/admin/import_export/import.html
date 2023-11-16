@@ -39,21 +39,7 @@
     <form action="" method="post" enctype="multipart/form-data">
       {% csrf_token %}
 
-      {% block fields_help %}
-        <p>
-          {% trans "This importer will import the following fields: " %}
-          {% if fields_list|length <= 1 %}
-             <code>{{ fields_list.0.1|join:", " }}</code>
-          {% else %}
-             <dl>
-                {% for resource, fields in fields_list %}
-                    <dt>{{ resource }}</dt>
-                    <dd><code>{{ fields|join:", " }}</code></dd>
-                {% endfor %}
-             </dl>
-          {% endif %}
-        </p>
-      {% endblock %}
+      {% include "admin/import_export/resource_fields_list.html" %}
 
       {% block form_detail %}
           <fieldset class="module aligned">
