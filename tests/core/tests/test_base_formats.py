@@ -210,17 +210,18 @@ class HTMLFormatTest(TestCase):
             )
         )
 
-    def test_export_html_escape(self):
-        res = self.format.export_data(self.dataset)
-        self.assertIn(
-            (
-                "<tr><td>1</td>"
-                "<td>good_user</td>"
-                "<td>John Doe</td></tr>"
-                "<tr><td>2</td>"
-                "<td>evil_user</td>"
-                '<td>&lt;script&gt;alert("I want to steal your credit card data")'
-                "&lt;/script&gt;</td></tr>"
-            ),
-            res,
-        )
+    # TODO removed pending tablib v4 - see #1627
+    # def test_export_html_escape(self):
+    #     res = self.format.export_data(self.dataset)
+    #     self.assertIn(
+    #         (
+    #             "<tr><td>1</td>"
+    #             "<td>good_user</td>"
+    #             "<td>John Doe</td></tr>"
+    #             "<tr><td>2</td>"
+    #             "<td>evil_user</td>"
+    #             '<td>&lt;script&gt;alert("I want to steal your credit card data")'
+    #             "&lt;/script&gt;</td></tr>"
+    #         ),
+    #         res,
+    #     )
