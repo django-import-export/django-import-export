@@ -3,7 +3,7 @@ Changelog
 
 Please refer to :doc:`release notes<release_notes>`.
 
-4.0.0-alpha.9 (2023-11-16)
+4.0.0-beta.0 (2023-11-16)
 --------------------------
 
 Deprecations
