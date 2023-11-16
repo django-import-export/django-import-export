@@ -1,4 +1,4 @@
 Django>=3.2
-# # tablib temporarily using master before v4
-tablib@git+https://github.com/jazzband/tablib.git@master#egg=tablib
+# # tablib temporarily pinned before v4 - see #1627
+tablib==3.5.0
 diff-match-patch

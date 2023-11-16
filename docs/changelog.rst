@@ -1,7 +1,6 @@
 Changelog
 =========
 
-
 Please refer to :doc:`release notes<release_notes>`.
 
 4.0.0-alpha.7 (unreleased)

@@ -37,19 +37,19 @@ classifiers = [
 dependencies = [
     "diff-match-patch",
     "Django>=3.2",
-    "tablib@git+https://github.com/jazzband/tablib.git@master#egg=tablib"
+    "tablib==3.5.0"
 ]
 
 [project.optional-dependencies]
 all = [
-    "tablib[all]@git+https://github.com/jazzband/tablib.git@master#egg=tablib"
+    "tablib[all]==3.5.0"
 ]
 cli = ["tablib[cli]"]
 ods = ["tablib[ods]"]
 pandas = ["tablib[pandas]"]
-xls = ["tablib[xls]@git+https://github.com/jazzband/tablib.git@master#egg=tablib"]
-xlsx = ["tablib[xlsx]@git+https://github.com/jazzband/tablib.git@master#egg=tablib"]
-yaml = ["tablib[yaml]@git+https://github.com/jazzband/tablib.git@master#egg=tablib"]
+xls = ["tablib[xls]==3.5.0"]
+xlsx = ["tablib[xlsx]==3.5.0"]
+yaml = ["tablib[yaml]==3.5.0"]
 
 [project.urls]
 Documentation = "https://django-import-export.readthedocs.io/en/stable/"
