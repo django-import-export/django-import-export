@@ -4,8 +4,6 @@ on:
   push:
     branches:
     - main
-      # temporary - remove after release 4
-    - release-4
   pull_request:
     branches:
     - main
