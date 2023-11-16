@@ -4,7 +4,7 @@ Changelog
 
 Please refer to :doc:`release notes<release_notes>`.
 
-4.0.0-beta.0 (unreleased)
+4.0.0-alpha.7 (unreleased)
 --------------------------
 
 Deprecations
