@@ -67,8 +67,5 @@ readme = {file = ["README.rst"]}
 write_to = "import_export/_version.py"
 local_scheme = "no-local-version"
 
-[tool.setuptools.packages.find]
-where = ["import_export"]
-
 [tool.isort]
 profile = "black"

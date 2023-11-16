@@ -2,7 +2,7 @@
 
 #### Pre-release
 
-Ensure that ``CHANGELOG.rst`` is up-to-date with the correct version number.
+Ensure that ``CHANGELOG.rst`` is up-to-date with the correct version number and release date.
 
 #### Perform the release
 

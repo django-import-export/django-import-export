@@ -3,7 +3,7 @@ Changelog
 
 Please refer to :doc:`release notes<release_notes>`.
 
-4.0.0-alpha.7 (unreleased)
+4.0.0-alpha.8 (2023-11-16)
 --------------------------
 
 Deprecations
@@ -53,10 +53,6 @@ Documentation
 
 - Clarified ``skip_diff`` documentation (#1655)
 - Improved documentation relating to validation on import (#1665)
-
-3.3.4 (unreleased)
-------------------
-
 - Added `CONTRIBUTING.md`
 
 3.3.3 (2023-11-11)
