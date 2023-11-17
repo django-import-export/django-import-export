@@ -26,6 +26,8 @@
       </p>
     {% endif %}
 
+  {% include "admin/import_export/resource_fields_list.html" with import_or_export="export" %}
+
     <fieldset class="module aligned">
       {% for field in form.visible_fields %}
         <div class="form-row">

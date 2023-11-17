@@ -53,7 +53,12 @@ Documentation
 
 - Clarified ``skip_diff`` documentation (#1655)
 - Improved documentation relating to validation on import (#1665)
+
+3.3.4 (unreleased)
+------------------
+
 - Added `CONTRIBUTING.md`
+- Show list of exported fields in Admin UI (#1685)
 
 3.3.3 (2023-11-11)
 ------------------
