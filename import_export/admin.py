@@ -743,6 +743,16 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
         context["title"] = _("Export")
         context["form"] = form
         context["opts"] = self.model._meta
+        context["fields_list"] = [
+            (
+                res.get_display_name(),
+                [
+                    field.column_name
+                    for field in res(model=self.model).get_user_visible_fields()
+                ],
+            )
+            for res in self.get_export_resource_classes()
+        ]
         return context
 
 

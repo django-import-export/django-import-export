@@ -75,6 +75,31 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
         )
         self.assertEqual(b"id,name\r\n", response.content)
 
+    def test_export_displays_resources_fields(self):
+        response = self.client.get("/admin/core/book/export/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.context["fields_list"],
+            [
+                (
+                    "BookResource",
+                    [
+                        "id",
+                        "name",
+                        "author",
+                        "author_email",
+                        "imported",
+                        "published",
+                        "published_time",
+                        "price",
+                        "added",
+                        "categories",
+                    ],
+                ),
+                ("Export/Import only book names", ["id", "name"]),
+            ],
+        )
+
     @override_settings(EXPORT_FORMATS=[XLSX])
     def test_get_export_form_single_format(self):
         response = self.client.get("/admin/core/category/export/")
