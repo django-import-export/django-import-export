@@ -1,0 +1,10 @@
+{% extends 'admin/change_form.html' %}
+
+{% block submit_buttons_bottom %}
+  {{ block.super }}
+  {% if show_change_form_export_btn %}
+  <div class="submit-row">
+    <input type="submit" value="Export" name="_export-item">
+  </div>
+  {% endif %}
+{% endblock %}

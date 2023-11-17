@@ -778,9 +778,32 @@ class ExportActionMixin(ExportMixin):
     Mixin with export functionality implemented as an admin action.
     """
 
+    #: template for change form
+    change_form_template = "admin/import_export/change_form.html"
+
+    #: Flag to indicate whether to show 'export' button on change form
+    show_change_form_export_btn = True
+
     # This action will receive a selection of items as a queryset,
     # store them in the context, and then render the 'export' admin form page,
     # so that users can select file format and resource
+
+    def change_view(self, request, object_id, form_url="", extra_context=None):
+        extra_context = extra_context or {}
+        extra_context["show_change_form_export_btn"] = self.show_change_form_export_btn
+        return super().change_view(
+            request,
+            object_id,
+            form_url,
+            extra_context=extra_context,
+        )
+
+    def response_change(self, request, obj):
+        if "_export-item" in request.POST:
+            return self.export_admin_action(
+                request, self.model.objects.filter(id=obj.id)
+            )
+        return super().response_change(request, obj)
 
     def export_admin_action(self, request, queryset):
         """
