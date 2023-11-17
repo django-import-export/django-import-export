@@ -16,7 +16,7 @@
 <form action="" method="POST">
   {% csrf_token %}
 
-  {% include "admin/import_export/resource_fields_list.html" %}
+  {% include "admin/import_export/resource_fields_list.html" with import_or_export="export" %}
 
     <fieldset class="module aligned">
       {% for field in form %}

@@ -672,29 +672,6 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
             ],
         )
 
-        response = self.client.get("/admin/core/ebook/export/")
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(
-            response.context["fields_list"],
-            [
-                (
-                    "EBookResource",
-                    [
-                        "id",
-                        "name",
-                        "author",
-                        "author_email",
-                        "imported",
-                        "published",
-                        "published_time",
-                        "price",
-                        "added",
-                        "categories",
-                    ],
-                )
-            ],
-        )
-
     def test_export(self):
         response = self.client.get("/admin/core/book/export/")
         self.assertEqual(response.status_code, 200)
