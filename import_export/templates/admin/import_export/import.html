@@ -39,7 +39,7 @@
     <form action="" method="post" enctype="multipart/form-data">
       {% csrf_token %}
 
-      {% include "admin/import_export/resource_fields_list.html" %}
+      {% include "admin/import_export/resource_fields_list.html" with import_or_export="import" %}
 
       {% block form_detail %}
           <fieldset class="module aligned">
