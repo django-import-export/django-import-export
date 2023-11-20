@@ -779,7 +779,7 @@ class ExportActionMixin(ExportMixin):
     """
 
     #: template for change form
-    change_form_template = "admin/import_export/change_form.html"
+    # change_form_template = "admin/import_export/change_form.html"
 
     #: Flag to indicate whether to show 'export' button on change form
     show_change_form_export_btn = True
@@ -843,7 +843,15 @@ class ExportActionMixin(ExportMixin):
 
         # this is necessary to render the FORM action correctly
         # i.e. so the POST goes to the correct URL
-        context["export_suffix"] = "export/"
+        export_url = reverse(
+            "%s:%s_%s_export"
+            % (
+                self.admin_site.name,
+                self.model._meta.app_label,
+                self.model._meta.model_name,
+            )
+        )
+        context["export_url"] = export_url
 
         return render(request, "admin/import_export/export.html", context=context)
 

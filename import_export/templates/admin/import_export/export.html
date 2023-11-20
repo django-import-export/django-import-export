@@ -13,7 +13,7 @@
 {% endblock %}
 
 {% block content %}
-<form action="{{ request.path }}{{ export_suffix }}" method="POST">
+<form action="{{ export_url }}" method="POST">
   {% csrf_token %}
     {# export request has originated from an Admin UI action #}
     {% if form.initial.export_items %}
