@@ -139,6 +139,61 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
             ),
         )
 
+    def test_import_for_deletion(self):
+        # GET the import form
+        response = self.client.get(self.book_import_url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "admin/import_export/import.html")
+        self.assertContains(response, 'form action=""')
+
+        # Simulate POST of books.csv
+        response = self._do_import_post(self.book_import_url, "books.csv")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("result", response.context)
+        self.assertFalse(response.context["result"].has_errors())
+        self.assertIn("confirm_form", response.context)
+        confirm_form = response.context["confirm_form"]
+
+        # Varify data, POST to DB, Generate Banner.
+        data = confirm_form.initial
+        self.assertEqual(data["original_file_name"], "books.csv")
+        response = self.client.post(self.book_process_import_url, data, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response,
+            _("Import finished: Number of New {}, Number of Updated {}, " +
+            "Number of Skipped {}, Number of Deleted {}, {}").format(
+                1, 0, 0, 0, Book._meta.verbose_name_plural
+            )
+        )
+        
+        # GET the import form
+        response = self.client.get(self.book_import_url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "admin/import_export/import.html")
+        self.assertContains(response, 'form action=""')
+
+        # Simulate POST of books-for-delete.csv
+        response = self._do_import_post(self.book_import_url, "books-for-delete.csv")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("result", response.context)
+        self.assertFalse(response.context["result"].has_errors())
+        self.assertIn("confirm_form", response.context)
+        confirm_form = response.context["confirm_form"]
+
+        # Varify data, POST to DB, Generate Banner.
+        data = confirm_form.initial
+        self.assertEqual(data["original_file_name"], "books-for-delete.csv")
+        response = self.client.post(self.book_process_import_url, data, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response, 
+            _( "Import finished: Number of New {}, Number of Updated {}, " +
+            "Number of Skipped {}, Number of Deleted {}").format(
+                0,0,0,1,
+            )
+        )
+
     @override_settings(DEBUG=True)
     def test_correct_scripts_declared_when_debug_is_true(self):
         # GET the import form
