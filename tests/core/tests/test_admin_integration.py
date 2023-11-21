@@ -161,8 +161,8 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(
             response,
-            _("Import finished: Number of New {}, Number of Updated {}, " +
-            "Number of Skipped {}, Number of Deleted {}, {}").format(
+            _("Import complete: {} new, {} updated, {} deleted and" +
+              " {} skipped {}").format(
                 1, 0, 0, 0, Book._meta.verbose_name_plural
             )
         )
@@ -188,9 +188,9 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(
             response, 
-            _( "Import finished: Number of New {}, Number of Updated {}, " +
-            "Number of Skipped {}, Number of Deleted {}").format(
-                0,0,0,1,
+            _( "Import complete: {} new, {} updated, {} deleted and" +
+              " {} skipped ").format(
+                0,0,1,0,
             )
         )
 

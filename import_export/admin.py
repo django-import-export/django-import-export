@@ -249,13 +249,12 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         opts = self.model._meta
 
         success_message = _(
-            "Import finished: Number of New {}, Number of Updated {}, " +
-            "Number of Skipped {}, Number of Deleted {}, {}"
+            "Import complete: {} new, {} updated, {} deleted and {} skipped {}"
         ).format(
             result.totals[RowResult.IMPORT_TYPE_NEW],
             result.totals[RowResult.IMPORT_TYPE_UPDATE],
-            result.totals[RowResult.IMPORT_TYPE_SKIP],
             result.totals[RowResult.IMPORT_TYPE_DELETE],
+            result.totals[RowResult.IMPORT_TYPE_SKIP],
             opts.verbose_name_plural,
         )
 
