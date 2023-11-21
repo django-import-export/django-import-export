@@ -779,7 +779,7 @@ class ExportActionMixin(ExportMixin):
     """
 
     #: template for change form
-    # change_form_template = "admin/import_export/change_form.html"
+    change_form_template = "admin/import_export/change_form.html"
 
     #: Flag to indicate whether to show 'export' button on change form
     show_change_form_export_btn = True
