@@ -9,6 +9,7 @@ from django.core.exceptions import PermissionDenied
 from django.http import HttpRequest
 from django.test.testcases import TestCase
 from django.test.utils import override_settings
+from django.urls import reverse
 
 from import_export.admin import ExportMixin, ImportExportActionModelAdmin
 from import_export.tmp_storages import TempFolderStorage
@@ -118,6 +119,27 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
         m = TestMixin()
         with self.assertRaises(PermissionDenied):
             m.get_export_data("0", Book.objects.none(), request=request)
+
+    def test_export_button_on_change_form(self):
+        change_url = reverse(
+            "%s:%s_%s_change"
+            % (
+                "admin",
+                "core",
+                "category",
+            ),
+            args=[self.cat1.id],
+        )
+        response = self.client.get(change_url)
+        self.assertIn(
+            '<input type="submit" value="Export" '
+            'class="default" name="_export-item">',
+            str(response.content),
+        )
+        response = self.client.post(
+            change_url, data={"_export-item": "Export", "name": self.cat1.name}
+        )
+        self.assertIn("Export 1 selected item", str(response.content))
 
 
 class TestImportExportActionModelAdmin(ImportExportActionModelAdmin):
