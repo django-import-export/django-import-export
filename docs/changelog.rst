@@ -3,6 +3,12 @@ Changelog
 
 Please refer to :doc:`release notes<release_notes>`.
 
+4.0.0-beta.2 (unreleased)
+--------------------------
+
+- Updated `docker-compose` command with latest version syntax in `runtests.sh` (#1686)
+- Support export from model change form (#1687)
+
 4.0.0-beta.1 (2023-11-16)
 --------------------------
 
@@ -47,7 +53,6 @@ Development
 - Refactor build process (#1630)
 - Refactored ``test_admin_integration()``: split into smaller test modules (#1662)
 - Refactored ``test_resources()``: split into smaller test modules (#1672)
-- Updated `docker-compose` command with latest version syntax in `runtests.sh` (#1686)
 
 Documentation
 #############
