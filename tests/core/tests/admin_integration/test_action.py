@@ -7,7 +7,6 @@ from core.models import Book, Category
 from core.tests.admin_integration.mixins import AdminTestMixin
 from core.tests.utils import ignore_widget_deprecation_warning
 from django.contrib import admin
-from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied
 from django.http import HttpRequest
 from django.test import RequestFactory
@@ -124,9 +123,10 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
             m.get_export_data("0", Book.objects.none(), request=request)
 
 
-class TestExportButtonOnChangeForm(ExportActionAdminIntegrationTest):
+class TestExportButtonOnChangeForm(AdminTestMixin, TestCase):
     def setUp(self):
         super().setUp()
+        self.cat1 = Category.objects.create(name="Cat 1")
         self.change_url = reverse(
             "%s:%s_%s_change"
             % (
@@ -157,7 +157,7 @@ class TestExportButtonOnChangeForm(ExportActionAdminIntegrationTest):
             show_change_form_export = True
 
         factory = RequestFactory()
-        category_admin = MockCategoryAdmin(User, admin.site)
+        category_admin = MockCategoryAdmin(Category, admin.site)
 
         request = factory.get(self.change_url)
         request.user = self.user
