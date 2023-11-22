@@ -38,8 +38,7 @@ class BookAdmin(ImportExportModelAdmin):
 
 
 class CategoryAdmin(ExportActionModelAdmin):
-    def export_admin_action(self, request, queryset):
-        return super().export_admin_action(request, queryset)
+    pass
 
 
 class AuthorAdmin(ImportMixin, admin.ModelAdmin):
