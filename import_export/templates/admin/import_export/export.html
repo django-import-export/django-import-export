@@ -9,11 +9,11 @@
 {% endblock %}
 
 {% block breadcrumbs_last %}
-{% trans "Export" %}
+{% translate "Export" %}
 {% endblock %}
 
 {% block content %}
-<form action="{{ request.path }}{{ export_suffix }}" method="POST">
+<form action="{{ export_url }}" method="POST">
   {% csrf_token %}
     {# export request has originated from an Admin UI action #}
     {% if form.initial.export_items %}
@@ -53,7 +53,7 @@
     </fieldset>
 
     <div class="submit-row">
-      <input type="submit" class="default" value="{% trans "Submit" %}">
+      <input type="submit" class="default" value="{% translate "Submit" %}">
     </div>
 </form>
 {% endblock %}

@@ -849,7 +849,26 @@ this to refer to your own model instances.  In the example application, the 'Cat
 
 When 'Go' is clicked for the selected items, the user will be directed to the
 :ref:`export 'confirm' page<export_confirm>`.  It is possible to disable this extra step by setting the
-:ref:`import_export_skip_admin_action_export_ui` flag.
+:ref:`import_export_skip_admin_action_export_ui` flag
+
+Export from model instance change form
+--------------------------------------
+
+When :ref:`export via admin action<export_via_admin_action>` is enabled, then it is also possible to export from a
+model instance change form:
+
+.. figure:: _static/images/change-form-export.png
+   :alt: export from change form
+
+   Export from model instance change form
+
+When 'Export' is clicked, the user will be directed to the :ref:`export 'confirm' page<export_confirm>`.
+
+This button can be removed from the UI by setting the
+:attr:`~import_export.admin.ExportActionMixin.show_change_form_export` attribute, for example::
+
+  class CategoryAdmin(ExportActionModelAdmin):
+      show_change_form_export = False
 
 Customize admin import forms
 ----------------------------

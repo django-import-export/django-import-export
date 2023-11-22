@@ -2,16 +2,19 @@ from datetime import datetime
 from unittest import mock
 from unittest.mock import MagicMock
 
+from core.admin import CategoryAdmin
 from core.models import Book, Category
 from core.tests.admin_integration.mixins import AdminTestMixin
 from core.tests.utils import ignore_widget_deprecation_warning
+from django.contrib import admin
 from django.core.exceptions import PermissionDenied
 from django.http import HttpRequest
+from django.test import RequestFactory
 from django.test.testcases import TestCase
 from django.test.utils import override_settings
+from django.urls import reverse
 
-from import_export.admin import ExportMixin, ImportExportActionModelAdmin
-from import_export.tmp_storages import TempFolderStorage
+from import_export.admin import ExportMixin
 
 
 class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
@@ -120,13 +123,51 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
             m.get_export_data("0", Book.objects.none(), request=request)
 
 
-class TestImportExportActionModelAdmin(ImportExportActionModelAdmin):
-    def __init__(self, mock_model, mock_site, error_instance):
-        self.error_instance = error_instance
-        super().__init__(mock_model, mock_site)
+class TestExportButtonOnChangeForm(AdminTestMixin, TestCase):
+    def setUp(self):
+        super().setUp()
+        self.cat1 = Category.objects.create(name="Cat 1")
+        self.change_url = reverse(
+            "%s:%s_%s_change"
+            % (
+                "admin",
+                "core",
+                "category",
+            ),
+            args=[self.cat1.id],
+        )
+        self.target_str = (
+            '<input type="submit" value="Export" '
+            'class="default" name="_export-item">'
+        )
 
-    def write_to_tmp_storage(self, import_file, input_format):
-        mock_storage = MagicMock(spec=TempFolderStorage)
+    def test_export_button_on_change_form(self):
+        response = self.client.get(self.change_url)
+        self.assertIn(
+            self.target_str,
+            str(response.content),
+        )
+        response = self.client.post(
+            self.change_url, data={"_export-item": "Export", "name": self.cat1.name}
+        )
+        self.assertIn("Export 1 selected item", str(response.content))
 
-        mock_storage.read.side_effect = self.error_instance
-        return mock_storage
+    def test_export_button_on_change_form_disabled(self):
+        class MockCategoryAdmin(CategoryAdmin):
+            show_change_form_export = True
+
+        factory = RequestFactory()
+        category_admin = MockCategoryAdmin(Category, admin.site)
+
+        request = factory.get(self.change_url)
+        request.user = self.user
+
+        response = category_admin.change_view(request, str(self.cat1.id))
+        response.render()
+
+        self.assertIn(self.target_str, str(response.content))
+
+        category_admin.show_change_form_export = False
+        response = category_admin.change_view(request, str(self.cat1.id))
+        response.render()
+        self.assertNotIn(self.target_str, str(response.content))
