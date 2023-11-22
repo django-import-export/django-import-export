@@ -16,6 +16,7 @@ from django.utils.translation import gettext_lazy as _
 
 from import_export.admin import ExportMixin
 from import_export.formats import base_formats
+from import_export.formats.base_formats import XLSX
 
 
 class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
@@ -464,6 +465,20 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertEqual(choices[0][1], "---")
         self.assertEqual(choices[1][1], "xlsx")
         self.assertEqual(choices[2][1], "xls")
+
+    @override_settings(IMPORT_FORMATS=[XLSX])
+    def test_get_export_form_single_format(self):
+        response = self.client.get(self.book_import_url)
+        form = response.context["form"]
+        self.assertEqual(1, len(form.fields["input_format"].choices))
+        self.assertTrue(form.fields["input_format"].widget.attrs["readonly"])
+        self.assertIn("xlsx", str(response.content))
+        self.assertNotIn('select name="input_format"', str(response.content))
+
+    @override_settings(IMPORT_FORMATS=[])
+    def test_export_empty_import_formats(self):
+        with self.assertRaisesRegex(ValueError, "invalid import formats list"):
+            self.client.get(self.book_import_url)
 
 
 class ConfirmImportEncodingTest(AdminTestMixin, TestCase):

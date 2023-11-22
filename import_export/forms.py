@@ -41,6 +41,13 @@ class ImportForm(ImportExportFormBase):
             choices.insert(0, ("", "---"))
             self.fields["import_file"].widget.attrs["class"] = "guess_format"
             self.fields["input_format"].widget.attrs["class"] = "guess_format"
+        elif len(import_formats) == 1:
+            field = self.fields["input_format"]
+            field.value = import_formats[0]().get_title()
+            field.initial = 0
+            field.widget.attrs["readonly"] = True
+        else:
+            raise ValueError("invalid import formats list")
 
         self.fields["input_format"].choices = choices
 

@@ -8,6 +8,7 @@ Please refer to :doc:`release notes<release_notes>`.
 
 - Updated `docker-compose` command with latest version syntax in `runtests.sh` (#1686)
 - Support export from model change form (#1687)
+- Import format defaults to read-only field if only one format defined (#)
 
 4.0.0-beta.1 (2023-11-16)
 --------------------------
