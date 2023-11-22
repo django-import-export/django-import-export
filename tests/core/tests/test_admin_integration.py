@@ -134,9 +134,10 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(
             response,
-            _("Import finished, with {} new and {} updated {}.").format(
-                1, 0, Book._meta.verbose_name_plural
-            ),
+            _("Import complete: {} new, {} updated, {} deleted and" +
+              " {} skipped {}").format(
+                1, 0, 0, 0, Book._meta.verbose_name_plural
+            )
         )
 
     def test_import_for_deletion(self):
@@ -270,8 +271,8 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(
             response,
-            _("Import finished, with {} new and {} updated {}.").format(
-                0, 1, Book._meta.verbose_name_plural
+            _("Import complete: 0 new, 1 updated, 0 deleted and 0 skipped books").format(
+                0, 1, 0, 0, Book._meta.verbose_name_plural
             ),
         )
         # Check, that we really use second resource - author_email didn't get imported
@@ -309,7 +310,7 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertContains(
-            response, "Import finished, with 0 new and 1 updated legacy books."
+            response, "Import complete: 1 new, 0 updated, 0 deleted and 0 skipped legacy books"
         )
 
     def test_export_admin_action(self):
@@ -450,9 +451,9 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(
             response,
-            _("Import finished, with {} new and {} updated {}.").format(
-                1, 0, Book._meta.verbose_name_plural
-            ),
+            _("Import complete: 1 new, 0 updated, 0 deleted and 0 skipped").format(
+                1, 0, 0, 0, EBook._meta.verbose_name_plural
+            )
         )
 
     def test_import_export_buttons_visible_without_add_permission(self):
@@ -564,8 +565,8 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(
             response,
-            _("Import finished, with {} new and {} updated {}.").format(
-                1, 0, EBook._meta.verbose_name_plural
+            _("Import complete: 1 new, 0 updated, 0 deleted and 0 skipped").format(
+                1, 0, 0, 0, EBook._meta.verbose_name_plural
             ),
         )
 
@@ -973,7 +974,7 @@ class CompleteImportEncodingTest(AdminTestMixin, TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(
-            response, "Import finished, with 1 new and 0 updated books."
+            response, "Import complete: 1 new, 0 updated, 0 deleted and 0 skipped books"
         )
 
     @override_settings(
@@ -1457,7 +1458,7 @@ class TestImportSkipConfirm(AdminTestMixin, TransactionTestCase):
             "books.csv",
             "0",
             follow=True,
-            str_in_response="Import finished, with 1 new and 0 updated books.",
+            str_in_response="Import complete: 1 new, 0 updated, 0 deleted and 0 skipped books",
         )
         self.assertEqual(1, Book.objects.count())
 
@@ -1523,7 +1524,7 @@ class TestImportSkipConfirm(AdminTestMixin, TransactionTestCase):
             "books-mac.csv",
             "0",
             follow=True,
-            str_in_response="Import finished, with 1 new and 0 updated books.",
+            str_in_response="Import complete: 1 new, 0 updated, 0 deleted and 0 skipped books",
         )
 
     def test_import_action_iso_8859_1(self):
@@ -1532,7 +1533,7 @@ class TestImportSkipConfirm(AdminTestMixin, TransactionTestCase):
             "0",
             "ISO-8859-1",
             follow=True,
-            str_in_response="Import finished, with 1 new and 0 updated books.",
+            str_in_response="Import complete: 1 new, 0 updated, 0 deleted and 0 skipped books",
         )
 
     def test_import_action_decode_error(self):
@@ -1552,5 +1553,5 @@ class TestImportSkipConfirm(AdminTestMixin, TransactionTestCase):
             "books.xls",
             "1",
             follow=True,
-            str_in_response="Import finished, with 1 new and 0 updated books.",
+            str_in_response="Import complete: 1 new, 0 updated, 0 deleted and 0 skipped books",
         )
