@@ -134,10 +134,9 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(
             response,
-            _("Import complete: {} new, {} updated, {} deleted and" +
-              " {} skipped {}").format(
-                1, 0, 0, 0, Book._meta.verbose_name_plural
-            )
+            _(
+                "Import complete: {} new, {} updated, {} deleted and" + " {} skipped {}"
+            ).format(1, 0, 0, 0, Book._meta.verbose_name_plural),
         )
 
     def test_import_for_deletion(self):
@@ -162,12 +161,11 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(
             response,
-            _("Import complete: {} new, {} updated, {} deleted and" +
-              " {} skipped {}").format(
-                1, 0, 0, 0, Book._meta.verbose_name_plural
-            )
+            _(
+                "Import complete: {} new, {} updated, {} deleted and" + " {} skipped {}"
+            ).format(1, 0, 0, 0, Book._meta.verbose_name_plural),
         )
-        
+
         # GET the import form
         response = self.client.get(self.book_import_url)
         self.assertEqual(response.status_code, 200)
@@ -188,11 +186,15 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         response = self.client.post(self.book_process_import_url, data, follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertContains(
-            response, 
-            _( "Import complete: {} new, {} updated, {} deleted and" +
-              " {} skipped ").format(
-                0,0,1,0,
-            )
+            response,
+            _(
+                "Import complete: {} new, {} updated, {} deleted and" + " {} skipped "
+            ).format(
+                0,
+                0,
+                1,
+                0,
+            ),
         )
 
     @override_settings(DEBUG=True)
@@ -271,9 +273,9 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(
             response,
-            _("Import complete: 0 new, 1 updated, 0 deleted and 0 skipped books").format(
-                0, 1, 0, 0, Book._meta.verbose_name_plural
-            ),
+            _(
+                "Import complete: 0 new, 1 updated, 0 deleted and 0 skipped books"
+            ).format(0, 1, 0, 0, Book._meta.verbose_name_plural),
         )
         # Check, that we really use second resource - author_email didn't get imported
         self.assertEqual(Book.objects.get(id=1).author_email, "")
@@ -310,7 +312,8 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertContains(
-            response, "Import complete: 1 new, 0 updated, 0 deleted and 0 skipped legacy books"
+            response,
+            "Import complete: 1 new, 0 updated, 0 deleted and 0 skipped legacy books",
         )
 
     def test_export_admin_action(self):
@@ -453,7 +456,7 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
             response,
             _("Import complete: 1 new, 0 updated, 0 deleted and 0 skipped").format(
                 1, 0, 0, 0, EBook._meta.verbose_name_plural
-            )
+            ),
         )
 
     def test_import_export_buttons_visible_without_add_permission(self):
