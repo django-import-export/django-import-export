@@ -1,12 +1,13 @@
+from datetime import date
 from unittest.mock import patch
 
 import tablib
-from core.models import Book
+from core.models import Author, Book, Category
 from core.tests.resources import BookResource
 from core.tests.utils import ignore_widget_deprecation_warning
 from django.test import TestCase
 
-from import_export import exceptions, fields, resources
+from import_export import exceptions, fields, resources, widgets
 
 
 class AfterImportComparisonTest(TestCase):
@@ -80,6 +81,35 @@ class ImportExportFieldOrderTest(TestCase):
         class Meta:
             fields = ["id", "price", "name"]
             model = Book
+
+    class DeclaredModelFieldBookResource(BaseBookResource):
+        # Non-model field, should come after model fields by default
+        author_full_name = fields.Field(
+            attribute="author",
+            column_name="author full name",
+        )
+
+        # Order of declared fields in `ModelResource` shouldn't change export order
+        categories = fields.Field(
+            attribute="categories",
+            column_name="categories",
+            widget=widgets.ManyToManyWidget(model=Category, field="name"),
+        )
+        published = fields.Field(
+            attribute="published",
+            column_name="published",
+            widget=widgets.DateWidget("%d.%m.%Y"),
+        )
+        author = fields.Field(attribute="author__name", column_name="author")
+
+        class Meta:
+            model = Book
+
+        def dehydrate_author_full_name(self, obj):
+            if obj.author:
+                return f"{obj.author.name} Bar"
+
+            return ""
 
     def setUp(self):
         super().setUp()
@@ -156,6 +186,82 @@ class ImportExportFieldOrderTest(TestCase):
         data = self.resource.export()
         target = f"id,price,name\r\n{self.pk},1.99,Ulysses\r\n"
         self.assertEqual(target, data.csv)
+
+    def test_declared_model_fields_not_alter_export_order(self):
+        # Issue (#1663)
+
+        categories = [
+            Category.objects.create(name="sci-fi"),
+            Category.objects.create(name="romance"),
+        ]
+        author = Author.objects.create(name="Foo")
+        book = Book.objects.create(
+            name="The Lord Of The Rings", author=author, published=date(2022, 2, 2)
+        )
+        book.categories.set(categories)
+
+        self.resource = ImportExportFieldOrderTest.DeclaredModelFieldBookResource()
+        declared_field_names = (
+            "published",
+            "author",  # FK
+            "categories",  # M2M
+        )
+        export_order = self.resource.get_export_order()
+        model_fields_names = [
+            field.name for field in self.resource._meta.model._meta.get_fields()
+        ]
+
+        for declared_field_name in declared_field_names:
+            self.assertEqual(
+                model_fields_names.index(declared_field_name),
+                export_order.index(declared_field_name),
+            )
+
+        # Validate non-model field is exported last unless specified
+        self.assertEqual(export_order[-1], "author_full_name")
+
+    def test_meta_fields_not_alter_export_order(self):
+        class DeclaredModelFieldBookResource(
+            ImportExportFieldOrderTest.BaseBookResource
+        ):
+            # Non-model field, should come after model fields by default
+            author_full_name = fields.Field(
+                attribute="author",
+                column_name="author full name",
+            )
+
+            # Order of declared fields in `ModelResource` shouldn't change export order
+            categories = fields.Field(
+                attribute="categories",
+                column_name="categories",
+                widget=widgets.ManyToManyWidget(model=Category, field="name"),
+            )
+            published = fields.Field(
+                attribute="published",
+                column_name="published",
+                widget=widgets.DateWidget("%d.%m.%Y"),
+            )
+            author = fields.Field(attribute="author__name", column_name="author")
+
+            class Meta:
+                model = Book
+                fields = (
+                    "id",
+                    "author__name",
+                    "author",
+                    "author_full_name",
+                    "categories",
+                    "published",
+                )
+
+            def dehydrate_author_full_name(self, obj):
+                if obj.author:
+                    return f"{obj.author.name} Bar"
+
+                return ""
+
+        self.resource = DeclaredModelFieldBookResource()
+        self.assertEqual(self.resource.get_export_order(), self.resource._meta.fields)
 
 
 class ImportIdFieldsTestCase(TestCase):

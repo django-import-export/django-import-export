@@ -39,6 +39,17 @@ Or the ``exclude`` option to blacklist fields::
             model = Book
             exclude = ('imported', )
 
+.. _field_ordering:
+
+Field ordering
+--------------
+
+The precedence for the order of fields for import / export is defined as follows:
+
+  * ``import_order`` or ``export_order`` (if defined)
+  * ``fields`` (if defined)
+  * The order derived from the underlying model instance.
+
 When importing or exporting, the ordering defined by ``fields`` is used, however an explicit order for importing or
 exporting fields can be set using the either the ``import_order`` or ``export_order`` options::
 
@@ -51,10 +62,11 @@ exporting fields can be set using the either the ``import_order`` or ``export_or
             export_order = ('id', 'price', 'author', 'name')
 
 Where ``import_order`` or ``export_order`` contains a subset of ``fields`` then the ``import_order`` and
-``export_order`` will be processed first.
+``export_order`` fields will be processed first.
 
 If no ``fields``, ``import_order`` or ``export_order`` is defined then fields are created via introspection of the model
-class.
+class.  The order of declared fields in the model instance is preserved, and any non-model fields are last in the
+ordering.
 
 .. _field_declaration:
 
