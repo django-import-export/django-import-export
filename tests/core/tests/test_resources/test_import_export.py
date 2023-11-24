@@ -187,7 +187,6 @@ class ImportExportFieldOrderTest(TestCase):
         target = f"id,price,name\r\n{self.pk},1.99,Ulysses\r\n"
         self.assertEqual(target, data.csv)
 
-    @ignore_widget_deprecation_warning
     def test_declared_model_fields_not_alter_export_order(self):
         # Issue (#1663)
 
@@ -221,7 +220,6 @@ class ImportExportFieldOrderTest(TestCase):
         # Validate non-model field is exported last unless specified
         self.assertEqual(export_order[-1], "author_full_name")
 
-    @ignore_widget_deprecation_warning
     def test_meta_fields_not_alter_export_order(self):
         class DeclaredModelFieldBookResource(
             ImportExportFieldOrderTest.BaseBookResource
