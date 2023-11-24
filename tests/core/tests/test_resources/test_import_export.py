@@ -4,7 +4,6 @@ from unittest.mock import patch
 import tablib
 from core.models import Author, Book, Category
 from core.tests.resources import BookResource
-from core.tests.utils import ignore_widget_deprecation_warning
 from django.test import TestCase
 
 from import_export import exceptions, fields, resources, widgets
@@ -33,7 +32,6 @@ class AfterImportComparisonTest(TestCase):
         row = [self.book.pk, "Some book", "2023-05-09"]
         self.dataset.append(row)
 
-    @ignore_widget_deprecation_warning
     def test_after_import_row_check_for_change(self):
         # issue 1583 - assert that `original` object is available to after_import_row()
         self.resource.import_data(self.dataset, raise_errors=True)
@@ -118,26 +116,22 @@ class ImportExportFieldOrderTest(TestCase):
         row = [self.pk, "Some book", "19.99"]
         self.dataset.append(row)
 
-    @ignore_widget_deprecation_warning
     def test_defined_import_order(self):
         self.resource = ImportExportFieldOrderTest.OrderedBookResource()
         self.resource.import_data(self.dataset)
         self.assertEqual(["price", "name", "id"], self.resource.field_names)
 
-    @ignore_widget_deprecation_warning
     def test_undefined_import_order(self):
         self.resource = ImportExportFieldOrderTest.UnorderedBookResource()
         self.resource.import_data(self.dataset)
         self.assertEqual(["price", "id", "name"], self.resource.field_names)
 
-    @ignore_widget_deprecation_warning
     def test_defined_export_order(self):
         self.resource = ImportExportFieldOrderTest.OrderedBookResource()
         data = self.resource.export()
         target = f"price,name,id\r\n1.99,Ulysses,{self.pk}\r\n"
         self.assertEqual(target, data.csv)
 
-    @ignore_widget_deprecation_warning
     def test_undefined_export_order(self):
         # When export order is not defined,
         # exported order should correspond with 'fields' definition
@@ -146,7 +140,6 @@ class ImportExportFieldOrderTest(TestCase):
         target = f"price,id,name\r\n1.99,{self.pk},Ulysses\r\n"
         self.assertEqual(target, data.csv)
 
-    @ignore_widget_deprecation_warning
     def test_subset_import_order(self):
         self.resource = ImportExportFieldOrderTest.SubsetOrderedBookResource()
         self.resource.import_data(self.dataset)
@@ -154,33 +147,28 @@ class ImportExportFieldOrderTest(TestCase):
             ["name", "price", "id", "published"], self.resource.field_names
         )
 
-    @ignore_widget_deprecation_warning
     def test_subset_export_order(self):
         self.resource = ImportExportFieldOrderTest.SubsetOrderedBookResource()
         data = self.resource.export()
         target = f"published,price,id,name\r\n,1.99,{self.pk},Ulysses\r\n"
         self.assertEqual(target, data.csv)
 
-    @ignore_widget_deprecation_warning
     def test_duplicate_import_order(self):
         self.resource = ImportExportFieldOrderTest.DuplicateFieldsBookResource()
         self.resource.import_data(self.dataset)
         self.assertEqual(["id", "price", "name"], self.resource.field_names)
 
-    @ignore_widget_deprecation_warning
     def test_duplicate_export_order(self):
         self.resource = ImportExportFieldOrderTest.DuplicateFieldsBookResource()
         data = self.resource.export()
         target = f"id,price,name\r\n{self.pk},1.99,Ulysses\r\n"
         self.assertEqual(target, data.csv)
 
-    @ignore_widget_deprecation_warning
     def test_fields_as_list_import_order(self):
         self.resource = ImportExportFieldOrderTest.FieldsAsListBookResource()
         self.resource.import_data(self.dataset)
         self.assertEqual(["id", "price", "name"], self.resource.field_names)
 
-    @ignore_widget_deprecation_warning
     def test_fields_as_list_export_order(self):
         self.resource = ImportExportFieldOrderTest.FieldsAsListBookResource()
         data = self.resource.export()
@@ -312,7 +300,6 @@ class ImportWithMissingFields(TestCase):
 
     @patch("import_export.resources.logger")
     @patch("import_export.fields.Field.save")
-    @ignore_widget_deprecation_warning
     def test_import_with_missing_instance_attribute(self, mock_field_save, mock_logger):
         class _BookResource(resources.ModelResource):
             name = fields.Field(column_name="name")
@@ -333,7 +320,6 @@ class ImportWithMissingFields(TestCase):
 
     @patch("import_export.resources.logger")
     @patch("import_export.fields.Field.save")
-    @ignore_widget_deprecation_warning
     def test_import_with_missing_field_in_row(self, mock_field_save, mock_logger):
         dataset = tablib.Dataset(*[(1, "Some book")], headers=["id", "name"])
         self.resource = BookResource()
