@@ -78,7 +78,7 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
     @ignore_widget_deprecation_warning
     def test_export_post(self):
         # create a POST request with data selected from the 'action' export
-        data = {"file_format": "0", "export_items": [str(self.cat1.id)]}
+        data = {"format": "0", "export_items": [str(self.cat1.id)]}
         date_str = datetime.now().strftime("%Y-%m-%d")
         response = self.client.post("/admin/core/category/export/", data)
         self.assertEqual(response.status_code, 200)

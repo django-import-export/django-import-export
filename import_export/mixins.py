@@ -151,7 +151,7 @@ class ExportViewFormMixin(ExportViewMixin, FormView):
             stacklevel=2,
         )
         formats = self.get_export_formats()
-        file_format = formats[int(form.cleaned_data["file_format"])]()
+        file_format = formats[int(form.cleaned_data["format"])]()
         if hasattr(self, "get_filterset"):
             queryset = self.get_filterset(self.get_filterset_class()).qs
         else:

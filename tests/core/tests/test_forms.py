@@ -1,4 +1,5 @@
 from django.test import TestCase
+from formats.base_formats import CSV
 
 from import_export import forms, resources
 
@@ -16,14 +17,14 @@ class FormTest(TestCase):
 
     def test_formbase_init_one_resource(self):
         resource_list = [resources.ModelResource]
-        form = forms.ImportExportFormBase(resources=resource_list)
+        form = forms.ImportExportFormBase(formats=[CSV], resources=resource_list)
         self.assertTrue("resource" in form.fields)
         self.assertEqual("ModelResource", form.fields["resource"].value)
         self.assertTrue(form.fields["resource"].widget.attrs["readonly"])
 
     def test_formbase_init_two_resources(self):
         resource_list = [resources.ModelResource, MyResource]
-        form = forms.ImportExportFormBase(resources=resource_list)
+        form = forms.ImportExportFormBase(formats=[CSV], resources=resource_list)
         self.assertEqual(
             form.fields["resource"].choices,
             [(0, "ModelResource"), (1, "My super resource")],

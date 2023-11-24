@@ -22,10 +22,10 @@ class ExportViewMixinTest(TestCase):
         self.cat1 = Category.objects.create(name="Cat 1")
         self.cat2 = Category.objects.create(name="Cat 2")
         self.form = ExportViewMixinTest.TestExportForm(
-            formats.base_formats.DEFAULT_FORMATS,
+            formats=formats.base_formats.DEFAULT_FORMATS,
             resources=[modelresource_factory(Category)],
         )
-        self.form.cleaned_data["file_format"] = "0"
+        self.form.cleaned_data["format"] = "0"
 
     def test_get(self):
         response = self.client.get(self.url)
@@ -35,7 +35,7 @@ class ExportViewMixinTest(TestCase):
     @ignore_widget_deprecation_warning
     def test_post(self):
         data = {
-            "file_format": "0",
+            "format": "0",
         }
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", category=DeprecationWarning)
