@@ -1355,10 +1355,15 @@ class ModelDeclarativeMetaclass(DeclarativeMetaclass):
                     continue
                 if opts.exclude and f.name in opts.exclude:
                     continue
-                if f.name in declared_fields:
-                    continue
 
-                field = new_class.field_from_django_field(f.name, f, readonly=False)
+                if f.name in declared_fields:
+                    # If model field is declared in `ModelResource`,
+                    # remove it from `declared_fields`
+                    # to keep exact order of model fields
+                    field = declared_fields.pop(f.name)
+                else:
+                    field = new_class.field_from_django_field(f.name, f, readonly=False)
+
                 field_list.append(
                     (
                         f.name,
@@ -1366,7 +1371,8 @@ class ModelDeclarativeMetaclass(DeclarativeMetaclass):
                     )
                 )
 
-            new_class.fields.update(OrderedDict(field_list))
+            # Order as model fields first then declared fields by default
+            new_class.fields = OrderedDict([*field_list, *new_class.fields.items()])
 
             # add fields that follow relationships
             if opts.fields is not None:

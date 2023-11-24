@@ -309,11 +309,11 @@ class ModelResourceTest(TestCase):
         self.assertEqual(
             headers,
             [
-                "published_date",
                 "id",
                 "name",
                 "author",
                 "author_email",
+                "published_date",
                 "published_time",
                 "price",
                 "added",
