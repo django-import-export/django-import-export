@@ -46,6 +46,11 @@ In v4, return values are rendered as strings by default (where applicable), with
 
 Refer to the :doc:`documentation<api_widgets>` for more information.
 
+Export field order
+------------
+
+The ordering rules for exported fields has been standardized. See :ref:`documentation<field_ordering>`.
+
 Deprecations
 ============
 
