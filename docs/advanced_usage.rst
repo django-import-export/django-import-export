@@ -39,15 +39,34 @@ Or the ``exclude`` option to blacklist fields::
             model = Book
             exclude = ('imported', )
 
-An explicit order for exporting fields can be set using the ``export_order``
-option::
+.. _field_ordering:
+
+Field ordering
+--------------
+
+The precedence for the order of fields for import / export is defined as follows:
+
+  * ``import_order`` or ``export_order`` (if defined)
+  * ``fields`` (if defined)
+  * The order derived from the underlying model instance.
+
+When importing or exporting, the ordering defined by ``fields`` is used, however an explicit order for importing or
+exporting fields can be set using the either the ``import_order`` or ``export_order`` options::
 
     class BookResource(resources.ModelResource):
 
         class Meta:
             model = Book
             fields = ('id', 'name', 'author', 'price',)
+            import_order = ('id', 'price',)
             export_order = ('id', 'price', 'author', 'name')
+
+Where ``import_order`` or ``export_order`` contains a subset of ``fields`` then the ``import_order`` and
+``export_order`` fields will be processed first.
+
+If no ``fields``, ``import_order`` or ``export_order`` is defined then fields are created via introspection of the model
+class.  The order of declared fields in the model instance is preserved, and any non-model fields are last in the
+ordering.
 
 .. _field_declaration:
 
@@ -136,7 +155,7 @@ There are widgets associated with character data, numeric values, dates, foreign
 widget and associate it with the field.
 
 A :class:`~import_export.resources.ModelResource` creates fields with a default widget for a given field type via
-instrospection.  If the widget should be initialized with different arguments, this can be done via an explicit
+introspection.  If the widget should be initialized with different arguments, this can be done via an explicit
 declaration or via the widgets dict.
 
 For example, the ``published`` field is overridden to use a different date format. This format will be used both for
@@ -149,7 +168,9 @@ importing and exporting resource::
         class Meta:
             model = Book
 
-Alternatively, widget parameters can be overridden using the widgets dict declaration::
+Declaring fields may affect the export order of the fields.  If this is an issue, you can either declare the
+:attr:`~import_export.resources.ResourceOptions.export_order` attribute, or declare widget parameters using the widgets
+dict declaration::
 
     class BookResource(resources.ModelResource):
 
@@ -159,10 +180,105 @@ Alternatively, widget parameters can be overridden using the widgets dict declar
                 'published': {'format': '%d.%m.%Y'},
             }
 
+Modify :meth:`.render` return type
+----------------------------------
+
+By default, :meth:`.render` will return a string type for export.  There may be use cases where a native type is
+required from export.  If so, you can use the ``coerce_to_string`` parameter if the widget supports it.
+
+By default, ``coerce_to_string`` is ``True``, but if you set this to ``False``, then the native type will be returned
+during export::
+
+    class BookResource(resources.ModelResource):
+        published = Field(attribute='published', column_name='published_date',
+            widget=DateWidget(format='%Y-%m-%d', coerce_to_string=False))
+
+        class Meta:
+            model = Book
+
 .. seealso::
 
     :doc:`/api_widgets`
-        available widget types and options.
+        Available widget types and options.
+
+Validation during import
+========================
+
+The import process will include basic validation during import.  This validation can be customized or extended if
+required.
+
+The import process distinguishes between:
+
+#. Validation errors which arise when failing to parse import data correctly.
+
+#. General exceptions which arise during processing.
+
+Errors are retained in each :class:`~import_export.results.RowResult` instance which is stored in the single
+:class:`~import_export.results.Result` instance which is returned from the import process.
+
+The :meth:`~import_export.resources.Resource.import_data` method takes optional parameters which can be used to
+customize the handling of errors.  Refer to the method documentation for specific details.
+
+For example, to iterate over errors produced from an import::
+
+    result = self.resource.import_data(self.dataset, raise_errors=False)
+    if result.has_errors():
+        for row in result.rows:
+            for error in row.errors:
+                print(str(error.error))
+
+If using the :ref:`Admin UI<admin-integration>`, errors are presented to the user during import (see below).
+
+Field level validation
+----------------------
+
+Validation of input can be performed during import by a widget's :meth:`~import_export.widgets.Widget.clean` method by
+raising a `ValueError <https://docs.python.org/3/library/exceptions.html#ValueError/>`_.
+Consult the :doc:`widget documentation </api_widgets>` for more information.
+
+You can supply your own field level validation by overriding :meth:`~import_export.widgets.Widget.clean`, for example::
+
+  class PositiveIntegerWidget(IntegerWidget):
+    """Returns a positive integer value"""
+
+    def clean(self, value, row=None, **kwargs):
+        val = super().clean(value, row=row, **kwargs)
+        if val < 0:
+            raise ValueError("value must be positive")
+        return val
+
+Field level errors will be presented in the :ref:`Admin UI<admin-integration>`, for example:
+
+.. figure:: _static/images/date-widget-validation-error.png
+
+  A screenshot showing a field specific error.
+
+Instance level validation
+-------------------------
+
+You can optionally configure import-export to perform model instance validation during import by enabling the
+:attr:`~import_export.resources.ResourceOptions.clean_model_instances` attribute.
+
+You can override the
+`full_clean() <https://docs.djangoproject.com/en/stable/ref/models/instances/#django.db.models.Model.full_clean>`_.
+method to provide extra validation, either at field or instance level::
+
+    class Book(models.Model):
+
+        def full_clean(self, exclude=None, validate_unique=True):
+            super().full_clean(exclude, validate_unique)
+
+            # non field specific validation
+            if self.published < date(1900, 1, 1):
+                raise ValidationError("book is out of print")
+
+            # field specific validation
+            if self.name == "Ulysses":
+                raise ValidationError({"name": "book has been banned"})
+
+.. figure:: _static/images/non-field-specific-validation-error.png
+
+  A screenshot showing a non field specific error.
 
 .. _import_model_relations:
 
@@ -252,7 +368,8 @@ data if it does not already exist.  It is possible to achieve this as follows::
 The code above can be adapted to handle m2m relationships.
 
 You can also achieve similar by subclassing the widget :meth:`~import_export.widgets.ForeignKeyWidget.clean` method to
-create the object if it does not already exist.
+create the object if it does not already exist.  An example for :class:`~import_export.widgets.ManyToManyWidget` is
+`here <https://github.com/django-import-export/django-import-export/issues/318#issuecomment-861813245>`_.
 
 Customize relation lookup
 -------------------------
@@ -356,8 +473,7 @@ for all Models that support it.
             model = Book
             use_natural_foreign_keys = True
 
-Read more at `Django Serialization <https://docs.djangoproject.com/en/dev/topics/serialization/>`_.
-
+Read more at `Django Serialization <https://docs.djangoproject.com/en/stable/topics/serialization/>`_.
 
 Create or update model instances
 ================================
@@ -438,16 +554,17 @@ Handling duplicate data
 
 If an existing instance is identified during import, then the existing instance will be updated, regardless of whether
 the data in the import row is the same as the persisted data or not.  You can configure the import process to skip the
-row if it is duplicate by using setting ``skip_unchanged``.
+row if it is duplicate by using setting :attr:`~import_export.resources.ResourceOptions.skip_unchanged`.
 
-If ``skip_unchanged`` is enabled, then the import process will check each defined import field and perform a simple
-comparison with the existing instance, and if all comparisons are equal, then the row is skipped.  Skipped rows are
-recorded in the row ``Result`` object.
+If :attr:`~import_export.resources.ResourceOptions.skip_unchanged` is enabled, then the import process will check each
+defined import field and perform a simple comparison with the existing instance, and if all comparisons are equal, then
+the row is skipped.  Skipped rows are recorded in the row :class:`~import_export.results.RowResult` object.
 
 You can override the :meth:`~.skip_row` method to have full control over the skip row implementation.
 
-Also, the ``report_skipped`` option controls whether skipped records appear in the import
-``Result`` object, and whether skipped records will show in the import preview page in the Admin UI::
+Also, the :attr:`~import_export.resources.ResourceOptions.report_skipped` option controls whether skipped records appear
+in the import :class:`~import_export.results.RowResult` object, and whether skipped records will show in the import
+preview page in the Admin UI::
 
     class BookResource(resources.ModelResource):
 
@@ -474,13 +591,15 @@ You can define your resource to take the associated instance as a param, and the
         def __init__(self, publisher_id):
             self.publisher_id = publisher_id
 
-        def before_save_instance(self, instance, using_transactions, dry_run):
+        def before_save_instance(self, instance, row, **kwargs):
             instance.publisher_id = self.publisher_id
 
         class Meta:
             model = Book
 
 See also :ref:`advanced_usage:How to dynamically set resource values`.
+
+.. _advanced_data_manipulation_on_export:
 
 Advanced data manipulation on export
 ====================================
@@ -539,6 +658,44 @@ To hook in the import-export workflow, you can connect to ``post_import``,
         # model is the actual model instance which after export
         pass
 
+.. _concurrent-writes:
+
+Concurrent writes
+=================
+
+There is specific consideration required if your application allows concurrent writes to data during imports.
+
+For example, consider this scenario:
+
+#. An import process is run to import new books identified by title.
+#. The :meth:`~import_export.resources.Resource.get_or_init_instance` is called and identifies that there is no
+   existing book with this title, hence the import process will create it as a new record.
+#. At that exact moment, another process inserts a book with the same title.
+#. As the row import process completes, :meth:`~import_export.resources.Resource.save` is called and an error is thrown
+   because the book already exists in the database.
+
+By default, import-export does not prevent this situation from occurring, therefore you need to consider what processes
+might be modifying shared tables during imports, and how you can mitigate risks.  If your database enforces integrity,
+then you may get errors raised, if not then you may get duplicate data.
+
+Potential solutions are:
+
+* Use one of the :doc:`import workflow<import_workflow>` methods to lock a table during import if the database supports
+  it.
+
+  * This should only be done in exceptional cases because there will be a performance impact.
+  * You will need to release the lock both in normal workflow and if there are errors.
+
+* Override :meth:`~import_export.resources.Resource.do_instance_save` to perform a
+  `update_or_create() <https://docs.djangoproject.com/en/stable/ref/models/querysets/#update_or_create>`_.
+  This can ensure that data integrity is maintained if there is concurrent access.
+
+* Modify working practices so that there is no risk of concurrent writes. For example, you could schedule imports to
+  only run at night.
+
+This issue may be more prevalent if using :doc:`bulk imports<bulk_import>`.  This is because instances are held in
+memory for longer before being written in bulk, therefore there is potentially more risk of another process modifying
+an instance before it has been persisted.
 
 .. _admin-integration:
 
@@ -546,7 +703,7 @@ Admin integration
 =================
 
 One of the main features of import-export is the support for integration with the
-`Django Admin site <https://docs.djangoproject.com/en/dev/ref/contrib/admin/>`_.
+`Django Admin site <https://docs.djangoproject.com/en/stable/ref/contrib/admin/>`_.
 This provides a convenient interface for importing and exporting Django objects.
 
 Please install and run the :ref:`example application<exampleapp>`  to become familiar with Admin integration.
@@ -581,39 +738,22 @@ dropdown in the UI.
 
    A screenshot of the change view with Import and Export buttons.
 
-Exporting via admin action
---------------------------
-
-Another approach to exporting data is by subclassing
-:class:`~import_export.admin.ExportActionModelAdmin` which implements
-export as an admin action. As a result it's possible to export a list of
-objects selected on the change list page::
-
-    # app/admin.py
-    from import_export.admin import ExportActionModelAdmin
-
-    class BookAdmin(ExportActionModelAdmin):
-        pass
-
-
-.. figure:: _static/images/django-import-export-action.png
-
-   A screenshot of the change view with Import and Export as an admin action.
-
-Note that to use the :class:`~import_export.admin.ExportMixin` or
-:class:`~import_export.admin.ExportActionMixin`, you must declare this mixin
-**before** ``admin.ModelAdmin``.
+.. _import-process:
 
 Importing
 ---------
 
-It is also possible to enable data import via standard Django admin interface.
-To do this subclass :class:`~import_export.admin.ImportExportModelAdmin` or use
+To enable import, subclass :class:`~import_export.admin.ImportExportModelAdmin` or use
 one of the available mixins, i.e. :class:`~import_export.admin.ImportMixin`, or
 :class:`~import_export.admin.ImportExportMixin`.
 
-By default, import is a two step process, though it can be configured to be a single step process
-(see :ref:`IMPORT_EXPORT_SKIP_ADMIN_CONFIRM`).
+Enabling import functionality means that a UI button will automatically be presented on the Admin page:
+
+.. figure:: _static/images/import-button.png
+   :alt: The import button
+
+When clicked, the user will be directed into the import workflow.  By default, import is a two step process, though
+it can be configured to be a single step process (see :ref:`import_export_skip_admin_confirm`).
 
 The two step process is:
 
@@ -623,12 +763,14 @@ The two step process is:
 .. _confirm-import-figure:
 
 .. figure:: _static/images/django-import-export-import.png
+   :alt: A screenshot of the 'import' view
 
-   A screenshot of the import view.
+   A screenshot of the 'import' view.
 
 .. figure:: _static/images/django-import-export-import-confirm.png
+   :alt: A screenshot of the 'confirm import' view
 
-   A screenshot of the confirm import view.
+   A screenshot of the 'confirm import' view.
 
 Import confirmation
 -------------------
@@ -642,11 +784,11 @@ There are three mechanisms for temporary storage.
 #. Temporary file storage on the host server (default).  This is suitable for development only.
    Use of temporary filesystem storage is not recommended for production sites.
 
-#. The `Django cache <https://docs.djangoproject.com/en/dev/topics/cache/>`_.
+#. The `Django cache <https://docs.djangoproject.com/en/stable/topics/cache/>`_.
 
-#. `Django storage <https://docs.djangoproject.com/en/dev/ref/files/storage/>`_.
+#. `Django storage <https://docs.djangoproject.com/en/stable/ref/files/storage/>`_.
 
-To modify which storage mechanism is used, please refer to the setting :ref:`IMPORT_EXPORT_TMP_STORAGE_CLASS`.
+To modify which storage mechanism is used, please refer to the setting :ref:`import_export_tmp_storage_class`.
 
 Temporary resources are removed when data is successfully imported after the confirmation step.
 
@@ -663,6 +805,82 @@ Your choice of temporary storage will be influenced by the following factors:
     or if there are errors during import, then temporary resources may not be deleted.
     This will need to be understood and managed in production settings.
     For example, using a cache expiration policy or cron job to clear stale resources.
+
+Exporting
+---------
+
+As with import, it is also possible to configure export functionality.
+
+To do this, subclass :class:`~import_export.admin.ImportExportModelAdmin` or use
+one of the available mixins, i.e. :class:`~import_export.admin.ExportMixin`, or
+:class:`~import_export.admin.ImportExportMixin`.
+
+Enabling export functionality means that a UI button will automatically be presented on the Admin page:
+
+.. figure:: _static/images/export-button.png
+   :alt: The export button
+
+When clicked, the user will be directed into the export workflow.
+
+Export is a two step process.  When the 'export' button is clicked, the user will be directed to a new screen,
+where 'resource' and 'file format' can be selected.
+
+.. _export_confirm:
+
+.. figure:: _static/images/django-import-export-export-confirm.png
+   :alt: the export confirm page
+
+   The export 'confirm' page.
+
+Once 'submit' is clicked, the export file will be automatically downloaded to the client (usually to the 'Downloads'
+folder).
+
+.. _export_via_admin_action:
+
+Exporting via Admin action
+--------------------------
+
+It's possible to configure the Admin UI so that users can select which items they want to export:
+
+
+.. image:: _static/images/select-for-export.png
+  :alt: Select items for export
+
+To do this, simply declare an Admin instance which includes  :class:`~import_export.admin.ExportActionMixin`::
+
+  class BookAdmin(ImportExportModelAdmin, ExportActionMixin):
+    # additional config can be supplied if required
+    pass
+
+Then register this Admin::
+
+  admin.site.register(Book, BookAdmin)
+
+Note that the above example refers specifically to the :ref:`example application<exampleapp>`, you'll have to modify
+this to refer to your own model instances.  In the example application, the 'Category' model has this functionality.
+
+When 'Go' is clicked for the selected items, the user will be directed to the
+:ref:`export 'confirm' page<export_confirm>`.  It is possible to disable this extra step by setting the
+:ref:`import_export_skip_admin_action_export_ui` flag
+
+Export from model instance change form
+--------------------------------------
+
+When :ref:`export via admin action<export_via_admin_action>` is enabled, then it is also possible to export from a
+model instance change form:
+
+.. figure:: _static/images/change-form-export.png
+   :alt: export from change form
+
+   Export from model instance change form
+
+When 'Export' is clicked, the user will be directed to the :ref:`export 'confirm' page<export_confirm>`.
+
+This button can be removed from the UI by setting the
+:attr:`~import_export.admin.ExportActionMixin.show_change_form_export` attribute, for example::
+
+  class CategoryAdmin(ExportActionModelAdmin):
+      show_change_form_export = False
 
 Customize admin import forms
 ----------------------------
@@ -882,33 +1100,12 @@ return books for the publisher::
         class Meta:
             model = Book
 
-Select items for export
------------------------
-
-It's possible to configure the Admin UI so that users can select which items they want to export:
-
-.. image:: _static/images/select-for-export.png
-  :alt: Select items for export
-
-To do this, simply declare an Admin instance which includes  :class:`~import_export.admin.ExportActionMixin`::
-
-  class BookAdmin(ImportExportModelAdmin, ExportActionMixin):
-    # additional config can be supplied if required
-    pass
-
-Then register this Admin::
-
-  admin.site.register(Book, BookAdmin)
-
-Note that the above example refers specifically to the :ref:`example application<exampleapp>`, you'll have to modify
-this to refer to your own Model instances.
-
 .. _interoperability:
 
 Interoperability with 3rd party libraries
 -----------------------------------------
 
-import_export extends the Django Admin interface.  There is a possibility that clashes may occur with other 3rd party
+import-export extends the Django Admin interface.  There is a possibility that clashes may occur with other 3rd party
 libraries which also use the admin interface.
 
 django-admin-sortable2
@@ -928,13 +1125,22 @@ template skipped due to recursion issue
 
 Refer to `this issue <https://github.com/django-import-export/django-import-export/issues/1514#issuecomment-1344200867>`_.
 
+django-debug-toolbar
+^^^^^^^^^^^^^^^^^^^^
+
+If you use import-export using with `django-debug-toolbar <https://pypi.org/project/django-debug-toolbar>`_.
+then you need to configure ``debug_toolbar=False`` or ``DEBUG=False``,
+It has been reported that the the import/export time will increase ~10 times.
+
+Refer to `this PR <https://github.com/django-import-export/django-import-export/issues/1656>`_.
+
 .. _admin_security:
 
 Security
 --------
 
 Enabling the Admin interface means that you should consider the security implications.  Some or all of the following
-points may be relevant:
+points may be relevant.
 
 Is there potential for untrusted imports?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -962,30 +1168,54 @@ What is the potential risk for exported data?
 * Could any exported data be rendered in HTML? For example, csv is exported and then loaded into another
   web application.  In this case, untrusted input could contain malicious code such as active script content.
 
+You should in all cases review `Django security documentation <https://docs.djangoproject.com/en/stable/topics/security/>`_
+before deploying a live Admin interface instance.
+
 Mitigating security risks
 ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Please read the following topics carefully to understand how you can improve the security of your implementation.
+
+Sanitize exports
+""""""""""""""""
 
 By default, import-export does not sanitize or process imported data.  Malicious content, such as script directives,
 can be imported into the database, and can be exported without any modification.
 
-You can optionally configure import-export to sanitize data on export.  There are two settings which enable this:
+.. note::
 
-#. :ref:`IMPORT_EXPORT_ESCAPE_HTML_ON_EXPORT`
-#. :ref:`IMPORT_EXPORT_ESCAPE_FORMULAE_ON_EXPORT`
+  HTML content, if exported into 'html' format, will be sanitized to remove scriptable content.
+  This sanitization is performed by the ``tablib`` library.
 
-.. warning::
+You can optionally configure import-export to sanitize Excel formula data on export.  See
+:ref:`IMPORT_EXPORT_ESCAPE_FORMULAE_ON_EXPORT`.
 
-    Enabling these settings only sanitizes data exported using the Admin Interface.
-    If exporting data :ref:`programmatically<exporting_data>`, then you will need to apply your own sanitization.
+Enabling this setting only sanitizes data exported using the Admin Interface.
+If exporting data :ref:`programmatically<exporting_data>`, then you will need to apply your own sanitization.
 
-Limiting the available import or export types can be considered. This can be done using either of the following settings:
+Limit formats
+"""""""""""""
+
+Limiting the available import or export format types can be considered. For example, if you never need to support
+import or export of spreadsheet data, you can remove this format from the application.
+
+Imports and exports can be restricted using the following settings:
 
 #. :ref:`IMPORT_EXPORT_FORMATS`
 #. :ref:`IMPORT_FORMATS`
 #. :ref:`EXPORT_FORMATS`
 
-You should in all cases review `Django security documentation <https://docs.djangoproject.com/en/dev/topics/security/>`_
-before deploying a live Admin interface instance.
+Set permissions
+"""""""""""""""
 
-Please refer to `SECURITY.md <https://github.com/django-import-export/django-import-export/blob/main/SECURITY.md>`_ for
-details on how to escalate security issues.
+Consider setting `permissions <https://docs.djangoproject.com/en/stable/topics/auth/default/>`_ to define which
+users can import and export.
+
+#. :ref:`IMPORT_EXPORT_IMPORT_PERMISSION_CODE`
+#. :ref:`IMPORT_EXPORT_EXPORT_PERMISSION_CODE`
+
+Raising security issues
+^^^^^^^^^^^^^^^^^^^^^^^
+
+Refer to `SECURITY.md <https://github.com/django-import-export/django-import-export/blob/main/SECURITY.md>`_ for
+details on how to escalate security issues you may have found in import-export.
