@@ -273,9 +273,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         form_class = self.get_import_form_class(request)
         kwargs = self.get_import_form_kwargs(request)
 
-        return form_class(
-            formats=formats, resources=self.get_import_resource_classes(), **kwargs
-        )
+        return form_class(formats, self.get_import_resource_classes(), **kwargs)
 
     def get_import_form_class(self, request):
         """
@@ -686,9 +684,9 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
         form_type = self.get_export_form_class()
         formats = self.get_export_formats()
         form = form_type(
-            request.POST or None,
-            formats=formats,
-            resources=self.get_export_resource_classes(),
+            formats,
+            self.get_export_resource_classes(),
+            data=request.POST or None,
         )
         form.fields["export_items"] = MultipleChoiceField(
             widget=MultipleHiddenInput,
