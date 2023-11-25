@@ -307,3 +307,25 @@ Parameter changes
    * - ``export(self, obj)``
      - ``export(self, instance)``
      - * ``obj`` renamed to ``instance``
+
+
+:class:`import_export.forms.ImportExportFormBase`
+-------------------------------------------------
+
+If you have subclassed one of the :mod:`~import_export.forms` then you may need to
+modify the parameters passed to constructors.
+
+Parameter changes
+^^^^^^^^^^^^^^^^^
+
+.. list-table::
+   :header-rows: 1
+
+   * - Previous
+     - New
+     - Summary
+
+   * - ``__init__(self, *args, resources=None, **kwargs)``
+     - ``__init__(self, formats, resources, *args, **kwargs)``
+     - * ``formats`` added as a mandatory arg
+       * ``resources`` added as a mandatory arg
