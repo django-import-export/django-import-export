@@ -1,7 +1,7 @@
 from django.test import TestCase
-from formats.base_formats import CSV
 
 from import_export import forms, resources
+from import_export.formats.base_formats import CSV
 
 
 class MyResource(resources.ModelResource):
