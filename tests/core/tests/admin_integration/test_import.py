@@ -389,7 +389,7 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
             response,
             _(
                 "Import finished: {} new, {} updated, {} deleted and {} skipped {}."
-            ).format(1, 0, 0, 0, Book._meta.verbose_name_plural),
+            ).format(1, 0, 0, 0, EBook._meta.verbose_name_plural),
         )
 
     def test_get_skip_admin_log_attribute(self):
