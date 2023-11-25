@@ -53,9 +53,9 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(
             response,
-            _("Import finished, with {} new and {} updated {}.").format(
-                1, 0, Book._meta.verbose_name_plural
-            ),
+            _(
+                "Import finished: {} new, {} updated, {} deleted and {} skipped {}."
+            ).format(1, 0, 0, 0, Book._meta.verbose_name_plural),
         )
 
     @override_settings(DEBUG=True)
@@ -135,9 +135,9 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(
             response,
-            _("Import finished, with {} new and {} updated {}.").format(
-                0, 1, Book._meta.verbose_name_plural
-            ),
+            _(
+                "Import finished: {} new, {} updated, {} deleted and {} skipped {}."
+            ).format(0, 1, 0, 0, Book._meta.verbose_name_plural),
         )
         # Check, that we really use second resource - author_email didn't get imported
         self.assertEqual(Book.objects.get(id=1).author_email, "")
@@ -266,9 +266,9 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(
             response,
-            _("Import finished, with {} new and {} updated {}.").format(
-                1, 0, Book._meta.verbose_name_plural
-            ),
+            _(
+                "Import finished: {} new, {} updated, {} deleted and {} skipped {}."
+            ).format(1, 0, 0, 0, Book._meta.verbose_name_plural),
         )
 
     def test_import_export_buttons_visible_without_add_permission(self):
@@ -387,9 +387,9 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(
             response,
-            _("Import finished, with {} new and {} updated {}.").format(
-                1, 0, EBook._meta.verbose_name_plural
-            ),
+            _(
+                "Import finished: {} new, {} updated, {} deleted and {} skipped {}."
+            ).format(1, 0, 0, 0, Book._meta.verbose_name_plural),
         )
 
     def test_get_skip_admin_log_attribute(self):
@@ -580,7 +580,8 @@ class CompleteImportEncodingTest(AdminTestMixin, TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(
-            response, "Import finished, with 1 new and 0 updated books."
+            response,
+            "Import finished: 1 new, 0 updated, 0 deleted and 0 skipped books.",
         )
 
     @override_settings(
@@ -718,7 +719,8 @@ class TestImportSkipConfirm(AdminTestMixin, TransactionTestCase):
             "books.csv",
             "0",
             follow=True,
-            str_in_response="Import finished, with 1 new and 0 updated books.",
+            str_in_response="Import finished: 1 new, 0 updated, "
+            + "0 deleted and 0 skipped books.",
         )
         self.assertEqual(1, Book.objects.count())
 
@@ -792,7 +794,8 @@ class TestImportSkipConfirm(AdminTestMixin, TransactionTestCase):
             "books-mac.csv",
             "0",
             follow=True,
-            str_in_response="Import finished, with 1 new and 0 updated books.",
+            str_in_response="Import finished: 1 new, 0 updated, "
+            + "0 deleted and 0 skipped books.",
         )
 
     @ignore_widget_deprecation_warning
@@ -802,7 +805,8 @@ class TestImportSkipConfirm(AdminTestMixin, TransactionTestCase):
             "0",
             "ISO-8859-1",
             follow=True,
-            str_in_response="Import finished, with 1 new and 0 updated books.",
+            str_in_response="Import finished: 1 new, 0 updated, "
+            + "0 deleted and 0 skipped books.",
         )
 
     def test_import_action_decode_error(self):
@@ -823,5 +827,6 @@ class TestImportSkipConfirm(AdminTestMixin, TransactionTestCase):
             "books.xls",
             "1",
             follow=True,
-            str_in_response="Import finished, with 1 new and 0 updated books.",
+            str_in_response="Import finished: 1 new, 0 updated, "
+            + "0 deleted and 0 skipped books.",
         )
