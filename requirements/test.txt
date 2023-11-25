@@ -6,3 +6,4 @@ memory-profiler==0.61.0
 django-extensions==3.2.3
 coverage==7.3.2
 tablib[all]==3.5.0
+setuptools-scm==8.0.4
