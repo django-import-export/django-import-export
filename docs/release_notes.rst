@@ -81,6 +81,12 @@ selected items using an export admin action.  However this meant that the export
 possible to select the export resource.  This has been fixed in v4 so that export workflow is now present when
 exporting via the Admin UI action.  For more information see :ref:`export documentation<export_via_admin_action>`.
 
+Success message
+---------------
+
+The success message shown on successful import has been updated to include the number of 'deleted' and 'skipped' rows.
+See `this PR <https://github.com/django-import-export/django-import-export/issues/1691>`_.
+
 API changes
 ===========
 
