@@ -24,3 +24,8 @@ class atomic_if_using_transaction:
     def __exit__(self, *args):
         if self.using_transactions:
             self.context_manager.__exit__(*args)
+
+
+def get_related_model(field):
+    if hasattr(field, "related_model"):
+        return field.related_model

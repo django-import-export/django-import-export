@@ -46,6 +46,7 @@ from django.utils.html import strip_tags
 
 from import_export import exceptions, fields, resources, results, widgets
 from import_export.instance_loaders import ModelInstanceLoader
+from import_export.options import ResourceOptions
 from import_export.resources import Diff
 
 
@@ -88,7 +89,7 @@ class ResourceTestCase(TestCase):
         self.assertIn(field.column_name, "name")
 
     def test_meta(self):
-        self.assertIsInstance(self.my_resource._meta, resources.ResourceOptions)
+        self.assertIsInstance(self.my_resource._meta, ResourceOptions)
 
     @mock.patch("builtins.dir")
     def test_new_handles_null_options(self, mock_dir):

@@ -24,7 +24,7 @@ This is what happens when the method is invoked:
    Then, an :class:`~import_export.instance_loaders.BaseInstanceLoader` responsible
    for loading existing instances is initialized. A different
    :class:`~import_export.instance_loaders.BaseInstanceLoader` can be specified
-   via :class:`~import_export.resources.ResourceOptions`'s
+   via :class:`~import_export.options.ResourceOptions`'s
    ``instance_loader_class`` attribute. A
    :class:`~import_export.instance_loaders.CachedInstanceLoader` can be used to
    reduce number of database queries. See the :mod:`~import_export.instance_loaders`

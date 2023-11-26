@@ -140,8 +140,8 @@ value changes::
 
 .. note::
 
-  * The ``original`` attribute will be null if :attr:`~import_export.resources.ResourceOptions.skip_diff` is True.
-  * The ``instance`` attribute will be null if :attr:`~import_export.resources.ResourceOptions.store_instance` is False.
+  * The ``original`` attribute will be null if :attr:`~import_export.options.ResourceOptions.skip_diff` is True.
+  * The ``instance`` attribute will be null if :attr:`~import_export.options.ResourceOptions.store_instance` is False.
 
 Field widgets
 =============
@@ -169,7 +169,7 @@ importing and exporting resource::
             model = Book
 
 Declaring fields may affect the export order of the fields.  If this is an issue, you can either declare the
-:attr:`~import_export.resources.ResourceOptions.export_order` attribute, or declare widget parameters using the widgets
+:attr:`~import_export.options.ResourceOptions.export_order` attribute, or declare widget parameters using the widgets
 dict declaration::
 
     class BookResource(resources.ModelResource):
@@ -257,7 +257,7 @@ Instance level validation
 -------------------------
 
 You can optionally configure import-export to perform model instance validation during import by enabling the
-:attr:`~import_export.resources.ResourceOptions.clean_model_instances` attribute.
+:attr:`~import_export.options.ResourceOptions.clean_model_instances` attribute.
 
 You can override the
 `full_clean() <https://docs.djangoproject.com/en/stable/ref/models/instances/#django.db.models.Model.full_clean>`_.
@@ -530,7 +530,7 @@ Access full instance data
 -------------------------
 
 All 'new', 'updated' and 'deleted' instances can be accessed after import if the
-:attr:`~import_export.resources.ResourceOptions.store_instance` meta attribute is set.
+:attr:`~import_export.options.ResourceOptions.store_instance` meta attribute is set.
 
 For example, this snippet shows how you can retrieve persisted row data from a result::
 
@@ -554,15 +554,16 @@ Handling duplicate data
 
 If an existing instance is identified during import, then the existing instance will be updated, regardless of whether
 the data in the import row is the same as the persisted data or not.  You can configure the import process to skip the
-row if it is duplicate by using setting :attr:`~import_export.resources.ResourceOptions.skip_unchanged`.
+row if it is duplicate by using setting :attr:`~import_export.options.ResourceOptions.skip_unchanged`.
 
-If :attr:`~import_export.resources.ResourceOptions.skip_unchanged` is enabled, then the import process will check each
+If :attr:`~import_export.options.ResourceOptions.skip_unchanged` is enabled, then the import process will check each
+ns
 defined import field and perform a simple comparison with the existing instance, and if all comparisons are equal, then
 the row is skipped.  Skipped rows are recorded in the row :class:`~import_export.results.RowResult` object.
 
 You can override the :meth:`~.skip_row` method to have full control over the skip row implementation.
 
-Also, the :attr:`~import_export.resources.ResourceOptions.report_skipped` option controls whether skipped records appear
+Also, the :attr:`~import_export.options.ResourceOptions.report_skipped` option controls whether skipped records appear
 in the import :class:`~import_export.results.RowResult` object, and whether skipped records will show in the import
 preview page in the Admin UI::
 
