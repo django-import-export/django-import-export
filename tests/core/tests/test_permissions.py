@@ -37,7 +37,7 @@ class ImportExportPermissionTest(TestCase):
 
         with open(filename, "rb") as f:
             data = {
-                "input_format": input_format,
+                "format": input_format,
                 "import_file": f,
             }
 
@@ -61,7 +61,7 @@ class ImportExportPermissionTest(TestCase):
 
         with open(filename, "rb") as f:
             data = {
-                "input_format": input_format,
+                "format": input_format,
                 "import_file": f,
             }
 
@@ -78,7 +78,7 @@ class ImportExportPermissionTest(TestCase):
         response = self.client.get("/admin/core/book/export/")
         self.assertEqual(response.status_code, 403)
 
-        data = {"file_format": "0"}
+        data = {"format": "0"}
         response = self.client.post("/admin/core/book/export/", data)
         self.assertEqual(response.status_code, 403)
 
@@ -86,7 +86,7 @@ class ImportExportPermissionTest(TestCase):
         response = self.client.get("/admin/core/book/export/")
         self.assertEqual(response.status_code, 200)
 
-        data = {"file_format": "0"}
+        data = {"format": "0"}
         response = self.client.post("/admin/core/book/export/", data)
         self.assertEqual(response.status_code, 200)
 

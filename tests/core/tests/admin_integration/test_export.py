@@ -28,7 +28,7 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertEqual(2, len(form.fields["resource"].choices))
 
         data = {
-            "file_format": "0",
+            "format": "0",
         }
         date_str = datetime.now().strftime("%Y-%m-%d")
         response = self.client.post("/admin/core/book/export/", data)
@@ -61,7 +61,7 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertContains(response, "Export/Import only book names")
 
         data = {
-            "file_format": "0",
+            "format": "0",
             "resource": 1,
         }
         date_str = datetime.now().strftime("%Y-%m-%d")
@@ -104,14 +104,14 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
     def test_get_export_form_single_format(self):
         response = self.client.get("/admin/core/category/export/")
         form = response.context["form"]
-        self.assertEqual(1, len(form.fields["file_format"].choices))
-        self.assertTrue(form.fields["file_format"].widget.attrs["readonly"])
+        self.assertEqual(1, len(form.fields["format"].choices))
+        self.assertTrue(form.fields["format"].widget.attrs["readonly"])
         self.assertIn("xlsx", str(response.content))
-        self.assertNotIn('select name="file_format"', str(response.content))
+        self.assertNotIn('select name="format"', str(response.content))
 
     @override_settings(EXPORT_FORMATS=[])
     def test_export_empty_export_formats(self):
-        with self.assertRaisesRegex(ValueError, "invalid export formats list"):
+        with self.assertRaisesRegex(ValueError, "invalid formats list"):
             self.client.get("/admin/core/category/export/")
 
     def test_returns_xlsx_export(self):
@@ -119,7 +119,7 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertEqual(response.status_code, 200)
 
         xlsx_index = self._get_input_format_index("xlsx")
-        data = {"file_format": str(xlsx_index)}
+        data = {"format": str(xlsx_index)}
         response = self.client.post("/admin/core/book/export/", data)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.has_header("Content-Disposition"))
@@ -137,7 +137,7 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertEqual(response.status_code, 200)
 
         xlsx_index = self._get_input_format_index("xlsx")
-        data = {"file_format": str(xlsx_index)}
+        data = {"format": str(xlsx_index)}
         response = self.client.post("/admin/core/book/export/", data)
         self.assertEqual(response.status_code, 200)
         content = response.content
@@ -153,7 +153,7 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertEqual(response.status_code, 200)
 
         index = self._get_input_format_index("csv")
-        data = {"file_format": str(index)}
+        data = {"format": str(index)}
         response = self.client.post("/admin/core/book/export/", data)
         self.assertIn(
             f"{b1.id},SUM(1+1),,,0,,,,,\r\n".encode(),
@@ -168,7 +168,7 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertEqual(response.status_code, 200)
 
         index = self._get_input_format_index("csv")
-        data = {"file_format": str(index)}
+        data = {"format": str(index)}
         response = self.client.post("/admin/core/book/export/", data)
         self.assertIn(
             f"{b1.id},=SUM(1+1),,,0,,,,,\r\n".encode(),
@@ -184,7 +184,7 @@ class FilteredExportAdminIntegrationTest(AdminTestMixin, TestCase):
         # issue 1578
         author = Author.objects.get(name="Ian Fleming")
 
-        data = {"file_format": "0", "author": str(author.id)}
+        data = {"format": "0", "author": str(author.id)}
         date_str = datetime.now().strftime("%Y-%m-%d")
         response = self.client.post("/admin/core/ebook/export/", data)
         self.assertEqual(response.status_code, 200)
@@ -205,7 +205,7 @@ class FilteredExportAdminIntegrationTest(AdminTestMixin, TestCase):
 
 class TestExportEncoding(TestCase):
     mock_request = MagicMock(spec=HttpRequest)
-    mock_request.POST = {"file_format": 0}
+    mock_request.POST = {"format": 0}
 
     class TestMixin(ExportMixin):
         model = Book
