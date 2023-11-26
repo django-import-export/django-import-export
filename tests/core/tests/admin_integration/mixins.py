@@ -36,7 +36,7 @@ class AdminTestMixin(object):
         )
         with open(filename, "rb") as f:
             data = {
-                "input_format": str(input_format),
+                "format": str(input_format),
                 "import_file": f,
             }
             if encoding:

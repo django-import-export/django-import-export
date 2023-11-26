@@ -49,7 +49,12 @@
 
               {{ field.label_tag }}
 
-              {{ field }}
+              {% if field.field.widget.attrs.readonly %}
+                {{ field.field.value }}
+                {{ field.as_hidden }}
+              {% else %}
+                {{ field }}
+              {% endif %}
 
               {% if field.field.help_text %}
               <p class="help">{{ field.field.help_text|safe }}</p>

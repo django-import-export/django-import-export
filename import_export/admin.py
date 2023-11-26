@@ -149,9 +149,9 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         confirm_form = self.create_confirm_form(request)
         if confirm_form.is_valid():
             import_formats = self.get_import_formats()
-            input_format = import_formats[
-                int(confirm_form.cleaned_data["input_format"])
-            ](encoding=self.from_encoding)
+            input_format = import_formats[int(confirm_form.cleaned_data["format"])](
+                encoding=self.from_encoding
+            )
             encoding = None if input_format.is_binary() else self.from_encoding
             tmp_storage_cls = self.get_tmp_storage_class()
             tmp_storage = tmp_storage_cls(
@@ -275,9 +275,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         form_class = self.get_import_form_class(request)
         kwargs = self.get_import_form_kwargs(request)
 
-        return form_class(
-            formats, resources=self.get_import_resource_classes(), **kwargs
-        )
+        return form_class(formats, self.get_import_resource_classes(), **kwargs)
 
     def get_import_form_class(self, request):
         """
@@ -376,7 +374,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
                 "import_file"
             ].tmp_storage_name,
             "original_file_name": import_form.cleaned_data["import_file"].name,
-            "input_format": import_form.cleaned_data["input_format"],
+            "format": import_form.cleaned_data["format"],
             "resource": import_form.cleaned_data.get("resource", ""),
         }
 
@@ -430,9 +428,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         import_form = self.create_import_form(request)
         resources = list()
         if request.POST and import_form.is_valid():
-            input_format = import_formats[
-                int(import_form.cleaned_data["input_format"])
-            ]()
+            input_format = import_formats[int(import_form.cleaned_data["format"])]()
             if not input_format.is_binary():
                 input_format.encoding = self.from_encoding
             import_file = import_form.cleaned_data["import_file"]
@@ -663,7 +659,6 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
         data = self.get_data_for_export(
             request,
             queryset,
-            *args,
             **kwargs,
         )
         export_data = file_format.export_data(data)
@@ -691,7 +686,9 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
         form_type = self.get_export_form_class()
         formats = self.get_export_formats()
         form = form_type(
-            formats, request.POST or None, resources=self.get_export_resource_classes()
+            formats,
+            self.get_export_resource_classes(),
+            data=request.POST or None,
         )
         form.fields["export_items"] = MultipleChoiceField(
             widget=MultipleHiddenInput,
@@ -699,7 +696,7 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
             choices=[(o.id, o.id) for o in self.model.objects.all()],
         )
         if form.is_valid():
-            file_format = formats[int(form.cleaned_data["file_format"])]()
+            file_format = formats[int(form.cleaned_data["format"])]()
 
             if "export_items" in form.changed_data:
                 # this request has arisen from an Admin UI action
@@ -831,7 +828,7 @@ class ExportActionMixin(ExportMixin):
         form_type = self.get_export_form_class()
         formats = self.get_export_formats()
         form = form_type(
-            formats,
+            formats=formats,
             resources=self.get_export_resource_classes(),
             initial={"export_items": list(queryset.values_list("id", flat=True))},
         )

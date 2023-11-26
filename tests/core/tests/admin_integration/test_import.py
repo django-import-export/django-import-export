@@ -16,6 +16,7 @@ from django.utils.translation import gettext_lazy as _
 
 from import_export.admin import ExportMixin
 from import_export.formats import base_formats
+from import_export.formats.base_formats import XLSX
 
 
 class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
@@ -299,7 +300,7 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
             os.path.dirname(__file__), os.path.pardir, "exports", "books.csv"
         )
         data = {
-            "input_format": "0",
+            "format": "0",
             "import_file_name": import_file_name,
             "original_file_name": "books.csv",
         }
@@ -366,7 +367,7 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
             "books.csv",
         )
         with open(filename, "rb") as fobj:
-            data = {"author": 11, "input_format": input_format, "import_file": fobj}
+            data = {"author": 11, "format": input_format, "import_file": fobj}
             response = self.client.post("/admin/core/ebook/import/", data)
 
         self.assertEqual(response.status_code, 200)
@@ -456,14 +457,27 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         mock_site = mock.MagicMock()
         import_form = BookAdmin(Book, mock_site).create_import_form(request)
 
-        items = list(import_form.fields.items())
-        file_format = items[len(items) - 1][1]
+        file_format = import_form.fields["format"]
         choices = file_format.choices
 
         self.assertEqual(len(choices), 3)
         self.assertEqual(choices[0][1], "---")
         self.assertEqual(choices[1][1], "xlsx")
         self.assertEqual(choices[2][1], "xls")
+
+    @override_settings(IMPORT_FORMATS=[XLSX])
+    def test_get_export_form_single_format(self):
+        response = self.client.get(self.book_import_url)
+        form = response.context["form"]
+        self.assertEqual(1, len(form.fields["format"].choices))
+        self.assertTrue(form.fields["format"].widget.attrs["readonly"])
+        self.assertIn("xlsx", str(response.content))
+        self.assertNotIn('select name="format"', str(response.content))
+
+    @override_settings(IMPORT_FORMATS=[])
+    def test_export_empty_import_formats(self):
+        with self.assertRaisesRegex(ValueError, "invalid formats list"):
+            self.client.get(self.book_import_url)
 
 
 class ConfirmImportEncodingTest(AdminTestMixin, TestCase):
