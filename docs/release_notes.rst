@@ -315,6 +315,9 @@ Parameter changes
 If you have subclassed one of the :mod:`~import_export.forms` then you may need to
 modify the parameters passed to constructors.
 
+The ``input_format`` field of :class:`~import_export.forms.ImportForm` has been moved to the parent class
+(:class:`~import_export.forms.ImportExportFormBase`) and renamed to ``format``.
+
 Parameter changes
 ^^^^^^^^^^^^^^^^^
 

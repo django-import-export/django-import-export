@@ -162,3 +162,10 @@ Once you have cloned and checked out the repository, you can install a new devel
 You can run the test suite with::
 
   make clean test
+
+To build a local version of the documentation::
+
+  pip install -r requirements/docs.txt
+  make build-html-doc
+
+The documentation will be present in ``docs/_build/html/index.html``.
