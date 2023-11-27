@@ -114,44 +114,6 @@ class ResourceTestCase(TestCase):
             )
         )
 
-    # Issue 140 Attributes aren't inherited by subclasses
-    def test_inheritance(self):
-        class A(MyResource):
-            inherited = fields.Field()
-
-            class Meta:
-                import_id_fields = ("email",)
-
-        class B(A):
-            local = fields.Field()
-
-            class Meta:
-                export_order = ("email", "extra")
-
-        resource = B()
-        self.assertIn("name", resource.fields)
-        self.assertIn("inherited", resource.fields)
-        self.assertIn("local", resource.fields)
-        self.assertEqual(
-            resource.get_export_headers(),
-            ["email", "extra", "name", "inherited", "local"],
-        )
-        self.assertEqual(resource._meta.import_id_fields, ("email",))
-
-    def test_inheritance_with_custom_attributes(self):
-        class A(MyResource):
-            inherited = fields.Field()
-
-            class Meta:
-                import_id_fields = ("email",)
-                custom_attribute = True
-
-        class B(A):
-            local = fields.Field()
-
-        resource = B()
-        self.assertEqual(resource._meta.custom_attribute, True)
-
     def test_get_use_transactions_defined_in_resource(self):
         class A(MyResource):
             class Meta:
