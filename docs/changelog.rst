@@ -11,6 +11,7 @@ Please refer to :doc:`release notes<release_notes>`.
 - Support export from model change form (#1687)
 - Updated Admin UI to track deleted and skipped Imports (#1691)
 - Import form defaults to read-only field if only one format defined (#1690)
+- Refactored :module:`~import_export.resources` into separate modules for ``declarative`` and ``options`` (#1695)
 
 4.0.0-beta.1 (2023-11-16)
 --------------------------

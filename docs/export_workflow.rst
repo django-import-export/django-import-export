@@ -35,7 +35,7 @@ This is what happens when the method is invoked:
    :meth:`~import_export.resources.Resource.export_resource` is called (with the
    instance passed as a parameter).
 
-#. For each field defined in :attr:`~import_export.resources.ResourceOptions.fields`:
+#. For each field defined in :attr:`~import_export.options.ResourceOptions.fields`:
 
    * :meth:`~import_export.resources.Resource.export_field` is called with the field and
      instance as parameters.
