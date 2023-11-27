@@ -45,6 +45,8 @@ class TestInheritance(TestCase):
         resource = B()
         self.assertEqual(resource._meta.custom_attribute, True)
 
+
+class TestMultiInheritance(TestCase):
     def test_meta_inheritance_3_levels(self):
         # issue 1363
         class GrandparentResource(Resource):
@@ -99,3 +101,23 @@ class TestInheritance(TestCase):
         child_resource = ChildResource()
         self.assertEqual(333, parent_resource._meta.batch_size)
         self.assertEqual(111, child_resource._meta.batch_size)
+
+    def test_meta_inheritance_default(self):
+        class GrandparentResource(Resource):
+            class Meta:
+                pass
+
+        class ParentResource(GrandparentResource):
+            class Meta:
+                pass
+
+        class ChildResource(ParentResource):
+            class Meta:
+                pass
+
+        grandparent_resource = GrandparentResource()
+        parent_resource = ParentResource()
+        child_resource = ChildResource()
+        self.assertEqual(1000, grandparent_resource._meta.batch_size)
+        self.assertEqual(1000, parent_resource._meta.batch_size)
+        self.assertEqual(1000, child_resource._meta.batch_size)
