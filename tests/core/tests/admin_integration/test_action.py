@@ -152,6 +152,15 @@ class TestExportButtonOnChangeForm(AdminTestMixin, TestCase):
         )
         self.assertIn("Export 1 selected item", str(response.content))
 
+    def test_save_button_on_change_form(self):
+        response = self.client.post(
+            self.change_url, data={"_save": "Save", "name": self.cat1.name}
+        )
+        self.assertIn(
+            f'The category "{self.cat1.name}" was changed successfully',
+            str(response.content),
+        )
+
     def test_export_button_on_change_form_disabled(self):
         class MockCategoryAdmin(CategoryAdmin):
             show_change_form_export = True
