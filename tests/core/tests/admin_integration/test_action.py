@@ -152,6 +152,14 @@ class TestExportButtonOnChangeForm(AdminTestMixin, TestCase):
         )
         self.assertIn("Export 1 selected item", str(response.content))
 
+    def test_save_button_on_change_form(self):
+        # test default behavior is retained when saving an instance ChangeForm
+        response = self.client.post(
+            self.change_url, data={"_save": "Save", "name": self.cat1.name}, follow=True
+        )
+        target_str = f"The category.*{self.cat1.name}.*was changed successfully."
+        self.assertRegex(str(response.content), target_str)
+
     def test_export_button_on_change_form_disabled(self):
         class MockCategoryAdmin(CategoryAdmin):
             show_change_form_export = True

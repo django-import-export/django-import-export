@@ -40,6 +40,9 @@ class DeclarativeMetaclass(type):
             if hasattr(base, "fields"):
                 declared_fields = list(base.fields.items()) + declared_fields
                 # Collect the Meta options
+                # #1363 If there are any parent classes, set those options first
+                for parent in base.__bases__:
+                    _load_meta_options(parent, meta)
                 _load_meta_options(base, meta)
 
         # Add direct fields
