@@ -31,8 +31,18 @@ Functional changes
 CharWidget
 ----------
 
-* :meth:`~import_export.widgets.CharWidget.clean` will now return a string type as the default.
-  The ``coerce_to_string`` option introduced in v3 is no longer used in this method.
+:meth:`~import_export.widgets.CharWidget.clean` will now return a string type as the default.
+The ``coerce_to_string`` option introduced in v3 is no longer used in this method.
+
+Validation error messages
+-------------------------
+
+The following widgets have had validation error messages updated:
+
+* :class:`~import_export.widgets.DateWidget`
+* :class:`~import_export.widgets.TimeWidget`
+* :class:`~import_export.widgets.DateTimeWidget`
+* :class:`~import_export.widgets.DurationWidget`
 
 Export format
 -------------
