@@ -4,15 +4,15 @@ Changelog
 3.3.4 (unreleased)
 ------------------
 
-- Added `CONTRIBUTING.md`
 - Show list of exported fields in Admin UI (#1685)
+- Added `CONTRIBUTING.md`
+- Added support for python 3.12 (#)
 
 3.3.3 (2023-11-11)
 ------------------
 
 - :meth:`~import_export.admin.ExportActionMixin.export_admin_action` can be overridden by subclassing it in the
   ``ModelAdmin`` (#1681)
-
 
 3.3.2 (2023-11-09)
 ------------------
