@@ -1430,6 +1430,67 @@ class ModelResourceFieldDeclarations(TestCase):
         self.assertFalse("author_email" in data.dict[0])
 
 
+class ModelResourceExcludeDeclarations(TestCase):
+    class MyBookResource(resources.ModelResource):
+        author_name = fields.Field(attribute="author_email", column_name="author_email")
+
+        class Meta:
+            model = Book
+            fields = ("id", "price", "author_email")
+            exclude = ("author_email",)
+
+    def setUp(self):
+        self.book = Book.objects.create(name="Moonraker", price=".99")
+        self.resource = ModelResourceFieldDeclarations.MyBookResource()
+
+    @ignore_widget_deprecation_warning
+    def test_excluded_field_not_imported(self):
+        self.assertEqual("", self.book.author_email)
+        rows = [
+            (self.book.id, "12.99", "jj@example.com"),
+        ]
+        dataset = tablib.Dataset(*rows, headers=["id", "price", "author_email"])
+        self.resource.import_data(dataset, raise_errors=True)
+        self.book.refresh_from_db()
+        # email should not be updated
+        self.assertEqual("", self.book.author_email)
+
+    @ignore_widget_deprecation_warning
+    def test_declared_field_not_exported(self):
+        self.assertEqual("", self.book.author_email)
+        data = self.resource.export()
+        self.assertFalse("author_email" in data.dict[0])
+
+
+class ModelResourceDeclarationsNotInImportTest(TestCase):
+    # issue 1697
+    # Add a declared field to the Resource, which is not present in the import file.
+    # The import should succeed without issue.
+    class MyBookResource(resources.ModelResource):
+        author_name = fields.Field(attribute="author_email", column_name="author_email")
+
+        class Meta:
+            model = Book
+            fields = (
+                "id",
+                "price",
+            )
+
+    def setUp(self):
+        self.resource = ModelResourceFieldDeclarations.MyBookResource()
+
+    @ignore_widget_deprecation_warning
+    def test_excluded_field_not_imported(self):
+        rows = [
+            ("1", "12.99"),
+        ]
+        dataset = tablib.Dataset(*rows, headers=["id", "price"])
+        result = self.resource.import_data(dataset, raise_errors=True)
+        book = Book.objects.first()
+        self.assertEqual("", book.author_email)
+        self.assertEqual(1, result.totals["new"])
+
+
 class ModelResourceTransactionTest(TransactionTestCase):
     @skipUnlessDBFeature("supports_transactions")
     @ignore_widget_deprecation_warning
@@ -1686,8 +1747,7 @@ if "postgresql" in settings.DATABASES["default"]["ENGINE"]:
         def test_export_field_with_appropriate_format(self):
             resource = resources.modelresource_factory(model=BookWithChapters)()
             result = resource.export(BookWithChapters.objects.all())
-
-            assert result[0][3] == json.dumps(self.json_data)
+            self.assertEqual(result[0][3], json.dumps(self.json_data))
 
     class TestImportJsonField(TestCase):
         def setUp(self):
