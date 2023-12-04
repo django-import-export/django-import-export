@@ -1400,28 +1400,34 @@ class ModelResourceTest(TestCase):
 
 
 class ModelResourceFieldDeclarations(TestCase):
+    class MyBookResource(resources.ModelResource):
+        author_name = fields.Field(attribute="author_email", column_name="author_email")
+
+        class Meta:
+            model = Book
+            fields = ("id", "price")
+
+    def setUp(self):
+        self.book = Book.objects.create(name="Moonraker", price=".99")
+        self.resource = ModelResourceFieldDeclarations.MyBookResource()
+
+    @ignore_widget_deprecation_warning
     def test_declared_field_not_imported(self):
-        class MyBookResource(resources.ModelResource):
-            author_name = fields.Field(
-                attribute="author_email", column_name="author_email"
-            )
-
-            class Meta:
-                model = Book
-                fields = ("id", "price")
-
-        b1 = Book.objects.create(name="Moonraker", price=".99")
-
-        self.assertEqual("", b1.author_email)
-        resource = MyBookResource()
+        self.assertEqual("", self.book.author_email)
         rows = [
-            (b1.id, "12.99", "jj@example.com"),
+            (self.book.id, "12.99", "jj@example.com"),
         ]
         dataset = tablib.Dataset(*rows, headers=["id", "price", "author_email"])
-        resource.import_data(dataset, raise_errors=True)
-        b1.refresh_from_db()
+        self.resource.import_data(dataset, raise_errors=True)
+        self.book.refresh_from_db()
         # email should not be updated
-        self.assertEqual("", b1.author_email)
+        self.assertEqual("", self.book.author_email)
+
+    @ignore_widget_deprecation_warning
+    def test_declared_field_not_exported(self):
+        self.assertEqual("", self.book.author_email)
+        data = self.resource.export()
+        self.assertFalse("author_email" in data.dict[0])
 
 
 class ModelResourceTransactionTest(TransactionTestCase):
