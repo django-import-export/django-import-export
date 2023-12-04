@@ -1399,6 +1399,31 @@ class ModelResourceTest(TestCase):
         self.assertFalse(related_field_widget.use_natural_foreign_keys)
 
 
+class ModelResourceFieldDeclarations(TestCase):
+    def test_declared_field_not_imported(self):
+        class MyBookResource(resources.ModelResource):
+            author_name = fields.Field(
+                attribute="author_email", column_name="author_email"
+            )
+
+            class Meta:
+                model = Book
+                fields = ("id", "price")
+
+        b1 = Book.objects.create(name="Moonraker", price=".99")
+
+        self.assertEqual("", b1.author_email)
+        resource = MyBookResource()
+        rows = [
+            (b1.id, "12.99", "jj@example.com"),
+        ]
+        dataset = tablib.Dataset(*rows, headers=["id", "price", "author_email"])
+        resource.import_data(dataset, raise_errors=True)
+        b1.refresh_from_db()
+        # email should not be updated
+        self.assertEqual("", b1.author_email)
+
+
 class ModelResourceTransactionTest(TransactionTestCase):
     @skipUnlessDBFeature("supports_transactions")
     @ignore_widget_deprecation_warning
