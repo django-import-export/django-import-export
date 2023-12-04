@@ -73,6 +73,8 @@ class ModelDeclarativeMetaclass(DeclarativeMetaclass):
 
         if opts.model:
             model_opts = opts.model._meta
+
+            # the fields explicitly declared as attributes of the Resource class
             declared_fields = new_class.fields
 
             field_list = []
