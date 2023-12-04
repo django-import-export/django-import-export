@@ -1255,9 +1255,9 @@ class ModelResourceTest(TestCase):
 
             class Meta:
                 model = Entry
-                fields = ("id",)
+                fields = ("id", "username")
 
-            def after_save_instance(self, instance, row, **kwargs):
+            def after_save_instance(self, instance, row_, **kwargs):
                 using_transactions = kwargs.get("using_transactions", False)
                 dry_run = kwargs.get("dry_run", False)
                 if not using_transactions and dry_run:

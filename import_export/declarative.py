@@ -74,8 +74,15 @@ class ModelDeclarativeMetaclass(DeclarativeMetaclass):
         if opts.model:
             model_opts = opts.model._meta
 
-            # the fields explicitly declared as attributes of the Resource class
-            declared_fields = new_class.fields
+            # #1693 check the fields explicitly declared as attributes of the Resource
+            # class.
+            # if 'fields' property is defined, declared fields can only be included
+            # if they appear in the 'fields' iterable.
+            declared_fields = dict()
+            for field_name, field in new_class.fields.items():
+                if opts.fields is not None and field_name not in opts.fields:
+                    continue
+                declared_fields[field_name] = field
 
             field_list = []
             for f in sorted(model_opts.fields + model_opts.many_to_many):
@@ -100,7 +107,7 @@ class ModelDeclarativeMetaclass(DeclarativeMetaclass):
                 )
 
             # Order as model fields first then declared fields by default
-            new_class.fields = OrderedDict([*field_list, *new_class.fields.items()])
+            new_class.fields = OrderedDict([*field_list, *declared_fields.items()])
 
             # add fields that follow relationships
             if opts.fields is not None:
