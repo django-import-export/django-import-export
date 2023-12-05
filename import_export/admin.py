@@ -230,14 +230,20 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
                     row.import_type != row.IMPORT_TYPE_ERROR
                     and row.import_type != row.IMPORT_TYPE_SKIP
                 ):
-                    LogEntry.objects.log_action(
-                        user_id=request.user.pk,
-                        content_type_id=content_type_id,
-                        object_id=row.object_id,
-                        object_repr=row.object_repr,
-                        action_flag=logentry_map[row.import_type],
-                        change_message=_("%s through import_export" % row.import_type),
-                    )
+                    with warnings.catch_warnings():
+                        warnings.filterwarnings(
+                            "ignore", category=PendingDeprecationWarning
+                        )
+                        LogEntry.objects.log_action(
+                            user_id=request.user.pk,
+                            content_type_id=content_type_id,
+                            object_id=row.object_id,
+                            object_repr=row.object_repr,
+                            action_flag=logentry_map[row.import_type],
+                            change_message=_(
+                                "%s through import_export" % row.import_type
+                            ),
+                        )
 
     def add_success_message(self, result, request):
         opts = self.model._meta
@@ -827,6 +833,16 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
         context["title"] = _("Export")
         context["form"] = form
         context["opts"] = self.model._meta
+        context["fields_list"] = [
+            (
+                res.get_display_name(),
+                [
+                    field.column_name
+                    for field in res(model=self.model).get_user_visible_fields()
+                ],
+            )
+            for res in self.get_export_resource_classes()
+        ]
         request.current_app = self.admin_site.name
         return TemplateResponse(request, [self.export_template_name], context)
 
@@ -912,7 +928,7 @@ class ExportActionMixin(ExportMixin):
         actions = super().get_actions(request)
         actions.update(
             export_admin_action=(
-                ExportActionMixin.export_admin_action,
+                type(self).export_admin_action,
                 "export_admin_action",
                 _("Export selected %(verbose_name_plural)s"),
             )

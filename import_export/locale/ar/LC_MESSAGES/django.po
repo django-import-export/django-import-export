@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-09-12 15:15+0100\n"
+"POT-Creation-Date: 2023-11-08 18:22+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -19,37 +19,37 @@ msgstr ""
 "Plural-Forms: nplurals=6; plural=n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 "
 "&& n%100<=10 ? 3 : n%100>=11 && n%100<=99 ? 4 : 5;\n"
 
-#: admin.py:241
+#: admin.py:239
 #, python-format
 msgid "%s through import_export"
 msgstr ""
 
-#: admin.py:248
+#: admin.py:246
 msgid "Import finished, with {} new and {} updated {}."
 msgstr ""
 
-#: admin.py:496
+#: admin.py:491
 #, python-format
 msgid ""
 "%(exc_name)s encountered while trying to read file. Ensure you have chosen "
 "the correct format for the file."
 msgstr ""
 
-#: admin.py:650 templates/admin/import_export/change_list_import_item.html:5
+#: admin.py:642 templates/admin/import_export/change_list_import_item.html:5
 #: templates/admin/import_export/import.html:19
 msgid "Import"
 msgstr "إستبراد"
 
-#: admin.py:836 templates/admin/import_export/change_list_export_item.html:5
+#: admin.py:827 templates/admin/import_export/change_list_export_item.html:5
 #: templates/admin/import_export/export.html:12
 msgid "Export"
 msgstr "تصدير"
 
-#: admin.py:901
+#: admin.py:892
 msgid "You must select an export format."
 msgstr "يجب تحديد تنسيق التصدير."
 
-#: admin.py:926
+#: admin.py:917
 #, python-format
 msgid "Export selected %(verbose_name_plural)s"
 msgstr "تصدير %(verbose_name_plural)s المحددة"

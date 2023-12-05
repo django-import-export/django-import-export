@@ -1,7 +1,20 @@
 Changelog
 =========
 
-3.3.2 (unreleased)
+3.3.4 (unreleased)
+------------------
+
+- Added `CONTRIBUTING.md`
+- Show list of exported fields in Admin UI (#1685)
+
+3.3.3 (2023-11-11)
+------------------
+
+- :meth:`~import_export.admin.ExportActionMixin.export_admin_action` can be overridden by subclassing it in the
+  ``ModelAdmin`` (#1681)
+
+
+3.3.2 (2023-11-09)
 ------------------
 
 - Added support for django5 (#1634)
@@ -10,6 +23,8 @@ Changelog
 - :meth:`~import_export.widgets.NumberWidget.render` returns ``None`` as empty string
   if ``coerce_to_string`` is True (#1650)
 - Updated documentation to describe how to select for export in Admin UI (#1670)
+- Added catch for django5 deprecation warning (#1676)
+- Updated and compiled message files (#1678)
 
 3.3.1 (2023-09-14)
 ------------------

@@ -33,6 +33,7 @@ from import_export.tmp_storages import TempFolderStorage
 
 
 class AdminTestMixin(object):
+    category_change_url = "/admin/core/category/"
     book_import_url = "/admin/core/book/import/"
     book_process_import_url = "/admin/core/book/process_import/"
     legacybook_import_url = "/admin/core/legacybook/import/"
@@ -256,6 +257,22 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
             response, "Import finished, with 0 new and 1 updated legacy books."
         )
 
+    def test_export_admin_action(self):
+        with mock.patch(
+            "core.admin.CategoryAdmin.export_admin_action"
+        ) as mock_export_admin_action:
+            response = self.client.post(
+                self.category_change_url,
+                {
+                    "action": "export_admin_action",
+                    "index": "0",
+                    "selected_across": "0",
+                    "_selected_action": "0",
+                },
+            )
+            assert 200 <= response.status_code <= 399
+            mock_export_admin_action.assert_called()
+
     def test_import_action_handles_UnicodeDecodeError_as_form_error(self):
         with mock.patch(
             "import_export.admin.TempFolderStorage.read"
@@ -319,7 +336,7 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
             response = self._do_import_post(self.book_import_url, "books.csv")
         self.assertEqual(response.status_code, 200)
         target_msg = (
-            "Se encontró 'ValueError' mientras se intentaba leer el archivo."
+            "Se encontró 'ValueError' mientras se intentaba leer el archivo. "
             "Asegúrese que seleccionó el formato correcto para el archivo."
         )
 
@@ -630,6 +647,31 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
 
 
 class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
+    def test_export_displays_resources_fields(self):
+        response = self.client.get("/admin/core/book/export/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.context["fields_list"],
+            [
+                (
+                    "BookResource",
+                    [
+                        "id",
+                        "name",
+                        "author",
+                        "author_email",
+                        "imported",
+                        "published",
+                        "published_time",
+                        "price",
+                        "added",
+                        "categories",
+                    ],
+                ),
+                ("Export/Import only book names", ["id", "name"]),
+            ],
+        )
+
     def test_export(self):
         response = self.client.get("/admin/core/book/export/")
         self.assertEqual(response.status_code, 200)

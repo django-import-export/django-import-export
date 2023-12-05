@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-09-12 15:28+0100\n"
+"POT-Creation-Date: 2023-11-08 18:22+0000\n"
 "PO-Revision-Date: 2023-05-10 15:23+0300\n"
 "Last-Translator: Lauri Virtanen <lauri.virtanen@iki.fi>\n"
 "Language-Team: \n"
@@ -12,16 +12,16 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: admin.py:241
+#: admin.py:239
 #, python-format
 msgid "%s through import_export"
 msgstr "%s käyttäen import_export"
 
-#: admin.py:248
+#: admin.py:246
 msgid "Import finished, with {} new and {} updated {}."
 msgstr "Tuonti valmis. Lisätty {} ja päivitetty {} kohteita {}."
 
-#: admin.py:496
+#: admin.py:491
 #, python-format
 msgid ""
 "%(exc_name)s encountered while trying to read file. Ensure you have chosen "
@@ -30,21 +30,21 @@ msgstr ""
 "Kohdattiin %(exc_name)s tiedostoa lukiessa. Varmista, että olet valinnut "
 "oikean tiedostotyypin. "
 
-#: admin.py:650 templates/admin/import_export/change_list_import_item.html:5
+#: admin.py:642 templates/admin/import_export/change_list_import_item.html:5
 #: templates/admin/import_export/import.html:19
 msgid "Import"
 msgstr "Tuo"
 
-#: admin.py:836 templates/admin/import_export/change_list_export_item.html:5
+#: admin.py:827 templates/admin/import_export/change_list_export_item.html:5
 #: templates/admin/import_export/export.html:12
 msgid "Export"
 msgstr "Vie"
 
-#: admin.py:901
+#: admin.py:892
 msgid "You must select an export format."
 msgstr "Sinun täytyy valita tiedostotyyppi."
 
-#: admin.py:926
+#: admin.py:917
 #, python-format
 msgid "Export selected %(verbose_name_plural)s"
 msgstr "Vie valitut %(verbose_name_plural)s"
