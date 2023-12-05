@@ -13,7 +13,7 @@ Please refer to :doc:`release notes<release_notes>`.
 - Import form defaults to read-only field if only one format defined (#1690)
 - Refactored :module:`~import_export.resources` into separate modules for ``declarative`` and ``options`` (#1695)
 - Fix multiple inheritance not setting options (#1696)
-- Fix issue where declared Resource fields not defined in `fields` are still imported (#1702)
+- Fix issue where declared Resource fields not defined in ``fields`` are still imported (#1702)
 
 4.0.0-beta.1 (2023-11-16)
 --------------------------
