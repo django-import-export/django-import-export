@@ -1499,6 +1499,42 @@ class ModelResourceExcludeDeclarations(TestCase):
         self.assertFalse("author_email" in data.dict[0])
 
 
+class ModelResourceFieldsAndExcludeDeclarations(TestCase):
+    # Include the same field in both `fields` and `exclude`.
+    # `fields` should take precedence.
+    class MyBookResource(resources.ModelResource):
+        author_email = fields.Field(
+            attribute="author_email", column_name="author_email"
+        )
+
+        class Meta:
+            model = Book
+            fields = ("id", "price", "author_email")
+            exclude = ("author_email",)
+
+    def setUp(self):
+        self.book = Book.objects.create(name="Moonraker", price=".99")
+        self.resource = ModelResourceFieldsAndExcludeDeclarations.MyBookResource()
+
+    @ignore_widget_deprecation_warning
+    def test_excluded_field_not_imported(self):
+        self.assertEqual("", self.book.author_email)
+        rows = [
+            (self.book.id, "12.99", "jj@example.com"),
+        ]
+        dataset = tablib.Dataset(*rows, headers=["id", "price", "author_email"])
+        self.resource.import_data(dataset, raise_errors=True)
+        self.book.refresh_from_db()
+        # email should be updated
+        self.assertEqual("jj@example.com", self.book.author_email)
+
+    @ignore_widget_deprecation_warning
+    def test_declared_field_not_exported(self):
+        self.assertEqual("", self.book.author_email)
+        data = self.resource.export()
+        self.assertTrue("author_email" in data.dict[0])
+
+
 class ModelResourceDeclarationsNotInImportTest(TestCase):
     # issue 1697
     # Add a declared field to the Resource, which is not present in the import file.
