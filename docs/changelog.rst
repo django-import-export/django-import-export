@@ -6,6 +6,7 @@ Changelog
 
 - Added `CONTRIBUTING.md`
 - Show list of exported fields in Admin UI (#1685)
+- Split test_resources.py into sub-modules (#1704)
 
 3.3.3 (2023-11-11)
 ------------------
