@@ -1401,7 +1401,9 @@ class ModelResourceTest(TestCase):
 
 class ModelResourceFieldDeclarations(TestCase):
     class MyBookResource(resources.ModelResource):
-        author_name = fields.Field(attribute="author_email", column_name="author_email")
+        author_email = fields.Field(
+            attribute="author_email", column_name="author_email"
+        )
 
         class Meta:
             model = Book
@@ -1430,18 +1432,53 @@ class ModelResourceFieldDeclarations(TestCase):
         self.assertFalse("author_email" in data.dict[0])
 
 
-class ModelResourceExcludeDeclarations(TestCase):
+class ModelResourceNoFieldDeclarations(TestCase):
+    # No `fields` declaration so all fields should be included
     class MyBookResource(resources.ModelResource):
-        author_name = fields.Field(attribute="author_email", column_name="author_email")
+        author_email = fields.Field(
+            attribute="author_email", column_name="author_email"
+        )
 
         class Meta:
             model = Book
-            fields = ("id", "price", "author_email")
+
+    def setUp(self):
+        self.book = Book.objects.create(name="Moonraker", price=".99")
+        self.resource = ModelResourceNoFieldDeclarations.MyBookResource()
+
+    @ignore_widget_deprecation_warning
+    def test_declared_field_imported(self):
+        self.assertEqual("", self.book.author_email)
+        rows = [
+            (self.book.id, "12.99", "jj@example.com"),
+        ]
+        dataset = tablib.Dataset(*rows, headers=["id", "price", "author_email"])
+        self.resource.import_data(dataset, raise_errors=True)
+        self.book.refresh_from_db()
+        # email should be updated
+        self.assertEqual("jj@example.com", self.book.author_email)
+
+    @ignore_widget_deprecation_warning
+    def test_declared_field_not_exported(self):
+        self.assertEqual("", self.book.author_email)
+        data = self.resource.export()
+        self.assertTrue("author_email" in data.dict[0])
+
+
+class ModelResourceExcludeDeclarations(TestCase):
+    class MyBookResource(resources.ModelResource):
+        author_email = fields.Field(
+            attribute="author_email", column_name="author_email"
+        )
+
+        class Meta:
+            model = Book
+            fields = ("id", "price")
             exclude = ("author_email",)
 
     def setUp(self):
         self.book = Book.objects.create(name="Moonraker", price=".99")
-        self.resource = ModelResourceFieldDeclarations.MyBookResource()
+        self.resource = ModelResourceExcludeDeclarations.MyBookResource()
 
     @ignore_widget_deprecation_warning
     def test_excluded_field_not_imported(self):
@@ -1467,7 +1504,9 @@ class ModelResourceDeclarationsNotInImportTest(TestCase):
     # Add a declared field to the Resource, which is not present in the import file.
     # The import should succeed without issue.
     class MyBookResource(resources.ModelResource):
-        author_name = fields.Field(attribute="author_email", column_name="author_email")
+        author_email = fields.Field(
+            attribute="author_email", column_name="author_email"
+        )
 
         class Meta:
             model = Book
@@ -1477,7 +1516,7 @@ class ModelResourceDeclarationsNotInImportTest(TestCase):
             )
 
     def setUp(self):
-        self.resource = ModelResourceFieldDeclarations.MyBookResource()
+        self.resource = ModelResourceDeclarationsNotInImportTest.MyBookResource()
 
     @ignore_widget_deprecation_warning
     def test_excluded_field_not_imported(self):
