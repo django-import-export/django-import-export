@@ -1565,6 +1565,13 @@ class ModelResourceDeclarationsNotInImportTest(TestCase):
         self.assertEqual("", book.author_email)
         self.assertEqual(1, result.totals["new"])
 
+    @ignore_widget_deprecation_warning
+    def test_excluded_field_not_exported(self):
+        self.book = Book.objects.create(name="Moonraker", price=".99")
+        self.assertEqual("", self.book.author_email)
+        data = self.resource.export()
+        self.assertFalse("author_email" in data.dict[0])
+
 
 class ModelResourceTransactionTest(TransactionTestCase):
     @skipUnlessDBFeature("supports_transactions")
