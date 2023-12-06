@@ -4,6 +4,7 @@ Changelog
 3.3.4 (unreleased)
 ------------------
 
+- Added support for django5 (#1634)
 - Added `CONTRIBUTING.md`
 - Show list of exported fields in Admin UI (#1685)
 
@@ -13,11 +14,9 @@ Changelog
 - :meth:`~import_export.admin.ExportActionMixin.export_admin_action` can be overridden by subclassing it in the
   ``ModelAdmin`` (#1681)
 
-
 3.3.2 (2023-11-09)
 ------------------
 
-- Added support for django5 (#1634)
 - Updated Spanish translations (#1639)
 - Added documentation and tests for retrieving instance information after import (#1643)
 - :meth:`~import_export.widgets.NumberWidget.render` returns ``None`` as empty string
