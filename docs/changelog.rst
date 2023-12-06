@@ -7,6 +7,7 @@ Changelog
 - Show list of exported fields in Admin UI (#1685)
 - Added `CONTRIBUTING.md`
 - Added support for python 3.12 (#1698)
+- Update Finnish translations (#1701)
 
 3.3.3 (2023-11-11)
 ------------------
