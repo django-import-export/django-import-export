@@ -6,6 +6,7 @@ Changelog
 
 - Added `CONTRIBUTING.md`
 - Show list of exported fields in Admin UI (#1685)
+- Update Finnish translations (#1701)
 
 3.3.3 (2023-11-11)
 ------------------
