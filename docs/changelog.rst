@@ -4,6 +4,7 @@ Changelog
 3.3.4 (unreleased)
 ------------------
 
+- Added support for django5 (#1634)
 - Show list of exported fields in Admin UI (#1685)
 - Added `CONTRIBUTING.md`
 - Added support for python 3.12 (#1698)
