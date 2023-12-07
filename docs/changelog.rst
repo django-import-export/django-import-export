@@ -4,6 +4,7 @@ Changelog
 3.3.4 (unreleased)
 ------------------
 
+- Added support for django5 (#1634)
 - Added `CONTRIBUTING.md`
 - Show list of exported fields in Admin UI (#1685)
 - Update Finnish translations (#1701)
@@ -13,7 +14,6 @@ Changelog
 
 - :meth:`~import_export.admin.ExportActionMixin.export_admin_action` can be overridden by subclassing it in the
   ``ModelAdmin`` (#1681)
-
 
 3.3.2 (2023-11-09)
 ------------------
