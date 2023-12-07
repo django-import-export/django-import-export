@@ -8,7 +8,10 @@ import chardet
 import tablib
 from core.models import Author, Book
 from core.tests.admin_integration.mixins import AdminTestMixin
-from core.tests.utils import ignore_widget_deprecation_warning
+from core.tests.utils import (
+    ignore_utcnow_deprecation_warning,
+    ignore_widget_deprecation_warning,
+)
 from django.http import HttpRequest
 from django.test.testcases import TestCase
 from django.test.utils import override_settings
@@ -259,6 +262,7 @@ class TestExportEncoding(TestCase):
                 encoding="bad-encoding",
             )
 
+    @ignore_utcnow_deprecation_warning
     def test_to_encoding_not_set_for_binary_file(self):
         self.export_mixin = self.TestMixin(test_str="teststr")
         self.file_format = formats.base_formats.XLSX()
