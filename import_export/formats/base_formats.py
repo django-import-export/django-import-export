@@ -1,3 +1,5 @@
+import warnings
+
 import tablib
 from django.conf import settings
 from tablib.formats import registry
@@ -205,6 +207,13 @@ class XLSX(TablibFormat):
             row_values = [cell.value for cell in row]
             dataset.append(row_values)
         return dataset
+
+    def export_data(self, dataset, **kwargs):
+        # #1698 temporary catch for deprecation warning in openpyxl
+        # this catch block must be removed when openpyxl updated
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=DeprecationWarning)
+            return super().export_data(dataset, **kwargs)
 
 
 #: These are the default formats for import and export. Whether they can be
