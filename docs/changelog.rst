@@ -14,6 +14,7 @@ Please refer to :doc:`release notes<release_notes>`.
 - Refactored :module:`~import_export.resources` into separate modules for ``declarative`` and ``options`` (#1695)
 - Fix multiple inheritance not setting options (#1696)
 - Fix issue where declared Resource fields not defined in ``fields`` are still imported (#1702)
+- Refactored tests to remove dependencies between tests (#1703)
 
 4.0.0-beta.1 (2023-11-16)
 --------------------------
@@ -69,8 +70,10 @@ Documentation
 3.3.4 (unreleased)
 ------------------
 
+- Added support for django5 (#1634)
 - Added `CONTRIBUTING.md`
 - Show list of exported fields in Admin UI (#1685)
+- Update Finnish translations (#1701)
 
 3.3.3 (2023-11-11)
 ------------------
