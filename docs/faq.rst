@@ -196,3 +196,16 @@ confirmation.
 To resolve this, you should avoid using temporary file system storage in multi server environments.
 
 Refer to :ref:`import process<import-process>` for more information.
+
+How to export large datasets
+----------------------------
+
+Large datasets can be exported in a number of ways, depending on data size and preferences.
+
+#. You can write custom scripts or `Admin commands <https://docs.djangoproject.com/en/stable/howto/custom-management-commands/>`_
+   to handle the export.  Output can be written to a local filesystem, cloud bucket, network storage etc.
+   Refer to the documentation on exporting :ref:`programmatically<exporting_data>`.
+#. You can use the third party library :doc:`django-import-export-celery <celery>` to handle long-running exports.
+#. You can enable :ref:`export via admin action<export_via_admin_action>` and then select items for export page by page
+   in the Admin UI.  This will work if you have a relatively small number of pages and can handle export to multiple
+   files.  This method is suitable as a one-off or as a simple way to export large datasets via the Admin UI.
