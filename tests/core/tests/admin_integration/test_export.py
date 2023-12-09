@@ -1,4 +1,3 @@
-import warnings
 from datetime import datetime
 from io import BytesIO
 from unittest import mock
@@ -8,7 +7,10 @@ import chardet
 import tablib
 from core.models import Author, Book
 from core.tests.admin_integration.mixins import AdminTestMixin
-from core.tests.utils import ignore_widget_deprecation_warning
+from core.tests.utils import (
+    ignore_utcnow_deprecation_warning,
+    ignore_widget_deprecation_warning,
+)
 from django.http import HttpRequest
 from django.test.testcases import TestCase
 from django.test.utils import override_settings
@@ -129,6 +131,7 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         )
 
+    @ignore_utcnow_deprecation_warning
     @override_settings(IMPORT_EXPORT_ESCAPE_FORMULAE_ON_EXPORT=True)
     @ignore_widget_deprecation_warning
     def test_export_escape_formulae(self):
@@ -142,11 +145,7 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
         response = self.client.post("/admin/core/book/export/", data)
         self.assertEqual(response.status_code, 200)
         content = response.content
-        # #1698 temporary catch for deprecation warning in openpyxl
-        # this catch block must be removed when openpyxl updated
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", category=DeprecationWarning)
-            wb = load_workbook(filename=BytesIO(content))
+        wb = load_workbook(filename=BytesIO(content))
         self.assertEqual("<script>alert(1)</script>", wb.active["B2"].value)
         self.assertEqual("SUM(1+1)", wb.active["B3"].value)
 
@@ -259,6 +258,7 @@ class TestExportEncoding(TestCase):
                 encoding="bad-encoding",
             )
 
+    @ignore_utcnow_deprecation_warning
     def test_to_encoding_not_set_for_binary_file(self):
         self.export_mixin = self.TestMixin(test_str="teststr")
         self.file_format = formats.base_formats.XLSX()
