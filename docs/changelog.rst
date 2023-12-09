@@ -14,7 +14,7 @@ Please refer to :doc:`release notes<release_notes>`.
 - Refactored :module:`~import_export.resources` into separate modules for ``declarative`` and ``options`` (#1695)
 - fix multiple inheritance not setting options (#1696)
 - Refactored tests to remove dependencies between tests (#1703)
-- Added FAQ entry for exporting large datasets (#)
+- Added FAQ entry for exporting large datasets (#1706)
 
 4.0.0-beta.1 (2023-11-16)
 --------------------------
