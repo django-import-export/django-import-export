@@ -9,8 +9,9 @@ from import_export.resources import ModelResource
 
 from .forms import (
     CustomConfirmImportForm,
-    CustomExportForm, CustomImportForm,
-    CustomExportFormModelFields
+    CustomExportForm,
+    CustomExportFormModelFields,
+    CustomImportForm,
 )
 from .models import Author, Book, Category, Child, EBook, LegacyBook
 from .utils import generate_hashed_content
@@ -38,7 +39,7 @@ class BookNameResource(ModelResource):
 class CustomBookResource(ModelResource):
     """
 
-        custom book resource for selecting form fields
+    custom book resource for selecting form fields
 
     """
 
@@ -59,7 +60,7 @@ class BookAdmin(ImportExportModelAdmin):
     resource_classes = [CustomBookResource]
     change_list_template = "core/admin/change_list.html"
     export_form_class = CustomExportFormModelFields
-    actions = ['change_list_of_display']
+    actions = ["change_list_of_display"]
 
     # return hashed string if name is empty
     def hashed_content(self, queryset):
@@ -72,15 +73,21 @@ class BookAdmin(ImportExportModelAdmin):
         required_model_fields = self.export_form_class.required_model_fields
 
         # retrieve values from field keys
-        return ' '.join(str([[obj.serializable_value(i) for obj in queryset] for i in
-                             required_model_fields]))
+        return " ".join(
+            str(
+                [
+                    [obj.serializable_value(i) for obj in queryset]
+                    for i in required_model_fields
+                ]
+            )
+        )
 
     def change_list_of_display(self, request, queryset):
         name = self.hashed_content(queryset)
-        queryset.filter(name='').update(name=name)
+        queryset.filter(name="").update(name=name)
         self.message_user(request, "List display changed successfully.")
 
-    change_list_of_display.short_description = 'Add (Hashed ID) to List of Display'
+    change_list_of_display.short_description = "Add (Hashed ID) to List of Display"
 
     def get_export_resource_kwargs(self, request, *args, **kwargs):
         export_form = kwargs["export_form"]

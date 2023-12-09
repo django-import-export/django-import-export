@@ -7,23 +7,25 @@ from .models import Author, Book
 
 
 class ModelFieldMixin(forms.Form):
-    model_fields = forms.MultipleChoiceField(label='Export Fields', required=True)
+    model_fields = forms.MultipleChoiceField(label="Export Fields", required=True)
     model = Book
 
     # For exporting data, you must select at least one of the required fields.
     # Please ensure that your selection includes at least one of these fields
-    required_model_fields = ['id', 'name', 'author', 'author_email']
+    required_model_fields = ["id", "name", "author", "author_email"]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['model_fields'].choices = [
+        self.fields["model_fields"].choices = [
             (field.name, field.name) for field in self.model._meta.get_fields()
         ]
 
     def clean_model_fields(self):
         minimum_field_selection = 2
-        data = self.cleaned_data['model_fields']
-        missing_required_fields = not any(item in data for item in self.required_model_fields)
+        data = self.cleaned_data["model_fields"]
+        missing_required_fields = not any(
+            item in data for item in self.required_model_fields
+        )
         if len(data) < minimum_field_selection:
             raise ValidationError("Minimum field selection is two field.")
         if missing_required_fields:
@@ -58,4 +60,5 @@ class CustomExportForm(AuthorFormMixin, ExportForm):
 
 class CustomExportFormModelFields(ExportForm, ModelFieldMixin):
     """Customized ExportForm, with model fields"""
+
     pass
