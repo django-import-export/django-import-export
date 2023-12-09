@@ -1,7 +1,7 @@
 Changelog
 =========
 
-3.3.4 (unreleased)
+3.3.4 (2023-12-09)
 ------------------
 
 - Added support for django5 (#1634)
