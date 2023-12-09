@@ -7,8 +7,13 @@ from import_export.admin import (
 )
 from import_export.resources import ModelResource
 
-from .forms import CustomConfirmImportForm, CustomExportForm, CustomImportForm
+from .forms import (
+    CustomConfirmImportForm,
+    CustomExportForm, CustomImportForm,
+    CustomExportFormModelFields
+)
 from .models import Author, Book, Category, Child, EBook, LegacyBook
+from .utils import generate_hashed_content
 
 
 class ChildAdmin(ImportMixin, admin.ModelAdmin):
@@ -30,11 +35,58 @@ class BookNameResource(ModelResource):
         name = "Export/Import only book names"
 
 
+class CustomBookResource(ModelResource):
+    """
+
+        custom book resource for selecting form fields
+
+    """
+
+    def __init__(self, **kwargs):
+        super(CustomBookResource, self).__init__(**kwargs)
+        self.model_fields = kwargs.pop("model_fields", None)
+
+    def get_export_fields(self):
+        return [self.fields[f] for f in self.model_fields]
+
+    class Meta:
+        model = Book
+
+
 class BookAdmin(ImportExportModelAdmin):
     list_display = ("name", "author", "added")
     list_filter = ["categories", "author"]
-    resource_classes = [BookResource, BookNameResource]
+    resource_classes = [CustomBookResource]
     change_list_template = "core/admin/change_list.html"
+    export_form_class = CustomExportFormModelFields
+    actions = ['change_list_of_display']
+
+    # return hashed string if name is empty
+    def hashed_content(self, queryset):
+        hashed_content = self.generate_hashed_content(queryset)
+        unique_id = generate_hashed_content(content=hashed_content, length=25)
+        return unique_id
+
+    def generate_hashed_content(self, queryset):
+        # field keys
+        required_model_fields = self.export_form_class.required_model_fields
+
+        # retrieve values from field keys
+        return ' '.join(str([[obj.serializable_value(i) for obj in queryset] for i in
+                             required_model_fields]))
+
+    def change_list_of_display(self, request, queryset):
+        name = self.hashed_content(queryset)
+        queryset.filter(name='').update(name=name)
+        self.message_user(request, "List display changed successfully.")
+
+    change_list_of_display.short_description = 'Add (Hashed ID) to List of Display'
+
+    def get_export_resource_kwargs(self, request, *args, **kwargs):
+        export_form = kwargs["export_form"]
+        if export_form:
+            return dict(model_fields=export_form.cleaned_data["model_fields"])
+        return {}
 
 
 class CategoryAdmin(ExportActionModelAdmin):
