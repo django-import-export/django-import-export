@@ -68,7 +68,7 @@ Documentation
 - Clarified ``skip_diff`` documentation (#1655)
 - Improved documentation relating to validation on import (#1665)
 
-3.3.4 (unreleased)
+3.3.4 (2023-12-09)
 ------------------
 
 - Added support for django5 (#1634)
