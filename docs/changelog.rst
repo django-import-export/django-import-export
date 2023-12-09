@@ -3,7 +3,7 @@ Changelog
 
 Please refer to :doc:`release notes<release_notes>`.
 
-4.0.0-beta.2 (unreleased)
+4.0.0-beta.2 (2023-12-09)
 --------------------------
 
 - fix declaring existing model field(s) in ModelResource altering export order (#1663)
