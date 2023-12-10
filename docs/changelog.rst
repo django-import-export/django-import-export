@@ -16,6 +16,8 @@ Please refer to :doc:`release notes<release_notes>`.
 - Updated Admin UI to track deleted and skipped Imports (#1691)
 - Import form defaults to read-only field if only one format defined (#1690)
 - Refactored :module:`~import_export.resources` into separate modules for ``declarative`` and ``options`` (#1695)
+- Fix multiple inheritance not setting options (#1696)
+- Fix issue where declared Resource fields not defined in ``fields`` are still imported (#1702)
 - fix multiple inheritance not setting options (#1696)
 - Refactored tests to remove dependencies between tests (#1703)
 - Handle python3.12 datetime deprecations (#1705)
