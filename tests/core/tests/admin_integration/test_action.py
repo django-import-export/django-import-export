@@ -104,7 +104,7 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
                     "_selected_action": "0",
                 },
             )
-            assert 200 <= response.status_code <= 399
+            self.assertTrue(200 <= response.status_code <= 399)
             mock_export_admin_action.assert_called()
 
     def test_get_export_data_raises_PermissionDenied_when_no_export_permission_assigned(

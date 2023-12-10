@@ -39,6 +39,9 @@ Or the ``exclude`` option to blacklist fields::
             model = Book
             exclude = ('imported', )
 
+If both ``fields`` and ``exclude`` are declared, the ``fields`` declaration takes precedence, and ``exclude`` is
+ignored.
+
 .. _field_ordering:
 
 Field ordering
