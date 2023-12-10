@@ -5,8 +5,8 @@ from unittest import mock, skipUnless
 from unittest.mock import patch
 
 import django
-import pytz
 from core.models import Author, Book, Category
+from core.tests.utils import ignore_utcnow_deprecation_warning
 from django.test import TestCase
 from django.test.utils import override_settings
 from django.utils import timezone
@@ -196,14 +196,20 @@ class DateTimeWidgetTest(TestCase, RowDeprecationTestMixin):
             "time data '2021-05-01' does not match format 'x'"
         )
 
+    @ignore_utcnow_deprecation_warning
     @override_settings(USE_TZ=True, TIME_ZONE="Europe/Ljubljana")
     def test_use_tz(self):
+        import pytz
+
         utc_dt = timezone.make_aware(self.datetime, pytz.UTC)
         self.assertEqual(self.widget.render(utc_dt), "13.08.2012 20:00:00")
         self.assertEqual(self.widget.clean("13.08.2012 20:00:00"), utc_dt)
 
+    @ignore_utcnow_deprecation_warning
     @override_settings(USE_TZ=True, TIME_ZONE="Europe/Ljubljana")
     def test_clean_returns_tz_aware_datetime_when_naive_datetime_passed(self):
+        import pytz
+
         # issue 1165
         if django.VERSION >= (5, 0):
             from zoneinfo import ZoneInfo
@@ -214,8 +220,11 @@ class DateTimeWidgetTest(TestCase, RowDeprecationTestMixin):
         target_dt = timezone.make_aware(self.datetime, tz)
         self.assertEqual(target_dt, self.widget.clean(self.datetime))
 
+    @ignore_utcnow_deprecation_warning
     @override_settings(USE_TZ=True, TIME_ZONE="Europe/Ljubljana")
     def test_clean_handles_tz_aware_datetime(self):
+        import pytz
+
         self.datetime = datetime(2012, 8, 13, 18, 0, 0, tzinfo=pytz.timezone("UTC"))
         self.assertEqual(self.datetime, self.widget.clean(self.datetime))
 

@@ -56,12 +56,8 @@ class ResultTest(TestCase):
         self.assertEqual("", row_result.object_repr)
 
     def test_add_instance_info(self):
-        class BookWithObjectRepr(Book):
-            def __str__(self):
-                return self.name
-
         row_result = RowResult()
-        row_result.add_instance_info(BookWithObjectRepr(pk=1, name="some book"))
+        row_result.add_instance_info(Book(pk=1, name="some book"))
         self.assertEqual(1, row_result.object_id)
         self.assertEqual("some book", row_result.object_repr)
 
