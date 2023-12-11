@@ -4,7 +4,7 @@ from uuid import uuid4
 
 from django.core.cache import cache
 from django.core.files.base import ContentFile
-from django.core.files.storage import default_storage
+from django.core.files.storage import StorageHandler
 
 
 class BaseStorage:
@@ -69,8 +69,15 @@ class CacheStorage(BaseStorage):
 
 class MediaStorage(BaseStorage):
     MEDIA_FOLDER = "django-import-export"
+    _storage = None
 
     def __init__(self, **kwargs):
+        sh = StorageHandler()
+        if "import_export" in sh.backends:
+            self._storage = sh["import_export"]
+        else:
+            self._storage = sh["default"]
+
         # issue 1589 - Ensure that for MediaStorage, we read in binary mode
         kwargs.update({"read_mode": "rb"})
         super().__init__(**kwargs)
@@ -78,14 +85,14 @@ class MediaStorage(BaseStorage):
     def save(self, data):
         if not self.name:
             self.name = uuid4().hex
-        default_storage.save(self.get_full_path(), ContentFile(data))
+        self._storage.save(self.get_full_path(), ContentFile(data))
 
     def read(self):
-        with default_storage.open(self.get_full_path(), mode=self.read_mode) as f:
+        with self._storage.open(self.get_full_path(), mode=self.read_mode) as f:
             return f.read()
 
     def remove(self):
-        default_storage.delete(self.get_full_path())
+        self._storage.delete(self.get_full_path())
 
     def get_full_path(self):
         return os.path.join(self.MEDIA_FOLDER, self.name)

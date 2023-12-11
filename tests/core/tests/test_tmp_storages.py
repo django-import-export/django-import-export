@@ -2,7 +2,7 @@ import os
 from unittest.mock import mock_open, patch
 
 from django.core.cache import cache
-from django.core.files.storage import default_storage
+from django.core.files.storage import FileSystemStorage, default_storage
 from django.test import TestCase
 
 from import_export.tmp_storages import (
@@ -108,6 +108,6 @@ id,name,author,author_email,imported,published,price,categories
     def test_media_storage_read_with_encoding(self):
         tmp_storage = TestMediaStorage()
         tmp_storage.name = "f"
-        with patch("import_export.tmp_storages.default_storage.open") as mock_open:
+        with patch.object(FileSystemStorage, "open") as mock_open:
             tmp_storage.read()
             mock_open.assert_called_with("f", mode="rb")
