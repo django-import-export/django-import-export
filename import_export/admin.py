@@ -107,6 +107,10 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
             tmp_storage_class = import_string(tmp_storage_class)
         return tmp_storage_class
 
+    def get_tmp_storage_class_kwargs(self):
+        """Override this method to provide additional kwargs to temp storage class."""
+        return {}
+
     def has_import_permission(self, request):
         """
         Returns whether a request has import permission.
@@ -158,6 +162,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
                 name=confirm_form.cleaned_data["import_file_name"],
                 encoding=encoding,
                 read_mode=input_format.get_read_mode(),
+                **self.get_tmp_storage_class_kwargs(),
             )
 
             data = tmp_storage.read()
@@ -395,7 +400,9 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
 
         tmp_storage_cls = self.get_tmp_storage_class()
         tmp_storage = tmp_storage_cls(
-            encoding=encoding, read_mode=input_format.get_read_mode()
+            encoding=encoding,
+            read_mode=input_format.get_read_mode(),
+            **self.get_tmp_storage_class_kwargs(),
         )
         data = bytes()
         for chunk in import_file.chunks():

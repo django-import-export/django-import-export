@@ -73,7 +73,8 @@ class MediaStorage(BaseStorage):
     _storage = None
 
     def __init__(self, **kwargs):
-        if django.VERSION >= (4, 2):
+        super().__init__(**kwargs)
+        if django.VERSION[:2] > (4, 2):
             from django.core.files.storage import StorageHandler
 
             sh = StorageHandler()
@@ -81,12 +82,20 @@ class MediaStorage(BaseStorage):
                 self._storage = sh["import_export"]
             else:
                 self._storage = sh["default"]
+
         else:
             from django.core.files.storage import default_storage
 
-            self._storage = getattr(
-                settings, "IMPORT_EXPORT_DEFAULT_FILE_STORAGE", default_storage
+            storage_class = getattr(
+                settings, "IMPORT_EXPORT_DEFAULT_FILE_STORAGE", None
             )
+            if storage_class is None:
+                self._storage = default_storage
+            else:
+                self._storage = storage_class()
+
+        if "MEDIA_FOLDER" in kwargs:
+            self.MEDIA_FOLDER = kwargs["MEDIA_FOLDER"]
 
         # issue 1589 - Ensure that for MediaStorage, we read in binary mode
         kwargs.update({"read_mode": "rb"})
@@ -105,4 +114,6 @@ class MediaStorage(BaseStorage):
         self._storage.delete(self.get_full_path())
 
     def get_full_path(self):
-        return os.path.join(self.MEDIA_FOLDER, self.name)
+        if self.MEDIA_FOLDER is not None:
+            return os.path.join(self.MEDIA_FOLDER, self.name)
+        return self.name
