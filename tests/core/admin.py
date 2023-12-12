@@ -36,6 +36,9 @@ class BookAdmin(ImportExportModelAdmin):
     resource_classes = [BookResource, BookNameResource]
     change_list_template = "core/admin/change_list.html"
 
+    def get_tmp_storage_class_kwargs(self):
+        return {"MEDIA_FOLDER": None}
+
 
 class CategoryAdmin(ExportActionModelAdmin):
     pass

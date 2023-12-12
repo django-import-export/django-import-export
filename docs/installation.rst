@@ -71,11 +71,23 @@ setting the ``skip_admin_log`` class attribute.
 ``IMPORT_EXPORT_TMP_STORAGE_CLASS``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+A string path to the preferred temporary storage module.
+
 Controls which storage class to use for storing the temporary uploaded file
 during imports. Defaults to ``import_export.tmp_storages.TempFolderStorage``.
 
 Can be overridden on a ``ModelAdmin`` class inheriting from ``ImportMixin`` by
 setting the ``tmp_storage_class`` class attribute.
+
+.. _import_export_default_file_storage:
+
+``IMPORT_EXPORT_DEFAULT_FILE_STORAGE``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A string path to a customized storage implementation.
+
+This setting is deprecated and only applies if using Django with a version less than 4.2,
+and will be removed in a future release.
 
 .. _import_export_import_permission_code:
 

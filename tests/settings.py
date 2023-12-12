@@ -102,28 +102,8 @@ LOGGING = {
     },
 }
 
-
 USE_TZ = False
 if django.VERSION >= (4, 1):
     FORM_RENDERER = "django.forms.renderers.DjangoDivFormRenderer"
 if django.VERSION >= (5, 0):
     FORM_RENDERER = "django.forms.renderers.DjangoTemplates"
-
-
-# STORAGES = {
-#     "default": {
-#         "BACKEND": "django.core.files.storage.FileSystemStorage",
-#     },
-#     "import_export": {
-#         "BACKEND": "storages.backends.s3.S3Storage",
-#         "OPTIONS": {
-#             "bucket_name": "import-export-access-test",
-#             "region_name": "eu-west-1",
-#             "access_key": "some_key",
-#             "secret_key": "some_secret"
-#         },
-#     },
-# }
-#
-#
-# IMPORT_EXPORT_TMP_STORAGE_CLASS = "import_export.tmp_storages.MediaStorage"
