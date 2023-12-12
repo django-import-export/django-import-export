@@ -7,6 +7,7 @@ Please refer to :doc:`release notes<release_notes>`.
 -------------------------
 
 - Fix issue where declared Resource fields not defined in ``fields`` are still imported (#1702)
+- Added customizable ``MediaStorage`` (#1708)
 
 4.0.0-beta.2 (2023-12-09)
 -------------------------
