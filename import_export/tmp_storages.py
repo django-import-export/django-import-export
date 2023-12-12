@@ -69,37 +69,34 @@ class CacheStorage(BaseStorage):
 
 
 class MediaStorage(BaseStorage):
-    MEDIA_FOLDER = "django-import-export"
     _storage = None
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         if django.VERSION[:2] > (4, 2):
-            from django.core.files.storage import StorageHandler
-
-            sh = StorageHandler()
-            if "import_export" in sh.backends:
-                self._storage = sh["import_export"]
-            else:
-                self._storage = sh["default"]
-
+            self._configure_storage()
         else:
-            from django.core.files.storage import default_storage
+            self._configure_storage_legacy()
 
-            storage_class = getattr(
-                settings, "IMPORT_EXPORT_DEFAULT_FILE_STORAGE", None
-            )
-            if storage_class is None:
-                self._storage = default_storage
-            else:
-                self._storage = storage_class()
-
-        if "MEDIA_FOLDER" in kwargs:
-            self.MEDIA_FOLDER = kwargs["MEDIA_FOLDER"]
+        self.MEDIA_FOLDER = kwargs.get("MEDIA_FOLDER", "django-import-export")
 
         # issue 1589 - Ensure that for MediaStorage, we read in binary mode
         kwargs.update({"read_mode": "rb"})
         super().__init__(**kwargs)
+
+    def _configure_storage(self):
+        from django.core.files.storage import StorageHandler
+
+        sh = StorageHandler()
+        self._storage = (
+            sh["import_export"] if "import_export" in sh.backends else sh["default"]
+        )
+
+    def _configure_storage_legacy(self):
+        from django.core.files.storage import default_storage
+
+        storage_class = getattr(settings, "IMPORT_EXPORT_DEFAULT_FILE_STORAGE", None)
+        self._storage = storage_class() if storage_class else default_storage
 
     def save(self, data):
         if not self.name:

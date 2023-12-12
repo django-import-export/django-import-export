@@ -179,3 +179,7 @@ class CustomizedMediaStorageTestDjango50(TestCase):
         tmp_storage.name = "TESTNAME"
         self.assertIsNone(tmp_storage.MEDIA_FOLDER)
         self.assertEqual("TESTNAME", tmp_storage.get_full_path())
+
+    def test_media_folder(self):
+        tmp_storage = MediaStorage()
+        self.assertEqual("django-import-export", tmp_storage.MEDIA_FOLDER)
