@@ -3,10 +3,16 @@ Changelog
 
 Please refer to :doc:`release notes<release_notes>`.
 
-4.0.0-beta.2 (unreleased)
---------------------------
+4.0.0-beta.3 (unreleased)
+-------------------------
 
-- fix declaring existing model field(s) in ModelResource altering export order (#1663)
+- Fix issue where declared Resource fields not defined in ``fields`` are still imported (#1702)
+- Added customizable ``MediaStorage`` (#1708)
+
+4.0.0-beta.2 (2023-12-09)
+-------------------------
+
+- Fix declaring existing model field(s) in ModelResource altering export order (#1663)
 - Updated `docker-compose` command with latest version syntax in `runtests.sh` (#1686)
 - Support export from model change form (#1687)
 - Updated Admin UI to track deleted and skipped Imports (#1691)
@@ -14,6 +20,8 @@ Please refer to :doc:`release notes<release_notes>`.
 - Refactored :module:`~import_export.resources` into separate modules for ``declarative`` and ``options`` (#1695)
 - fix multiple inheritance not setting options (#1696)
 - Refactored tests to remove dependencies between tests (#1703)
+- Handle python3.12 datetime deprecations (#1705)
+- Added FAQ entry for exporting large datasets (#1706)
 
 4.0.0-beta.1 (2023-11-16)
 --------------------------
@@ -66,11 +74,14 @@ Documentation
 - Clarified ``skip_diff`` documentation (#1655)
 - Improved documentation relating to validation on import (#1665)
 
-3.3.4 (unreleased)
+3.3.4 (2023-12-09)
 ------------------
 
-- Added `CONTRIBUTING.md`
+- Added support for django5 (#1634)
 - Show list of exported fields in Admin UI (#1685)
+- Added `CONTRIBUTING.md`
+- Added support for python 3.12 (#1698)
+- Update Finnish translations (#1701)
 
 3.3.3 (2023-11-11)
 ------------------

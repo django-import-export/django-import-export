@@ -39,6 +39,9 @@ Or the ``exclude`` option to blacklist fields::
             model = Book
             exclude = ('imported', )
 
+If both ``fields`` and ``exclude`` are declared, the ``fields`` declaration takes precedence, and ``exclude`` is
+ignored.
+
 .. _field_ordering:
 
 Field ordering
@@ -791,8 +794,6 @@ There are three mechanisms for temporary storage.
 
 To modify which storage mechanism is used, please refer to the setting :ref:`import_export_tmp_storage_class`.
 
-Temporary resources are removed when data is successfully imported after the confirmation step.
-
 Your choice of temporary storage will be influenced by the following factors:
 
 * Sensitivity of the data being imported.
@@ -800,12 +801,47 @@ Your choice of temporary storage will be influenced by the following factors:
 * File upload size.
 * Use of containers or load-balanced servers.
 
+Temporary resources are removed when data is successfully imported after the confirmation step.
+
 .. warning::
 
     If users do not complete the confirmation step of the workflow,
     or if there are errors during import, then temporary resources may not be deleted.
     This will need to be understood and managed in production settings.
     For example, using a cache expiration policy or cron job to clear stale resources.
+
+Customizable storage
+^^^^^^^^^^^^^^^^^^^^^
+
+If using :class:`~import_export.tmp_storages.MediaStorage` as a storage module, then you can define which storage
+backend implementation is used to handle create / read / delete operations on the persisted data.
+
+If using Django 4.2 or greater, use the `STORAGES <https://docs.djangoproject.com/en/stable/ref/settings/#std-setting-STORAGES>`_
+setting to define the backend, otherwise use :ref:`import_export_default_file_storage`.
+
+You can either supply a path to your own custom storage backend, or use pre-existing backends such as
+`django-storages <https://django-storages.readthedocs.io/>`_.
+
+If no custom storage implementation is supplied, then the Django default handler is used.
+
+For example, if using django-storages, you can configure s3 as a temporary storage location with the following::
+
+    IMPORT_EXPORT_TMP_STORAGE_CLASS = "import_export.tmp_storages.MediaStorage"
+
+    STORAGES = {
+        "default": {
+            "BACKEND": "django.core.files.storage.FileSystemStorage",
+        },
+        "import_export": {
+            "BACKEND": "storages.backends.s3.S3Storage",
+            "OPTIONS": {
+                "bucket_name": "<your bucket name>",
+                "region_name": "<your region>",
+                "access_key": "<your key>",
+                "secret_key": "<your secret>"
+            },
+        },
+    }
 
 Exporting
 ---------

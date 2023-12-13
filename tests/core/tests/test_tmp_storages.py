@@ -1,9 +1,13 @@
+import io
 import os
+from unittest import skipUnless
 from unittest.mock import mock_open, patch
 
+import django
 from django.core.cache import cache
-from django.core.files.storage import default_storage
+from django.core.files.storage import FileSystemStorage, default_storage
 from django.test import TestCase
+from django.test.utils import override_settings
 
 from import_export.tmp_storages import (
     BaseStorage,
@@ -108,6 +112,74 @@ id,name,author,author_email,imported,published,price,categories
     def test_media_storage_read_with_encoding(self):
         tmp_storage = TestMediaStorage()
         tmp_storage.name = "f"
-        with patch("import_export.tmp_storages.default_storage.open") as mock_open:
+        with patch.object(FileSystemStorage, "open") as mock_open:
             tmp_storage.read()
             mock_open.assert_called_with("f", mode="rb")
+
+
+class CustomizedStorage(object):
+    save_count = 0
+    open_count = 0
+    delete_count = 0
+
+    def __init__(self, **kwargs):
+        pass
+
+    def save(self, path, data):
+        self.save_count += 1
+
+    def open(self, path, mode=None):
+        self.open_count += 1
+        return io.StringIO("a")
+
+    def delete(self, path):
+        self.delete_count += 1
+
+
+@skipUnless(django.VERSION <= (4, 2), "Django 4.2")
+class CustomizedMediaStorageTestDjango42(TestCase):
+    @override_settings(IMPORT_EXPORT_DEFAULT_FILE_STORAGE=CustomizedStorage)
+    def test_MediaStorage_uses_custom_storage_implementation(self):
+        tmp_storage = TestMediaStorage()
+        tmp_storage.save(b"a")
+        self.assertEqual(1, tmp_storage._storage.save_count)
+        tmp_storage.read()
+        self.assertEqual(1, tmp_storage._storage.open_count)
+        tmp_storage.remove()
+        self.assertEqual(1, tmp_storage._storage.delete_count)
+
+
+@skipUnless(django.VERSION >= (5, 0), "Django 5.0")
+class CustomizedMediaStorageTestDjango50(TestCase):
+    @override_settings(
+        STORAGES={
+            "import_export": {
+                "BACKEND": "tests.core.tests.test_tmp_storages.CustomizedStorage"
+            }
+        }
+    )
+    def test_MediaStorage_uses_custom_storage_implementation(self):
+        tmp_storage = TestMediaStorage()
+        tmp_storage.save(b"a")
+        self.assertEqual(1, tmp_storage._storage.save_count)
+        tmp_storage.read()
+        self.assertEqual(1, tmp_storage._storage.open_count)
+        tmp_storage.remove()
+        self.assertEqual(1, tmp_storage._storage.delete_count)
+
+    @override_settings(
+        STORAGES={
+            "import_export": {
+                "BACKEND": "tests.core.tests.test_tmp_storages.CustomizedStorage"
+            }
+        }
+    )
+    def test_disable_media_folder(self):
+        tmp_storage = MediaStorage(MEDIA_FOLDER=None)
+        tmp_storage.name = "TESTNAME"
+        self.assertIsNone(tmp_storage.MEDIA_FOLDER)
+        self.assertEqual("TESTNAME", tmp_storage.get_full_path())
+
+    def test_media_folder(self):
+        tmp_storage = MediaStorage()
+        self.assertEqual("django-import-export", tmp_storage.MEDIA_FOLDER)
