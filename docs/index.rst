@@ -38,6 +38,7 @@ exporting data with included admin integration.
    installation
    getting_started
    advanced_usage
+   admin_integration
    import_workflow
    export_workflow
    bulk_import
