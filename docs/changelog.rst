@@ -5,7 +5,7 @@ Changelog
 ------------------
 
 - Nothing changed yet.
-
+- Remove unnecessary COUNT queries to speed up export
 
 3.3.4 (2023-12-09)
 ------------------

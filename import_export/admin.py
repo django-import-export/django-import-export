@@ -1,5 +1,6 @@
 import logging
 import warnings
+from contextlib import contextmanager
 
 import django
 from django import forms
@@ -67,6 +68,24 @@ class ImportExportMixinBase:
         extra_context = extra_context or {}
         extra_context["base_change_list_template"] = self.base_change_list_template
         return super().changelist_view(request, extra_context)
+
+
+class FakePaginator:
+    count = 0
+
+
+def _get_paginator(request, queryset, per_page):
+    return FakePaginator()
+
+
+@contextmanager
+def temp_attr(obj, attr_name, new_value):
+    original_value = getattr(obj, attr_name)
+    setattr(obj, attr_name, new_value)
+    try:
+        yield
+    finally:
+        setattr(obj, attr_name, original_value)
 
 
 class ImportMixin(BaseImportMixin, ImportExportMixinBase):
@@ -741,7 +760,12 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
         changelist_kwargs["sortable_by"] = self.sortable_by
         if django.VERSION >= (4, 0):
             changelist_kwargs["search_help_text"] = self.search_help_text
-        cl = ChangeList(**changelist_kwargs)
+
+        # Temporarily set to False to avoid unnecessary COUNT queries.
+        with temp_attr(self, "show_full_result_count", False):
+            # Temporarily set to FakePaginator to avoid unnecessary COUNT queries.
+            with temp_attr(self, "get_paginator", _get_paginator):
+                cl = ChangeList(**changelist_kwargs)
 
         return cl.get_queryset(request)
 
