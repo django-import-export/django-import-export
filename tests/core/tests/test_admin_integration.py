@@ -11,9 +11,12 @@ import tablib
 from core.admin import AuthorAdmin, BookAdmin, CustomBookAdmin, ImportMixin
 from core.models import Author, Book, Category, EBook, Parent
 from django.contrib.admin.models import DELETION, LogEntry
+from django.contrib.admin.sites import AdminSite
+from django.contrib.admin.views.main import ChangeList
 from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied
 from django.http import HttpRequest
+from django.test import RequestFactory
 from django.test.testcases import TestCase, TransactionTestCase
 from django.test.utils import override_settings
 from django.utils.translation import gettext_lazy as _
@@ -680,9 +683,8 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
             "file_format": "0",
         }
         date_str = datetime.now().strftime("%Y-%m-%d")
-        with self.assertNumQueries(
-            7
-        ):  # Should not contain COUNT queries from ModelAdmin.get_results()
+        # Should not contain COUNT queries from ModelAdmin.get_results()
+        with self.assertNumQueries(5):
             response = self.client.post("/admin/core/book/export/", data)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.has_header("Content-Disposition"))
@@ -696,6 +698,72 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
             b"published_time,price,added,categories\r\n",
             response.content,
         )
+
+    def test_get_export_queryset(self):
+        model_admin = BookAdmin(Book, AdminSite())
+
+        factory = RequestFactory()
+        request = factory.get("/admin/core/book/export/")
+        request.user = User.objects.create_user("admin1")
+
+        call_number = 0
+
+        class MyChangeList(ChangeList):
+            def get_queryset(self, request):
+                nonlocal call_number
+                call_number += 1
+                return super().get_queryset(request)
+
+        model_admin.get_changelist = lambda request: MyChangeList
+
+        with patch.object(model_admin, "get_paginator") as mock_get_paginator:
+            with self.assertNumQueries(4):
+                queryset = model_admin.get_export_queryset(request)
+
+            mock_get_paginator.assert_not_called()
+            self.assertEqual(call_number, 1)
+
+        self.assertEqual(queryset.count(), Book.objects.count())
+
+    def test_get_export_queryset_no_queryset_init(self):
+        """Test if user has own ChangeList which doesn't store queryset diring init"""
+        model_admin = BookAdmin(Book, AdminSite())
+
+        factory = RequestFactory()
+        request = factory.get("/admin/core/book/export/")
+        request.user = User.objects.create_user("admin1")
+
+        call_number = 0
+
+        class MyChangeList(ChangeList):
+            def __init__(self, *args, **kwargs):
+                self.filter_params = {}
+                self.model_admin = kwargs.pop("model_admin")
+                self.list_filter = kwargs.pop("list_filter")
+                self.model = kwargs.pop("model")
+                self.date_hierarchy = kwargs.pop("date_hierarchy")
+                self.root_queryset = self.model_admin.get_queryset(request)
+                self.list_select_related = kwargs.pop("list_select_related")
+                self.list_display = kwargs.pop("list_display")
+                self.lookup_opts = self.model._meta
+                self.params = {}
+                self.query = ""
+
+            def get_queryset(self, request):
+                nonlocal call_number
+                call_number += 1
+                return super().get_queryset(request)
+
+        model_admin.get_changelist = lambda request: MyChangeList
+
+        with patch.object(model_admin, "get_paginator") as mock_get_paginator:
+            with self.assertNumQueries(4):
+                queryset = model_admin.get_export_queryset(request)
+
+            mock_get_paginator.assert_not_called()
+            self.assertEqual(call_number, 1)
+
+        self.assertEqual(queryset.count(), Book.objects.count())
 
     def test_export_second_resource(self):
         response = self.client.get("/admin/core/book/export/")

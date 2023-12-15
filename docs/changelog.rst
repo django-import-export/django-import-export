@@ -5,7 +5,8 @@ Changelog
 ------------------
 
 - Nothing changed yet.
-- Remove unnecessary COUNT queries to speed up export
+- Remove unnecessary queries to speed up export
+  This is done by overriding `ChangeList` from `ModelAdmin.get_changelist().get_results()` with stub method.
 
 3.3.4 (2023-12-09)
 ------------------
