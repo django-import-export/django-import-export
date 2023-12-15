@@ -741,8 +741,25 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
         changelist_kwargs["sortable_by"] = self.sortable_by
         if django.VERSION >= (4, 0):
             changelist_kwargs["search_help_text"] = self.search_help_text
-        cl = ChangeList(**changelist_kwargs)
 
+        class ExportChangeList(ChangeList):
+            def get_results(self, request):
+                """
+                Overrides ChangeList.get_results() to bypass default operations like
+                pagination and result counting, which are not needed for export. This
+                prevents executing unnecessary COUNT queries during ChangeList
+                initialization.
+                """
+                pass
+
+        cl = ExportChangeList(**changelist_kwargs)
+
+        # get_queryset() is already called during initialization,
+        # it is enough to get its results
+        if hasattr(cl, "queryset"):
+            return cl.queryset
+
+        # Fallback in case the ChangeList doesn't have queryset attribute set
         return cl.get_queryset(request)
 
     def get_export_data(self, file_format, queryset, *args, **kwargs):
