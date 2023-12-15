@@ -5,8 +5,7 @@ Changelog
 ------------------
 
 - Nothing changed yet.
-- Remove unnecessary queries to speed up export
-  This is done by overriding `ChangeList` from `ModelAdmin.get_changelist().get_results()` with stub method.
+- Remove unnecessary ChangeList queries to speed up export via Admin UI (#1715)
 
 3.3.4 (2023-12-09)
 ------------------

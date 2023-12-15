@@ -726,7 +726,7 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertEqual(queryset.count(), Book.objects.count())
 
     def test_get_export_queryset_no_queryset_init(self):
-        """Test if user has own ChangeList which doesn't store queryset diring init"""
+        """Test if user has own ChangeList which doesn't store queryset during init"""
         model_admin = BookAdmin(Book, AdminSite())
 
         factory = RequestFactory()
