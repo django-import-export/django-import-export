@@ -1,7 +1,7 @@
 Changelog
 =========
 
-3.3.5 (unreleased)
+3.3.5 (2023-12-19)
 ------------------
 
 - Remove unnecessary ChangeList queries to speed up export via Admin UI (#1715)
