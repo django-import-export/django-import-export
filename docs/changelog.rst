@@ -75,11 +75,18 @@ Documentation
 - Clarified ``skip_diff`` documentation (#1655)
 - Improved documentation relating to validation on import (#1665)
 
-3.3.5 (unreleased)
+3.3.6 (unreleased)
 ------------------
 
 - Nothing changed yet.
+
+
+3.3.5 (2023-12-19)
+------------------
+
 - Remove unnecessary ChangeList queries to speed up export via Admin UI (#1715)
+- Respect color scheme override (#1720)
+- Update FAQ to cover skipping rows with validation errors (#1721)
 
 3.3.4 (2023-12-09)
 ------------------

@@ -181,6 +181,11 @@ with this issue.  Refer to `this comment <https://github.com/django-import-expor
 This indicates that the change_list_template attribute could not be set, most likely due to a clash with a third party
 library.  Refer to :ref:`interoperability`.
 
+How to skip rows with validation errors during import
+-----------------------------------------------------
+
+Refer to `this comment <https://github.com/django-import-export/django-import-export/issues/763#issuecomment-1861031723>`_.
+
 ``FileNotFoundError`` during Admin import 'confirm' step
 --------------------------------------------------------
 
