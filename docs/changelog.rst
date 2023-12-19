@@ -4,8 +4,8 @@ Changelog
 3.3.5 (unreleased)
 ------------------
 
-- Nothing changed yet.
 - Remove unnecessary ChangeList queries to speed up export via Admin UI (#1715)
+- Update FAQ to cover skipping rows with validation errors (#)
 
 3.3.4 (2023-12-09)
 ------------------
