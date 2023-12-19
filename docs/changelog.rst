@@ -5,7 +5,7 @@ Changelog
 ------------------
 
 - Remove unnecessary ChangeList queries to speed up export via Admin UI (#1715)
-- Update FAQ to cover skipping rows with validation errors (#)
+- Update FAQ to cover skipping rows with validation errors (#1721)
 
 3.3.4 (2023-12-09)
 ------------------
