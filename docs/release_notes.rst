@@ -97,6 +97,21 @@ Success message
 The success message shown on successful import has been updated to include the number of 'deleted' and 'skipped' rows.
 See `this PR <https://github.com/django-import-export/django-import-export/issues/1691>`_.
 
+Import error messages
+---------------------
+
+The default error message for import errors has been modified to simplify the format.
+Error messages now contain the error message only by default.  The row and traceback are not presented.
+
+The original format can be restored by setting :attr:`~import_export.admin.ImportMixin.import_error_display` on the
+Admin class definition.  For example::
+
+  class BookAdmin(ImportExportModelAdmin):
+    import_error_display = ("message", "row", "traceback")
+
+
+See `this issue <https://github.com/django-import-export/django-import-export/issues/1724>`_.
+
 API changes
 ===========
 

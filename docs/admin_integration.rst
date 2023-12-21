@@ -37,7 +37,7 @@ dropdown in the UI.
 .. figure:: _static/images/django-import-export-change.png
 
    A screenshot of the change view with Import and Export buttons.
-   
+
 Importing
 ---------
 
@@ -136,6 +136,14 @@ For example, if using django-storages, you can configure s3 as a temporary stora
             },
         },
     }
+
+.. _format_ui_error_messages:
+
+How to format UI error messages
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Admin UI import error messages can be formatted using the :attr:`~import_export.admin.ImportMixin.import_error_display`
+attribute.
 
 Exporting
 ---------
