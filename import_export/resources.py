@@ -13,6 +13,7 @@ from django.core.management.color import no_style
 from django.core.paginator import Paginator
 from django.db import connections, router
 from django.db.models import fields
+from django.db.models.fields.related import ForeignKey
 from django.db.models.query import QuerySet
 from django.db.transaction import TransactionManagementError, set_rollback
 from django.utils.encoding import force_str
@@ -1196,9 +1197,17 @@ class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
 
         FieldWidget = cls.widget_from_django_field(django_field)
         widget_kwargs = cls.widget_kwargs_for_field(field_name, django_field)
+
+        attribute = field_name
+        column_name = field_name
+        # To solve #974
+        if isinstance(django_field, ForeignKey) and "__" not in column_name:
+            attribute += "_id"
+            widget_kwargs["key_is_id"] = True
+
         field = cls.DEFAULT_RESOURCE_FIELD(
-            attribute=field_name,
-            column_name=field_name,
+            attribute=attribute,
+            column_name=column_name,
             widget=FieldWidget(**widget_kwargs),
             readonly=readonly,
             default=django_field.default,

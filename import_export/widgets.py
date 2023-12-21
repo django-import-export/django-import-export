@@ -476,9 +476,17 @@ class ForeignKeyWidget(Widget):
         related object, default to False
     """
 
-    def __init__(self, model, field="pk", use_natural_foreign_keys=False, **kwargs):
+    def __init__(
+        self,
+        model,
+        field="pk",
+        use_natural_foreign_keys=False,
+        key_is_id=False,
+        **kwargs,
+    ):
         self.model = model
         self.field = field
+        self.key_is_id = key_is_id
         self.use_natural_foreign_keys = use_natural_foreign_keys
         super().__init__(**kwargs)
 
@@ -528,7 +536,10 @@ class ForeignKeyWidget(Widget):
                 return self.model.objects.get_by_natural_key(*value)
             else:
                 lookup_kwargs = self.get_lookup_kwargs(value, row, **kwargs)
-                return self.get_queryset(value, row, **kwargs).get(**lookup_kwargs)
+                obj = self.get_queryset(value, row, **kwargs).get(**lookup_kwargs)
+                if self.key_is_id:
+                    return obj.id
+                return obj
         else:
             return None
 
@@ -551,6 +562,10 @@ class ForeignKeyWidget(Widget):
           ``coerce_to_string`` has no effect on the return value.
         """
         self._obj_deprecation_warning(obj)
+
+        if self.key_is_id:
+            return value or ""
+
         if value is None:
             return ""
 
