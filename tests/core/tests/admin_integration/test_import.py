@@ -498,6 +498,7 @@ class TestImportErrorMessageFormat(AdminTestMixin, TestCase):
         self.request = factory.post(self.book_import_url, self.data, follow=True)
         self.request.user = User.objects.create_user("admin1")
 
+    @ignore_widget_deprecation_warning
     def test_result_error_display_default(self):
         response = self.model_admin.import_action(self.request)
         response.render()
@@ -509,6 +510,7 @@ class TestImportErrorMessageFormat(AdminTestMixin, TestCase):
         self.assertNotIn("import-error-display-row", str(response.content))
         self.assertNotIn("import-error-display-traceback", str(response.content))
 
+    @ignore_widget_deprecation_warning
     def test_result_error_display_message_only(self):
         self.model_admin.import_error_display = ("message",)
 
@@ -522,6 +524,7 @@ class TestImportErrorMessageFormat(AdminTestMixin, TestCase):
         self.assertNotIn("import-error-display-row", str(response.content))
         self.assertNotIn("import-error-display-traceback", str(response.content))
 
+    @ignore_widget_deprecation_warning
     def test_result_error_display_row_only(self):
         self.model_admin.import_error_display = ("row",)
 
@@ -535,6 +538,7 @@ class TestImportErrorMessageFormat(AdminTestMixin, TestCase):
         self.assertIn("import-error-display-row", str(response.content))
         self.assertNotIn("import-error-display-traceback", str(response.content))
 
+    @ignore_widget_deprecation_warning
     def test_result_error_display_traceback_only(self):
         self.model_admin.import_error_display = ("traceback",)
 
