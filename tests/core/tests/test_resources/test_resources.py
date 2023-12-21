@@ -290,6 +290,24 @@ class ModelResourceTest(TestCase):
             self.assertEqual(len(dataset), 1)
 
     @ignore_widget_deprecation_warning
+    def test_export_with_foreign_keys(self):
+        """
+        Test that export() containing foreign keys doesn't generate
+        extra query for every row.
+        Fixes #974
+        """
+        author = Author.objects.create()
+        self.book.author = author
+        self.book.save()
+        Book.objects.create(name="Second book", author=Author.objects.create())
+        Book.objects.create(name="Third book", author=Author.objects.create())
+
+        with self.assertNumQueries(3):
+            dataset = self.resource.export(Book.objects.prefetch_related("categories"))
+            self.assertEqual(dataset.dict[0]["author"], author.pk)
+            self.assertEqual(len(dataset), 3)
+
+    @ignore_widget_deprecation_warning
     def test_export_iterable(self):
         with self.assertNumQueries(2):
             dataset = self.resource.export(queryset=list(Book.objects.all()))
