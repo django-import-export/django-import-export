@@ -85,7 +85,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
     from_encoding = "utf-8-sig"
     #: control which UI elements appear when import errors are displayed.
     #: Available options: 'message', 'row', 'traceback'
-    import_error_display = ("message", "row", "traceback")
+    import_error_display = ("message",)
 
     skip_admin_log = None
     # storage class for saving temporary files
