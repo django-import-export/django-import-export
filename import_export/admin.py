@@ -83,6 +83,10 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
     confirm_form_class = ConfirmImportForm
     #: import data encoding
     from_encoding = "utf-8-sig"
+    #: control which UI elements appear when import errors are displayed.
+    #: Available options: 'message', 'row', 'traceback'
+    import_error_display = ("message", "row", "traceback")
+
     skip_admin_log = None
     # storage class for saving temporary files
     tmp_storage_class = None
@@ -535,6 +539,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
             )
             for resource in resources
         ]
+        context["import_error_display"] = self.import_error_display
 
         request.current_app = self.admin_site.name
         return TemplateResponse(request, [self.import_template_name], context)
