@@ -44,6 +44,7 @@ from django.utils.encoding import force_str
 from django.utils.html import strip_tags
 
 from import_export import exceptions, fields, resources, results, widgets
+from import_export.exceptions import RowError
 from import_export.instance_loaders import ModelInstanceLoader
 from import_export.options import ResourceOptions
 from import_export.resources import Diff
@@ -561,7 +562,7 @@ class ModelResourceTest(TestCase):
         # 'user' is a required field, the database will raise an error.
         row = [None, None]
         dataset = tablib.Dataset(row, headers=headers)
-        with self.assertRaises(IntegrityError):
+        with self.assertRaises(RowError) as exc:
             resource.import_data(
                 dataset,
                 dry_run=True,
@@ -569,13 +570,20 @@ class ModelResourceTest(TestCase):
                 raise_errors=True,
             )
 
+        row_error = exc.exception
+        self.assertEqual(
+            "NOT NULL constraint failed: core_profile.user_id", str(row_error.error)
+        )
+        self.assertEqual(1, row_error.number)
+        self.assertEqual({"id": None, "user": None}, row_error.row)
+
     @ignore_widget_deprecation_warning
     def test_collect_failed_rows_validation_error(self):
         resource = ProfileResource()
         row = ["1"]
         dataset = tablib.Dataset(row, headers=["id"])
         with mock.patch(
-            "import_export.resources.Field.save", side_effect=ValidationError("fail!")
+            "import_export.resources.Field.save", side_effect=Exception("fail!")
         ):
             result = resource.import_data(
                 dataset,
@@ -589,9 +597,7 @@ class ModelResourceTest(TestCase):
             len(result.failed_dataset),
         )
         self.assertEqual("1", result.failed_dataset.dict[0]["id"])
-        self.assertEqual(
-            "{'__all__': ['fail!']}", result.failed_dataset.dict[0]["Error"]
-        )
+        self.assertEqual("fail!", result.failed_dataset.dict[0]["Error"])
 
     @ignore_widget_deprecation_warning
     def test_row_result_raise_ValidationError(self):
@@ -601,7 +607,7 @@ class ModelResourceTest(TestCase):
         with mock.patch(
             "import_export.resources.Field.save", side_effect=ValidationError("fail!")
         ):
-            with self.assertRaisesRegex(ValidationError, "{'__all__': \\['fail!'\\]}"):
+            with self.assertRaisesRegex(RowError, "{'__all__': \\['fail!'\\]}"):
                 resource.import_data(
                     dataset,
                     dry_run=True,

@@ -22,9 +22,9 @@ from django.utils.translation import gettext_lazy as _
 
 from . import widgets
 from .declarative import DeclarativeMetaclass, ModelDeclarativeMetaclass
-from .exceptions import FieldError
+from .exceptions import FieldError, RowError
 from .fields import Field
-from .results import Error, Result, RowResult
+from .results import Result, RowResult
 from .utils import atomic_if_using_transaction, get_related_model
 
 logger = logging.getLogger(__name__)
@@ -111,7 +111,7 @@ class Resource(metaclass=DeclarativeMetaclass):
         """
         Returns the class used to store an error resulting from an import.
         """
-        return Error
+        return RowError
 
     @classmethod
     def get_diff_class(self):
@@ -764,7 +764,8 @@ class Resource(metaclass=DeclarativeMetaclass):
             inside a transaction.
 
         :param collect_failed_rows: If ``True`` the import process will collect
-            failed rows.
+            failed rows. This can be useful for debugging purposes but will cause
+            higher memory usage for larger datasets.
 
         :param rollback_on_validation_errors: If both ``use_transactions`` and
           ``rollback_on_validation_errors`` are set to ``True``, the import process will
@@ -896,16 +897,17 @@ class Resource(metaclass=DeclarativeMetaclass):
             result.increment_row_result_total(row_result)
 
             if row_result.errors:
+                result.append_error_row(i, row, row_result.errors)
                 if collect_failed_rows:
                     result.append_failed_row(row, row_result.errors[0])
                 if raise_errors:
-                    raise row_result.errors[-1].error
+                    raise RowError(row_result.errors[-1].error, number=i, row=row)
             elif row_result.validation_error:
                 result.append_invalid_row(i, row, row_result.validation_error)
                 if collect_failed_rows:
                     result.append_failed_row(row, row_result.validation_error)
                 if raise_errors:
-                    raise row_result.validation_error
+                    raise RowError(row_result.validation_error, number=i, row=row)
             if (
                 row_result.import_type != RowResult.IMPORT_TYPE_SKIP
                 or self._meta.report_skipped

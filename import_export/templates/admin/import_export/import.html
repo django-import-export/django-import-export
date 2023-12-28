@@ -91,7 +91,7 @@
             {% block import_error_list_item %}
             <li class="import-error-li">
               {% if "message" in import_error_display %}
-                <div class="import-error-display-message">{% translate "Line number" %}: {{ line }} - {{ error.error }}</div>
+                <div class="import-error-display-message">{% translate "Row number" %}: {{ line }} - {{ error.error }}</div>
               {% endif %}
               {% if "row" in import_error_display %}
                 <div class="import-error-display-row">{{ error.row.values|join:", " }}</div>
