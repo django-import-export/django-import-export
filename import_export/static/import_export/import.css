@@ -50,6 +50,10 @@ table.import-preview td ins, html[data-theme="light"] table.import-preview td in
   background-color: #e6ffe6 !important;
 }
 
+html[data-theme="light"] table.import-preview td del {
+  background-color: #ffe6e6 !important;
+}
+
 .import-preview td:hover .validation-error-count {
   z-index: 3;
 }

@@ -4,7 +4,7 @@ Changelog
 3.3.6 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Fix issue with highlight when using 'light' color scheme (#1728)
 
 
 3.3.5 (2023-12-19)
