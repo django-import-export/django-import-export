@@ -265,6 +265,9 @@ For example, generic errors are usually raised at the point the model instance i
 to a int field.  Because generic errors are raised from a lower point in the stack, it is not always possible to
 identify which field caused the error.
 
+Generic errors are retained within the :attr:`~import_export.results.Result.error_rows` list as a
+:class:`~import_export.results.ErrorRow` instance.
+
 The ``raise_errors`` parameter can be used during programmatic import to halt the import at the first error::
 
     rows = [
