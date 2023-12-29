@@ -6,10 +6,11 @@ from tablib import Dataset
 
 
 class Error:
-    def __init__(self, error, traceback=None, row=None):
+    def __init__(self, error, traceback=None, row=None, number=None):
         self.error = error
         self.traceback = traceback
         self.row = row
+        self.number = number
 
 
 class RowResult:

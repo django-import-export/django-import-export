@@ -225,11 +225,12 @@ customize the handling of errors.  Refer to the method documentation for specifi
 Validation Errors
 -----------------
 
-During import of a row, each field is iterated and any `ValueError <https://docs.python.org/3/library/exceptions.html#ValueError/>`_.
+During import of a row, each field is iterated and any `ValueError <https://docs.python.org/3/library/exceptions.html#ValueError/>`_
 errors raised by Widgets are stored in an instance of Django's
 `ValidationError <https://docs.djangoproject.com/en/stable/ref/forms/validation/>`_.
 
-Validation errors are retained in each :class:`~import_export.results.RowResult` instance.
+Validation errors are retained within the :attr:`~import_export.results.Result.invalid_rows` list as a
+:class:`~import_export.results.InvalidRow` instance.
 
 If importing programmatically, you can set the ``raise_errors`` parameter of :meth:`~import_export.resources.Resource.import_data`
 to ``True``, which will mean the process will exit at the first row which has errors::
@@ -272,7 +273,6 @@ The ``raise_errors`` parameter can be used during programmatic import to halt th
     ]
     dataset = tablib.Dataset(*rows, headers=['id', 'name', 'price'])
     resource = BookResource()
-    # #resource = resources.modelresource_factory(model=Book)()
     result = resource.import_data(
         dataset,
         raise_errors=True
@@ -281,6 +281,14 @@ The ``raise_errors`` parameter can be used during programmatic import to halt th
 The above process will exit with a row number and error::
 
   import_export.exceptions.RowError: 2: [<class 'decimal.ConversionSyntax'>]
+
+To iterate over all generic errors produced from an import, pass ``False`` to ``raise_errors``::
+
+    result = self.resource.import_data(self.dataset, raise_errors=False)
+    for row in result.error_rows:
+        print(f"--- row {row.number} ---")
+        for field, error in row.error.error_dict.items():
+            print(f"{field}: {error}")
 
 Field level validation
 ----------------------

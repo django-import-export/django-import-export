@@ -20,11 +20,10 @@ from django.utils.encoding import force_str
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 
-from . import widgets
+from . import exceptions, widgets
 from .declarative import DeclarativeMetaclass, ModelDeclarativeMetaclass
-from .exceptions import FieldError, RowError
 from .fields import Field
-from .results import Result, RowResult
+from .results import Error, Result, RowResult
 from .utils import atomic_if_using_transaction, get_related_model
 
 logger = logging.getLogger(__name__)
@@ -111,7 +110,7 @@ class Resource(metaclass=DeclarativeMetaclass):
         """
         Returns the class used to store an error resulting from an import.
         """
-        return RowError
+        return Error
 
     @classmethod
     def get_diff_class(self):
@@ -634,7 +633,9 @@ class Resource(metaclass=DeclarativeMetaclass):
         logger.debug(error, exc_info=error)
         if result:
             tb_info = traceback.format_exc()
-            result.append_base_error(self.get_error_result_class()(error, tb_info))
+            result.append_base_error(
+                self.get_error_result_class()(error, traceback=tb_info)
+            )
         if raise_errors:
             raise
 
@@ -737,7 +738,9 @@ class Resource(metaclass=DeclarativeMetaclass):
             if not isinstance(e, TransactionManagementError):
                 logger.debug(e, exc_info=e)
             tb_info = traceback.format_exc()
-            row_result.errors.append(self.get_error_result_class()(e, tb_info, row))
+            row_result.errors.append(
+                self.get_error_result_class()(e, traceback=tb_info, row=row)
+            )
 
         return row_result
 
@@ -901,13 +904,17 @@ class Resource(metaclass=DeclarativeMetaclass):
                 if collect_failed_rows:
                     result.append_failed_row(row, row_result.errors[0])
                 if raise_errors:
-                    raise RowError(row_result.errors[-1].error, number=i, row=row)
+                    raise exceptions.ImportError(
+                        row_result.errors[-1].error, number=i, row=row
+                    )
             elif row_result.validation_error:
                 result.append_invalid_row(i, row, row_result.validation_error)
                 if collect_failed_rows:
                     result.append_failed_row(row, row_result.validation_error)
                 if raise_errors:
-                    raise RowError(row_result.validation_error, number=i, row=row)
+                    raise exceptions.ImportError(
+                        row_result.validation_error, number=i, row=row
+                    )
             if (
                 row_result.import_type != RowResult.IMPORT_TYPE_SKIP
                 or self._meta.report_skipped
@@ -1077,7 +1084,7 @@ class Resource(metaclass=DeclarativeMetaclass):
                 missing_fields.append(col)
 
         if missing_fields:
-            raise FieldError(
+            raise exceptions.FieldError(
                 _(
                     "The following import_id_fields are not present in the dataset: %s"
                     % ", ".join(missing_fields)

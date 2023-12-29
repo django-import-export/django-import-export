@@ -10,7 +10,7 @@ class FieldError(ImportExportError):
     pass
 
 
-class RowError(ImportExportError):
+class ImportError(ImportExportError):
     """A wrapper for errors thrown from the import process."""
 
     def __init__(self, error, number=None, row=None):

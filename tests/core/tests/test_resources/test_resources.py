@@ -44,7 +44,6 @@ from django.utils.encoding import force_str
 from django.utils.html import strip_tags
 
 from import_export import exceptions, fields, resources, results, widgets
-from import_export.exceptions import RowError
 from import_export.instance_loaders import ModelInstanceLoader
 from import_export.options import ResourceOptions
 from import_export.resources import Diff
@@ -562,7 +561,7 @@ class ModelResourceTest(TestCase):
         # 'user' is a required field, the database will raise an error.
         row = [None, None]
         dataset = tablib.Dataset(row, headers=headers)
-        with self.assertRaises(RowError) as exc:
+        with self.assertRaises(exceptions.ImportError) as exc:
             resource.import_data(
                 dataset,
                 dry_run=True,
@@ -607,7 +606,9 @@ class ModelResourceTest(TestCase):
         with mock.patch(
             "import_export.resources.Field.save", side_effect=ValidationError("fail!")
         ):
-            with self.assertRaisesRegex(RowError, "{'__all__': \\['fail!'\\]}"):
+            with self.assertRaisesRegex(
+                exceptions.ImportError, "{'__all__': \\['fail!'\\]}"
+            ):
                 resource.import_data(
                     dataset,
                     dry_run=True,
