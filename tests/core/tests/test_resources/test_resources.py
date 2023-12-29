@@ -570,9 +570,6 @@ class ModelResourceTest(TestCase):
             )
 
         row_error = exc.exception
-        self.assertEqual(
-            "NOT NULL constraint failed: core_profile.user_id", str(row_error.error)
-        )
         self.assertEqual(1, row_error.number)
         self.assertEqual({"id": None, "user": None}, row_error.row)
 

@@ -739,7 +739,9 @@ class Resource(metaclass=DeclarativeMetaclass):
                 logger.debug(e, exc_info=e)
             tb_info = traceback.format_exc()
             row_result.errors.append(
-                self.get_error_result_class()(e, traceback=tb_info, row=row)
+                self.get_error_result_class()(
+                    e, traceback=tb_info, row=row, number=kwargs["row_number"]
+                )
             )
 
         return row_result
