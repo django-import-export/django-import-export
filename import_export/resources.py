@@ -428,7 +428,7 @@ class Resource(metaclass=DeclarativeMetaclass):
         warn(
             "The 'import_obj' method is deprecated and will be replaced "
             "with 'import_instance(self, instance, row, **kwargs)' "
-            "in a future release",
+            "in a future release.  Refer to Release Notes for details.",
             DeprecationWarning,
             stacklevel=2,
         )
@@ -632,7 +632,7 @@ class Resource(metaclass=DeclarativeMetaclass):
         warn(
             "The 'after_import_instance' method is deprecated and will be replaced "
             "with 'after_init_instance(self, instance, new, row, **kwargs)' "
-            "in a future release",
+            "in a future release.  Refer to Release Notes for details.",
             DeprecationWarning,
             stacklevel=2,
         )
