@@ -70,6 +70,8 @@ Deprecations
 
 * Use of ``ExportViewFormMixin`` is deprecated.  See `this issue <https://github.com/django-import-export/django-import-export/issues/1666>`_.
 
+* See :ref:`renamed_methods`.
+
 Admin UI
 ========
 
@@ -136,6 +138,8 @@ method calls, and to allow easier extensibility.
 :class:`import_export.resources.Resource`
 -----------------------------------------
 
+.. _renamed_methods:
+
 Renamed methods
 ^^^^^^^^^^^^^^^
 
@@ -200,41 +204,41 @@ This section describes methods in which the parameters have changed.
 
    * - ``save_m2m(self, obj, data, using_transactions, dry_run)``
      - ``save_m2m(self, instance, row, **kwargs)``
-     - * ``dry_run`` param now in ``kwargs``
-       * ``using_transactions`` param now in ``kwargs``
-       * ``row`` added as mandatory arg
+     - * ``row`` added as mandatory arg
        * ``obj`` renamed to ``instance``
        * ``data`` renamed to ``row``
+       * ``dry_run`` param now in ``kwargs``
+       * ``using_transactions`` param now in ``kwargs``
 
    * - ``before_save_instance(self, instance, using_transactions, dry_run)``
      - ``before_save_instance(self, instance, row, **kwargs)``
-     - * ``dry_run`` param now in ``kwargs``
+     - * ``row`` added as mandatory arg
+       * ``dry_run`` param now in ``kwargs``
        * ``using_transactions`` param now in ``kwargs``
-       * ``row`` added as mandatory arg
 
    * - ``after_save_instance(self, instance, using_transactions, dry_run)``
      - ``after_save_instance(self, instance, row, **kwargs)``
-     - * ``dry_run`` param now in ``kwargs``
+     - * ``row`` added as mandatory arg
+       * ``dry_run`` param now in ``kwargs``
        * ``using_transactions`` param now in ``kwargs``
-       * ``row`` added as mandatory arg
 
    * - ``delete_instance(self, instance, using_transactions=True, dry_run=False)``
      - ``delete_instance(self, instance, row, **kwargs)``
-     - * ``dry_run`` param now in ``kwargs``
+     - * ``row`` added as mandatory arg
+       * ``dry_run`` param now in ``kwargs``
        * ``using_transactions`` param now in ``kwargs``
-       * ``row`` added as mandatory arg
 
    * - ``before_delete_instance(self, instance, dry_run)``
      - ``before_delete_instance(self, instance, row, **kwargs)``
-     - * ``dry_run`` param now in ``kwargs``
+     - * ``row`` added as mandatory arg
+       * ``dry_run`` param now in ``kwargs``
        * ``using_transactions`` param now in ``kwargs``
-       * ``row`` added as mandatory arg
 
    * - ``after_delete_instance(self, instance, dry_run)``
      - ``after_delete_instance(self, instance, row, **kwargs)``
-     - * ``dry_run`` param now in ``kwargs``
+     - * ``row`` added as mandatory arg
+       * ``dry_run`` param now in ``kwargs``
        * ``using_transactions`` param now in ``kwargs``
-       * ``row`` added as mandatory arg
 
    * - ``before_export(self, queryset, *args, **kwargs)``
      - ``before_export(self, queryset, **kwargs)``

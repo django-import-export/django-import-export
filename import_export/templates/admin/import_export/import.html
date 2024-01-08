@@ -85,7 +85,6 @@
           <div class="traceback">{{ error.traceback|linebreaks }}</div>
         </li>
         {% endfor %}
-        {% block import_error_list %}
         {% for line, errors in result.row_errors %}
           {% for error in errors %}
             {% block import_error_list_item %}
@@ -100,10 +99,8 @@
               <div class="import-error-display-traceback">{{ error.traceback|linebreaks }}</div>
               {% endif %}
             </li>
-            {% endblock %}
           {% endfor %}
         {% endfor %}
-        {% endblock %}
       </ul>
     {% endblock %}
 
