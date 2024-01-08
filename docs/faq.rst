@@ -104,7 +104,7 @@ Please refer to `this issue <https://github.com/django-import-export/django-impo
 How to hide stack trace in UI error messages
 --------------------------------------------
 
-Please refer to `this issue <https://github.com/django-import-export/django-import-export/issues/1257#issuecomment-952276485>`_.
+Please refer to :ref:`format_ui_error_messages`.
 
 Ids incremented twice during import
 -----------------------------------

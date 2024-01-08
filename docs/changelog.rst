@@ -12,6 +12,7 @@ Changelog
 - Added customizable ``MediaStorage`` (#1708)
 - Relocated admin integration section from advanced_usage.rst into new file (#1713)
 - Fix slow export with ForeignKey id (#1717)
+- Added customization of Admin UI import error messages (#1727)
 
 4.0.0-beta.2 (2023-12-09)
 -------------------------
