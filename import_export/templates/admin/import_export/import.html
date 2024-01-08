@@ -85,12 +85,13 @@
           <div class="traceback">{{ error.traceback|linebreaks }}</div>
         </li>
         {% endfor %}
+        {% block import_error_list %}
         {% for line, errors in result.row_errors %}
           {% for error in errors %}
             {% block import_error_list_item %}
             <li class="import-error-li">
               {% if "message" in import_error_display %}
-                <div class="import-error-display-message">{% translate "Row number" %}: {{ line }} - {{ error.error }}</div>
+                <div class="import-error-display-message">{% translate "Line number" %}: {{ line }} - {{ error.error }}</div>
               {% endif %}
               {% if "row" in import_error_display %}
                 <div class="import-error-display-row">{{ error.row.values|join:", " }}</div>
@@ -99,8 +100,10 @@
               <div class="import-error-display-traceback">{{ error.traceback|linebreaks }}</div>
               {% endif %}
             </li>
+            {% endblock %}
           {% endfor %}
         {% endfor %}
+        {% endblock %}
       </ul>
     {% endblock %}
 

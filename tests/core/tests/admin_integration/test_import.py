@@ -504,7 +504,7 @@ class TestImportErrorMessageFormat(AdminTestMixin, TestCase):
         response.render()
         self.assertIn("import-error-display-message", str(response.content))
         self.assertIn(
-            "Row number: 1 - Author matching query does not exist.",
+            "Line number: 1 - Author matching query does not exist.",
             str(response.content),
         )
         self.assertNotIn("import-error-display-row", str(response.content))
@@ -517,7 +517,7 @@ class TestImportErrorMessageFormat(AdminTestMixin, TestCase):
         response = self.model_admin.import_action(self.request)
         response.render()
         self.assertIn(
-            "Row number: 1 - Author matching query does not exist.",
+            "Line number: 1 - Author matching query does not exist.",
             str(response.content),
         )
         self.assertIn("import-error-display-message", str(response.content))
