@@ -6,7 +6,7 @@ from django.test import TestCase
 from tests.core.tests.resources import BookResource
 
 
-class ExportFunctionalityTests(TestCase):
+class ExportFunctionalityTest(TestCase):
     def setUp(self):
         self.resource = BookResource()
         self.book = Book.objects.create(name="Some book")

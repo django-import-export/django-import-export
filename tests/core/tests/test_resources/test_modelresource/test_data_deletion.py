@@ -9,7 +9,7 @@ from django.test import TestCase
 from import_export import fields, results, widgets
 
 
-class DataDeletionDryRunTests(TestCase):
+class DataDeletionDryRunTest(TestCase):
     def setUp(self):
         self.resource = BookResource()
         self.book = Book.objects.create(name="Some book")

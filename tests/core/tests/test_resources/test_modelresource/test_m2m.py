@@ -7,7 +7,7 @@ from django.test import TestCase
 from import_export import fields, resources, widgets
 
 
-class ForeignKeyM2MTests(TestCase):
+class ForeignKeyM2MTest(TestCase):
     def setUp(self):
         self.resource = BookResource()
         self.book = Book.objects.create(name="Some book")

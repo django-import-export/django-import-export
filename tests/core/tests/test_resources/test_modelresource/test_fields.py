@@ -8,7 +8,7 @@ from django.test import TestCase
 from import_export import fields, resources, widgets
 
 
-class FieldHandlingTests(TestCase):
+class FieldHandlingTest(TestCase):
     def setUp(self):
         self.resource = BookResource()
         self.book = Book.objects.create(name="Some book")

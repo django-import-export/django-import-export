@@ -7,7 +7,7 @@ from django.core.paginator import Paginator
 from django.test import TestCase
 
 
-class QuerysetHandlingTests(TestCase):
+class QuerysetHandlingTest(TestCase):
     def setUp(self):
         self.resource = BookResource()
         self.book = Book.objects.create(name="Some book")

@@ -16,7 +16,7 @@ from django.test import TestCase
 from import_export import exceptions, results
 
 
-class ErrorHandlingTests(TestCase):
+class ErrorHandlingTest(TestCase):
     def setUp(self):
         self.resource = BookResource()
         self.book = Book.objects.create(name="Some book")
