@@ -1,7 +1,9 @@
 Changelog
 =========
 
-Please refer to :doc:`release notes<release_notes>`.
+.. warning::
+
+    Version 4 introduces breaking changes.  Please refer to :doc:`release notes<release_notes>`.
 
 4.0.0-beta.3 (unreleased)
 -------------------------
@@ -19,7 +21,7 @@ Please refer to :doc:`release notes<release_notes>`.
 - Support export from model change form (#1687)
 - Updated Admin UI to track deleted and skipped Imports (#1691)
 - Import form defaults to read-only field if only one format defined (#1690)
-- Refactored :module:`~import_export.resources` into separate modules for ``declarative`` and ``options`` (#1695)
+- Refactored :mod:`~import_export.resources` into separate modules for ``declarative`` and ``options`` (#1695)
 - fix multiple inheritance not setting options (#1696)
 - Refactored tests to remove dependencies between tests (#1703)
 - Handle python3.12 datetime deprecations (#1705)
