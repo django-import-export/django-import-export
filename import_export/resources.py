@@ -662,7 +662,7 @@ class Resource(metaclass=DeclarativeMetaclass):
                 self.get_error_result_class()(error, traceback=tb_info)
             )
         if raise_errors:
-            raise
+            raise exceptions.ImportError(error)
 
     def import_row(self, row, instance_loader, **kwargs):
         r"""

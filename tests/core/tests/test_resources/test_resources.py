@@ -1174,9 +1174,9 @@ class ModelResourceTest(TestCase):
                 raise Exception("This is an invalid dataset")
 
         resource = B()
-        with self.assertRaises(Exception) as cm:
+        with self.assertRaises(exceptions.ImportError) as cm:
             resource.import_data(self.dataset, raise_errors=True)
-        self.assertEqual("This is an invalid dataset", cm.exception.args[0])
+        self.assertEqual("This is an invalid dataset", cm.exception.error.args[0])
 
     @ignore_widget_deprecation_warning
     def test_after_import_raises_error(self):
@@ -1187,9 +1187,9 @@ class ModelResourceTest(TestCase):
                 raise Exception("This is an invalid dataset")
 
         resource = B()
-        with self.assertRaises(Exception) as cm:
+        with self.assertRaises(exceptions.ImportError) as cm:
             resource.import_data(self.dataset, raise_errors=True)
-        self.assertEqual("This is an invalid dataset", cm.exception.args[0])
+        self.assertEqual("This is an invalid dataset", cm.exception.error.args[0])
 
     def test_link_to_nonexistent_field(self):
         with self.assertRaises(FieldDoesNotExist) as cm:

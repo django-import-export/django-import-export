@@ -57,9 +57,17 @@ In v4, return values are rendered as strings by default (where applicable), with
 Refer to the :doc:`documentation<api_widgets>` for more information.
 
 Export field order
-------------
+------------------
 
 The ordering rules for exported fields has been standardized. See :ref:`documentation<field_ordering>`.
+
+Error output
+------------
+
+If the ``raise_errors`` parameter of :meth:`~import_export.resources.Resource.import_data` is ``True``, then an instance
+of :class:`~import_export.exceptions.ImportError` is raised.  This exception wraps the underlying exception.
+
+See `this PR <https://github.com/django-import-export/django-import-export/issues/1729>`_.
 
 Deprecations
 ============

@@ -11,9 +11,13 @@ class FieldError(ImportExportError):
 
 
 class ImportError(ImportExportError):
-    """A wrapper for errors thrown from the import process."""
-
     def __init__(self, error, number=None, row=None):
+        """A wrapper for errors thrown from the import process.
+
+        :param error: The underlying error that occurred.
+        :param number: The row number of the row containing the error (if obtainable).
+        :param row: The row containing the error (if obtainable).
+        """
         self.error = error
         self.number = number
         self.row = row
