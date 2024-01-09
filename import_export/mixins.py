@@ -102,7 +102,7 @@ class BaseExportMixin(BaseImportExportMixin):
     def get_export_resource_kwargs(self, request, **kwargs):
         return self.get_resource_kwargs(request, **kwargs)
 
-    def get_export_resource_fields_from_from(self, form):
+    def get_export_resource_fields_from_form(self, form):
         if isinstance(form, SelectableFieldsExportForm):
             export_fields = form.get_selected_resource_export_fields()
             if export_fields:
@@ -114,7 +114,7 @@ class BaseExportMixin(BaseImportExportMixin):
         export_form = kwargs.get("export_form")
         export_class = self.choose_export_resource_class(export_form)
         export_resource_kwargs = self.get_export_resource_kwargs(request, **kwargs)
-        export_fields = self.get_export_resource_fields_from_from(export_form)
+        export_fields = self.get_export_resource_fields_from_form(export_form)
         cls = export_class(**export_resource_kwargs)
         export_data = cls.export(
             queryset=queryset, export_fields=export_fields, **kwargs

@@ -141,7 +141,7 @@ class SelectableFieldsExportForm(ExportForm):
     def create_boolean_field_name(resource: ModelResource, field_name: str) -> str:
         """
         Create field name by combining `resource_name` + `field_name` to prevent
-        confliction between resource fields with same name
+        conflict between resource fields with same name
 
         Example:
             BookResource            +   name -> bookresource_name
@@ -181,9 +181,6 @@ class SelectableFieldsExportForm(ExportForm):
         self.cleaned_data = _cleaned_data
 
     def get_selected_resource(self):
-        """
-        Get selected resource
-        """
         if not getattr(self, "cleaned_data", None):
             raise forms.ValidationError(
                 _("Form is not validated, call `is_valid` first")
@@ -198,7 +195,7 @@ class SelectableFieldsExportForm(ExportForm):
                 pass
         return self.resources[resource_index]
 
-    def _normalize_resource_fields(self, selected_resource: ModelResource) -> dict:
+    def _normalize_resource_fields(self, selected_resource: ModelResource) -> None:
         """
         Field names are combination of resource_name + field_name,
         normalize field names by removing resource name
