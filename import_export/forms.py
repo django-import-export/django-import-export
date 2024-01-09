@@ -149,9 +149,6 @@ class SelectableFieldsExportForm(ExportForm):
         """
         return resource.__name__.lower() + "_" + field_name
 
-    def full_clean(self) -> None:
-        return super().full_clean()
-
     def clean(self):
         selected_resource = self.get_selected_resource()
 
