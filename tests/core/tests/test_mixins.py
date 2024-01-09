@@ -21,9 +21,10 @@ class ExportViewMixinTest(TestCase):
         self.url = reverse("export-category")
         self.cat1 = Category.objects.create(name="Cat 1")
         self.cat2 = Category.objects.create(name="Cat 2")
+        self.resource = modelresource_factory(Category)
         self.form = ExportViewMixinTest.TestExportForm(
             formats=formats.base_formats.DEFAULT_FORMATS,
-            resources=[modelresource_factory(Category)],
+            resources=[self.resource],
         )
         self.form.cleaned_data["format"] = "0"
 
@@ -34,9 +35,7 @@ class ExportViewMixinTest(TestCase):
 
     @ignore_widget_deprecation_warning
     def test_post(self):
-        data = {
-            "format": "0",
-        }
+        data = {"format": "0", "categoryresource_id": True}
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", category=DeprecationWarning)
             response = self.client.post(self.url, data)

@@ -58,18 +58,7 @@ class SelectableFieldsExportFormTest(TestCase):
     def test_form_raises_validation_error_when_no_resource_fields_are_selected(
         self,
     ) -> None:
-        data = {"resource": "0", "format": "0"}
-
-        form = forms.SelectableFieldsExportForm(
-            formats=(CSV,), resources=self.resources, data=data
-        )
-
-        # Form should be valid because no fields are provided in `data`
-        # so any field validation won't run
-        self.assertTrue(form.is_valid())
-
-        # Add field to data, form will run any field selected validation now
-        data["bookresource_id"] = False
+        data = {"resource": "0", "format": "0", "bookresource_id": False}
         form = forms.SelectableFieldsExportForm(
             formats=(CSV,), resources=self.resources, data=data
         )
