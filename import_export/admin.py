@@ -591,7 +591,7 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
     export_template_name = "admin/import_export/export.html"
     #: export data encoding
     to_encoding = None
-    #: form class to use for the initial import step
+    #: form class to use for the initial export step
     #: Use `ExportForm` if you would like to disable selectable fields feature
     export_form_class = SelectableFieldsExportForm
 
