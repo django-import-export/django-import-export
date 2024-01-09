@@ -592,7 +592,8 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
     #: export data encoding
     to_encoding = None
     #: form class to use for the initial export step
-    #: Use `ExportForm` if you would like to disable selectable fields feature
+    #: Use :class:`~import_export.forms.ExportForm` if you would
+    #: like to disable selectable fields feature
     export_form_class = SelectableFieldsExportForm
 
     def get_urls(self):
