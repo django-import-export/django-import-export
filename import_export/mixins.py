@@ -102,7 +102,7 @@ class BaseExportMixin(BaseImportExportMixin):
     def get_export_resource_kwargs(self, request, **kwargs):
         return self.get_resource_kwargs(request, **kwargs)
 
-    def get_export_resource_fields_from_from(self, form) -> list[str] | None:
+    def get_export_resource_fields_from_from(self, form):
         if isinstance(form, SelectableFieldsExportForm):
             export_fields = form.get_selected_resource_export_fields()
             if export_fields:

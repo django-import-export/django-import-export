@@ -988,7 +988,7 @@ class Resource(metaclass=DeclarativeMetaclass):
     def get_export_fields(self):
         return [self.fields[f] for f in self.get_export_order()]
 
-    def export_resource(self, instance, fields: list[str] | None = None):
+    def export_resource(self, instance, fields=None):
         export_fields = self.get_export_fields()
 
         if isinstance(fields, list) and fields:
@@ -1000,7 +1000,7 @@ class Resource(metaclass=DeclarativeMetaclass):
 
         return [self.export_field(field, instance) for field in export_fields]
 
-    def get_export_headers(self, fields: list[str] | None = None):
+    def get_export_headers(self, fields=None):
         headers = [force_str(field.column_name) for field in self.get_export_fields()]
 
         if isinstance(fields, list) and fields:

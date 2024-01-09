@@ -1,6 +1,6 @@
 import os.path
 from copy import deepcopy
-from typing import Any, Iterable
+from typing import Iterable
 
 from django import forms
 from django.conf import settings
@@ -152,7 +152,7 @@ class SelectableFieldsExportForm(ExportForm):
     def full_clean(self) -> None:
         return super().full_clean()
 
-    def clean(self) -> dict[str, Any]:
+    def clean(self):
         selected_resource = self.get_selected_resource()
 
         if selected_resource:
@@ -183,7 +183,7 @@ class SelectableFieldsExportForm(ExportForm):
 
         self.cleaned_data = _cleaned_data
 
-    def get_selected_resource(self) -> ModelResource | None:
+    def get_selected_resource(self):
         """
         Get selected resource
         """
@@ -223,7 +223,7 @@ class SelectableFieldsExportForm(ExportForm):
 
         self.cleaned_data = _cleaned_data
 
-    def get_selected_resource_export_fields(self) -> list[str]:
+    def get_selected_resource_export_fields(self):
         selected_resource = self.get_selected_resource()
         # Initialize resource to use `get_export_order` method
         resource_fields = selected_resource().get_export_order()
