@@ -6,6 +6,7 @@ Please refer to :doc:`release notes<release_notes>`.
 4.0.0-beta.3 (unreleased)
 -------------------------
 
+- Added feature: selectable fields for admin export view (#1538)
 - Fix issue where declared Resource fields not defined in ``fields`` are still imported (#1702)
 - Added customizable ``MediaStorage`` (#1708)
 - Relocated admin integration section from advanced_usage.rst into new file (#1713)
