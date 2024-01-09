@@ -206,7 +206,7 @@ class MixinModelAdminTest(TestCase):
     class BaseModelExportChooseTest(mixins.BaseExportMixin):
         resource_classes = [resources.Resource, FooResource]
 
-    @mock.patch("import_export.admin.ExportForm")
+    @mock.patch("import_export.admin.SelectableFieldsExportForm")
     def test_choose_export_resource_class(self, form):
         """Test choose_export_resource_class() method"""
         admin = self.BaseModelExportChooseTest()
@@ -288,7 +288,7 @@ class ExportMixinTest(TestCase):
 
     def test_get_export_form(self):
         m = admin.ExportMixin()
-        self.assertEqual(forms.ExportForm, m.get_export_form_class())
+        self.assertEqual(admin.ExportMixin.export_form_class, m.get_export_form_class())
 
     def test_get_export_form_with_custom_form(self):
         m = self.TestExportMixin(self.TestExportForm)

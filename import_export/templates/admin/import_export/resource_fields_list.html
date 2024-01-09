@@ -7,15 +7,19 @@
       {% translate "This importer will import the following fields: " %}
     {% endif %}
 
-    {% if fields_list|length <= 1 %}
-       <code>{{ fields_list.0.1|join:", " }}</code>
+    {% if form.is_selectable_fields_form %}
+      {% include "admin/import_export/selectable_resource_export_fields.html" %}
     {% else %}
-       <dl>
-          {% for resource, fields in fields_list %}
-              <dt>{{ resource }}</dt>
-              <dd><code>{{ fields|join:", " }}</code></dd>
-          {% endfor %}
-       </dl>
+      {% if fields_list|length <= 1 %}
+        <code>{{ fields_list.0.1|join:", " }}</code>
+      {% else %}
+        <dl>
+            {% for resource, fields in fields_list %}
+                <dt>{{ resource }}</dt>
+                <dd><code>{{ fields|join:", " }}</code></dd>
+            {% endfor %}
+        </dl>
+      {% endif %}
     {% endif %}
   </p>
 {% endblock %}

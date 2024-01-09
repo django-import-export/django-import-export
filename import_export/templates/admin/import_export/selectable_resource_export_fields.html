@@ -1,0 +1,19 @@
+{% regroup form by field.resource_name as selectable_fields_list %}
+
+{% for resource in selectable_fields_list %}
+  <div class="form-row">
+    {% if resource.grouper %}
+      <fieldset>
+        <legend>{{ resource.grouper }}</legend>
+        {% for field in resource.list %}
+          <div class="selectable-field-row">
+            {{ field.errors  }}
+  
+            {{ field.label_tag }}
+            {{ field }}
+          </div>
+        {% endfor %}
+      </fieldset>
+    {% endif %}
+  </div>
+{% endfor %}

@@ -18,7 +18,7 @@ from django.utils.module_loading import import_string
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_POST
 
-from .forms import ConfirmImportForm, ExportForm, ImportForm
+from .forms import ConfirmImportForm, ImportForm, SelectableFieldsExportForm
 from .mixins import BaseExportMixin, BaseImportMixin
 from .results import RowResult
 from .signals import post_export, post_import
@@ -592,7 +592,8 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
     #: export data encoding
     to_encoding = None
     #: form class to use for the initial import step
-    export_form_class = ExportForm
+    #: Use `ExportForm` if you would like to disable selectable fields feature
+    export_form_class = SelectableFieldsExportForm
 
     def get_urls(self):
         urls = super().get_urls()
