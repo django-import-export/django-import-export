@@ -160,18 +160,8 @@ class SelectableFieldsExportForm(ExportForm):
             self._remove_unselected_resource_fields(selected_resource)
             # Normalize resource field names
             self._normalize_resource_fields(selected_resource)
-
             # Validate at least one field is selected for selected resource
-            # Run this validation only if form.data is present
-            # and data contains any of fields
-            if self.data is not None and any(
-                [
-                    f
-                    for f in self.data
-                    if f in self.resource_fields[selected_resource.__name__]
-                ]
-            ):
-                self._validate_any_field_selected(selected_resource)
+            self._validate_any_field_selected(selected_resource)
 
         return self.cleaned_data
 
@@ -244,7 +234,11 @@ class SelectableFieldsExportForm(ExportForm):
         ]
 
     def _validate_any_field_selected(self, resource) -> None:
+        """
+        Validate if any field for resource was selected in form data
+        """
         resource_fields = [field for field in resource().get_export_order()]
+
         if not any([v for k, v in self.cleaned_data.items() if k in resource_fields]):
             raise forms.ValidationError(
                 _("""Select at least 1 field for "%(resource_name)s" to export"""),
