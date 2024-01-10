@@ -70,6 +70,8 @@ Deprecations
 
 * Use of ``ExportViewFormMixin`` is deprecated.  See `this issue <https://github.com/django-import-export/django-import-export/issues/1666>`_.
 
+* See :ref:`renamed_methods`.
+
 Admin UI
 ========
 
@@ -97,6 +99,21 @@ Success message
 The success message shown on successful import has been updated to include the number of 'deleted' and 'skipped' rows.
 See `this PR <https://github.com/django-import-export/django-import-export/issues/1691>`_.
 
+Import error messages
+---------------------
+
+The default error message for import errors has been modified to simplify the format.
+Error messages now contain the error message only by default.  The row and traceback are not presented.
+
+The original format can be restored by setting :attr:`~import_export.admin.ImportMixin.import_error_display` on the
+Admin class definition.  For example::
+
+  class BookAdmin(ImportExportModelAdmin):
+    import_error_display = ("message", "row", "traceback")
+
+
+See `this issue <https://github.com/django-import-export/django-import-export/issues/1724>`_.
+
 API changes
 ===========
 
@@ -120,6 +137,8 @@ method calls, and to allow easier extensibility.
 
 :class:`import_export.resources.Resource`
 -----------------------------------------
+
+.. _renamed_methods:
 
 Renamed methods
 ^^^^^^^^^^^^^^^
@@ -185,41 +204,41 @@ This section describes methods in which the parameters have changed.
 
    * - ``save_m2m(self, obj, data, using_transactions, dry_run)``
      - ``save_m2m(self, instance, row, **kwargs)``
-     - * ``dry_run`` param now in ``kwargs``
-       * ``using_transactions`` param now in ``kwargs``
-       * ``row`` added as mandatory arg
+     - * ``row`` added as mandatory arg
        * ``obj`` renamed to ``instance``
        * ``data`` renamed to ``row``
+       * ``dry_run`` param now in ``kwargs``
+       * ``using_transactions`` param now in ``kwargs``
 
    * - ``before_save_instance(self, instance, using_transactions, dry_run)``
      - ``before_save_instance(self, instance, row, **kwargs)``
-     - * ``dry_run`` param now in ``kwargs``
+     - * ``row`` added as mandatory arg
+       * ``dry_run`` param now in ``kwargs``
        * ``using_transactions`` param now in ``kwargs``
-       * ``row`` added as mandatory arg
 
    * - ``after_save_instance(self, instance, using_transactions, dry_run)``
      - ``after_save_instance(self, instance, row, **kwargs)``
-     - * ``dry_run`` param now in ``kwargs``
+     - * ``row`` added as mandatory arg
+       * ``dry_run`` param now in ``kwargs``
        * ``using_transactions`` param now in ``kwargs``
-       * ``row`` added as mandatory arg
 
    * - ``delete_instance(self, instance, using_transactions=True, dry_run=False)``
      - ``delete_instance(self, instance, row, **kwargs)``
-     - * ``dry_run`` param now in ``kwargs``
+     - * ``row`` added as mandatory arg
+       * ``dry_run`` param now in ``kwargs``
        * ``using_transactions`` param now in ``kwargs``
-       * ``row`` added as mandatory arg
 
    * - ``before_delete_instance(self, instance, dry_run)``
      - ``before_delete_instance(self, instance, row, **kwargs)``
-     - * ``dry_run`` param now in ``kwargs``
+     - * ``row`` added as mandatory arg
+       * ``dry_run`` param now in ``kwargs``
        * ``using_transactions`` param now in ``kwargs``
-       * ``row`` added as mandatory arg
 
    * - ``after_delete_instance(self, instance, dry_run)``
      - ``after_delete_instance(self, instance, row, **kwargs)``
-     - * ``dry_run`` param now in ``kwargs``
+     - * ``row`` added as mandatory arg
+       * ``dry_run`` param now in ``kwargs``
        * ``using_transactions`` param now in ``kwargs``
-       * ``row`` added as mandatory arg
 
    * - ``before_export(self, queryset, *args, **kwargs)``
      - ``before_export(self, queryset, **kwargs)``

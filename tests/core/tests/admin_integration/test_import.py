@@ -1,5 +1,6 @@
 import os
 import warnings
+from io import StringIO
 from unittest import mock
 from unittest.mock import MagicMock, patch
 
@@ -9,7 +10,10 @@ from core.models import Author, Book, EBook, Parent
 from core.tests.admin_integration.mixins import AdminTestMixin
 from core.tests.utils import ignore_widget_deprecation_warning
 from django.contrib.admin.models import DELETION, LogEntry
+from django.contrib.admin.sites import AdminSite
+from django.contrib.auth.models import User
 from django.http import HttpRequest
+from django.test import RequestFactory
 from django.test.testcases import TestCase, TransactionTestCase
 from django.test.utils import override_settings
 from django.utils.translation import gettext_lazy as _
@@ -478,6 +482,75 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
     def test_export_empty_import_formats(self):
         with self.assertRaisesRegex(ValueError, "invalid formats list"):
             self.client.get(self.book_import_url)
+
+
+class TestImportErrorMessageFormat(AdminTestMixin, TestCase):
+    # issue 1724
+
+    def setUp(self):
+        super().setUp()
+        self.csvdata = "id,name,author\r\n" "1,Ulysses,666\r\n"
+        self.filedata = StringIO(self.csvdata)
+        self.data = {"format": "0", "import_file": self.filedata}
+        self.model_admin = BookAdmin(Book, AdminSite())
+
+        factory = RequestFactory()
+        self.request = factory.post(self.book_import_url, self.data, follow=True)
+        self.request.user = User.objects.create_user("admin1")
+
+    @ignore_widget_deprecation_warning
+    def test_result_error_display_default(self):
+        response = self.model_admin.import_action(self.request)
+        response.render()
+        self.assertIn("import-error-display-message", str(response.content))
+        self.assertIn(
+            "Line number: 1 - Author matching query does not exist.",
+            str(response.content),
+        )
+        self.assertNotIn("import-error-display-row", str(response.content))
+        self.assertNotIn("import-error-display-traceback", str(response.content))
+
+    @ignore_widget_deprecation_warning
+    def test_result_error_display_message_only(self):
+        self.model_admin.import_error_display = ("message",)
+
+        response = self.model_admin.import_action(self.request)
+        response.render()
+        self.assertIn(
+            "Line number: 1 - Author matching query does not exist.",
+            str(response.content),
+        )
+        self.assertIn("import-error-display-message", str(response.content))
+        self.assertNotIn("import-error-display-row", str(response.content))
+        self.assertNotIn("import-error-display-traceback", str(response.content))
+
+    @ignore_widget_deprecation_warning
+    def test_result_error_display_row_only(self):
+        self.model_admin.import_error_display = ("row",)
+
+        response = self.model_admin.import_action(self.request)
+        response.render()
+        self.assertNotIn(
+            "Line number: 1 - Author matching query does not exist.",
+            str(response.content),
+        )
+        self.assertNotIn("import-error-display-message", str(response.content))
+        self.assertIn("import-error-display-row", str(response.content))
+        self.assertNotIn("import-error-display-traceback", str(response.content))
+
+    @ignore_widget_deprecation_warning
+    def test_result_error_display_traceback_only(self):
+        self.model_admin.import_error_display = ("traceback",)
+
+        response = self.model_admin.import_action(self.request)
+        response.render()
+        self.assertNotIn(
+            "Line number: 1 - Author matching query does not exist.",
+            str(response.content),
+        )
+        self.assertNotIn("import-error-display-message", str(response.content))
+        self.assertNotIn("import-error-display-row", str(response.content))
+        self.assertIn("import-error-display-traceback", str(response.content))
 
 
 class ConfirmImportEncodingTest(AdminTestMixin, TestCase):

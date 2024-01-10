@@ -4,6 +4,7 @@ import traceback
 from collections import OrderedDict
 from copy import deepcopy
 from html import escape
+from warnings import warn
 
 import tablib
 from diff_match_patch import diff_match_patch
@@ -423,6 +424,18 @@ class Resource(metaclass=DeclarativeMetaclass):
     def get_import_fields(self):
         return [self.fields[f] for f in self.get_import_order()]
 
+    def import_obj(self, obj, data, dry_run, **kwargs):
+        warn(
+            "The 'import_obj' method is deprecated and will be replaced "
+            "with 'import_instance(self, instance, row, **kwargs)' "
+            "in a future release.  Refer to Release Notes for details.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        if dry_run is True:
+            kwargs.update({"dry_run": dry_run})
+        self.import_instance(obj, data, **kwargs)
+
     def import_instance(self, instance, row, **kwargs):
         r"""
         Traverses every field in this Resource and calls
@@ -614,6 +627,18 @@ class Resource(metaclass=DeclarativeMetaclass):
             See :meth:`import_row`
         """
         pass
+
+    def after_import_instance(self, instance, new, row_number=None, **kwargs):
+        warn(
+            "The 'after_import_instance' method is deprecated and will be replaced "
+            "with 'after_init_instance(self, instance, new, row, **kwargs)' "
+            "in a future release.  Refer to Release Notes for details.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        if row_number is not None:
+            kwargs.update({"row_number": row_number})
+        self.after_init_instance(instance, new, None, **kwargs)
 
     def after_init_instance(self, instance, new, row, **kwargs):
         r"""
