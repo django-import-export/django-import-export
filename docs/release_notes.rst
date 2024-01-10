@@ -91,6 +91,16 @@ selected items using an export admin action.  However this meant that the export
 possible to select the export resource.  This has been fixed in v4 so that export workflow is now present when
 exporting via the Admin UI action.  For more information see :ref:`export documentation<export_via_admin_action>`.
 
+Export Selected fields
+----------------------
+
+The :ref:`export 'confirm' page<export_confirm>` now includes selectable fields for export.
+If you wish to revert to the previous (v3) version of the export confirm screen, add a
+:attr:`~import_export.admin.ExportMixin.export_form_class` declaration to your Admin class subclass, for example::
+
+  class BookAdmin(ImportExportModelAdmin):
+    export_form_class = ExportForm
+
 Success message
 ---------------
 

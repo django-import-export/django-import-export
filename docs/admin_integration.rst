@@ -37,7 +37,7 @@ dropdown in the UI.
 .. figure:: _static/images/django-import-export-change.png
 
    A screenshot of the change view with Import and Export buttons.
-   
+
 Importing
 ---------
 
@@ -154,7 +154,7 @@ Enabling export functionality means that a UI button will automatically be prese
 When clicked, the user will be directed into the export workflow.
 
 Export is a two step process.  When the 'export' button is clicked, the user will be directed to a new screen,
-where 'resource' and 'file format' can be selected.
+where 'fields', 'resource' and 'file format' can be selected.
 
 .. _export_confirm:
 
