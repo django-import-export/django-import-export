@@ -79,11 +79,10 @@ Documentation
 - Clarified ``skip_diff`` documentation (#1655)
 - Improved documentation relating to validation on import (#1665)
 
-3.3.6 (unreleased)
+3.3.6 (2024-01-10)
 ------------------
 
-- Nothing changed yet.
-
+- Fix issue with highlight when using 'light' color scheme (#1728)
 
 3.3.5 (2023-12-19)
 ------------------
