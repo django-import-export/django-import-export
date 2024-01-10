@@ -91,7 +91,7 @@ selected items using an export admin action.  However this meant that the export
 possible to select the export resource.  This has been fixed in v4 so that export workflow is now present when
 exporting via the Admin UI action.  For more information see :ref:`export documentation<export_via_admin_action>`.
 
-Export Selected fields
+Export selected fields
 ----------------------
 
 The :ref:`export 'confirm' page<export_confirm>` now includes selectable fields for export.
