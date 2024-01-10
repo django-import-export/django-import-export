@@ -170,7 +170,7 @@ class Result:
         self.invalid_rows = []
         #: The collection of rows which had generic errors.
         self.error_rows = []
-        #: A custom Dataset containing only failed rows.
+        #: A custom Dataset containing only failed rows and associated errors.
         self.failed_dataset = Dataset()
         self.totals = OrderedDict(
             [

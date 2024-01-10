@@ -243,9 +243,10 @@ to ``True``, which will mean the process will exit at the first row which has er
     resource = BookResource()
     self.resource.import_data(self.dataset, raise_errors=True)
 
-The above process will exit with a row number and error::
+The above process will exit with a row number and error (formatted for clarity)::
 
-  import_export.exceptions.RowError: 2: {'published': ['Value could not be parsed using defined date formats.']}
+  ImportError: 2: {'published': ['Value could not be parsed using defined date formats.']}
+    (OrderedDict({'id': 2, 'name': 'The Hobbit', 'published': 'x'}))
 
 To iterate over all validation errors produced from an import, pass ``False`` to ``raise_errors``::
 
@@ -253,7 +254,7 @@ To iterate over all validation errors produced from an import, pass ``False`` to
     for row in result.invalid_rows:
         print(f"--- row {row.number} ---")
         for field, error in row.error.error_dict.items():
-            print(f"{field}: {error}")
+            print(f"{field}: {error} ({row.values})")
 
 If using the :ref:`Admin UI<admin-integration>`, errors are presented to the user during import (see below).
 
@@ -281,9 +282,10 @@ The ``raise_errors`` parameter can be used during programmatic import to halt th
         raise_errors=True
     )
 
-The above process will exit with a row number and error::
+The above process will exit with a row number and error (formatted for clarity)::
 
-  import_export.exceptions.RowError: 2: [<class 'decimal.ConversionSyntax'>]
+  ImportError: 1: [<class 'decimal.ConversionSyntax'>]
+    (OrderedDict({'id': 1, 'name': 'Lord of the Rings', 'price': '1x'}))
 
 To iterate over all generic errors produced from an import, pass ``False`` to ``raise_errors``::
 
@@ -291,7 +293,7 @@ To iterate over all generic errors produced from an import, pass ``False`` to ``
     for row in result.error_rows:
         print(f"--- row {row.number} ---")
         for field, error in row.error.error_dict.items():
-            print(f"{field}: {error}")
+            print(f"{field}: {error} ({error.row})")
 
 Field level validation
 ----------------------

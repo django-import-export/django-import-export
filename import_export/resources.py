@@ -793,9 +793,12 @@ class Resource(metaclass=DeclarativeMetaclass):
         :param use_transactions: If ``True`` the import process will be processed
             inside a transaction.
 
-        :param collect_failed_rows: If ``True`` the import process will collect
-            failed rows. This can be useful for debugging purposes but will cause
-            higher memory usage for larger datasets.
+        :param collect_failed_rows:
+          If ``True`` the import process will create a new dataset object comprising
+          failed rows and errors.
+          This can be useful for debugging purposes but will cause higher memory usage
+          for larger datasets.
+          See :attr:`~import_export.results.Result.failed_dataset`.
 
         :param rollback_on_validation_errors: If both ``use_transactions`` and
           ``rollback_on_validation_errors`` are set to ``True``, the import process will

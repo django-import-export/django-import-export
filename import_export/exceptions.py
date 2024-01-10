@@ -23,4 +23,4 @@ class ImportError(ImportExportError):
         self.row = row
 
     def __str__(self):
-        return f"{self.number}: {self.error}"
+        return f"{self.number}: {self.error} ({self.row})"
