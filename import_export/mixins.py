@@ -7,7 +7,7 @@ from django.utils.timezone import now
 from django.views.generic.edit import FormView
 
 from .formats import base_formats
-from .forms import ExportForm
+from .forms import SelectableFieldsExportForm
 from .resources import modelresource_factory
 from .signals import post_export
 
@@ -102,12 +102,23 @@ class BaseExportMixin(BaseImportExportMixin):
     def get_export_resource_kwargs(self, request, **kwargs):
         return self.get_resource_kwargs(request, **kwargs)
 
+    def get_export_resource_fields_from_form(self, form):
+        if isinstance(form, SelectableFieldsExportForm):
+            export_fields = form.get_selected_resource_export_fields()
+            if export_fields:
+                return export_fields
+
+        return
+
     def get_data_for_export(self, request, queryset, **kwargs):
         export_form = kwargs.get("export_form")
         export_class = self.choose_export_resource_class(export_form)
         export_resource_kwargs = self.get_export_resource_kwargs(request, **kwargs)
+        export_fields = self.get_export_resource_fields_from_form(export_form)
         cls = export_class(**export_resource_kwargs)
-        export_data = cls.export(queryset=queryset, **kwargs)
+        export_data = cls.export(
+            queryset=queryset, export_fields=export_fields, **kwargs
+        )
         return export_data
 
     def get_export_filename(self, file_format):
@@ -121,7 +132,7 @@ class BaseExportMixin(BaseImportExportMixin):
 
 
 class ExportViewMixin(BaseExportMixin):
-    form_class = ExportForm
+    form_class = SelectableFieldsExportForm
 
     def get_export_data(self, file_format, queryset, *args, **kwargs):
         """

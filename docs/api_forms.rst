@@ -11,3 +11,5 @@ Forms
 .. autoclass:: ConfirmImportForm
 
 .. autoclass:: ExportForm
+
+.. autoclass:: SelectableFieldsExportForm

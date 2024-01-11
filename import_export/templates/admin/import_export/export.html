@@ -26,34 +26,54 @@
       </p>
     {% endif %}
 
-  {% include "admin/import_export/resource_fields_list.html" with import_or_export="export" %}
+  {# fields list is not required with selectable fields form #}
+  {% if not form.is_selectable_fields_form %}
+    {% include "admin/import_export/resource_fields_list.html" with import_or_export="export" %}
+  {% endif %}
 
-    <fieldset class="module aligned">
-      {% for field in form.visible_fields %}
-        <div class="form-row">
-          {{ field.errors }}
+  <fieldset class="module">
+    {% for field in form.visible_fields %}
+      <div
+        {% if field.field.is_selectable_field %}
+          {# all fields are visible by default, JS will hide unselected resource fields on load #}
 
-          {{ field.label_tag }}
+          class="selectable-field-export-row"
+          {# resource index will be used for showing-hiding fields #}
+          resource-index="{{ field.field.resource_index }}"
+        {% else %}
+          class="form-row aligned"
+        {% endif %}
+      >
+        {% if field.field.initial_field %}
+          <p style="padding: 0;">{% translate "This exporter will export the following fields: " %}</p>
+        {% endif %}
+        {{ field.errors }}
 
-          {% if field.field.widget.attrs.readonly %}
-            {{ field.field.value }}
-            {{ field.as_hidden }}
-            {% else %}
-            {{ field }}
-          {% endif %}
+        {{ field.label_tag }}
 
-          {% if field.field.help_text %}
-          <p class="help">{{ field.field.help_text|safe }}</p>
-          {% endif %}
-        </div>
-      {% endfor %}
-      {% for field in form.hidden_fields %}
+        {% if field.field.widget.attrs.readonly %}
+          {{ field.field.value }}
+          {{ field.as_hidden }}
+          {% else %}
           {{ field }}
-      {% endfor %}
-    </fieldset>
+        {% endif %}
 
-    <div class="submit-row">
-      <input type="submit" class="default" value="{% translate "Submit" %}">
-    </div>
+        {% if field.field.help_text %}
+        <p class="help">{{ field.field.help_text|safe }}</p>
+        {% endif %}
+      </div>
+    {% endfor %}
+    {% for field in form.hidden_fields %}
+        {{ field }}
+    {% endfor %}
+  </fieldset>
+
+  <div>
+    {{ form.non_field_errors }}
+  </div>
+
+  <div class="submit-row">
+    <input type="submit" class="default" value="{% translate "Submit" %}">
+  </div>
 </form>
 {% endblock %}
