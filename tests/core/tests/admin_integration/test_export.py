@@ -381,3 +381,19 @@ class TestExportEncoding(TestCase):
             self.export_mixin.export_admin_action(self.mock_request, list())
             encoding_kwarg = mock_get_export_data.call_args_list[0][1]["encoding"]
             self.assertEqual("utf-8", encoding_kwarg)
+
+
+class TestSelectableFieldsExportPage(AdminTestMixin, TestCase):
+    def test_selectable_fields_rendered_with_resource_index_attribute(self) -> None:
+        response = self.client.get("/admin/core/book/export/")
+
+        self.assertEqual(response.status_code, 200)
+        form_resources = response.context["form"].resources
+        response_content = str(response.content)
+
+        for index, resource in enumerate(form_resources):
+            resource_fields = resource().get_export_order()
+            self.assertEqual(
+                response_content.count(f'resource-index="{index}"'),
+                len(resource_fields),
+            )

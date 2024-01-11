@@ -146,3 +146,46 @@ class SelectableFieldsExportFormTest(TestCase):
             form.get_selected_resource_export_fields(),
             list(selected_resource.get_export_order()),
         )
+
+    def test_fields_order(self) -> None:
+        form = forms.SelectableFieldsExportForm(
+            formats=(CSV,), resources=(BookResource,)
+        )
+
+        self.assertEqual(
+            list(form.fields.keys()),
+            [
+                "resource",
+                "bookresource_id",
+                "bookresource_name",
+                "bookresource_author",
+                "bookresource_author_email",
+                "bookresource_published",
+                "bookresource_published_time",
+                "bookresource_price",
+                "bookresource_added",
+                "bookresource_categories",
+                "format",
+                "export_items",
+            ],
+        )
+
+    def test_resource_boolean_field_attributes(self) -> None:
+        for resource_index, resource in enumerate(self.resources):
+            resource_fields = resource().get_export_order()
+            initial_field_checked = False
+
+            for resource_field in resource_fields:
+                field_name = forms.SelectableFieldsExportForm.create_boolean_field_name(
+                    resource, resource_field
+                )
+                form_field = self.form.fields[field_name]
+
+                if not initial_field_checked:
+                    self.assertTrue(form_field.initial_field)
+                    initial_field_checked = True
+
+                self.assertTrue(form_field.is_selectable_field)
+                self.assertEqual(form_field.resource_name, resource.__name__)
+                self.assertEqual(form_field.resource_index, resource_index)
+                self.assertEqual(form_field.widget.attrs["resource-id"], resource_index)
