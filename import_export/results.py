@@ -6,10 +6,11 @@ from tablib import Dataset
 
 
 class Error:
-    def __init__(self, error, traceback=None, row=None):
+    def __init__(self, error, traceback=None, row=None, number=None):
         self.error = error
         self.traceback = traceback
         self.row = row
+        self.number = number
 
 
 class RowResult:
@@ -148,13 +149,28 @@ class InvalidRow:
         return count
 
 
+class ErrorRow:
+    """A row that resulted in one or more errors being raised during import."""
+
+    def __init__(self, number, errors):
+        #: The row number
+        self.number = number
+        #: A list of errors associated with the row
+        self.errors = errors
+
+
 class Result:
     def __init__(self, *args, **kwargs):
         super().__init__()
         self.base_errors = []
         self.diff_headers = []
-        self.rows = []  # RowResults
-        self.invalid_rows = []  # InvalidRow
+        #: The rows associated with the result.
+        self.rows = []
+        #: The collection of rows which had validation errors.
+        self.invalid_rows = []
+        #: The collection of rows which had generic errors.
+        self.error_rows = []
+        #: A custom Dataset containing only failed rows and associated errors.
         self.failed_dataset = Dataset()
         self.totals = OrderedDict(
             [
@@ -196,6 +212,9 @@ class Result:
         self.invalid_rows.append(
             InvalidRow(number=number, validation_error=validation_error, values=values)
         )
+
+    def append_error_row(self, number, row, errors):
+        self.error_rows.append(ErrorRow(number=number, errors=errors))
 
     def increment_row_result_total(self, row_result):
         if row_result.import_type:

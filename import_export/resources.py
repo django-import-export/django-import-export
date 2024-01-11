@@ -21,9 +21,8 @@ from django.utils.encoding import force_str
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 
-from . import widgets
+from . import exceptions, widgets
 from .declarative import DeclarativeMetaclass, ModelDeclarativeMetaclass
-from .exceptions import FieldError
 from .fields import Field
 from .results import Error, Result, RowResult
 from .utils import atomic_if_using_transaction, get_related_model
@@ -659,9 +658,11 @@ class Resource(metaclass=DeclarativeMetaclass):
         logger.debug(error, exc_info=error)
         if result:
             tb_info = traceback.format_exc()
-            result.append_base_error(self.get_error_result_class()(error, tb_info))
+            result.append_base_error(
+                self.get_error_result_class()(error, traceback=tb_info)
+            )
         if raise_errors:
-            raise
+            raise exceptions.ImportError(error)
 
     def import_row(self, row, instance_loader, **kwargs):
         r"""
@@ -762,7 +763,11 @@ class Resource(metaclass=DeclarativeMetaclass):
             if not isinstance(e, TransactionManagementError):
                 logger.debug(e, exc_info=e)
             tb_info = traceback.format_exc()
-            row_result.errors.append(self.get_error_result_class()(e, tb_info, row))
+            row_result.errors.append(
+                self.get_error_result_class()(
+                    e, traceback=tb_info, row=row, number=kwargs["row_number"]
+                )
+            )
 
         return row_result
 
@@ -788,8 +793,12 @@ class Resource(metaclass=DeclarativeMetaclass):
         :param use_transactions: If ``True`` the import process will be processed
             inside a transaction.
 
-        :param collect_failed_rows: If ``True`` the import process will collect
-            failed rows.
+        :param collect_failed_rows:
+          If ``True`` the import process will create a new dataset object comprising
+          failed rows and errors.
+          This can be useful for debugging purposes but will cause higher memory usage
+          for larger datasets.
+          See :attr:`~import_export.results.Result.failed_dataset`.
 
         :param rollback_on_validation_errors: If both ``use_transactions`` and
           ``rollback_on_validation_errors`` are set to ``True``, the import process will
@@ -921,16 +930,21 @@ class Resource(metaclass=DeclarativeMetaclass):
             result.increment_row_result_total(row_result)
 
             if row_result.errors:
+                result.append_error_row(i, row, row_result.errors)
                 if collect_failed_rows:
                     result.append_failed_row(row, row_result.errors[0])
                 if raise_errors:
-                    raise row_result.errors[-1].error
+                    raise exceptions.ImportError(
+                        row_result.errors[-1].error, number=i, row=row
+                    )
             elif row_result.validation_error:
                 result.append_invalid_row(i, row, row_result.validation_error)
                 if collect_failed_rows:
                     result.append_failed_row(row, row_result.validation_error)
                 if raise_errors:
-                    raise row_result.validation_error
+                    raise exceptions.ImportError(
+                        row_result.validation_error, number=i, row=row
+                    )
             if (
                 row_result.import_type != RowResult.IMPORT_TYPE_SKIP
                 or self._meta.report_skipped
@@ -1112,7 +1126,7 @@ class Resource(metaclass=DeclarativeMetaclass):
                 missing_fields.append(col)
 
         if missing_fields:
-            raise FieldError(
+            raise exceptions.FieldError(
                 _(
                     "The following import_id_fields are not present in the dataset: %s"
                     % ", ".join(missing_fields)

@@ -61,6 +61,7 @@ exporting data with included admin integration.
    api_tmp_storages
    api_results
    api_forms
+   api_exceptions
 
 .. toctree::
    :maxdepth: 2

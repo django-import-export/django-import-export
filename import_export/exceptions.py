@@ -8,3 +8,19 @@ class FieldError(ImportExportError):
     """Raised when a field encounters an error."""
 
     pass
+
+
+class ImportError(ImportExportError):
+    def __init__(self, error, number=None, row=None):
+        """A wrapper for errors thrown from the import process.
+
+        :param error: The underlying error that occurred.
+        :param number: The row number of the row containing the error (if obtainable).
+        :param row: The row containing the error (if obtainable).
+        """
+        self.error = error
+        self.number = number
+        self.row = row
+
+    def __str__(self):
+        return f"{self.number}: {self.error} ({self.row})"
