@@ -536,7 +536,7 @@ class ModelResourceTest(TestCase):
             resource.import_data(tablib.Dataset(), collect_failed_rows=True)
         self.assertEqual(
             "The following fields are declared in 'import_id_fields' "
-            "but are not present in the dataset: id",
+            "but are not present in the resource: id",
             str(e.exception),
         )
 

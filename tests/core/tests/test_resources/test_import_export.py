@@ -285,7 +285,7 @@ class ImportIdFieldsTestCase(TestCase):
             self.resource.import_data(dataset)
         self.assertEqual(
             "The following fields are declared in 'import_id_fields' "
-            "but are not present in the dataset: book_name",
+            "but are not present in the resource: book_name",
             str(e.exception),
         )
 
@@ -306,7 +306,7 @@ class ImportIdFieldsTestCase(TestCase):
             resource.import_data(dataset)
         self.assertEqual(
             "The following fields are declared in 'import_id_fields' "
-            "but are not present in the dataset: a, b",
+            "but are not present in the resource: a, b",
             str(e.exception),
         )
 
@@ -325,7 +325,7 @@ class ImportIdFieldsTestCase(TestCase):
             self.resource.import_data(dataset)
         self.assertEqual(
             "The following fields are declared in 'import_id_fields' "
-            "but are not present in the dataset: id, author_email",
+            "but are not present in the resource: id, author_email",
             str(e.exception),
         )
 

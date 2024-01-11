@@ -1136,7 +1136,7 @@ class Resource(metaclass=DeclarativeMetaclass):
             raise exceptions.FieldError(
                 _(
                     "The following fields are declared in 'import_id_fields' but "
-                    "are not present in the dataset: %s" % ", ".join(missing_fields)
+                    "are not present in the resource: %s" % ", ".join(missing_fields)
                 )
             )
 

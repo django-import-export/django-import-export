@@ -30,12 +30,18 @@ We encourage you to read the :doc:`contributing guidelines <contributing>`.
 Common issues
 =============
 
-key error 'id' in ``get_import_id_fields()``
---------------------------------------------
+FieldError on import
+--------------------
 
-When attempting to import, this error can be seen.  This indicates that the ``Resource`` has not been configured
-correctly, and the import logic fails.  Specifically, the import process is looking for an instance field called ``id``
-and there is no such field in the import.  See :ref:`advanced_usage:Create or update model instances`.
+The following error message can be seen on import:
+
+  *The following fields are declared in 'import_id_fields' but are not present in the resource*
+
+This indicates that the Resource has not been configured correctly, and the import logic fails.  Specifically,
+the import process is attempting to use either the defined or default
+:attr:`~import_export.options.ResourceOptions.import_id_fields` and no match has been detected in the resource fields.
+
+See :ref:`advanced_usage:Create or update model instances`.
 
 How to handle double-save from Signals
 --------------------------------------
