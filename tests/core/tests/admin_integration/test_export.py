@@ -28,6 +28,15 @@ from import_export.formats.base_formats import XLSX
 
 
 class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        self.bookresource_export_fields_payload = {
+            "bookresource_id": True,
+            "bookresource_name": True,
+            "bookresource_author_email": True,
+            "bookresource_categories": True,
+        }
+
     def test_export(self):
         response = self.client.get("/admin/core/book/export/")
         self.assertEqual(response.status_code, 200)
@@ -35,9 +44,7 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
         form = response.context["form"]
         self.assertEqual(2, len(form.fields["resource"].choices))
 
-        data = {
-            "format": "0",
-        }
+        data = {"format": "0", **self.bookresource_export_fields_payload}
         date_str = datetime.now().strftime("%Y-%m-%d")
         # Should not contain COUNT queries from ModelAdmin.get_results()
         with self.assertNumQueries(6):
@@ -50,8 +57,7 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
             'attachment; filename="Book-{}.csv"'.format(date_str),
         )
         self.assertEqual(
-            b"id,name,author,author_email,imported,published,"
-            b"published_time,price,added,categories\r\n",
+            b"id,name,author_email,categories\r\n",
             response.content,
         )
 
@@ -139,6 +145,9 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
         data = {
             "format": "0",
             "resource": 1,
+            # Second resource is `BookNameResource`
+            "booknameresource_id": True,
+            "booknameresource_name": True,
         }
         date_str = datetime.now().strftime("%Y-%m-%d")
         response = self.client.post("/admin/core/book/export/", data)
@@ -195,7 +204,7 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertEqual(response.status_code, 200)
 
         xlsx_index = self._get_input_format_index("xlsx")
-        data = {"format": str(xlsx_index)}
+        data = {"format": str(xlsx_index), **self.bookresource_export_fields_payload}
         response = self.client.post("/admin/core/book/export/", data)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.has_header("Content-Disposition"))
@@ -214,7 +223,7 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertEqual(response.status_code, 200)
 
         xlsx_index = self._get_input_format_index("xlsx")
-        data = {"format": str(xlsx_index)}
+        data = {"format": str(xlsx_index), **self.bookresource_export_fields_payload}
         response = self.client.post("/admin/core/book/export/", data)
         self.assertEqual(response.status_code, 200)
         content = response.content
@@ -230,10 +239,14 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertEqual(response.status_code, 200)
 
         index = self._get_input_format_index("csv")
-        data = {"format": str(index)}
+        data = {
+            "format": str(index),
+            "bookresource_id": True,
+            "bookresource_name": True,
+        }
         response = self.client.post("/admin/core/book/export/", data)
         self.assertIn(
-            f"{b1.id},SUM(1+1),,,0,,,,,\r\n".encode(),
+            f"{b1.id},SUM(1+1)\r\n".encode(),
             response.content,
         )
 
@@ -245,10 +258,14 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertEqual(response.status_code, 200)
 
         index = self._get_input_format_index("csv")
-        data = {"format": str(index)}
+        data = {
+            "format": str(index),
+            "bookresource_id": True,
+            "bookresource_name": True,
+        }
         response = self.client.post("/admin/core/book/export/", data)
         self.assertIn(
-            f"{b1.id},=SUM(1+1),,,0,,,,,\r\n".encode(),
+            f"{b1.id},=SUM(1+1)\r\n".encode(),
             response.content,
         )
 
@@ -282,7 +299,7 @@ class FilteredExportAdminIntegrationTest(AdminTestMixin, TestCase):
 
 class TestExportEncoding(TestCase):
     mock_request = MagicMock(spec=HttpRequest)
-    mock_request.POST = {"format": 0}
+    mock_request.POST = {"format": 0, "bookresource_id": True}
 
     class TestMixin(ExportMixin):
         model = Book
@@ -364,3 +381,19 @@ class TestExportEncoding(TestCase):
             self.export_mixin.export_admin_action(self.mock_request, list())
             encoding_kwarg = mock_get_export_data.call_args_list[0][1]["encoding"]
             self.assertEqual("utf-8", encoding_kwarg)
+
+
+class TestSelectableFieldsExportPage(AdminTestMixin, TestCase):
+    def test_selectable_fields_rendered_with_resource_index_attribute(self) -> None:
+        response = self.client.get("/admin/core/book/export/")
+
+        self.assertEqual(response.status_code, 200)
+        form_resources = response.context["form"].resources
+        response_content = str(response.content)
+
+        for index, resource in enumerate(form_resources):
+            resource_fields = resource().get_export_order()
+            self.assertEqual(
+                response_content.count(f'resource-index="{index}"'),
+                len(resource_fields),
+            )

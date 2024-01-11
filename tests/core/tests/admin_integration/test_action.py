@@ -22,6 +22,12 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
         super().setUp()
         self.cat1 = Category.objects.create(name="Cat 1")
         self.cat2 = Category.objects.create(name="Cat 2")
+        # fields payload for `CategoryResource` -
+        # to export using `SelectableFieldsExportForm`
+        self.resource_fields_payload = {
+            "categoryresource_id": True,
+            "categoryresource_name": True,
+        }
 
     def _check_export_response(self, response):
         self.assertContains(response, self.cat1.name, status_code=200)
@@ -78,7 +84,11 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
     @ignore_widget_deprecation_warning
     def test_export_post(self):
         # create a POST request with data selected from the 'action' export
-        data = {"format": "0", "export_items": [str(self.cat1.id)]}
+        data = {
+            "format": "0",
+            "export_items": [str(self.cat1.id)],
+            **self.resource_fields_payload,
+        }
         date_str = datetime.now().strftime("%Y-%m-%d")
         response = self.client.post("/admin/core/category/export/", data)
         self.assertEqual(response.status_code, 200)

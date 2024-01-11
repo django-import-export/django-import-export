@@ -8,6 +8,7 @@ Changelog
 4.0.0-beta.3 (unreleased)
 -------------------------
 
+- Added feature: selectable fields for admin export view (#1734)
 - Fix issue where declared Resource fields not defined in ``fields`` are still imported (#1702)
 - Added customizable ``MediaStorage`` (#1708)
 - Relocated admin integration section from advanced_usage.rst into new file (#1713)
@@ -80,11 +81,10 @@ Documentation
 - Clarified ``skip_diff`` documentation (#1655)
 - Improved documentation relating to validation on import (#1665)
 
-3.3.6 (unreleased)
+3.3.6 (2024-01-10)
 ------------------
 
-- Nothing changed yet.
-
+- Fix issue with highlight when using 'light' color scheme (#1728)
 
 3.3.5 (2023-12-19)
 ------------------
