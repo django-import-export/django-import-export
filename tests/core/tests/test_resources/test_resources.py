@@ -532,11 +532,13 @@ class ModelResourceTest(TestCase):
 
     def test_import_data_empty_dataset_with_collect_failed_rows(self):
         resource = AuthorResource()
-        with self.assertRaisesRegex(
-            exceptions.FieldError,
-            "The following import_id_fields are not present in the dataset: id",
-        ):
+        with self.assertRaises(exceptions.FieldError) as e:
             resource.import_data(tablib.Dataset(), collect_failed_rows=True)
+        self.assertEqual(
+            "The following fields are declared in 'import_id_fields' "
+            "but are not present in the dataset: id",
+            str(e.exception),
+        )
 
     @ignore_widget_deprecation_warning
     def test_collect_failed_rows(self):
