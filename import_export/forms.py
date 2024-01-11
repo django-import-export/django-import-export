@@ -1,5 +1,6 @@
 import os.path
 from copy import deepcopy
+from itertools import chain
 from typing import Iterable
 
 from django import forms
@@ -102,6 +103,16 @@ class SelectableFieldsExportForm(ExportForm):
         super().__init__(formats, resources, *args, **kwargs)
         self._init_selectable_fields(resources)
 
+    @property
+    def media(self):
+        media = super().media
+        return media + forms.Media(
+            js=("import_export/export_selectable_fields.js",),
+            css={
+                "all": ["import_export/export.css"],
+            },
+        )
+
     def _init_selectable_fields(self, resources: Iterable[ModelResource]) -> None:
         """
         Create `BooleanField(s)` for resource fields
@@ -110,14 +121,23 @@ class SelectableFieldsExportForm(ExportForm):
         self.is_selectable_fields_form = True
         self.resource_fields = {resource.__name__: list() for resource in resources}
 
-        for resource in resources:
-            self._create_boolean_fields(resource)
+        for index, resource in enumerate(resources):
+            boolean_fields = self._create_boolean_fields(resource, index)
+            self.resource_fields[resource.__name__] = boolean_fields
 
-    def _create_boolean_fields(self, resource: ModelResource) -> None:
+        # Order fields by resource select then boolean fields
+        ordered_fields = [
+            "resource",
+            # flatten resource fields lists
+            *chain(*[fields for fields in self.resource_fields.values()]),
+        ]
+        self.order_fields(ordered_fields)
+
+    def _create_boolean_fields(self, resource: ModelResource, index: int) -> None:
         # Initiate resource to get ordered export fields
         fields = resource().get_export_order()
-
         boolean_fields = []  # will be used for ordering the fields
+        is_initial_field = False
 
         for field in fields:
             field_name = self.create_boolean_field_name(resource, field)
@@ -126,16 +146,19 @@ class SelectableFieldsExportForm(ExportForm):
                 initial=True,
                 required=False,
             )
+
             # These attributes will be used for rendering in template
             boolean_field.is_selectable_field = True
             boolean_field.resource_name = resource.__name__
+            boolean_field.resource_index = index
+            boolean_field.widget.attrs["resource-id"] = index
+            if is_initial_field is False:
+                boolean_field.initial_field = is_initial_field = True
 
             self.fields[field_name] = boolean_field
             boolean_fields.append(field_name)
 
-        self.order_fields(boolean_fields)  # Order fields by boolean fields
-
-        self.resource_fields[resource.__name__] = boolean_fields
+        return boolean_fields
 
     @staticmethod
     def create_boolean_field_name(resource: ModelResource, field_name: str) -> str:
