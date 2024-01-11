@@ -38,8 +38,9 @@ The following error message can be seen on import:
   *The following fields are declared in 'import_id_fields' but are not present in the resource*
 
 This indicates that the Resource has not been configured correctly, and the import logic fails.  Specifically,
-the import process is attempting to use either the defined or default
-:attr:`~import_export.options.ResourceOptions.import_id_fields` and no match has been detected in the resource fields.
+the import process is attempting to use either the defined or default values for
+:attr:`~import_export.options.ResourceOptions.import_id_fields` and no matching field has been detected in the resource
+fields.
 
 See :ref:`advanced_usage:Create or update model instances`.
 
