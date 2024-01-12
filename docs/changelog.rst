@@ -8,11 +8,13 @@ Changelog
 4.0.0-beta.3 (unreleased)
 -------------------------
 
+- Added feature: selectable fields for admin export view (#1734)
 - Fix issue where declared Resource fields not defined in ``fields`` are still imported (#1702)
 - Added customizable ``MediaStorage`` (#1708)
 - Relocated admin integration section from advanced_usage.rst into new file (#1713)
 - Fix slow export with ForeignKey id (#1717)
 - Added customization of Admin UI import error messages (#1727)
+- Improve output of error messages (#1729)
 - Refactor `test_resources.py` into smaller modules (#1733)
 
 4.0.0-beta.2 (2023-12-09)
@@ -80,11 +82,10 @@ Documentation
 - Clarified ``skip_diff`` documentation (#1655)
 - Improved documentation relating to validation on import (#1665)
 
-3.3.6 (unreleased)
+3.3.6 (2024-01-10)
 ------------------
 
-- Nothing changed yet.
-
+- Fix issue with highlight when using 'light' color scheme (#1728)
 
 3.3.5 (2023-12-19)
 ------------------

@@ -6,7 +6,7 @@ from core.tests.utils import ignore_widget_deprecation_warning
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 
-from import_export import fields, resources, widgets
+from import_export import exceptions, fields, resources, widgets
 from import_export.instance_loaders import ModelInstanceLoader
 
 
@@ -246,7 +246,7 @@ class BulkCreateTest(BulkTest):
                 batch_size = 100
 
         resource = _BookResource()
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(exceptions.ImportError):
             resource.import_data(self.dataset, raise_errors=True)
 
     @mock.patch("core.models.Book.objects.bulk_create")
@@ -457,7 +457,7 @@ class BulkUpdateTest(BulkTest):
                 use_bulk = True
 
         resource = _BookResource()
-        with self.assertRaises(ValidationError) as raised_exc:
+        with self.assertRaises(exceptions.ImportError) as raised_exc:
             resource.import_data(self.dataset, raise_errors=True)
             self.assertEqual(e, raised_exc)
 

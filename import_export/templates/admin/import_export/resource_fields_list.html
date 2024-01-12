@@ -8,14 +8,14 @@
     {% endif %}
 
     {% if fields_list|length <= 1 %}
-       <code>{{ fields_list.0.1|join:", " }}</code>
+      <code>{{ fields_list.0.1|join:", " }}</code>
     {% else %}
-       <dl>
+      <dl>
           {% for resource, fields in fields_list %}
               <dt>{{ resource }}</dt>
               <dd><code>{{ fields|join:", " }}</code></dd>
           {% endfor %}
-       </dl>
+      </dl>
     {% endif %}
   </p>
 {% endblock %}

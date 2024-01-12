@@ -57,9 +57,17 @@ In v4, return values are rendered as strings by default (where applicable), with
 Refer to the :doc:`documentation<api_widgets>` for more information.
 
 Export field order
-------------
+------------------
 
 The ordering rules for exported fields has been standardized. See :ref:`documentation<field_ordering>`.
+
+Error output
+------------
+
+If the ``raise_errors`` parameter of :meth:`~import_export.resources.Resource.import_data` is ``True``, then an instance
+of :class:`~import_export.exceptions.ImportError` is raised.  This exception wraps the underlying exception.
+
+See `this PR <https://github.com/django-import-export/django-import-export/issues/1729>`_.
 
 Deprecations
 ============
@@ -92,6 +100,16 @@ The export action has been updated to include the export workflow.  Prior to v4,
 selected items using an export admin action.  However this meant that the export workflow was skipped and it was not
 possible to select the export resource.  This has been fixed in v4 so that export workflow is now present when
 exporting via the Admin UI action.  For more information see :ref:`export documentation<export_via_admin_action>`.
+
+Export selected fields
+----------------------
+
+The :ref:`export 'confirm' page<export_confirm>` now includes selectable fields for export.
+If you wish to revert to the previous (v3) version of the export confirm screen, add a
+:attr:`~import_export.admin.ExportMixin.export_form_class` declaration to your Admin class subclass, for example::
+
+  class BookAdmin(ImportExportModelAdmin):
+    export_form_class = ExportForm
 
 Success message
 ---------------

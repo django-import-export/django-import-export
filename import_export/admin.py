@@ -18,7 +18,7 @@ from django.utils.module_loading import import_string
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_POST
 
-from .forms import ConfirmImportForm, ExportForm, ImportForm
+from .forms import ConfirmImportForm, ImportForm, SelectableFieldsExportForm
 from .mixins import BaseExportMixin, BaseImportMixin
 from .results import RowResult
 from .signals import post_export, post_import
@@ -586,8 +586,8 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
     """
     Export mixin.
 
-    This is intended to be mixed with django.contrib.admin.ModelAdmin
-    https://docs.djangoproject.com/en/dev/ref/contrib/admin/
+    This is intended to be mixed with
+    `ModelAdmin <https://docs.djangoproject.com/en/stable/ref/contrib/admin/>`_.
     """
 
     #: template for change_list view
@@ -596,8 +596,10 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
     export_template_name = "admin/import_export/export.html"
     #: export data encoding
     to_encoding = None
-    #: form class to use for the initial import step
-    export_form_class = ExportForm
+    #: Form class to use for the initial export step.
+    #: Assign to :class:`~import_export.forms.ExportForm` if you would
+    #: like to disable selectable fields feature.
+    export_form_class = SelectableFieldsExportForm
 
     def get_urls(self):
         urls = super().get_urls()

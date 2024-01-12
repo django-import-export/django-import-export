@@ -222,15 +222,78 @@ Errors are retained in each :class:`~import_export.results.RowResult` instance w
 The :meth:`~import_export.resources.Resource.import_data` method takes optional parameters which can be used to
 customize the handling of errors.  Refer to the method documentation for specific details.
 
-For example, to iterate over errors produced from an import::
+Validation Errors
+-----------------
+
+During import of a row, each field is iterated and any `ValueError <https://docs.python.org/3/library/exceptions.html#ValueError/>`_
+errors raised by Widgets are stored in an instance of Django's
+`ValidationError <https://docs.djangoproject.com/en/stable/ref/forms/validation/>`_.
+
+Validation errors are retained within the :attr:`~import_export.results.Result.invalid_rows` list as a
+:class:`~import_export.results.InvalidRow` instance.
+
+If importing programmatically, you can set the ``raise_errors`` parameter of :meth:`~import_export.resources.Resource.import_data`
+to ``True``, which will mean the process will exit at the first row which has errors::
+
+    rows = [
+        (1, 'Lord of the Rings', '1996-01-01'),
+        (2, 'The Hobbit', '1996-01-02x'),
+    ]
+    dataset = tablib.Dataset(*rows, headers=['id', 'name', 'published'])
+    resource = BookResource()
+    self.resource.import_data(self.dataset, raise_errors=True)
+
+The above process will exit with a row number and error (formatted for clarity)::
+
+  ImportError: 2: {'published': ['Value could not be parsed using defined date formats.']}
+    (OrderedDict({'id': 2, 'name': 'The Hobbit', 'published': 'x'}))
+
+To iterate over all validation errors produced from an import, pass ``False`` to ``raise_errors``::
 
     result = self.resource.import_data(self.dataset, raise_errors=False)
-    if result.has_errors():
-        for row in result.rows:
-            for error in row.errors:
-                print(str(error.error))
+    for row in result.invalid_rows:
+        print(f"--- row {row.number} ---")
+        for field, error in row.error.error_dict.items():
+            print(f"{field}: {error} ({row.values})")
 
 If using the :ref:`Admin UI<admin-integration>`, errors are presented to the user during import (see below).
+
+Generic Errors
+--------------
+
+Generic errors are raised during import for cases which are not validation errors.
+For example, generic errors are usually raised at the point the model instance is saved, such as attempt to save a float
+to a int field.  Because generic errors are raised from a lower point in the stack, it is not always possible to
+identify which field caused the error.
+
+Generic errors are retained within the :attr:`~import_export.results.Result.error_rows` list as a
+:class:`~import_export.results.ErrorRow` instance.
+
+The ``raise_errors`` parameter can be used during programmatic import to halt the import at the first error::
+
+    rows = [
+        (1, 'Lord of the Rings', '999'),
+        (2, 'The Hobbit', 'x'),
+    ]
+    dataset = tablib.Dataset(*rows, headers=['id', 'name', 'price'])
+    resource = BookResource()
+    result = resource.import_data(
+        dataset,
+        raise_errors=True
+    )
+
+The above process will exit with a row number and error (formatted for clarity)::
+
+  ImportError: 1: [<class 'decimal.ConversionSyntax'>]
+    (OrderedDict({'id': 1, 'name': 'Lord of the Rings', 'price': '1x'}))
+
+To iterate over all generic errors produced from an import, pass ``False`` to ``raise_errors``::
+
+    result = self.resource.import_data(self.dataset, raise_errors=False)
+    for row in result.error_rows:
+        print(f"--- row {row.number} ---")
+        for field, error in row.error.error_dict.items():
+            print(f"{field}: {error} ({error.row})")
 
 Field level validation
 ----------------------

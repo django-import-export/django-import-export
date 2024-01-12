@@ -214,3 +214,21 @@ Large datasets can be exported in a number of ways, depending on data size and p
 #. You can enable :ref:`export via admin action<export_via_admin_action>` and then select items for export page by page
    in the Admin UI.  This will work if you have a relatively small number of pages and can handle export to multiple
    files.  This method is suitable as a one-off or as a simple way to export large datasets via the Admin UI.
+
+How to change column names on export
+------------------------------------
+
+If you want to modify the names of the columns on export, you can do so by overriding
+:meth:`~import_export.resources.Resource.get_export_headers`::
+
+  class BookResource(ModelResource):
+
+    def get_export_headers(self, fields=None):
+      headers = super().get_export_headers(fields=fields)
+      for i, h in enumerate(headers):
+          if h == 'name':
+            headers[i] = "NEW COLUMN NAME"
+      return headers
+
+    class Meta:
+      model = Book
