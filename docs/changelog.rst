@@ -15,6 +15,7 @@ Changelog
 - Fix slow export with ForeignKey id (#1717)
 - Added customization of Admin UI import error messages (#1727)
 - Improve output of error messages (#1729)
+- Refactor `test_resources.py` into smaller modules (#1733)
 
 4.0.0-beta.2 (2023-12-09)
 -------------------------
