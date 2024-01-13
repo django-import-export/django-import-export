@@ -15,6 +15,7 @@ Changelog
 - Fix slow export with ForeignKey id (#1717)
 - Added customization of Admin UI import error messages (#1727)
 - Improve output of error messages (#1729)
+- Refactor `test_resources.py` into smaller modules (#1733)
 - Added specific check for declared :attr:`~import_export.options.ResourceOptions.import_id_fields` not in dataset
   (#1735)
 
