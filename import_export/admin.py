@@ -855,7 +855,9 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
                 res.get_display_name(),
                 [
                     field.column_name
-                    for field in res(model=self.model).get_user_visible_fields()
+                    for field in res(
+                        model=self.model, **self.get_export_resource_kwargs(request)
+                    ).get_user_visible_fields()
                 ],
             )
             for res in self.get_export_resource_classes()
