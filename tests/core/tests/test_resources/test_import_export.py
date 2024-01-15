@@ -281,12 +281,34 @@ class ImportIdFieldsTestCase(TestCase):
         dataset = tablib.Dataset(
             *[(self.book.pk, "Some book")], headers=["id", "wrong_name"]
         )
-        with self.assertRaisesRegex(
-            exceptions.FieldError,
-            "The following import_id_fields are not present "
-            "in the dataset: book_name",
-        ):
+        with self.assertRaises(exceptions.FieldError) as e:
             self.resource.import_data(dataset)
+        self.assertEqual(
+            "The following fields are declared in 'import_id_fields' "
+            "but are not present in the resource: book_name",
+            str(e.exception),
+        )
+
+    def test_missing_import_id_field_raises_exception(self):
+        class TestBookResource(resources.ModelResource):
+            class Meta:
+                model = Book
+                import_id_fields = ("id", "a", "b")
+
+        resource = TestBookResource()
+
+        book = Book.objects.create(name="Some book")
+        row = [book.pk, "Some book"]
+        dataset = tablib.Dataset(*[row], headers=["id", "name"])
+        dataset.append(row)
+
+        with self.assertRaises(exceptions.FieldError) as e:
+            resource.import_data(dataset)
+        self.assertEqual(
+            "The following fields are declared in 'import_id_fields' "
+            "but are not present in the resource: a, b",
+            str(e.exception),
+        )
 
     def test_multiple_import_id_fields(self):
         class BookResource(resources.ModelResource):
@@ -299,12 +321,13 @@ class ImportIdFieldsTestCase(TestCase):
             *[(self.book.pk, "Goldeneye", "ian.fleming@example.com")],
             headers=["A", "name", "B"],
         )
-        with self.assertRaisesRegex(
-            exceptions.FieldError,
-            "The following import_id_fields are not present "
-            "in the dataset: id, author_email",
-        ):
+        with self.assertRaises(exceptions.FieldError) as e:
             self.resource.import_data(dataset)
+        self.assertEqual(
+            "The following fields are declared in 'import_id_fields' "
+            "but are not present in the resource: id, author_email",
+            str(e.exception),
+        )
 
 
 class ImportWithMissingFields(TestCase):

@@ -1117,8 +1117,15 @@ class Resource(metaclass=DeclarativeMetaclass):
         return kwargs.get("dry_run", False)
 
     def _check_import_id_fields(self, headers):
-        import_id_fields = [self.fields[f] for f in self.get_import_id_fields()]
+        import_id_fields = list()
         missing_fields = list()
+
+        for field_name in self.get_import_id_fields():
+            if field_name not in self.fields:
+                missing_fields.append(field_name)
+            else:
+                import_id_fields.append(self.fields[field_name])
+
         for field in import_id_fields:
             if not headers or field.column_name not in headers:
                 # escape to be safe (exception could end up in logs)
@@ -1128,8 +1135,8 @@ class Resource(metaclass=DeclarativeMetaclass):
         if missing_fields:
             raise exceptions.FieldError(
                 _(
-                    "The following import_id_fields are not present in the dataset: %s"
-                    % ", ".join(missing_fields)
+                    "The following fields are declared in 'import_id_fields' but "
+                    "are not present in the resource: %s" % ", ".join(missing_fields)
                 )
             )
 
