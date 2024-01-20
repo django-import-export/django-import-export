@@ -329,6 +329,7 @@ class SimpleArrayWidget(Widget):
 
     :param separator: Defaults to ``','``
     """
+
     def ArrayToString(value):
         if type(value) == list:
             if len(value) != 0:
@@ -338,9 +339,9 @@ class SimpleArrayWidget(Widget):
                     value = ",".join(value)
         else:
             pass
-            
+
         return value
-    
+
     def __init__(self, separator=None):
         if separator is None:
             separator = ","
