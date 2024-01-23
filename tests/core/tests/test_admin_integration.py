@@ -8,7 +8,13 @@ from unittest.mock import MagicMock, patch
 import chardet
 import django
 import tablib
-from core.admin import AuthorAdmin, BookAdmin, CustomBookAdmin, ImportMixin
+from core.admin import (
+    AuthorAdmin,
+    BookAdmin,
+    BookResource,
+    CustomBookAdmin,
+    ImportMixin,
+)
 from core.models import Author, Book, Category, EBook, Parent
 from django.contrib.admin.models import DELETION, LogEntry
 from django.contrib.admin.sites import AdminSite
@@ -684,6 +690,18 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
         response = self.client.get("/admin/core/book/export/")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(2, mock_get_export_resource_kwargs.call_count)
+
+    def book_resource_init(self):
+        # stub call to the resource constructor
+        pass
+
+    @mock.patch.object(BookResource, "__init__", book_resource_init)
+    def test_export_passes_no_resource_constructor_params(self):
+        # issue 1716
+        # assert that the export call with a no-arg constructor
+        # does not crash
+        response = self.client.get("/admin/core/book/export/")
+        self.assertEqual(response.status_code, 200)
 
     def test_export(self):
         response = self.client.get("/admin/core/book/export/")
