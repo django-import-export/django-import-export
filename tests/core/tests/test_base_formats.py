@@ -3,6 +3,7 @@ import unittest
 from unittest import mock
 
 import tablib
+from core.tests.utils import ignore_utcnow_deprecation_warning
 from django.test import TestCase
 from django.utils.encoding import force_str
 from tablib.core import UnsupportedFormat
@@ -94,6 +95,7 @@ class XLSXTest(TestCase):
     def test_binary_format(self):
         self.assertTrue(self.format.is_binary())
 
+    @ignore_utcnow_deprecation_warning
     def test_import(self):
         with open(self.filename, self.format.get_read_mode()) as in_stream:
             dataset = self.format.create_dataset(in_stream.read())
@@ -210,32 +212,18 @@ class HTMLFormatTest(TestCase):
             )
         )
 
-    def test_export_html_escape(self):
-        res = self.format.export_data(self.dataset, escape_html=True)
-        self.assertIn(
-            (
-                "<tr><td>1</td>\n"
-                "<td>good_user</td>\n"
-                "<td>John Doe</td></tr>\n"
-                "<tr><td>2</td>\n"
-                "<td>evil_user</td>\n"
-                "<td>&lt;script&gt;alert(&quot;I want to steal your credit card data"
-                "&quot;)&lt;/script&gt;</td></tr>\n"
-            ),
-            res,
-        )
-
-    def test_export_data_no_escape(self):
-        res = self.format.export_data(self.dataset)
-        self.assertIn(
-            (
-                "<tr><td>1</td>\n"
-                "<td>good_user</td>\n"
-                "<td>John Doe</td></tr>\n"
-                "<tr><td>2</td>\n"
-                "<td>evil_user</td>\n"
-                '<td><script>alert("I want to steal your credit card data")'
-                "</script></td></tr>\n"
-            ),
-            res,
-        )
+    # TODO removed pending tablib v4 - see #1627
+    # def test_export_html_escape(self):
+    #     res = self.format.export_data(self.dataset)
+    #     self.assertIn(
+    #         (
+    #             "<tr><td>1</td>"
+    #             "<td>good_user</td>"
+    #             "<td>John Doe</td></tr>"
+    #             "<tr><td>2</td>"
+    #             "<td>evil_user</td>"
+    #             '<td>&lt;script&gt;alert("I want to steal your credit card data")'
+    #             "&lt;/script&gt;</td></tr>"
+    #         ),
+    #         res,
+    #     )

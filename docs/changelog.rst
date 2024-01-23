@@ -1,18 +1,99 @@
 Changelog
 =========
 
+.. warning::
+
+    Version 4 introduces breaking changes.  Please refer to :doc:`release notes<release_notes>`.
+
+4.0.0-beta.3 (unreleased)
+-------------------------
+
+- Added feature: selectable fields for admin export view (#1734)
+- Fix issue where declared Resource fields not defined in ``fields`` are still imported (#1702)
+- Added customizable ``MediaStorage`` (#1708)
+- Relocated admin integration section from advanced_usage.rst into new file (#1713)
+- Fix slow export with ForeignKey id (#1717)
+- Added customization of Admin UI import error messages (#1727)
+- Improve output of error messages (#1729)
+- Refactor `test_resources.py` into smaller modules (#1733)
+- Added specific check for declared :attr:`~import_export.options.ResourceOptions.import_id_fields` not in dataset
+  (#1735)
+
+4.0.0-beta.2 (2023-12-09)
+-------------------------
+
+- Fix declaring existing model field(s) in ModelResource altering export order (#1663)
+- Updated `docker-compose` command with latest version syntax in `runtests.sh` (#1686)
+- Support export from model change form (#1687)
+- Updated Admin UI to track deleted and skipped Imports (#1691)
+- Import form defaults to read-only field if only one format defined (#1690)
+- Refactored :mod:`~import_export.resources` into separate modules for ``declarative`` and ``options`` (#1695)
+- fix multiple inheritance not setting options (#1696)
+- Refactored tests to remove dependencies between tests (#1703)
+- Handle python3.12 datetime deprecations (#1705)
+- Added FAQ entry for exporting large datasets (#1706)
+
+4.0.0-beta.1 (2023-11-16)
+--------------------------
+
+Deprecations
+############
+
+- Removed v3 deprecations (#1629)
+- Deprecation of ``ExportViewFormMixin`` (#1666)
+
+Enhancements
+############
+
+- Refactor ordering logic (#1626)
+
+  - Refactor 'diff' logic to avoid calling dehydrate methods
+
+  - Refactor declarations of ``fields``, ``import_order`` and ``export_order`` to fix ordering issues
+
+- refactor to export HTML / formulae escaping updates (#1638)
+- removed unused variable ``Result.new_record`` (#1640)
+- Refactor ``resources.py`` to standardise method args (#1641)
+- added specific check for missing ``import_id_fields`` (#1645)
+- Enable optional tablib dependencies (#1647)
+- added :meth:`~import_export.widgets.ForeignKeyWidget.get_lookup_kwargs` to make it easier to override object
+  lookup (#1651)
+- Standardised interface of :meth:`~import_export.widgets.Widget.render` (#1657)
+- Added :meth:`~import_export.resources.Resource.do_instance_save` helper method (#1668)
+- Enable defining Resource model as a string (#1669)
+- Support multiple Resources for export (#1671)
+
+Fixes
+#####
+
+- dynamic widget parameters for CharField fixes 'NOT NULL constraint' error in xlsx (#1485)
+- fix cooperation with adminsortable2 (#1633)
+- Removed unused method ``utils.original()``
+- Fix deprecated ``log_action`` method (#1673)
+
+Development
+###########
+
+- Refactor build process (#1630)
+- Refactored ``test_admin_integration()``: split into smaller test modules (#1662)
+- Refactored ``test_resources()``: split into smaller test modules (#1672)
+
+Documentation
+#############
+
+- Clarified ``skip_diff`` documentation (#1655)
+- Improved documentation relating to validation on import (#1665)
+
 3.3.7 (unreleased)
 ------------------
 
 - Pass :meth:`~import_export.mixins.BaseExportMixin.get_export_resource_kwargs` to Resource constructor
   :meth:`~import_export.admin.ExportMixin.export_action` (#1739)
 
-
 3.3.6 (2024-01-10)
 ------------------
 
 - Fix issue with highlight when using 'light' color scheme (#1728)
-
 
 3.3.5 (2023-12-19)
 ------------------
@@ -133,6 +214,7 @@ Documentation
 3.1.0 (2023-02-21)
 ------------------
 
+- Float and Decimal widgets use LANGUAGE_CODE on export (#1501)
 - Add optional dehydrate method param (#1536)
 
   - ``exceptions`` module has been undeprecated

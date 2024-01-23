@@ -1,41 +1,35 @@
 import functools
 import logging
 import traceback
-import warnings
 from collections import OrderedDict
 from copy import deepcopy
+from html import escape
+from warnings import warn
 
 import tablib
 from diff_match_patch import diff_match_patch
 from django.conf import settings
-from django.core.exceptions import (
-    FieldDoesNotExist,
-    ImproperlyConfigured,
-    ValidationError,
-)
+from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.core.management.color import no_style
 from django.core.paginator import Paginator
 from django.db import connections, router
-from django.db.models.fields.related import ForeignObjectRel
+from django.db.models import fields
+from django.db.models.fields.related import ForeignKey
 from django.db.models.query import QuerySet
 from django.db.transaction import TransactionManagementError, set_rollback
 from django.utils.encoding import force_str
 from django.utils.safestring import mark_safe
+from django.utils.translation import gettext_lazy as _
 
-from . import widgets
+from . import exceptions, widgets
+from .declarative import DeclarativeMetaclass, ModelDeclarativeMetaclass
 from .fields import Field
-from .instance_loaders import ModelInstanceLoader
 from .results import Error, Result, RowResult
-from .utils import atomic_if_using_transaction
+from .utils import atomic_if_using_transaction, get_related_model
 
 logger = logging.getLogger(__name__)
 # Set default logging handler to avoid "No handler found" warnings.
 logger.addHandler(logging.NullHandler())
-
-
-def get_related_model(field):
-    if hasattr(field, "related_model"):
-        return field.related_model
 
 
 def has_natural_foreign_key(model):
@@ -47,221 +41,14 @@ def has_natural_foreign_key(model):
     )
 
 
-class ResourceOptions:
-    """
-    The inner Meta class allows for class-level configuration of how the
-    Resource should behave. The following options are available:
-    """
-
-    model = None
-    """
-    Django Model class. It is used to introspect available
-    fields.
-
-    """
-    fields = None
-    """
-    Controls what introspected fields the Resource should include. A whitelist
-    of fields.
-    """
-
-    exclude = None
-    """
-    Controls what introspected fields the Resource should
-    NOT include. A blacklist of fields.
-    """
-
-    instance_loader_class = None
-    """
-    Controls which class instance will take
-    care of loading existing objects.
-    """
-
-    import_id_fields = ["id"]
-    """
-    Controls which object fields will be used to
-    identify existing instances.
-    """
-
-    export_order = None
-    """
-    Controls export order for columns.
-    """
-
-    widgets = None
-    """
-    This dictionary defines widget kwargs for fields.
-    """
-
-    use_transactions = None
-    """
-    Controls if import should use database transactions. Default value is
-    ``None`` meaning ``settings.IMPORT_EXPORT_USE_TRANSACTIONS`` will be
-    evaluated.
-    """
-
-    skip_unchanged = False
-    """
-    Controls if the import should skip unchanged records. Default value is
-    False
-    """
-
-    report_skipped = True
-    """
-    Controls if the result reports skipped rows. Default value is True
-    """
-
-    clean_model_instances = False
-    """
-    Controls whether ``instance.full_clean()`` is called during the import
-    process to identify potential validation errors for each (non skipped) row.
-    The default value is False.
-    """
-
-    chunk_size = None
-    """
-    Controls the chunk_size argument of Queryset.iterator or,
-    if prefetch_related is used, the per_page attribute of Paginator.
-    """
-
-    skip_diff = False
-    """
-    Controls whether or not an instance should be diffed following import.
-    By default, an instance is copied prior to insert, update or delete.
-    After each row is processed, the instance's copy is diffed against the original,
-    and the value stored in each :class:`~import_export.results.RowResult`.
-    If diffing is not required, then disabling the diff operation by setting this value
-    to ``True`` improves performance, because the copy and comparison operations are
-    skipped for each row.
-    If enabled, then ``skip_row()`` checks do not execute, because 'skip' logic requires
-    comparison between the stored and imported versions of a row.
-    If enabled, then HTML row reports are also not generated (see ``skip_html_diff``).
-    The default value is False.
-    """
-
-    skip_html_diff = False
-    """
-    Controls whether or not a HTML report is generated after each row.
-    By default, the difference between a stored copy and an imported instance
-    is generated in HTML form and stored in each
-    :class:`~import_export.results.RowResult`.
-    The HTML report is used to present changes on the confirmation screen in the admin
-    site, hence when this value is ``True``, then changes will not be presented on the
-    confirmation screen.
-    If the HTML report is not required, then setting this value to ``True`` improves
-    performance, because the HTML generation is skipped for each row.
-    This is a useful optimization when importing large datasets.
-    The default value is False.
-    """
-
-    use_bulk = False
-    """
-    Controls whether import operations should be performed in bulk.
-    By default, an object's save() method is called for each row in a data set.
-    When bulk is enabled, objects are saved using bulk operations.
-    """
-
-    batch_size = 1000
-    """
-    The batch_size parameter controls how many objects are created in a single query.
-    The default is to create objects in batches of 1000.
-    See `bulk_create()
-    <https://docs.djangoproject.com/en/dev/ref/models/querysets/#bulk-create>`_.
-    This parameter is only used if ``use_bulk`` is True.
-    """
-
-    force_init_instance = False
-    """
-    If True, this parameter will prevent imports from checking the database for existing
-    instances.
-    Enabling this parameter is a performance enhancement if your import dataset is
-    guaranteed to contain new instances.
-    """
-
-    using_db = None
-    """
-    DB Connection name to use for db transactions. If not provided,
-    ``router.db_for_write(model)`` will be evaluated and if it's missing,
-    DEFAULT_DB_ALIAS constant ("default") is used.
-    """
-
-    store_row_values = False
-    """
-    If True, each row's raw data will be stored in each
-    :class:`~import_export.results.RowResult`.
-    Enabling this parameter will increase the memory usage during import
-    which should be considered when importing large datasets.
-    """
-
-    store_instance = False
-    """
-    If True, the row instance will be stored in each
-    :class:`~import_export.results.RowResult`.
-    Enabling this parameter will increase the memory usage during import
-    which should be considered when importing large datasets.
-    """
-
-    use_natural_foreign_keys = False
-    """
-    If True, use_natural_foreign_keys = True will be passed to all foreign
-    key widget fields whose models support natural foreign keys. That is,
-    the model has a natural_key function and the manager has a
-    get_by_natural_key function.
-    """
-
-
-class DeclarativeMetaclass(type):
-    def __new__(cls, name, bases, attrs):
-        declared_fields = []
-        meta = ResourceOptions()
-
-        # If this class is subclassing another Resource, add that Resource's
-        # fields. Note that we loop over the bases in *reverse*. This is
-        # necessary in order to preserve the correct order of fields.
-        for base in bases[::-1]:
-            if hasattr(base, "fields"):
-                declared_fields = list(base.fields.items()) + declared_fields
-                # Collect the Meta options
-                options = getattr(base, "Meta", None)
-                for option in [
-                    option
-                    for option in dir(options)
-                    if not option.startswith("_") and hasattr(options, option)
-                ]:
-                    setattr(meta, option, getattr(options, option))
-
-        # Add direct fields
-        for field_name, obj in attrs.copy().items():
-            if isinstance(obj, Field):
-                field = attrs.pop(field_name)
-                if not field.column_name:
-                    field.column_name = field_name
-                declared_fields.append((field_name, field))
-
-        attrs["fields"] = OrderedDict(declared_fields)
-        new_class = super().__new__(cls, name, bases, attrs)
-
-        # Add direct options
-        options = getattr(new_class, "Meta", None)
-        for option in [
-            option
-            for option in dir(options)
-            if not option.startswith("_") and hasattr(options, option)
-        ]:
-            setattr(meta, option, getattr(options, option))
-        new_class._meta = meta
-
-        return new_class
-
-
 class Diff:
     def __init__(self, resource, instance, new):
-        self.left = self._export_resource_fields(resource, instance)
+        self.left = Diff._read_field_values(resource, instance)
         self.right = []
         self.new = new
 
-    def compare_with(self, resource, instance, dry_run=False):
-        self.right = self._export_resource_fields(resource, instance)
+    def compare_with(self, resource, instance):
+        self.right = Diff._read_field_values(resource, instance)
 
     def as_html(self):
         data = []
@@ -276,11 +63,9 @@ class Diff:
             data.append(html)
         return data
 
-    def _export_resource_fields(self, resource, instance):
-        return [
-            resource.export_field(f, instance) if instance else ""
-            for f in resource.get_user_visible_fields()
-        ]
+    @classmethod
+    def _read_field_values(cls, resource, instance):
+        return [f.export(instance) for f in resource.get_import_fields()]
 
 
 class Resource(metaclass=DeclarativeMetaclass):
@@ -356,10 +141,9 @@ class Resource(metaclass=DeclarativeMetaclass):
 
     def get_fields(self, **kwargs):
         """
-        Returns fields sorted according to
-        :attr:`~import_export.resources.ResourceOptions.export_order`.
+        Returns list of fields (unordered).
         """
-        return [self.fields[f] for f in self.get_export_order()]
+        return list(self.fields.values())
 
     def get_field_name(self, field):
         """
@@ -381,14 +165,8 @@ class Resource(metaclass=DeclarativeMetaclass):
 
     def get_instance(self, instance_loader, row):
         """
-        If all 'import_id_fields' are present in the dataset, calls
-        the :doc:`InstanceLoader <api_instance_loaders>`. Otherwise,
-        returns `None`.
+        Calls the :doc:`InstanceLoader <api_instance_loaders>`.
         """
-        import_id_fields = [self.fields[f] for f in self.get_import_id_fields()]
-        for field in import_id_fields:
-            if field.column_name not in row:
-                return
         return instance_loader.get_instance(row)
 
     def get_or_init_instance(self, instance_loader, row):
@@ -398,8 +176,8 @@ class Resource(metaclass=DeclarativeMetaclass):
         if not self._meta.force_init_instance:
             instance = self.get_instance(instance_loader, row)
             if instance:
-                return (instance, False)
-        return (self.init_instance(row), True)
+                return instance, False
+        return self.init_instance(row), True
 
     def get_import_id_fields(self):
         """ """
@@ -475,14 +253,14 @@ class Resource(metaclass=DeclarativeMetaclass):
     ):
         """
         Takes any validation errors that were raised by
-        :meth:`~import_export.resources.Resource.import_obj`, and combines them
+        :meth:`~import_export.resources.Resource.import_instance`, and combines them
         with validation errors raised by the instance's ``full_clean()``
         method. The combined errors are then re-raised as single, multi-field
         ValidationError.
 
         If the ``clean_model_instances`` option is False, the instances's
         ``full_clean()`` method is not called, and only the errors raised by
-        ``import_obj()`` are re-raised.
+        ``import_instance()`` are re-raised.
         """
         if import_validation_errors is None:
             errors = {}
@@ -500,110 +278,205 @@ class Resource(metaclass=DeclarativeMetaclass):
         if errors:
             raise ValidationError(errors)
 
-    def save_instance(
-        self, instance, is_create, using_transactions=True, dry_run=False
-    ):
-        """
+    def save_instance(self, instance, is_create, row, **kwargs):
+        r"""
         Takes care of saving the object to the database.
 
         Objects can be created in bulk if ``use_bulk`` is enabled.
 
         :param instance: The instance of the object to be persisted.
+
         :param is_create: A boolean flag to indicate whether this is a new object
         to be created, or an existing object to be updated.
-        :param using_transactions: A flag to indicate whether db transactions are used.
-        :param dry_run: A flag to indicate dry-run mode.
+
+        :param row: A dict representing the import row.
+
+        :param \**kwargs:
+            See :meth:`import_row
         """
-        self.before_save_instance(instance, using_transactions, dry_run)
+        self.before_save_instance(instance, row, **kwargs)
         if self._meta.use_bulk:
             if is_create:
                 self.create_instances.append(instance)
             else:
                 self.update_instances.append(instance)
         else:
-            if not using_transactions and dry_run:
+            if not self._is_using_transactions(kwargs) and self._is_dry_run(kwargs):
                 # we don't have transactions and we want to do a dry_run
                 pass
             else:
-                instance.save()
-        self.after_save_instance(instance, using_transactions, dry_run)
+                self.do_instance_save(instance)
+        self.after_save_instance(instance, row, **kwargs)
 
-    def before_save_instance(self, instance, using_transactions, dry_run):
+    def do_instance_save(self, instance):
         """
+        A method specifically to provide a single overridable hook for the instance
+        save operation.
+        For example, this can be overridden to implement update_or_create().
+
+        :param instance: The model instance to be saved.
+        """
+        instance.save()
+
+    def before_save_instance(self, instance, row, **kwargs):
+        r"""
         Override to add additional logic. Does nothing by default.
+
+        :param instance: A new or existing model instance.
+
+        :param row: A ``dict`` containing key / value data for the row to be imported.
+
+        :param \**kwargs:
+            See :meth:`import_row`
         """
         pass
 
-    def after_save_instance(self, instance, using_transactions, dry_run):
-        """
+    def after_save_instance(self, instance, row, **kwargs):
+        r"""
         Override to add additional logic. Does nothing by default.
+
+        :param instance: A new or existing model instance.
+
+        :param row: A ``dict`` containing key / value data for the row to be imported.
+
+        :param \**kwargs:
+            See :meth:`import_row`
         """
         pass
 
-    def delete_instance(self, instance, using_transactions=True, dry_run=False):
-        """
+    def delete_instance(self, instance, row, **kwargs):
+        r"""
         Calls :meth:`instance.delete` as long as ``dry_run`` is not set.
         If ``use_bulk`` then instances are appended to a list for bulk import.
+
+        :param instance: A new or existing model instance.
+
+        :param row: A ``dict`` containing key / value data for the row to be imported.
+
+        :param \**kwargs:
+            See :meth:`import_row`
         """
-        self.before_delete_instance(instance, dry_run)
+        self.before_delete_instance(instance, row, **kwargs)
         if self._meta.use_bulk:
             self.delete_instances.append(instance)
         else:
-            if not using_transactions and dry_run:
+            if not self._is_using_transactions(kwargs) and self._is_dry_run(kwargs):
                 # we don't have transactions and we want to do a dry_run
                 pass
             else:
                 instance.delete()
-        self.after_delete_instance(instance, dry_run)
+        self.after_delete_instance(instance, row, **kwargs)
 
-    def before_delete_instance(self, instance, dry_run):
-        """
+    def before_delete_instance(self, instance, row, **kwargs):
+        r"""
         Override to add additional logic. Does nothing by default.
+
+        :param instance: A new or existing model instance.
+
+        :param row: A ``dict`` containing key / value data for the row to be imported.
+
+        :param \**kwargs:
+            See :meth:`import_row`
         """
         pass
 
-    def after_delete_instance(self, instance, dry_run):
-        """
+    def after_delete_instance(self, instance, row, **kwargs):
+        r"""
         Override to add additional logic. Does nothing by default.
+
+        :param instance: A new or existing model instance.
+
+        :param row: A ``dict`` containing key / value data for the row to be imported.
+
+        :param \**kwargs:
+            See :meth:`import_row`
         """
         pass
 
-    def import_field(self, field, obj, data, is_m2m=False, **kwargs):
+    def import_field(self, field, instance, row, is_m2m=False, **kwargs):
+        r"""
+        Handles persistence of the field data.
+
+        :param field: A :class:`import_export.fields.Field` instance.
+
+        :param instance: A new or existing model instance.
+
+        :param row: A ``dict`` containing key / value data for the row to be imported.
+
+        :param is_m2m: A boolean value indicating whether or not this is a
+          many-to-many field.
+
+        :param \**kwargs:
+            See :meth:`import_row`
         """
-        Calls :meth:`import_export.fields.Field.save` if ``Field.attribute``
-        is specified, and ``Field.column_name`` is found in ``data``.
-        """
-        if field.attribute and field.column_name in data:
-            field.save(obj, data, is_m2m, **kwargs)
+        if not field.attribute:
+            logger.debug(f"skipping field '{field}' - field attribute is not defined")
+            return
+        if field.column_name not in row:
+            logger.debug(
+                f"skipping field '{field}' "
+                f"- column name '{field.column_name}' is not present in row"
+            )
+            return
+        field.save(instance, row, is_m2m, **kwargs)
 
     def get_import_fields(self):
-        return self.get_fields()
+        return [self.fields[f] for f in self.get_import_order()]
 
     def import_obj(self, obj, data, dry_run, **kwargs):
-        """
+        warn(
+            "The 'import_obj' method is deprecated and will be replaced "
+            "with 'import_instance(self, instance, row, **kwargs)' "
+            "in a future release.  Refer to Release Notes for details.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        if dry_run is True:
+            kwargs.update({"dry_run": dry_run})
+        self.import_instance(obj, data, **kwargs)
+
+    def import_instance(self, instance, row, **kwargs):
+        r"""
         Traverses every field in this Resource and calls
         :meth:`~import_export.resources.Resource.import_field`. If
         ``import_field()`` results in a ``ValueError`` being raised for
         one of more fields, those errors are captured and reraised as a single,
-        multi-field ValidationError."""
+        multi-field ValidationError.
+
+        :param instance: A new or existing model instance.
+
+        :param row: A ``dict`` containing key / value data for the row to be imported.
+
+        :param \**kwargs:
+            See :meth:`import_row`
+        """
         errors = {}
         for field in self.get_import_fields():
             if isinstance(field.widget, widgets.ManyToManyWidget):
                 continue
             try:
-                self.import_field(field, obj, data, **kwargs)
+                self.import_field(field, instance, row, **kwargs)
             except ValueError as e:
                 errors[field.attribute] = ValidationError(force_str(e), code="invalid")
         if errors:
             raise ValidationError(errors)
 
-    def save_m2m(self, obj, data, using_transactions, dry_run):
-        """
+    def save_m2m(self, instance, row, **kwargs):
+        r"""
         Saves m2m fields.
 
         Model instance need to have a primary key value before
         a many-to-many relationship can be used.
+
+        :param instance: A new or existing model instance.
+
+        :param row: A ``dict`` containing key / value data for the row to be imported.
+
+        :param \**kwargs:
+            See :meth:`import_row`
         """
+        using_transactions = self._is_using_transactions(kwargs)
+        dry_run = self._is_dry_run(kwargs)
         if (not using_transactions and dry_run) or self._meta.use_bulk:
             # we don't have transactions and we want to do a dry_run
             # OR use_bulk is enabled (m2m operations are not supported
@@ -613,7 +486,7 @@ class Resource(metaclass=DeclarativeMetaclass):
             for field in self.get_import_fields():
                 if not isinstance(field.widget, widgets.ManyToManyWidget):
                     continue
-                self.import_field(field, obj, data, True)
+                self.import_field(field, instance, row, True)
 
     def for_delete(self, row, instance):
         """
@@ -621,6 +494,10 @@ class Resource(metaclass=DeclarativeMetaclass):
 
         Default implementation returns ``False``.
         Override this method to handle deletion.
+
+        :param row: A ``dict`` containing key / value data for the row to be imported.
+
+        :param instance: A new or existing model instance.
         """
         return False
 
@@ -651,6 +528,15 @@ class Resource(metaclass=DeclarativeMetaclass):
                 # Add code here
                 return super().skip_row(instance, original, row,
                   import_validation_errors=import_validation_errors)
+
+        :param instance: A new or updated model instance.
+
+        :param original: The original persisted model instance.
+
+        :param row: A ``dict`` containing key / value data for the row to be imported.
+
+        :param import_validation_errors: A ``dict`` containing key / value data for any
+          identified validation errors.
         """
         if (
             not self._meta.skip_unchanged
@@ -691,40 +577,80 @@ class Resource(metaclass=DeclarativeMetaclass):
         """
         return self.get_user_visible_headers()
 
-    def before_import(self, dataset, using_transactions, dry_run, **kwargs):
-        """
+    def before_import(self, dataset, **kwargs):
+        r"""
         Override to add additional logic. Does nothing by default.
+
+        :param dataset: A ``tablib.Dataset``.
+
+        :param \**kwargs:
+            See :meth:`import_row`
         """
         pass
 
-    def after_import(self, dataset, result, using_transactions, dry_run, **kwargs):
-        """
+    def after_import(self, dataset, result, **kwargs):
+        r"""
         Override to add additional logic. Does nothing by default.
+
+        :param dataset: A ``tablib.Dataset``.
+
+        :param result: A :class:`import_export.results.Result` implementation
+          containing a summary of the import.
+
+        :param \**kwargs:
+            See :meth:`import_row`
         """
         pass
 
-    def before_import_row(self, row, row_number=None, **kwargs):
-        """
+    def before_import_row(self, row, **kwargs):
+        r"""
         Override to add additional logic. Does nothing by default.
+
+        :param row: A ``dict`` containing key / value data for the row to be imported.
+
+        :param \**kwargs:
+            See :meth:`import_row`
         """
         pass
 
-    def after_import_row(self, row, row_result, row_number=None, **kwargs):
-        """
+    def after_import_row(self, row, row_result, **kwargs):
+        r"""
         Override to add additional logic. Does nothing by default.
 
-        :param row: A ``dict`` of the import row.
+        :param row: A ``dict`` containing key / value data for the row to be imported.
 
         :param row_result: A ``RowResult`` instance.
           References the persisted ``instance`` as an attribute.
 
-        :param row_number: The row number from the dataset.
+        :param \**kwargs:
+            See :meth:`import_row`
         """
         pass
 
     def after_import_instance(self, instance, new, row_number=None, **kwargs):
-        """
+        warn(
+            "The 'after_import_instance' method is deprecated and will be replaced "
+            "with 'after_init_instance(self, instance, new, row, **kwargs)' "
+            "in a future release.  Refer to Release Notes for details.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        if row_number is not None:
+            kwargs.update({"row_number": row_number})
+        self.after_init_instance(instance, new, None, **kwargs)
+
+    def after_init_instance(self, instance, new, row, **kwargs):
+        r"""
         Override to add additional logic. Does nothing by default.
+
+        :param instance: A new or existing model instance.
+
+        :param new: a boolean flag indicating whether instance is new or existing.
+
+        :param row: A ``dict`` containing key / value data for the row to be imported.
+
+        :param \**kwargs:
+            See :meth:`import_row`
         """
         pass
 
@@ -732,41 +658,42 @@ class Resource(metaclass=DeclarativeMetaclass):
         logger.debug(error, exc_info=error)
         if result:
             tb_info = traceback.format_exc()
-            result.append_base_error(self.get_error_result_class()(error, tb_info))
+            result.append_base_error(
+                self.get_error_result_class()(error, traceback=tb_info)
+            )
         if raise_errors:
-            raise
+            raise exceptions.ImportError(error)
 
-    def import_row(
-        self,
-        row,
-        instance_loader,
-        using_transactions=True,
-        dry_run=False,
-        raise_errors=None,
-        **kwargs
-    ):
-        """
+    def import_row(self, row, instance_loader, **kwargs):
+        r"""
         Imports data from ``tablib.Dataset``. Refer to :doc:`import_workflow`
         for a more complete description of the whole import process.
 
-        :param row: A ``dict`` of the row to import
+        :param row: A ``dict`` of the 'row' to import.
+          A row is a dict of data fields so can be a csv line, a JSON object,
+          a YAML object etc.
 
-        :param instance_loader: The instance loader to be used to load the row
+        :param instance_loader: The instance loader to be used to load the model
+          instance associated with the row (if there is one).
 
-        :param using_transactions: If ``using_transactions`` is set, a transaction
-            is being used to wrap the import
+        :param \**kwargs:
+            See below.
 
-        :param dry_run: If ``dry_run`` is set, or error occurs, transaction
-            will be rolled back.
+        :Keyword Arguments:
+            * dry_run (``boolean``) --
+              A True value means that no data should be persisted.
+            * use_transactions (``boolean``) --
+              A True value means that transactions will be rolled back.
+            * row_number  (``int``) --
+              The index of the row being imported.
         """
-        if raise_errors is not None:
-            warnings.warn(
-                "raise_errors argument is deprecated and "
-                "will be removed in a future release.",
-                category=DeprecationWarning,
+        skip_diff = self._meta.skip_diff
+
+        if not self._meta.store_instance:
+            self._meta.store_instance = kwargs.get(
+                "retain_instance_in_row_result", False
             )
 
-        skip_diff = self._meta.skip_diff
         row_result = self.get_row_result_class()()
         if self._meta.store_row_values:
             row_result.row_values = row
@@ -774,12 +701,11 @@ class Resource(metaclass=DeclarativeMetaclass):
         try:
             self.before_import_row(row, **kwargs)
             instance, new = self.get_or_init_instance(instance_loader, row)
-            self.after_import_instance(instance, new, **kwargs)
+            self.after_init_instance(instance, new, row, **kwargs)
             if new:
                 row_result.import_type = RowResult.IMPORT_TYPE_NEW
             else:
                 row_result.import_type = RowResult.IMPORT_TYPE_UPDATE
-            row_result.new_record = new
             if not skip_diff:
                 original = deepcopy(instance)
                 diff = self.get_diff_class()(self, original, new)
@@ -787,23 +713,24 @@ class Resource(metaclass=DeclarativeMetaclass):
                 if new:
                     row_result.import_type = RowResult.IMPORT_TYPE_SKIP
                     if not skip_diff:
-                        diff.compare_with(self, None, dry_run)
+                        diff.compare_with(self, None)
                 else:
                     row_result.import_type = RowResult.IMPORT_TYPE_DELETE
                     row_result.add_instance_info(instance)
                     if self._meta.store_instance:
-                        row_result.instance = instance
-                    self.delete_instance(instance, using_transactions, dry_run)
+                        # create a copy before deletion so id fields are retained
+                        row_result.instance = deepcopy(instance)
+                    self.delete_instance(instance, row, **kwargs)
                     if not skip_diff:
-                        diff.compare_with(self, None, dry_run)
+                        diff.compare_with(self, None)
             else:
                 import_validation_errors = {}
                 try:
-                    self.import_obj(instance, row, dry_run, **kwargs)
+                    self.import_instance(instance, row, **kwargs)
                 except ValidationError as e:
-                    # Validation errors from import_obj() are passed on to
-                    # validate_instance(), where they can be combined with model
-                    # instance validation errors if necessary
+                    # Validation errors are passed on to validate_instance(),
+                    # where they can be combined with model instance validation
+                    # errors if necessary
                     import_validation_errors = e.update_error_dict(
                         import_validation_errors
                     )
@@ -812,13 +739,13 @@ class Resource(metaclass=DeclarativeMetaclass):
                     row_result.import_type = RowResult.IMPORT_TYPE_SKIP
                 else:
                     self.validate_instance(instance, import_validation_errors)
-                    self.save_instance(instance, new, using_transactions, dry_run)
-                    self.save_m2m(instance, row, using_transactions, dry_run)
+                    self.save_instance(instance, new, row, **kwargs)
+                    self.save_m2m(instance, row, **kwargs)
                 row_result.add_instance_info(instance)
                 if self._meta.store_instance:
                     row_result.instance = instance
                 if not skip_diff:
-                    diff.compare_with(self, instance, dry_run)
+                    diff.compare_with(self, instance)
                     if not new:
                         row_result.original = original
 
@@ -836,7 +763,11 @@ class Resource(metaclass=DeclarativeMetaclass):
             if not isinstance(e, TransactionManagementError):
                 logger.debug(e, exc_info=e)
             tb_info = traceback.format_exc()
-            row_result.errors.append(self.get_error_result_class()(e, tb_info, row))
+            row_result.errors.append(
+                self.get_error_result_class()(
+                    e, traceback=tb_info, row=row, number=kwargs["row_number"]
+                )
+            )
 
         return row_result
 
@@ -848,13 +779,13 @@ class Resource(metaclass=DeclarativeMetaclass):
         use_transactions=None,
         collect_failed_rows=False,
         rollback_on_validation_errors=False,
-        **kwargs
+        **kwargs,
     ):
-        """
+        r"""
         Imports data from ``tablib.Dataset``. Refer to :doc:`import_workflow`
         for a more complete description of the whole import process.
 
-        :param dataset: A ``tablib.Dataset``
+        :param dataset: A ``tablib.Dataset``.
 
         :param raise_errors: Whether errors should be printed to the end user
             or raised regularly.
@@ -862,15 +793,22 @@ class Resource(metaclass=DeclarativeMetaclass):
         :param use_transactions: If ``True`` the import process will be processed
             inside a transaction.
 
-        :param collect_failed_rows: If ``True`` the import process will collect
-            failed rows.
+        :param collect_failed_rows:
+          If ``True`` the import process will create a new dataset object comprising
+          failed rows and errors.
+          This can be useful for debugging purposes but will cause higher memory usage
+          for larger datasets.
+          See :attr:`~import_export.results.Result.failed_dataset`.
 
         :param rollback_on_validation_errors: If both ``use_transactions`` and
-        ``rollback_on_validation_errors`` are set to ``True``, the import process will
-        be rolled back in case of ValidationError.
+          ``rollback_on_validation_errors`` are set to ``True``, the import process will
+          be rolled back in case of ValidationError.
 
         :param dry_run: If ``dry_run`` is set, or an error occurs, if a transaction
             is being used, it will be rolled back.
+
+        :param \**kwargs:
+            Metadata which may be associated with the import.
         """
 
         if use_transactions is None:
@@ -899,7 +837,7 @@ class Resource(metaclass=DeclarativeMetaclass):
                 raise_errors,
                 using_transactions,
                 collect_failed_rows,
-                **kwargs
+                **kwargs,
             )
             if using_transactions and (
                 dry_run
@@ -916,16 +854,8 @@ class Resource(metaclass=DeclarativeMetaclass):
         raise_errors,
         using_transactions,
         collect_failed_rows,
-        rollback_on_validation_errors=None,
-        **kwargs
+        **kwargs,
     ):
-        if rollback_on_validation_errors is not None:
-            warnings.warn(
-                "rollback_on_validation_errors argument is deprecated and will be "
-                "removed in a future release.",
-                category=DeprecationWarning,
-            )
-
         result = self.get_result_class()()
         result.diff_headers = self.get_diff_headers()
         result.total_rows = len(dataset)
@@ -933,10 +863,11 @@ class Resource(metaclass=DeclarativeMetaclass):
 
         try:
             with atomic_if_using_transaction(using_transactions, using=db_connection):
-                self.before_import(dataset, using_transactions, dry_run, **kwargs)
+                self.before_import(dataset, **kwargs)
         except Exception as e:
             self.handle_import_error(result, e, raise_errors)
 
+        self._check_import_id_fields(dataset.headers)
         instance_loader = self._meta.instance_loader_class(self, dataset)
 
         # Update the total in case the dataset was altered by before_import()
@@ -950,13 +881,17 @@ class Resource(metaclass=DeclarativeMetaclass):
             with atomic_if_using_transaction(
                 using_transactions and not self._meta.use_bulk, using=db_connection
             ):
+                kwargs.update(
+                    {
+                        "dry_run": dry_run,
+                        "using_transactions": using_transactions,
+                        "row_number": i,
+                    }
+                )
                 row_result = self.import_row(
                     row,
                     instance_loader,
-                    using_transactions=using_transactions,
-                    dry_run=dry_run,
-                    row_number=i,
-                    **kwargs
+                    **kwargs,
                 )
             if self._meta.use_bulk:
                 # persist a batch of rows
@@ -995,16 +930,21 @@ class Resource(metaclass=DeclarativeMetaclass):
             result.increment_row_result_total(row_result)
 
             if row_result.errors:
+                result.append_error_row(i, row, row_result.errors)
                 if collect_failed_rows:
                     result.append_failed_row(row, row_result.errors[0])
                 if raise_errors:
-                    raise row_result.errors[-1].error
+                    raise exceptions.ImportError(
+                        row_result.errors[-1].error, number=i, row=row
+                    )
             elif row_result.validation_error:
                 result.append_invalid_row(i, row, row_result.validation_error)
                 if collect_failed_rows:
                     result.append_failed_row(row, row_result.validation_error)
                 if raise_errors:
-                    raise row_result.validation_error
+                    raise exceptions.ImportError(
+                        row_result.validation_error, number=i, row=row
+                    )
             if (
                 row_result.import_type != RowResult.IMPORT_TYPE_SKIP
                 or self._meta.report_skipped
@@ -1026,53 +966,85 @@ class Resource(metaclass=DeclarativeMetaclass):
 
         try:
             with atomic_if_using_transaction(using_transactions, using=db_connection):
-                self.after_import(
-                    dataset, result, using_transactions, dry_run, **kwargs
-                )
+                self.after_import(dataset, result, **kwargs)
         except Exception as e:
             self.handle_import_error(result, e, raise_errors)
 
         return result
 
+    def get_import_order(self):
+        return self._get_ordered_field_names("import_order")
+
     def get_export_order(self):
-        order = tuple(self._meta.export_order or ())
-        return order + tuple(k for k in self.fields if k not in order)
+        return self._get_ordered_field_names("export_order")
 
-    def before_export(self, queryset, *args, **kwargs):
-        """
+    def before_export(self, queryset, **kwargs):
+        r"""
         Override to add additional logic. Does nothing by default.
+
+        :param queryset: The queryset for export.
+
+        :param \**kwargs:
+            Metadata which may be associated with the export.
         """
         pass
 
-    def after_export(self, queryset, data, *args, **kwargs):
-        """
+    def after_export(self, queryset, dataset, **kwargs):
+        r"""
         Override to add additional logic. Does nothing by default.
+
+        :param queryset: The queryset for export.
+
+        :param dataset: A ``tablib.Dataset``.
+
+        :param \**kwargs:
+            Metadata which may be associated with the export.
         """
         pass
 
-    def filter_export(self, queryset, *args, **kwargs):
-        """
+    def filter_export(self, queryset, **kwargs):
+        r"""
         Override to filter an export queryset.
+
+        :param queryset: The queryset for export (optional).
+
+        :param \**kwargs:
+            Metadata which may be associated with the export.
+
+        :returns: The filtered queryset.
         """
         return queryset
 
-    def export_field(self, field, obj):
+    def export_field(self, field, instance):
         field_name = self.get_field_name(field)
         dehydrate_method = field.get_dehydrate_method(field_name)
 
         method = getattr(self, dehydrate_method, None)
         if method is not None:
-            return method(obj)
-        return field.export(obj)
+            return method(instance)
+        return field.export(instance)
 
     def get_export_fields(self):
-        return self.get_fields()
+        return [self.fields[f] for f in self.get_export_order()]
 
-    def export_resource(self, obj):
-        return [self.export_field(field, obj) for field in self.get_export_fields()]
+    def export_resource(self, instance, fields=None):
+        export_fields = self.get_export_fields()
 
-    def get_export_headers(self):
+        if isinstance(fields, list) and fields:
+            return [
+                self.export_field(field, instance)
+                for field in export_fields
+                if field.column_name in fields
+            ]
+
+        return [self.export_field(field, instance) for field in export_fields]
+
+    def get_export_headers(self, fields=None):
         headers = [force_str(field.column_name) for field in self.get_export_fields()]
+
+        if isinstance(fields, list) and fields:
+            return [f for f in headers if f in fields]
+
         return headers
 
     def get_user_visible_headers(self):
@@ -1101,123 +1073,72 @@ class Resource(metaclass=DeclarativeMetaclass):
         else:
             yield from queryset.iterator(chunk_size=self.get_chunk_size())
 
-    def export(self, *args, queryset=None, **kwargs):
+    def export(self, queryset=None, **kwargs):
         """
         Exports a resource.
-        :returns: Dataset object.
-        """
-        if len(args) == 1 and (
-            isinstance(args[0], QuerySet) or isinstance(args[0], list)
-        ):
-            # issue 1565: definition of export() was incorrect
-            # if queryset is being passed, it must be as the first arg or named
-            # parameter
-            # this logic is included for backwards compatibility:
-            # if the method is being called without a named parameter, add a warning
-            # this check should be removed in a future release
-            warnings.warn(
-                "'queryset' must be supplied as a named parameter",
-                category=DeprecationWarning,
-            )
-            queryset = args[0]
 
-        self.before_export(queryset, *args, **kwargs)
+        :param queryset: The queryset for export (optional).
+
+        :returns: A ``tablib.Dataset``.
+        """
+        self.before_export(queryset, **kwargs)
 
         if queryset is None:
             queryset = self.get_queryset()
-        queryset = self.filter_export(queryset, *args, **kwargs)
-        headers = self.get_export_headers()
-        data = tablib.Dataset(headers=headers)
+        queryset = self.filter_export(queryset, **kwargs)
+        export_fields = kwargs.get("export_fields", None)
+        headers = self.get_export_headers(fields=export_fields)
+        dataset = tablib.Dataset(headers=headers)
 
         for obj in self.iter_queryset(queryset):
-            data.append(self.export_resource(obj))
+            dataset.append(self.export_resource(obj, fields=export_fields))
 
-        self.after_export(queryset, data, *args, **kwargs)
+        self.after_export(queryset, dataset, **kwargs)
 
-        return data
+        return dataset
 
+    def _get_ordered_field_names(self, order_field):
+        """
+        Return a list of field names, respecting any defined ordering.
+        """
+        # get any declared 'order' fields
+        order_fields = getattr(self._meta, order_field) or ()
+        # get any defined fields
+        defined_fields = order_fields + tuple(getattr(self._meta, "fields") or ())
 
-class ModelDeclarativeMetaclass(DeclarativeMetaclass):
-    def __new__(cls, name, bases, attrs):
-        new_class = super().__new__(cls, name, bases, attrs)
+        order = list()
+        [order.append(f) for f in defined_fields if f not in order]
+        return tuple(order) + tuple(k for k in self.fields if k not in order)
 
-        opts = new_class._meta
+    def _is_using_transactions(self, kwargs):
+        return kwargs.get("using_transactions", False)
 
-        if not opts.instance_loader_class:
-            opts.instance_loader_class = ModelInstanceLoader
+    def _is_dry_run(self, kwargs):
+        return kwargs.get("dry_run", False)
 
-        if opts.model:
-            model_opts = opts.model._meta
-            declared_fields = new_class.fields
+    def _check_import_id_fields(self, headers):
+        import_id_fields = list()
+        missing_fields = list()
 
-            field_list = []
-            for f in sorted(model_opts.fields + model_opts.many_to_many):
-                if opts.fields is not None and f.name not in opts.fields:
-                    continue
-                if opts.exclude and f.name in opts.exclude:
-                    continue
-                if f.name in declared_fields:
-                    continue
+        for field_name in self.get_import_id_fields():
+            if field_name not in self.fields:
+                missing_fields.append(field_name)
+            else:
+                import_id_fields.append(self.fields[field_name])
 
-                field = new_class.field_from_django_field(f.name, f, readonly=False)
-                field_list.append(
-                    (
-                        f.name,
-                        field,
-                    )
+        for field in import_id_fields:
+            if not headers or field.column_name not in headers:
+                # escape to be safe (exception could end up in logs)
+                col = escape(field.column_name)
+                missing_fields.append(col)
+
+        if missing_fields:
+            raise exceptions.FieldError(
+                _(
+                    "The following fields are declared in 'import_id_fields' but "
+                    "are not present in the resource: %s" % ", ".join(missing_fields)
                 )
-
-            new_class.fields.update(OrderedDict(field_list))
-
-            # add fields that follow relationships
-            if opts.fields is not None:
-                field_list = []
-                for field_name in opts.fields:
-                    if field_name in declared_fields:
-                        continue
-                    if field_name.find("__") == -1:
-                        continue
-
-                    model = opts.model
-                    attrs = field_name.split("__")
-                    for i, attr in enumerate(attrs):
-                        verbose_path = ".".join(
-                            [opts.model.__name__] + attrs[0 : i + 1]
-                        )
-
-                        try:
-                            f = model._meta.get_field(attr)
-                        except FieldDoesNotExist as e:
-                            logger.debug(e, exc_info=e)
-                            raise FieldDoesNotExist(
-                                "%s: %s has no field named '%s'"
-                                % (verbose_path, model.__name__, attr)
-                            )
-
-                        if i < len(attrs) - 1:
-                            # We're not at the last attribute yet, so check
-                            # that we're looking at a relation, and move on to
-                            # the next model.
-                            if isinstance(f, ForeignObjectRel):
-                                model = get_related_model(f)
-                            else:
-                                if get_related_model(f) is None:
-                                    raise KeyError(
-                                        "%s is not a relation" % verbose_path
-                                    )
-                                model = get_related_model(f)
-
-                    if isinstance(f, ForeignObjectRel):
-                        f = f.field
-
-                    field = new_class.field_from_django_field(
-                        field_name, f, readonly=True
-                    )
-                    field_list.append((field_name, field))
-
-                new_class.fields.update(OrderedDict(field_list))
-
-        return new_class
+            )
 
 
 class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
@@ -1311,13 +1232,20 @@ class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
         return result
 
     @classmethod
-    def widget_kwargs_for_field(self, field_name):
+    def widget_kwargs_for_field(cls, field_name, django_field):
         """
         Returns widget kwargs for given field_name.
         """
-        if self._meta.widgets:
-            return self._meta.widgets.get(field_name, {})
-        return {}
+        widget_kwargs = {}
+        if cls._meta.widgets:
+            cls_kwargs = cls._meta.widgets.get(field_name, {})
+            widget_kwargs.update(cls_kwargs)
+        if (
+            issubclass(django_field.__class__, fields.CharField)
+            and django_field.blank is True
+        ):
+            widget_kwargs.update({"coerce_to_string": True, "allow_blank": True})
+        return widget_kwargs
 
     @classmethod
     def field_from_django_field(cls, field_name, django_field, readonly):
@@ -1326,10 +1254,18 @@ class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
         """
 
         FieldWidget = cls.widget_from_django_field(django_field)
-        widget_kwargs = cls.widget_kwargs_for_field(field_name)
+        widget_kwargs = cls.widget_kwargs_for_field(field_name, django_field)
+
+        attribute = field_name
+        column_name = field_name
+        # To solve #974
+        if isinstance(django_field, ForeignKey) and "__" not in column_name:
+            attribute += "_id"
+            widget_kwargs["key_is_id"] = True
+
         field = cls.DEFAULT_RESOURCE_FIELD(
-            attribute=field_name,
-            column_name=field_name,
+            attribute=attribute,
+            column_name=column_name,
             widget=FieldWidget(**widget_kwargs),
             readonly=readonly,
             default=django_field.default,
@@ -1349,11 +1285,12 @@ class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
         """
         return self._meta.model()
 
-    def after_import(self, dataset, result, using_transactions, dry_run, **kwargs):
+    def after_import(self, dataset, result, **kwargs):
         """
         Reset the SQL sequences after new objects are imported
         """
         # Adapted from django's loaddata
+        dry_run = self._is_dry_run(kwargs)
         if not dry_run and any(
             r.import_type == RowResult.IMPORT_TYPE_NEW for r in result.rows
         ):

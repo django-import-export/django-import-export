@@ -2,9 +2,10 @@ import os
 import tempfile
 from uuid import uuid4
 
+import django
+from django.conf import settings
 from django.core.cache import cache
 from django.core.files.base import ContentFile
-from django.core.files.storage import default_storage
 
 
 class BaseStorage:
@@ -68,24 +69,48 @@ class CacheStorage(BaseStorage):
 
 
 class MediaStorage(BaseStorage):
-    MEDIA_FOLDER = "django-import-export"
+    _storage = None
 
     def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        if django.VERSION[:2] > (4, 2):
+            self._configure_storage()
+        else:
+            self._configure_storage_legacy()
+
+        self.MEDIA_FOLDER = kwargs.get("MEDIA_FOLDER", "django-import-export")
+
         # issue 1589 - Ensure that for MediaStorage, we read in binary mode
         kwargs.update({"read_mode": "rb"})
         super().__init__(**kwargs)
 
+    def _configure_storage(self):
+        from django.core.files.storage import StorageHandler
+
+        sh = StorageHandler()
+        self._storage = (
+            sh["import_export"] if "import_export" in sh.backends else sh["default"]
+        )
+
+    def _configure_storage_legacy(self):
+        from django.core.files.storage import default_storage
+
+        storage_class = getattr(settings, "IMPORT_EXPORT_DEFAULT_FILE_STORAGE", None)
+        self._storage = storage_class() if storage_class else default_storage
+
     def save(self, data):
         if not self.name:
             self.name = uuid4().hex
-        default_storage.save(self.get_full_path(), ContentFile(data))
+        self._storage.save(self.get_full_path(), ContentFile(data))
 
     def read(self):
-        with default_storage.open(self.get_full_path(), mode=self.read_mode) as f:
+        with self._storage.open(self.get_full_path(), mode=self.read_mode) as f:
             return f.read()
 
     def remove(self):
-        default_storage.delete(self.get_full_path())
+        self._storage.delete(self.get_full_path())
 
     def get_full_path(self):
-        return os.path.join(self.MEDIA_FOLDER, self.name)
+        if self.MEDIA_FOLDER is not None:
+            return os.path.join(self.MEDIA_FOLDER, self.name)
+        return self.name

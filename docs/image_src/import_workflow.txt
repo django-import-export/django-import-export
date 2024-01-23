@@ -1,0 +1,93 @@
+# Source for import workflow sequence diagram.
+# This source can be loaded into sequencediagram.org (web app).
+# If this source is changed, then the svg image in 'images/' dir should be regenerated
+# by exporting from the web app.
+
+participant Resource
+participant Result
+participant RowResult
+participant InstanceLoader
+participant Field
+participant Widget
+
+Resource->Resource:""import_data(data, \*\*kwargs)""
+activate Resource
+Resource->Result:""__init__()""
+activate Result
+Resource<--Result:""Result""
+deactivate Result
+
+Resource->Resource:<background:#yellow>""before_import(dataset, \*\*kwargs)""
+
+loop #pink each row in dataset
+Resource->Resource:""import_row(row, instance_loader, \*\*kwargs)""
+activate Resource #lightblue
+Resource->RowResult:""__init__()""
+activate RowResult
+Resource<--RowResult:""RowResult""
+deactivate RowResult
+
+Resource->Resource:<background:#yellow>""before_import_row(row, \*\*kwargs)""
+
+
+Resource->Resource:<background:#yellow>""get_or_init_instance(instance_loader, \n    row)""
+activate Resource #lightgrey
+
+Resource->Resource:<background:#yellow>""get_instance(instance_loader, row)""
+activate Resource #lightgreen
+Resource->InstanceLoader:""get_instance(row)""
+activate InstanceLoader
+note over InstanceLoader: Existing Instance is returned if exists,\n otherwise a new Instance is created.
+
+Resource<--InstanceLoader:""Instance""
+deactivate InstanceLoader
+Resource-->Resource:""Instance""
+deactivate Resource
+Resource-->Resource:""Instance, bool""
+deactivate Resource
+
+Resource->Resource:<background:#yellow>""after_init_instance(instance, new, row \n   \*\*kwargs)""
+
+Resource->Resource:<background:#yellow>""for_delete(row, instance)""
+activate Resource #lightgrey
+note over Resource: If True, row is deleted.
+Resource-->Resource:""bool""
+
+deactivate Resource
+
+Resource->Resource:""import_instance(instance, row, \*\*kwargs)""
+activate Resource #lightgrey
+
+loop #green each field in row
+Resource->Field:""save(instance, row, is_m2m, \*\*kwargs)""
+note over Field: save logic determines the correct value\nand sets attribute on instance.
+Field->Field:""clean(row, \*\*kwargs)""
+activate Field
+Field->Widget:""clean(value, row, \*\*kwargs)""
+activate Widget
+Field<--Widget:""value""
+deactivate Widget
+deactivate Field
+end
+
+deactivate Resource
+
+Resource->Resource:<background:#yellow>""skip_row(instance, original, row, \n    import_validation_errors)""
+activate Resource #lightgrey
+note over Resource: If True, row is skipped.
+Resource-->Resource:""bool""
+deactivate Resource
+
+Resource->Resource:<background:#yellow>""validate_instance(instance, \n   import_validation_errors)""
+Resource->Resource:<background:#yellow>""save_instance(instance, row, new, \n    \*\*kwargs)""
+Resource->Resource:<background:#yellow>""save_m2m(instance, row, \*\*kwargs)""
+
+Resource->Resource:<background:#yellow>""after_import_row(row, row_result, \n    \*\*kwargs)""
+
+
+Resource-->Resource:""RowResult""
+deactivate Resource
+end
+
+Resource<--Resource:""Result""
+deactivate Resource

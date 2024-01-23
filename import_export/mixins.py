@@ -1,5 +1,5 @@
 import logging
-import warnings
+from warnings import warn
 
 from django.conf import settings
 from django.http import HttpResponse
@@ -7,7 +7,7 @@ from django.utils.timezone import now
 from django.views.generic.edit import FormView
 
 from .formats import base_formats
-from .forms import ExportForm
+from .forms import SelectableFieldsExportForm
 from .resources import modelresource_factory
 from .signals import post_export
 
@@ -15,7 +15,6 @@ logger = logging.getLogger(__name__)
 
 
 class BaseImportExportMixin:
-    resource_class = None
     resource_classes = []
 
     @property
@@ -39,28 +38,9 @@ class BaseImportExportMixin:
 
     def get_resource_classes(self):
         """Return subscriptable type (list, tuple, ...) containing resource classes"""
-        if self.resource_classes and self.resource_class:
-            raise Exception(
-                "Only one of 'resource_class' and 'resource_classes' can be set"
-            )
-        if hasattr(self, "get_resource_class"):
-            warnings.warn(
-                "The 'get_resource_class()' method has been deprecated. "
-                "Please implement the new 'get_resource_classes()' method",
-                DeprecationWarning,
-            )
-            return [self.get_resource_class()]
-        if self.resource_class:
-            warnings.warn(
-                "The 'resource_class' field has been deprecated. "
-                "Please implement the new 'resource_classes' field",
-                DeprecationWarning,
-            )
-        if not self.resource_classes and not self.resource_class:
+        if not self.resource_classes:
             return [modelresource_factory(self.model)]
-        if self.resource_classes:
-            return self.resource_classes
-        return [self.resource_class]
+        return self.resource_classes
 
     def get_resource_kwargs(self, request, *args, **kwargs):
         return {}
@@ -80,14 +60,6 @@ class BaseImportMixin(BaseImportExportMixin):
         """
         Returns ResourceClass subscriptable (list, tuple, ...) to use for import.
         """
-        if hasattr(self, "get_import_resource_class"):
-            warnings.warn(
-                "The 'get_import_resource_class()' method has been deprecated. "
-                "Please implement the new 'get_import_resource_classes()' method",
-                DeprecationWarning,
-            )
-            return [self.get_import_resource_class()]
-
         resource_classes = self.get_resource_classes()
         self.check_resource_classes(resource_classes)
         return resource_classes
@@ -98,8 +70,8 @@ class BaseImportMixin(BaseImportExportMixin):
         """
         return [f for f in self.import_formats if f().can_import()]
 
-    def get_import_resource_kwargs(self, request, *args, **kwargs):
-        return self.get_resource_kwargs(request, *args, **kwargs)
+    def get_import_resource_kwargs(self, request, **kwargs):
+        return self.get_resource_kwargs(request, **kwargs)
 
     def choose_import_resource_class(self, form):
         resource_index = self.get_resource_index(form)
@@ -108,31 +80,6 @@ class BaseImportMixin(BaseImportExportMixin):
 
 class BaseExportMixin(BaseImportExportMixin):
     model = None
-    escape_exported_data = False
-    escape_html = False
-    escape_formulae = False
-
-    @property
-    def should_escape_html(self):
-        if hasattr(settings, "IMPORT_EXPORT_ESCAPE_HTML_ON_EXPORT"):
-            warnings.warn(
-                "IMPORT_EXPORT_ESCAPE_HTML_ON_EXPORT is deprecated and "
-                "will be removed in a future release.",
-                DeprecationWarning,
-            )
-        v = getattr(settings, "IMPORT_EXPORT_ESCAPE_HTML_ON_EXPORT", self.escape_html)
-        if v is True:
-            logger.debug("IMPORT_EXPORT_ESCAPE_HTML_ON_EXPORT is enabled")
-        return v
-
-    @property
-    def should_escape_formulae(self):
-        v = getattr(
-            settings, "IMPORT_EXPORT_ESCAPE_FORMULAE_ON_EXPORT", self.escape_formulae
-        )
-        if v is True:
-            logger.debug("IMPORT_EXPORT_ESCAPE_FORMULAE_ON_EXPORT is enabled")
-        return v
 
     def get_export_formats(self):
         """
@@ -144,14 +91,6 @@ class BaseExportMixin(BaseImportExportMixin):
         """
         Returns ResourceClass subscriptable (list, tuple, ...) to use for export.
         """
-        if hasattr(self, "get_export_resource_class"):
-            warnings.warn(
-                "The 'get_export_resource_class()' method has been deprecated. "
-                "Please implement the new 'get_export_resource_classes()' method",
-                DeprecationWarning,
-            )
-            return [self.get_export_resource_class()]
-
         resource_classes = self.get_resource_classes()
         self.check_resource_classes(resource_classes)
         return resource_classes
@@ -160,17 +99,26 @@ class BaseExportMixin(BaseImportExportMixin):
         resource_index = self.get_resource_index(form)
         return self.get_export_resource_classes()[resource_index]
 
-    def get_export_resource_kwargs(self, request, *args, **kwargs):
-        return self.get_resource_kwargs(request, *args, **kwargs)
+    def get_export_resource_kwargs(self, request, **kwargs):
+        return self.get_resource_kwargs(request, **kwargs)
 
-    def get_data_for_export(self, request, queryset, *args, **kwargs):
+    def get_export_resource_fields_from_form(self, form):
+        if isinstance(form, SelectableFieldsExportForm):
+            export_fields = form.get_selected_resource_export_fields()
+            if export_fields:
+                return export_fields
+
+        return
+
+    def get_data_for_export(self, request, queryset, **kwargs):
         export_form = kwargs.get("export_form")
         export_class = self.choose_export_resource_class(export_form)
-        export_resource_kwargs = self.get_export_resource_kwargs(
-            request, *args, **kwargs
-        )
+        export_resource_kwargs = self.get_export_resource_kwargs(request, **kwargs)
+        export_fields = self.get_export_resource_fields_from_form(export_form)
         cls = export_class(**export_resource_kwargs)
-        export_data = cls.export(*args, queryset=queryset, **kwargs)
+        export_data = cls.export(
+            queryset=queryset, export_fields=export_fields, **kwargs
+        )
         return export_data
 
     def get_export_filename(self, file_format):
@@ -184,7 +132,7 @@ class BaseExportMixin(BaseImportExportMixin):
 
 
 class ExportViewMixin(BaseExportMixin):
-    form_class = ExportForm
+    form_class = SelectableFieldsExportForm
 
     def get_export_data(self, file_format, queryset, *args, **kwargs):
         """
@@ -201,13 +149,20 @@ class ExportViewMixin(BaseExportMixin):
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs["formats"] = self.get_export_formats()
+        kwargs["resources"] = self.get_export_resource_classes()
         return kwargs
 
 
 class ExportViewFormMixin(ExportViewMixin, FormView):
     def form_valid(self, form):
+        warn(
+            "ExportViewFormMixin is deprecated and will be removed "
+            "in a future release",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         formats = self.get_export_formats()
-        file_format = formats[int(form.cleaned_data["file_format"])]()
+        file_format = formats[int(form.cleaned_data["format"])]()
         if hasattr(self, "get_filterset"):
             queryset = self.get_filterset(self.get_filterset_class()).qs
         else:

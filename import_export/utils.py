@@ -26,11 +26,6 @@ class atomic_if_using_transaction:
             self.context_manager.__exit__(*args)
 
 
-def original(method):
-    """
-    A decorator used to mark some class methods as 'original',
-    making it easy to detect whether they have been overridden
-    by a subclass. Useful for method deprecation.
-    """
-    method.is_original = True
-    return method
+def get_related_model(field):
+    if hasattr(field, "related_model"):
+        return field.related_model
