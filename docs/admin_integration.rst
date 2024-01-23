@@ -236,8 +236,8 @@ To use your customized form(s), change the respective attributes on your
 * :attr:`~import_export.admin.ImportMixin.import_form_class`
 * :attr:`~import_export.admin.ImportMixin.confirm_form_class`
 
-For example, imagine you want to import books for a specific author. You can
-extend the import forms to include ``author`` field to select the author from.
+For example, imagine you want to import books and set each book to have the same Author, selected from a
+dropdown. You can extend the import forms to include ``author`` field to select the author from.
 
 .. note::
 
@@ -269,13 +269,38 @@ Customize ``ModelAdmin`` (for example see ``tests/core/admin.py``)::
 
         def get_confirm_form_initial(self, request, import_form):
             initial = super().get_confirm_form_initial(request, import_form)
+
             # Pass on the `author` value from the import form to
             # the confirm form (if provided)
             if import_form:
                 initial['author'] = import_form.cleaned_data['author']
             return initial
 
-    admin.site.register(Book, CustomBookAdmin)
+    admin.site.register(EBook, CustomBookAdmin)
+
+In order to save the selected author along with the EBook, another couple of methods are required.
+Add the following to ``CustomBookAdmin`` class (in ``tests/core/admin.py``)::
+
+    def get_import_data_kwargs(self, request, *args, **kwargs):
+        """
+        Prepare kwargs for import_data.
+        """
+        form = kwargs.get("form", None)
+        if form and hasattr(form, "cleaned_data"):
+            kwargs.update({"author": form.cleaned_data.get("author", None)})
+        return kwargs
+
+Then add the following to ``CustomBookAdmin`` class (in ``tests/core/admin.py``)::
+
+    def after_init_instance(self, instance, new, row, **kwargs):
+        if "author" in kwargs:
+            instance.author = kwargs["author"]
+
+The selected author is now set as an attribute on the instance object.  When the instance is saved,
+then the author is set as a foreign key relation to the instance.
+
+Further customization
+---------------------
 
 To further customize the import forms, you might like to consider overriding the following
 :class:`~import_export.admin.ImportMixin` methods:
@@ -285,17 +310,6 @@ To further customize the import forms, you might like to consider overriding the
 * :meth:`~import_export.admin.ImportMixin.get_import_form_initial`
 * :meth:`~import_export.admin.ImportMixin.get_confirm_form_class`
 * :meth:`~import_export.admin.ImportMixin.get_confirm_form_kwargs`
-
-For example, to pass extract form values (so that they get passed to the import process)::
-
-    def get_import_data_kwargs(self, request, *args, **kwargs):
-        """
-        Return form data as kwargs for import_data.
-        """
-        form = kwargs.get('form')
-        if form:
-            return form.cleaned_data
-        return {}
 
 The parameters can then be read from ``Resource`` methods, such as:
 

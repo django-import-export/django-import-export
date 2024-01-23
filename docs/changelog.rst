@@ -18,6 +18,7 @@ Changelog
 - Refactor `test_resources.py` into smaller modules (#1733)
 - Added specific check for declared :attr:`~import_export.options.ResourceOptions.import_id_fields` not in dataset
   (#1735)
+- Updated Admin integration documentation to clarify how to save custom form values (#)
 
 4.0.0-beta.2 (2023-12-09)
 -------------------------
