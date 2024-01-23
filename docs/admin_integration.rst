@@ -273,7 +273,7 @@ Customize ``ModelAdmin`` (for example see ``tests/core/admin.py``)::
             # Pass on the `author` value from the import form to
             # the confirm form (if provided)
             if import_form:
-                initial['author'] = import_form.cleaned_data['author']
+                initial['author'] = import_form.cleaned_data['author'].id
             return initial
 
     admin.site.register(EBook, CustomBookAdmin)

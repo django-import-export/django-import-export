@@ -70,7 +70,7 @@ class CustomBookAdmin(ImportExportModelAdmin):
         # Pass on the `author` value from the import form to
         # the confirm form (if provided)
         if import_form:
-            initial["author"] = import_form.cleaned_data["author"]
+            initial["author"] = import_form.cleaned_data["author"].id
         return initial
 
     def get_import_resource_kwargs(self, request, **kwargs):
