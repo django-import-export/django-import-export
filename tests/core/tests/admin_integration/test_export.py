@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 
 import chardet
 import tablib
-from core.admin import BookAdmin
+from core.admin import BookAdmin, BookResource
 from core.models import Author, Book
 from core.tests.admin_integration.mixins import AdminTestMixin
 from core.tests.utils import (
@@ -60,6 +60,28 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
             b"id,name,author_email,categories\r\n",
             response.content,
         )
+
+    @mock.patch("core.admin.BookAdmin.get_export_resource_kwargs")
+    def test_export_passes_export_resource_kwargs(
+        self, mock_get_export_resource_kwargs
+    ):
+        # issue 1738
+        mock_get_export_resource_kwargs.return_value = {"a": 1}
+        response = self.client.get("/admin/core/book/export/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(2, mock_get_export_resource_kwargs.call_count)
+
+    def book_resource_init(self):
+        # stub call to the resource constructor
+        pass
+
+    @mock.patch.object(BookResource, "__init__", book_resource_init)
+    def test_export_passes_no_resource_constructor_params(self):
+        # issue 1716
+        # assert that the export call with a no-arg constructor
+        # does not crash
+        response = self.client.get("/admin/core/book/export/")
+        self.assertEqual(response.status_code, 200)
 
     def test_get_export_queryset(self):
         model_admin = BookAdmin(Book, AdminSite())
