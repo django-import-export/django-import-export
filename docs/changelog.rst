@@ -4,7 +4,7 @@ Changelog
 3.3.7 (unreleased)
 ------------------
 
-- Nothing changed yet.
+- Fix issue with model class passed to Resource constructor crashing on export (#)
 
 
 3.3.6 (2024-01-10)
