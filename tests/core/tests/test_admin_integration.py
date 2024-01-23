@@ -681,6 +681,16 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
             ],
         )
 
+    @mock.patch("core.admin.BookAdmin.get_export_resource_kwargs")
+    def test_export_passes_export_resource_kwargs(
+        self, mock_get_export_resource_kwargs
+    ):
+        # issue 1738
+        mock_get_export_resource_kwargs.return_value = {"a": 1}
+        response = self.client.get("/admin/core/book/export/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(2, mock_get_export_resource_kwargs.call_count)
+
     def book_resource_init(self):
         # stub call to the resource constructor
         pass

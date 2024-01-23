@@ -4,14 +4,14 @@ Changelog
 3.3.7 (unreleased)
 ------------------
 
-- Fix issue with model class passed to Resource constructor crashing on export (#)
-
+- Pass :meth:`~import_export.mixins.BaseExportMixin.get_export_resource_kwargs` to Resource constructor
+  :meth:`~import_export.admin.ExportMixin.export_action` (#1739)
+- Fix issue with model class passed to Resource constructor crashing on export (#1745)
 
 3.3.6 (2024-01-10)
 ------------------
 
 - Fix issue with highlight when using 'light' color scheme (#1728)
-
 
 3.3.5 (2023-12-19)
 ------------------
