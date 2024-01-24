@@ -38,6 +38,7 @@ from import_export.admin import (
 )
 from import_export.formats import base_formats
 from import_export.formats.base_formats import DEFAULT_FORMATS
+from import_export.resources import ModelResource
 from import_export.tmp_storages import TempFolderStorage
 
 
@@ -173,6 +174,22 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
             count=1,
             html=True,
         )
+
+    @patch("import_export.admin.ImportMixin.choose_import_resource_class")
+    def test_import_passes_correct_kwargs_to_constructor(
+        self, mock_choose_import_resource_class
+    ):
+        class TestResource(ModelResource):
+            def __init__(self, **kwargs):
+                super().__init__(**kwargs)
+                self.kwargs = kwargs
+                if "form" not in kwargs:
+                    raise Exception("No form")
+
+        mock_choose_import_resource_class.return_value = TestResource
+        # issue 1716
+        response = self._do_import_post(self.book_import_url, "books.csv")
+        self.assertEqual(response.status_code, 200)
 
     @override_settings(DEBUG=False)
     def test_correct_scripts_declared_when_debug_is_false(self):
