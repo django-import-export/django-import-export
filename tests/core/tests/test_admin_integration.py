@@ -179,15 +179,19 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
     def test_import_passes_correct_kwargs_to_constructor(
         self, mock_choose_import_resource_class
     ):
+        # issue 1716
         class TestResource(ModelResource):
             def __init__(self, **kwargs):
                 super().__init__(**kwargs)
-                self.kwargs = kwargs
+
+                # the form is passed as a kwarg to the Resource constructor
+                # if not present, then it means that the original kwargs were lost
                 if "form" not in kwargs:
                     raise Exception("No form")
 
+        # mock the returned resource class so that we can inspect constructor params
         mock_choose_import_resource_class.return_value = TestResource
-        # issue 1716
+
         response = self._do_import_post(self.book_import_url, "books.csv")
         self.assertEqual(response.status_code, 200)
 
