@@ -179,7 +179,7 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
     def test_import_passes_correct_kwargs_to_constructor(
         self, mock_choose_import_resource_class
     ):
-        # issue 1716
+        # issue 1741
         class TestResource(ModelResource):
             def __init__(self, **kwargs):
                 super().__init__(**kwargs)
