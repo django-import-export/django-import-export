@@ -63,7 +63,7 @@ class BaseImportExportMixin:
         return [self.resource_class]
 
     def get_resource_kwargs(self, request, *args, **kwargs):
-        return {}
+        return kwargs
 
     def get_resource_index(self, form):
         resource_index = 0
