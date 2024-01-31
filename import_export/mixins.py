@@ -15,6 +15,11 @@ logger = logging.getLogger(__name__)
 
 
 class BaseImportExportMixin:
+    """
+    Base mixin for functionality related to importing and exporting via the Admin
+    interface.
+    """
+
     resource_class = None
     resource_classes = []
 
@@ -63,9 +68,24 @@ class BaseImportExportMixin:
         return [self.resource_class]
 
     def get_resource_kwargs(self, request, *args, **kwargs):
+        """
+        Return the kwargs which are to be passed to the Resource constructor.
+        Can be overridden to provide additional kwarg params.
+
+        :param request: The request object.
+        :param args: Positional arguments.
+        :param kwargs: Keyword arguments.
+        :returns: The Resource kwargs (by default, is the kwargs passed).
+        """
         return kwargs
 
     def get_resource_index(self, form):
+        """
+        Return the index of the resource class defined in the form.
+
+        :param form: The form object.
+        :returns: The index of the resource as an int.
+        """
         resource_index = 0
         if form and "resource" in form.cleaned_data:
             try:

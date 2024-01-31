@@ -123,22 +123,6 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertContains(response, _("Export"))
         self.assertContains(response, "Custom change list item")
 
-    @patch("import_export.admin.ImportMixin.choose_import_resource_class")
-    def test_import_passes_correct_kwargs_to_constructor(
-        self, mock_choose_import_resource_class
-    ):
-        class TestResource(ModelResource):
-            def __init__(self, **kwargs):
-                super().__init__(**kwargs)
-                self.kwargs = kwargs
-                if "form" not in kwargs:
-                    raise Exception("No form")
-
-        mock_choose_import_resource_class.return_value = TestResource
-
-        response = self._do_import_post(self.book_import_url, "books.csv")
-        self.assertEqual(response.status_code, 200)
-
     @override_settings(TEMPLATE_STRING_IF_INVALID="INVALID_VARIABLE")
     def test_import(self):
         # GET the import form
@@ -190,6 +174,26 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
             count=1,
             html=True,
         )
+
+    @patch("import_export.admin.ImportMixin.choose_import_resource_class")
+    def test_import_passes_correct_kwargs_to_constructor(
+        self, mock_choose_import_resource_class
+    ):
+        # issue 1741
+        class TestResource(ModelResource):
+            def __init__(self, **kwargs):
+                super().__init__(**kwargs)
+
+                # the form is passed as a kwarg to the Resource constructor
+                # if not present, then it means that the original kwargs were lost
+                if "form" not in kwargs:
+                    raise Exception("No form")
+
+        # mock the returned resource class so that we can inspect constructor params
+        mock_choose_import_resource_class.return_value = TestResource
+
+        response = self._do_import_post(self.book_import_url, "books.csv")
+        self.assertEqual(response.status_code, 200)
 
     @override_settings(DEBUG=False)
     def test_correct_scripts_declared_when_debug_is_false(self):
