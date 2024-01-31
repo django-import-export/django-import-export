@@ -292,3 +292,16 @@ class ExportMixinTest(TestCase):
     def test_get_export_form_with_custom_form(self):
         m = self.TestExportMixin(self.TestExportForm)
         self.assertEqual(self.TestExportForm, m.get_export_form())
+
+
+class BaseExportImportMixinTest(TestCase):
+    class TestMixin(mixins.BaseImportExportMixin):
+        pass
+
+    def test_get_resource_kwargs(self):
+        mixin_instance = self.TestMixin()
+        test_kwargs = {"key1": "value1", "key2": "value2"}
+
+        result = mixin_instance.get_resource_kwargs(HttpRequest, **test_kwargs)
+
+        self.assertEqual(result, test_kwargs)
