@@ -287,7 +287,7 @@ class Resource(metaclass=DeclarativeMetaclass):
         :param instance: The instance of the object to be persisted.
 
         :param is_create: A boolean flag to indicate whether this is a new object
-        to be created, or an existing object to be updated.
+                          to be created, or an existing object to be updated.
 
         :param row: A dict representing the import row.
 
@@ -523,11 +523,13 @@ class Resource(metaclass=DeclarativeMetaclass):
 
         Use ``super`` if you want to preserve default handling while overriding
         ::
-          class YourResource(ModelResource):
-            def skip_row(self, instance, original, row, import_validation_errors=None):
-                # Add code here
-                return super().skip_row(instance, original, row,
-                  import_validation_errors=import_validation_errors)
+
+            class YourResource(ModelResource):
+                def skip_row(self, instance, original,
+                             row, import_validation_errors=None):
+                    # Add code here
+                    return super().skip_row(instance, original, row,
+                                            import_validation_errors=import_validation_errors)
 
         :param instance: A new or updated model instance.
 
@@ -788,10 +790,10 @@ class Resource(metaclass=DeclarativeMetaclass):
         :param dataset: A ``tablib.Dataset``.
 
         :param raise_errors: Whether errors should be printed to the end user
-            or raised regularly.
+                             or raised regularly.
 
         :param use_transactions: If ``True`` the import process will be processed
-            inside a transaction.
+                                 inside a transaction.
 
         :param collect_failed_rows:
           If ``True`` the import process will create a new dataset object comprising
