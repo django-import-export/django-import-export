@@ -412,6 +412,10 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
                 if "form" not in kwargs:
                     raise Exception("No form")
 
+            class Meta:
+                model = Book
+                fields = ("id",)
+
         # mock the returned resource class so that we can inspect constructor params
         mock_choose_import_resource_class.return_value = TestResource
 
