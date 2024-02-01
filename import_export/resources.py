@@ -510,7 +510,7 @@ class Resource(metaclass=DeclarativeMetaclass):
 
         :param instance: The instance of the object to be persisted.
         :param is_create: A boolean flag to indicate whether this is a new object
-        to be created, or an existing object to be updated.
+                          to be created, or an existing object to be updated.
         :param using_transactions: A flag to indicate whether db transactions are used.
         :param dry_run: A flag to indicate dry-run mode.
         """
@@ -646,11 +646,13 @@ class Resource(metaclass=DeclarativeMetaclass):
 
         Use ``super`` if you want to preserve default handling while overriding
         ::
-          class YourResource(ModelResource):
-            def skip_row(self, instance, original, row, import_validation_errors=None):
-                # Add code here
-                return super().skip_row(instance, original, row,
-                  import_validation_errors=import_validation_errors)
+
+            class YourResource(ModelResource):
+                def skip_row(self, instance, original,
+                             row, import_validation_errors=None):
+                    # Add code here
+                    return super().skip_row(instance, original, row,
+                                            import_validation_errors=import_validation_errors)
         """
         if (
             not self._meta.skip_unchanged
@@ -857,20 +859,22 @@ class Resource(metaclass=DeclarativeMetaclass):
         :param dataset: A ``tablib.Dataset``
 
         :param raise_errors: Whether errors should be printed to the end user
-            or raised regularly.
+                             or raised regularly.
 
         :param use_transactions: If ``True`` the import process will be processed
-            inside a transaction.
+                                 inside a transaction.
 
         :param collect_failed_rows: If ``True`` the import process will collect
-            failed rows.
+                                    failed rows.
 
         :param rollback_on_validation_errors: If both ``use_transactions`` and
-        ``rollback_on_validation_errors`` are set to ``True``, the import process will
-        be rolled back in case of ValidationError.
+                                              ``rollback_on_validation_errors``
+                                              are set to ``True``, the import
+                                              process will be rolled back in
+                                              case of ValidationError.
 
         :param dry_run: If ``dry_run`` is set, or an error occurs, if a transaction
-            is being used, it will be rolled back.
+                        is being used, it will be rolled back.
         """
 
         if use_transactions is None:
