@@ -869,8 +869,8 @@ class Resource(metaclass=DeclarativeMetaclass):
 
         :param rollback_on_validation_errors: If both ``use_transactions`` and
                                               ``rollback_on_validation_errors``
-                                              are set to ``True``, the import 
-                                              process will be rolled back in 
+                                              are set to ``True``, the import
+                                              process will be rolled back in
                                               case of ValidationError.
 
         :param dry_run: If ``dry_run`` is set, or an error occurs, if a transaction
