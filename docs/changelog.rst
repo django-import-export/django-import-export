@@ -1,7 +1,7 @@
 Changelog
 =========
 
-3.3.7 (unreleased)
+3.3.7 (2024-02-03)
 ------------------
 
 - Pass :meth:`~import_export.mixins.BaseExportMixin.get_export_resource_kwargs` to Resource constructor
