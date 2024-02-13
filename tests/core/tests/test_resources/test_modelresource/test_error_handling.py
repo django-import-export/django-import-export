@@ -162,3 +162,19 @@ class ErrorHandlingTest(TestCase):
                     use_transactions=True,
                     raise_errors=True,
                 )
+
+    @ignore_widget_deprecation_warning
+    def test_row_result_raise_ValidationError_collect_failed_rows(self):
+        # 1752
+        resource = ProfileResource()
+        row = ["1"]
+        dataset = tablib.Dataset(row, headers=["id"])
+        with mock.patch(
+            "import_export.resources.Field.save", side_effect=ValidationError("fail!")
+        ):
+            res = resource.import_data(
+                dataset, use_transactions=True, collect_failed_rows=True
+            )
+        self.assertEqual(
+            res.failed_dataset.dict[0], {"id": "1", "Error": "{'__all__': ['fail!']}"}
+        )

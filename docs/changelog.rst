@@ -19,7 +19,8 @@ Changelog
 - Added specific check for declared :attr:`~import_export.options.ResourceOptions.import_id_fields` not in dataset
   (#1735)
 - Updated Admin integration documentation to clarify how to save custom form values (#1746)
-- Fixed handling of :attr:`~import_export.exceptions.FieldError` during Admin import (#17)
+- Updated test coverage to include error row when ``collect_failed_rows`` is ``True`` (#1753)
+- Fixed handling of :attr:`~import_export.exceptions.FieldError` during Admin import (#1755)
 
 4.0.0-beta.2 (2023-12-09)
 -------------------------
