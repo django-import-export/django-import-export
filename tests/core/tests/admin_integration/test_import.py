@@ -19,6 +19,7 @@ from django.test.utils import override_settings
 from django.utils.translation import gettext_lazy as _
 
 from import_export.admin import ExportMixin
+from import_export.exceptions import FieldError
 from import_export.formats import base_formats
 from import_export.formats.base_formats import XLSX
 from import_export.resources import ModelResource
@@ -201,6 +202,17 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
                     self.assertFormError(response, "form", "import_file", target_msg)
         else:
             self.assertFormError(response, "form", "import_file", target_msg)
+
+    def test_import_action_handles_FieldError(self):
+        # issue 1722
+        with mock.patch(
+            "import_export.resources.Resource._check_import_id_fields"
+        ) as mock_check_import_id_fields:
+            mock_check_import_id_fields.side_effect = FieldError("some unknown error")
+            response = self._do_import_post(self.book_import_url, "books.csv")
+        self.assertEqual(response.status_code, 200)
+        target_msg = "Some unknown error"
+        self.assertIn(target_msg, str(response.content))
 
     @override_settings(LANGUAGE_CODE="es")
     def test_import_action_handles_ValueError_as_form_error_with_translation(self):
