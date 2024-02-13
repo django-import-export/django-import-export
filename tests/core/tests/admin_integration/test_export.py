@@ -15,6 +15,7 @@ from core.tests.utils import (
 from django.contrib.admin.sites import AdminSite
 from django.contrib.admin.views.main import ChangeList
 from django.contrib.auth.models import User
+from django.core.exceptions import FieldError
 from django.http import HttpRequest
 from django.test import RequestFactory
 from django.test.testcases import TestCase
@@ -158,6 +159,21 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertTrue(form.fields["resource"].widget.attrs["readonly"])
         self.assertIn("CategoryResource", str(response.content))
         self.assertNotIn('select name="resource"', str(response.content))
+
+    def test_get_export_FieldError(self):
+        # issue 1723
+        with mock.patch("import_export.resources.Resource.export") as mock_export:
+            mock_export.side_effect = FieldError("some unknown error")
+            data = {
+                "format": "0",
+                "resource": 1,
+                "booknameresource_id": True,
+                "booknameresource_name": True,
+            }
+            response = self.client.post("/admin/core/book/export/", data)
+        self.assertEqual(response.status_code, 200)
+        target_msg = "Some unknown error"
+        self.assertIn(target_msg, str(response.content))
 
     def test_export_second_resource(self):
         response = self.client.get("/admin/core/book/export/")

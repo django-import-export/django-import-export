@@ -7,7 +7,7 @@ from django.contrib import admin, messages
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION, LogEntry
 from django.contrib.auth import get_permission_codename
 from django.contrib.contenttypes.models import ContentType
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import FieldError, PermissionDenied
 from django.forms import MultipleChoiceField, MultipleHiddenInput
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
@@ -739,21 +739,25 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
             else:
                 queryset = self.get_export_queryset(request)
 
-            export_data = self.get_export_data(
-                file_format,
-                queryset,
-                request=request,
-                encoding=self.to_encoding,
-                export_form=form,
-            )
-            content_type = file_format.get_content_type()
-            response = HttpResponse(export_data, content_type=content_type)
-            response["Content-Disposition"] = 'attachment; filename="%s"' % (
-                self.get_export_filename(request, queryset, file_format),
-            )
+            try:
+                export_data = self.get_export_data(
+                    file_format,
+                    queryset,
+                    request=request,
+                    encoding=self.to_encoding,
+                    export_form=form,
+                )
+                content_type = file_format.get_content_type()
+                response = HttpResponse(export_data, content_type=content_type)
+                response["Content-Disposition"] = 'attachment; filename="%s"' % (
+                    self.get_export_filename(request, queryset, file_format),
+                )
 
-            post_export.send(sender=None, model=self.model)
-            return response
+                post_export.send(sender=None, model=self.model)
+                return response
+            except FieldError as e:
+                messages.error(request, str(e))
+
         context = self.init_request_context_data(request, form)
         request.current_app = self.admin_site.name
         return TemplateResponse(request, [self.export_template_name], context=context)
