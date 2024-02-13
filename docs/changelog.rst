@@ -15,7 +15,7 @@ Changelog
 - Fix slow export with ForeignKey id (#1717)
 - Added customization of Admin UI import error messages (#1727)
 - Improve output of error messages (#1729)
-- Refactor `test_resources.py` into smaller modules (#1733)
+- Refactor ``test_resources.py`` into smaller modules (#1733)
 - Added specific check for declared :attr:`~import_export.options.ResourceOptions.import_id_fields` not in dataset
   (#1735)
 - Updated Admin integration documentation to clarify how to save custom form values (#1746)
@@ -26,7 +26,7 @@ Changelog
 -------------------------
 
 - Fix declaring existing model field(s) in ModelResource altering export order (#1663)
-- Updated `docker-compose` command with latest version syntax in `runtests.sh` (#1686)
+- Updated ``docker-compose`` command with latest version syntax in ``runtests.sh`` (#1686)
 - Support export from model change form (#1687)
 - Updated Admin UI to track deleted and skipped Imports (#1691)
 - Import form defaults to read-only field if only one format defined (#1690)
