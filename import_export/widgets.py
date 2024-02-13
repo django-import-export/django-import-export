@@ -87,10 +87,12 @@ class NumberWidget(Widget):
 
     def render(self, value, obj=None):
         self._obj_deprecation_warning(obj)
-        if not isinstance(value, numbers.Number):
-            return ""
         if self.coerce_to_string:
-            return "" if value is None else number_format(value)
+            return (
+                ""
+                if value is None or not isinstance(value, numbers.Number)
+                else number_format(value)
+            )
         return value
 
 
