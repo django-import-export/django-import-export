@@ -20,7 +20,7 @@ Changelog
   (#1735)
 - Updated Admin integration documentation to clarify how to save custom form values (#1746)
 - Updated test coverage to include error row when ``collect_failed_rows`` is ``True`` (#1753)
-- Add check for type to :meth:`~import_export.widgets.Widget.render` (#)
+- Add check for type to :meth:`~import_export.widgets.Widget.render` (#1757)
 
 4.0.0-beta.2 (2023-12-09)
 -------------------------
