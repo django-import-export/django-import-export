@@ -5,7 +5,7 @@ Changelog
 
     Version 4 introduces breaking changes.  Please refer to :doc:`release notes<release_notes>`.
 
-4.0.0-rc.1 (2024-02-14)
+4.0.0-rc.0 (2024-02-14)
 -----------------------
 
 Deprecations
