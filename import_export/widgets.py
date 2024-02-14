@@ -1,6 +1,7 @@
 import json
 import logging
-from datetime import date, datetime, time
+import numbers
+from datetime import date, datetime, time, timedelta
 from decimal import Decimal
 from warnings import warn
 
@@ -87,7 +88,11 @@ class NumberWidget(Widget):
     def render(self, value, obj=None):
         self._obj_deprecation_warning(obj)
         if self.coerce_to_string:
-            return "" if value is None else number_format(value)
+            return (
+                ""
+                if value is None or not isinstance(value, numbers.Number)
+                else number_format(value)
+            )
         return value
 
 
@@ -204,7 +209,7 @@ class BooleanWidget(Widget):
         self._obj_deprecation_warning(obj)
         if self.coerce_to_string is False:
             return value
-        if value in self.NULL_VALUES:
+        if value in self.NULL_VALUES or not type(value) is bool:
             return ""
         return self.TRUE_VALUES[0] if value else self.FALSE_VALUES[0]
 
@@ -248,7 +253,7 @@ class DateWidget(Widget):
         self._obj_deprecation_warning(obj)
         if self.coerce_to_string is False:
             return value
-        if not value:
+        if not value or not type(value) is date:
             return ""
         return format_datetime(value, self.formats[0])
 
@@ -298,7 +303,7 @@ class DateTimeWidget(Widget):
         self._obj_deprecation_warning(obj)
         if self.coerce_to_string is False:
             return value
-        if not value:
+        if not value or not type(value) is datetime:
             return ""
         if settings.USE_TZ:
             value = timezone.localtime(value)
@@ -344,7 +349,7 @@ class TimeWidget(Widget):
         self._obj_deprecation_warning(obj)
         if self.coerce_to_string is False:
             return value
-        if not value:
+        if not value or not type(value) is time:
             return ""
         return value.strftime(self.formats[0])
 
@@ -372,7 +377,7 @@ class DurationWidget(Widget):
         self._obj_deprecation_warning(obj)
         if self.coerce_to_string is False:
             return value
-        if value is None:
+        if value is None or not type(value) is timedelta:
             return ""
         return str(value)
 
