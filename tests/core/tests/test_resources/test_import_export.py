@@ -281,13 +281,25 @@ class ImportIdFieldsTestCase(TestCase):
         dataset = tablib.Dataset(
             *[(self.book.pk, "Some book")], headers=["id", "wrong_name"]
         )
-        with self.assertRaises(exceptions.FieldError) as e:
-            self.resource.import_data(dataset)
+        with self.assertRaises(exceptions.ImportError) as e:
+            self.resource.import_data(dataset, raise_errors=True)
         self.assertEqual(
             "The following fields are declared in 'import_id_fields' "
-            "but are not present in the resource: book_name",
+            "but are not present in the file headers: book_name",
             str(e.exception),
         )
+
+    def test_custom_column_name_warns_if_not_present_as_error_in_result(self):
+        dataset = tablib.Dataset(
+            *[(self.book.pk, "Some book")], headers=["id", "wrong_name"]
+        )
+        res = self.resource.import_data(dataset, raise_errors=False)
+        print(res)
+        target = (
+            "The following fields are declared in 'import_id_fields' "
+            "but are not present in the file headers: book_name"
+        )
+        self.assertEqual(target, str(res.base_errors[0].error))
 
     def test_missing_import_id_field_raises_exception(self):
         class TestBookResource(resources.ModelResource):
@@ -302,11 +314,11 @@ class ImportIdFieldsTestCase(TestCase):
         dataset = tablib.Dataset(*[row], headers=["id", "name"])
         dataset.append(row)
 
-        with self.assertRaises(exceptions.FieldError) as e:
-            resource.import_data(dataset)
+        with self.assertRaises(exceptions.ImportError) as e:
+            resource.import_data(dataset, raise_errors=True)
         self.assertEqual(
             "The following fields are declared in 'import_id_fields' "
-            "but are not present in the resource: a, b",
+            "but are not present in the resource fields: a, b",
             str(e.exception),
         )
 
@@ -321,11 +333,11 @@ class ImportIdFieldsTestCase(TestCase):
             *[(self.book.pk, "Goldeneye", "ian.fleming@example.com")],
             headers=["A", "name", "B"],
         )
-        with self.assertRaises(exceptions.FieldError) as e:
-            self.resource.import_data(dataset)
+        with self.assertRaises(exceptions.ImportError) as e:
+            self.resource.import_data(dataset, raise_errors=True)
         self.assertEqual(
             "The following fields are declared in 'import_id_fields' "
-            "but are not present in the resource: id, author_email",
+            "but are not present in the file headers: id, author_email",
             str(e.exception),
         )
 

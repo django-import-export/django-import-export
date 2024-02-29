@@ -23,4 +23,10 @@ class ImportError(ImportExportError):
         self.row = row
 
     def __str__(self):
-        return f"{self.number}: {self.error} ({self.row})"
+        s = ""
+        if self.number is not None:
+            s += f"{self.number}: "
+        s += f"{self.error}"
+        if self.row is not None:
+            s += f" ({self.row})"
+        return s
