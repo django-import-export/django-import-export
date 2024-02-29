@@ -5,7 +5,9 @@ from import_export.admin import (
     ImportExportModelAdmin,
     ImportMixin,
 )
+from import_export.fields import Field
 from import_export.resources import ModelResource
+from import_export.widgets import DecimalWidget
 
 from .forms import CustomConfirmImportForm, CustomExportForm, CustomImportForm
 from .models import Author, Book, Category, Child, EBook
