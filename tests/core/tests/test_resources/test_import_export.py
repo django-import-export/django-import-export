@@ -294,7 +294,6 @@ class ImportIdFieldsTestCase(TestCase):
             *[(self.book.pk, "Some book")], headers=["id", "wrong_name"]
         )
         res = self.resource.import_data(dataset, raise_errors=False)
-        print(res)
         target = (
             "The following fields are declared in 'import_id_fields' "
             "but are not present in the file headers: book_name"
