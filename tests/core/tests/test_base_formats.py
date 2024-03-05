@@ -9,6 +9,7 @@ from django.utils.encoding import force_str
 from tablib.core import UnsupportedFormat
 
 from import_export.formats import base_formats
+from import_export.widgets import NumberWidget
 
 
 class FormatTest(TestCase):
@@ -227,3 +228,11 @@ class HTMLFormatTest(TestCase):
     #         ),
     #         res,
     #     )
+
+
+class YAMLFormatTest(TestCase):
+    def test_numeric_widget_export(self):
+        dataset = tablib.Dataset(headers=["id", "username"])
+        dataset.append((NumberWidget().render(1), "x"))
+        res = base_formats.YAML().export_data(dataset)
+        self.assertEqual("- {id: '1', username: x}\n", res)
