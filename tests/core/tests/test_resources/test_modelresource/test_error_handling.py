@@ -80,11 +80,13 @@ class ErrorHandlingTest(TestCase):
 
     def test_import_data_empty_dataset_with_collect_failed_rows(self):
         resource = AuthorResource()
-        with self.assertRaises(exceptions.FieldError) as e:
-            resource.import_data(tablib.Dataset(), collect_failed_rows=True)
+        with self.assertRaises(exceptions.ImportError) as e:
+            resource.import_data(
+                tablib.Dataset(), collect_failed_rows=True, raise_errors=True
+            )
         self.assertEqual(
             "The following fields are declared in 'import_id_fields' "
-            "but are not present in the resource: id",
+            "but are not present in the file headers: id",
             str(e.exception),
         )
 

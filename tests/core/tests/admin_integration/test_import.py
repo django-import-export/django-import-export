@@ -211,7 +211,7 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
             mock_check_import_id_fields.side_effect = FieldError("some unknown error")
             response = self._do_import_post(self.book_import_url, "books.csv")
         self.assertEqual(response.status_code, 200)
-        target_msg = "Some unknown error"
+        target_msg = "some unknown error"
         self.assertIn(target_msg, str(response.content))
 
     @override_settings(LANGUAGE_CODE="es")

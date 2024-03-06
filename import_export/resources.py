@@ -866,10 +866,10 @@ class Resource(metaclass=DeclarativeMetaclass):
         try:
             with atomic_if_using_transaction(using_transactions, using=db_connection):
                 self.before_import(dataset, **kwargs)
+            self._check_import_id_fields(dataset.headers)
         except Exception as e:
             self.handle_import_error(result, e, raise_errors)
 
-        self._check_import_id_fields(dataset.headers)
         instance_loader = self._meta.instance_loader_class(self, dataset)
 
         # Update the total in case the dataset was altered by before_import()
@@ -1121,6 +1121,7 @@ class Resource(metaclass=DeclarativeMetaclass):
     def _check_import_id_fields(self, headers):
         import_id_fields = list()
         missing_fields = list()
+        missing_headers = list()
 
         for field_name in self.get_import_id_fields():
             if field_name not in self.fields:
@@ -1128,17 +1129,27 @@ class Resource(metaclass=DeclarativeMetaclass):
             else:
                 import_id_fields.append(self.fields[field_name])
 
-        for field in import_id_fields:
-            if not headers or field.column_name not in headers:
-                # escape to be safe (exception could end up in logs)
-                col = escape(field.column_name)
-                missing_fields.append(col)
-
         if missing_fields:
             raise exceptions.FieldError(
                 _(
                     "The following fields are declared in 'import_id_fields' but "
-                    "are not present in the resource: %s" % ", ".join(missing_fields)
+                    "are not present in the resource fields: %s"
+                    % ", ".join(missing_fields)
+                )
+            )
+
+        for field in import_id_fields:
+            if not headers or field.column_name not in headers:
+                # escape to be safe (exception could end up in logs)
+                col = escape(field.column_name)
+                missing_headers.append(col)
+
+        if missing_headers:
+            raise exceptions.FieldError(
+                _(
+                    "The following fields are declared in 'import_id_fields' but "
+                    "are not present in the file headers: %s"
+                    % ", ".join(missing_headers)
                 )
             )
 
