@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 from core.models import Book
 from django.core.exceptions import ValidationError
 from django.test.testcases import TestCase
@@ -60,6 +62,22 @@ class ResultTest(TestCase):
         row_result.add_instance_info(Book(pk=1, name="some book"))
         self.assertEqual(1, row_result.object_id)
         self.assertEqual("some book", row_result.object_repr)
+
+    @patch("import_export.results.logger")
+    def test_add_instance_info_instance_unserializable(self, mock_logger):
+        # issue 1763
+        class UnserializableBook(object):
+            # will raise TypeError
+            def __str__(self):
+                return None
+
+        row_result = RowResult()
+        row_result.add_instance_info(UnserializableBook())
+        mock_logger.debug.assert_called_with(
+            "call to force_str() on instance failed: "
+            "__str__ returned non-string (type NoneType)"
+        )
+        self.assertEqual(None, row_result.object_repr)
 
     def test_is_new(self):
         row_result = RowResult()

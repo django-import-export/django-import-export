@@ -8,6 +8,7 @@ Changelog
 4.0.0-rc.1 (unreleased)
 -----------------------
 
+- added try / catch to :meth:`~import_export.results.RowResult.add_instance_info` to handle unserializable instances (#1767)
 - fix: YAML export does not work with SafeString (#1762)
 
 4.0.0-rc.0 (2024-02-14)
