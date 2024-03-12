@@ -125,3 +125,23 @@ class DataImportTests(TestCase):
         )
         self.assertEqual(result.rows[0].row_values.get("name"), None)
         self.assertEqual(result.rows[0].row_values.get("author_email"), None)
+
+    @ignore_widget_deprecation_warning
+    def test_import_data_new_override_do_instance_save(self):
+        class CustomDoInstanceSave(BookResource):
+            is_create = False
+
+            def do_instance_save(self, instance, is_create):
+                self.is_create = is_create
+                super().do_instance_save(instance, is_create)
+
+        Book.objects.all().delete()
+        self.assertEqual(0, Book.objects.count())
+        self.resource = CustomDoInstanceSave()
+        self.assertFalse(self.resource.is_create)
+
+        result = self.resource.import_data(self.dataset, raise_errors=True)
+
+        self.assertFalse(result.has_errors())
+        self.assertEqual(1, Book.objects.count())
+        self.assertTrue(self.resource.is_create)
