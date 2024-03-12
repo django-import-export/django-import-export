@@ -91,7 +91,7 @@ class NumberWidget(Widget):
             return (
                 ""
                 if value is None or not isinstance(value, numbers.Number)
-                else number_format(value)
+                else "" + number_format(value)
             )
         return value
 

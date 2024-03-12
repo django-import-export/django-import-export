@@ -117,5 +117,6 @@ class DataHandlingTest(TestCase):
             {
                 "could not convert string to float",
                 "[<class 'decimal.ConversionSyntax'>]",
+                "Invalid literal for Decimal: 'foo'",
             },
         )
