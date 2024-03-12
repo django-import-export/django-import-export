@@ -402,8 +402,12 @@ class SimpleArrayWidget(Widget):
         """
         :return: A string with values separated by ``separator``.
           If ``coerce_to_string`` is ``False``, the native array will be returned.
+          If ``value`` is None, None will be returned if ``coerce_to_string``
+            is ``False``, otherwise an empty string will be returned.
         """
         self._obj_deprecation_warning(obj)
+        if value is None:
+            return "" if self.coerce_to_string is True else None
         if not self.coerce_to_string:
             return value
         return self.separator.join(str(v) for v in value)
