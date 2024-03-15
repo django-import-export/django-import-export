@@ -10,6 +10,7 @@ Changelog
 
 - added try / catch to :meth:`~import_export.results.RowResult.add_instance_info` to handle unserializable instances (#1767)
 - fix: YAML export does not work with SafeString (#1762)
+- fix: :meth:`~import_export.widgets.SimpleArrayWidget.render` crashes if value is ``None`` (#1771)
 
 4.0.0-rc.0 (2024-02-14)
 -----------------------
