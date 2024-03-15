@@ -29,3 +29,5 @@ This is implemented using a Webhook defined in the Github repo (Settings / Webho
 
 readthedocs should be checked after each release to ensure that the docs have built correctly.
 Login to [readthedocs.org](https://readthedocs.org) to check that the build ran OK (click on 'Builds' tab).
+
+For pre-releases, the release version has to be activated via the readthedocs UI before it can be built.
