@@ -12,7 +12,7 @@ Changelog
 - fix: YAML export does not work with SafeString (#1762)
 - pass ``is_create``` param into :meth:`~import_export.resources.Resource.do_instance_save` (#1772)
 - fix: :meth:`~import_export.widgets.SimpleArrayWidget.render` crashes if value is ``None`` (#1771)
-- updated translations for release-4 (#)
+- updated translations for release-4 (#1775)
 
 4.0.0-rc.0 (2024-02-14)
 -----------------------
