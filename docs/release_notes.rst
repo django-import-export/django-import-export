@@ -365,6 +365,9 @@ modify the parameters passed to constructors.
 The ``input_format`` field of :class:`~import_export.forms.ImportForm` has been moved to the parent class
 (:class:`~import_export.forms.ImportExportFormBase`) and renamed to ``format``.
 
+The ``file_format`` field of :class:`~import_export.forms.ExportForm` has been removed and is now replaced by
+:attr:`~import_export.forms.ImportExportFormBase.format`.
+
 Parameter changes
 ^^^^^^^^^^^^^^^^^
 
