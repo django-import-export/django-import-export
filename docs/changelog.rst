@@ -5,7 +5,7 @@ Changelog
 
     Version 4 introduces breaking changes.  Please refer to :doc:`release notes<release_notes>`.
 
-4.0.0-rc.1 (unreleased)
+4.0.0-rc.1 (2024-03-15)
 -----------------------
 
 - added try / catch to :meth:`~import_export.results.RowResult.add_instance_info` to handle unserializable instances (#1767)
