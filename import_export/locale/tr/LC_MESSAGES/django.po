@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-11-08 18:22+0000\n"
+"POT-Creation-Date: 2024-03-15 13:54+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,59 +18,106 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
-#: admin.py:239
+#: admin.py:246 admin.py:588
 #, python-format
 msgid "%s through import_export"
 msgstr "%s vasıtasıyla import_export"
 
-#: admin.py:246
-msgid "Import finished, with {} new and {} updated {}."
+#: admin.py:254
+#, fuzzy
+#| msgid "Import finished, with {} new and {} updated {}."
+msgid "Import finished: {} new, {} updated, {} deleted and {} skipped {}."
 msgstr "{} yeni ve {} güncellenen {} ile içe aktarma bitti"
 
-#: admin.py:491
+#: admin.py:423
 #, python-format
 msgid ""
 "%(exc_name)s encountered while trying to read file. Ensure you have chosen "
 "the correct format for the file."
 msgstr ""
 
-#: admin.py:642 templates/admin/import_export/change_list_import_item.html:5
+#: admin.py:539 templates/admin/import_export/change_list_import_item.html:5
 #: templates/admin/import_export/import.html:19
 msgid "Import"
 msgstr "İçe aktar"
 
-#: admin.py:827 templates/admin/import_export/change_list_export_item.html:5
+#: admin.py:785 templates/admin/import_export/change_form.html:8
+#: templates/admin/import_export/change_list_export_item.html:5
 #: templates/admin/import_export/export.html:12
 msgid "Export"
 msgstr "Dışa aktar"
 
-#: admin.py:892
-msgid "You must select an export format."
-msgstr "Bir dosya biçimi seçmelisiniz"
-
-#: admin.py:917
+#: admin.py:911
 #, python-format
 msgid "Export selected %(verbose_name_plural)s"
 msgstr "Seçililenleri dışa aktar %(verbose_name_plural)s"
 
-#: forms.py:12
+#: forms.py:15
 msgid "Resource"
 msgstr ""
 
-#: forms.py:40
+#: forms.py:20
+msgid "Format"
+msgstr "Dosya biçimi"
+
+#: forms.py:58
 msgid "File to import"
 msgstr "İçe alınacak dosya"
 
-#: forms.py:42 forms.py:83 forms.py:116
-msgid "Format"
-msgstr "Dosya biçimi"
+#: forms.py:209
+msgid "Form is not validated, call `is_valid` first"
+msgstr ""
+
+#: forms.py:261
+#, python-format
+msgid "Select at least 1 field for \"%(resource_name)s\" to export"
+msgstr ""
+
+#: resources.py:1137
+#, python-format
+msgid ""
+"The following fields are declared in 'import_id_fields' but are not present "
+"in the resource fields: %s"
+msgstr ""
+
+#: resources.py:1152
+#, python-format
+msgid ""
+"The following fields are declared in 'import_id_fields' but are not present "
+"in the file headers: %s"
+msgstr ""
+
+#: results.py:120
+#, python-format
+msgid "call to force_str() on instance failed: %s"
+msgstr ""
 
 #: templates/admin/import_export/base.html:11
 msgid "Home"
 msgstr "Ana sayfa"
 
-#: templates/admin/import_export/export.html:36
-#: templates/admin/import_export/import.html:78
+#: templates/admin/import_export/export.html:21
+#, python-format
+msgid ""
+"\n"
+"        Export %(len)s selected item.\n"
+"        "
+msgid_plural ""
+"\n"
+"        Export %(len)s selected items.\n"
+"      "
+msgstr[0] ""
+msgstr[1] ""
+
+#: templates/admin/import_export/export.html:48
+#: templates/admin/import_export/resource_fields_list.html:5
+#, fuzzy
+#| msgid "This importer will import the following fields: "
+msgid "This exporter will export the following fields: "
+msgstr "Bu içe aktarıcı aşağıdaki alanları içe aktaracaktır: "
+
+#: templates/admin/import_export/export.html:76
+#: templates/admin/import_export/import.html:69
 msgid "Submit"
 msgstr "Kaydet"
 
@@ -86,24 +133,20 @@ msgstr ""
 msgid "Confirm import"
 msgstr "İçe aktarmayı onayla"
 
-#: templates/admin/import_export/import.html:44
-msgid "This importer will import the following fields: "
-msgstr "Bu içe aktarıcı aşağıdaki alanları içe aktaracaktır: "
-
-#: templates/admin/import_export/import.html:89
-#: templates/admin/import_export/import.html:120
+#: templates/admin/import_export/import.html:80
+#: templates/admin/import_export/import.html:121
 msgid "Errors"
 msgstr "Hatalar"
 
-#: templates/admin/import_export/import.html:100
+#: templates/admin/import_export/import.html:94
 msgid "Line number"
 msgstr "Satır numarası"
 
-#: templates/admin/import_export/import.html:112
+#: templates/admin/import_export/import.html:113
 msgid "Some rows failed to validate"
 msgstr "Bazı satırlar doğrulanamadı"
 
-#: templates/admin/import_export/import.html:114
+#: templates/admin/import_export/import.html:115
 msgid ""
 "Please correct these errors in your data where possible, then reupload it "
 "using the form above."
@@ -111,30 +154,53 @@ msgstr ""
 "Lütfen verilerinizdeki bu hataları olabildiğince düzeltin, sonra yukarıdaki "
 "formu kullanarak tekrar yükleyin."
 
-#: templates/admin/import_export/import.html:119
+#: templates/admin/import_export/import.html:120
 msgid "Row"
 msgstr "Satır"
 
-#: templates/admin/import_export/import.html:146
+#: templates/admin/import_export/import.html:147
 msgid "Non field specific"
 msgstr "Alan olmayana özgü"
 
-#: templates/admin/import_export/import.html:169
+#: templates/admin/import_export/import.html:170
 msgid "Preview"
 msgstr "Ön izleme"
 
-#: templates/admin/import_export/import.html:184
+#: templates/admin/import_export/import.html:185
 msgid "New"
 msgstr "Yeni"
 
-#: templates/admin/import_export/import.html:186
+#: templates/admin/import_export/import.html:187
 msgid "Skipped"
 msgstr "Atlandı"
 
-#: templates/admin/import_export/import.html:188
+#: templates/admin/import_export/import.html:189
 msgid "Delete"
 msgstr "Sil"
 
-#: templates/admin/import_export/import.html:190
+#: templates/admin/import_export/import.html:191
 msgid "Update"
 msgstr "Güncelle"
+
+#: templates/admin/import_export/resource_fields_list.html:7
+msgid "This importer will import the following fields: "
+msgstr "Bu içe aktarıcı aşağıdaki alanları içe aktaracaktır: "
+
+#: widgets.py:250
+msgid "Value could not be parsed using defined date formats."
+msgstr ""
+
+#: widgets.py:300
+msgid "Value could not be parsed using defined datetime formats."
+msgstr ""
+
+#: widgets.py:346
+msgid "Value could not be parsed using defined time formats."
+msgstr ""
+
+#: widgets.py:374
+msgid "Value could not be parsed."
+msgstr ""
+
+#~ msgid "You must select an export format."
+#~ msgstr "Bir dosya biçimi seçmelisiniz"

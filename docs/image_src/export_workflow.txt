@@ -1,0 +1,58 @@
+# see import_workflow.txt
+
+participant Resource
+participant Field
+participant Widget
+participant tablib.Dataset
+
+Resource->Resource:""export(queryset=None, \*\*kwargs)""
+activate Resource
+
+Resource->Resource:<background:#yellow>""before_export(queryset=None, \*\*kwargs)""
+
+note over Resource: A Queryset instance can be passed into export().\nIf no Queryset is passed, get_queryset() is called.
+
+Resource->Resource:<background:#yellow>""get_queryset()""
+activate Resource #lightblue
+Resource<--Resource:""Queryset""
+deactivate Resource
+
+Resource->Resource:<background:#yellow>""filter_export(queryset, \*\*kwargs)""
+activate Resource #lightblue
+Resource<--Resource:""Queryset""
+deactivate Resource
+
+loop #pink each row in Queryset
+
+Resource->Resource:<background:#yellow>""export_resource(instance)""
+activate Resource #lightblue
+
+loop #green each field in export field list
+Resource->Resource:""export_field(field, instance)""
+activate Resource #lightpink
+Resource->Field:""export(instance)""
+activate Field #lightblue
+note over Field: An optional callable can be defined instead of export().\n See 'dehydrate' methods in docs.
+Field->Field:""get_value(instance)""
+activate Field #lightpink
+note over Field: Get the field's value from the instance.
+Field<--Field:""<<value>>""
+Field->Widget:""render(value, instance)""
+activate Widget
+note over Widget: Format field value into a\nstring or value as required.
+Field<--Widget:""<<value>>
+deactivate Widget
+deactivate Field
+Resource<--Field:""<<value>>""
+deactivate Field
+deactivate Resource
+end
+deactivate Resource
+
+Resource->tablib.Dataset:""append()""
+end
+
+Resource<--Resource:""<<Dataset>>""
+deactivate Resource
+
+

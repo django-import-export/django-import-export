@@ -26,6 +26,9 @@ django-import-export
 .. image:: https://static.pepy.tech/personalized-badge/django-import-export?period=month&units=international_system&left_color=black&right_color=blue&left_text=Downloads/month
     :target: https://pepy.tech/project/django-import-export
 
+.. image:: https://img.shields.io/twitter/url/https/twitter.com/django_import.svg?style=social&label=Follow%20%40django_import
+   :alt: Follow us on X
+
 django-import-export is a Django application and library for importing
 and exporting data from a variety of formats.  Includes Django Admin site integration.
 
@@ -33,3 +36,4 @@ and exporting data from a variety of formats.  Includes Django Admin site integr
 * GitHub: https://github.com/django-import-export/django-import-export/
 * Free software: BSD license
 * PyPI: https://pypi.org/project/django-import-export/
+* Twitter / X: https://twitter.com/django_import

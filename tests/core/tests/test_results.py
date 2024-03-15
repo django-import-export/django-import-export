@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 from core.models import Book
 from django.core.exceptions import ValidationError
 from django.test.testcases import TestCase
@@ -56,11 +58,65 @@ class ResultTest(TestCase):
         self.assertEqual("", row_result.object_repr)
 
     def test_add_instance_info(self):
-        class BookWithObjectRepr(Book):
-            def __str__(self):
-                return self.name
-
         row_result = RowResult()
-        row_result.add_instance_info(BookWithObjectRepr(pk=1, name="some book"))
+        row_result.add_instance_info(Book(pk=1, name="some book"))
         self.assertEqual(1, row_result.object_id)
         self.assertEqual("some book", row_result.object_repr)
+
+    @patch("import_export.results.logger")
+    def test_add_instance_info_instance_unserializable(self, mock_logger):
+        # issue 1763
+        class UnserializableBook(object):
+            # will raise TypeError
+            def __str__(self):
+                return None
+
+        row_result = RowResult()
+        row_result.add_instance_info(UnserializableBook())
+        mock_logger.debug.assert_called_with(
+            "call to force_str() on instance failed: "
+            "__str__ returned non-string (type NoneType)"
+        )
+        self.assertEqual(None, row_result.object_repr)
+
+    def test_is_new(self):
+        row_result = RowResult()
+        self.assertFalse(row_result.is_new())
+        row_result.import_type = RowResult.IMPORT_TYPE_NEW
+        self.assertTrue(row_result.is_new())
+        self.assertTrue(row_result.is_valid())
+
+    def test_is_update(self):
+        row_result = RowResult()
+        self.assertFalse(row_result.is_update())
+        row_result.import_type = RowResult.IMPORT_TYPE_UPDATE
+        self.assertTrue(row_result.is_update())
+        self.assertTrue(row_result.is_valid())
+
+    def test_is_skip(self):
+        row_result = RowResult()
+        self.assertFalse(row_result.is_skip())
+        row_result.import_type = RowResult.IMPORT_TYPE_SKIP
+        self.assertTrue(row_result.is_skip())
+        self.assertTrue(row_result.is_valid())
+
+    def test_is_delete(self):
+        row_result = RowResult()
+        self.assertFalse(row_result.is_delete())
+        row_result.import_type = RowResult.IMPORT_TYPE_DELETE
+        self.assertTrue(row_result.is_delete())
+        self.assertTrue(row_result.is_valid())
+
+    def test_is_error(self):
+        row_result = RowResult()
+        self.assertFalse(row_result.is_error())
+        row_result.import_type = RowResult.IMPORT_TYPE_ERROR
+        self.assertTrue(row_result.is_error())
+        self.assertFalse(row_result.is_valid())
+
+    def test_is_invalid(self):
+        row_result = RowResult()
+        self.assertFalse(row_result.is_invalid())
+        row_result.import_type = RowResult.IMPORT_TYPE_INVALID
+        self.assertTrue(row_result.is_invalid())
+        self.assertFalse(row_result.is_valid())

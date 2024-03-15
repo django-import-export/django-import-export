@@ -1,15 +1,20 @@
+import logging
 from collections import OrderedDict
 
 from django.core.exceptions import NON_FIELD_ERRORS
 from django.utils.encoding import force_str
+from django.utils.translation import gettext_lazy as _
 from tablib import Dataset
+
+logger = logging.getLogger(__name__)
 
 
 class Error:
-    def __init__(self, error, traceback=None, row=None):
+    def __init__(self, error, traceback=None, row=None, number=None):
         self.error = error
         self.traceback = traceback
         self.row = row
+        self.number = number
 
 
 class RowResult:
@@ -46,7 +51,7 @@ class RowResult:
         #: A string identifier which identifies what type of import was performed.
         self.import_type = None
 
-        #: Can the raw values associated with each imported row.
+        #: Retain the raw values associated with each imported row.
         self.row_values = {}
 
         #: The instance id (used in Admin UI)
@@ -62,16 +67,57 @@ class RowResult:
         #: This value is only set for updates.
         self.original = None
 
-        #: A boolean flag indicating whether the record is `new` or not.
-        #: Deprecated: use the value of ``import_type`` instead.
-        #: See issue 1586.
-        self.new_record = None
+    def is_update(self):
+        """
+        :return: ``True`` if import type is 'update', otherwise ``False``.
+        """
+        return self.import_type == RowResult.IMPORT_TYPE_UPDATE
+
+    def is_new(self):
+        """
+        :return: ``True`` if import type is 'new', otherwise ``False``.
+        """
+        return self.import_type == RowResult.IMPORT_TYPE_NEW
+
+    def is_delete(self):
+        """
+        :return: ``True`` if import type is 'delete', otherwise ``False``.
+        """
+        return self.import_type == RowResult.IMPORT_TYPE_DELETE
+
+    def is_skip(self):
+        """
+        :return: ``True`` if import type is 'skip', otherwise ``False``.
+        """
+        return self.import_type == RowResult.IMPORT_TYPE_SKIP
+
+    def is_error(self):
+        """
+        :return: ``True`` if import type is 'error', otherwise ``False``.
+        """
+        return self.import_type == RowResult.IMPORT_TYPE_ERROR
+
+    def is_invalid(self):
+        """
+        :return: ``True`` if import type is 'invalid', otherwise ``False``.
+        """
+        return self.import_type == RowResult.IMPORT_TYPE_INVALID
+
+    def is_valid(self):
+        """
+        :return: ``True`` if import type is not 'error' or 'invalid', otherwise
+          ``False``.
+        """
+        return self.import_type in self.valid_import_types
 
     def add_instance_info(self, instance):
         if instance is not None:
             # Add object info to RowResult (e.g. for LogEntry)
             self.object_id = getattr(instance, "pk", None)
-            self.object_repr = force_str(instance)
+            try:
+                self.object_repr = force_str(instance)
+            except Exception as e:
+                logger.debug(_("call to force_str() on instance failed: %s" % str(e)))
 
 
 class InvalidRow:
@@ -110,13 +156,28 @@ class InvalidRow:
         return count
 
 
+class ErrorRow:
+    """A row that resulted in one or more errors being raised during import."""
+
+    def __init__(self, number, errors):
+        #: The row number
+        self.number = number
+        #: A list of errors associated with the row
+        self.errors = errors
+
+
 class Result:
     def __init__(self, *args, **kwargs):
         super().__init__()
         self.base_errors = []
         self.diff_headers = []
-        self.rows = []  # RowResults
-        self.invalid_rows = []  # InvalidRow
+        #: The rows associated with the result.
+        self.rows = []
+        #: The collection of rows which had validation errors.
+        self.invalid_rows = []
+        #: The collection of rows which had generic errors.
+        self.error_rows = []
+        #: A custom Dataset containing only failed rows and associated errors.
         self.failed_dataset = Dataset()
         self.totals = OrderedDict(
             [
@@ -158,6 +219,9 @@ class Result:
         self.invalid_rows.append(
             InvalidRow(number=number, validation_error=validation_error, values=values)
         )
+
+    def append_error_row(self, number, row, errors):
+        self.error_rows.append(ErrorRow(number=number, errors=errors))
 
     def increment_row_result_total(self, row_result):
         if row_result.import_type:

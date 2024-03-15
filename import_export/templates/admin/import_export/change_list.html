@@ -1,4 +1,4 @@
-{% extends base_change_list_template %}
+{% extends ie_base_change_list_template|default:"admin/change_list.html" %}
 
 {# Original template renders object-tools only when has_add_permission is True. #}
 {# This hack allows sub templates to add to object-tools #}

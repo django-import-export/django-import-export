@@ -38,11 +38,14 @@ exporting data with included admin integration.
    installation
    getting_started
    advanced_usage
+   admin_integration
    import_workflow
+   export_workflow
    bulk_import
    celery
    testing
    faq
+   release_notes
    changelog
 
 .. toctree::
@@ -54,9 +57,11 @@ exporting data with included admin integration.
    api_widgets
    api_fields
    api_instance_loaders
+   api_mixins
    api_tmp_storages
    api_results
    api_forms
+   api_exceptions
 
 .. toctree::
    :maxdepth: 2

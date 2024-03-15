@@ -147,3 +147,25 @@ Development
   Then run::
 
     pre-commit install
+
+* If using ``git blame``, you can ignore commits which made large changes to the code base, such as reformatting.
+  Run this command from the base project directory::
+
+    git config blame.ignoreRevsFile .git-blame-ignore-revs
+
+Once you have cloned and checked out the repository, you can install a new development environment as follows::
+
+  python -m venv django-import-export-venv
+  source django-import-export-venv/bin/activate
+  pip install -r requirements/base.txt -r requirements/test.txt
+
+You can run the test suite with::
+
+  make clean test
+
+To build a local version of the documentation::
+
+  pip install -r requirements/docs.txt
+  make build-html-doc
+
+The documentation will be present in ``docs/_build/html/index.html``.

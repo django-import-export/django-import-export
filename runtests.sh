@@ -14,7 +14,7 @@ export IMPORT_EXPORT_MYSQL_USER=mysqluser
 export IMPORT_EXPORT_MYSQL_PASSWORD=mysqluserpass
 
 echo "starting local database instances"
-docker-compose -f tests/docker-compose.yml up -d
+docker compose -f tests/docker-compose.yml up -d
 
 echo "waiting for db initialization"
 sleep 45
@@ -31,4 +31,4 @@ export IMPORT_EXPORT_TEST_TYPE=postgres
 tox
 
 echo "removing local database instances"
-docker-compose -f tests/docker-compose.yml down -v
+docker compose -f tests/docker-compose.yml down -v

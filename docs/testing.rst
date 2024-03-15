@@ -23,8 +23,17 @@ Note that this is the process which is undertaken by CI builds.
 Coverage
 ########
 
-Coverage data is written in parallel mode by default (defined in ``setup.cfg``).  After a tox run, you can view coverage
-data as follows:
+Coverage data is written in parallel mode by default (defined in ``pyproject.toml``).
+
+A simple coverage report can be obtained with
+
+.. code-block:: bash
+
+  make coverage
+
+However this may omit lines which are db specific.  A full coverage report can be obtained by running tox.
+
+After a tox run, you can view coverage data as follows:
 
 .. code-block:: bash
 

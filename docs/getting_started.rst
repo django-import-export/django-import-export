@@ -68,7 +68,7 @@ describe how this resource can be imported or exported::
     class BookResource(resources.ModelResource):
 
         class Meta:
-            model = Book
+            model = Book  # or 'core.Book'
 
 Importing data
 ==============
