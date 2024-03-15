@@ -4,20 +4,21 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('core', '0011_uuidcategory_legacybook_alter_uuidbook_id_and_more'),
+        ("core", "0011_uuidcategory_legacybook_alter_uuidbook_id_and_more"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='book',
-            name='added',
+            model_name="book",
+            name="added",
             field=models.DateTimeField(auto_now_add=True, null=True),
         ),
         migrations.AlterField(
-            model_name='book',
-            name='published_time',
-            field=models.TimeField(auto_now_add=True, null=True, verbose_name='Time published'),
+            model_name="book",
+            name="published_time",
+            field=models.TimeField(
+                auto_now_add=True, null=True, verbose_name="Time published"
+            ),
         ),
     ]

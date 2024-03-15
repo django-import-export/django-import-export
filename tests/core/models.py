@@ -78,7 +78,9 @@ class Book(models.Model):
     author_email = models.EmailField("Author email", max_length=75, blank=True)
     imported = models.BooleanField(default=False)
     published = models.DateField("Published", blank=True, null=True)
-    published_time = models.TimeField("Time published", blank=True, null=True, auto_now_add=True)
+    published_time = models.TimeField(
+        "Time published", blank=True, null=True, auto_now_add=True
+    )
     price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     added = models.DateTimeField(blank=True, null=True, auto_now_add=True)
 
