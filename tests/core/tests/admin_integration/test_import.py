@@ -253,7 +253,7 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         )
         self.assertEqual(response.status_code, 200)
         target_msg = (
-            "No valid data to import. Ensure you file "
+            "No valid data to import. Ensure your file "
             "has the correct headers or data for import."
         )
 
