@@ -4,41 +4,32 @@ import traceback
 from collections import OrderedDict
 from copy import deepcopy
 from html import escape
+from warnings import warn
 
 import tablib
 from diff_match_patch import diff_match_patch
 from django.conf import settings
-from django.core.exceptions import (
-    FieldDoesNotExist,
-    ImproperlyConfigured,
-    ValidationError,
-)
+from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.core.management.color import no_style
 from django.core.paginator import Paginator
 from django.db import connections, router
 from django.db.models import fields
-from django.db.models.fields.related import ForeignObjectRel
+from django.db.models.fields.related import ForeignKey
 from django.db.models.query import QuerySet
 from django.db.transaction import TransactionManagementError, set_rollback
 from django.utils.encoding import force_str
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 
-from . import widgets
-from .exceptions import FieldError
+from . import exceptions, widgets
+from .declarative import DeclarativeMetaclass, ModelDeclarativeMetaclass
 from .fields import Field
-from .instance_loaders import ModelInstanceLoader
 from .results import Error, Result, RowResult
-from .utils import atomic_if_using_transaction
+from .utils import atomic_if_using_transaction, get_related_model
 
 logger = logging.getLogger(__name__)
 # Set default logging handler to avoid "No handler found" warnings.
 logger.addHandler(logging.NullHandler())
-
-
-def get_related_model(field):
-    if hasattr(field, "related_model"):
-        return field.related_model
 
 
 def has_natural_foreign_key(model):
@@ -48,245 +39,6 @@ def has_natural_foreign_key(model):
     return hasattr(model, "natural_key") and hasattr(
         model.objects, "get_by_natural_key"
     )
-
-
-class ResourceOptions:
-    """
-    The inner Meta class allows for class-level configuration of how the
-    Resource should behave. The following options are available:
-    """
-
-    model = None
-    """
-    Django Model class. It is used to introspect available
-    fields.
-
-    """
-    fields = None
-    """
-    Controls what introspected fields the Resource should include. A whitelist
-    of fields.
-    """
-
-    exclude = None
-    """
-    Controls what introspected fields the Resource should
-    NOT include. A blacklist of fields.
-    """
-
-    instance_loader_class = None
-    """
-    Controls which class instance will take
-    care of loading existing objects.
-    """
-
-    import_id_fields = ["id"]
-    """
-    Controls which object fields will be used to
-    identify existing instances.
-    """
-
-    import_order = None
-    """
-    Controls import order for columns.
-    """
-
-    export_order = None
-    """
-    Controls export order for columns.
-    """
-
-    widgets = None
-    """
-    This dictionary defines widget kwargs for fields.
-    """
-
-    use_transactions = None
-    """
-    Controls if import should use database transactions. Default value is
-    ``None`` meaning ``settings.IMPORT_EXPORT_USE_TRANSACTIONS`` will be
-    evaluated.
-    """
-
-    skip_unchanged = False
-    """
-    Controls if the import should skip unchanged records.
-    If ``True``, then each existing instance is compared with the instance to be
-    imported, and if there are no changes detected, the row is recorded as skipped,
-    and no database update takes place.
-
-    The advantages of enabling this option are:
-
-    #. Avoids unnecessary database operations which can result in performance
-       improvements for large datasets.
-
-    #. Skipped records are recorded in each :class:`~import_export.results.RowResult`.
-
-    #. Skipped records are clearly visible in the
-       :ref:`import confirmation page<import-process>`.
-
-    For the default ``skip_unchanged`` logic to work, the
-    :attr:`~import_export.resources.ResourceOptions.skip_diff` must also be ``False``
-    (which is the default):
-
-    Default value is ``False``.
-    """
-
-    report_skipped = True
-    """
-    Controls if the result reports skipped rows. Default value is ``True``.
-    """
-
-    clean_model_instances = False
-    """
-    Controls whether ``instance.full_clean()`` is called during the import
-    process to identify potential validation errors for each (non skipped) row.
-    The default value is ``False``.
-    """
-
-    chunk_size = None
-    """
-    Controls the chunk_size argument of Queryset.iterator or,
-    if prefetch_related is used, the per_page attribute of Paginator.
-    """
-
-    skip_diff = False
-    """
-    Controls whether or not an instance should be diffed following import.
-
-    By default, an instance is copied prior to insert, update or delete.
-    After each row is processed, the instance's copy is diffed against the original,
-    and the value stored in each :class:`~import_export.results.RowResult`.
-    If diffing is not required, then disabling the diff operation by setting this value
-    to ``True`` improves performance, because the copy and comparison operations are
-    skipped for each row.
-
-    If enabled, then :meth:`~import_export.resources.Resource.skip_row` checks do not
-    execute, because 'skip' logic requires comparison between the stored and imported
-    versions of a row.
-
-    If enabled, then HTML row reports are also not generated, meaning that the
-    :attr:`~import_export.resources.ResourceOptions.skip_html_diff` value is ignored.
-
-    The default value is ``False``.
-    """
-
-    skip_html_diff = False
-    """
-    Controls whether or not a HTML report is generated after each row.
-    By default, the difference between a stored copy and an imported instance
-    is generated in HTML form and stored in each
-    :class:`~import_export.results.RowResult`.
-
-    The HTML report is used to present changes in the
-    :ref:`import confirmation page<import-process>` in the admin site, hence when this
-    value is ``True``, then changes will not be presented on the confirmation screen.
-
-    If the HTML report is not required, then setting this value to ``True`` improves
-    performance, because the HTML generation is skipped for each row.
-    This is a useful optimization when importing large datasets.
-
-    The default value is ``False``.
-    """
-
-    use_bulk = False
-    """
-    Controls whether import operations should be performed in bulk.
-    By default, an object's save() method is called for each row in a data set.
-    When bulk is enabled, objects are saved using bulk operations.
-    """
-
-    batch_size = 1000
-    """
-    The batch_size parameter controls how many objects are created in a single query.
-    The default is to create objects in batches of 1000.
-    See `bulk_create()
-    <https://docs.djangoproject.com/en/dev/ref/models/querysets/#bulk-create>`_.
-    This parameter is only used if ``use_bulk`` is ``True``.
-    """
-
-    force_init_instance = False
-    """
-    If ``True``, this parameter will prevent imports from checking the database for
-    existing instances.
-    Enabling this parameter is a performance enhancement if your import dataset is
-    guaranteed to contain new instances.
-    """
-
-    using_db = None
-    """
-    DB Connection name to use for db transactions. If not provided,
-    ``router.db_for_write(model)`` will be evaluated and if it's missing,
-    ``DEFAULT_DB_ALIAS`` constant ("default") is used.
-    """
-
-    store_row_values = False
-    """
-    If True, each row's raw data will be stored in each
-    :class:`~import_export.results.RowResult`.
-    Enabling this parameter will increase the memory usage during import
-    which should be considered when importing large datasets.
-    """
-
-    store_instance = False
-    """
-    If True, the row instance will be stored in each
-    :class:`~import_export.results.RowResult`.
-    Enabling this parameter will increase the memory usage during import
-    which should be considered when importing large datasets.
-    """
-
-    use_natural_foreign_keys = False
-    """
-    If ``True``, this value will be passed to all foreign
-    key widget fields whose models support natural foreign keys. That is,
-    the model has a natural_key function and the manager has a
-    ``get_by_natural_key()`` function.
-    """
-
-
-class DeclarativeMetaclass(type):
-    def __new__(cls, name, bases, attrs):
-        declared_fields = []
-        meta = ResourceOptions()
-
-        # If this class is subclassing another Resource, add that Resource's
-        # fields. Note that we loop over the bases in *reverse*. This is
-        # necessary in order to preserve the correct order of fields.
-        for base in bases[::-1]:
-            if hasattr(base, "fields"):
-                declared_fields = list(base.fields.items()) + declared_fields
-                # Collect the Meta options
-                options = getattr(base, "Meta", None)
-                for option in [
-                    option
-                    for option in dir(options)
-                    if not option.startswith("_") and hasattr(options, option)
-                ]:
-                    setattr(meta, option, getattr(options, option))
-
-        # Add direct fields
-        for field_name, obj in attrs.copy().items():
-            if isinstance(obj, Field):
-                field = attrs.pop(field_name)
-                if not field.column_name:
-                    field.column_name = field_name
-                declared_fields.append((field_name, field))
-
-        attrs["fields"] = OrderedDict(declared_fields)
-        new_class = super().__new__(cls, name, bases, attrs)
-
-        # Add direct options
-        options = getattr(new_class, "Meta", None)
-        for option in [
-            option
-            for option in dir(options)
-            if not option.startswith("_") and hasattr(options, option)
-        ]:
-            setattr(meta, option, getattr(options, option))
-        new_class._meta = meta
-
-        return new_class
 
 
 class Diff:
@@ -535,7 +287,7 @@ class Resource(metaclass=DeclarativeMetaclass):
         :param instance: The instance of the object to be persisted.
 
         :param is_create: A boolean flag to indicate whether this is a new object
-        to be created, or an existing object to be updated.
+                          to be created, or an existing object to be updated.
 
         :param row: A dict representing the import row.
 
@@ -553,8 +305,20 @@ class Resource(metaclass=DeclarativeMetaclass):
                 # we don't have transactions and we want to do a dry_run
                 pass
             else:
-                instance.save()
+                self.do_instance_save(instance, is_create)
         self.after_save_instance(instance, row, **kwargs)
+
+    def do_instance_save(self, instance, is_create):
+        """
+        A method specifically to provide a single overridable hook for the instance
+        save operation.
+        For example, this can be overridden to implement update_or_create().
+
+        :param instance: The model instance to be saved.
+        :param is_create: A boolean flag to indicate whether this is a new object
+                          to be created, or an existing object to be updated.
+        """
+        instance.save()
 
     def before_save_instance(self, instance, row, **kwargs):
         r"""
@@ -661,6 +425,18 @@ class Resource(metaclass=DeclarativeMetaclass):
     def get_import_fields(self):
         return [self.fields[f] for f in self.get_import_order()]
 
+    def import_obj(self, obj, data, dry_run, **kwargs):
+        warn(
+            "The 'import_obj' method is deprecated and will be replaced "
+            "with 'import_instance(self, instance, row, **kwargs)' "
+            "in a future release.  Refer to Release Notes for details.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        if dry_run is True:
+            kwargs.update({"dry_run": dry_run})
+        self.import_instance(obj, data, **kwargs)
+
     def import_instance(self, instance, row, **kwargs):
         r"""
         Traverses every field in this Resource and calls
@@ -749,11 +525,13 @@ class Resource(metaclass=DeclarativeMetaclass):
 
         Use ``super`` if you want to preserve default handling while overriding
         ::
-          class YourResource(ModelResource):
-            def skip_row(self, instance, original, row, import_validation_errors=None):
-                # Add code here
-                return super().skip_row(instance, original, row,
-                  import_validation_errors=import_validation_errors)
+
+            class YourResource(ModelResource):
+                def skip_row(self, instance, original,
+                             row, import_validation_errors=None):
+                    # Add code here
+                    return super().skip_row(instance, original, row,
+                                            import_validation_errors=import_validation_errors)
 
         :param instance: A new or updated model instance.
 
@@ -853,6 +631,18 @@ class Resource(metaclass=DeclarativeMetaclass):
         """
         pass
 
+    def after_import_instance(self, instance, new, row_number=None, **kwargs):
+        warn(
+            "The 'after_import_instance' method is deprecated and will be replaced "
+            "with 'after_init_instance(self, instance, new, row, **kwargs)' "
+            "in a future release.  Refer to Release Notes for details.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        if row_number is not None:
+            kwargs.update({"row_number": row_number})
+        self.after_init_instance(instance, new, None, **kwargs)
+
     def after_init_instance(self, instance, new, row, **kwargs):
         r"""
         Override to add additional logic. Does nothing by default.
@@ -872,9 +662,11 @@ class Resource(metaclass=DeclarativeMetaclass):
         logger.debug(error, exc_info=error)
         if result:
             tb_info = traceback.format_exc()
-            result.append_base_error(self.get_error_result_class()(error, tb_info))
+            result.append_base_error(
+                self.get_error_result_class()(error, traceback=tb_info)
+            )
         if raise_errors:
-            raise
+            raise exceptions.ImportError(error)
 
     def import_row(self, row, instance_loader, **kwargs):
         r"""
@@ -900,6 +692,12 @@ class Resource(metaclass=DeclarativeMetaclass):
               The index of the row being imported.
         """
         skip_diff = self._meta.skip_diff
+
+        if not self._meta.store_instance:
+            self._meta.store_instance = kwargs.get(
+                "retain_instance_in_row_result", False
+            )
+
         row_result = self.get_row_result_class()()
         if self._meta.store_row_values:
             row_result.row_values = row
@@ -924,7 +722,8 @@ class Resource(metaclass=DeclarativeMetaclass):
                     row_result.import_type = RowResult.IMPORT_TYPE_DELETE
                     row_result.add_instance_info(instance)
                     if self._meta.store_instance:
-                        row_result.instance = instance
+                        # create a copy before deletion so id fields are retained
+                        row_result.instance = deepcopy(instance)
                     self.delete_instance(instance, row, **kwargs)
                     if not skip_diff:
                         diff.compare_with(self, None)
@@ -968,7 +767,11 @@ class Resource(metaclass=DeclarativeMetaclass):
             if not isinstance(e, TransactionManagementError):
                 logger.debug(e, exc_info=e)
             tb_info = traceback.format_exc()
-            row_result.errors.append(self.get_error_result_class()(e, tb_info, row))
+            row_result.errors.append(
+                self.get_error_result_class()(
+                    e, traceback=tb_info, row=row, number=kwargs["row_number"]
+                )
+            )
 
         return row_result
 
@@ -989,13 +792,17 @@ class Resource(metaclass=DeclarativeMetaclass):
         :param dataset: A ``tablib.Dataset``.
 
         :param raise_errors: Whether errors should be printed to the end user
-            or raised regularly.
+                             or raised regularly.
 
         :param use_transactions: If ``True`` the import process will be processed
-            inside a transaction.
+                                 inside a transaction.
 
-        :param collect_failed_rows: If ``True`` the import process will collect
-            failed rows.
+        :param collect_failed_rows:
+          If ``True`` the import process will create a new dataset object comprising
+          failed rows and errors.
+          This can be useful for debugging purposes but will cause higher memory usage
+          for larger datasets.
+          See :attr:`~import_export.results.Result.failed_dataset`.
 
         :param rollback_on_validation_errors: If both ``use_transactions`` and
           ``rollback_on_validation_errors`` are set to ``True``, the import process will
@@ -1061,10 +868,10 @@ class Resource(metaclass=DeclarativeMetaclass):
         try:
             with atomic_if_using_transaction(using_transactions, using=db_connection):
                 self.before_import(dataset, **kwargs)
+            self._check_import_id_fields(dataset.headers)
         except Exception as e:
             self.handle_import_error(result, e, raise_errors)
 
-        self._check_import_id_fields(dataset.headers)
         instance_loader = self._meta.instance_loader_class(self, dataset)
 
         # Update the total in case the dataset was altered by before_import()
@@ -1127,16 +934,21 @@ class Resource(metaclass=DeclarativeMetaclass):
             result.increment_row_result_total(row_result)
 
             if row_result.errors:
+                result.append_error_row(i, row, row_result.errors)
                 if collect_failed_rows:
                     result.append_failed_row(row, row_result.errors[0])
                 if raise_errors:
-                    raise row_result.errors[-1].error
+                    raise exceptions.ImportError(
+                        row_result.errors[-1].error, number=i, row=row
+                    )
             elif row_result.validation_error:
                 result.append_invalid_row(i, row, row_result.validation_error)
                 if collect_failed_rows:
                     result.append_failed_row(row, row_result.validation_error)
                 if raise_errors:
-                    raise row_result.validation_error
+                    raise exceptions.ImportError(
+                        row_result.validation_error, number=i, row=row
+                    )
             if (
                 row_result.import_type != RowResult.IMPORT_TYPE_SKIP
                 or self._meta.report_skipped
@@ -1219,13 +1031,24 @@ class Resource(metaclass=DeclarativeMetaclass):
     def get_export_fields(self):
         return [self.fields[f] for f in self.get_export_order()]
 
-    def export_resource(self, instance):
-        return [
-            self.export_field(field, instance) for field in self.get_export_fields()
-        ]
+    def export_resource(self, instance, fields=None):
+        export_fields = self.get_export_fields()
 
-    def get_export_headers(self):
+        if isinstance(fields, list) and fields:
+            return [
+                self.export_field(field, instance)
+                for field in export_fields
+                if field.column_name in fields
+            ]
+
+        return [self.export_field(field, instance) for field in export_fields]
+
+    def get_export_headers(self, fields=None):
         headers = [force_str(field.column_name) for field in self.get_export_fields()]
+
+        if isinstance(fields, list) and fields:
+            return [f for f in headers if f in fields]
+
         return headers
 
     def get_user_visible_headers(self):
@@ -1267,11 +1090,12 @@ class Resource(metaclass=DeclarativeMetaclass):
         if queryset is None:
             queryset = self.get_queryset()
         queryset = self.filter_export(queryset, **kwargs)
-        headers = self.get_export_headers()
+        export_fields = kwargs.get("export_fields", None)
+        headers = self.get_export_headers(fields=export_fields)
         dataset = tablib.Dataset(headers=headers)
 
         for obj in self.iter_queryset(queryset):
-            dataset.append(self.export_resource(obj))
+            dataset.append(self.export_resource(obj, fields=export_fields))
 
         self.after_export(queryset, dataset, **kwargs)
 
@@ -1297,104 +1121,39 @@ class Resource(metaclass=DeclarativeMetaclass):
         return kwargs.get("dry_run", False)
 
     def _check_import_id_fields(self, headers):
-        import_id_fields = [self.fields[f] for f in self.get_import_id_fields()]
+        import_id_fields = list()
         missing_fields = list()
-        for field in import_id_fields:
-            if not headers or field.column_name not in headers:
-                # escape to be safe (exception could end up in logs)
-                col = escape(field.column_name)
-                missing_fields.append(col)
+        missing_headers = list()
+
+        for field_name in self.get_import_id_fields():
+            if field_name not in self.fields:
+                missing_fields.append(field_name)
+            else:
+                import_id_fields.append(self.fields[field_name])
 
         if missing_fields:
-            raise FieldError(
+            raise exceptions.FieldError(
                 _(
-                    "The following import_id_fields are not present in the dataset: %s"
+                    "The following fields are declared in 'import_id_fields' but "
+                    "are not present in the resource fields: %s"
                     % ", ".join(missing_fields)
                 )
             )
 
+        for field in import_id_fields:
+            if not headers or field.column_name not in headers:
+                # escape to be safe (exception could end up in logs)
+                col = escape(field.column_name)
+                missing_headers.append(col)
 
-class ModelDeclarativeMetaclass(DeclarativeMetaclass):
-    def __new__(cls, name, bases, attrs):
-        new_class = super().__new__(cls, name, bases, attrs)
-
-        opts = new_class._meta
-
-        if not opts.instance_loader_class:
-            opts.instance_loader_class = ModelInstanceLoader
-
-        if opts.model:
-            model_opts = opts.model._meta
-            declared_fields = new_class.fields
-
-            field_list = []
-            for f in sorted(model_opts.fields + model_opts.many_to_many):
-                if opts.fields is not None and f.name not in opts.fields:
-                    continue
-                if opts.exclude and f.name in opts.exclude:
-                    continue
-                if f.name in declared_fields:
-                    continue
-
-                field = new_class.field_from_django_field(f.name, f, readonly=False)
-                field_list.append(
-                    (
-                        f.name,
-                        field,
-                    )
+        if missing_headers:
+            raise exceptions.FieldError(
+                _(
+                    "The following fields are declared in 'import_id_fields' but "
+                    "are not present in the file headers: %s"
+                    % ", ".join(missing_headers)
                 )
-
-            new_class.fields.update(OrderedDict(field_list))
-
-            # add fields that follow relationships
-            if opts.fields is not None:
-                field_list = []
-                for field_name in opts.fields:
-                    if field_name in declared_fields:
-                        continue
-                    if field_name.find("__") == -1:
-                        continue
-
-                    model = opts.model
-                    attrs = field_name.split("__")
-                    for i, attr in enumerate(attrs):
-                        verbose_path = ".".join(
-                            [opts.model.__name__] + attrs[0 : i + 1]
-                        )
-
-                        try:
-                            f = model._meta.get_field(attr)
-                        except FieldDoesNotExist as e:
-                            logger.debug(e, exc_info=e)
-                            raise FieldDoesNotExist(
-                                "%s: %s has no field named '%s'"
-                                % (verbose_path, model.__name__, attr)
-                            )
-
-                        if i < len(attrs) - 1:
-                            # We're not at the last attribute yet, so check
-                            # that we're looking at a relation, and move on to
-                            # the next model.
-                            if isinstance(f, ForeignObjectRel):
-                                model = get_related_model(f)
-                            else:
-                                if get_related_model(f) is None:
-                                    raise KeyError(
-                                        "%s is not a relation" % verbose_path
-                                    )
-                                model = get_related_model(f)
-
-                    if isinstance(f, ForeignObjectRel):
-                        f = f.field
-
-                    field = new_class.field_from_django_field(
-                        field_name, f, readonly=True
-                    )
-                    field_list.append((field_name, field))
-
-                new_class.fields.update(OrderedDict(field_list))
-
-        return new_class
+            )
 
 
 class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
@@ -1511,9 +1270,17 @@ class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
 
         FieldWidget = cls.widget_from_django_field(django_field)
         widget_kwargs = cls.widget_kwargs_for_field(field_name, django_field)
+
+        attribute = field_name
+        column_name = field_name
+        # To solve #974
+        if isinstance(django_field, ForeignKey) and "__" not in column_name:
+            attribute += "_id"
+            widget_kwargs["key_is_id"] = True
+
         field = cls.DEFAULT_RESOURCE_FIELD(
-            attribute=field_name,
-            column_name=field_name,
+            attribute=attribute,
+            column_name=column_name,
             widget=FieldWidget(**widget_kwargs),
             readonly=readonly,
             default=django_field.default,

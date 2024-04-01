@@ -30,12 +30,19 @@ We encourage you to read the :doc:`contributing guidelines <contributing>`.
 Common issues
 =============
 
-key error 'id' in ``get_import_id_fields()``
---------------------------------------------
+FieldError on import
+--------------------
 
-When attempting to import, this error can be seen.  This indicates that the ``Resource`` has not been configured
-correctly, and the import logic fails.  Specifically, the import process is looking for an instance field called ``id``
-and there is no such field in the import.  See :ref:`advanced_usage:Create or update model instances`.
+The following error message can be seen on import:
+
+  *The following fields are declared in 'import_id_fields' but are not present in the resource*
+
+This indicates that the Resource has not been configured correctly, and the import logic fails.  Specifically,
+the import process is attempting to use either the defined or default values for
+:attr:`~import_export.options.ResourceOptions.import_id_fields` and no matching field has been detected in the resource
+fields.
+
+See :ref:`advanced_usage:Create or update model instances`.
 
 How to handle double-save from Signals
 --------------------------------------
@@ -104,7 +111,7 @@ Please refer to `this issue <https://github.com/django-import-export/django-impo
 How to hide stack trace in UI error messages
 --------------------------------------------
 
-Please refer to `this issue <https://github.com/django-import-export/django-import-export/issues/1257#issuecomment-952276485>`_.
+Please refer to :ref:`format_ui_error_messages`.
 
 Ids incremented twice during import
 -----------------------------------
@@ -113,7 +120,7 @@ When importing using the Admin site, it can be that the ids of the imported inst
 in the preview step.  This occurs because the rows are imported during 'confirm', and then the transaction is rolled
 back prior to the confirm step.  Database implementations mean that sequence numbers may not be reused.
 
-Consider enabling :ref:`IMPORT_EXPORT_SKIP_ADMIN_CONFIRM` as a workaround.
+Consider enabling :ref:`import_export_skip_admin_confirm` as a workaround.
 
 See `this issue <https://github.com/django-import-export/django-import-export/issues/560>`_ for more detailed
 discussion.
@@ -181,6 +188,11 @@ with this issue.  Refer to `this comment <https://github.com/django-import-expor
 This indicates that the change_list_template attribute could not be set, most likely due to a clash with a third party
 library.  Refer to :ref:`interoperability`.
 
+How to skip rows with validation errors during import
+-----------------------------------------------------
+
+Refer to `this comment <https://github.com/django-import-export/django-import-export/issues/763#issuecomment-1861031723>`_.
+
 ``FileNotFoundError`` during Admin import 'confirm' step
 --------------------------------------------------------
 
@@ -196,3 +208,34 @@ confirmation.
 To resolve this, you should avoid using temporary file system storage in multi server environments.
 
 Refer to :ref:`import process<import-process>` for more information.
+
+How to export large datasets
+----------------------------
+
+Large datasets can be exported in a number of ways, depending on data size and preferences.
+
+#. You can write custom scripts or `Admin commands <https://docs.djangoproject.com/en/stable/howto/custom-management-commands/>`_
+   to handle the export.  Output can be written to a local filesystem, cloud bucket, network storage etc.
+   Refer to the documentation on exporting :ref:`programmatically<exporting_data>`.
+#. You can use the third party library :doc:`django-import-export-celery <celery>` to handle long-running exports.
+#. You can enable :ref:`export via admin action<export_via_admin_action>` and then select items for export page by page
+   in the Admin UI.  This will work if you have a relatively small number of pages and can handle export to multiple
+   files.  This method is suitable as a one-off or as a simple way to export large datasets via the Admin UI.
+
+How to change column names on export
+------------------------------------
+
+If you want to modify the names of the columns on export, you can do so by overriding
+:meth:`~import_export.resources.Resource.get_export_headers`::
+
+  class BookResource(ModelResource):
+
+    def get_export_headers(self, fields=None):
+      headers = super().get_export_headers(fields=fields)
+      for i, h in enumerate(headers):
+          if h == 'name':
+            headers[i] = "NEW COLUMN NAME"
+      return headers
+
+    class Meta:
+      model = Book

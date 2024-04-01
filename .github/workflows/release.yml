@@ -36,7 +36,6 @@ jobs:
   publish-to-pypi:
     name: >-
       Publish Python 🐍 distribution 📦 to PyPI
-    if: startsWith(github.ref, 'refs/tags/')  # only publish to PyPI on tag pushes
     needs:
     - build
     runs-on: ubuntu-latest
@@ -45,7 +44,6 @@ jobs:
       url: https://pypi.org/p/django-import-export
     permissions:
       id-token: write  # IMPORTANT: mandatory for trusted publishing
-
     steps:
     - name: Download all the dists
       uses: actions/download-artifact@v3
@@ -60,14 +58,11 @@ jobs:
     needs:
     - build
     runs-on: ubuntu-latest
-
     environment:
       name: testpypi
       url: https://test.pypi.org/p/django-import-export
-
     permissions:
       id-token: write  # IMPORTANT: mandatory for trusted publishing
-
     steps:
     - name: Download all the dists
       uses: actions/download-artifact@v3

@@ -1,4 +1,5 @@
 import logging
+from warnings import warn
 
 from django.conf import settings
 from django.http import HttpResponse
@@ -6,7 +7,7 @@ from django.utils.timezone import now
 from django.views.generic.edit import FormView
 
 from .formats import base_formats
-from .forms import ExportForm
+from .forms import SelectableFieldsExportForm
 from .resources import modelresource_factory
 from .signals import post_export
 
@@ -14,6 +15,12 @@ logger = logging.getLogger(__name__)
 
 
 class BaseImportExportMixin:
+    """
+    Base mixin for functionality related to importing and exporting via the Admin
+    interface.
+    """
+
+    resource_class = None
     resource_classes = []
 
     @property
@@ -42,9 +49,24 @@ class BaseImportExportMixin:
         return self.resource_classes
 
     def get_resource_kwargs(self, request, *args, **kwargs):
-        return {}
+        """
+        Return the kwargs which are to be passed to the Resource constructor.
+        Can be overridden to provide additional kwarg params.
+
+        :param request: The request object.
+        :param args: Positional arguments.
+        :param kwargs: Keyword arguments.
+        :returns: The Resource kwargs (by default, is the kwargs passed).
+        """
+        return kwargs
 
     def get_resource_index(self, form):
+        """
+        Return the index of the resource class defined in the form.
+
+        :param form: The form object.
+        :returns: The index of the resource as an int.
+        """
         resource_index = 0
         if form and "resource" in form.cleaned_data:
             try:
@@ -101,12 +123,23 @@ class BaseExportMixin(BaseImportExportMixin):
     def get_export_resource_kwargs(self, request, **kwargs):
         return self.get_resource_kwargs(request, **kwargs)
 
+    def get_export_resource_fields_from_form(self, form):
+        if isinstance(form, SelectableFieldsExportForm):
+            export_fields = form.get_selected_resource_export_fields()
+            if export_fields:
+                return export_fields
+
+        return
+
     def get_data_for_export(self, request, queryset, **kwargs):
         export_form = kwargs.get("export_form")
         export_class = self.choose_export_resource_class(export_form)
         export_resource_kwargs = self.get_export_resource_kwargs(request, **kwargs)
+        export_fields = self.get_export_resource_fields_from_form(export_form)
         cls = export_class(**export_resource_kwargs)
-        export_data = cls.export(queryset=queryset, **kwargs)
+        export_data = cls.export(
+            queryset=queryset, export_fields=export_fields, **kwargs
+        )
         return export_data
 
     def get_export_filename(self, file_format):
@@ -120,7 +153,7 @@ class BaseExportMixin(BaseImportExportMixin):
 
 
 class ExportViewMixin(BaseExportMixin):
-    form_class = ExportForm
+    form_class = SelectableFieldsExportForm
 
     def get_export_data(self, file_format, queryset, *args, **kwargs):
         """
@@ -137,13 +170,20 @@ class ExportViewMixin(BaseExportMixin):
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs["formats"] = self.get_export_formats()
+        kwargs["resources"] = self.get_export_resource_classes()
         return kwargs
 
 
 class ExportViewFormMixin(ExportViewMixin, FormView):
     def form_valid(self, form):
+        warn(
+            "ExportViewFormMixin is deprecated and will be removed "
+            "in a future release",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         formats = self.get_export_formats()
-        file_format = formats[int(form.cleaned_data["file_format"])]()
+        file_format = formats[int(form.cleaned_data["format"])]()
         if hasattr(self, "get_filterset"):
             queryset = self.get_filterset(self.get_filterset_class()).qs
         else:

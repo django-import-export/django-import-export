@@ -59,7 +59,7 @@ if os.environ.get("IMPORT_EXPORT_TEST_TYPE") == "mysql-innodb":
             "USER": os.environ.get("IMPORT_EXPORT_MYSQL_USER"),
             "PASSWORD": os.environ.get("IMPORT_EXPORT_MYSQL_PASSWORD"),
             "HOST": "127.0.0.1",
-            "PORT": 3306,
+            "PORT": os.environ.get("IMPORT_EXPORT_MYSQL_PORT", "3306"),
             "TEST": {
                 "CHARSET": "utf8",
                 "COLLATION": "utf8_general_ci",
@@ -78,7 +78,7 @@ elif os.environ.get("IMPORT_EXPORT_TEST_TYPE") == "postgres":
             "USER": os.environ.get("IMPORT_EXPORT_POSTGRESQL_USER"),
             "PASSWORD": os.environ.get("IMPORT_EXPORT_POSTGRESQL_PASSWORD"),
             "HOST": "localhost",
-            "PORT": 5432,
+            "PORT": os.environ.get("IMPORT_EXPORT_POSTGRESQL_PORT", "5432"),
         }
     }
 else:
@@ -101,7 +101,6 @@ LOGGING = {
         "handlers": ["console"],
     },
 }
-
 
 USE_TZ = False
 if django.VERSION >= (4, 1):

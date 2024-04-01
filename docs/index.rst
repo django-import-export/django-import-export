@@ -38,6 +38,7 @@ exporting data with included admin integration.
    installation
    getting_started
    advanced_usage
+   admin_integration
    import_workflow
    export_workflow
    bulk_import
@@ -60,6 +61,7 @@ exporting data with included admin integration.
    api_tmp_storages
    api_results
    api_forms
+   api_exceptions
 
 .. toctree::
    :maxdepth: 2

@@ -1,3 +1,4 @@
+import warnings
 from unittest import mock
 from unittest.mock import MagicMock
 
@@ -7,6 +8,7 @@ from django.test.testcases import TestCase
 from django.urls import reverse
 
 from import_export import admin, formats, forms, mixins, resources
+from import_export.resources import modelresource_factory
 
 from .utils import ignore_widget_deprecation_warning
 
@@ -19,10 +21,12 @@ class ExportViewMixinTest(TestCase):
         self.url = reverse("export-category")
         self.cat1 = Category.objects.create(name="Cat 1")
         self.cat2 = Category.objects.create(name="Cat 2")
+        self.resource = modelresource_factory(Category)
         self.form = ExportViewMixinTest.TestExportForm(
-            formats.base_formats.DEFAULT_FORMATS
+            formats=formats.base_formats.DEFAULT_FORMATS,
+            resources=[self.resource],
         )
-        self.form.cleaned_data["file_format"] = "0"
+        self.form.cleaned_data["format"] = "0"
 
     def test_get(self):
         response = self.client.get(self.url)
@@ -31,10 +35,10 @@ class ExportViewMixinTest(TestCase):
 
     @ignore_widget_deprecation_warning
     def test_post(self):
-        data = {
-            "file_format": "0",
-        }
-        response = self.client.post(self.url, data)
+        data = {"format": "0", "categoryresource_id": True}
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=DeprecationWarning)
+            response = self.client.post(self.url, data)
         self.assertContains(response, self.cat1.name, status_code=200)
         self.assertTrue(response.has_header("Content-Disposition"))
         self.assertEqual(response["Content-Type"], "text/csv")
@@ -58,7 +62,9 @@ class ExportViewMixinTest(TestCase):
         with mock.patch("import_export.mixins.HttpResponse") as mock_http_response:
             # on first instantiation, raise TypeError, on second, return mock
             mock_http_response.side_effect = [TypeError(), mock_http_response]
-            m.form_valid(self.form)
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", category=DeprecationWarning)
+                m.form_valid(self.form)
             self.assertEqual(
                 content_type, mock_http_response.call_args_list[0][1]["content_type"]
             )
@@ -90,7 +96,9 @@ class ExportViewMixinTest(TestCase):
                 return MagicMock()
 
         m = TestMixin()
-        res = m.form_valid(self.form)
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=DeprecationWarning)
+            res = m.form_valid(self.form)
         self.assertEqual(200, res.status_code)
         self.assertEqual(1, m.mock_get_filterset_call_count)
         self.assertEqual(1, m.mock_get_filterset_class_call_count)
@@ -197,7 +205,7 @@ class MixinModelAdminTest(TestCase):
     class BaseModelExportChooseTest(mixins.BaseExportMixin):
         resource_classes = [resources.Resource, FooResource]
 
-    @mock.patch("import_export.admin.ExportForm")
+    @mock.patch("import_export.admin.SelectableFieldsExportForm")
     def test_choose_export_resource_class(self, form):
         """Test choose_export_resource_class() method"""
         admin = self.BaseModelExportChooseTest()
@@ -279,8 +287,21 @@ class ExportMixinTest(TestCase):
 
     def test_get_export_form(self):
         m = admin.ExportMixin()
-        self.assertEqual(forms.ExportForm, m.get_export_form_class())
+        self.assertEqual(admin.ExportMixin.export_form_class, m.get_export_form_class())
 
     def test_get_export_form_with_custom_form(self):
         m = self.TestExportMixin(self.TestExportForm)
         self.assertEqual(self.TestExportForm, m.get_export_form())
+
+
+class BaseExportImportMixinTest(TestCase):
+    class TestMixin(mixins.BaseImportExportMixin):
+        pass
+
+    def test_get_resource_kwargs(self):
+        mixin_instance = self.TestMixin()
+        test_kwargs = {"key1": "value1", "key2": "value2"}
+
+        result = mixin_instance.get_resource_kwargs(HttpRequest, **test_kwargs)
+
+        self.assertEqual(result, test_kwargs)

@@ -5,8 +5,8 @@ from unittest import mock, skipUnless
 from unittest.mock import patch
 
 import django
-import pytz
 from core.models import Author, Book, Category
+from core.tests.utils import ignore_utcnow_deprecation_warning
 from django.test import TestCase
 from django.test.utils import override_settings
 from django.utils import timezone
@@ -93,6 +93,9 @@ class BooleanWidgetTest(TestCase, RowDeprecationTestMixin):
         self.assertFalse(self.widget.render(False))
         self.assertIsNone(self.widget.render(None))
 
+    def test_render_invalid_type(self):
+        self.assertEqual(self.widget.render("a"), "")
+
 
 class FormatDatetimeTest(TestCase):
     date = date(10, 8, 2)
@@ -126,6 +129,9 @@ class DateWidgetTest(TestCase, RowDeprecationTestMixin):
 
     def test_render_none(self):
         self.assertEqual(self.widget.render(None), "")
+
+    def test_render_invalid_type(self):
+        self.assertEqual(self.widget.render(int(1)), "")
 
     def test_render_coerce_to_string_is_False(self):
         self.widget = widgets.DateWidget(coerce_to_string=False)
@@ -178,6 +184,9 @@ class DateTimeWidgetTest(TestCase, RowDeprecationTestMixin):
     def test_render_none(self):
         self.assertEqual(self.widget.render(None), "")
 
+    def test_render_invalid_type(self):
+        self.assertEqual(self.widget.render(int(1)), "")
+
     def test_render_coerce_to_string_is_False(self):
         self.widget = widgets.DateTimeWidget(coerce_to_string=False)
         self.assertEqual(self.datetime, self.widget.render(self.datetime))
@@ -196,14 +205,20 @@ class DateTimeWidgetTest(TestCase, RowDeprecationTestMixin):
             "time data '2021-05-01' does not match format 'x'"
         )
 
+    @ignore_utcnow_deprecation_warning
     @override_settings(USE_TZ=True, TIME_ZONE="Europe/Ljubljana")
     def test_use_tz(self):
+        import pytz
+
         utc_dt = timezone.make_aware(self.datetime, pytz.UTC)
         self.assertEqual(self.widget.render(utc_dt), "13.08.2012 20:00:00")
         self.assertEqual(self.widget.clean("13.08.2012 20:00:00"), utc_dt)
 
+    @ignore_utcnow_deprecation_warning
     @override_settings(USE_TZ=True, TIME_ZONE="Europe/Ljubljana")
     def test_clean_returns_tz_aware_datetime_when_naive_datetime_passed(self):
+        import pytz
+
         # issue 1165
         if django.VERSION >= (5, 0):
             from zoneinfo import ZoneInfo
@@ -214,8 +229,11 @@ class DateTimeWidgetTest(TestCase, RowDeprecationTestMixin):
         target_dt = timezone.make_aware(self.datetime, tz)
         self.assertEqual(target_dt, self.widget.clean(self.datetime))
 
+    @ignore_utcnow_deprecation_warning
     @override_settings(USE_TZ=True, TIME_ZONE="Europe/Ljubljana")
     def test_clean_handles_tz_aware_datetime(self):
+        import pytz
+
         self.datetime = datetime(2012, 8, 13, 18, 0, 0, tzinfo=pytz.timezone("UTC"))
         self.assertEqual(self.datetime, self.widget.clean(self.datetime))
 
@@ -270,6 +288,9 @@ class TimeWidgetTest(TestCase, RowDeprecationTestMixin):
     def test_render_none(self):
         self.assertEqual(self.widget.render(None), "")
 
+    def test_render_invalid_type(self):
+        self.assertEqual(self.widget.render(int(1)), "")
+
     def test_render_coerce_to_string_is_False(self):
         self.widget = widgets.TimeWidget(coerce_to_string=False)
         self.assertEqual(self.time, self.widget.render(self.time))
@@ -315,6 +336,9 @@ class DurationWidgetTest(TestCase, RowDeprecationTestMixin):
         self.widget = widgets.DurationWidget(coerce_to_string=False)
         self.assertEqual(self.duration, self.widget.render(self.duration))
 
+    def test_render_invalid_type(self):
+        self.assertEqual(self.widget.render(int(1)), "")
+
     def test_clean(self):
         self.assertEqual(self.widget.clean("1:57:00"), self.duration)
 
@@ -356,6 +380,9 @@ class NumberWidgetTest(TestCase, RowDeprecationTestMixin):
     def test_render_None_coerce_to_string_False(self):
         self.assertEqual("", self.widget.render(None))
 
+    def test_render_invalid_type(self):
+        self.assertEqual(self.widget.render("a"), "")
+
     @skipUnless(
         django.VERSION[0] < 4, f"skipping django {django.VERSION} version specific test"
     )
@@ -386,6 +413,9 @@ class FloatWidgetTest(TestCase, RowDeprecationTestMixin):
 
     def test_render(self):
         self.assertEqual(self.widget.render(self.value), "11.111")
+
+    def test_render_invalid_type(self):
+        self.assertEqual(self.widget.render("a"), "")
 
     def test_clean_string_zero(self):
         self.assertEqual(self.widget.clean("0"), 0.0)
@@ -427,6 +457,9 @@ class DecimalWidgetTest(TestCase, RowDeprecationTestMixin):
 
     def test_render(self):
         self.assertEqual(self.widget.render(self.value), "11.111")
+
+    def test_render_invalid_type(self):
+        self.assertEqual(self.widget.render("1"), "")
 
     def test_clean_string_zero(self):
         self.assertEqual(self.widget.clean("0"), Decimal("0"))
@@ -474,6 +507,9 @@ class IntegerWidgetTest(TestCase, RowDeprecationTestMixin):
         self.assertEqual(self.widget.clean(""), None)
         self.assertEqual(self.widget.clean(" "), None)
         self.assertEqual(self.widget.clean("\n\t\r"), None)
+
+    def test_render_invalid_type(self):
+        self.assertEqual(self.widget.render("a"), "")
 
     @skipUnless(
         django.VERSION[0] < 4, f"skipping django {django.VERSION} version specific test"
@@ -721,3 +757,13 @@ class SimpleArrayWidgetTest(TestCase, RowDeprecationTestMixin):
         v = [1, 2, 3]
         self.widget = widgets.SimpleArrayWidget(coerce_to_string=False)
         self.assertEqual(v, self.widget.render(v))
+
+    def test_render_none_coerce_to_string_is_True(self):
+        self.widget = widgets.SimpleArrayWidget()
+        self.assertTrue(self.widget.coerce_to_string)
+        self.assertEqual("", self.widget.render(None))
+
+    def test_render_none_coerce_to_string_is_False(self):
+        self.widget = widgets.SimpleArrayWidget(coerce_to_string=False)
+        self.assertFalse(self.widget.coerce_to_string)
+        self.assertIsNone(self.widget.render(None))

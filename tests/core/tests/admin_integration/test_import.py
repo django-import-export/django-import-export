@@ -1,108 +1,28 @@
-import os.path
+import os
 import warnings
-from datetime import datetime
-from io import BytesIO
+from io import StringIO
 from unittest import mock
 from unittest.mock import MagicMock, patch
 
-import chardet
 import django
-import tablib
 from core.admin import AuthorAdmin, BookAdmin, CustomBookAdmin, ImportMixin
-from core.models import Author, Book, Category, EBook, Parent
-from django.contrib import admin
+from core.models import Author, Book, EBook, Parent
+from core.tests.admin_integration.mixins import AdminTestMixin
+from core.tests.utils import ignore_widget_deprecation_warning
 from django.contrib.admin.models import DELETION, LogEntry
-from django.contrib.admin.options import ModelAdmin
+from django.contrib.admin.sites import AdminSite
 from django.contrib.auth.models import User
-from django.core.exceptions import PermissionDenied
 from django.http import HttpRequest
 from django.test import RequestFactory
 from django.test.testcases import TestCase, TransactionTestCase
 from django.test.utils import override_settings
 from django.utils.translation import gettext_lazy as _
-from openpyxl.reader.excel import load_workbook
-from tablib import Dataset
 
-from import_export import formats
-from import_export.admin import (
-    ExportActionMixin,
-    ExportActionModelAdmin,
-    ExportMixin,
-    ImportExportActionModelAdmin,
-    ImportExportMixinBase,
-)
+from import_export.admin import ExportMixin
+from import_export.exceptions import FieldError
 from import_export.formats import base_formats
-from import_export.formats.base_formats import DEFAULT_FORMATS
-from import_export.tmp_storages import TempFolderStorage
-
-from .utils import ignore_widget_deprecation_warning
-
-
-class AdminTestMixin(object):
-    book_import_url = "/admin/core/book/import/"
-    book_process_import_url = "/admin/core/book/process_import/"
-    legacybook_import_url = "/admin/core/legacybook/import/"
-    legacybook_process_import_url = "/admin/core/legacybook/process_import/"
-    child_import_url = "/admin/core/child/import/"
-    child_process_import_url = "/admin/core/child/process_import/"
-
-    def setUp(self):
-        super().setUp()
-        self.user = User.objects.create_user("admin", "admin@example.com", "password")
-        self.user.is_staff = True
-        self.user.is_superuser = True
-        self.user.save()
-        self.client.login(username="admin", password="password")
-
-    def _do_import_post(
-        self, url, filename, input_format=0, encoding=None, resource=None, follow=False
-    ):
-        input_format = input_format
-        filename = os.path.join(
-            os.path.dirname(__file__), os.path.pardir, "exports", filename
-        )
-        with open(filename, "rb") as f:
-            data = {
-                "input_format": str(input_format),
-                "import_file": f,
-            }
-            if encoding:
-                BookAdmin.from_encoding = encoding
-            if resource:
-                data.update({"resource": resource})
-            response = self.client.post(url, data, follow=follow)
-        return response
-
-    def _assert_string_in_response(
-        self,
-        url,
-        filename,
-        input_format,
-        encoding=None,
-        str_in_response=None,
-        follow=False,
-        status_code=200,
-    ):
-        response = self._do_import_post(
-            url, filename, input_format, encoding=encoding, follow=follow
-        )
-        self.assertEqual(response.status_code, status_code)
-        self.assertIn("result", response.context)
-        self.assertFalse(response.context["result"].has_errors())
-        if str_in_response is not None:
-            self.assertContains(response, str_in_response)
-
-    def _get_input_format_index(self, format):
-        for i, f in enumerate(DEFAULT_FORMATS):
-            if f().get_title() == format:
-                xlsx_index = i
-                break
-        else:
-            raise Exception(
-                "Unable to find %s format. DEFAULT_FORMATS: %r"
-                % (format, DEFAULT_FORMATS)
-            )
-        return xlsx_index
+from import_export.formats.base_formats import XLSX
+from import_export.resources import ModelResource
 
 
 class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
@@ -140,9 +60,9 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(
             response,
-            _("Import finished, with {} new and {} updated {}.").format(
-                1, 0, Book._meta.verbose_name_plural
-            ),
+            _(
+                "Import finished: {} new, {} updated, {} deleted and {} skipped {}."
+            ).format(1, 0, 0, 0, Book._meta.verbose_name_plural),
         )
 
     @override_settings(DEBUG=True)
@@ -222,9 +142,9 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(
             response,
-            _("Import finished, with {} new and {} updated {}.").format(
-                0, 1, Book._meta.verbose_name_plural
-            ),
+            _(
+                "Import finished: {} new, {} updated, {} deleted and {} skipped {}."
+            ).format(0, 1, 0, 0, Book._meta.verbose_name_plural),
         )
         # Check, that we really use second resource - author_email didn't get imported
         self.assertEqual(Book.objects.get(id=1).author_email, "")
@@ -283,6 +203,17 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         else:
             self.assertFormError(response, "form", "import_file", target_msg)
 
+    def test_import_action_handles_FieldError(self):
+        # issue 1722
+        with mock.patch(
+            "import_export.resources.Resource._check_import_id_fields"
+        ) as mock_check_import_id_fields:
+            mock_check_import_id_fields.side_effect = FieldError("some unknown error")
+            response = self._do_import_post(self.book_import_url, "books.csv")
+        self.assertEqual(response.status_code, 200)
+        target_msg = "some unknown error"
+        self.assertIn(target_msg, str(response.content))
+
     @override_settings(LANGUAGE_CODE="es")
     def test_import_action_handles_ValueError_as_form_error_with_translation(self):
         with mock.patch(
@@ -292,7 +223,7 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
             response = self._do_import_post(self.book_import_url, "books.csv")
         self.assertEqual(response.status_code, 200)
         target_msg = (
-            "Se encontró 'ValueError' mientras se intentaba leer el archivo."
+            "Se encontró 'ValueError' mientras se intentaba leer el archivo. "
             "Asegúrese que seleccionó el formato correcto para el archivo."
         )
 
@@ -383,9 +314,9 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(
             response,
-            _("Import finished, with {} new and {} updated {}.").format(
-                1, 0, Book._meta.verbose_name_plural
-            ),
+            _(
+                "Import finished: {} new, {} updated, {} deleted and {} skipped {}."
+            ).format(1, 0, 0, 0, Book._meta.verbose_name_plural),
         )
 
     def test_import_export_buttons_visible_without_add_permission(self):
@@ -416,7 +347,7 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
             os.path.dirname(__file__), os.path.pardir, "exports", "books.csv"
         )
         data = {
-            "input_format": "0",
+            "format": "0",
             "import_file_name": import_file_name,
             "original_file_name": "books.csv",
         }
@@ -476,10 +407,14 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         # POST the import form
         input_format = "0"
         filename = os.path.join(
-            os.path.dirname(__file__), os.path.pardir, "exports", "books.csv"
+            os.path.dirname(__file__),
+            os.path.pardir,
+            os.path.pardir,
+            "exports",
+            "books.csv",
         )
         with open(filename, "rb") as fobj:
-            data = {"author": 11, "input_format": input_format, "import_file": fobj}
+            data = {"author": 11, "format": input_format, "import_file": fobj}
             response = self.client.post("/admin/core/ebook/import/", data)
 
         self.assertEqual(response.status_code, 200)
@@ -500,10 +435,34 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(
             response,
-            _("Import finished, with {} new and {} updated {}.").format(
-                1, 0, EBook._meta.verbose_name_plural
-            ),
+            _(
+                "Import finished: {} new, {} updated, {} deleted and {} skipped {}."
+            ).format(1, 0, 0, 0, EBook._meta.verbose_name_plural),
         )
+
+    @patch("import_export.admin.ImportMixin.choose_import_resource_class")
+    def test_import_passes_correct_kwargs_to_constructor(
+        self, mock_choose_import_resource_class
+    ):
+        # issue 1741
+        class TestResource(ModelResource):
+            def __init__(self, **kwargs):
+                super().__init__(**kwargs)
+
+                # the form is passed as a kwarg to the Resource constructor
+                # if not present, then it means that the original kwargs were lost
+                if "form" not in kwargs:
+                    raise Exception("No form")
+
+            class Meta:
+                model = Book
+                fields = ("id",)
+
+        # mock the returned resource class so that we can inspect constructor params
+        mock_choose_import_resource_class.return_value = TestResource
+
+        response = self._do_import_post(self.book_import_url, "books.csv")
+        self.assertEqual(response.status_code, 200)
 
     def test_get_skip_admin_log_attribute(self):
         m = ImportMixin()
@@ -547,22 +506,6 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         m = ExportMixin()
         self.assertEqual(dict(), m.get_context_data())
 
-    def test_media_attribute(self):
-        """
-        Test that the 'media' attribute of the ModelAdmin class is overridden to include
-        the project-specific js file.
-        """
-        mock_model = mock.MagicMock()
-        mock_site = mock.MagicMock()
-
-        class TestExportActionModelAdmin(ExportActionModelAdmin):
-            def __init__(self):
-                super().__init__(mock_model, mock_site)
-
-        m = TestExportActionModelAdmin()
-        target_media = m.media
-        self.assertEqual("import_export/action_formats.js", target_media._js[-1])
-
     @patch("import_export.admin.logger")
     def test_issue_1521_change_list_template_as_property(self, mock_logger):
         class TestImportCls(ImportMixin):
@@ -585,8 +528,7 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         mock_site = mock.MagicMock()
         import_form = BookAdmin(Book, mock_site).create_import_form(request)
 
-        items = list(import_form.fields.items())
-        file_format = items[len(items) - 1][1]
+        file_format = import_form.fields["format"]
         choices = file_format.choices
 
         self.assertEqual(len(choices), 3)
@@ -594,137 +536,88 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertEqual(choices[1][1], "xlsx")
         self.assertEqual(choices[2][1], "xls")
 
+    @override_settings(IMPORT_FORMATS=[XLSX])
+    def test_get_export_form_single_format(self):
+        response = self.client.get(self.book_import_url)
+        form = response.context["form"]
+        self.assertEqual(1, len(form.fields["format"].choices))
+        self.assertTrue(form.fields["format"].widget.attrs["readonly"])
+        self.assertIn("xlsx", str(response.content))
+        self.assertNotIn('select name="format"', str(response.content))
 
-class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
-    def test_export(self):
-        response = self.client.get("/admin/core/book/export/")
-        self.assertEqual(response.status_code, 200)
+    @override_settings(IMPORT_FORMATS=[])
+    def test_export_empty_import_formats(self):
+        with self.assertRaisesRegex(ValueError, "invalid formats list"):
+            self.client.get(self.book_import_url)
 
-        data = {
-            "file_format": "0",
-        }
-        date_str = datetime.now().strftime("%Y-%m-%d")
-        response = self.client.post("/admin/core/book/export/", data)
-        self.assertEqual(response.status_code, 200)
-        self.assertTrue(response.has_header("Content-Disposition"))
-        self.assertEqual(response["Content-Type"], "text/csv")
-        self.assertEqual(
-            response["Content-Disposition"],
-            'attachment; filename="Book-{}.csv"'.format(date_str),
-        )
-        self.assertEqual(
-            b"id,name,author,author_email,imported,published,"
-            b"published_time,price,added,categories\r\n",
-            response.content,
-        )
 
-    def test_export_second_resource(self):
-        response = self.client.get("/admin/core/book/export/")
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Export/Import only book names")
+class TestImportErrorMessageFormat(AdminTestMixin, TestCase):
+    # issue 1724
 
-        data = {
-            "file_format": "0",
-            "resource": 1,
-        }
-        date_str = datetime.now().strftime("%Y-%m-%d")
-        response = self.client.post("/admin/core/book/export/", data)
-        self.assertEqual(response.status_code, 200)
-        self.assertTrue(response.has_header("Content-Disposition"))
-        self.assertEqual(response["Content-Type"], "text/csv")
-        self.assertEqual(
-            response["Content-Disposition"],
-            'attachment; filename="Book-{}.csv"'.format(date_str),
-        )
-        self.assertEqual(b"id,name\r\n", response.content)
+    def setUp(self):
+        super().setUp()
+        self.csvdata = "id,name,author\r\n" "1,Ulysses,666\r\n"
+        self.filedata = StringIO(self.csvdata)
+        self.data = {"format": "0", "import_file": self.filedata}
+        self.model_admin = BookAdmin(Book, AdminSite())
 
-    def test_returns_xlsx_export(self):
-        response = self.client.get("/admin/core/book/export/")
-        self.assertEqual(response.status_code, 200)
+        factory = RequestFactory()
+        self.request = factory.post(self.book_import_url, self.data, follow=True)
+        self.request.user = User.objects.create_user("admin1")
 
-        xlsx_index = self._get_input_format_index("xlsx")
-        data = {"file_format": str(xlsx_index)}
-        response = self.client.post("/admin/core/book/export/", data)
-        self.assertEqual(response.status_code, 200)
-        self.assertTrue(response.has_header("Content-Disposition"))
-        self.assertEqual(
-            response["Content-Type"],
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        )
-
-    @override_settings(IMPORT_EXPORT_ESCAPE_FORMULAE_ON_EXPORT=True)
     @ignore_widget_deprecation_warning
-    def test_export_escape_formulae(self):
-        Book.objects.create(id=1, name="=SUM(1+1)")
-        Book.objects.create(id=2, name="<script>alert(1)</script>")
-        response = self.client.get("/admin/core/book/export/")
-        self.assertEqual(response.status_code, 200)
-
-        xlsx_index = self._get_input_format_index("xlsx")
-        data = {"file_format": str(xlsx_index)}
-        response = self.client.post("/admin/core/book/export/", data)
-        self.assertEqual(response.status_code, 200)
-        content = response.content
-        wb = load_workbook(filename=BytesIO(content))
-        self.assertEqual("<script>alert(1)</script>", wb.active["B2"].value)
-        self.assertEqual("SUM(1+1)", wb.active["B3"].value)
-
-    @override_settings(IMPORT_EXPORT_ESCAPE_FORMULAE_ON_EXPORT=True)
-    @ignore_widget_deprecation_warning
-    def test_export_escape_formulae_csv(self):
-        b1 = Book.objects.create(id=1, name="=SUM(1+1)")
-        response = self.client.get("/admin/core/book/export/")
-        self.assertEqual(response.status_code, 200)
-
-        index = self._get_input_format_index("csv")
-        data = {"file_format": str(index)}
-        response = self.client.post("/admin/core/book/export/", data)
+    def test_result_error_display_default(self):
+        response = self.model_admin.import_action(self.request)
+        response.render()
+        self.assertIn("import-error-display-message", str(response.content))
         self.assertIn(
-            f"{b1.id},SUM(1+1),,,0,,,,,\r\n".encode(),
-            response.content,
+            "Line number: 1 - Author matching query does not exist.",
+            str(response.content),
         )
+        self.assertNotIn("import-error-display-row", str(response.content))
+        self.assertNotIn("import-error-display-traceback", str(response.content))
 
-    @override_settings(IMPORT_EXPORT_ESCAPE_FORMULAE_ON_EXPORT=False)
     @ignore_widget_deprecation_warning
-    def test_export_escape_formulae_csv_false(self):
-        b1 = Book.objects.create(id=1, name="=SUM(1+1)")
-        response = self.client.get("/admin/core/book/export/")
-        self.assertEqual(response.status_code, 200)
+    def test_result_error_display_message_only(self):
+        self.model_admin.import_error_display = ("message",)
 
-        index = self._get_input_format_index("csv")
-        data = {"file_format": str(index)}
-        response = self.client.post("/admin/core/book/export/", data)
+        response = self.model_admin.import_action(self.request)
+        response.render()
         self.assertIn(
-            f"{b1.id},=SUM(1+1),,,0,,,,,\r\n".encode(),
-            response.content,
+            "Line number: 1 - Author matching query does not exist.",
+            str(response.content),
         )
-
-
-class FilteredExportAdminIntegrationTest(AdminTestMixin, TestCase):
-    fixtures = ["category", "book", "author"]
+        self.assertIn("import-error-display-message", str(response.content))
+        self.assertNotIn("import-error-display-row", str(response.content))
+        self.assertNotIn("import-error-display-traceback", str(response.content))
 
     @ignore_widget_deprecation_warning
-    def test_export_filters_by_form_param(self):
-        # issue 1578
-        author = Author.objects.get(name="Ian Fleming")
+    def test_result_error_display_row_only(self):
+        self.model_admin.import_error_display = ("row",)
 
-        data = {"file_format": "0", "author": str(author.id)}
-        date_str = datetime.now().strftime("%Y-%m-%d")
-        response = self.client.post("/admin/core/ebook/export/", data)
-        self.assertEqual(response.status_code, 200)
-        self.assertTrue(response.has_header("Content-Disposition"))
-        self.assertEqual(response["Content-Type"], "text/csv")
-        self.assertEqual(
-            response["Content-Disposition"],
-            'attachment; filename="EBook-{}.csv"'.format(date_str),
+        response = self.model_admin.import_action(self.request)
+        response.render()
+        self.assertNotIn(
+            "Line number: 1 - Author matching query does not exist.",
+            str(response.content),
         )
-        self.assertEqual(
-            b"id,name,author,author_email,imported,published,"
-            b"published_time,price,added,categories\r\n"
-            b"5,The Man with the Golden Gun,5,ian@example.com,"
-            b"0,1965-04-01,21:00:00,5.00,,2\r\n",
-            response.content,
+        self.assertNotIn("import-error-display-message", str(response.content))
+        self.assertIn("import-error-display-row", str(response.content))
+        self.assertNotIn("import-error-display-traceback", str(response.content))
+
+    @ignore_widget_deprecation_warning
+    def test_result_error_display_traceback_only(self):
+        self.model_admin.import_error_display = ("traceback",)
+
+        response = self.model_admin.import_action(self.request)
+        response.render()
+        self.assertNotIn(
+            "Line number: 1 - Author matching query does not exist.",
+            str(response.content),
         )
+        self.assertNotIn("import-error-display-message", str(response.content))
+        self.assertNotIn("import-error-display-row", str(response.content))
+        self.assertIn("import-error-display-traceback", str(response.content))
 
 
 class ConfirmImportEncodingTest(AdminTestMixin, TestCase):
@@ -841,7 +734,8 @@ class CompleteImportEncodingTest(AdminTestMixin, TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(
-            response, "Import finished, with 1 new and 0 updated books."
+            response,
+            "Import finished: 1 new, 0 updated, 0 deleted and 0 skipped books.",
         )
 
     @override_settings(
@@ -929,262 +823,6 @@ class CompleteImportEncodingTest(AdminTestMixin, TestCase):
         self._is_str_in_response("books.xls", "1")
 
 
-class TestImportExportActionModelAdmin(ImportExportActionModelAdmin):
-    def __init__(self, mock_model, mock_site, error_instance):
-        self.error_instance = error_instance
-        super().__init__(mock_model, mock_site)
-
-    def write_to_tmp_storage(self, import_file, input_format):
-        mock_storage = MagicMock(spec=TempFolderStorage)
-
-        mock_storage.read.side_effect = self.error_instance
-        return mock_storage
-
-
-class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
-    def setUp(self):
-        super().setUp()
-        self.cat1 = Category.objects.create(name="Cat 1")
-        self.cat2 = Category.objects.create(name="Cat 2")
-
-    @ignore_widget_deprecation_warning
-    def test_export(self):
-        data = {
-            "action": ["export_admin_action"],
-            "file_format": "0",
-            "_selected_action": [str(self.cat1.id)],
-        }
-        response = self.client.post("/admin/core/category/", data)
-        self.assertContains(response, self.cat1.name, status_code=200)
-        self.assertNotContains(response, self.cat2.name, status_code=200)
-        self.assertTrue(response.has_header("Content-Disposition"))
-        date_str = datetime.now().strftime("%Y-%m-%d")
-        self.assertEqual(
-            response["Content-Disposition"],
-            'attachment; filename="Category-{}.csv"'.format(date_str),
-        )
-
-    def test_export_no_format_selected(self):
-        data = {
-            "action": ["export_admin_action"],
-            "_selected_action": [str(self.cat1.id)],
-        }
-        response = self.client.post("/admin/core/category/", data)
-        self.assertEqual(response.status_code, 302)
-
-    def test_get_export_data_raises_PermissionDenied_when_no_export_permission_assigned(
-        self,
-    ):
-        request = MagicMock(spec=HttpRequest)
-
-        class TestMixin(ExportMixin):
-            model = Book
-
-            def has_export_permission(self, request):
-                return False
-
-        m = TestMixin()
-        with self.assertRaises(PermissionDenied):
-            m.get_export_data("0", Book.objects.none(), request=request)
-
-    def test_export_admin_action_one_formats(self):
-        mock_model = mock.MagicMock()
-        mock_site = mock.MagicMock()
-
-        class TestCategoryAdmin(ExportActionModelAdmin):
-            def __init__(self):
-                super().__init__(mock_model, mock_site)
-
-            export_formats = [base_formats.CSV]
-
-        m = TestCategoryAdmin()
-        action_form = m.action_form
-
-        items = list(action_form.base_fields.items())
-        file_format = items[len(items) - 1][1]
-        choices = file_format.choices
-
-        self.assertNotEqual(choices[0][0], "---")
-        self.assertEqual(choices[0][1], "csv")
-
-    def test_export_admin_action_formats(self):
-        mock_model = mock.MagicMock()
-        mock_site = mock.MagicMock()
-
-        class TestCategoryAdmin(ExportActionModelAdmin):
-            def __init__(self):
-                super().__init__(mock_model, mock_site)
-
-        class TestFormatsCategoryAdmin(ExportActionModelAdmin):
-            def __init__(self):
-                super().__init__(mock_model, mock_site)
-
-            export_formats = [base_formats.CSV, base_formats.JSON]
-
-        m = TestCategoryAdmin()
-        action_form = m.action_form
-
-        items = list(action_form.base_fields.items())
-        file_format = items[len(items) - 1][1]
-        choices = file_format.choices
-
-        self.assertEqual(choices[0][1], "---")
-        self.assertEqual(len(choices), 9)
-
-        m = TestFormatsCategoryAdmin()
-        action_form = m.action_form
-
-        items = list(action_form.base_fields.items())
-        file_format = items[len(items) - 1][1]
-        choices = file_format.choices
-
-        self.assertEqual(choices[0][1], "---")
-        self.assertEqual(len(m.export_formats) + 1, len(choices))
-
-        self.assertIn("csv", [c[1] for c in choices])
-        self.assertIn("json", [c[1] for c in choices])
-
-    @override_settings(EXPORT_FORMATS=[base_formats.XLSX, base_formats.CSV])
-    def test_export_admin_action_uses_export_format_settings(self):
-        """
-        Test that export action only avails the formats provided by the
-        EXPORT_FORMATS setting
-        """
-        mock_model = mock.MagicMock()
-        mock_site = mock.MagicMock()
-
-        class TestCategoryAdmin(ExportActionModelAdmin):
-            def __init__(self):
-                super().__init__(mock_model, mock_site)
-
-        m = TestCategoryAdmin()
-        action_form = m.action_form
-
-        items = list(action_form.base_fields.items())
-        file_format = items[len(items) - 1][1]
-        choices = file_format.choices
-
-        self.assertEqual(len(choices), 3)
-        self.assertEqual(choices[0][1], "---")
-        self.assertEqual(choices[1][1], "xlsx")
-        self.assertEqual(choices[2][1], "csv")
-
-    @override_settings(IMPORT_EXPORT_FORMATS=[base_formats.XLS, base_formats.CSV])
-    def test_export_admin_action_uses_import_export_format_settings(self):
-        """
-        Test that export action only avails the formats provided by the
-        IMPORT_EXPORT_FORMATS setting
-        """
-        mock_model = mock.MagicMock()
-        mock_site = mock.MagicMock()
-
-        class TestCategoryAdmin(ExportActionModelAdmin):
-            def __init__(self):
-                super().__init__(mock_model, mock_site)
-
-        m = TestCategoryAdmin()
-        action_form = m.action_form
-
-        items = list(action_form.base_fields.items())
-        file_format = items[len(items) - 1][1]
-        choices = file_format.choices
-
-        self.assertEqual(len(choices), 3)
-        self.assertEqual(choices[0][1], "---")
-        self.assertEqual(choices[1][1], "xls")
-        self.assertEqual(choices[2][1], "csv")
-
-
-class TestExportEncoding(TestCase):
-    mock_request = MagicMock(spec=HttpRequest)
-    mock_request.POST = {"file_format": 0}
-
-    class TestMixin(ExportMixin):
-        model = Book
-
-        def __init__(self, test_str=None):
-            self.test_str = test_str
-
-        def get_data_for_export(self, request, queryset, *args, **kwargs):
-            dataset = Dataset(headers=["id", "name"])
-            dataset.append([1, self.test_str])
-            return dataset
-
-        def get_export_queryset(self, request):
-            return list()
-
-        def get_export_filename(self, request, queryset, file_format):
-            return "f"
-
-    def setUp(self):
-        self.file_format = formats.base_formats.CSV()
-        self.export_mixin = self.TestMixin(test_str="teststr")
-
-    def test_to_encoding_not_set_default_encoding_is_utf8(self):
-        self.export_mixin = self.TestMixin(test_str="teststr")
-        data = self.export_mixin.get_export_data(
-            self.file_format, list(), request=self.mock_request
-        )
-        csv_dataset = tablib.import_set(data)
-        self.assertEqual("teststr", csv_dataset.dict[0]["name"])
-
-    def test_to_encoding_set(self):
-        self.export_mixin = self.TestMixin(test_str="ハローワールド")
-        data = self.export_mixin.get_export_data(
-            self.file_format, list(), request=self.mock_request, encoding="shift-jis"
-        )
-        encoding = chardet.detect(bytes(data))["encoding"]
-        self.assertEqual("SHIFT_JIS", encoding)
-
-    def test_to_encoding_set_incorrect(self):
-        self.export_mixin = self.TestMixin()
-        with self.assertRaises(LookupError):
-            self.export_mixin.get_export_data(
-                self.file_format,
-                list(),
-                request=self.mock_request,
-                encoding="bad-encoding",
-            )
-
-    def test_to_encoding_not_set_for_binary_file(self):
-        self.export_mixin = self.TestMixin(test_str="teststr")
-        self.file_format = formats.base_formats.XLSX()
-        data = self.export_mixin.get_export_data(
-            self.file_format, list(), request=self.mock_request
-        )
-        binary_dataset = tablib.import_set(data)
-        self.assertEqual("teststr", binary_dataset.dict[0]["name"])
-
-    @mock.patch("import_export.admin.ImportForm")
-    def test_export_action_to_encoding(self, mock_form):
-        mock_form.is_valid.return_value = True
-        self.export_mixin.to_encoding = "utf-8"
-        with mock.patch(
-            "import_export.admin.ExportMixin.get_export_data"
-        ) as mock_get_export_data:
-            self.export_mixin.export_action(self.mock_request)
-            encoding_kwarg = mock_get_export_data.call_args_list[0][1]["encoding"]
-            self.assertEqual("utf-8", encoding_kwarg)
-
-    @mock.patch("import_export.admin.ImportForm")
-    def test_export_admin_action_to_encoding(self, mock_form):
-        class TestExportActionMixin(ExportActionMixin):
-            def get_export_filename(self, request, queryset, file_format):
-                return "f"
-
-        self.mock_request.POST = {"file_format": "1"}
-
-        self.export_mixin = TestExportActionMixin()
-        self.export_mixin.to_encoding = "utf-8"
-        mock_form.is_valid.return_value = True
-        with mock.patch(
-            "import_export.admin.ExportMixin.get_export_data"
-        ) as mock_get_export_data:
-            self.export_mixin.export_admin_action(self.mock_request, list())
-            encoding_kwarg = mock_get_export_data.call_args_list[0][1]["encoding"]
-            self.assertEqual("utf-8", encoding_kwarg)
-
-
 @override_settings(IMPORT_EXPORT_SKIP_ADMIN_CONFIRM=True)
 class TestImportSkipConfirm(AdminTestMixin, TransactionTestCase):
     fixtures = ["author"]
@@ -1235,7 +873,8 @@ class TestImportSkipConfirm(AdminTestMixin, TransactionTestCase):
             "books.csv",
             "0",
             follow=True,
-            str_in_response="Import finished, with 1 new and 0 updated books.",
+            str_in_response="Import finished: 1 new, 0 updated, "
+            + "0 deleted and 0 skipped books.",
         )
         self.assertEqual(1, Book.objects.count())
 
@@ -1309,7 +948,8 @@ class TestImportSkipConfirm(AdminTestMixin, TransactionTestCase):
             "books-mac.csv",
             "0",
             follow=True,
-            str_in_response="Import finished, with 1 new and 0 updated books.",
+            str_in_response="Import finished: 1 new, 0 updated, "
+            + "0 deleted and 0 skipped books.",
         )
 
     @ignore_widget_deprecation_warning
@@ -1319,7 +959,8 @@ class TestImportSkipConfirm(AdminTestMixin, TransactionTestCase):
             "0",
             "ISO-8859-1",
             follow=True,
-            str_in_response="Import finished, with 1 new and 0 updated books.",
+            str_in_response="Import finished: 1 new, 0 updated, "
+            + "0 deleted and 0 skipped books.",
         )
 
     def test_import_action_decode_error(self):
@@ -1340,33 +981,6 @@ class TestImportSkipConfirm(AdminTestMixin, TransactionTestCase):
             "books.xls",
             "1",
             follow=True,
-            str_in_response="Import finished, with 1 new and 0 updated books.",
-        )
-
-
-class MockModelAdmin(ImportExportMixinBase, ModelAdmin):
-    change_list_template = "admin/import_export/change_list.html"
-
-
-class TestChangeListView(AdminTestMixin, TestCase):
-    def setUp(self):
-        super().setUp()
-        self.factory = RequestFactory()
-        self.model_admin = MockModelAdmin(User, admin.site)
-
-    def test_changelist_view_context(self):
-        request = self.factory.get("/admin/")
-        request.user = self.user
-
-        # Call the changelist_view method
-        self.model_admin.ie_base_change_list_template = None
-        response = self.model_admin.changelist_view(request)
-
-        # Render will throw an exception if the default for {% extends %} is not set
-        response.render()
-
-        # Check if the base_change_list_template context variable is set to None
-        self.assertIsNone(response.context_data.get("base_change_list_template"))
-        self.assertContains(
-            response, '<a href="/admin/">Django administration</a>', html=True
+            str_in_response="Import finished: 1 new, 0 updated, "
+            + "0 deleted and 0 skipped books.",
         )
