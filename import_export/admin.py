@@ -493,8 +493,10 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
                     if len(dataset) == 0:
                         import_form.add_error(
                             "import_file",
-                            "No valid data to import. Ensure your file "
-                            "has the correct headers or data for import.",
+                            _(
+                                "No valid data to import. Ensure your file "
+                                "has the correct headers or data for import."
+                            ),
                         )
 
                 if not import_form.errors:
