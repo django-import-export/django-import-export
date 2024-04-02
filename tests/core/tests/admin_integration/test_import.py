@@ -249,7 +249,7 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertContains(response, 'form action=""')
 
         response = self._do_import_post(
-            self.book_import_url, "books-no-headers.xlsx", input_format=2
+            self.book_import_url, "books-no-headers.csv", input_format=0
         )
         self.assertEqual(response.status_code, 200)
         target_msg = (
