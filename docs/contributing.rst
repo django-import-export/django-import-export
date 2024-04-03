@@ -132,6 +132,9 @@ into django-import-export proper, which may take substantial time for the all-vo
 Development
 -----------
 
+Formatting
+^^^^^^^^^^
+
 * All files should be formatted using the black auto-formatter. This will be run by pre-commit if configured.
 
 * The project repository includes an ``.editorconfig`` file. We recommend using a text editor with EditorConfig support
@@ -153,15 +156,26 @@ Development
 
     git config blame.ignoreRevsFile .git-blame-ignore-revs
 
+.. _create_venv:
+
+Create virtual environment
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 Once you have cloned and checked out the repository, you can install a new development environment as follows::
 
   python -m venv django-import-export-venv
   source django-import-export-venv/bin/activate
   pip install -r requirements/base.txt -r requirements/test.txt
 
+Run tests
+^^^^^^^^^
+
 You can run the test suite with::
 
   make clean test
+
+Build documentation
+^^^^^^^^^^^^^^^^^^^
 
 To build a local version of the documentation::
 

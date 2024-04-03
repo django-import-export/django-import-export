@@ -224,10 +224,10 @@ Example app
 ===========
 
 There's an example application that showcases what import_export can do.
-It's assumed that you have set up a Python ``venv`` with all required dependencies
-(from ``test.txt`` requirements file) and are able to run Django locally.
 
-You can run the example application as follows::
+Before starting, set up a virtual environment ("venv") using :ref:`these instructions<create_venv>`.
+
+You can initialize and run the example application as follows::
 
     cd tests
     ./manage.py makemigrations
