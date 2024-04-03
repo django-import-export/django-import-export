@@ -241,6 +241,36 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         else:
             self.assertFormError(response, "form", "import_file", target_msg)
 
+    def test_import_action_invalidates_data_sheet_with_no_headers_or_data(self):
+        # GET the import form
+        response = self.client.get(self.book_import_url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "admin/import_export/import.html")
+        self.assertContains(response, 'form action=""')
+
+        response = self._do_import_post(
+            self.book_import_url, "books-no-headers.csv", input_format=0
+        )
+        self.assertEqual(response.status_code, 200)
+        target_msg = (
+            "No valid data to import. Ensure your file "
+            "has the correct headers or data for import."
+        )
+
+        # required for testing via tox
+        # remove after django 5.0 released
+        if django.VERSION >= (4, 0):
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", category=DeprecationWarning)
+                try:
+                    self.assertFormError(
+                        response.context["form"], "import_file", target_msg
+                    )
+                except TypeError:
+                    self.assertFormError(response, "form", "import_file", target_msg)
+        else:
+            self.assertFormError(response, "form", "import_file", target_msg)
+
     @ignore_widget_deprecation_warning
     def test_delete_from_admin(self):
         # test delete from admin site (see #432)

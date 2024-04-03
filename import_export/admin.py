@@ -489,6 +489,15 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
                     dataset = input_format.create_dataset(data)
                 except Exception as e:
                     self.add_data_read_fail_error_to_form(import_form, e)
+                else:
+                    if len(dataset) == 0:
+                        import_form.add_error(
+                            "import_file",
+                            _(
+                                "No valid data to import. Ensure your file "
+                                "has the correct headers or data for import."
+                            ),
+                        )
 
                 if not import_form.errors:
                     # prepare kwargs for import data, if needed
