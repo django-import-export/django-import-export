@@ -5,6 +5,11 @@ Changelog
 
     Version 4 introduces breaking changes.  Please refer to :doc:`release notes<release_notes>`.
 
+4.0.0-rc.2 (unreleased)
+-----------------------
+
+- Add form error if source file contains invalid header (#1780)
+
 4.0.0-rc.1 (2024-03-15)
 -----------------------
 
