@@ -99,7 +99,7 @@ class SkipDiffTest(TestCase):
             "import_export.resources.Resource.get_import_fields"
         ) as mock_get_import_fields:
             resource.import_data(self.dataset, dry_run=True)
-            self.assertEqual(2, mock_get_import_fields.call_count)
+            self.assertEqual(3, mock_get_import_fields.call_count)
 
 
 class SkipHtmlDiffTest(TestCase):

@@ -1002,7 +1002,7 @@ class ConfirmImportPreviewOrderTest(AdminTestMixin, TestCase):
         # test header rendered in correct order
         target_header_re = (
             r"<thead>[\\n\s]+<tr>[\\n\s]+<th></th>[\\n\s]+<th>id</th>"
-            r"[\\n\s]+<th>name</th>[\\n\s]+<th>author_email</th>[\\n\s]+</tr>[\\n\s]+"
+            r"[\\n\s]+<th>author_email</th>[\\n\s]+<th>name</th>[\\n\s]+</tr>[\\n\s]+"
             "</thead>"
         )
         self.assertRegex(str(response.content), target_header_re)

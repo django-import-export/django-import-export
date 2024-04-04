@@ -579,7 +579,7 @@ class Resource(metaclass=DeclarativeMetaclass):
         """
         Diff representation headers.
         """
-        return self.get_user_visible_headers()
+        return [force_str(field.column_name) for field in self.get_import_fields()]
 
     def before_import(self, dataset, **kwargs):
         r"""
@@ -1049,12 +1049,6 @@ class Resource(metaclass=DeclarativeMetaclass):
         if isinstance(fields, list) and fields:
             return [f for f in headers if f in fields]
 
-        return headers
-
-    def get_user_visible_headers(self):
-        headers = [
-            force_str(field.column_name) for field in self.get_user_visible_fields()
-        ]
         return headers
 
     def get_user_visible_fields(self):
