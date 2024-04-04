@@ -1008,7 +1008,7 @@ class ConfirmImportPreviewOrderTest(AdminTestMixin, TestCase):
         self.assertRegex(str(response.content), target_header_re)
         # test row rendered in correct order
         target_row_re = (
-            r'<tr class="new">[\\n\s]+"'
+            r'<tr class="new">[\\n\s]+'
             r'<td class="import-type">[\\n\s]+New[\\n\s]+</td>[\\n\s]+'
             r'<td><ins style="background:#e6ffe6;">1</ins></td>[\\n\s]+'
             r'<td><ins style="background:#e6ffe6;">test@example.com</ins></td>[\\n\s]+'
