@@ -9,6 +9,8 @@ Changelog
 -----------------------
 
 - Add form error if source file contains invalid header (#1780)
+- Remove unneeded format method overrides (#1785)
+- Support dynamic selection of Resource class based on request property ()
 
 4.0.0-rc.1 (2024-03-15)
 -----------------------

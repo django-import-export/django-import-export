@@ -150,19 +150,19 @@ class MixinModelAdminTest(TestCase):
     class BaseImportModelAdminTest(mixins.BaseImportMixin):
         call_count = 0
 
-        def get_resource_classes(self):
+        def get_resource_classes(self, request=None, **kwargs):
             self.call_count += 1
 
-        def get_resource_kwargs(self, request, *args, **kwargs):
+        def get_resource_kwargs(self, request=None, **kwargs):
             self.call_count += 1
 
     class BaseExportModelAdminTest(mixins.BaseExportMixin):
         call_count = 0
 
-        def get_resource_classes(self):
+        def get_resource_classes(self, request=None, **kwargs):
             self.call_count += 1
 
-        def get_resource_kwargs(self, request, *args, **kwargs):
+        def get_export_resource_kwargs(self, request, **kwargs):
             self.call_count += 1
 
     def test_get_import_resource_class_calls_self_get_resource_class(self):
@@ -221,10 +221,13 @@ class MixinModelAdminTest(TestCase):
     def test_choose_import_resource_class(self, form):
         """Test choose_import_resource_class() method"""
         admin = self.BaseModelImportChooseTest()
-        self.assertEqual(admin.choose_import_resource_class(form), resources.Resource)
+        request = MagicMock(spec=HttpRequest)
+        self.assertEqual(
+            admin.choose_import_resource_class(request, form), resources.Resource
+        )
 
         form.cleaned_data = {"resource": 1}
-        self.assertEqual(admin.choose_import_resource_class(form), FooResource)
+        self.assertEqual(admin.choose_import_resource_class(request, form), FooResource)
 
 
 class BaseExportMixinTest(TestCase):
