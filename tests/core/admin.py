@@ -55,6 +55,11 @@ class EBookResource(ModelResource):
 
     class Meta:
         model = EBook
+        fields = (
+            "id",
+            "author_email",
+            "name",
+        )
 
 
 class CustomBookAdmin(ImportExportModelAdmin):
