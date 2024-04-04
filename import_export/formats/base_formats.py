@@ -163,9 +163,6 @@ class HTML(TextFormat):
     TABLIB_MODULE = "tablib.formats._html"
     CONTENT_TYPE = "text/html"
 
-    def export_data(self, dataset, **kwargs):
-        return super().export_data(dataset, **kwargs)
-
 
 class XLS(TablibFormat):
     TABLIB_MODULE = "tablib.formats._xls"
