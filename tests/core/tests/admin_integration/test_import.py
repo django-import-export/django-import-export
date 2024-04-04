@@ -984,3 +984,36 @@ class TestImportSkipConfirm(AdminTestMixin, TransactionTestCase):
             str_in_response="Import finished: 1 new, 0 updated, "
             + "0 deleted and 0 skipped books.",
         )
+
+
+class ConfirmImportPreviewOrderTest(AdminTestMixin, TestCase):
+    """Test preview order displayed correctly (issue 1784)."""
+
+    fixtures = ["author"]
+
+    @ignore_widget_deprecation_warning
+    def test_import_preview_order(self):
+        author_id = Author.objects.first().id
+        response = self._do_import_post(
+            self.ebook_import_url,
+            "books.csv",
+            input_format="0",
+            data={"author": author_id},
+        )
+        # test header rendered in correct order
+        target_header_re = (
+            r"<thead>[\\n\s]+<tr>[\\n\s]+<th></th>[\\n\s]+<th>id</th>"
+            r"[\\n\s]+<th>author_email</th>[\\n\s]+<th>name</th>[\\n\s]+</tr>[\\n\s]+"
+            "</thead>"
+        )
+        self.assertRegex(str(response.content), target_header_re)
+        # test row rendered in correct order
+        target_row_re = (
+            r'<tr class="new">[\\n\s]+'
+            r'<td class="import-type">[\\n\s]+New[\\n\s]+</td>[\\n\s]+'
+            r'<td><ins style="background:#e6ffe6;">1</ins></td>[\\n\s]+'
+            r'<td><ins style="background:#e6ffe6;">test@example.com</ins></td>[\\n\s]+'
+            r'<td><ins style="background:#e6ffe6;">Some book</ins></td>[\\n\s]+'
+            "</tr>"
+        )
+        self.assertRegex(str(response.content), target_row_re)

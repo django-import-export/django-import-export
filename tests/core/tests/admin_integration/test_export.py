@@ -327,10 +327,8 @@ class FilteredExportAdminIntegrationTest(AdminTestMixin, TestCase):
             'attachment; filename="EBook-{}.csv"'.format(date_str),
         )
         self.assertEqual(
-            b"id,name,author,author_email,imported,published,"
-            b"published_time,price,added,categories\r\n"
-            b"5,The Man with the Golden Gun,5,ian@example.com,"
-            b"0,1965-04-01,21:00:00,5.00,,2\r\n",
+            b"id,author_email,name\r\n"
+            b"5,ian@example.com,The Man with the Golden Gun\r\n",
             response.content,
         )
 

@@ -9,6 +9,7 @@ from import_export.formats.base_formats import DEFAULT_FORMATS
 class AdminTestMixin(object):
     category_change_url = "/admin/core/category/"
     book_import_url = "/admin/core/book/import/"
+    ebook_import_url = "/admin/core/ebook/import/"
     book_process_import_url = "/admin/core/book/process_import/"
     legacybook_import_url = "/admin/core/legacybook/import/"
     legacybook_process_import_url = "/admin/core/legacybook/process_import/"
@@ -24,7 +25,14 @@ class AdminTestMixin(object):
         self.client.login(username="admin", password="password")
 
     def _do_import_post(
-        self, url, filename, input_format=0, encoding=None, resource=None, follow=False
+        self,
+        url,
+        filename,
+        input_format=0,
+        encoding=None,
+        resource=None,
+        follow=False,
+        data=None,
     ):
         input_format = input_format
         filename = os.path.join(
@@ -35,10 +43,14 @@ class AdminTestMixin(object):
             filename,
         )
         with open(filename, "rb") as f:
-            data = {
-                "format": str(input_format),
-                "import_file": f,
-            }
+            if data is None:
+                data = dict()
+            data.update(
+                {
+                    "format": str(input_format),
+                    "import_file": f,
+                }
+            )
             if encoding:
                 BookAdmin.from_encoding = encoding
             if resource:

@@ -145,9 +145,6 @@ class TSV(TextFormat):
     TABLIB_MODULE = "tablib.formats._tsv"
     CONTENT_TYPE = "text/tab-separated-values"
 
-    def create_dataset(self, in_stream, **kwargs):
-        return super().create_dataset(in_stream, **kwargs)
-
 
 class ODS(TextFormat):
     TABLIB_MODULE = "tablib.formats._ods"
