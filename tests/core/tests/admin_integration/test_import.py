@@ -991,6 +991,7 @@ class ConfirmImportPreviewOrderTest(AdminTestMixin, TestCase):
 
     fixtures = ["author"]
 
+    @ignore_widget_deprecation_warning
     def test_import_preview_order(self):
         author_id = Author.objects.first().id
         response = self._do_import_post(
