@@ -9,6 +9,7 @@ Changelog
 -----------------------
 
 - Add form error if source file contains invalid header (#1780)
+- Fix for incorrect header order on 'confirm' page (#1786)
 
 4.0.0-rc.1 (2024-03-15)
 -----------------------
