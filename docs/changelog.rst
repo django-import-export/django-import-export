@@ -11,7 +11,7 @@ Changelog
 - Add form error if source file contains invalid header (#1780)
 - Fix for incorrect header order on 'confirm' page (#1786)
 - Remove unneeded format method overrides (#1785)
-- Support dynamic selection of Resource class based on request property ()
+- Support dynamic selection of Resource class based on request property (#1787)
 
 4.0.0-rc.1 (2024-03-15)
 -----------------------
