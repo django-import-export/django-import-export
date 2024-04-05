@@ -150,19 +150,19 @@ class MixinModelAdminTest(TestCase):
     class BaseImportModelAdminTest(mixins.BaseImportMixin):
         call_count = 0
 
-        def get_resource_classes(self, request=None, **kwargs):
+        def get_resource_classes(self, **kwargs):
             self.call_count += 1
 
-        def get_resource_kwargs(self, request=None, **kwargs):
+        def get_resource_kwargs(self, **kwargs):
             self.call_count += 1
 
     class BaseExportModelAdminTest(mixins.BaseExportMixin):
         call_count = 0
 
-        def get_resource_classes(self, request=None, **kwargs):
+        def get_resource_classes(self, **kwargs):
             self.call_count += 1
 
-        def get_export_resource_kwargs(self, request, **kwargs):
+        def get_export_resource_kwargs(self, **kwargs):
             self.call_count += 1
 
     def test_get_import_resource_class_calls_self_get_resource_class(self):
@@ -182,7 +182,7 @@ class MixinModelAdminTest(TestCase):
 
     def test_get_export_resource_kwargs_calls_self_get_resource_kwargs(self):
         admin = self.BaseExportModelAdminTest()
-        admin.get_export_resource_kwargs(self.request)
+        admin.get_export_resource_kwargs(request=self.request)
         self.assertEqual(1, admin.call_count)
 
     class BaseModelAdminFaultyResourceClassesTest(mixins.BaseExportMixin):
@@ -209,10 +209,12 @@ class MixinModelAdminTest(TestCase):
     def test_choose_export_resource_class(self, form):
         """Test choose_export_resource_class() method"""
         admin = self.BaseModelExportChooseTest()
-        self.assertEqual(admin.choose_export_resource_class(form), resources.Resource)
+        self.assertEqual(
+            admin.choose_export_resource_class(form=form), resources.Resource
+        )
 
         form.cleaned_data = {"resource": 1}
-        self.assertEqual(admin.choose_export_resource_class(form), FooResource)
+        self.assertEqual(admin.choose_export_resource_class(form=form), FooResource)
 
     class BaseModelImportChooseTest(mixins.BaseImportMixin):
         resource_classes = [resources.Resource, FooResource]

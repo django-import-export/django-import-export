@@ -124,8 +124,8 @@ class BaseExportMixin(BaseImportExportMixin):
         self.check_resource_classes(resource_classes)
         return resource_classes
 
-    def choose_export_resource_class(self, form):
-        resource_index = self.get_resource_index(form)
+    def choose_export_resource_class(self, **kwargs):
+        resource_index = self.get_resource_index(kwargs["form"])
         return self.get_export_resource_classes()[resource_index]
 
     def get_export_resource_kwargs(self, **kwargs):
@@ -146,7 +146,7 @@ class BaseExportMixin(BaseImportExportMixin):
 
     def get_data_for_export(self, queryset, **kwargs):
         export_form = kwargs.get("export_form")
-        export_class = self.choose_export_resource_class(export_form)
+        export_class = self.choose_export_resource_class(form=export_form, **kwargs)
         export_resource_kwargs = self.get_export_resource_kwargs(**kwargs)
         export_fields = self.get_export_resource_fields_from_form(export_form)
         cls = export_class(**export_resource_kwargs)

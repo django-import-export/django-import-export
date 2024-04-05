@@ -279,6 +279,29 @@ This section describes methods in which the parameters have changed.
      - ``export(self, queryset=None, **kwargs)``
      - * unused ``*args`` list removed
 
+
+:class:`import_export.mixins.BaseImportExportMixin`
+---------------------------------------------
+
+Parameter changes
+^^^^^^^^^^^^^^^^^
+
+.. list-table::
+   :header-rows: 1
+
+   * - Previous
+     - New
+     - Summary
+
+   * - ``get_resource_classes(self)``
+     - ``get_resource_classes(self, **kwargs)``
+     -  * ``request`` param now in ``kwargs``
+
+   * - ``get_resource_kwargs(self, request, *args, **kwargs)``
+     - ``get_resource_kwargs(self, **kwargs)``
+     -  * ``request`` param now in ``kwargs``
+        * unused ``*args`` list removed
+
 :class:`import_export.mixins.BaseImportMixin`
 ---------------------------------------------
 
@@ -293,11 +316,17 @@ Parameter changes
      - Summary
 
    * - ``get_import_resource_kwargs(self, request, *args, **kwargs)``
-     - ``get_import_resource_kwargs(self, request, **kwargs)``
-     -  * ``using_transactions`` param now in ``kwargs``
-        * ``dry_run`` param now in ``kwargs``
+     - ``get_import_resource_kwargs(self, **kwargs)``
+     -  * ``request`` param now in ``kwargs``
         * unused ``*args`` list removed
 
+   * - ``get_import_resource_classes(self)``
+     - ``get_import_resource_classes(self, **kwargs)``
+     -  * ``request`` param now in ``kwargs``
+
+   * - ``choose_import_resource_class(self, form)``
+     - ``choose_import_resource_class(self, **kwargs)``
+     -  * ``form`` param now in ``kwargs``
 
 :class:`import_export.mixins.BaseExportMixin`
 ---------------------------------------------
@@ -312,17 +341,23 @@ Parameter changes
      - New
      - Summary
 
-   * - ``get_export_resource_kwargs(self, request, *args, **kwargs)``
-     - ``get_export_resource_kwargs(self, request, **kwargs)``
-     -  * unused ``*args`` list removed
+   * - ``get_export_resource_classes(self)``
+     - ``get_export_resource_classes(self, **kwargs)``
+     - ``kwargs`` added
 
    * - ``get_export_resource_kwargs(self, request, *args, **kwargs)``
-     - ``get_export_resource_kwargs(self, request, **kwargs)``
+     - ``get_export_resource_kwargs(self, **kwargs)``
      -  * unused ``*args`` list removed
+        * ``request`` param now in ``kwargs``
 
-   * - ``get_data_for_export(self, request, *args, **kwargs)``
-     - ``get_data_for_export(self, request, queryset, **kwargs)``
+   * - ``get_data_for_export(self, request, queryset, *args, **kwargs)``
+     - ``get_data_for_export(self, queryset, **kwargs)``
      -  * unused ``*args`` list removed
+        * ``request`` param now in ``kwargs``
+
+   * - ``choose_export_resource_class(self, form)``
+     - ``choose_export_resource_class(self, **kwargs)``
+     -  * ``form`` param now in ``kwargs``
 
 
 :class:`import_export.fields.Field`
@@ -379,6 +414,6 @@ Parameter changes
      - Summary
 
    * - ``__init__(self, *args, resources=None, **kwargs)``
-     - ``__init__(self, formats, resources, *args, **kwargs)``
+     - ``__init__(self, formats, resources, **kwargs)``
      - * ``formats`` added as a mandatory arg
        * ``resources`` added as a mandatory arg
