@@ -50,7 +50,7 @@ class EBookResource(ModelResource):
         super().__init__()
         self.author_id = kwargs.get("author_id")
 
-    def filter_export(self, queryset, *args, **kwargs):
+    def filter_export(self, queryset, **kwargs):
         return queryset.filter(author_id=self.author_id)
 
     class Meta:

@@ -44,10 +44,10 @@ class BookResourceWithStoreInstance(resources.ModelResource):
 
 
 class BookResourceWithLineNumberLogger(BookResource):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, **kwargs):
         self.before_lines = []
         self.after_lines = []
-        return super().__init__(*args, **kwargs)
+        return super().__init__(**kwargs)
 
     def before_import_row(self, row, **kwargs):
         row_number = kwargs.pop("row_number")
