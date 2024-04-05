@@ -172,7 +172,7 @@ class MixinModelAdminTest(TestCase):
 
     def test_get_import_resource_kwargs_calls_self_get_resource_kwargs(self):
         admin = self.BaseImportModelAdminTest()
-        admin.get_import_resource_kwargs(self.request)
+        admin.get_import_resource_kwargs(request=self.request)
         self.assertEqual(1, admin.call_count)
 
     def test_get_export_resource_class_calls_self_get_resource_class(self):
@@ -223,18 +223,21 @@ class MixinModelAdminTest(TestCase):
         admin = self.BaseModelImportChooseTest()
         request = MagicMock(spec=HttpRequest)
         self.assertEqual(
-            admin.choose_import_resource_class(request, form), resources.Resource
+            admin.choose_import_resource_class(request=request, form=form),
+            resources.Resource,
         )
 
         form.cleaned_data = {"resource": 1}
-        self.assertEqual(admin.choose_import_resource_class(request, form), FooResource)
+        self.assertEqual(
+            admin.choose_import_resource_class(request=request, form=form), FooResource
+        )
 
 
 class BaseExportMixinTest(TestCase):
     class TestBaseExportMixin(mixins.BaseExportMixin):
-        def get_export_resource_kwargs(self, request, **kwargs):
+        def get_export_resource_kwargs(self, **kwargs):
             self.kwargs = kwargs
-            return super().get_resource_kwargs(request, **kwargs)
+            return super().get_resource_kwargs(**kwargs)
 
     def test_get_data_for_export_sets_kwargs(self):
         """
@@ -244,8 +247,8 @@ class BaseExportMixinTest(TestCase):
         request = MagicMock(spec=HttpRequest)
         m = self.TestBaseExportMixin()
         m.model = Book
-        target_kwargs = {"a": 1}
-        m.get_data_for_export(request, Book.objects.none(), **target_kwargs)
+        target_kwargs = {"a": 1, "request": request}
+        m.get_data_for_export(Book.objects.none(), **target_kwargs)
         self.assertEqual(m.kwargs, target_kwargs)
 
     def test_get_export_formats(self):
@@ -305,6 +308,6 @@ class BaseExportImportMixinTest(TestCase):
         mixin_instance = self.TestMixin()
         test_kwargs = {"key1": "value1", "key2": "value2"}
 
-        result = mixin_instance.get_resource_kwargs(HttpRequest, **test_kwargs)
+        result = mixin_instance.get_resource_kwargs(**test_kwargs)
 
         self.assertEqual(result, test_kwargs)

@@ -78,15 +78,16 @@ class CustomBookAdmin(ImportExportModelAdmin):
             initial["author"] = import_form.cleaned_data["author"].id
         return initial
 
-    def get_import_resource_kwargs(self, request, **kwargs):
+    def get_import_resource_kwargs(self, **kwargs):
         # update resource kwargs so that the Resource is passed the authenticated user
         # This is included as an example of how dynamic values
         # can be passed to resources
-        kwargs = super().get_resource_kwargs(request, **kwargs)
+        request = kwargs["request"]
+        kwargs = super().get_resource_kwargs(**kwargs)
         kwargs.update({"user": request.user})
         return kwargs
 
-    def get_export_resource_kwargs(self, request, **kwargs):
+    def get_export_resource_kwargs(self, **kwargs):
         # this is overridden to demonstrate that custom form fields can be used
         # to override the export query.
         # The dict returned here will be passed as kwargs to EBookResource

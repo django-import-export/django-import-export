@@ -72,7 +72,7 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(2, mock_get_export_resource_kwargs.call_count)
 
-    def book_resource_init(self):
+    def book_resource_init(self, **kwargs):
         # stub call to the resource constructor
         pass
 
@@ -343,7 +343,7 @@ class TestExportEncoding(TestCase):
         def __init__(self, test_str=None):
             self.test_str = test_str
 
-        def get_data_for_export(self, request, queryset, *args, **kwargs):
+        def get_data_for_export(self, queryset, **kwargs):
             dataset = Dataset(headers=["id", "name"])
             dataset.append([1, self.test_str])
             return dataset

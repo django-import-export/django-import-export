@@ -149,7 +149,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         return my_urls + urls
 
     @method_decorator(require_POST)
-    def process_import(self, request, *args, **kwargs):
+    def process_import(self, request, **kwargs):
         """
         Perform the actual import action (after the user has confirmed the import)
         """
@@ -173,9 +173,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
 
             data = tmp_storage.read()
             dataset = input_format.create_dataset(data)
-            result = self.process_dataset(
-                dataset, confirm_form, request, *args, **kwargs
-            )
+            result = self.process_dataset(dataset, confirm_form, request, **kwargs)
 
             tmp_storage.remove()
 
@@ -186,16 +184,12 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         dataset,
         confirm_form,
         request,
-        *args,
         **kwargs,
     ):
-        res_kwargs = self.get_import_resource_kwargs(
-            request, form=confirm_form, **kwargs
-        )
-        resource = self.choose_import_resource_class(request, confirm_form)(
-            **res_kwargs
-        )
-        imp_kwargs = self.get_import_data_kwargs(request, form=confirm_form, **kwargs)
+        kwargs.update(request=request, form=confirm_form)
+        res_kwargs = self.get_import_resource_kwargs(**kwargs)
+        resource = self.choose_import_resource_class(**kwargs)(**res_kwargs)
+        imp_kwargs = self.get_import_data_kwargs(**kwargs)
         imp_kwargs["retain_instance_in_row_result"] = True
 
         return resource.import_data(
@@ -288,9 +282,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         form_class = self.get_import_form_class(request)
         kwargs = self.get_import_form_kwargs(request)
 
-        return form_class(
-            formats, self.get_import_resource_classes(request, **kwargs), **kwargs
-        )
+        return form_class(formats, self.get_import_resource_classes(**kwargs), **kwargs)
 
     def get_import_form_class(self, request):
         """
@@ -393,7 +385,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
             "resource": import_form.cleaned_data.get("resource", ""),
         }
 
-    def get_import_data_kwargs(self, request, *args, **kwargs):
+    def get_import_data_kwargs(self, **kwargs):
         """
         Prepare kwargs for import_data.
         """
@@ -429,7 +421,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         ) % {"exc_name": exc_name}
         form.add_error("import_file", msg)
 
-    def import_action(self, request, *args, **kwargs):
+    def import_action(self, request, **kwargs):
         """
         Perform a dry_run of the import to make sure the import will not
         result in errors.  If there are no errors, save the user
@@ -469,7 +461,6 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
                         dataset,
                         import_form,
                         request,
-                        *args,
                         raise_errors=False,
                         rollback_on_validation_errors=True,
                         **kwargs,
@@ -506,16 +497,16 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
                 if not import_form.errors:
                     # prepare kwargs for import data, if needed
                     res_kwargs = self.get_import_resource_kwargs(
-                        request, form=import_form, **kwargs
+                        request=request, form=import_form, **kwargs
                     )
-                    resource = self.choose_import_resource_class(request, import_form)(
-                        **res_kwargs
-                    )
+                    resource = self.choose_import_resource_class(
+                        request=request, form=import_form
+                    )(**res_kwargs)
                     resources = [resource]
 
                     # prepare additional kwargs for import_data, if needed
                     imp_kwargs = self.get_import_data_kwargs(
-                        request, *args, form=import_form, **kwargs
+                        request=request, form=import_form, **kwargs
                     )
                     try:
                         result = resource.import_data(
@@ -540,9 +531,11 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
 
         else:
             res_kwargs = self.get_import_resource_kwargs(
-                request, form=import_form, **kwargs
+                request=request, form=import_form, **kwargs
             )
-            resource_classes = self.get_import_resource_classes(request, **kwargs)
+            resource_classes = self.get_import_resource_classes(
+                request=request, **kwargs
+            )
             resources = [
                 resource_class(**res_kwargs) for resource_class in resource_classes
             ]
@@ -700,16 +693,15 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
         # Fallback in case the ChangeList doesn't have queryset attribute set
         return cl.get_queryset(request)
 
-    def get_export_data(self, file_format, queryset, *args, **kwargs):
+    def get_export_data(self, file_format, queryset, **kwargs):
         """
         Returns file_format representation for given queryset.
         """
-        request = kwargs.pop("request")
+        request = kwargs["request"]
         if not self.has_export_permission(request):
             raise PermissionDenied
 
         data = self.get_data_for_export(
-            request,
             queryset,
             **kwargs,
         )
@@ -804,7 +796,7 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
                 [
                     field.column_name
                     for field in res(
-                        **self.get_export_resource_kwargs(request)
+                        **self.get_export_resource_kwargs(request=request)
                     ).get_user_visible_fields()
                 ],
             )
@@ -887,7 +879,7 @@ class ExportActionMixin(ExportMixin):
         formats = self.get_export_formats()
         form = form_type(
             formats=formats,
-            resources=self.get_export_resource_classes(request),
+            resources=self.get_export_resource_classes(request=request),
             initial={"export_items": list(queryset.values_list("id", flat=True))},
         )
         # selected items are to be stored as a hidden input on the form

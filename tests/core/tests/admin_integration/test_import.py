@@ -2,7 +2,7 @@ import os
 import warnings
 from io import StringIO
 from unittest import mock
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import django
 from core.admin import AuthorAdmin, BookAdmin, CustomBookAdmin, ImportMixin
@@ -12,7 +12,6 @@ from core.tests.utils import ignore_widget_deprecation_warning
 from django.contrib.admin.models import DELETION, LogEntry
 from django.contrib.admin.sites import AdminSite
 from django.contrib.auth.models import User
-from django.http import HttpRequest
 from django.test import RequestFactory
 from django.test.testcases import TestCase, TransactionTestCase
 from django.test.utils import override_settings
@@ -480,27 +479,25 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
 
     def test_get_import_data_kwargs_with_form_kwarg(self):
         """
-        Test that if a the method is called with a 'form' kwarg,
+        Test that if the method is called with a 'form' kwarg,
         then it is removed and the updated dict is returned
         """
-        request = MagicMock(spec=HttpRequest)
         m = ImportMixin()
         kw = {"a": 1, "form": "some_form"}
         target = {"a": 1}
-        self.assertEqual(target, m.get_import_data_kwargs(request, **kw))
+        self.assertEqual(target, m.get_import_data_kwargs(**kw))
 
     def test_get_import_data_kwargs_with_no_form_kwarg_returns_empty_dict(self):
         """
         Test that if the method is called with no 'form' kwarg,
         then an empty dict is returned
         """
-        request = MagicMock(spec=HttpRequest)
         m = ImportMixin()
         kw = {
             "a": 1,
         }
         target = {}
-        self.assertEqual(target, m.get_import_data_kwargs(request, **kw))
+        self.assertEqual(target, m.get_import_data_kwargs(**kw))
 
     def test_get_context_data_returns_empty_dict(self):
         m = ExportMixin()
