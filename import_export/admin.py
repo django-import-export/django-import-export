@@ -173,7 +173,9 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
 
             data = tmp_storage.read()
             dataset = input_format.create_dataset(data)
-            result = self.process_dataset(dataset, confirm_form, request, **kwargs)
+            result = self.process_dataset(
+                dataset, form=confirm_form, request=request, **kwargs
+            )
 
             tmp_storage.remove()
 
@@ -182,20 +184,19 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
     def process_dataset(
         self,
         dataset,
-        confirm_form,
-        request,
         **kwargs,
     ):
-        kwargs.update(request=request, form=confirm_form)
         res_kwargs = self.get_import_resource_kwargs(**kwargs)
         resource = self.choose_import_resource_class(**kwargs)(**res_kwargs)
         imp_kwargs = self.get_import_data_kwargs(**kwargs)
         imp_kwargs["retain_instance_in_row_result"] = True
 
+        request = kwargs["request"]
+        form = kwargs["form"]
         return resource.import_data(
             dataset,
             dry_run=False,
-            file_name=confirm_form.cleaned_data.get("original_file_name"),
+            file_name=form.cleaned_data.get("original_file_name"),
             user=request.user,
             **imp_kwargs,
         )
@@ -459,8 +460,8 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
                 if not import_form.errors:
                     result = self.process_dataset(
                         dataset,
-                        import_form,
-                        request,
+                        form=import_form,
+                        request=request,
                         raise_errors=False,
                         rollback_on_validation_errors=True,
                         **kwargs,
