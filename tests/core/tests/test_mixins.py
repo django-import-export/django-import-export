@@ -150,39 +150,39 @@ class MixinModelAdminTest(TestCase):
     class BaseImportModelAdminTest(mixins.BaseImportMixin):
         call_count = 0
 
-        def get_resource_classes(self, **kwargs):
+        def get_resource_classes(self, request, **kwargs):
             self.call_count += 1
 
-        def get_resource_kwargs(self, **kwargs):
+        def get_resource_kwargs(self, request, **kwargs):
             self.call_count += 1
 
     class BaseExportModelAdminTest(mixins.BaseExportMixin):
         call_count = 0
 
-        def get_resource_classes(self, **kwargs):
+        def get_resource_classes(self, request, **kwargs):
             self.call_count += 1
 
-        def get_export_resource_kwargs(self, **kwargs):
+        def get_export_resource_kwargs(self, request, **kwargs):
             self.call_count += 1
 
     def test_get_import_resource_class_calls_self_get_resource_class(self):
         admin = self.BaseImportModelAdminTest()
-        admin.get_import_resource_classes()
+        admin.get_import_resource_classes(self.request)
         self.assertEqual(1, admin.call_count)
 
     def test_get_import_resource_kwargs_calls_self_get_resource_kwargs(self):
         admin = self.BaseImportModelAdminTest()
-        admin.get_import_resource_kwargs(request=self.request)
+        admin.get_import_resource_kwargs(self.request)
         self.assertEqual(1, admin.call_count)
 
     def test_get_export_resource_class_calls_self_get_resource_class(self):
         admin = self.BaseExportModelAdminTest()
-        admin.get_export_resource_classes()
+        admin.get_export_resource_classes(self.request)
         self.assertEqual(1, admin.call_count)
 
     def test_get_export_resource_kwargs_calls_self_get_resource_kwargs(self):
         admin = self.BaseExportModelAdminTest()
-        admin.get_export_resource_kwargs(request=self.request)
+        admin.get_export_resource_kwargs(self.request)
         self.assertEqual(1, admin.call_count)
 
     class BaseModelAdminFaultyResourceClassesTest(mixins.BaseExportMixin):
@@ -194,7 +194,7 @@ class MixinModelAdminTest(TestCase):
         with self.assertRaisesRegex(
             Exception, r"^The resource_classes field type must be subscriptable"
         ):
-            admin.get_export_resource_classes()
+            admin.get_export_resource_classes(self.request)
 
     class BaseModelAdminBothResourceTest(mixins.BaseExportMixin):
         call_count = 0
@@ -210,11 +210,13 @@ class MixinModelAdminTest(TestCase):
         """Test choose_export_resource_class() method"""
         admin = self.BaseModelExportChooseTest()
         self.assertEqual(
-            admin.choose_export_resource_class(form=form), resources.Resource
+            admin.choose_export_resource_class(form, self.request), resources.Resource
         )
 
         form.cleaned_data = {"resource": 1}
-        self.assertEqual(admin.choose_export_resource_class(form=form), FooResource)
+        self.assertEqual(
+            admin.choose_export_resource_class(form, self.request), FooResource
+        )
 
     class BaseModelImportChooseTest(mixins.BaseImportMixin):
         resource_classes = [resources.Resource, FooResource]
@@ -225,21 +227,19 @@ class MixinModelAdminTest(TestCase):
         admin = self.BaseModelImportChooseTest()
         request = MagicMock(spec=HttpRequest)
         self.assertEqual(
-            admin.choose_import_resource_class(request=request, form=form),
+            admin.choose_import_resource_class(form, request),
             resources.Resource,
         )
 
         form.cleaned_data = {"resource": 1}
-        self.assertEqual(
-            admin.choose_import_resource_class(request=request, form=form), FooResource
-        )
+        self.assertEqual(admin.choose_import_resource_class(form, request), FooResource)
 
 
 class BaseExportMixinTest(TestCase):
     class TestBaseExportMixin(mixins.BaseExportMixin):
-        def get_export_resource_kwargs(self, **kwargs):
+        def get_export_resource_kwargs(self, request, **kwargs):
             self.kwargs = kwargs
-            return super().get_resource_kwargs(**kwargs)
+            return super().get_resource_kwargs(request, **kwargs)
 
     def test_get_data_for_export_sets_kwargs(self):
         """
@@ -249,8 +249,8 @@ class BaseExportMixinTest(TestCase):
         request = MagicMock(spec=HttpRequest)
         m = self.TestBaseExportMixin()
         m.model = Book
-        target_kwargs = {"a": 1, "request": request}
-        m.get_data_for_export(Book.objects.none(), **target_kwargs)
+        target_kwargs = {"a": 1}
+        m.get_data_for_export(request, Book.objects.none(), **target_kwargs)
         self.assertEqual(m.kwargs, target_kwargs)
 
     def test_get_export_formats(self):
@@ -309,7 +309,7 @@ class BaseExportImportMixinTest(TestCase):
     def test_get_resource_kwargs(self):
         mixin_instance = self.TestMixin()
         test_kwargs = {"key1": "value1", "key2": "value2"}
-
-        result = mixin_instance.get_resource_kwargs(**test_kwargs)
+        mock_request = MagicMock(spec=HttpRequest)
+        result = mixin_instance.get_resource_kwargs(mock_request, **test_kwargs)
 
         self.assertEqual(result, test_kwargs)

@@ -135,23 +135,21 @@ See `this issue <https://github.com/django-import-export/django-import-export/is
 API changes
 ===========
 
-v4 of import-export contains a number of minor changes to the API.
+v4 of import-export contains a number of changes to the API.  These changes are summarized in the table below.
+Refer to
+`this PR <https://github.com/django-import-export/django-import-export/pull/1641/>`_ for detailed information.
 
-If you have customized import-export by overriding methods, then you will have to
-modify your installation before working with v4.  If you have not overridden any
-methods then you should not be affected by these changes and no changes to your code
+If you have customized import-export by overriding methods, then you may have to modify your installation before
+working with v4.
+
+If you have not overridden any methods then you should not be affected by these changes and no changes to your code
 should be necessary.
 
-The API changes include changes to method arguments, although some method names have
-changed.
-
-Refer to
-`this PR <https://github.com/django-import-export/django-import-export/pull/1641/>`_
-for more information.
+The API changes include changes to method arguments, although some method names have changed.
 
 Methods which process row data have been updated so that method args are standardized.
-This has been done to resolve inconsistency issues where the parameters differed between
-method calls, and to allow easier extensibility.
+This has been done to resolve inconsistency issues where the parameters differed between method calls, and to allow
+easier extensibility.
 
 :class:`import_export.resources.Resource`
 -----------------------------------------
@@ -258,6 +256,11 @@ This section describes methods in which the parameters have changed.
        * ``dry_run`` param now in ``kwargs``
        * ``using_transactions`` param now in ``kwargs``
 
+   * - ``import_field(self, field, obj, data, is_m2m=False, **kwargs)``
+     - ``import_field(self, field, instance, row, is_m2m=False, **kwargs):``
+     - * ``obj`` renamed to ``instance``
+       * ``data`` renamed to ``row``
+
    * - ``before_export(self, queryset, *args, **kwargs)``
      - ``before_export(self, queryset, **kwargs)``
      - * unused ``*args`` list removed
@@ -275,9 +278,18 @@ This section describes methods in which the parameters have changed.
      - ``export_field(self, field, instance)``
      - * ``obj`` renamed to ``instance``
 
+   * - ``export_resource(self, obj)``
+     - ``export_resource(self, instance, fields=None)``
+     - * ``obj`` renamed to ``instance``
+       * ``fields`` passed as kwarg
+
    * - ``export(self, *args, queryset=None, **kwargs)``
      - ``export(self, queryset=None, **kwargs)``
      - * unused ``*args`` list removed
+
+   * - ``get_export_headers(self)``
+     - ``get_export_headers(self, fields=None)``
+     - * ``fields`` passed as kwarg
 
 
 :class:`import_export.mixins.BaseImportExportMixin`
@@ -294,13 +306,12 @@ Parameter changes
      - Summary
 
    * - ``get_resource_classes(self)``
-     - ``get_resource_classes(self, **kwargs)``
-     -  * ``request`` param now in ``kwargs``
+     - ``get_resource_classes(self, request)``
+     -  * Added ``request`` param
 
    * - ``get_resource_kwargs(self, request, *args, **kwargs)``
-     - ``get_resource_kwargs(self, **kwargs)``
-     -  * ``request`` param now in ``kwargs``
-        * unused ``*args`` list removed
+     - ``get_resource_kwargs(self, request, **kwargs)``
+     -  * unused ``*args`` list removed
 
 :class:`import_export.mixins.BaseImportMixin`
 ---------------------------------------------
@@ -316,17 +327,16 @@ Parameter changes
      - Summary
 
    * - ``get_import_resource_kwargs(self, request, *args, **kwargs)``
-     - ``get_import_resource_kwargs(self, **kwargs)``
-     -  * ``request`` param now in ``kwargs``
-        * unused ``*args`` list removed
+     - ``get_import_resource_kwargs(self, request, **kwargs)``
+     -  * unused ``*args`` list removed
 
    * - ``get_import_resource_classes(self)``
-     - ``get_import_resource_classes(self, **kwargs)``
-     -  * ``request`` param now in ``kwargs``
+     - ``get_import_resource_classes(self, request)``
+     -  * Added ``request`` param
 
-   * - ``choose_import_resource_class(self, form)``
+   * - ``choose_import_resource_class(self, form, request)``
      - ``choose_import_resource_class(self, **kwargs)``
-     -  * ``form`` param now in ``kwargs``
+     -  * Added ``request`` param
 
 :class:`import_export.mixins.BaseExportMixin`
 ---------------------------------------------
@@ -342,22 +352,20 @@ Parameter changes
      - Summary
 
    * - ``get_export_resource_classes(self)``
-     - ``get_export_resource_classes(self, **kwargs)``
-     - ``kwargs`` added
+     - ``get_export_resource_classes(self, request)``
+     -  * Added ``request`` param
 
    * - ``get_export_resource_kwargs(self, request, *args, **kwargs)``
-     - ``get_export_resource_kwargs(self, **kwargs)``
+     - ``get_export_resource_kwargs(self, request, **kwargs)``
      -  * unused ``*args`` list removed
-        * ``request`` param now in ``kwargs``
 
    * - ``get_data_for_export(self, request, queryset, *args, **kwargs)``
-     - ``get_data_for_export(self, queryset, **kwargs)``
+     - ``get_data_for_export(self, request, queryset, **kwargs)``
      -  * unused ``*args`` list removed
-        * ``request`` param now in ``kwargs``
 
    * - ``choose_export_resource_class(self, form)``
-     - ``choose_export_resource_class(self, **kwargs)``
-     -  * ``form`` param now in ``kwargs``
+     - ``choose_export_resource_class(self, form, request)``
+     -  * Added ``request`` param
 
 
 :class:`import_export.fields.Field`
@@ -417,3 +425,4 @@ Parameter changes
      - ``__init__(self, formats, resources, **kwargs)``
      - * ``formats`` added as a mandatory arg
        * ``resources`` added as a mandatory arg
+       * unused ``*args`` list removed

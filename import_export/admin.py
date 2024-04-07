@@ -173,9 +173,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
 
             data = tmp_storage.read()
             dataset = input_format.create_dataset(data)
-            result = self.process_dataset(
-                dataset, form=confirm_form, request=request, **kwargs
-            )
+            result = self.process_dataset(dataset, confirm_form, request, **kwargs)
 
             tmp_storage.remove()
 
@@ -184,15 +182,15 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
     def process_dataset(
         self,
         dataset,
+        form,
+        request,
         **kwargs,
     ):
-        res_kwargs = self.get_import_resource_kwargs(**kwargs)
-        resource = self.choose_import_resource_class(**kwargs)(**res_kwargs)
+        res_kwargs = self.get_import_resource_kwargs(request, **kwargs)
+        resource = self.choose_import_resource_class(form, request)(**res_kwargs)
         imp_kwargs = self.get_import_data_kwargs(**kwargs)
         imp_kwargs["retain_instance_in_row_result"] = True
 
-        request = kwargs["request"]
-        form = kwargs["form"]
         return resource.import_data(
             dataset,
             dry_run=False,
@@ -283,7 +281,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         form_class = self.get_import_form_class(request)
         kwargs = self.get_import_form_kwargs(request)
 
-        return form_class(formats, self.get_import_resource_classes(**kwargs), **kwargs)
+        return form_class(formats, self.get_import_resource_classes(request), **kwargs)
 
     def get_import_form_class(self, request):
         """
@@ -394,7 +392,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         if form:
             kwargs.pop("form")
             return kwargs
-        return {}
+        return kwargs
 
     def write_to_tmp_storage(self, import_file, input_format):
         encoding = None
@@ -460,8 +458,8 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
                 if not import_form.errors:
                     result = self.process_dataset(
                         dataset,
-                        form=import_form,
-                        request=request,
+                        import_form,
+                        request,
                         raise_errors=False,
                         rollback_on_validation_errors=True,
                         **kwargs,
@@ -694,15 +692,15 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
         # Fallback in case the ChangeList doesn't have queryset attribute set
         return cl.get_queryset(request)
 
-    def get_export_data(self, file_format, queryset, **kwargs):
+    def get_export_data(self, file_format, request, queryset, **kwargs):
         """
         Returns file_format representation for given queryset.
         """
-        request = kwargs["request"]
         if not self.has_export_permission(request):
             raise PermissionDenied
 
         data = self.get_data_for_export(
+            request,
             queryset,
             **kwargs,
         )
@@ -756,8 +754,8 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
             try:
                 export_data = self.get_export_data(
                     file_format,
+                    request,
                     queryset,
-                    request=request,
                     encoding=self.to_encoding,
                     export_form=form,
                 )
@@ -867,7 +865,7 @@ class ExportActionMixin(ExportMixin):
             file_format = formats[0]()
 
             export_data = self.get_export_data(
-                file_format, queryset, request=request, encoding=self.to_encoding
+                file_format, request, queryset, encoding=self.to_encoding
             )
             content_type = file_format.get_content_type()
             response = HttpResponse(export_data, content_type=content_type)

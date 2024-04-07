@@ -130,7 +130,7 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
 
         m = TestMixin()
         with self.assertRaises(PermissionDenied):
-            m.get_export_data("0", Book.objects.none(), request=request)
+            m.get_export_data("0", request, Book.objects.none())
 
 
 class TestExportButtonOnChangeForm(AdminTestMixin, TestCase):

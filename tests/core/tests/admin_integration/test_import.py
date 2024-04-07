@@ -487,7 +487,7 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         target = {"a": 1}
         self.assertEqual(target, m.get_import_data_kwargs(**kw))
 
-    def test_get_import_data_kwargs_with_no_form_kwarg_returns_empty_dict(self):
+    def test_get_import_data_kwargs_with_no_form_kwarg_returns_kwarg_dict(self):
         """
         Test that if the method is called with no 'form' kwarg,
         then an empty dict is returned
@@ -496,7 +496,7 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         kw = {
             "a": 1,
         }
-        target = {}
+        target = {"a": 1}
         self.assertEqual(target, m.get_import_data_kwargs(**kw))
 
     def test_get_context_data_returns_empty_dict(self):

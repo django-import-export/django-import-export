@@ -343,7 +343,7 @@ class TestExportEncoding(TestCase):
         def __init__(self, test_str=None):
             self.test_str = test_str
 
-        def get_data_for_export(self, queryset, **kwargs):
+        def get_data_for_export(self, request, queryset, **kwargs):
             dataset = Dataset(headers=["id", "name"])
             dataset.append([1, self.test_str])
             return dataset
@@ -361,7 +361,7 @@ class TestExportEncoding(TestCase):
     def test_to_encoding_not_set_default_encoding_is_utf8(self):
         self.export_mixin = self.TestMixin(test_str="teststr")
         data = self.export_mixin.get_export_data(
-            self.file_format, list(), request=self.mock_request
+            self.file_format, self.mock_request, list()
         )
         csv_dataset = tablib.import_set(data)
         self.assertEqual("teststr", csv_dataset.dict[0]["name"])
@@ -369,7 +369,7 @@ class TestExportEncoding(TestCase):
     def test_to_encoding_set(self):
         self.export_mixin = self.TestMixin(test_str="ハローワールド")
         data = self.export_mixin.get_export_data(
-            self.file_format, list(), request=self.mock_request, encoding="shift-jis"
+            self.file_format, self.mock_request, list(), encoding="shift-jis"
         )
         encoding = chardet.detect(bytes(data))["encoding"]
         self.assertEqual("SHIFT_JIS", encoding)
@@ -379,8 +379,8 @@ class TestExportEncoding(TestCase):
         with self.assertRaises(LookupError):
             self.export_mixin.get_export_data(
                 self.file_format,
+                self.mock_request,
                 list(),
-                request=self.mock_request,
                 encoding="bad-encoding",
             )
 
@@ -389,7 +389,9 @@ class TestExportEncoding(TestCase):
         self.export_mixin = self.TestMixin(test_str="teststr")
         self.file_format = formats.base_formats.XLSX()
         data = self.export_mixin.get_export_data(
-            self.file_format, list(), request=self.mock_request
+            self.file_format,
+            self.mock_request,
+            list(),
         )
         binary_dataset = tablib.import_set(data)
         self.assertEqual("teststr", binary_dataset.dict[0]["name"])
