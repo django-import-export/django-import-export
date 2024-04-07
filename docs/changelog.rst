@@ -100,6 +100,10 @@ Performance
 
 - Fix slow export with ForeignKey id (#1717)
 
+3.3.8 (unreleased)
+
+- Add additional django template block for extending import page (#1776)
+
 3.3.7 (2024-02-03)
 ------------------
 
