@@ -4,8 +4,7 @@ Changelog
 3.3.8 (unreleased)
 ------------------
 
-- Nothing changed yet.
-
+- Add additional django template block for extending import page (#1776)
 
 3.3.7 (2024-02-03)
 ------------------
