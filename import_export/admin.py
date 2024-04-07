@@ -188,7 +188,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
     ):
         res_kwargs = self.get_import_resource_kwargs(request, **kwargs)
         resource = self.choose_import_resource_class(form, request)(**res_kwargs)
-        imp_kwargs = self.get_import_data_kwargs(**kwargs)
+        imp_kwargs = self.get_import_data_kwargs(request=request, form=form, **kwargs)
         imp_kwargs["retain_instance_in_row_result"] = True
 
         return resource.import_data(
@@ -730,7 +730,7 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
         formats = self.get_export_formats()
         form = form_type(
             formats,
-            self.get_export_resource_classes(request=request),
+            self.get_export_resource_classes(request),
             data=request.POST or None,
         )
         form.fields["export_items"] = MultipleChoiceField(
@@ -795,11 +795,11 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
                 [
                     field.column_name
                     for field in res(
-                        **self.get_export_resource_kwargs(request=request)
+                        **self.get_export_resource_kwargs(request)
                     ).get_user_visible_fields()
                 ],
             )
-            for res in self.get_export_resource_classes(request=request)
+            for res in self.get_export_resource_classes(request)
         ]
         return context
 
@@ -878,7 +878,7 @@ class ExportActionMixin(ExportMixin):
         formats = self.get_export_formats()
         form = form_type(
             formats=formats,
-            resources=self.get_export_resource_classes(request=request),
+            resources=self.get_export_resource_classes(request),
             initial={"export_items": list(queryset.values_list("id", flat=True))},
         )
         # selected items are to be stored as a hidden input on the form
