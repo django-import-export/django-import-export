@@ -20,7 +20,6 @@ class BaseImportExportMixin:
     interface.
     """
 
-    resource_class = None
     resource_classes = []
 
     @property
@@ -42,19 +41,22 @@ class BaseImportExportMixin:
                 "subscriptable (list, tuple, ...)"
             )
 
-    def get_resource_classes(self):
-        """Return subscriptable type (list, tuple, ...) containing resource classes"""
+    def get_resource_classes(self, request):
+        """
+        Return subscriptable type (list, tuple, ...) containing resource classes
+        :param request: The request object.
+        :returns: The Resource classes.
+        """
         if not self.resource_classes:
             return [modelresource_factory(self.model)]
         return self.resource_classes
 
-    def get_resource_kwargs(self, request, *args, **kwargs):
+    def get_resource_kwargs(self, request, **kwargs):
         """
         Return the kwargs which are to be passed to the Resource constructor.
         Can be overridden to provide additional kwarg params.
 
         :param request: The request object.
-        :param args: Positional arguments.
         :param kwargs: Keyword arguments.
         :returns: The Resource kwargs (by default, is the kwargs passed).
         """
@@ -77,11 +79,12 @@ class BaseImportExportMixin:
 
 
 class BaseImportMixin(BaseImportExportMixin):
-    def get_import_resource_classes(self):
+    def get_import_resource_classes(self, request):
         """
+        :param request: The request object.
         Returns ResourceClass subscriptable (list, tuple, ...) to use for import.
         """
-        resource_classes = self.get_resource_classes()
+        resource_classes = self.get_resource_classes(request)
         self.check_resource_classes(resource_classes)
         return resource_classes
 
@@ -92,11 +95,23 @@ class BaseImportMixin(BaseImportExportMixin):
         return [f for f in self.import_formats if f().can_import()]
 
     def get_import_resource_kwargs(self, request, **kwargs):
+        """
+        Returns kwargs which will be passed to the Resource constructor.
+        :param request: The request object.
+        :param kwargs: Keyword arguments.
+        :returns: The kwargs (dict)
+        """
         return self.get_resource_kwargs(request, **kwargs)
 
-    def choose_import_resource_class(self, form):
+    def choose_import_resource_class(self, form, request):
+        """
+        Identify which class should be used for import
+        :param form: The form object.
+        :param request: The request object.
+        :returns: The export Resource class.
+        """
         resource_index = self.get_resource_index(form)
-        return self.get_import_resource_classes()[resource_index]
+        return self.get_import_resource_classes(request)[resource_index]
 
 
 class BaseExportMixin(BaseImportExportMixin):
@@ -108,19 +123,33 @@ class BaseExportMixin(BaseImportExportMixin):
         """
         return [f for f in self.export_formats if f().can_export()]
 
-    def get_export_resource_classes(self):
+    def get_export_resource_classes(self, request):
         """
         Returns ResourceClass subscriptable (list, tuple, ...) to use for export.
+        :param request: The request object.
+        :returns: The Resource classes.
         """
-        resource_classes = self.get_resource_classes()
+        resource_classes = self.get_resource_classes(request)
         self.check_resource_classes(resource_classes)
         return resource_classes
 
-    def choose_export_resource_class(self, form):
+    def choose_export_resource_class(self, form, request):
+        """
+        Identify which class should be used for export
+        :param request: The request object.
+        :param form: The form object.
+        :returns: The export Resource class.
+        """
         resource_index = self.get_resource_index(form)
-        return self.get_export_resource_classes()[resource_index]
+        return self.get_export_resource_classes(request)[resource_index]
 
     def get_export_resource_kwargs(self, request, **kwargs):
+        """
+        Returns kwargs which will be passed to the Resource constructor.
+        :param request: The request object.
+        :param kwargs: Keyword arguments.
+        :returns: The kwargs (dict)
+        """
         return self.get_resource_kwargs(request, **kwargs)
 
     def get_export_resource_fields_from_form(self, form):
@@ -133,7 +162,7 @@ class BaseExportMixin(BaseImportExportMixin):
 
     def get_data_for_export(self, request, queryset, **kwargs):
         export_form = kwargs.get("export_form")
-        export_class = self.choose_export_resource_class(export_form)
+        export_class = self.choose_export_resource_class(export_form, request)
         export_resource_kwargs = self.get_export_resource_kwargs(request, **kwargs)
         export_fields = self.get_export_resource_fields_from_form(export_form)
         cls = export_class(**export_resource_kwargs)
@@ -155,11 +184,11 @@ class BaseExportMixin(BaseImportExportMixin):
 class ExportViewMixin(BaseExportMixin):
     form_class = SelectableFieldsExportForm
 
-    def get_export_data(self, file_format, queryset, *args, **kwargs):
+    def get_export_data(self, file_format, queryset, **kwargs):
         """
         Returns file_format representation for given queryset.
         """
-        data = self.get_data_for_export(self.request, queryset, *args, **kwargs)
+        data = self.get_data_for_export(self.request, queryset, **kwargs)
         export_data = file_format.export_data(data)
         return export_data
 
@@ -170,7 +199,7 @@ class ExportViewMixin(BaseExportMixin):
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs["formats"] = self.get_export_formats()
-        kwargs["resources"] = self.get_export_resource_classes()
+        kwargs["resources"] = self.get_export_resource_classes(self.request)
         return kwargs
 
 

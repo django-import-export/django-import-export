@@ -21,8 +21,8 @@ class ImportExportFormBase(forms.Form):
         choices=(),
     )
 
-    def __init__(self, formats, resources, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, formats, resources, **kwargs):
+        super().__init__(**kwargs)
         self._init_resources(resources)
         self._init_formats(formats)
 
@@ -62,8 +62,8 @@ class ImportForm(ImportExportFormBase):
     # so that the 'guess_format' js logic makes sense
     field_order = ["resource", "import_file", "format"]
 
-    def __init__(self, formats, resources, *args, **kwargs):
-        super().__init__(formats, resources, *args, **kwargs)
+    def __init__(self, formats, resources, **kwargs):
+        super().__init__(formats, resources, **kwargs)
         if len(formats) > 1:
             self.fields["import_file"].widget.attrs["class"] = "guess_format"
             self.fields["format"].widget.attrs["class"] = "guess_format"
@@ -99,8 +99,8 @@ class ExportForm(ImportExportFormBase):
 
 
 class SelectableFieldsExportForm(ExportForm):
-    def __init__(self, formats, resources, *args, **kwargs):
-        super().__init__(formats, resources, *args, **kwargs)
+    def __init__(self, formats, resources, **kwargs):
+        super().__init__(formats, resources, **kwargs)
         self._init_selectable_fields(resources)
 
     @property
