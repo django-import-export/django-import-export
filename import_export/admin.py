@@ -496,11 +496,11 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
                 if not import_form.errors:
                     # prepare kwargs for import data, if needed
                     res_kwargs = self.get_import_resource_kwargs(
-                        request=request, form=import_form, **kwargs
+                        request, form=import_form, **kwargs
                     )
-                    resource = self.choose_import_resource_class(
-                        request=request, form=import_form
-                    )(**res_kwargs)
+                    resource = self.choose_import_resource_class(import_form, request)(
+                        **res_kwargs
+                    )
                     resources = [resource]
 
                     # prepare additional kwargs for import_data, if needed
@@ -532,9 +532,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
             res_kwargs = self.get_import_resource_kwargs(
                 request=request, form=import_form, **kwargs
             )
-            resource_classes = self.get_import_resource_classes(
-                request=request, **kwargs
-            )
+            resource_classes = self.get_import_resource_classes(request)
             resources = [
                 resource_class(**res_kwargs) for resource_class in resource_classes
             ]
