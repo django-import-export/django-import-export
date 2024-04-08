@@ -334,8 +334,8 @@ Parameter changes
      - ``get_import_resource_classes(self, request)``
      -  * Added ``request`` param
 
-   * - ``choose_import_resource_class(self, form, request)``
-     - ``choose_import_resource_class(self, **kwargs)``
+   * - ``choose_import_resource_class(self, form)``
+     - ``choose_import_resource_class(self, form, request)``
      -  * Added ``request`` param
 
 :class:`import_export.mixins.BaseExportMixin`
