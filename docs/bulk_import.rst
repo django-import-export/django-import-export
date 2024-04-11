@@ -31,9 +31,9 @@ Caveats
 * In bulk mode, exceptions are not linked to a row.  Any exceptions raised by bulk operations are logged and returned
   as critical (non-validation) errors (and re-raised if ``raise_errors`` is true).
 
-* If you use :class:`~import_export.widgets.ForeignKeyWidget` then this can affect performance, because it reads from
-  the database for each row.  If this is an issue then create a subclass which caches ``get_queryset()`` results rather
-  than reading for each invocation.
+* If you use :class:`~import_export.widgets.ForeignKeyWidget` then this should not affect performance during lookups,
+  because the ``QuerySet`` cache should be used.  Some more information
+  `here <https://stackoverflow.com/a/78309357/39296>`_.
 
 * If there is the potential for concurrent writes to a table during a bulk operation, then you need to consider the
   potential impact of this.  Refer to :ref:`concurrent-writes` for more information.

@@ -64,4 +64,20 @@ You can then run the script as follows:
   # pass 'create', 'update' or 'delete' to run the single test
   ./manage.py runscript bulk_import --script-args create
 
+Enable logging
+^^^^^^^^^^^^^^
+
+You can see console debug logging by updating the ``LOGGING`` block in `settings.py`::
+
+    LOGGING = {
+        "version": 1,
+        "handlers": {"console": {"class": "logging.StreamHandler"}},
+        "root": {
+            "handlers": ["console"],
+        },
+        "loggers": {
+            "django.db.backends": {"level": "DEBUG", "handlers": ["console"]},
+        }
+    }
+
 
