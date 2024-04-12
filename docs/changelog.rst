@@ -8,7 +8,7 @@ Changelog
 4.0.0-rc.3 (unreleased)
 -----------------------
 
-- fix form not being passed to ``get_import_resource_kwargs()`` (#)
+- fix form not being passed to ``get_import_resource_kwargs()`` (#1789)
 
 4.0.0-rc.2 (2024-04-08)
 -----------------------
