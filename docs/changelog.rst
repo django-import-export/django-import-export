@@ -5,6 +5,11 @@ Changelog
 
     Version 4 introduces breaking changes.  Please refer to :doc:`release notes<release_notes>`.
 
+4.0.0-rc.3 (unreleased)
+-----------------------
+
+- fix form not being passed to ``get_import_resource_kwargs()`` (#)
+
 4.0.0-rc.2 (2024-04-08)
 -----------------------
 

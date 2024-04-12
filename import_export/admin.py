@@ -186,7 +186,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         request,
         **kwargs,
     ):
-        res_kwargs = self.get_import_resource_kwargs(request, **kwargs)
+        res_kwargs = self.get_import_resource_kwargs(request, form=form, **kwargs)
         resource = self.choose_import_resource_class(form, request)(**res_kwargs)
         imp_kwargs = self.get_import_data_kwargs(request=request, form=form, **kwargs)
         imp_kwargs["retain_instance_in_row_result"] = True
