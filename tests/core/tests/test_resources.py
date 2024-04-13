@@ -396,7 +396,8 @@ class ModelResourcePostgresModuleLoadTest(TestCase):
 
     def tearDown(self):
         super().tearDown()
-        sys.modules[self.pg_module_name] = self.pg_modules
+        if hasattr(self, "pg_modules") and self.pg_modules:
+            sys.modules[self.pg_module_name] = self.pg_modules
 
     def test_widget_from_django_field_cannot_import_postgres(self):
         # test that default widget is returned if postgres extensions
