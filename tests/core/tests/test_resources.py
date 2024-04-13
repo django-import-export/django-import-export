@@ -549,18 +549,18 @@ class ModelResourceTest(TestCase):
 
     def test_export(self):
         with self.assertNumQueries(2):
-            dataset = self.resource.export(Book.objects.all())
+            dataset = self.resource.export(queryset=Book.objects.all())
             self.assertEqual(len(dataset), 1)
 
     def test_export_iterable(self):
         with self.assertNumQueries(2):
-            dataset = self.resource.export(list(Book.objects.all()))
+            dataset = self.resource.export(queryset=list(Book.objects.all()))
             self.assertEqual(len(dataset), 1)
 
     def test_export_prefetch_related(self):
         with self.assertNumQueries(3):
             dataset = self.resource.export(
-                Book.objects.prefetch_related("categories").all()
+                queryset=Book.objects.prefetch_related("categories").all()
             )
             self.assertEqual(len(dataset), 1)
 
@@ -1172,7 +1172,7 @@ class ModelResourceTest(TestCase):
         self.book.author = author1
         self.book.save()
 
-        dataset = self.resource.export(Book.objects.all())
+        dataset = self.resource.export(queryset=Book.objects.all())
         self.assertEqual(dataset.dict[0]["author"], author1.pk)
 
     def test_foreign_keys_import(self):
@@ -1191,7 +1191,7 @@ class ModelResourceTest(TestCase):
         self.book.categories.add(cat1)
         self.book.categories.add(cat2)
 
-        dataset = self.resource.export(Book.objects.all())
+        dataset = self.resource.export(queryset=Book.objects.all())
         self.assertEqual(dataset.dict[0]["categories"], "%d,%d" % (cat1.pk, cat2.pk))
 
     def test_m2m_import(self):
@@ -1284,7 +1284,7 @@ class ModelResourceTest(TestCase):
                 fields = ("user__profile", "user__profile__is_private")
 
         resource = EntryResource()
-        dataset = resource.export(Entry.objects.all())
+        dataset = resource.export(queryset=Entry.objects.all())
         self.assertEqual(dataset.dict[0]["user__profile"], profile.pk)
         self.assertEqual(dataset.dict[0]["user__profile__is_private"], "1")
         self.assertEqual(dataset.dict[1]["user__profile"], "")
@@ -1293,7 +1293,7 @@ class ModelResourceTest(TestCase):
     def test_empty_get_queryset(self):
         # issue #25 - Overriding queryset on export() fails when passed
         # queryset has zero elements
-        dataset = self.resource.export(Book.objects.none())
+        dataset = self.resource.export(queryset=Book.objects.none())
         self.assertEqual(len(dataset), 0)
 
     def test_import_data_skip_unchanged(self):
@@ -1439,7 +1439,7 @@ class ModelResourceTest(TestCase):
 
         # Verify that the annotated field is correctly exported
         dataset = resource.export(
-            Book.objects.annotate(total_categories=Count("categories"))
+            queryset=Book.objects.annotate(total_categories=Count("categories"))
         )
         self.assertEqual(int(dataset.dict[0]["total_categories"]), 1)
 
@@ -1852,7 +1852,7 @@ class ForeignKeyWidgetFollowRelationship(TestCase):
                 fields = ["id", "role"]
 
         resource = MyPersonResource()
-        dataset = resource.export(Person.objects.all())
+        dataset = resource.export(queryset=Person.objects.all())
         self.assertEqual(len(dataset), 1)
         self.assertEqual(dataset[0][0], "foo")
 
