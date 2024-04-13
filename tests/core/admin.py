@@ -82,6 +82,9 @@ class CustomBookAdmin(ImportExportModelAdmin):
         # update resource kwargs so that the Resource is passed the authenticated user
         # This is included as an example of how dynamic values
         # can be passed to resources
+        if "form" not in kwargs:
+            # test for #1789
+            raise ValueError("'form' param was expected in kwargs")
         kwargs = super().get_resource_kwargs(request, **kwargs)
         kwargs.update({"user": request.user})
         return kwargs
