@@ -8,7 +8,7 @@ Changelog
 4.0.0-rc.4 (unreleased)
 -----------------------
 
-- Removed support for django 3.2 (#)
+- Removed support for django 3.2 (#1790)
 
 4.0.0-rc.3 (2024-04-13)
 -----------------------
