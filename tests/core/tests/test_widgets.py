@@ -1,7 +1,7 @@
 import json
 from datetime import date, datetime, time, timedelta
 from decimal import Decimal
-from unittest import mock, skipUnless
+from unittest import mock
 from unittest.mock import patch
 
 import django
@@ -102,17 +102,6 @@ class FormatDatetimeTest(TestCase):
     target_dt = "02.08.0010"
     format = "%d.%m.%Y"
 
-    @skipUnless(
-        django.VERSION[0] < 4, f"skipping django {django.VERSION} version specific test"
-    )
-    def test_format_datetime_lt_django4(self):
-        self.assertEqual(
-            self.target_dt, widgets.format_datetime(self.date, self.format)
-        )
-
-    @skipUnless(
-        django.VERSION[0] >= 4, f"running django {django.VERSION} version specific test"
-    )
     def test_format_datetime_gte_django4(self):
         self.assertEqual(
             self.target_dt, widgets.format_datetime(self.date, self.format)
@@ -383,17 +372,6 @@ class NumberWidgetTest(TestCase, RowDeprecationTestMixin):
     def test_render_invalid_type(self):
         self.assertEqual(self.widget.render("a"), "")
 
-    @skipUnless(
-        django.VERSION[0] < 4, f"skipping django {django.VERSION} version specific test"
-    )
-    @override_settings(LANGUAGE_CODE="fr-fr", USE_L10N=True)
-    def test_locale_render_coerce_to_string_lt4(self):
-        self.assertEqual("11,111", self.widget_coerce_to_string.render(self.value))
-
-    @skipUnless(
-        django.VERSION[0] >= 4,
-        f"skipping django {django.VERSION} version specific test",
-    )
     @override_settings(LANGUAGE_CODE="fr-fr")
     def test_locale_render_coerce_to_string_gte4(self):
         self.assertEqual("11,111", self.widget_coerce_to_string.render(self.value))
@@ -426,17 +404,6 @@ class FloatWidgetTest(TestCase, RowDeprecationTestMixin):
         self.assertEqual(self.widget.clean(" "), None)
         self.assertEqual(self.widget.clean("\r\n\t"), None)
 
-    @skipUnless(
-        django.VERSION[0] < 4, f"skipping django {django.VERSION} version specific test"
-    )
-    @override_settings(LANGUAGE_CODE="fr-fr", USE_L10N=True)
-    def test_locale_render_coerce_to_string_lt4(self):
-        self.assertEqual(self.widget_coerce_to_string.render(self.value), "11,111")
-
-    @skipUnless(
-        django.VERSION[0] >= 4,
-        f"skipping django {django.VERSION} version specific test",
-    )
     @override_settings(LANGUAGE_CODE="fr-fr")
     def test_locale_render_coerce_to_string_gte4(self):
         self.assertEqual(self.widget_coerce_to_string.render(self.value), "11,111")
@@ -470,17 +437,6 @@ class DecimalWidgetTest(TestCase, RowDeprecationTestMixin):
         self.assertEqual(self.widget.clean(" "), None)
         self.assertEqual(self.widget.clean("\r\n\t"), None)
 
-    @skipUnless(
-        django.VERSION[0] < 4, f"skipping django {django.VERSION} version specific test"
-    )
-    @override_settings(LANGUAGE_CODE="fr-fr", USE_L10N=True)
-    def test_locale_render_coerce_to_string_lt4(self):
-        self.assertEqual(self.widget.render(self.value), "11,111")
-
-    @skipUnless(
-        django.VERSION[0] >= 4,
-        f"skipping django {django.VERSION} version specific test",
-    )
     @override_settings(LANGUAGE_CODE="fr-fr")
     def test_locale_render_coerce_to_string_gte4(self):
         self.assertEqual(self.widget.render(self.value), "11,111")
@@ -511,17 +467,6 @@ class IntegerWidgetTest(TestCase, RowDeprecationTestMixin):
     def test_render_invalid_type(self):
         self.assertEqual(self.widget.render("a"), "")
 
-    @skipUnless(
-        django.VERSION[0] < 4, f"skipping django {django.VERSION} version specific test"
-    )
-    @override_settings(LANGUAGE_CODE="fr-fr", USE_L10N=True)
-    def test_locale_render_lt_django4(self):
-        self.assertEqual(self.widget_coerce_to_string.render(self.value), "0")
-
-    @skipUnless(
-        django.VERSION[0] >= 4,
-        f"skipping django {django.VERSION} version specific test",
-    )
     @override_settings(LANGUAGE_CODE="fr-fr")
     def test_locale_render_gte_django4(self):
         self.assertEqual(self.widget_coerce_to_string.render(self.value), "0")
