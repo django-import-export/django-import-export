@@ -52,7 +52,7 @@ jobs:
         -u${{ env.IMPORT_EXPORT_MYSQL_USER }}
         -p${{ env.IMPORT_EXPORT_MYSQL_PASSWORD }}
     - name: Check out repository code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
       with:
