@@ -4,7 +4,6 @@ from io import StringIO
 from unittest import mock
 from unittest.mock import patch
 
-import django
 from core.admin import AuthorAdmin, BookAdmin, CustomBookAdmin, ImportMixin
 from core.models import Author, Book, EBook, Parent
 from core.tests.admin_integration.mixins import AdminTestMixin
@@ -162,19 +161,14 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
             "'UnicodeDecodeError' encountered while trying to read file. "
             "Ensure you have chosen the correct format for the file."
         )
-        # required for testing via tox
-        # remove after django 5.0 released
-        if django.VERSION >= (4, 0):
-            with warnings.catch_warnings():
-                warnings.filterwarnings("ignore", category=DeprecationWarning)
-                try:
-                    self.assertFormError(
-                        response.context["form"], "import_file", target_msg
-                    )
-                except TypeError:
-                    self.assertFormError(response, "form", "import_file", target_msg)
-        else:
-            self.assertFormError(response, "form", "import_file", target_msg)
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=DeprecationWarning)
+            try:
+                self.assertFormError(
+                    response.context["form"], "import_file", target_msg
+                )
+            except TypeError:
+                self.assertFormError(response, "form", "import_file", target_msg)
 
     def test_import_action_handles_ValueError_as_form_error(self):
         with mock.patch(
@@ -188,19 +182,14 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
             "Ensure you have chosen the correct format for the file."
         )
 
-        # required for testing via tox
-        # remove after django 5.0 released
-        if django.VERSION >= (4, 0):
-            with warnings.catch_warnings():
-                warnings.filterwarnings("ignore", category=DeprecationWarning)
-                try:
-                    self.assertFormError(
-                        response.context["form"], "import_file", target_msg
-                    )
-                except TypeError:
-                    self.assertFormError(response, "form", "import_file", target_msg)
-        else:
-            self.assertFormError(response, "form", "import_file", target_msg)
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=DeprecationWarning)
+            try:
+                self.assertFormError(
+                    response.context["form"], "import_file", target_msg
+                )
+            except TypeError:
+                self.assertFormError(response, "form", "import_file", target_msg)
 
     def test_import_action_handles_FieldError(self):
         # issue 1722
@@ -226,19 +215,14 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
             "Asegúrese que seleccionó el formato correcto para el archivo."
         )
 
-        # required for testing via tox
-        # remove after django 5.0 released
-        if django.VERSION >= (4, 0):
-            with warnings.catch_warnings():
-                warnings.filterwarnings("ignore", category=DeprecationWarning)
-                try:
-                    self.assertFormError(
-                        response.context["form"], "import_file", target_msg
-                    )
-                except TypeError:
-                    self.assertFormError(response, "form", "import_file", target_msg)
-        else:
-            self.assertFormError(response, "form", "import_file", target_msg)
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=DeprecationWarning)
+            try:
+                self.assertFormError(
+                    response.context["form"], "import_file", target_msg
+                )
+            except TypeError:
+                self.assertFormError(response, "form", "import_file", target_msg)
 
     def test_import_action_invalidates_data_sheet_with_no_headers_or_data(self):
         # GET the import form
@@ -256,19 +240,14 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
             "has the correct headers or data for import."
         )
 
-        # required for testing via tox
-        # remove after django 5.0 released
-        if django.VERSION >= (4, 0):
-            with warnings.catch_warnings():
-                warnings.filterwarnings("ignore", category=DeprecationWarning)
-                try:
-                    self.assertFormError(
-                        response.context["form"], "import_file", target_msg
-                    )
-                except TypeError:
-                    self.assertFormError(response, "form", "import_file", target_msg)
-        else:
-            self.assertFormError(response, "form", "import_file", target_msg)
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=DeprecationWarning)
+            try:
+                self.assertFormError(
+                    response.context["form"], "import_file", target_msg
+                )
+            except TypeError:
+                self.assertFormError(response, "form", "import_file", target_msg)
 
     @ignore_widget_deprecation_warning
     def test_delete_from_admin(self):
