@@ -165,3 +165,8 @@ class UUIDBook(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField("Book name", max_length=100)
     categories = models.ManyToManyField(UUIDCategory, blank=True)
+
+
+class WithPositiveIntegerFields(models.Model):
+    big = models.PositiveBigIntegerField(null=True)
+    small = models.PositiveSmallIntegerField(null=True)

@@ -6,28 +6,21 @@ from django.db import models
 from import_export import widgets
 from import_export.resources import ModelResource
 
-
-class ExampleModel(models.Model):
-    field_example1 = models.PositiveBigIntegerField(null=True)
-    field_example2 = models.PositiveSmallIntegerField(null=True)
+from ..models import WithPositiveIntegerFields
 
 
 class ExampleResource(ModelResource):
     class Meta:
-        model = ExampleModel
+        model = WithPositiveIntegerFields
 
 
 class TestImportExportBug(TestCase):
     def test_field_has_correct_widget(self):
         resource = ExampleResource()
         with self.subTest("PositiveBigIntegerField"):
-            self.assertIsInstance(
-                resource.fields["field_example1"], widgets.IntegerWidget
-            )
+            self.assertIsInstance(resource.fields["big"], widgets.IntegerWidget)
         with self.subTest("PositiveSmallIntegerField"):
-            self.assertIsInstance(
-                resource.fields["field_example2"], widgets.IntegerWidget
-            )
+            self.assertIsInstance(resource.fields["small"], widgets.IntegerWidget)
 
     def test_all_db_fields_has_widgets(self):
         all_django_fields_classes = self._collect_all_clas_children(models.Field)
@@ -78,9 +71,9 @@ class TestImportExportBug(TestCase):
         return [
             models.PositiveBigIntegerField(),
             models.PositiveSmallIntegerField(),
-            models.ManyToManyField(ExampleModel),
-            models.OneToOneField(ExampleModel, on_delete=models.PROTECT),
-            models.ForeignKey(ExampleModel, on_delete=models.PROTECT),
+            models.ManyToManyField(WithPositiveIntegerFields),
+            models.OneToOneField(WithPositiveIntegerFields, on_delete=models.PROTECT),
+            models.ForeignKey(WithPositiveIntegerFields, on_delete=models.PROTECT),
             models.JSONField(),
             models.UUIDField(),
             models.TimeField(),
