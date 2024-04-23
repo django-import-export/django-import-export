@@ -1,7 +1,7 @@
 from unittest import TestCase
 
-from django.db import models
 from django.contrib.postgres import fields as postgres_fields
+from django.db import models
 
 from import_export import widgets
 from import_export.resources import ModelResource
@@ -18,13 +18,16 @@ class ExampleResource(ModelResource):
 
 
 class TestImportExportBug(TestCase):
-
     def test_field_has_correct_widget(self):
         resource = ExampleResource()
         with self.subTest("PositiveBigIntegerField"):
-            self.assertIsInstance(resource.fields["field_example1"], widgets.IntegerWidget)
+            self.assertIsInstance(
+                resource.fields["field_example1"], widgets.IntegerWidget
+            )
         with self.subTest("PositiveSmallIntegerField"):
-            self.assertIsInstance(resource.fields["field_example2"], widgets.IntegerWidget)
+            self.assertIsInstance(
+                resource.fields["field_example2"], widgets.IntegerWidget
+            )
 
     def test_all_db_fields_has_widgets(self):
         all_django_fields_classes = self._collect_all_clas_children(models.Field)
@@ -36,24 +39,33 @@ class TestImportExportBug(TestCase):
             models.BinaryField,
             models.FilePathField,
         }
-        all_fields = self._get_default_django_fields() + self._get_postgres_django_fields()
+        all_fields = (
+            self._get_default_django_fields() + self._get_postgres_django_fields()
+        )
 
-        field_instance_by_field_cls = {
-            field.__class__: field
-            for field in all_fields
-        }
+        field_instance_by_field_cls = {field.__class__: field for field in all_fields}
 
         for field_cls, field in field_instance_by_field_cls.items():
             with self.subTest(msg=field_cls.__name__):
-                resource_field = ModelResource.field_from_django_field("test", field, False)
+                resource_field = ModelResource.field_from_django_field(
+                    "test", field, False
+                )
                 widget = resource_field.widget
-                self.assertNotEqual(widget.__class__.__name__, "Widget", msg=f"{field_cls.__name__} has default widget")
+                self.assertNotEqual(
+                    widget.__class__.__name__,
+                    "Widget",
+                    msg=f"{field_cls.__name__} has default widget",
+                )
 
         for field_cls in all_django_fields_classes:
             if field_cls in expected_not_presented_fields:
                 continue
             with self.subTest(msg=field_cls.__name__):
-                self.assertIn(field_cls, field_instance_by_field_cls, msg=f"{field_cls.__name__} not presented in test widgets")
+                self.assertIn(
+                    field_cls,
+                    field_instance_by_field_cls,
+                    msg=f"{field_cls.__name__} not presented in test widgets",
+                )
 
     def _collect_all_clas_children(self, cls):
         children = []
