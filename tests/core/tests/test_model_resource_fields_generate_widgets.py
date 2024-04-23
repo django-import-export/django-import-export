@@ -72,7 +72,7 @@ class TestImportExportBug(TestCase):
                 self.assertIn(
                     field_cls,
                     field_instance_by_field_cls,
-                    msg=f"{field_cls.__name__} not presented in test widgets",
+                    msg=f"{field_cls.__name__} not presented in test fields",
                 )
 
     def _get_fields_with_expected_default_widget(self):
@@ -91,8 +91,6 @@ class TestImportExportBug(TestCase):
             models.TextField,
             models.UUIDField,
             postgres.BigIntegerRangeField,
-            postgres.CICharField,
-            postgres.CIEmailField,
             postgres.CITextField,
             postgres.DateRangeField,
             postgres.DateTimeRangeField,
@@ -101,6 +99,12 @@ class TestImportExportBug(TestCase):
             postgres.IntegerRangeField,
             postgres.RangeField,
         }
+        if django.VERSION < (5, 1):
+            ci_char_fields = {
+                postgres.CICharField,
+                postgres.CIEmailField,
+            }
+            expected_has_default_widget |= ci_char_fields
         return expected_has_default_widget
 
     def _get_expected_not_presented_in_test_field_subclasses(self):
@@ -122,6 +126,8 @@ class TestImportExportBug(TestCase):
             expected_not_presented_fields |= {postgres_search._Float4Field}
         if django.VERSION >= (5, 0):
             expected_not_presented_fields |= {models.GeneratedField}
+        if django.VERSION >= (5, 1):
+            expected_not_presented_fields |= {contenttype_fields.GenericForeignKey}
         return expected_not_presented_fields
 
     def _get_all_django_model_field_subclasses(self):
