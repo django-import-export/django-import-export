@@ -1171,6 +1171,7 @@ class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
         "IntegerField": widgets.IntegerWidget,
         "PositiveIntegerField": widgets.IntegerWidget,
         "BigIntegerField": widgets.IntegerWidget,
+        "PositiveBigIntegerField": widgets.IntegerWidget,
         "PositiveSmallIntegerField": widgets.IntegerWidget,
         "SmallIntegerField": widgets.IntegerWidget,
         "SmallAutoField": widgets.IntegerWidget,
