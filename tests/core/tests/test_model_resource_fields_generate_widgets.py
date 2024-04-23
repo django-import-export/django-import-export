@@ -112,13 +112,14 @@ class TestImportExportBug(TestCase):
         expected_not_presented_fields = {
             contenttype_fields.GenericRelation,
             models.ForeignObject,
-            postgres_search._Float4Field,
             postgres_search.SearchQueryField,
             postgres_search.SearchVectorField,
             RelatedField,
         }
         if django.VERSION >= (4, 1):
             expected_not_presented_fields |= {postgres_ranges.ContinuousRangeField}
+        if django.VERSION >= (4, 2):
+            expected_not_presented_fields |= {postgres_search._Float4Field}
         if django.VERSION >= (5, 0):
             expected_not_presented_fields |= {models.GeneratedField}
         return expected_not_presented_fields
