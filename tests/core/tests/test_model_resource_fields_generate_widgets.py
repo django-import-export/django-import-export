@@ -4,7 +4,7 @@ import django
 from django.contrib.contenttypes import fields as contenttype_fields
 from django.contrib.postgres import fields as postgres
 from django.contrib.postgres import search as postgres_search
-from django.contrib.postgres.fields.ranges import ContinuousRangeField
+from django.contrib.postgres.fields import ranges as postgres_ranges
 from django.db import models
 from django.db.models.fields.related import RelatedField
 
@@ -111,14 +111,14 @@ class TestImportExportBug(TestCase):
         """
         expected_not_presented_fields = {
             contenttype_fields.GenericRelation,
-            ContinuousRangeField,
             models.ForeignObject,
             postgres_search._Float4Field,
             postgres_search.SearchQueryField,
             postgres_search.SearchVectorField,
             RelatedField,
         }
-
+        if django.VERSION >= (4, 1):
+            expected_not_presented_fields |= {postgres_ranges.ContinuousRangeField}
         if django.VERSION >= (5, 0):
             expected_not_presented_fields |= {models.GeneratedField}
         return expected_not_presented_fields
