@@ -19,9 +19,12 @@ class TestImportExportBug(TestCase):
     def test_field_has_correct_widget(self):
         resource = ExampleResource()
         with self.subTest("PositiveBigIntegerField"):
-            self.assertIsInstance(resource.fields["big"], widgets.IntegerWidget)
+            self.assertIsInstance(resource.fields["big"].widget, widgets.IntegerWidget)
         with self.subTest("PositiveSmallIntegerField"):
-            self.assertIsInstance(resource.fields["small"], widgets.IntegerWidget)
+            self.assertIsInstance(
+                resource.fields["small"].widget,
+                widgets.IntegerWidget,
+            )
 
     def test_all_db_fields_has_widgets(self):
         all_django_fields_classes = self._collect_all_clas_children(models.Field)
