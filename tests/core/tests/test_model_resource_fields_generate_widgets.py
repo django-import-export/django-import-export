@@ -1,5 +1,6 @@
 from unittest import TestCase
 
+import django
 from django.contrib.postgres import fields as postgres_fields
 from django.db import models
 
@@ -25,13 +26,14 @@ class TestImportExportBug(TestCase):
     def test_all_db_fields_has_widgets(self):
         all_django_fields_classes = self._collect_all_clas_children(models.Field)
         expected_not_presented_fields = {
-            models.GeneratedField,
             models.ForeignObject,
             models.ImageField,
             models.FileField,
             models.BinaryField,
             models.FilePathField,
         }
+        if django.VERSION >= (5, 0):
+            expected_not_presented_fields |= {models.GeneratedField}
         all_fields = (
             self._get_default_django_fields() + self._get_postgres_django_fields()
         )
@@ -68,7 +70,7 @@ class TestImportExportBug(TestCase):
         return children
 
     def _get_default_django_fields(self):
-        return [
+        fields = [
             models.PositiveBigIntegerField(),
             models.PositiveSmallIntegerField(),
             models.ManyToManyField(WithPositiveIntegerFields),
@@ -103,6 +105,7 @@ class TestImportExportBug(TestCase):
             models.NullBooleanField(),
             models.BooleanField(),
         ]
+        return fields
 
     def _get_postgres_django_fields(self):
         return [
