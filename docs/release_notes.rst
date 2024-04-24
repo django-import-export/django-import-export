@@ -75,6 +75,7 @@ Deprecations
 * The ``obj`` param passed to :meth:`~import_export.widgets.Widget.render` is deprecated.
   The :meth:`~import_export.widgets.Widget.render` method should not need to have a reference to
   model instance.
+  The call to ``render()`` from :meth:`~import_export.fields.Field.export` has been removed.
 
 * Use of ``ExportViewFormMixin`` is deprecated.  See `this issue <https://github.com/django-import-export/django-import-export/issues/1666>`_.
 
