@@ -3,7 +3,6 @@ from unittest import mock
 import tablib
 from core.models import Book
 from core.tests.resources import BookResource
-from core.tests.utils import ignore_widget_deprecation_warning
 from django.test import TestCase
 
 from import_export import fields, results, widgets
@@ -17,7 +16,6 @@ class DataDeletionDryRunTest(TestCase):
         row = [self.book.pk, "Some book", "test@example.com", "10.25"]
         self.dataset.append(row)
 
-    @ignore_widget_deprecation_warning
     def test_import_data_delete(self):
         class B(BookResource):
             delete = fields.Field(widget=widgets.BooleanWidget())
@@ -36,7 +34,6 @@ class DataDeletionDryRunTest(TestCase):
         self.assertIsNone(result.rows[0].instance)
         self.assertIsNone(result.rows[0].original)
 
-    @ignore_widget_deprecation_warning
     def test_import_data_delete_store_instance(self):
         class B(BookResource):
             delete = fields.Field(widget=widgets.BooleanWidget())
@@ -55,7 +52,6 @@ class DataDeletionDryRunTest(TestCase):
         )
         self.assertIsNotNone(result.rows[0].instance)
 
-    @ignore_widget_deprecation_warning
     def test_save_instance_with_dry_run_flag(self):
         class B(BookResource):
             def before_save_instance(self, instance, row, **kwargs):
@@ -109,7 +105,6 @@ class DataDeletionDryRunTest(TestCase):
         )
         self.assertEqual(0, mock_book.call_count)
 
-    @ignore_widget_deprecation_warning
     def test_delete_instance_with_dry_run_flag(self):
         class B(BookResource):
             delete = fields.Field(widget=widgets.BooleanWidget())

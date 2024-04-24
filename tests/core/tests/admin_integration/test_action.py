@@ -5,7 +5,6 @@ from unittest.mock import MagicMock
 from core.admin import CategoryAdmin
 from core.models import Book, Category
 from core.tests.admin_integration.mixins import AdminTestMixin
-from core.tests.utils import ignore_widget_deprecation_warning
 from django.contrib import admin
 from django.core.exceptions import PermissionDenied
 from django.http import HttpRequest
@@ -40,7 +39,6 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
         )
 
     @override_settings(IMPORT_EXPORT_SKIP_ADMIN_ACTION_EXPORT_UI=True)
-    @ignore_widget_deprecation_warning
     def test_export_skips_export_ui_page(self):
         data = {
             "action": ["export_admin_action"],
@@ -49,7 +47,6 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
         response = self.client.post("/admin/core/category/", data)
         self._check_export_response(response)
 
-    @ignore_widget_deprecation_warning
     def test_export_displays_ui_select_page(self):
         data = {
             "action": ["export_admin_action"],
@@ -64,7 +61,6 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertEqual([self.cat1.id], data["export_items"])
         self.assertIn("Export 1 selected item.", str(response.content))
 
-    @ignore_widget_deprecation_warning
     def test_export_displays_ui_select_page_multiple_items(self):
         data = {
             "action": ["export_admin_action"],
@@ -81,7 +77,6 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
         )
         self.assertIn("Export 2 selected items.", str(response.content))
 
-    @ignore_widget_deprecation_warning
     def test_export_post(self):
         # create a POST request with data selected from the 'action' export
         data = {

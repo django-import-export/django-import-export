@@ -1,6 +1,5 @@
 import tablib
 from core.models import Author, Book
-from core.tests.utils import ignore_widget_deprecation_warning
 from django.test import TestCase
 
 from tests.core.tests.resources import BookResource
@@ -31,13 +30,11 @@ class ExportFunctionalityTest(TestCase):
             ],
         )
 
-    @ignore_widget_deprecation_warning
     def test_export(self):
         with self.assertNumQueries(2):
             dataset = self.resource.export(queryset=Book.objects.all())
             self.assertEqual(len(dataset), 1)
 
-    @ignore_widget_deprecation_warning
     def test_export_with_foreign_keys(self):
         """
         Test that export() containing foreign keys doesn't generate
@@ -55,13 +52,11 @@ class ExportFunctionalityTest(TestCase):
             self.assertEqual(dataset.dict[0]["author"], author.pk)
             self.assertEqual(len(dataset), 3)
 
-    @ignore_widget_deprecation_warning
     def test_export_iterable(self):
         with self.assertNumQueries(2):
             dataset = self.resource.export(queryset=list(Book.objects.all()))
             self.assertEqual(len(dataset), 1)
 
-    @ignore_widget_deprecation_warning
     def test_export_prefetch_related(self):
         with self.assertNumQueries(3):
             dataset = self.resource.export(
@@ -69,7 +64,6 @@ class ExportFunctionalityTest(TestCase):
             )
             self.assertEqual(len(dataset), 1)
 
-    @ignore_widget_deprecation_warning
     def test_export_handles_named_queryset_parameter(self):
         class _BookResource(BookResource):
             def before_export(self, queryset, **kwargs):

@@ -3,7 +3,6 @@ from decimal import InvalidOperation
 import tablib
 from core.models import Author, Book
 from core.tests.resources import AuthorResourceWithCustomWidget, BookResource
-from core.tests.utils import ignore_widget_deprecation_warning
 from django.test import TestCase
 
 from import_export import resources, results
@@ -17,7 +16,6 @@ class DataHandlingTest(TestCase):
         row = [self.book.pk, "Some book", "test@example.com", "10.25"]
         self.dataset.append(row)
 
-    @ignore_widget_deprecation_warning
     def test_import_data_handles_widget_valueerrors_with_unicode_messages(self):
         resource = AuthorResourceWithCustomWidget()
         dataset = tablib.Dataset(headers=["id", "name", "birthday"])
@@ -48,7 +46,6 @@ class DataHandlingTest(TestCase):
         self.assertFalse(result.has_validation_errors())
         self.assertEqual(len(result.invalid_rows), 0)
 
-    @ignore_widget_deprecation_warning
     def test_model_validation_errors_raised_when_clean_model_instances_is_true(self):
         class TestResource(resources.ModelResource):
             class Meta:
@@ -78,7 +75,6 @@ class DataHandlingTest(TestCase):
         self.assertEqual(result.diff_headers, ["id", "name", "birthday"])
         self.assertEqual(invalid_row.values, ("1", "123", "---"))
 
-    @ignore_widget_deprecation_warning
     def test_known_invalid_fields_are_excluded_from_model_instance_cleaning(self):
         # The custom widget on the parent class should complain about
         # 'name' first, preventing Author.full_clean() from raising the

@@ -3,7 +3,6 @@ from datetime import date
 import tablib
 from core.models import Author, Book
 from core.tests.resources import BookResource
-from core.tests.utils import ignore_widget_deprecation_warning
 from django.test import TestCase
 
 from import_export import fields, resources
@@ -17,7 +16,6 @@ class RelationshipFieldTest(TestCase):
         row = [self.book.pk, "Some book", "test@example.com", "10.25"]
         self.dataset.append(row)
 
-    @ignore_widget_deprecation_warning
     def test_relationships_fields(self):
         class B(resources.ModelResource):
             class Meta:
@@ -83,7 +81,6 @@ class RelationshipFieldTest(TestCase):
         self.assertEqual(1, len(resource.fields))
         self.assertEqual("full_title", list(resource.fields.keys())[0])
 
-    @ignore_widget_deprecation_warning
     def test_widget_format_in_fk_field(self):
         class B(resources.ModelResource):
             class Meta:
@@ -99,7 +96,6 @@ class RelationshipFieldTest(TestCase):
         result = resource.fields["author__birthday"].export(self.book)
         self.assertEqual(result, str(date.today()))
 
-    @ignore_widget_deprecation_warning
     def test_widget_kwargs_for_field(self):
         class B(resources.ModelResource):
             class Meta:

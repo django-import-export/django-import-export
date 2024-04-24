@@ -4,7 +4,6 @@ from unittest import mock
 import tablib
 from core.models import Book
 from core.tests.resources import BookResource, BookResourceWithStoreInstance
-from core.tests.utils import ignore_widget_deprecation_warning
 from django.test import TestCase, skipUnlessDBFeature
 
 from import_export import results
@@ -19,7 +18,6 @@ class DataImportTests(TestCase):
         row = [self.book.pk, "Some book", "test@example.com", "10.25"]
         self.dataset.append(row)
 
-    @ignore_widget_deprecation_warning
     def test_get_diff(self):
         diff = Diff(self.resource, self.book, False)
         book2 = Book(name="Some other book")
@@ -33,7 +31,6 @@ class DataImportTests(TestCase):
         )
         self.assertFalse(html[headers.index("author_email")])
 
-    @ignore_widget_deprecation_warning
     def test_import_data_update(self):
         result = self.resource.import_data(self.dataset, raise_errors=True)
 
@@ -53,7 +50,6 @@ class DataImportTests(TestCase):
         self.assertEqual(instance.author_email, "test@example.com")
         self.assertEqual(instance.price, Decimal("10.25"))
 
-    @ignore_widget_deprecation_warning
     def test_import_data_new(self):
         Book.objects.all().delete()
         self.assertEqual(0, Book.objects.count())
@@ -74,7 +70,6 @@ class DataImportTests(TestCase):
         self.assertEqual(instance.author_email, "test@example.com")
         self.assertEqual(instance.price, Decimal("10.25"))
 
-    @ignore_widget_deprecation_warning
     def test_import_data_new_store_instance(self):
         self.resource = BookResourceWithStoreInstance()
         Book.objects.all().delete()
@@ -88,7 +83,6 @@ class DataImportTests(TestCase):
         book = Book.objects.first()
         self.assertEqual(book.pk, result.rows[0].instance.pk)
 
-    @ignore_widget_deprecation_warning
     def test_import_data_update_store_instance(self):
         self.resource = BookResourceWithStoreInstance()
         result = self.resource.import_data(self.dataset, raise_errors=True)
@@ -103,7 +97,6 @@ class DataImportTests(TestCase):
 
     @skipUnlessDBFeature("supports_transactions")
     @mock.patch("import_export.resources.connections")
-    @ignore_widget_deprecation_warning
     def test_import_data_no_transaction(self, mock_db_connections):
         class Features:
             supports_transactions = False
@@ -126,7 +119,6 @@ class DataImportTests(TestCase):
         self.assertEqual(result.rows[0].row_values.get("name"), None)
         self.assertEqual(result.rows[0].row_values.get("author_email"), None)
 
-    @ignore_widget_deprecation_warning
     def test_import_data_new_override_do_instance_save(self):
         class CustomDoInstanceSave(BookResource):
             is_create = False

@@ -5,8 +5,6 @@ from django.contrib.auth.models import Permission, User
 from django.test.testcases import TestCase
 from django.test.utils import override_settings
 
-from .utils import ignore_widget_deprecation_warning
-
 
 class ImportExportPermissionTest(TestCase):
     def setUp(self):
@@ -23,7 +21,6 @@ class ImportExportPermissionTest(TestCase):
         self.user.user_permissions.add(permission)
 
     @override_settings(IMPORT_EXPORT_IMPORT_PERMISSION_CODE="change")
-    @ignore_widget_deprecation_warning
     def test_import(self):
         # user has no permission to import
         response = self.client.get("/admin/core/book/import/")

@@ -10,8 +10,6 @@ from django.urls import reverse
 from import_export import admin, formats, forms, mixins, resources
 from import_export.resources import modelresource_factory
 
-from .utils import ignore_widget_deprecation_warning
-
 
 class ExportViewMixinTest(TestCase):
     class TestExportForm(forms.ExportForm):
@@ -33,7 +31,6 @@ class ExportViewMixinTest(TestCase):
         self.assertContains(response, self.cat1.name, status_code=200)
         self.assertEqual(response["Content-Type"], "text/html; charset=utf-8")
 
-    @ignore_widget_deprecation_warning
     def test_post(self):
         data = {"format": "0", "categoryresource_id": True}
         with warnings.catch_warnings():

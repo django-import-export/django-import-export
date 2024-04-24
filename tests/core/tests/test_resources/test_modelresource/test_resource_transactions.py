@@ -6,7 +6,6 @@ from core.tests.resources import (
     CategoryResource,
     ProfileResource,
 )
-from core.tests.utils import ignore_widget_deprecation_warning
 from django.test import TransactionTestCase, skipUnlessDBFeature
 from django.utils.encoding import force_str
 from django.utils.html import strip_tags
@@ -14,7 +13,6 @@ from django.utils.html import strip_tags
 
 class ModelResourceTransactionTest(TransactionTestCase):
     @skipUnlessDBFeature("supports_transactions")
-    @ignore_widget_deprecation_warning
     def test_m2m_import_with_transactions(self):
         resource = BookResource()
         cat1 = Category.objects.create(name="Cat 1")
@@ -77,7 +75,6 @@ class ModelResourceTransactionTest(TransactionTestCase):
         )
         self.assertTrue(result.has_errors())
 
-    @ignore_widget_deprecation_warning
     def test_rollback_on_validation_errors_false(self):
         """Should create only one instance as the second one
         raises a ``ValidationError``"""
@@ -100,7 +97,6 @@ class ModelResourceTransactionTest(TransactionTestCase):
         # Ensure that valid row resulted in an instance created.
         self.assertEqual(Author.objects.count(), 1)
 
-    @ignore_widget_deprecation_warning
     def test_rollback_on_validation_errors_true(self):
         """
         Should not create any instances as the second one raises a ``ValidationError``

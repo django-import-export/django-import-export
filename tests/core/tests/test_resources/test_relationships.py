@@ -1,7 +1,6 @@
 import tablib
 from core.models import Book, Category, Person, Role, UUIDBook, UUIDCategory
 from core.tests.resources import BookResource
-from core.tests.utils import ignore_widget_deprecation_warning
 from django.contrib.auth.models import User
 from django.test import TestCase
 
@@ -14,7 +13,6 @@ class ForeignKeyWidgetFollowRelationship(TestCase):
         self.role = Role.objects.create(user=self.user)
         self.person = Person.objects.create(role=self.role)
 
-    @ignore_widget_deprecation_warning
     def test_export(self):
         class MyPersonResource(resources.ModelResource):
             role = fields.Field(
@@ -49,7 +47,6 @@ class ManyRelatedManagerDiffTest(TestCase):
     def setUp(self):
         pass
 
-    @ignore_widget_deprecation_warning
     def test_related_manager_diff(self):
         dataset_headers = ["id", "name", "categories"]
         dataset_row = ["1", "Test Book", "1"]
@@ -86,7 +83,6 @@ class ManyToManyWidgetDiffTest(TestCase):
     def setUp(self):
         pass
 
-    @ignore_widget_deprecation_warning
     def test_many_to_many_widget_create(self):
         # the book is associated with 0 categories
         # when we import a book with category 1, the book
@@ -111,7 +107,6 @@ class ManyToManyWidgetDiffTest(TestCase):
         )
         self.assertEqual(Category.objects.first(), book.categories.first())
 
-    @ignore_widget_deprecation_warning
     def test_many_to_many_widget_create_with_m2m_being_compared(self):
         # issue 1558 - when the object is a new instance and m2m is
         # evaluated for differences
@@ -128,7 +123,6 @@ class ManyToManyWidgetDiffTest(TestCase):
         self.assertEqual(len(result.rows), 1)
         self.assertEqual(result.rows[0].import_type, results.RowResult.IMPORT_TYPE_NEW)
 
-    @ignore_widget_deprecation_warning
     def test_many_to_many_widget_update(self):
         # the book is associated with 1 category ('Category 2')
         # when we import a book with category 1, the book
@@ -150,7 +144,6 @@ class ManyToManyWidgetDiffTest(TestCase):
         self.assertEqual(1, book.categories.count())
         self.assertEqual(Category.objects.first(), book.categories.first())
 
-    @ignore_widget_deprecation_warning
     def test_many_to_many_widget_no_changes(self):
         # the book is associated with 1 category ('Category 2')
         # when we import a row with a book with category 1, the book
@@ -169,7 +162,6 @@ class ManyToManyWidgetDiffTest(TestCase):
         self.assertEqual(result.rows[0].import_type, results.RowResult.IMPORT_TYPE_SKIP)
         self.assertEqual(1, book.categories.count())
 
-    @ignore_widget_deprecation_warning
     def test_many_to_many_widget_handles_ordering(self):
         # the book is associated with 2 categories ('Category 1', 'Category 2')
         # when we import a row with a book with both categories (in any order), the book
@@ -204,7 +196,6 @@ class ManyToManyWidgetDiffTest(TestCase):
 
         self.assertEqual(2, book.categories.count())
 
-    @ignore_widget_deprecation_warning
     def test_many_to_many_widget_handles_uuid(self):
         # Test for #1435 - skip_row() handles M2M field when UUID pk used
         class _UUIDBookResource(resources.ModelResource):
@@ -226,7 +217,6 @@ class ManyToManyWidgetDiffTest(TestCase):
         result = uuid_resource.import_data(dataset, dry_run=False)
         self.assertEqual(result.rows[0].import_type, results.RowResult.IMPORT_TYPE_SKIP)
 
-    @ignore_widget_deprecation_warning
     def test_skip_row_no_m2m_data_supplied(self):
         # issue #1437
         # test skip_row() when the model defines a m2m field
