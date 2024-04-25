@@ -9,6 +9,7 @@ Changelog
 -----------------------
 
 - Removed support for django 3.2 (#1790)
+- Fix default widget for PositiveBigIntegerField. Added test for widgets generating by model fields (#1793)
 
 4.0.0-rc.3 (2024-04-13)
 -----------------------
