@@ -1,6 +1,5 @@
 import tablib
 from core.models import Book
-from core.tests.utils import ignore_widget_deprecation_warning
 from django.test import TestCase
 
 from import_export import fields, resources
@@ -20,7 +19,6 @@ class ModelResourceFieldDeclarations(TestCase):
         self.book = Book.objects.create(name="Moonraker", price=".99")
         self.resource = ModelResourceFieldDeclarations.MyBookResource()
 
-    @ignore_widget_deprecation_warning
     def test_declared_field_not_imported(self):
         self.assertEqual("", self.book.author_email)
         rows = [
@@ -32,7 +30,6 @@ class ModelResourceFieldDeclarations(TestCase):
         # email should not be updated
         self.assertEqual("", self.book.author_email)
 
-    @ignore_widget_deprecation_warning
     def test_declared_field_not_exported(self):
         self.assertEqual("", self.book.author_email)
         data = self.resource.export()
@@ -53,7 +50,6 @@ class ModelResourceNoFieldDeclarations(TestCase):
         self.book = Book.objects.create(name="Moonraker", price=".99")
         self.resource = ModelResourceNoFieldDeclarations.MyBookResource()
 
-    @ignore_widget_deprecation_warning
     def test_declared_field_imported(self):
         self.assertEqual("", self.book.author_email)
         rows = [
@@ -65,7 +61,6 @@ class ModelResourceNoFieldDeclarations(TestCase):
         # email should be updated
         self.assertEqual("jj@example.com", self.book.author_email)
 
-    @ignore_widget_deprecation_warning
     def test_declared_field_not_exported(self):
         self.assertEqual("", self.book.author_email)
         data = self.resource.export()
@@ -87,7 +82,6 @@ class ModelResourceExcludeDeclarations(TestCase):
         self.book = Book.objects.create(name="Moonraker", price=".99")
         self.resource = ModelResourceExcludeDeclarations.MyBookResource()
 
-    @ignore_widget_deprecation_warning
     def test_excluded_field_not_imported(self):
         self.assertEqual("", self.book.author_email)
         rows = [
@@ -99,7 +93,6 @@ class ModelResourceExcludeDeclarations(TestCase):
         # email should not be updated
         self.assertEqual("", self.book.author_email)
 
-    @ignore_widget_deprecation_warning
     def test_declared_field_not_exported(self):
         self.assertEqual("", self.book.author_email)
         data = self.resource.export()
@@ -123,7 +116,6 @@ class ModelResourceFieldsAndExcludeDeclarations(TestCase):
         self.book = Book.objects.create(name="Moonraker", price=".99")
         self.resource = ModelResourceFieldsAndExcludeDeclarations.MyBookResource()
 
-    @ignore_widget_deprecation_warning
     def test_excluded_field_not_imported(self):
         self.assertEqual("", self.book.author_email)
         rows = [
@@ -135,7 +127,6 @@ class ModelResourceFieldsAndExcludeDeclarations(TestCase):
         # email should be updated
         self.assertEqual("jj@example.com", self.book.author_email)
 
-    @ignore_widget_deprecation_warning
     def test_declared_field_not_exported(self):
         self.assertEqual("", self.book.author_email)
         data = self.resource.export()
@@ -161,7 +152,6 @@ class ModelResourceDeclarationsNotInImportTest(TestCase):
     def setUp(self):
         self.resource = ModelResourceDeclarationsNotInImportTest.MyBookResource()
 
-    @ignore_widget_deprecation_warning
     def test_excluded_field_not_imported(self):
         rows = [
             ("1", "12.99"),
@@ -172,7 +162,6 @@ class ModelResourceDeclarationsNotInImportTest(TestCase):
         self.assertEqual("", book.author_email)
         self.assertEqual(1, result.totals["new"])
 
-    @ignore_widget_deprecation_warning
     def test_excluded_field_not_exported(self):
         self.book = Book.objects.create(name="Moonraker", price=".99")
         self.assertEqual("", self.book.author_email)

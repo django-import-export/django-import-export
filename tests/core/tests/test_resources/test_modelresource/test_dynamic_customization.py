@@ -8,7 +8,6 @@ from core.models import (
     WithFloatField,
 )
 from core.tests.resources import BookResource, CategoryResource
-from core.tests.utils import ignore_widget_deprecation_warning
 from django.contrib.auth.models import User
 from django.core.exceptions import FieldDoesNotExist
 from django.db.models import Count
@@ -26,7 +25,6 @@ class DynamicBehaviorCustomizationTest(TestCase):
         row = [self.book.pk, "Some book", "test@example.com", "10.25"]
         self.dataset.append(row)
 
-    @ignore_widget_deprecation_warning
     def test_related_one_to_one(self):
         # issue #17 - Exception when attempting access something on the
         # related_name
@@ -54,7 +52,6 @@ class DynamicBehaviorCustomizationTest(TestCase):
         dataset = self.resource.export(queryset=Book.objects.none())
         self.assertEqual(len(dataset), 0)
 
-    @ignore_widget_deprecation_warning
     def test_import_data_skip_unchanged(self):
         class MyBookResource(resources.ModelResource):
             save_count = 0
@@ -91,7 +88,6 @@ class DynamicBehaviorCustomizationTest(TestCase):
         self.assertFalse(result.has_errors())
         self.assertEqual(len(result.rows), 0)
 
-    @ignore_widget_deprecation_warning
     def test_before_import_access_to_kwargs(self):
         class B(BookResource):
             def before_import(self, dataset, **kwargs):
@@ -120,7 +116,6 @@ class DynamicBehaviorCustomizationTest(TestCase):
             resource.import_data(self.dataset, raise_errors=True)
         self.assertEqual("This is an invalid dataset", cm.exception.error.args[0])
 
-    @ignore_widget_deprecation_warning
     def test_after_import_raises_error(self):
         class B(BookResource):
             def after_import(
@@ -191,7 +186,6 @@ class DynamicBehaviorCustomizationTest(TestCase):
         B()
         self.assertEqual({"sound": "quack"}, B.fields["published"])
 
-    @ignore_widget_deprecation_warning
     def test_readonly_annotated_field_import_and_export(self):
         class B(BookResource):
             total_categories = fields.Field("total_categories", readonly=True)
@@ -218,7 +212,6 @@ class DynamicBehaviorCustomizationTest(TestCase):
         self.assertEqual(len(result.rows), len(dataset))
         self.assertEqual(result.rows[0].import_type, results.RowResult.IMPORT_TYPE_SKIP)
 
-    @ignore_widget_deprecation_warning
     def test_follow_relationship_for_modelresource(self):
         class EntryResource(resources.ModelResource):
             username = fields.Field(attribute="user__username", readonly=False)
@@ -250,7 +243,6 @@ class DynamicBehaviorCustomizationTest(TestCase):
         self.assertFalse(result.has_errors())
         self.assertEqual(User.objects.get(pk=user.pk).username, "bar")
 
-    @ignore_widget_deprecation_warning
     def test_import_data_dynamic_default_callable(self):
         class DynamicDefaultResource(resources.ModelResource):
             class Meta:
@@ -275,7 +267,6 @@ class DynamicBehaviorCustomizationTest(TestCase):
         objs = WithDynamicDefault.objects.all()
         self.assertNotEqual(objs[0].name, objs[1].name)
 
-    @ignore_widget_deprecation_warning
     def test_float_field(self):
         # 433
         class R(resources.ModelResource):

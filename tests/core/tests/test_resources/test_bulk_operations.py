@@ -2,7 +2,6 @@ from unittest import mock
 
 import tablib
 from core.models import Book, UUIDBook
-from core.tests.utils import ignore_widget_deprecation_warning
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 
@@ -31,7 +30,6 @@ class BulkTest(TestCase):
 
 class BulkCreateTest(BulkTest):
     @mock.patch("core.models.Book.objects.bulk_create")
-    @ignore_widget_deprecation_warning
     def test_bulk_create_does_not_call_object_save(self, mock_bulk_create):
         with mock.patch("core.models.Book.save") as mock_obj_save:
             self.resource.import_data(self.dataset)
@@ -39,7 +37,6 @@ class BulkCreateTest(BulkTest):
         mock_bulk_create.assert_called_with(mock.ANY, batch_size=None)
 
     @mock.patch("core.models.Book.objects.bulk_create")
-    @ignore_widget_deprecation_warning
     def test_bulk_create_batch_size_of_5(self, mock_bulk_create):
         class _BookResource(resources.ModelResource):
             class Meta:
@@ -54,7 +51,6 @@ class BulkCreateTest(BulkTest):
         self.assertEqual(10, result.total_rows)
 
     @mock.patch("core.models.UUIDBook.objects.bulk_create")
-    @ignore_widget_deprecation_warning
     def test_bulk_create_uuid_model(self, mock_bulk_create):
         """Test create of a Model which defines uuid not pk (issue #1274)"""
 
@@ -75,7 +71,6 @@ class BulkCreateTest(BulkTest):
         self.assertEqual(10, result.total_rows)
 
     @mock.patch("core.models.Book.objects.bulk_create")
-    @ignore_widget_deprecation_warning
     def test_bulk_create_no_batch_size(self, mock_bulk_create):
         class _BookResource(resources.ModelResource):
             class Meta:
@@ -91,7 +86,6 @@ class BulkCreateTest(BulkTest):
         self.assertEqual(10, result.totals["new"])
 
     @mock.patch("core.models.Book.objects.bulk_create")
-    @ignore_widget_deprecation_warning
     def test_bulk_create_called_dry_run(self, mock_bulk_create):
         class _BookResource(resources.ModelResource):
             class Meta:
@@ -106,7 +100,6 @@ class BulkCreateTest(BulkTest):
         self.assertEqual(10, result.totals["new"])
 
     @mock.patch("core.models.Book.objects.bulk_create")
-    @ignore_widget_deprecation_warning
     def test_bulk_create_not_called_when_not_using_transactions(self, mock_bulk_create):
         class _BookResource(resources.ModelResource):
             def import_data(
@@ -138,7 +131,6 @@ class BulkCreateTest(BulkTest):
         mock_bulk_create.assert_not_called()
 
     @mock.patch("core.models.Book.objects.bulk_create")
-    @ignore_widget_deprecation_warning
     def test_bulk_create_batch_size_of_4(self, mock_bulk_create):
         class _BookResource(resources.ModelResource):
             class Meta:
@@ -152,7 +144,6 @@ class BulkCreateTest(BulkTest):
         self.assertEqual(10, result.total_rows)
         self.assertEqual(10, result.totals["new"])
 
-    @ignore_widget_deprecation_warning
     def test_no_changes_for_errors_if_use_transactions_enabled(self):
         with mock.patch("import_export.results.Result.has_errors") as mock_has_errors:
             mock_has_errors.return_val = True
@@ -160,7 +151,6 @@ class BulkCreateTest(BulkTest):
         self.assertEqual(0, Book.objects.count())
 
     @mock.patch("core.models.Book.objects.bulk_create")
-    @ignore_widget_deprecation_warning
     def test_bulk_create_use_bulk_disabled(self, mock_bulk_create):
         class _BookResource(resources.ModelResource):
             class Meta:
@@ -175,7 +165,6 @@ class BulkCreateTest(BulkTest):
         self.assertEqual(10, result.totals["new"])
 
     @mock.patch("core.models.Book.objects.bulk_create")
-    @ignore_widget_deprecation_warning
     def test_bulk_create_bad_batch_size_value(self, mock_bulk_create):
         class _BookResource(resources.ModelResource):
             class Meta:
@@ -202,7 +191,6 @@ class BulkCreateTest(BulkTest):
         mock_bulk_create.assert_not_called()
 
     @mock.patch("core.models.Book.objects.bulk_create")
-    @ignore_widget_deprecation_warning
     def test_bulk_create_oversized_batch_size_value(self, mock_bulk_create):
         class _BookResource(resources.ModelResource):
             class Meta:
@@ -218,7 +206,6 @@ class BulkCreateTest(BulkTest):
         self.assertEqual(10, result.totals["new"])
 
     @mock.patch("core.models.Book.objects.bulk_create")
-    @ignore_widget_deprecation_warning
     def test_bulk_create_logs_exception(self, mock_bulk_create):
         e = ValidationError("invalid field")
         mock_bulk_create.side_effect = e
@@ -235,7 +222,6 @@ class BulkCreateTest(BulkTest):
             mock_exception.assert_called_with(e, exc_info=e)
 
     @mock.patch("core.models.Book.objects.bulk_create")
-    @ignore_widget_deprecation_warning
     def test_bulk_create_raises_exception(self, mock_bulk_create):
         mock_bulk_create.side_effect = ValidationError("invalid field")
 
@@ -250,7 +236,6 @@ class BulkCreateTest(BulkTest):
             resource.import_data(self.dataset, raise_errors=True)
 
     @mock.patch("core.models.Book.objects.bulk_create")
-    @ignore_widget_deprecation_warning
     def test_bulk_create_exception_gathered_on_dry_run(self, mock_bulk_create):
         mock_bulk_create.side_effect = ValidationError("invalid field")
 
@@ -264,7 +249,6 @@ class BulkCreateTest(BulkTest):
         result = resource.import_data(self.dataset, dry_run=True, raise_errors=False)
         self.assertTrue(result.has_errors())
 
-    @ignore_widget_deprecation_warning
     def test_m2m_not_called_for_bulk(self):
         mock_m2m_widget = mock.Mock(spec=widgets.ManyToManyWidget)
 
@@ -323,7 +307,6 @@ class BulkUpdateTest(BulkTest):
         self.init_update_test_data()
         self.resource = self._BookResource()
 
-    @ignore_widget_deprecation_warning
     def test_bulk_update(self):
         result = self.resource.import_data(self.dataset)
         [self.assertEqual("UPDATED", b.name) for b in Book.objects.all()]
@@ -331,7 +314,6 @@ class BulkUpdateTest(BulkTest):
         self.assertEqual(10, result.totals["update"])
 
     @mock.patch("core.models.Book.objects.bulk_update")
-    @ignore_widget_deprecation_warning
     def test_bulk_update_batch_size_of_4(self, mock_bulk_update):
         class _BookResource(resources.ModelResource):
             class Meta:
@@ -346,7 +328,6 @@ class BulkUpdateTest(BulkTest):
         self.assertEqual(10, result.totals["update"])
 
     @mock.patch("core.models.Book.objects.bulk_update")
-    @ignore_widget_deprecation_warning
     def test_bulk_update_batch_size_of_5(self, mock_bulk_update):
         class _BookResource(resources.ModelResource):
             class Meta:
@@ -361,7 +342,6 @@ class BulkUpdateTest(BulkTest):
         self.assertEqual(10, result.totals["update"])
 
     @mock.patch("core.models.Book.objects.bulk_update")
-    @ignore_widget_deprecation_warning
     def test_bulk_update_no_batch_size(self, mock_bulk_update):
         class _BookResource(resources.ModelResource):
             class Meta:
@@ -377,7 +357,6 @@ class BulkUpdateTest(BulkTest):
         self.assertEqual(10, result.totals["update"])
 
     @mock.patch("core.models.Book.objects.bulk_update")
-    @ignore_widget_deprecation_warning
     def test_bulk_update_not_called_when_not_using_transactions(self, mock_bulk_update):
         class _BookResource(resources.ModelResource):
             def import_data(
@@ -409,13 +388,11 @@ class BulkUpdateTest(BulkTest):
         mock_bulk_update.assert_not_called()
 
     @mock.patch("core.models.Book.objects.bulk_update")
-    @ignore_widget_deprecation_warning
     def test_bulk_update_called_for_dry_run(self, mock_bulk_update):
         self.resource.import_data(self.dataset, dry_run=True)
         self.assertEqual(1, mock_bulk_update.call_count)
 
     @mock.patch("core.models.Book.objects.bulk_update")
-    @ignore_widget_deprecation_warning
     def test_bulk_not_called_when_use_bulk_disabled(self, mock_bulk_update):
         class _BookResource(resources.ModelResource):
             class Meta:
@@ -430,7 +407,6 @@ class BulkUpdateTest(BulkTest):
         mock_bulk_update.assert_not_called()
 
     @mock.patch("core.models.Book.objects.bulk_update")
-    @ignore_widget_deprecation_warning
     def test_bulk_update_logs_exception(self, mock_bulk_update):
         e = ValidationError("invalid field")
         mock_bulk_update.side_effect = e
@@ -446,7 +422,6 @@ class BulkUpdateTest(BulkTest):
             mock_exception.assert_called_with(e, exc_info=e)
 
     @mock.patch("core.models.Book.objects.bulk_update")
-    @ignore_widget_deprecation_warning
     def test_bulk_update_raises_exception(self, mock_bulk_update):
         e = ValidationError("invalid field")
         mock_bulk_update.side_effect = e
@@ -468,7 +443,6 @@ class BulkUUIDBookUpdateTest(BulkTest):
         self.init_update_test_data(model=UUIDBook)
 
     @mock.patch("core.models.UUIDBook.objects.bulk_update")
-    @ignore_widget_deprecation_warning
     def test_bulk_update_uuid_model(self, mock_bulk_update):
         """Test update of a Model which defines uuid not pk (issue #1274)"""
 
@@ -509,14 +483,12 @@ class BulkDeleteTest(BulkTest):
         self.init_update_test_data()
 
     @mock.patch("core.models.Book.delete")
-    @ignore_widget_deprecation_warning
     def test_bulk_delete_use_bulk_is_false(self, mock_obj_delete):
         self.resource._meta.use_bulk = False
         self.resource.import_data(self.dataset)
         self.assertEqual(10, mock_obj_delete.call_count)
 
     @mock.patch("core.models.Book.objects")
-    @ignore_widget_deprecation_warning
     def test_bulk_delete_batch_size_of_4(self, mock_obj_manager):
         self.resource._meta.batch_size = 4
         result = self.resource.import_data(self.dataset)
@@ -525,7 +497,6 @@ class BulkDeleteTest(BulkTest):
         self.assertEqual(10, result.totals["delete"])
 
     @mock.patch("core.models.Book.objects")
-    @ignore_widget_deprecation_warning
     def test_bulk_delete_batch_size_of_5(self, mock_obj_manager):
         self.resource._meta.batch_size = 5
         result = self.resource.import_data(self.dataset)
@@ -534,7 +505,6 @@ class BulkDeleteTest(BulkTest):
         self.assertEqual(10, result.totals["delete"])
 
     @mock.patch("core.models.Book.objects")
-    @ignore_widget_deprecation_warning
     def test_bulk_delete_batch_size_is_none(self, mock_obj_manager):
         self.resource._meta.batch_size = None
         result = self.resource.import_data(self.dataset)
@@ -543,7 +513,6 @@ class BulkDeleteTest(BulkTest):
         self.assertEqual(10, result.totals["delete"])
 
     @mock.patch("core.models.Book.objects")
-    @ignore_widget_deprecation_warning
     def test_bulk_delete_not_called_when_not_using_transactions(self, mock_obj_manager):
         class _BookResource(self.DeleteBookResource):
             def import_data(
@@ -571,13 +540,11 @@ class BulkDeleteTest(BulkTest):
         self.assertEqual(0, mock_obj_manager.filter.return_value.delete.call_count)
 
     @mock.patch("core.models.Book.objects")
-    @ignore_widget_deprecation_warning
     def test_bulk_delete_called_for_dry_run(self, mock_obj_manager):
         self.resource.import_data(self.dataset, dry_run=True)
         self.assertEqual(1, mock_obj_manager.filter.return_value.delete.call_count)
 
     @mock.patch("core.models.Book.objects")
-    @ignore_widget_deprecation_warning
     def test_bulk_delete_logs_exception(self, mock_obj_manager):
         e = Exception("invalid")
         mock_obj_manager.filter.return_value.delete.side_effect = e
@@ -588,7 +555,6 @@ class BulkDeleteTest(BulkTest):
             self.assertEqual(1, mock_exception.call_count)
 
     @mock.patch("core.models.Book.objects")
-    @ignore_widget_deprecation_warning
     def test_bulk_delete_raises_exception(self, mock_obj_manager):
         e = Exception("invalid")
         mock_obj_manager.filter.return_value.delete.side_effect = e
@@ -613,7 +579,6 @@ class BulkUUIDBookDeleteTest(BulkTest):
         self.resource = self.DeleteBookResource()
         self.init_update_test_data(model=UUIDBook)
 
-    @ignore_widget_deprecation_warning
     def test_bulk_delete_batch_size_of_5(self):
         self.assertEqual(10, UUIDBook.objects.count())
         self.resource.import_data(self.dataset)

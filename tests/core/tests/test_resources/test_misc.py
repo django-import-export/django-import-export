@@ -1,6 +1,5 @@
 import tablib
 from core.models import Author, Book, Category
-from core.tests.utils import ignore_widget_deprecation_warning
 from django.test import TestCase
 
 from import_export import resources, results
@@ -20,7 +19,6 @@ class RawValueTest(TestCase):
         row = [self.book.pk, "Some book", "test@example.com", "10.25"]
         self.dataset.append(row)
 
-    @ignore_widget_deprecation_warning
     def test_import_data(self):
         result = self.resource.import_data(self.dataset, raise_errors=True)
 

@@ -1,7 +1,6 @@
 import tablib
 from core.models import Author, Book, Category
 from core.tests.resources import BookResource
-from core.tests.utils import ignore_widget_deprecation_warning
 from django.test import TestCase
 
 from import_export import fields, resources, widgets
@@ -15,7 +14,6 @@ class ForeignKeyM2MTest(TestCase):
         row = [self.book.pk, "Some book", "test@example.com", "10.25"]
         self.dataset.append(row)
 
-    @ignore_widget_deprecation_warning
     def test_foreign_keys_export(self):
         author1 = Author.objects.create(name="Foo")
         self.book.author = author1
@@ -24,7 +22,6 @@ class ForeignKeyM2MTest(TestCase):
         dataset = self.resource.export(Book.objects.all())
         self.assertEqual(dataset.dict[0]["author"], author1.pk)
 
-    @ignore_widget_deprecation_warning
     def test_foreign_keys_import(self):
         author2 = Author.objects.create(name="Bar")
         headers = ["id", "name", "author"]
@@ -35,7 +32,6 @@ class ForeignKeyM2MTest(TestCase):
         book = Book.objects.get(name="FooBook")
         self.assertEqual(book.author, author2)
 
-    @ignore_widget_deprecation_warning
     def test_m2m_export(self):
         cat1 = Category.objects.create(name="Cat 1")
         cat2 = Category.objects.create(name="Cat 2")
@@ -45,7 +41,6 @@ class ForeignKeyM2MTest(TestCase):
         dataset = self.resource.export(Book.objects.all())
         self.assertEqual(dataset.dict[0]["categories"], "%d,%d" % (cat1.pk, cat2.pk))
 
-    @ignore_widget_deprecation_warning
     def test_m2m_import(self):
         cat1 = Category.objects.create(name="Cat 1")
         headers = ["id", "name", "categories"]
@@ -56,7 +51,6 @@ class ForeignKeyM2MTest(TestCase):
         book = Book.objects.get(name="FooBook")
         self.assertIn(cat1, book.categories.all())
 
-    @ignore_widget_deprecation_warning
     def test_m2m_options_import(self):
         cat1 = Category.objects.create(name="Cat 1")
         cat2 = Category.objects.create(name="Cat 2")
@@ -79,7 +73,6 @@ class ForeignKeyM2MTest(TestCase):
         self.assertIn(cat1, book.categories.all())
         self.assertIn(cat2, book.categories.all())
 
-    @ignore_widget_deprecation_warning
     def test_import_null_django_CharField_saved_as_empty_string(self):
         # issue 1485
         resource = BookResource()
@@ -92,7 +85,6 @@ class ForeignKeyM2MTest(TestCase):
         book = Book.objects.get(id=1)
         self.assertEqual("", book.author_email)
 
-    @ignore_widget_deprecation_warning
     def test_import_empty_django_CharField_saved_as_empty_string(self):
         resource = BookResource()
         self.assertTrue(resource._meta.model.author_email.field.blank)
@@ -104,7 +96,6 @@ class ForeignKeyM2MTest(TestCase):
         book = Book.objects.get(id=1)
         self.assertEqual("", book.author_email)
 
-    @ignore_widget_deprecation_warning
     def test_m2m_add(self):
         cat1 = Category.objects.create(name="Cat 1")
         cat2 = Category.objects.create(name="Cat 2")

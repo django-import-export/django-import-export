@@ -8,7 +8,6 @@ from core.tests.resources import (
     BookResourceWithLineNumberLogger,
     ProfileResource,
 )
-from core.tests.utils import ignore_widget_deprecation_warning
 from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.test import TestCase
 
@@ -41,14 +40,12 @@ class ErrorHandlingTest(TestCase):
                 use_transactions=True,
             )
 
-    @ignore_widget_deprecation_warning
     def test_importing_with_line_number_logging(self):
         resource = BookResourceWithLineNumberLogger()
         resource.import_data(self.dataset, raise_errors=True)
         self.assertEqual(resource.before_lines, [1])
         self.assertEqual(resource.after_lines, [1])
 
-    @ignore_widget_deprecation_warning
     def test_import_data_raises_field_specific_validation_errors(self):
         resource = AuthorResource()
         dataset = tablib.Dataset(headers=["id", "name", "birthday"])
@@ -60,7 +57,6 @@ class ErrorHandlingTest(TestCase):
         self.assertIs(result.rows[0].import_type, results.RowResult.IMPORT_TYPE_INVALID)
         self.assertIn("birthday", result.invalid_rows[0].field_specific_errors)
 
-    @ignore_widget_deprecation_warning
     def test_import_data_raises_field_specific_validation_errors_with_skip_unchanged(
         self,
     ):
@@ -90,7 +86,6 @@ class ErrorHandlingTest(TestCase):
             str(e.exception),
         )
 
-    @ignore_widget_deprecation_warning
     def test_collect_failed_rows(self):
         resource = ProfileResource()
         headers = ["id", "user"]
@@ -107,7 +102,6 @@ class ErrorHandlingTest(TestCase):
         self.assertEqual(len(result.failed_dataset), 1)
         # We can't check the error message because it's package- and version-dependent
 
-    @ignore_widget_deprecation_warning
     def test_row_result_raise_errors(self):
         resource = ProfileResource()
         headers = ["id", "user"]
@@ -125,7 +119,6 @@ class ErrorHandlingTest(TestCase):
         self.assertEqual(1, row_error.number)
         self.assertEqual({"id": None, "user": None}, row_error.row)
 
-    @ignore_widget_deprecation_warning
     def test_collect_failed_rows_validation_error(self):
         resource = ProfileResource()
         row = ["1"]
@@ -147,7 +140,6 @@ class ErrorHandlingTest(TestCase):
         self.assertEqual("1", result.failed_dataset.dict[0]["id"])
         self.assertEqual("fail!", result.failed_dataset.dict[0]["Error"])
 
-    @ignore_widget_deprecation_warning
     def test_row_result_raise_ValidationError(self):
         resource = ProfileResource()
         row = ["1"]
@@ -165,7 +157,6 @@ class ErrorHandlingTest(TestCase):
                     raise_errors=True,
                 )
 
-    @ignore_widget_deprecation_warning
     def test_row_result_raise_ValidationError_collect_failed_rows(self):
         # 1752
         resource = ProfileResource()

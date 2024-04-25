@@ -8,10 +8,7 @@ import tablib
 from core.admin import BookAdmin, BookResource
 from core.models import Author, Book
 from core.tests.admin_integration.mixins import AdminTestMixin
-from core.tests.utils import (
-    ignore_utcnow_deprecation_warning,
-    ignore_widget_deprecation_warning,
-)
+from core.tests.utils import ignore_utcnow_deprecation_warning
 from django.contrib.admin.sites import AdminSite
 from django.contrib.admin.views.main import ChangeList
 from django.contrib.auth.models import User
@@ -253,7 +250,6 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
 
     @ignore_utcnow_deprecation_warning
     @override_settings(IMPORT_EXPORT_ESCAPE_FORMULAE_ON_EXPORT=True)
-    @ignore_widget_deprecation_warning
     def test_export_escape_formulae(self):
         Book.objects.create(id=1, name="=SUM(1+1)")
         Book.objects.create(id=2, name="<script>alert(1)</script>")
@@ -270,7 +266,6 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertEqual("SUM(1+1)", wb.active["B3"].value)
 
     @override_settings(IMPORT_EXPORT_ESCAPE_FORMULAE_ON_EXPORT=True)
-    @ignore_widget_deprecation_warning
     def test_export_escape_formulae_csv(self):
         b1 = Book.objects.create(id=1, name="=SUM(1+1)")
         response = self.client.get("/admin/core/book/export/")
@@ -289,7 +284,6 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
         )
 
     @override_settings(IMPORT_EXPORT_ESCAPE_FORMULAE_ON_EXPORT=False)
-    @ignore_widget_deprecation_warning
     def test_export_escape_formulae_csv_false(self):
         b1 = Book.objects.create(id=1, name="=SUM(1+1)")
         response = self.client.get("/admin/core/book/export/")
@@ -311,7 +305,6 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
 class FilteredExportAdminIntegrationTest(AdminTestMixin, TestCase):
     fixtures = ["category", "book", "author"]
 
-    @ignore_widget_deprecation_warning
     def test_export_filters_by_form_param(self):
         # issue 1578
         author = Author.objects.get(name="Ian Fleming")
