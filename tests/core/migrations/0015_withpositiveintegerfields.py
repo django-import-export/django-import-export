@@ -5,7 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("core", "0011_uuidcategory_legacybook_alter_uuidbook_id_and_more"),
+        ("core", "0014_bookwithchapternumbers"),
     ]
 
     operations = [
