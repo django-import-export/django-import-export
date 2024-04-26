@@ -62,6 +62,7 @@ Fixes
 - fix: YAML export does not work with SafeString (`1762 <https://github.com/django-import-export/django-import-export/pull/1762>`_)
 - fix: :meth:`~import_export.widgets.SimpleArrayWidget.render` crashes if value is ``None`` (`1771 <https://github.com/django-import-export/django-import-export/pull/1771>`_)
 - fix form not being passed to ``get_import_resource_kwargs()`` (`1789 <https://github.com/django-import-export/django-import-export/pull/1789>`_)
+- Fix: Missing default widget for ``PositiveBigIntegerField`` (`1795 <https://github.com/django-import-export/django-import-export/pull/1795>`_)
 
 Development
 ###########
@@ -76,6 +77,7 @@ Development
 - Refactor ``test_resources.py`` into smaller modules (`1733 <https://github.com/django-import-export/django-import-export/pull/1733>`_)
 - Updated test coverage to include error row when ``collect_failed_rows`` is ``True`` (`1753 <https://github.com/django-import-export/django-import-export/pull/1753>`_)
 - Removed support for django 3.2 (`1790 <https://github.com/django-import-export/django-import-export/pull/1790>`_)
+- Added test for widgets generating by model fields `1795 <https://github.com/django-import-export/django-import-export/pull/1795>`_)
 
 Documentation
 #############
