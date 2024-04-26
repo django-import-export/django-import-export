@@ -4,8 +4,7 @@ Changelog
 3.3.9 (unreleased)
 ------------------
 
-- Nothing changed yet.
-
+- Update translations for Russian language (#1797)
 
 3.3.8 (2024-04-08)
 ------------------
