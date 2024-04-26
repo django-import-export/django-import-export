@@ -3,60 +3,62 @@
 # This file is distributed under the same license as the PACKAGE package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
-#, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: PACKAGE VERSION\n"
+"Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-11-08 18:22+0000\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
-"Language: \n"
+"POT-Creation-Date: 2024-04-25 14:57+0700\n"
+"PO-Revision-Date: 2024-04-26 17:19+0700\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: ru\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"X-Generator: Poedit 3.0.1\n"
 
-#: admin.py:239
+#: admin.py:244
 #, python-format
 msgid "%s through import_export"
 msgstr "%s через import_export"
 
-#: admin.py:246
+#: admin.py:252
 msgid "Import finished, with {} new and {} updated {}."
 msgstr "Импорт завершен, {} новых и {} обновлено."
 
-#: admin.py:491
+#: admin.py:497
 #, python-format
 msgid ""
 "%(exc_name)s encountered while trying to read file. Ensure you have chosen "
 "the correct format for the file."
 msgstr ""
+"При чтении файла возникла ошибка %(exc_name)s. Убедитесь, что используется "
+"подходящий формат файла."
 
-#: admin.py:642 templates/admin/import_export/change_list_import_item.html:5
+#: admin.py:648 templates/admin/import_export/change_list_import_item.html:5
 #: templates/admin/import_export/import.html:19
 msgid "Import"
 msgstr "Импорт"
 
-#: admin.py:827 templates/admin/import_export/change_list_export_item.html:5
+#: admin.py:850 templates/admin/import_export/change_list_export_item.html:5
 #: templates/admin/import_export/export.html:12
 msgid "Export"
 msgstr "Экспорт"
 
-#: admin.py:892
+#: admin.py:927
 msgid "You must select an export format."
-msgstr "Необходимо выбрать формат экспорта"
+msgstr "Необходимо выбрать формат экспорта."
 
-#: admin.py:917
+#: admin.py:952
 #, python-format
 msgid "Export selected %(verbose_name_plural)s"
 msgstr "Экспортировать выбранные %(verbose_name_plural)s"
 
 #: forms.py:12
 msgid "Resource"
-msgstr ""
+msgstr "Ресурс"
 
 #: forms.py:40
 msgid "File to import"
@@ -70,8 +72,8 @@ msgstr "Формат"
 msgid "Home"
 msgstr "Главная"
 
-#: templates/admin/import_export/export.html:36
-#: templates/admin/import_export/import.html:78
+#: templates/admin/import_export/export.html:38
+#: templates/admin/import_export/import.html:65
 msgid "Submit"
 msgstr "Отправить"
 
@@ -87,24 +89,20 @@ msgstr ""
 msgid "Confirm import"
 msgstr "Подтвердить импорт"
 
-#: templates/admin/import_export/import.html:44
-msgid "This importer will import the following fields: "
-msgstr "Будут импортированы следующие поля: "
-
-#: templates/admin/import_export/import.html:89
-#: templates/admin/import_export/import.html:120
+#: templates/admin/import_export/import.html:76
+#: templates/admin/import_export/import.html:107
 msgid "Errors"
 msgstr "Ошибки"
 
-#: templates/admin/import_export/import.html:100
+#: templates/admin/import_export/import.html:87
 msgid "Line number"
 msgstr "Номер строки"
 
-#: templates/admin/import_export/import.html:112
+#: templates/admin/import_export/import.html:99
 msgid "Some rows failed to validate"
 msgstr "Некоторые строки не прошли валидацию"
 
-#: templates/admin/import_export/import.html:114
+#: templates/admin/import_export/import.html:101
 msgid ""
 "Please correct these errors in your data where possible, then reupload it "
 "using the form above."
@@ -112,30 +110,38 @@ msgstr ""
 "По возможности исправьте эти ошибки в своих данных, а затем повторно "
 "загрузите их, используя форму выше."
 
-#: templates/admin/import_export/import.html:119
+#: templates/admin/import_export/import.html:106
 msgid "Row"
 msgstr "Строка"
 
-#: templates/admin/import_export/import.html:146
+#: templates/admin/import_export/import.html:133
 msgid "Non field specific"
 msgstr "Не относящиеся к конкретному полю"
 
-#: templates/admin/import_export/import.html:169
+#: templates/admin/import_export/import.html:156
 msgid "Preview"
 msgstr "Предпросмотр"
 
-#: templates/admin/import_export/import.html:184
+#: templates/admin/import_export/import.html:171
 msgid "New"
 msgstr "Добавлено"
 
-#: templates/admin/import_export/import.html:186
+#: templates/admin/import_export/import.html:173
 msgid "Skipped"
 msgstr "Пропущено"
 
-#: templates/admin/import_export/import.html:188
+#: templates/admin/import_export/import.html:175
 msgid "Delete"
 msgstr "Удалено"
 
-#: templates/admin/import_export/import.html:190
+#: templates/admin/import_export/import.html:177
 msgid "Update"
 msgstr "Обновлено"
+
+#: templates/admin/import_export/resource_fields_list.html:5
+msgid "This exporter will export the following fields: "
+msgstr "Будут экспортированы следующие поля: "
+
+#: templates/admin/import_export/resource_fields_list.html:7
+msgid "This importer will import the following fields: "
+msgstr "Будут импортированы следующие поля: "
