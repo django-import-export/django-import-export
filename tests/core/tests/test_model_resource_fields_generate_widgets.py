@@ -19,7 +19,7 @@ class ExampleResource(ModelResource):
         model = WithPositiveIntegerFields
 
 
-class TestImportExportBug(TestCase):
+class TestFieldWidgetMapping(TestCase):
     def test_field_has_correct_widget(self):
         resource = ExampleResource()
         with self.subTest("PositiveBigIntegerField"):
@@ -119,9 +119,8 @@ class TestImportExportBug(TestCase):
             postgres_search.SearchQueryField,
             postgres_search.SearchVectorField,
             RelatedField,
+            postgres_ranges.ContinuousRangeField,
         }
-        if django.VERSION >= (4, 1):
-            expected_not_presented_fields |= {postgres_ranges.ContinuousRangeField}
         if django.VERSION >= (4, 2):
             expected_not_presented_fields |= {postgres_search._Float4Field}
         if django.VERSION >= (5, 0):
@@ -136,11 +135,11 @@ class TestImportExportBug(TestCase):
         """
         return self._collect_all_clas_children(models.Field)
 
-    def _collect_all_clas_children(self, cls):
+    def _collect_all_clas_children(self, clas):
         children = []
-        for child_cls in cls.__subclasses__():
-            children.append(child_cls)
-            children.extend(self._collect_all_clas_children(child_cls))
+        for child_clas in clas.__subclasses__():
+            children.append(child_clas)
+            children.extend(self._collect_all_clas_children(child_clas))
         return children
 
     def _get_django_fields_for_check_widget(self):
