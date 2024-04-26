@@ -1,174 +1,159 @@
 Changelog
 =========
 
+4.0.0 (2024-04-27)
+-----------------------
+
 .. warning::
 
     Version 4 introduces breaking changes.  Please refer to :doc:`release notes<release_notes>`.
 
-4.0.0-rc.4 (unreleased)
------------------------
-
-- Removed support for django 3.2 (#1790)
-- Fix default widget for PositiveBigIntegerField. Added test for widgets generating by model fields (#1795)
-
-4.0.0-rc.3 (2024-04-13)
------------------------
-
-- fix form not being passed to ``get_import_resource_kwargs()`` (#1789)
-
-4.0.0-rc.2 (2024-04-08)
------------------------
-
-- Add form error if source file contains invalid header (#1780)
-- Fix for incorrect header order on 'confirm' page (#1786)
-- Remove unneeded format method overrides (#1785)
-- Support dynamic selection of Resource class based on request property (#1787)
-
-4.0.0-rc.1 (2024-03-15)
------------------------
-
-- added try / catch to :meth:`~import_export.results.RowResult.add_instance_info` to handle unserializable instances (#1767)
-- fix: YAML export does not work with SafeString (#1762)
-- pass ``is_create``` param into :meth:`~import_export.resources.Resource.do_instance_save` (#1772)
-- fix: :meth:`~import_export.widgets.SimpleArrayWidget.render` crashes if value is ``None`` (#1771)
-- updated translations for release-4 (#1775)
-
-4.0.0-rc.0 (2024-02-14)
------------------------
-
 Deprecations
 ############
 
-- Removed v3 deprecations (#1629)
-- Deprecation of ``ExportViewFormMixin`` (#1666)
+- Removed v3 deprecations (`1629 <https://github.com/django-import-export/django-import-export/pull/1629>`_)
+- Deprecation of ``ExportViewFormMixin`` (`1666 <https://github.com/django-import-export/django-import-export/pull/1666>`_)
 
 Enhancements
 ############
 
-- Refactor ordering logic (#1626)
+- Refactor ordering logic (`1626 <https://github.com/django-import-export/django-import-export/pull/1626>`_)
 
   - Refactor 'diff' logic to avoid calling dehydrate methods
 
   - Refactor declarations of ``fields``, ``import_order`` and ``export_order`` to fix ordering issues
 
-- refactor to export HTML / formulae escaping updates (#1638)
-- removed unused variable ``Result.new_record`` (#1640)
-- Refactor ``resources.py`` to standardise method args (#1641)
-- added specific check for missing ``import_id_fields`` (#1645)
-- Enable optional tablib dependencies (#1647)
-- added :meth:`~import_export.widgets.ForeignKeyWidget.get_lookup_kwargs` to make it easier to override object
-  lookup (#1651)
-- Standardised interface of :meth:`~import_export.widgets.Widget.render` (#1657)
-- Added :meth:`~import_export.resources.Resource.do_instance_save` helper method (#1668)
-- Enable defining Resource model as a string (#1669)
-- Support multiple Resources for export (#1671)
-- Fix declaring existing model field(s) in ModelResource altering export order (#1663)
-- Support export from model change form (#1687)
-- Updated Admin UI to track deleted and skipped Imports (#1691)
-- Import form defaults to read-only field if only one format defined (#1690)
-- Added feature: selectable fields for admin export view (#1734)
-- Added customizable ``MediaStorage`` (#1708)
-- Added customization of Admin UI import error messages (#1727)
-- Improve output of error messages (#1729)
-- Added specific check for declared :attr:`~import_export.options.ResourceOptions.import_id_fields` not in dataset
-  (#1735)
+- refactor to export HTML / formulae escaping updates (`1638 <https://github.com/django-import-export/django-import-export/pull/1638>`_)
+- removed unused variable ``Result.new_record`` (`1640 <https://github.com/django-import-export/django-import-export/pull/1640>`_)
+- Refactor ``resources.py`` to standardise method args (`1641 <https://github.com/django-import-export/django-import-export/pull/1641>`_)
+- added specific check for missing ``import_id_fields`` (`1645 <https://github.com/django-import-export/django-import-export/pull/1645>`_)
+- Enable optional tablib dependencies (`1647 <https://github.com/django-import-export/django-import-export/pull/1647>`_)
+- added :meth:`~import_export.widgets.ForeignKeyWidget.get_lookup_kwargs` to make it easier to override object lookup (`1651 <https://github.com/django-import-export/django-import-export/pull/1651>`_)
+- Standardised interface of :meth:`~import_export.widgets.Widget.render` (`1657 <https://github.com/django-import-export/django-import-export/pull/1657>`_)
+- Fix declaring existing model field(s) in ModelResource altering export order (`1663 <https://github.com/django-import-export/django-import-export/pull/1663>`_)
+- Added :meth:`~import_export.resources.Resource.do_instance_save` helper method (`1668 <https://github.com/django-import-export/django-import-export/pull/1668>`_)
+- Enable defining Resource model as a string (`1669 <https://github.com/django-import-export/django-import-export/pull/1669>`_)
+- Support multiple Resources for export (`1671 <https://github.com/django-import-export/django-import-export/pull/1671>`_)
+- Support export from model change form (`1687 <https://github.com/django-import-export/django-import-export/pull/1687>`_)
+- Import form defaults to read-only field if only one format defined (`1690 <https://github.com/django-import-export/django-import-export/pull/1690>`_)
+- Updated Admin UI to track deleted and skipped Imports (`1691 <https://github.com/django-import-export/django-import-export/pull/1691>`_)
+- Added customizable ``MediaStorage`` (`1708 <https://github.com/django-import-export/django-import-export/pull/1708>`_)
+- Added customization of Admin UI import error messages (`1727 <https://github.com/django-import-export/django-import-export/pull/1727>`_)
+- Improve output of error messages (`1729 <https://github.com/django-import-export/django-import-export/pull/1729>`_)
+- Added feature: selectable fields for admin export view (`1734 <https://github.com/django-import-export/django-import-export/pull/1734>`_)
+- Added specific check for declared :attr:`~import_export.options.ResourceOptions.import_id_fields` not in dataset (`1735 <https://github.com/django-import-export/django-import-export/pull/1735>`_)
+- added try / catch to :meth:`~import_export.results.RowResult.add_instance_info` to handle unserializable instances (`1767 <https://github.com/django-import-export/django-import-export/pull/1767>`_)
+- Add form error if source file contains invalid header (`1780 <https://github.com/django-import-export/django-import-export/pull/1780>`_)
+- Remove unneeded format method overrides (`1785 <https://github.com/django-import-export/django-import-export/pull/1785>`_)
+- Support dynamic selection of Resource class based on request property (`1787 <https://github.com/django-import-export/django-import-export/pull/1787>`_)
 
 Fixes
 #####
 
-- dynamic widget parameters for CharField fixes 'NOT NULL constraint' error in xlsx (#1485)
-- fix cooperation with adminsortable2 (#1633)
+- dynamic widget parameters for CharField fixes 'NOT NULL constraint' error in xlsx (`1485 <https://github.com/django-import-export/django-import-export/pull/1485>`_)
+- fix cooperation with adminsortable2 (`1633 <https://github.com/django-import-export/django-import-export/pull/1633>`_)
 - Removed unused method ``utils.original()``
-- Fix deprecated ``log_action`` method (#1673)
-- fix multiple inheritance not setting options (#1696)
-- Fix issue where declared Resource fields not defined in ``fields`` are still imported (#1702)
-- Fixed handling of :attr:`~import_export.exceptions.FieldError` during Admin import (#1755)
-- Fixed handling of django ``FieldError`` during Admin export (#1756)
-- Add check for type to :meth:`~import_export.widgets.Widget.render` (#1757)
+- Fix deprecated ``log_action`` method (`1673 <https://github.com/django-import-export/django-import-export/pull/1673>`_)
+- fix multiple inheritance not setting options (`1696 <https://github.com/django-import-export/django-import-export/pull/1696>`_)
+- Fix issue where declared Resource fields not defined in ``fields`` are still imported (`1702 <https://github.com/django-import-export/django-import-export/pull/1702>`_)
+- Fixed handling of :attr:`~import_export.exceptions.FieldError` during Admin import (`1755 <https://github.com/django-import-export/django-import-export/pull/1755>`_)
+- Fixed handling of django ``FieldError`` during Admin export (`1756 <https://github.com/django-import-export/django-import-export/pull/1756>`_)
+- Add check for type to :meth:`~import_export.widgets.Widget.render` (`1757 <https://github.com/django-import-export/django-import-export/pull/1757>`_)
+- fix: YAML export does not work with SafeString (`1762 <https://github.com/django-import-export/django-import-export/pull/1762>`_)
+- fix: :meth:`~import_export.widgets.SimpleArrayWidget.render` crashes if value is ``None`` (`1771 <https://github.com/django-import-export/django-import-export/pull/1771>`_)
+- fix form not being passed to ``get_import_resource_kwargs()`` (`1789 <https://github.com/django-import-export/django-import-export/pull/1789>`_)
+- Fix: default widget for PositiveBigIntegerField (`1795 <https://github.com/django-import-export/django-import-export/pull/1795>`_)
 
 Development
 ###########
 
-- Refactor build process (#1630)
-- Refactored ``test_admin_integration()``: split into smaller test modules (#1662)
-- Refactored ``test_resources()``: split into smaller test modules (#1672)
-- Updated ``docker-compose`` command with latest version syntax in ``runtests.sh`` (#1686)
-- Refactored :mod:`~import_export.resources` into separate modules for ``declarative`` and ``options`` (#1695)
-- Refactored tests to remove dependencies between tests (#1703)
-- Handle python3.12 datetime deprecations (#1705)
-- Refactor ``test_resources.py`` into smaller modules (#1733)
-- Updated test coverage to include error row when ``collect_failed_rows`` is ``True`` (#1753)
+- Refactor build process (`1630 <https://github.com/django-import-export/django-import-export/pull/1630>`_)
+- Refactored ``test_admin_integration()``: split into smaller test modules (`1662 <https://github.com/django-import-export/django-import-export/pull/1662>`_)
+- Refactored ``test_resources()``: split into smaller test modules (`1672 <https://github.com/django-import-export/django-import-export/pull/1672>`_)
+- Updated ``docker-compose`` command with latest version syntax in ``runtests.sh`` (`1686 <https://github.com/django-import-export/django-import-export/pull/1686>`_)
+- Refactored :mod:`~import_export.resources` into separate modules for ``declarative`` and ``options`` (`1695 <https://github.com/django-import-export/django-import-export/pull/1695>`_)
+- Refactored tests to remove dependencies between tests (`1703 <https://github.com/django-import-export/django-import-export/pull/1703>`_)
+- Handle python3.12 datetime deprecations (`1705 <https://github.com/django-import-export/django-import-export/pull/1705>`_)
+- Refactor ``test_resources.py`` into smaller modules (`1733 <https://github.com/django-import-export/django-import-export/pull/1733>`_)
+- Updated test coverage to include error row when ``collect_failed_rows`` is ``True`` (`1753 <https://github.com/django-import-export/django-import-export/pull/1753>`_)
+- Removed support for django 3.2 (`1790 <https://github.com/django-import-export/django-import-export/pull/1790>`_)
+- Added test for widgets generating by model fields `1795 <https://github.com/django-import-export/django-import-export/pull/1795>`_)
 
 Documentation
 #############
 
-- Clarified ``skip_diff`` documentation (#1655)
-- Improved documentation relating to validation on import (#1665)
-- Added FAQ entry for exporting large datasets (#1706)
-- Relocated admin integration section from advanced_usage.rst into new file (#1713)
-- Updated Admin integration documentation to clarify how to save custom form values (#1746)
+- Clarified ``skip_diff`` documentation (`1655 <https://github.com/django-import-export/django-import-export/pull/1655>`_)
+- Improved documentation relating to validation on import (`1665 <https://github.com/django-import-export/django-import-export/pull/1665>`_)
+- Added FAQ entry for exporting large datasets (`1706 <https://github.com/django-import-export/django-import-export/pull/1706>`_)
+- Relocated admin integration section from advanced_usage.rst into new file (`1713 <https://github.com/django-import-export/django-import-export/pull/1713>`_)
+- Updated Admin integration documentation to clarify how to save custom form values (`1746 <https://github.com/django-import-export/django-import-export/pull/1746>`_)
 
 Performance
 ###########
 
-- Fix slow export with ForeignKey id (#1717)
+- Fix slow export with ForeignKey id (`1717 <https://github.com/django-import-export/django-import-export/pull/1717>`_)
+
+i18n
+####
+
+- updated translations for release-4 (`1775 <https://github.com/django-import-export/django-import-export/pull/1775>`_)
 
 3.3.8 (2024-04-08)
 ------------------
 
-- Add additional django template block for extending import page (#1776)
+- Add additional django template block for extending import page (`1776 <https://github.com/django-import-export/django-import-export/pull/1776>`_)
 
 3.3.7 (2024-02-03)
 ------------------
 
 - Pass :meth:`~import_export.mixins.BaseExportMixin.get_export_resource_kwargs` to Resource constructor
-  :meth:`~import_export.admin.ExportMixin.export_action` (#1739)
-- Fix issue with model class passed to Resource constructor crashing on export (#1745)
-- Fix indentation for skip_row docstring (#1743)
-- Return ``kwargs`` by default from :meth:`~import_export.mixins.BaseImportExportMixin.get_resource_kwargs` (#1748)
+  :meth:`~import_export.admin.ExportMixin.export_action` (`1739 <https://github.com/django-import-export/django-import-export/pull/1739>`_)
+- Fix issue with model class passed to Resource constructor crashing on export (`1745 <https://github.com/django-import-export/django-import-export/pull/1745>`_)
+- Fix indentation for skip_row docstring (`1743 <https://github.com/django-import-export/django-import-export/pull/1743>`_)
+- Return ``kwargs`` by default from :meth:`~import_export.mixins.BaseImportExportMixin.get_resource_kwargs` (`1748 <https://github.com/django-import-export/django-import-export/pull/1748>`_)
 
 3.3.6 (2024-01-10)
 ------------------
 
-- Fix issue with highlight when using 'light' color scheme (#1728)
+- Fix issue with highlight when using 'light' color scheme (`1728 <https://github.com/django-import-export/django-import-export/pull/1728>`_)
 
 3.3.5 (2023-12-19)
 ------------------
 
-- Remove unnecessary ChangeList queries to speed up export via Admin UI (#1715)
-- Respect color scheme override (#1720)
-- Update FAQ to cover skipping rows with validation errors (#1721)
+- Remove unnecessary ChangeList queries to speed up export via Admin UI (`1715 <https://github.com/django-import-export/django-import-export/pull/1715>`_)
+- Respect color scheme override (`1720 <https://github.com/django-import-export/django-import-export/pull/1720>`_)
+- Update FAQ to cover skipping rows with validation errors (`1721 <https://github.com/django-import-export/django-import-export/pull/1721>`_)
 
 3.3.4 (2023-12-09)
 ------------------
 
-- Added support for django5 (#1634)
-- Show list of exported fields in Admin UI (#1685)
+- Added support for django5 (`1634 <https://github.com/django-import-export/django-import-export/pull/1634>`_)
+- Show list of exported fields in Admin UI (`1685 <https://github.com/django-import-export/django-import-export/pull/1685>`_)
 - Added `CONTRIBUTING.md`
-- Added support for python 3.12 (#1698)
-- Update Finnish translations (#1701)
+- Added support for python 3.12 (`1698 <https://github.com/django-import-export/django-import-export/pull/1698>`_)
+- Update Finnish translations (`1701 <https://github.com/django-import-export/django-import-export/pull/1701>`_)
 
 3.3.3 (2023-11-11)
 ------------------
 
 - :meth:`~import_export.admin.ExportActionMixin.export_admin_action` can be overridden by subclassing it in the
-  ``ModelAdmin`` (#1681)
+  ``ModelAdmin`` (`1681 <https://github.com/django-import-export/django-import-export/pull/1681>`_)
 
 3.3.2 (2023-11-09)
 ------------------
 
-- Updated Spanish translations (#1639)
-- Added documentation and tests for retrieving instance information after import (#1643)
+- Updated Spanish translations (`1639 <https://github.com/django-import-export/django-import-export/pull/1639>`_)
+- Added documentation and tests for retrieving instance information after import (`1643 <https://github.com/django-import-export/django-import-export/pull/1643>`_)
 - :meth:`~import_export.widgets.NumberWidget.render` returns ``None`` as empty string
-  if ``coerce_to_string`` is True (#1650)
-- Updated documentation to describe how to select for export in Admin UI (#1670)
-- Added catch for django5 deprecation warning (#1676)
-- Updated and compiled message files (#1678)
+  if ``coerce_to_string`` is True (`1650 <https://github.com/django-import-export/django-import-export/pull/1650>`_)
+- Updated documentation to describe how to select for export in Admin UI (`1670 <https://github.com/django-import-export/django-import-export/pull/1670>`_)
+- Added catch for django5 deprecation warning (`1676 <https://github.com/django-import-export/django-import-export/pull/1676>`_)
+- Updated and compiled message files (`1678 <https://github.com/django-import-export/django-import-export/pull/1678>`_)
 
 3.3.1 (2023-09-14)
 ------------------
 
-- Added `.readthedocs.yaml` (#1625)
+- Added `.readthedocs.yaml` (`1625 <https://github.com/django-import-export/django-import-export/pull/1625>`_)
 
 3.3.0 (2023-09-14)
 ------------------
@@ -176,7 +161,7 @@ Performance
 Deprecations
 ############
 
-- Remove 'escape output' deprecation (#1618)
+- Remove 'escape output' deprecation (`1618 <https://github.com/django-import-export/django-import-export/pull/1618>`_)
 
   - Removal of deprecated :ref:`IMPORT_EXPORT_ESCAPE_OUTPUT_ON_EXPORT`.
 
@@ -185,43 +170,43 @@ Deprecations
 Enhancements
 ############
 
-- Refactoring and fix to support filtering exports (#1579)
-- Store ``instance`` and ``original`` object in :class:`~import_export.results.RowResult` (#1584)
-- Add customizable blocks in import.html (#1598)
-- Include 'allowed formats' settings (#1606)
-- Add kwargs to enable CharWidget to return values as strings (#1623)
+- Refactoring and fix to support filtering exports (`1579 <https://github.com/django-import-export/django-import-export/pull/1579>`_)
+- Store ``instance`` and ``original`` object in :class:`~import_export.results.RowResult` (`1584 <https://github.com/django-import-export/django-import-export/pull/1584>`_)
+- Add customizable blocks in import.html (`1598 <https://github.com/django-import-export/django-import-export/pull/1598>`_)
+- Include 'allowed formats' settings (`1606 <https://github.com/django-import-export/django-import-export/pull/1606>`_)
+- Add kwargs to enable CharWidget to return values as strings (`1623 <https://github.com/django-import-export/django-import-export/pull/1623>`_)
 
 Internationalization
 ####################
 
-- Add Finnish translation (#1588)
-- Updated ru translation (#1604)
-- Fixed badly formatted translation string (#1622)
-- Remove 'escape output' deprecation (#1618)
+- Add Finnish translation (`1588 <https://github.com/django-import-export/django-import-export/pull/1588>`_)
+- Updated ru translation (`1604 <https://github.com/django-import-export/django-import-export/pull/1604>`_)
+- Fixed badly formatted translation string (`1622 <https://github.com/django-import-export/django-import-export/pull/1622>`_)
+- Remove 'escape output' deprecation (`1618 <https://github.com/django-import-export/django-import-export/pull/1618>`_)
 
 Fixes
 #####
 
-- Do not decode bytes when writing to MediaStorage (#1615)
-- Fix for cache entries not removed (#1621)
+- Do not decode bytes when writing to MediaStorage (`1615 <https://github.com/django-import-export/django-import-export/pull/1615>`_)
+- Fix for cache entries not removed (`1621 <https://github.com/django-import-export/django-import-export/pull/1621>`_)
 
 Development
 ###########
 
-- Added support for Django 4.2 (#1570)
-- Add automatic formatting and linting (#1571)
-- removed duplicate admin integration tests (#1616)
-- Removed support for python3.7 and django4.0 (past EOL) (#1618)
+- Added support for Django 4.2 (`1570 <https://github.com/django-import-export/django-import-export/pull/1570>`_)
+- Add automatic formatting and linting (`1571 <https://github.com/django-import-export/django-import-export/pull/1571>`_)
+- removed duplicate admin integration tests (`1616 <https://github.com/django-import-export/django-import-export/pull/1616>`_)
+- Removed support for python3.7 and django4.0 (past EOL) (`1618 <https://github.com/django-import-export/django-import-export/pull/1618>`_)
 
 Documentation
 #############
 
-- Updated documentation for interoperability with third party libraries (#1614)
+- Updated documentation for interoperability with third party libraries (`1614 <https://github.com/django-import-export/django-import-export/pull/1614>`_)
 
 3.2.0 (2023-04-12)
 ------------------
 
-- Escape formulae on export to XLSX (#1568)
+- Escape formulae on export to XLSX (`1568 <https://github.com/django-import-export/django-import-export/pull/1568>`_)
 
   - This includes deprecation of :ref:`IMPORT_EXPORT_ESCAPE_OUTPUT_ON_EXPORT`.
 
@@ -230,7 +215,7 @@ Documentation
   - :meth:`import_export.formats.TablibFormat.export()`: ``escape_output`` flag now deprecated in favour of
     ``escape_html`` and ``escape_formulae``.
 
-- Refactor methods so that ``args`` are declared correctly (#1566)
+- Refactor methods so that ``args`` are declared correctly (`1566 <https://github.com/django-import-export/django-import-export/pull/1566>`_)
 
   - This includes deprecations to be aware of if you have overridden :meth:`~import_export.resources.Resource.export`
     or :class:`~import_export.forms.ImportExportFormBase`.
@@ -240,54 +225,54 @@ Documentation
     - ``ImportExportFormBase``: If passing ``resources`` to ``__init__`` as the first arg, ensure this is
       passed as a named parameter.
 
-- Updated ``setup.py`` (#1564)
-- Added ``SECURITY.md`` (#1563)
-- Updated FAQ to include workaround for `RelatedObjectDoesNotExist` exception (#1562)
-- Prevent error comparing m2m field of the new objects (#1560)
-- Add documentation for passing data from admin form to Resource  (#1555)
-- Added new translations to Spanish and Spanish (Argentina) (#1552)
-- Pass kwargs to import_set function (#1448)
+- Updated ``setup.py`` (`1564 <https://github.com/django-import-export/django-import-export/pull/1564>`_)
+- Added ``SECURITY.md`` (`1563 <https://github.com/django-import-export/django-import-export/pull/1563>`_)
+- Updated FAQ to include workaround for `RelatedObjectDoesNotExist` exception (`1562 <https://github.com/django-import-export/django-import-export/pull/1562>`_)
+- Prevent error comparing m2m field of the new objects (`1560 <https://github.com/django-import-export/django-import-export/pull/1560>`_)
+- Add documentation for passing data from admin form to Resource  (`1555 <https://github.com/django-import-export/django-import-export/pull/1555>`_)
+- Added new translations to Spanish and Spanish (Argentina) (`1552 <https://github.com/django-import-export/django-import-export/pull/1552>`_)
+- Pass kwargs to import_set function (`1448 <https://github.com/django-import-export/django-import-export/pull/1448>`_)
 
 3.1.0 (2023-02-21)
 ------------------
 
-- Float and Decimal widgets use LANGUAGE_CODE on export (#1501)
-- Add optional dehydrate method param (#1536)
+- Float and Decimal widgets use LANGUAGE_CODE on export (`1501 <https://github.com/django-import-export/django-import-export/pull/1501>`_)
+- Add optional dehydrate method param (`1536 <https://github.com/django-import-export/django-import-export/pull/1536>`_)
 
   - ``exceptions`` module has been undeprecated
 
-- Updated DE translation (#1537)
-- Add option for single step import via Admin Site (#1540)
-- Add support for m2m add (#1545)
-- collect errors on bulk operations (#1541)
+- Updated DE translation (`1537 <https://github.com/django-import-export/django-import-export/pull/1537>`_)
+- Add option for single step import via Admin Site (`1540 <https://github.com/django-import-export/django-import-export/pull/1540>`_)
+- Add support for m2m add (`1545 <https://github.com/django-import-export/django-import-export/pull/1545>`_)
+- collect errors on bulk operations (`1541 <https://github.com/django-import-export/django-import-export/pull/1541>`_)
 
   - this change causes bulk import errors to be logged at DEBUG level not EXCEPTION.
 
-- Improve bulk import performance (#1539)
+- Improve bulk import performance (`1539 <https://github.com/django-import-export/django-import-export/pull/1539>`_)
 
   - ``raise_errors`` has been deprecated as a kwarg in ``import_row()``
 
-- Reduce memory footprint during import (#1542)
-- documentation updates (#1533)
-- add detailed format parameter docstrings to ``DateWidget`` and ``TimeWidget`` (#1532)
-- tox updates (#1534)
-- fix xss vulnerability in html export (#1546)
+- Reduce memory footprint during import (`1542 <https://github.com/django-import-export/django-import-export/pull/1542>`_)
+- documentation updates (`1533 <https://github.com/django-import-export/django-import-export/pull/1533>`_)
+- add detailed format parameter docstrings to ``DateWidget`` and ``TimeWidget`` (`1532 <https://github.com/django-import-export/django-import-export/pull/1532>`_)
+- tox updates (`1534 <https://github.com/django-import-export/django-import-export/pull/1534>`_)
+- fix xss vulnerability in html export (`1546 <https://github.com/django-import-export/django-import-export/pull/1546>`_)
 
 3.0.2 (2022-12-13)
 ------------------
 
-- Support Python 3.11 (#1508)
-- use ``get_list_select_related`` in ``ExportMixin`` (#1511)
-- bugfix: handle crash on start-up when ``change_list_template`` is a property (#1523)
-- bugfix: include instance info in row result when row is skipped (#1526)
-- bugfix: add ``**kwargs`` param to ``Resource`` constructor (#1527)
+- Support Python 3.11 (`1508 <https://github.com/django-import-export/django-import-export/pull/1508>`_)
+- use ``get_list_select_related`` in ``ExportMixin`` (`1511 <https://github.com/django-import-export/django-import-export/pull/1511>`_)
+- bugfix: handle crash on start-up when ``change_list_template`` is a property (`1523 <https://github.com/django-import-export/django-import-export/pull/1523>`_)
+- bugfix: include instance info in row result when row is skipped (`1526 <https://github.com/django-import-export/django-import-export/pull/1526>`_)
+- bugfix: add ``**kwargs`` param to ``Resource`` constructor (`1527 <https://github.com/django-import-export/django-import-export/pull/1527>`_)
 
 3.0.1 (2022-10-18)
 ------------------
 
 - Updated ``django-import-export-ci.yml`` to fix node.js deprecation
-- bugfix: ``DateTimeWidget.clean()`` handles tz aware datetime (#1499)
-- Updated translations for v3.0.0 release (#1500)
+- bugfix: ``DateTimeWidget.clean()`` handles tz aware datetime (`1499 <https://github.com/django-import-export/django-import-export/pull/1499>`_)
+- Updated translations for v3.0.0 release (`1500 <https://github.com/django-import-export/django-import-export/pull/1500>`_)
 
 3.0.0 (2022-10-18)
 ------------------
@@ -297,30 +282,30 @@ Breaking changes
 
 This release makes some minor changes to the public API.  If you have overridden any methods from the ``resources`` or ``widgets`` modules, you may need to update your implementation to accommodate these changes.
 
-- Check value of ``ManyToManyField`` in ``skip_row()`` (#1271)
+- Check value of ``ManyToManyField`` in ``skip_row()`` (`1271 <https://github.com/django-import-export/django-import-export/pull/1271>`_)
     - This fixes an issue where ManyToMany fields are not checked correctly in ``skip_row()``.  This means that ``skip_row()`` now takes ``row`` as a mandatory arg.  If you have overridden ``skip_row()`` in your own implementation, you will need to add ``row`` as an arg.
 
-- Bug fix: validation errors were being ignored when ``skip_unchanged`` is set (#1378)
+- Bug fix: validation errors were being ignored when ``skip_unchanged`` is set (`1378 <https://github.com/django-import-export/django-import-export/pull/1378>`_)
     - If you have overridden ``skip_row()`` you can choose whether or not to skip rows if validation errors are present.  The default behavior is to not to skip rows if there are validation errors during import.
 
-- Use 'create' flag instead of instance.pk (#1362)
+- Use 'create' flag instead of instance.pk (`1362 <https://github.com/django-import-export/django-import-export/pull/1362>`_)
     - ``import_export.resources.save_instance()`` now takes an additional mandatory argument: ``is_create``.  If you have overridden ``save_instance()`` in your own code, you will need to add this new argument.
 
-- ``widgets``: Unused ``*args`` params have been removed from method definitions. (#1413)
+- ``widgets``: Unused ``*args`` params have been removed from method definitions. (`1413 <https://github.com/django-import-export/django-import-export/pull/1413>`_)
     - If you have overridden ``clean()`` then you should update your method definition to reflect this change.
     - ``widgets.ForeignKeyWidget`` / ``widgets.ManyToManyWidget``: The unused ``*args`` param has been removed from ``__init__()``.  If you have overridden ``ForeignKeyWidget`` or ``ManyToManyWidget`` you may need to update your implementation to reflect this change.
 
-- Admin interface: Modified handling of import errors (#1306)
+- Admin interface: Modified handling of import errors (`1306 <https://github.com/django-import-export/django-import-export/pull/1306>`_)
     - Exceptions raised during the import process are now presented as form errors, instead of being wrapped in a \<H1\> tag in the response.  If you have any custom logic which uses the error written directly into the response, then this may need to be changed.
 
-- ImportForm: improve compatibility with previous signature (#1434)
+- ImportForm: improve compatibility with previous signature (`1434 <https://github.com/django-import-export/django-import-export/pull/1434>`_)
     - Previous ``ImportForm`` implementation was based on Django's ``forms.Form``, if you have any custom ImportForm you now need to inherit from ``import_export.forms.ImportExportFormBase``.
 
-- Allow custom ``change_list_template`` in admin views using mixins (#1483)
+- Allow custom ``change_list_template`` in admin views using mixins (`1483 <https://github.com/django-import-export/django-import-export/pull/1483>`_)
     - If you are using admin mixins from this library in conjunction with code that overrides ``change_list_template`` (typically admin mixins from other libraries such as django-admin-sortable2 or reversion), object tools in the admin change list views may render differently now.
-    - If you have created a custom template which extends any import_export template, then this may now cause a recursion error (see #1514)
+    - If you have created a custom template which extends any import_export template, then this may now cause a recursion error (see `1415  <https://github.com/django-import-export/django-import-export/pull/1415 >`_)
 
-- ``import.html``: Added blocks to import template (#1488)
+- ``import.html``: Added blocks to import template (`1488 <https://github.com/django-import-export/django-import-export/pull/1488>`_)
     - If you have made customizations to the import template then you may need to refactor these after the addition of block declarations.
 
 Deprecations
@@ -328,15 +313,15 @@ Deprecations
 
 This release adds some deprecations which will be removed in a future release.
 
-- Add support for multiple resources in ModelAdmin. (#1223)
+- Add support for multiple resources in ModelAdmin. (`1223 <https://github.com/django-import-export/django-import-export/pull/1223>`_)
 
     - The ``*Mixin.resource_class`` accepting single resource has been deprecated and the new ``*Mixin.resource_classes`` accepting subscriptable type (list, tuple, ...) has been added.
 
     - Same applies to all of the ``get_resource_class``, ``get_import_resource_class`` and ``get_export_resource_class`` methods.
 
-- Deprecated ``exceptions.py`` (#1372)
+- Deprecated ``exceptions.py`` (`1372 <https://github.com/django-import-export/django-import-export/pull/1372>`_)
 
-- Refactored form-related methods on ``ImportMixin`` / ``ExportMixin`` (#1147)
+- Refactored form-related methods on ``ImportMixin`` / ``ExportMixin`` (`1147 <https://github.com/django-import-export/django-import-export/pull/1147>`_)
 
     - The following are deprecated:
 
@@ -351,116 +336,116 @@ This release adds some deprecations which will be removed in a future release.
 Enhancements
 ############
 
-- Default format selections set correctly for export action (#1389)
-- Added option to store raw row values in each row's ``RowResult`` (#1393)
-- Add natural key support to ``ForeignKeyWidget`` (#1371)
-- Optimised default instantiation of ``CharWidget`` (#1414)
-- Allow custom ``change_list_template`` in admin views using mixins (#1483)
-- Added blocks to import template (#1488)
-- improve compatibility with previous ImportForm signature (#1434)
-- Refactored form-related methods on ``ImportMixin`` / ``ExportMixin`` (#1147)
-- Include custom form media in templates (#1038)
-- Remove unnecessary files generated when running tox locally (#1426)
+- Default format selections set correctly for export action (`1389 <https://github.com/django-import-export/django-import-export/pull/1389>`_)
+- Added option to store raw row values in each row's ``RowResult`` (`1393 <https://github.com/django-import-export/django-import-export/pull/1393>`_)
+- Add natural key support to ``ForeignKeyWidget`` (`1371 <https://github.com/django-import-export/django-import-export/pull/1371>`_)
+- Optimised default instantiation of ``CharWidget`` (`1414 <https://github.com/django-import-export/django-import-export/pull/1414>`_)
+- Allow custom ``change_list_template`` in admin views using mixins (`1483 <https://github.com/django-import-export/django-import-export/pull/1483>`_)
+- Added blocks to import template (`1488 <https://github.com/django-import-export/django-import-export/pull/1488>`_)
+- improve compatibility with previous ImportForm signature (`1434 <https://github.com/django-import-export/django-import-export/pull/1434>`_)
+- Refactored form-related methods on ``ImportMixin`` / ``ExportMixin`` (`1147 <https://github.com/django-import-export/django-import-export/pull/1147>`_)
+- Include custom form media in templates (`1038 <https://github.com/django-import-export/django-import-export/pull/1038>`_)
+- Remove unnecessary files generated when running tox locally (`1426 <https://github.com/django-import-export/django-import-export/pull/1426>`_)
 
 Fixes
 #####
 
 - Fixed Makefile coverage: added ``coverage combine``
-- Fixed handling of LF character when using ``CacheStorage`` (#1417)
+- Fixed handling of LF character when using ``CacheStorage`` (`1417 <https://github.com/django-import-export/django-import-export/pull/1417>`_)
 - bugfix: ``skip_row()`` handles M2M field when UUID pk used
-- Fix broken link to tablib formats page (#1418)
+- Fix broken link to tablib formats page (`1418 <https://github.com/django-import-export/django-import-export/pull/1418>`_)
 - Fix broken image ref in ``README.rst``
-- bugfix: ``skip_row()`` fix crash when model has m2m field and none is provided in upload (#1439)
-- Fix deprecation in example application: Added support for transitional form renderer (#1451)
+- bugfix: ``skip_row()`` fix crash when model has m2m field and none is provided in upload (`1439 <https://github.com/django-import-export/django-import-export/pull/1439>`_)
+- Fix deprecation in example application: Added support for transitional form renderer (`1451 <https://github.com/django-import-export/django-import-export/pull/1451>`_)
 
 Development
 ###########
 
-- Increased test coverage, refactored CI build to use tox (#1372)
+- Increased test coverage, refactored CI build to use tox (`1372 <https://github.com/django-import-export/django-import-export/pull/1372>`_)
 
 Documentation
 #############
 
-- Clarified issues around the usage of temporary storage (#1306)
+- Clarified issues around the usage of temporary storage (`1306 <https://github.com/django-import-export/django-import-export/pull/1306>`_)
 
 2.9.0 (2022-09-14)
 ------------------
 
-- Fix deprecation in example application: Added support for transitional form renderer (#1451)
-- Escape HTML output when rendering decoding errors (#1469)
-- Apply make_aware when the original file contains actual datetimes (#1478)
-- Automatically guess the format of the file when importing (#1460)
+- Fix deprecation in example application: Added support for transitional form renderer (`1451 <https://github.com/django-import-export/django-import-export/pull/1451>`_)
+- Escape HTML output when rendering decoding errors (`1469 <https://github.com/django-import-export/django-import-export/pull/1469>`_)
+- Apply make_aware when the original file contains actual datetimes (`1478 <https://github.com/django-import-export/django-import-export/pull/1478>`_)
+- Automatically guess the format of the file when importing (`1460 <https://github.com/django-import-export/django-import-export/pull/1460>`_)
 
 2.8.0 (2022-03-31)
 ------------------
 
-- Updated import.css to support dark mode (#1318)
-- Fix crash when import_data() called with empty Dataset and ``collect_failed_rows=True`` (#1381)
-- Improve Korean translation (#1402)
-- Update example subclass widget code (#1407)
-- Drop support for python3.6, django 2.2, 3.0, 3.1 (#1408)
-- Add get_export_form() to ExportMixin (#1409)
+- Updated import.css to support dark mode (`1318 <https://github.com/django-import-export/django-import-export/pull/1318>`_)
+- Fix crash when import_data() called with empty Dataset and ``collect_failed_rows=True`` (`1381 <https://github.com/django-import-export/django-import-export/pull/1381>`_)
+- Improve Korean translation (`1402 <https://github.com/django-import-export/django-import-export/pull/1402>`_)
+- Update example subclass widget code (`1407 <https://github.com/django-import-export/django-import-export/pull/1407>`_)
+- Drop support for python3.6, django 2.2, 3.0, 3.1 (`1408 <https://github.com/django-import-export/django-import-export/pull/1408>`_)
+- Add get_export_form() to ExportMixin (`1409 <https://github.com/django-import-export/django-import-export/pull/1409>`_)
 
 2.7.1 (2021-12-23)
 ------------------
 
-- Removed ``django_extensions`` from example app settings (#1356)
-- Added support for Django 4.0 (#1357)
+- Removed ``django_extensions`` from example app settings (`1356 <https://github.com/django-import-export/django-import-export/pull/1356>`_)
+- Added support for Django 4.0 (`1357 <https://github.com/django-import-export/django-import-export/pull/1357>`_)
 
 2.7.0 (2021-12-07)
 ------------------
 
-- Big integer support for Integer widget (#788)
-- Run compilemessages command to keep .mo files in sync (#1299)
-- Added ``skip_html_diff`` meta attribute (#1329)
-- Added python3.10 to tox and CI environment list (#1336)
-- Add ability to rollback the import on validation error (#1339)
-- Fix missing migration on example app (#1346)
-- Fix crash when deleting via admin site (#1347)
-- Use Github secret in CI script instead of hard-coded password (#1348)
-- Documentation: correct error in example application which leads to crash (#1353)
+- Big integer support for Integer widget (`788 <https://github.com/django-import-export/django-import-export/pull/788>`_)
+- Run compilemessages command to keep .mo files in sync (`1299 <https://github.com/django-import-export/django-import-export/pull/1299>`_)
+- Added ``skip_html_diff`` meta attribute (`1329 <https://github.com/django-import-export/django-import-export/pull/1329>`_)
+- Added python3.10 to tox and CI environment list (`1336 <https://github.com/django-import-export/django-import-export/pull/1336>`_)
+- Add ability to rollback the import on validation error (`1339 <https://github.com/django-import-export/django-import-export/pull/1339>`_)
+- Fix missing migration on example app (`1346 <https://github.com/django-import-export/django-import-export/pull/1346>`_)
+- Fix crash when deleting via admin site (`1347 <https://github.com/django-import-export/django-import-export/pull/1347>`_)
+- Use Github secret in CI script instead of hard-coded password (`1348 <https://github.com/django-import-export/django-import-export/pull/1348>`_)
+- Documentation: correct error in example application which leads to crash (`1353 <https://github.com/django-import-export/django-import-export/pull/1353>`_)
 
 2.6.1 (2021-09-30)
 ------------------
 
-- Revert 'dark mode' css: causes issues in django2.2 (#1330)
+- Revert 'dark mode' css: causes issues in django2.2 (`1330 <https://github.com/django-import-export/django-import-export/pull/1330>`_)
 
 2.6.0 (2021-09-15)
 ------------------
 
-- Added guard for null 'options' to fix crash (#1325)
-- Updated import.css to support dark mode (#1323)
-- Fixed regression where overridden mixin methods are not called (#1315)
-- Fix xls/xlsx import of Time fields (#1314)
-- Added support for 'to_encoding' attribute (#1311)
-- Removed travis and replaced with github actions for CI (#1307)
-- Increased test coverage (#1286)
-- Fix minor date formatting issue for date with years < 1000 (#1285)
-- Translate the zh_Hans missing part (#1279)
-- Remove code duplication from mixins.py and admin.py (#1277)
-- Fix example in BooleanWidget docs (#1276)
-- Better support for Django main (#1272)
-- don't test Django main branch with python36,37 (#1269)
-- Support Django 3.2 (#1265)
-- Correct typo in Readme (#1258)
-- Rephrase logical clauses in docstrings (#1255)
-- Support multiple databases (#1254)
-- Update django master to django main (#1251)
-- Add Farsi translated messages in the locale (#1249)
-- Update Russian translations (#1244)
-- Append export admin action using ModelAdmin.get_actions (#1241)
-- Fix minor mistake in makemigrations command (#1233)
-- Remove EOL Python 3.5 from CI (#1228)
-- CachedInstanceLoader defaults to empty when import_id is missing (#1225)
-- Add kwargs to import_row, import_object and import_field (#1190)
-- Call load_workbook() with data_only flag (#1095)
+- Added guard for null 'options' to fix crash (`1325 <https://github.com/django-import-export/django-import-export/pull/1325>`_)
+- Updated import.css to support dark mode (`1323 <https://github.com/django-import-export/django-import-export/pull/1323>`_)
+- Fixed regression where overridden mixin methods are not called (`1315 <https://github.com/django-import-export/django-import-export/pull/1315>`_)
+- Fix xls/xlsx import of Time fields (`1314 <https://github.com/django-import-export/django-import-export/pull/1314>`_)
+- Added support for 'to_encoding' attribute (`1311 <https://github.com/django-import-export/django-import-export/pull/1311>`_)
+- Removed travis and replaced with github actions for CI (`1307 <https://github.com/django-import-export/django-import-export/pull/1307>`_)
+- Increased test coverage (`1286 <https://github.com/django-import-export/django-import-export/pull/1286>`_)
+- Fix minor date formatting issue for date with years < 1000 (`1285 <https://github.com/django-import-export/django-import-export/pull/1285>`_)
+- Translate the zh_Hans missing part (`1279 <https://github.com/django-import-export/django-import-export/pull/1279>`_)
+- Remove code duplication from mixins.py and admin.py (`1277 <https://github.com/django-import-export/django-import-export/pull/1277>`_)
+- Fix example in BooleanWidget docs (`1276 <https://github.com/django-import-export/django-import-export/pull/1276>`_)
+- Better support for Django main (`1272 <https://github.com/django-import-export/django-import-export/pull/1272>`_)
+- don't test Django main branch with python36,37 (`1269 <https://github.com/django-import-export/django-import-export/pull/1269>`_)
+- Support Django 3.2 (`1265 <https://github.com/django-import-export/django-import-export/pull/1265>`_)
+- Correct typo in Readme (`1258 <https://github.com/django-import-export/django-import-export/pull/1258>`_)
+- Rephrase logical clauses in docstrings (`1255 <https://github.com/django-import-export/django-import-export/pull/1255>`_)
+- Support multiple databases (`1254 <https://github.com/django-import-export/django-import-export/pull/1254>`_)
+- Update django master to django main (`1251 <https://github.com/django-import-export/django-import-export/pull/1251>`_)
+- Add Farsi translated messages in the locale (`1249 <https://github.com/django-import-export/django-import-export/pull/1249>`_)
+- Update Russian translations (`1244 <https://github.com/django-import-export/django-import-export/pull/1244>`_)
+- Append export admin action using ModelAdmin.get_actions (`1241 <https://github.com/django-import-export/django-import-export/pull/1241>`_)
+- Fix minor mistake in makemigrations command (`1233 <https://github.com/django-import-export/django-import-export/pull/1233>`_)
+- Remove EOL Python 3.5 from CI (`1228 <https://github.com/django-import-export/django-import-export/pull/1228>`_)
+- CachedInstanceLoader defaults to empty when import_id is missing (`1225 <https://github.com/django-import-export/django-import-export/pull/1225>`_)
+- Add kwargs to import_row, import_object and import_field (`1190 <https://github.com/django-import-export/django-import-export/pull/1190>`_)
+- Call load_workbook() with data_only flag (`1095 <https://github.com/django-import-export/django-import-export/pull/1095>`_)
 
 
 2.5.0 (2020-12-30)
 ------------------
 
-- Changed the default value for ``IMPORT_EXPORT_CHUNK_SIZE`` to 100. (#1196)
-- Add translation for Korean (#1218)
+- Changed the default value for ``IMPORT_EXPORT_CHUNK_SIZE`` to 100. (`1196 <https://github.com/django-import-export/django-import-export/pull/1196>`_)
+- Add translation for Korean (`1218 <https://github.com/django-import-export/django-import-export/pull/1218>`_)
 - Update linting, CI, and docs.
 
 
@@ -474,94 +459,93 @@ Documentation
 2.3.0 (2020-07-12)
 ------------------
 
-- Add missing translation keys for all languages (#1144)
-- Added missing Portuguese translations (#1145)
-- Add kazakh translations (#1161)
-- Add bulk operations (#1149)
+- Add missing translation keys for all languages (`1144 <https://github.com/django-import-export/django-import-export/pull/1144>`_)
+- Added missing Portuguese translations (`1145 <https://github.com/django-import-export/django-import-export/pull/1145>`_)
+- Add kazakh translations (`1161 <https://github.com/django-import-export/django-import-export/pull/1161>`_)
+- Add bulk operations (`1149 <https://github.com/django-import-export/django-import-export/pull/1149>`_)
 
 2.2.0 (2020-06-01)
 ------------------
 
 - Deal with importing a BooleanField that actually has ``True``, ``False``, and
-  ``None`` values. (#1071)
-- Add row_number parameter to before_import_row, after_import_row and after_import_instance (#1040)
-- Paginate queryset if Queryset.prefetch_related is used (#1050)
+  ``None`` values. (`1071 <https://github.com/django-import-export/django-import-export/pull/1071>`_)
+- Add row_number parameter to before_import_row, after_import_row and after_import_instance (`1040 <https://github.com/django-import-export/django-import-export/pull/1040>`_)
+- Paginate queryset if Queryset.prefetch_related is used (`1050 <https://github.com/django-import-export/django-import-export/pull/1050>`_)
 
 2.1.0 (2020-05-02)
 ------------------
 
-- Fix DurationWidget handling of zero value (#1117)
+- Fix DurationWidget handling of zero value (`1117 <https://github.com/django-import-export/django-import-export/pull/1117>`_)
 
-- Make import diff view only show headers for user visible fields (#1109)
+- Make import diff view only show headers for user visible fields (`1109 <https://github.com/django-import-export/django-import-export/pull/1109>`_)
 
-- Make confirm_form accessible in get_import_resource_kwargs and get_import_data_kwargs (#994, #1108)
+- Make confirm_form accessible in get_import_resource_kwargs and get_import_data_kwargs (`994 <https://github.com/django-import-export/django-import-export/pull/994>`_, `1108 <https://github.com/django-import-export/django-import-export/pull/1108>`_)
 
-- Initialize Decimal with text value, fix #1035 (#1039)
+- Initialize Decimal with text value, fix #1035 (`1039 <https://github.com/django-import-export/django-import-export/pull/1039>`_)
 
-- Adds meta flag 'skip_diff' to enable skipping of diff operations (#1045)
+- Adds meta flag 'skip_diff' to enable skipping of diff operations (`1045 <https://github.com/django-import-export/django-import-export/pull/1045>`_)
 
-- Update docs (#1097, #1114, #1122, #969, #1083, #1093)
-
+- Update docs (`1097 <https://github.com/django-import-export/django-import-export/pull/1097>`_, `1114 <https://github.com/django-import-export/django-import-export/pull/1114>`_, `1122 <https://github.com/django-import-export/django-import-export/pull/1122>`_, `969 <https://github.com/django-import-export/django-import-export/pull/969>`_, `1083 <https://github.com/django-import-export/django-import-export/pull/1083>`_, `1093 <https://github.com/django-import-export/django-import-export/pull/1093>`_)
 
 2.0.2 (2020-02-16)
 ------------------
 
-- Add support for tablib >= 1.0 (#1061)
+- Add support for tablib >= 1.0 (`1061 <https://github.com/django-import-export/django-import-export/pull/1061>`_)
 
 - Add ability to install a subset of tablib supported formats and save some
   automatic dependency installations (needs tablib >= 1.0)
 
-- Use column_name when checking row for fields (#1056)
+- Use column_name when checking row for fields (`1056 <https://github.com/django-import-export/django-import-export/pull/1056>`_)
 
 2.0.1 (2020-01-15)
 ------------------
 
-- Fix deprecated Django 3.0 function usage (#1054)
+- Fix deprecated Django 3.0 function usage (`1054 <https://github.com/django-import-export/django-import-export/pull/1054>`_)
 
-- Pin tablib version to not use new major version (#1063)
+- Pin tablib version to not use new major version (`1063 <https://github.com/django-import-export/django-import-export/pull/1063>`_)
 
-- Format field is always shown on Django 2.2 (#1007)
+- Format field is always shown on Django 2.2 (`1007 <https://github.com/django-import-export/django-import-export/pull/1007>`_)
 
 2.0 (2019-12-03)
 ----------------
 
 - Removed support for Django < 2.0
 - Removed support for Python < 3.5
-- feat: Support for Postgres JSONb Field (#904)
+- feat: Support for Postgres JSONb Field (`904 <https://github.com/django-import-export/django-import-export/pull/904>`_)
 
 1.2.0 (2019-01-10)
 ------------------
 
-- feat: Better surfacing of validation errors in UI / optional model instance validation (#852)
+- feat: Better surfacing of validation errors in UI / optional model instance validation (`852 <https://github.com/django-import-export/django-import-export/pull/852>`_)
 
-- chore: Use modern setuptools in setup.py (#862)
+- chore: Use modern setuptools in setup.py (`862 <https://github.com/django-import-export/django-import-export/pull/862>`_)
 
-- chore: Update URLs to use https:// (#863)
+- chore: Update URLs to use https:// (`863 <https://github.com/django-import-export/django-import-export/pull/863>`_)
 
 - chore: remove outdated workarounds
 
 - chore: Run SQLite tests with in-memory database
 
-- fix: Change logging level (#832)
+- fix: Change logging level (`832 <https://github.com/django-import-export/django-import-export/pull/832>`_)
 
-- fix: Changed ``get_instance()`` return val (#842)
+- fix: Changed ``get_instance()`` return val (`842 <https://github.com/django-import-export/django-import-export/pull/842>`_)
 
 1.1.0 (2018-10-02)
 ------------------
 
-- fix: Django2.1 ImportExportModelAdmin export (#797) (#819)
+- fix: Django2.1 ImportExportModelAdmin export (`797 <https://github.com/django-import-export/django-import-export/pull/797>`_, `819 <https://github.com/django-import-export/django-import-export/pull/819>`_)
 
 - setup: add django2.1 to test matrix
 
-- JSONWidget for jsonb fields (#803)
+- JSONWidget for jsonb fields (`803 <https://github.com/django-import-export/django-import-export/pull/803>`_)
 
-- Add ExportActionMixin (#809)
+- Add ExportActionMixin (`809 <https://github.com/django-import-export/django-import-export/pull/809>`_)
 
-- Add Import Export Permissioning #608 (#804)
+- Add Import Export Permissioning #608 (`804 <https://github.com/django-import-export/django-import-export/pull/804>`_)
 
-- write_to_tmp_storage() for import_action() (#781)
+- write_to_tmp_storage() for import_action() (`781 <https://github.com/django-import-export/django-import-export/pull/781>`_)
 
-- follow relationships on ForeignKeyWidget #798
+- follow relationships on ForeignKeyWidget (`798 <https://github.com/django-import-export/django-import-export/pull/798>`_)
 
 - Update all pypi.python.org URLs to pypi.org
 
@@ -569,190 +553,190 @@ Documentation
 
 - added unicode support for TSV for python 2
 
-- Added ExportViewMixin (#692)
+- Added ExportViewMixin (`692 <https://github.com/django-import-export/django-import-export/pull/692>`_)
 
 1.0.1 (2018-05-17)
 ------------------
 
-- Make deep copy of fileds from class attr to instance attr (#550)
+- Make deep copy of fields from class attr to instance attr (`550 <https://github.com/django-import-export/django-import-export/pull/550>`_)
 
-- Fix #612: NumberWidget.is_empty() should strip the value if string type (#613)
+- Fix #612: NumberWidget.is_empty() should strip the value if string type (`613 <https://github.com/django-import-export/django-import-export/pull/613>`_)
 
-- Fix #713: last day isn't included in results qs (#779)
+- Fix #713: last day isn't included in results qs (`779 <https://github.com/django-import-export/django-import-export/pull/779>`_)
 
-- use Python3 compatible MySql driver in development (#706)
+- use Python3 compatible MySql driver in development (`706 <https://github.com/django-import-export/django-import-export/pull/706>`_)
 
-- fix: warning U mode is deprecated in python 3 (#776)
+- fix: warning U mode is deprecated in python 3 (`776 <https://github.com/django-import-export/django-import-export/pull/776>`_)
 
-- refactor: easier overridding widgets and default field (#769)
+- refactor: easier overriding widgets and default field (`769 <https://github.com/django-import-export/django-import-export/pull/769>`_)
 
-- Updated documentation regardign declaring fields (#735)
+- Updated documentation regarding declaring fields (`735 <https://github.com/django-import-export/django-import-export/pull/735>`_)
 
-- custom js for action form also handles grappelli (#719)
+- custom js for action form also handles grappelli (`719 <https://github.com/django-import-export/django-import-export/pull/719>`_)
 
-- Use 'verbose_name' in breadcrumbs to match Django default (#732)
+- Use 'verbose_name' in breadcrumbs to match Django default (`732 <https://github.com/django-import-export/django-import-export/pull/732>`_)
 
-- Add Resource.get_diff_class() (#745)
+- Add Resource.get_diff_class() (`745 <https://github.com/django-import-export/django-import-export/pull/745>`_)
 
-- Fix and add polish translation (#747)
+- Fix and add polish translation (`747 <https://github.com/django-import-export/django-import-export/pull/747>`_)
 
-- Restore raise_errors to before_import (#749)
+- Restore raise_errors to before_import (`749 <https://github.com/django-import-export/django-import-export/pull/749>`_)
 
 
 1.0.0 (2018-02-13)
 ------------------
 
-- Switch to semver versioning (#687)
+- Switch to semver versioning (`687 <https://github.com/django-import-export/django-import-export/pull/687>`_)
 
-- Require Django>=1.8 (#685)
+- Require Django>=1.8 (`685 <https://github.com/django-import-export/django-import-export/pull/685>`_)
 
-- upgrade tox configuration (#737)
+- upgrade tox configuration (`737 <https://github.com/django-import-export/django-import-export/pull/737>`_)
 
 
 0.7.0 (2018-01-17)
 ------------------
 
-- skip_row override example (#702)
+- skip_row override example (`702 <https://github.com/django-import-export/django-import-export/pull/702>`_)
 
-- Testing against Django 2.0 should not fail (#709)
+- Testing against Django 2.0 should not fail (`709 <https://github.com/django-import-export/django-import-export/pull/709>`_)
 
-- Refactor transaction handling (#690)
+- Refactor transaction handling (`690 <https://github.com/django-import-export/django-import-export/pull/690>`_)
 
-- Resolves #703 fields shadowed (#703)
+- Resolves #703 fields shadowed (`703 <https://github.com/django-import-export/django-import-export/pull/703>`_)
 
-- discourage installation as a zipped egg (#548)
+- discourage installation as a zipped egg (`548 <https://github.com/django-import-export/django-import-export/pull/548>`_)
 
-- Fixed middleware settings in test app for Django 2.x (#696)
+- Fixed middleware settings in test app for Django 2.x (`696 <https://github.com/django-import-export/django-import-export/pull/696>`_)
 
 
 0.6.1 (2017-12-04)
 ------------------
 
-- Refactors and optimizations (#686, #632, #684, #636, #631, #629, #635, #683)
+- Refactors and optimizations (`686 <https://github.com/django-import-export/django-import-export/pull/686>`_, `632 <https://github.com/django-import-export/django-import-export/pull/632>`_, `684 <https://github.com/django-import-export/django-import-export/pull/684>`_, `636 <https://github.com/django-import-export/django-import-export/pull/636>`_, `631 <https://github.com/django-import-export/django-import-export/pull/631>`_, `629 <https://github.com/django-import-export/django-import-export/pull/629>`_, `635 <https://github.com/django-import-export/django-import-export/pull/635>`_, `683 <https://github.com/django-import-export/django-import-export/pull/683>`_)
 
-- Travis tests for Django 2.0.x (#691)
+- Travis tests for Django 2.0.x (`691 <https://github.com/django-import-export/django-import-export/pull/691>`_)
 
 
 0.6.0 (2017-11-23)
 ------------------
 
-- Refactor import_row call by using keyword arguments (#585)
+- Refactor import_row call by using keyword arguments (`585 <https://github.com/django-import-export/django-import-export/pull/585>`_)
 
-- Added {{ block.super }} call in block bodyclass in admin/base_site.html (#582)
+- Added {{ block.super }} call in block bodyclass in admin/base_site.html (`582 <https://github.com/django-import-export/django-import-export/pull/582>`_)
 
-- Add support for the Django DurationField with DurationWidget (#575)
+- Add support for the Django DurationField with DurationWidget (`575 <https://github.com/django-import-export/django-import-export/pull/575>`_)
 
-- GitHub bmihelac -> django-import-export Account Update (#574)
+- GitHub bmihelac -> django-import-export Account Update (`574 <https://github.com/django-import-export/django-import-export/pull/574>`_)
 
-- Add intersphinx links to documentation (#572)
+- Add intersphinx links to documentation (`572 <https://github.com/django-import-export/django-import-export/pull/572>`_)
 
-- Add Resource.get_import_fields() (#569)
+- Add Resource.get_import_fields() (`569 <https://github.com/django-import-export/django-import-export/pull/569>`_)
 
-- Fixed readme mistake (#568)
+- Fixed readme mistake (`568 <https://github.com/django-import-export/django-import-export/pull/568>`_)
 
-- Bugfix/fix m2m widget clean (#515)
+- Bugfix/fix m2m widget clean (`515 <https://github.com/django-import-export/django-import-export/pull/515>`_)
 
-- Allow injection of context data for template rendered by import_action() and export_action() (#544)
+- Allow injection of context data for template rendered by import_action() and export_action() (`544 <https://github.com/django-import-export/django-import-export/pull/544>`_)
 
-- Bugfix/fix exception in generate_log_entries() (#543)
+- Bugfix/fix exception in generate_log_entries() (`543 <https://github.com/django-import-export/django-import-export/pull/543>`_)
 
-- Process import dataset and result in separate methods (#542)
+- Process import dataset and result in separate methods (`542 <https://github.com/django-import-export/django-import-export/pull/542>`_)
 
-- Bugfix/fix error in converting exceptions to strings (#526)
+- Bugfix/fix error in converting exceptions to strings (`526 <https://github.com/django-import-export/django-import-export/pull/526>`_)
 
-- Fix admin integration tests for the new "Import finished..." message, update Czech translations to 100% coverage. (#596)
+- Fix admin integration tests for the new "Import finished..." message, update Czech translations to 100% coverage. (`596 <https://github.com/django-import-export/django-import-export/pull/596>`_)
 
-- Make import form type easier to override (#604)
+- Make import form type easier to override (`604 <https://github.com/django-import-export/django-import-export/pull/604>`_)
 
-- Add saves_null_values attribute to Field to control whether null values are saved on the object (#611)
+- Add saves_null_values attribute to Field to control whether null values are saved on the object (`611 <https://github.com/django-import-export/django-import-export/pull/611>`_)
 
-- Add Bulgarian translations (#656)
+- Add Bulgarian translations (`656 <https://github.com/django-import-export/django-import-export/pull/656>`_)
 
-- Add django 1.11 to TravisCI (#621)
+- Add django 1.11 to TravisCI (`621 <https://github.com/django-import-export/django-import-export/pull/621>`_)
 
-- Make Signals code example format correctly in documentation (#553)
+- Make Signals code example format correctly in documentation (`553 <https://github.com/django-import-export/django-import-export/pull/553>`_)
 
-- Add Django as requirement to setup.py (#634)
+- Add Django as requirement to setup.py (`634 <https://github.com/django-import-export/django-import-export/pull/634>`_)
 
-- Update import of reverse for django 2.x (#620)
+- Update import of reverse for django 2.x (`620 <https://github.com/django-import-export/django-import-export/pull/620>`_)
 
-- Add Django-version classifiers to setup.py’s CLASSIFIERS (#616)
+- Add Django-version classifiers to setup.py’s CLASSIFIERS (`616 <https://github.com/django-import-export/django-import-export/pull/616>`_)
 
-- Some fixes for Django 2.0 (#672)
+- Some fixes for Django 2.0 (`672 <https://github.com/django-import-export/django-import-export/pull/672>`_)
 
-- Strip whitespace when looking up ManyToMany fields (#668)
+- Strip whitespace when looking up ManyToMany fields (`668 <https://github.com/django-import-export/django-import-export/pull/668>`_)
 
-- Fix all ResourceWarnings during tests in Python 3.x (#637)
+- Fix all ResourceWarnings during tests in Python 3.x (`637 <https://github.com/django-import-export/django-import-export/pull/637>`_)
 
-- Remove downloads count badge from README since shields.io no longer supports it for PyPi (#677)
+- Remove downloads count badge from README since shields.io no longer supports it for PyPi (`677 <https://github.com/django-import-export/django-import-export/pull/677>`_)
 
-- Add coveralls support and README badge (#678)
+- Add coveralls support and README badge (`678 <https://github.com/django-import-export/django-import-export/pull/678>`_)
 
 
 0.5.1 (2016-09-29)
 ------------------
 
-- French locale not in pypi (#524)
+- French locale not in pypi (`524 <https://github.com/django-import-export/django-import-export/pull/524>`_)
 
-- Bugfix/fix undefined template variables (#519)
+- Bugfix/fix undefined template variables (`519 <https://github.com/django-import-export/django-import-export/pull/519>`_)
 
 
 0.5.0 (2016-09-01)
 ------------------
 
-- Hide default value in diff when importing a new instance (#458)
+- Hide default value in diff when importing a new instance (`458 <https://github.com/django-import-export/django-import-export/pull/458>`_)
 
-- Append rows to Result object via function call to allow overriding (#462)
+- Append rows to Result object via function call to allow overriding (`462 <https://github.com/django-import-export/django-import-export/pull/462>`_)
 
-- Add get_resource_kwargs to allow passing request to resource (#457)
+- Add get_resource_kwargs to allow passing request to resource (`457 <https://github.com/django-import-export/django-import-export/pull/457>`_)
 
-- Expose Django user to get_export_data() and export() (#447)
+- Expose Django user to get_export_data() and export() (`447 <https://github.com/django-import-export/django-import-export/pull/447>`_)
 
-- Add before_export and after_export hooks (#449)
+- Add before_export and after_export hooks (`449 <https://github.com/django-import-export/django-import-export/pull/449>`_)
 
-- fire events post_import, post_export events (#440)
+- fire events post_import, post_export events (`440 <https://github.com/django-import-export/django-import-export/pull/440>`_)
 
 - add **kwargs to export_data / create_dataset
 
-- Add before_import_row() and after_import_row() (#452)
+- Add before_import_row() and after_import_row() (`452 <https://github.com/django-import-export/django-import-export/pull/452>`_)
 
-- Add get_export_fields() to Resource to control what fields are exported (#461)
+- Add get_export_fields() to Resource to control what fields are exported (`461 <https://github.com/django-import-export/django-import-export/pull/461>`_)
 
-- Control user-visible fields (#466)
+- Control user-visible fields (`466 <https://github.com/django-import-export/django-import-export/pull/466>`_)
 
 - Fix diff for models using ManyRelatedManager
 
-- Handle already cleaned objects (#484)
+- Handle already cleaned objects (`484 <https://github.com/django-import-export/django-import-export/pull/484>`_)
 
-- Add after_import_instance hook (#489)
+- Add after_import_instance hook (`489 <https://github.com/django-import-export/django-import-export/pull/489>`_)
 
-- Use optimized xlsx reader (#482)
+- Use optimized xlsx reader (`482 <https://github.com/django-import-export/django-import-export/pull/482>`_)
 
-- Adds resource_class of BookResource (re-adds) in admin docs (#481)
+- Adds resource_class of BookResource (re-adds) in admin docs (`481 <https://github.com/django-import-export/django-import-export/pull/481>`_)
 
-- Require POST method for process_import() (#478)
+- Require POST method for process_import() (`478 <https://github.com/django-import-export/django-import-export/pull/478>`_)
 
-- Add SimpleArrayWidget to support use of django.contrib.postgres.fields.ArrayField (#472)
+- Add SimpleArrayWidget to support use of django.contrib.postgres.fields.ArrayField (`472 <https://github.com/django-import-export/django-import-export/pull/472>`_)
 
-- Add new Diff class (#477)
+- Add new Diff class (`477 <https://github.com/django-import-export/django-import-export/pull/477>`_)
 
-- Fix #375: add row to widget.clean(), obj to widget.render() (#479)
+- Fix #375: add row to widget.clean(), obj to widget.render() (`479 <https://github.com/django-import-export/django-import-export/pull/479>`_)
 
-- Restore transactions for data import (#480)
+- Restore transactions for data import (`480 <https://github.com/django-import-export/django-import-export/pull/480>`_)
 
-- Refactor the import-export templates (#496)
+- Refactor the import-export templates (`496 <https://github.com/django-import-export/django-import-export/pull/496>`_)
 
-- Update doc links to the stable version, update rtfd to .io (#507)
+- Update doc links to the stable version, update rtfd to .io (`507 <https://github.com/django-import-export/django-import-export/pull/507>`_)
 
-- Fixed typo in the Czech translation (#495)
+- Fixed typo in the Czech translation (`495 <https://github.com/django-import-export/django-import-export/pull/495>`_)
 
 
 0.4.5 (2016-04-06)
 ------------------
 
-- Add FloatWidget, use with model fields models.FloatField (#433)
+- Add FloatWidget, use with model fields models.FloatField (`433 <https://github.com/django-import-export/django-import-export/pull/433>`_)
 
-- Fix default values in fields (#431, #364)
+- Fix default values in fields (`431 <https://github.com/django-import-export/django-import-export/pull/431>`_, `364 <https://github.com/django-import-export/django-import-export/pull/364>`_)
 
   Field constructor ``default`` argument is NOT_PROVIDED instead of None
   Field clean method checks value against ``Field.empty_values`` [None, '']
@@ -760,7 +744,7 @@ Documentation
 0.4.4 (2016-03-22)
 ------------------
 
-- FIX: No static/ when installed via pip #427
+- FIX: No static/ when installed via pip (`427 <https://github.com/django-import-export/django-import-export/pull/427>`_)
 
 - Add total # of imports and total # of updates to import success msg
 
@@ -768,15 +752,15 @@ Documentation
 0.4.3 (2016-03-08)
 ------------------
 
-- fix MediaStorage does not respect the read_mode parameter (#416)
+- fix MediaStorage does not respect the read_mode parameter (`416 <https://github.com/django-import-export/django-import-export/pull/416>`_)
 
-- Reset SQL sequences when new objects are imported (#59)
+- Reset SQL sequences when new objects are imported (`59 <https://github.com/django-import-export/django-import-export/pull/59>`_)
 
-- Let Resource rollback if import throws exception (#377)
+- Let Resource rollback if import throws exception (`377 <https://github.com/django-import-export/django-import-export/pull/377>`_)
 
-- Fixes error when a single value is stored in m2m relation field (#177)
+- Fixes error when a single value is stored in m2m relation field (`177 <https://github.com/django-import-export/django-import-export/pull/177>`_)
 
-- Add support for django.db.models.TimeField (#381)
+- Add support for django.db.models.TimeField (`381 <https://github.com/django-import-export/django-import-export/pull/381>`_)
 
 
 0.4.2 (2015-12-18)
@@ -788,7 +772,7 @@ Documentation
 0.4.1 (2015-12-11)
 ------------------
 
-- fix for fields with a dyanmic default callable (#360)
+- fix for fields with a dyanmic default callable (`360 <https://github.com/django-import-export/django-import-export/pull/360>`_)
 
 
 0.4.0 (2015-12-02)
@@ -796,7 +780,7 @@ Documentation
 
 - Add Django 1.9 support
 
-- Django 1.4 is not supported (#348)
+- Django 1.4 is not supported (`348 <https://github.com/django-import-export/django-import-export/pull/348>`_)
 
 
 0.3.1 (2015-11-20)
@@ -808,33 +792,33 @@ Documentation
 0.3 (2015-11-20)
 ----------------
 
-- FIX: importing csv UnicodeEncodeError introduced in 0.2.9 (#347)
+- FIX: importing csv UnicodeEncodeError introduced in 0.2.9 (`347 <https://github.com/django-import-export/django-import-export/pull/347>`_)
 
 
 0.2.9 (2015-11-12)
 ------------------
 
-- Allow Field.save() relation following (#344)
+- Allow Field.save() relation following (`344 <https://github.com/django-import-export/django-import-export/pull/344>`_)
 
-- Support default values on fields (and models) (#345)
+- Support default values on fields (and models) (`345 <https://github.com/django-import-export/django-import-export/pull/345>`_)
 
-- m2m widget: allow trailing comma (#343)
+- m2m widget: allow trailing comma (`343 <https://github.com/django-import-export/django-import-export/pull/343>`_)
 
-- Open csv files as text and not binary (#127)
+- Open csv files as text and not binary (`127 <https://github.com/django-import-export/django-import-export/pull/127>`_)
 
 
 0.2.8 (2015-07-29)
 ------------------
 
-- use the IntegerWidget for database-fields of type BigIntegerField (#302)
+- use the IntegerWidget for database-fields of type BigIntegerField (`302 <https://github.com/django-import-export/django-import-export/pull/302>`_)
 
-- make datetime timezone aware if USE_TZ is True (#283).
+- make datetime timezone aware if USE_TZ is True (`283 <https://github.com/django-import-export/django-import-export/pull/283>`_).
 
-- Fix 0 is interpreted as None in number widgets (#274)
+- Fix 0 is interpreted as None in number widgets (`274 <https://github.com/django-import-export/django-import-export/pull/274>`_)
 
-- add possibility to override tmp storage class (#133, #251)
+- add possibility to override tmp storage class (`133 <https://github.com/django-import-export/django-import-export/pull/133>`_, `251 <https://github.com/django-import-export/django-import-export/pull/251>`_)
 
-- better error reporting (#259)
+- better error reporting (`259 <https://github.com/django-import-export/django-import-export/pull/259>`_)
 
 
 0.2.7 (2015-05-04)
@@ -842,34 +826,34 @@ Documentation
 
 - Django 1.8 compatibility
 
-- add attribute inheritance to Resource (#140)
+- add attribute inheritance to Resource (`140 <https://github.com/django-import-export/django-import-export/pull/140>`_)
 
-- make the filename and user available to import_data (#237)
+- make the filename and user available to import_data (`237 <https://github.com/django-import-export/django-import-export/pull/237>`_)
 
-- Add to_encoding functionality (#244)
+- Add to_encoding functionality (`244 <https://github.com/django-import-export/django-import-export/pull/244>`_)
 
-- Call before_import before creating the instance_loader - fixes #193
+- Call before_import before creating the instance_loader - fixes (`193 <https://github.com/django-import-export/django-import-export/pull/193>`_)
 
 
 0.2.6 (2014-10-09)
 ------------------
 
-- added use of get_diff_headers method into import.html template (#158)
+- added use of get_diff_headers method into import.html template (`158 <https://github.com/django-import-export/django-import-export/pull/158>`_)
 
 - Try to use OrderedDict instead of SortedDict, which is deprecated in
-  Django 1.7 (#157)
+  Django 1.7 (`157 <https://github.com/django-import-export/django-import-export/pull/157>`_)
 
 - fixed #105 unicode import
 
-- remove invalid form action "form_url" #154
+- remove invalid form action "form_url" (`154 <https://github.com/django-import-export/django-import-export/pull/154>`_)
 
 
 0.2.5 (2014-10-04)
 ------------------
 
-- Do not convert numeric types to string (#149)
+- Do not convert numeric types to string (`149 <https://github.com/django-import-export/django-import-export/pull/149>`_)
 
-- implement export as an admin action (#124)
+- implement export as an admin action (`124 <https://github.com/django-import-export/django-import-export/pull/124>`_)
 
 
 0.2.4 (2014-09-18)
@@ -886,7 +870,7 @@ Documentation
 
 - Improve error messages
 
-- FIX: Properly handle NullBoleanField (#115) - Backward Incompatible Change
+- FIX: Properly handle NullBoleanField (`115 <https://github.com/django-import-export/django-import-export/pull/115>`_) - Backward Incompatible Change
   previously None values were handled as false
 
 
@@ -895,7 +879,7 @@ Documentation
 
 - Add separator and field keyword arguments to ManyToManyWidget
 
-- FIX: No support for dates before 1900 (#93)
+- FIX: No support for dates before 1900 (`93 <https://github.com/django-import-export/django-import-export/pull/93>`_)
 
 
 0.2.2 (2014-04-18)
@@ -909,7 +893,7 @@ Documentation
 0.2.1 (2014-02-20)
 ------------------
 
-- FIX import_file_name form field can be use to access the filesystem (#65)
+- FIX import_file_name form field can be use to access the filesystem (`65 <https://github.com/django-import-export/django-import-export/pull/65>`_)
 
 
 0.2.0 (2014-01-30)
@@ -921,29 +905,29 @@ Documentation
 0.1.6 (2014-01-21)
 ------------------
 
-* Additional hooks for customizing the workflow (#61)
+* Additional hooks for customizing the workflow (`61 <https://github.com/django-import-export/django-import-export/pull/61>`_)
 
 0.1.5 (2013-11-29)
 ------------------
 
-* Prevent queryset caching when exporting (#44)
+* Prevent queryset caching when exporting (`44 <https://github.com/django-import-export/django-import-export/pull/44>`_)
 
-* Allow unchanged rows to be skipped when importing (#30)
+* Allow unchanged rows to be skipped when importing (`30 <https://github.com/django-import-export/django-import-export/pull/30>`_)
 
-* Update tests for Django 1.6 (#57)
+* Update tests for Django 1.6 (`57 <https://github.com/django-import-export/django-import-export/pull/57>`_)
 
 * Allow different ``ResourceClass`` to be used in ``ImportExportModelAdmin``
-  (#49)
+  (`49 <https://github.com/django-import-export/django-import-export/pull/49>`_)
 
 0.1.4
 -----
 
-* Use ``field_name`` instead of ``column_name`` for field dehydration, FIX #36
+* Use ``field_name`` instead of ``column_name`` for field dehydration, FIX (`36 <https://github.com/django-import-export/django-import-export/pull/36>`_)
 
-* Handle OneToOneField,  FIX #17 - Exception when attempting access something
+* Handle OneToOneField,  FIX (`17 <https://github.com/django-import-export/django-import-export/pull/17>`_) - Exception when attempting access something
   on the related_name.
 
-* FIX #23 - export filter not working
+* export filter not working (`23 <https://github.com/django-import-export/django-import-export/pull/23>`_)
 
 0.1.3
 -----
@@ -979,3 +963,4 @@ Documentation
 -----
 
 * Refactor api
+
