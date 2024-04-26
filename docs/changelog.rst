@@ -62,7 +62,7 @@ Fixes
 - fix: YAML export does not work with SafeString (`1762 <https://github.com/django-import-export/django-import-export/pull/1762>`_)
 - fix: :meth:`~import_export.widgets.SimpleArrayWidget.render` crashes if value is ``None`` (`1771 <https://github.com/django-import-export/django-import-export/pull/1771>`_)
 - fix form not being passed to ``get_import_resource_kwargs()`` (`1789 <https://github.com/django-import-export/django-import-export/pull/1789>`_)
-- Fix: default widget for PositiveBigIntegerField (`1795 <https://github.com/django-import-export/django-import-export/pull/1795>`_)
+- Fix: Missing default widget for ``PositiveBigIntegerField`` (`1795 <https://github.com/django-import-export/django-import-export/pull/1795>`_)
 
 Development
 ###########
