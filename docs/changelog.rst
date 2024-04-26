@@ -1,12 +1,12 @@
 Changelog
 =========
 
+4.0.0 (2024-04-27)
+-----------------------
+
 .. warning::
 
     Version 4 introduces breaking changes.  Please refer to :doc:`release notes<release_notes>`.
-
-4.0.0 (2024-04-27)
------------------------
 
 Deprecations
 ############
