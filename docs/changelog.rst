@@ -1,7 +1,7 @@
 Changelog
 =========
 
-3.3.9 (unreleased)
+3.3.9 (2024-04-28)
 ------------------
 
 - Update translations for Russian language (#1797)
