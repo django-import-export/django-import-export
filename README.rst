@@ -2,8 +2,8 @@
 django-import-export
 ====================
 
-.. image:: https://github.com/django-import-export/django-import-export/actions/workflows/django-import-export-ci.yml/badge.svg
-    :target: https://github.com/django-import-export/django-import-export/actions/workflows/django-import-export-ci.yml
+.. image:: https://github.com/django-import-export/django-import-export/actions/workflows/release.yml/badge.svg
+    :target: https://github.com/django-import-export/django-import-export/actions/workflows/release.yml
     :alt: Build status on Github
 
 .. image:: https://coveralls.io/repos/github/django-import-export/django-import-export/badge.svg?branch=main
