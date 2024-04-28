@@ -4,6 +4,7 @@ import uuid
 
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils import timezone
 
 
 class AuthorManager(models.Manager):
@@ -24,7 +25,7 @@ class Author(models.Model):
     objects = AuthorManager()
 
     name = models.CharField(max_length=100)
-    birthday = models.DateTimeField(auto_now_add=True)
+    birthday = models.DateTimeField(default=timezone.now)
 
     def natural_key(self):
         """
@@ -153,18 +154,6 @@ class EBook(Book):
         proxy = True
 
 
-class LegacyBook(Book):
-    """
-    Book proxy model to have a separate admin url access and name.
-    This class exists solely to test import works correctly using the deprecated
-    functions.
-    This class can be removed when the deprecated code is removed.
-    """
-
-    class Meta:
-        proxy = True
-
-
 class UUIDCategory(models.Model):
     catid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=32)
@@ -176,3 +165,8 @@ class UUIDBook(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField("Book name", max_length=100)
     categories = models.ManyToManyField(UUIDCategory, blank=True)
+
+
+class WithPositiveIntegerFields(models.Model):
+    big = models.PositiveBigIntegerField(null=True)
+    small = models.PositiveSmallIntegerField(null=True)

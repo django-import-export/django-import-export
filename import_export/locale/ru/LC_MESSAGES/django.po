@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-04-25 14:57+0700\n"
-"PO-Revision-Date: 2024-04-26 17:19+0700\n"
+"POT-Creation-Date: 2024-04-26 20:01+0700\n"
+"PO-Revision-Date: 2024-04-26 20:55+0700\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: ru\n"
@@ -19,16 +19,17 @@ msgstr ""
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 "X-Generator: Poedit 3.0.1\n"
 
-#: admin.py:244
+#: admin.py:241 admin.py:591
 #, python-format
 msgid "%s through import_export"
 msgstr "%s через import_export"
 
-#: admin.py:252
-msgid "Import finished, with {} new and {} updated {}."
-msgstr "Импорт завершен, {} новых и {} обновлено."
+#: admin.py:249
+msgid "Import finished: {} new, {} updated, {} deleted and {} skipped {}."
+msgstr ""
+"Импорт завершен: {} новых, {} обновлено, {} удалено и {} пропущено {}."
 
-#: admin.py:497
+#: admin.py:418
 #, python-format
 msgid ""
 "%(exc_name)s encountered while trying to read file. Ensure you have chosen "
@@ -37,43 +38,108 @@ msgstr ""
 "При чтении файла возникла ошибка %(exc_name)s. Убедитесь, что используется "
 "подходящий формат файла."
 
-#: admin.py:648 templates/admin/import_export/change_list_import_item.html:5
+#: admin.py:491
+msgid ""
+"No valid data to import. Ensure your file has the correct headers or data "
+"for import."
+msgstr ""
+"Некорректные данные для импорта. Убедитесь, что файл содержит корректные "
+"заголовок и данные."
+
+#: admin.py:542 templates/admin/import_export/change_list_import_item.html:5
 #: templates/admin/import_export/import.html:19
 msgid "Import"
 msgstr "Импорт"
 
-#: admin.py:850 templates/admin/import_export/change_list_export_item.html:5
+#: admin.py:786 templates/admin/import_export/change_form.html:8
+#: templates/admin/import_export/change_list_export_item.html:5
 #: templates/admin/import_export/export.html:12
 msgid "Export"
 msgstr "Экспорт"
 
-#: admin.py:927
-msgid "You must select an export format."
-msgstr "Необходимо выбрать формат экспорта."
-
-#: admin.py:952
+#: admin.py:912
 #, python-format
 msgid "Export selected %(verbose_name_plural)s"
 msgstr "Экспортировать выбранные %(verbose_name_plural)s"
 
-#: forms.py:12
+#: forms.py:15
 msgid "Resource"
 msgstr "Ресурс"
 
-#: forms.py:40
+#: forms.py:20
+msgid "Format"
+msgstr "Формат"
+
+#: forms.py:58
 msgid "File to import"
 msgstr "Файл для импорта"
 
-#: forms.py:42 forms.py:83 forms.py:116
-msgid "Format"
-msgstr "Формат"
+#: forms.py:209
+msgid "Form is not validated, call `is_valid` first"
+msgstr "Необходимо сначала вызвать `is_valid` для валидации формы"
+
+#: forms.py:261
+#, python-format
+msgid "Select at least 1 field for \"%(resource_name)s\" to export"
+msgstr "Выберите хотя бы одно поле для экспорта \"%(resource_name)s\""
+
+#: resources.py:1131
+#, python-format
+msgid ""
+"The following fields are declared in 'import_id_fields' but are not present "
+"in the resource fields: %s"
+msgstr ""
+"Следующие поля указаны в 'import_id_fields', но отсутствуют в полях "
+"ресурса: %s"
+
+#: resources.py:1146
+#, python-format
+msgid ""
+"The following fields are declared in 'import_id_fields' but are not present "
+"in the file headers: %s"
+msgstr ""
+"Следующие поля указаны в 'import_id_fields', но отсутствуют в заголовке "
+"файла: %s"
+
+#: results.py:120
+#, python-format
+msgid "call to force_str() on instance failed: %s"
+msgstr "вызов 'force_str()' завершился ошибкой: %s"
 
 #: templates/admin/import_export/base.html:11
 msgid "Home"
 msgstr "Главная"
 
-#: templates/admin/import_export/export.html:38
-#: templates/admin/import_export/import.html:65
+#: templates/admin/import_export/export.html:21
+#, python-format
+msgid ""
+"\n"
+"        Export %(len)s selected item.\n"
+"        "
+msgid_plural ""
+"\n"
+"        Export %(len)s selected items.\n"
+"      "
+msgstr[0] ""
+"\n"
+"        Экспортировать %(len)s выбранный элемент.\n"
+"        "
+msgstr[1] ""
+"\n"
+"        Экспортировать %(len)s выбранных элемента.\n"
+"        "
+msgstr[2] ""
+"\n"
+"        Экспортировать %(len)s выбранных элементов.\n"
+"        "
+
+#: templates/admin/import_export/export.html:48
+#: templates/admin/import_export/resource_fields_list.html:5
+msgid "This exporter will export the following fields: "
+msgstr "Будут экспортированы следующие поля: "
+
+#: templates/admin/import_export/export.html:76
+#: templates/admin/import_export/import.html:70
 msgid "Submit"
 msgstr "Отправить"
 
@@ -89,20 +155,20 @@ msgstr ""
 msgid "Confirm import"
 msgstr "Подтвердить импорт"
 
-#: templates/admin/import_export/import.html:76
-#: templates/admin/import_export/import.html:107
+#: templates/admin/import_export/import.html:81
+#: templates/admin/import_export/import.html:122
 msgid "Errors"
 msgstr "Ошибки"
 
-#: templates/admin/import_export/import.html:87
+#: templates/admin/import_export/import.html:95
 msgid "Line number"
 msgstr "Номер строки"
 
-#: templates/admin/import_export/import.html:99
+#: templates/admin/import_export/import.html:114
 msgid "Some rows failed to validate"
 msgstr "Некоторые строки не прошли валидацию"
 
-#: templates/admin/import_export/import.html:101
+#: templates/admin/import_export/import.html:116
 msgid ""
 "Please correct these errors in your data where possible, then reupload it "
 "using the form above."
@@ -110,38 +176,53 @@ msgstr ""
 "По возможности исправьте эти ошибки в своих данных, а затем повторно "
 "загрузите их, используя форму выше."
 
-#: templates/admin/import_export/import.html:106
+#: templates/admin/import_export/import.html:121
 msgid "Row"
 msgstr "Строка"
 
-#: templates/admin/import_export/import.html:133
+#: templates/admin/import_export/import.html:148
 msgid "Non field specific"
 msgstr "Не относящиеся к конкретному полю"
 
-#: templates/admin/import_export/import.html:156
+#: templates/admin/import_export/import.html:171
 msgid "Preview"
 msgstr "Предпросмотр"
 
-#: templates/admin/import_export/import.html:171
+#: templates/admin/import_export/import.html:186
 msgid "New"
 msgstr "Добавлено"
 
-#: templates/admin/import_export/import.html:173
+#: templates/admin/import_export/import.html:188
 msgid "Skipped"
 msgstr "Пропущено"
 
-#: templates/admin/import_export/import.html:175
+#: templates/admin/import_export/import.html:190
 msgid "Delete"
 msgstr "Удалено"
 
-#: templates/admin/import_export/import.html:177
+#: templates/admin/import_export/import.html:192
 msgid "Update"
 msgstr "Обновлено"
-
-#: templates/admin/import_export/resource_fields_list.html:5
-msgid "This exporter will export the following fields: "
-msgstr "Будут экспортированы следующие поля: "
 
 #: templates/admin/import_export/resource_fields_list.html:7
 msgid "This importer will import the following fields: "
 msgstr "Будут импортированы следующие поля: "
+
+#: widgets.py:250
+msgid "Value could not be parsed using defined date formats."
+msgstr "Ошибка парсинга значения даты."
+
+#: widgets.py:300
+msgid "Value could not be parsed using defined datetime formats."
+msgstr "Ошибка парсинга значения даты и времени."
+
+#: widgets.py:346
+msgid "Value could not be parsed using defined time formats."
+msgstr "Ошибка парсинга значения времени."
+
+#: widgets.py:374
+msgid "Value could not be parsed."
+msgstr "Ошибка парсинга значения."
+
+#~ msgid "You must select an export format."
+#~ msgstr "Необходимо выбрать формат экспорта"

@@ -1,0 +1,71 @@
+[build-system]
+requires = ["setuptools>=60", "setuptools-scm>=7.1.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "django-import-export"
+authors = [
+    {name = "Bojan Mihelač", email = "djangoimportexport@gmail.com"},
+]
+maintainers = [
+    {name = "Matthew Hegarty", email = "djangoimportexport@gmail.com"},
+]
+description = "Django application and library for importing and exporting data with included admin integration."
+keywords = ["django", "import", "export"]
+license = {file = "LICENSE"}
+requires-python = ">=3.8"
+dynamic = ["version", "readme"]
+classifiers = [
+    "Framework :: Django",
+    "Framework :: Django :: 4.2",
+    "Framework :: Django :: 5.0",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: BSD License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Software Development",
+]
+
+# tablib temporarily using master before v4
+dependencies = [
+    "diff-match-patch",
+    "Django>=3.2",
+    "tablib==3.5.0"
+]
+
+[project.optional-dependencies]
+all = [
+    "tablib[all]==3.5.0"
+]
+cli = ["tablib[cli]"]
+ods = ["tablib[ods]"]
+pandas = ["tablib[pandas]"]
+xls = ["tablib[xls]==3.5.0"]
+xlsx = ["tablib[xlsx]==3.5.0"]
+yaml = ["tablib[yaml]==3.5.0"]
+
+[project.urls]
+Documentation = "https://django-import-export.readthedocs.io/en/stable/"
+Repository = "https://github.com/django-import-export/django-import-export"
+Changelog = "https://github.com/django-import-export/django-import-export/blob/main/docs/changelog.rst"
+
+[tool.setuptools]
+platforms = ["OS Independent"]
+license-files = ["LICENSE", "AUTHORS"]
+
+[tool.setuptools.dynamic]
+readme = {file = ["README.rst"]}
+
+[tool.setuptools_scm]
+write_to = "import_export/_version.py"
+local_scheme = "no-local-version"
+
+[tool.isort]
+profile = "black"

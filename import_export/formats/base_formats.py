@@ -1,7 +1,7 @@
-import html
 import warnings
 
 import tablib
+from django.conf import settings
 from tablib.formats import registry
 
 
@@ -86,9 +86,7 @@ class TablibFormat(Format):
         return tablib.import_set(in_stream, format=self.get_title(), **kwargs)
 
     def export_data(self, dataset, **kwargs):
-        if kwargs.pop("escape_html", None):
-            self._escape_html(dataset)
-        if kwargs.pop("escape_formulae", None):
+        if getattr(settings, "IMPORT_EXPORT_ESCAPE_FORMULAE_ON_EXPORT", False) is True:
             self._escape_formulae(dataset)
         return dataset.export(self.get_title(), **kwargs)
 
@@ -103,12 +101,6 @@ class TablibFormat(Format):
 
     def can_export(self):
         return hasattr(self.get_format(), "export_set")
-
-    def _escape_html(self, dataset):
-        for _ in dataset:
-            row = dataset.lpop()
-            row = [html.escape(str(cell)) for cell in row]
-            dataset.append(row)
 
     def _escape_formulae(self, dataset):
         def _do_escape(s):
@@ -153,9 +145,6 @@ class TSV(TextFormat):
     TABLIB_MODULE = "tablib.formats._tsv"
     CONTENT_TYPE = "text/tab-separated-values"
 
-    def create_dataset(self, in_stream, **kwargs):
-        return super().create_dataset(in_stream, **kwargs)
-
 
 class ODS(TextFormat):
     TABLIB_MODULE = "tablib.formats._ods"
@@ -165,9 +154,6 @@ class ODS(TextFormat):
 class HTML(TextFormat):
     TABLIB_MODULE = "tablib.formats._html"
     CONTENT_TYPE = "text/html"
-
-    def export_data(self, dataset, **kwargs):
-        return super().export_data(dataset, **kwargs)
 
 
 class XLS(TablibFormat):

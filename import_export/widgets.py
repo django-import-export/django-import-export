@@ -1,6 +1,9 @@
 import json
-from datetime import date, datetime, time
+import logging
+import numbers
+from datetime import date, datetime, time, timedelta
 from decimal import Decimal
+from warnings import warn
 
 import django
 from django.conf import settings
@@ -9,6 +12,9 @@ from django.utils import timezone
 from django.utils.dateparse import parse_duration
 from django.utils.encoding import force_str, smart_str
 from django.utils.formats import number_format
+from django.utils.translation import gettext_lazy as _
+
+logger = logging.getLogger(__name__)
 
 
 def format_datetime(value, datetime_format):
@@ -23,47 +29,55 @@ def format_datetime(value, datetime_format):
 
 class Widget:
     """
-    A Widget takes care of converting between import and export representations.
-
-    This is achieved by the two methods,
-    :meth:`~import_export.widgets.Widget.clean` and
-    :meth:`~import_export.widgets.Widget.render`.
+    A Widget handles converting between import and export representations.
     """
+
+    def __init__(self, coerce_to_string=True):
+        """
+        :param coerce_to_string: If True, :meth:`~import_export.widgets.Widget.render`
+          will return a string representation of the value, otherwise the value is
+          returned.
+        """
+        self.coerce_to_string = coerce_to_string
 
     def clean(self, value, row=None, **kwargs):
         """
-        Returns an appropriate Python object for an imported value.
+        Returns an appropriate python object for an imported value.
+        For example, a date string will be converted to a python datetime instance.
 
-        For example, if you import a value from a spreadsheet,
-        :meth:`~import_export.widgets.Widget.clean` handles conversion
-        of this value into the corresponding Python object.
-
-        Numbers or dates can be *cleaned* to their respective data types and
-        don't have to be imported as Strings.
+        :param value: The value to be converted to a native type.
+        :param row: A dict containing row key/value pairs.
+        :param **kwargs: Optional kwargs.
         """
         return value
 
     def render(self, value, obj=None):
         """
-        Returns an export representation of a Python value.
+        Returns an export representation of a python value.
 
-        For example, if you have an object you want to export,
-        :meth:`~import_export.widgets.Widget.render` takes care of converting
-        the object's field to a value that can be written to a spreadsheet.
+        :param value: The python value to be rendered.
+        :param obj: The model instance from which the value is taken.
+          This parameter is deprecated and will be removed in a future release.
+
+        :return: By default, this value will be a string, with ``None`` values returned
+          as empty strings.
         """
         return force_str(value)
+
+    def _obj_deprecation_warning(self, obj):
+        if obj is not None:
+            warn(
+                "The 'obj' parameter is deprecated and will be removed "
+                "in a future release",
+                DeprecationWarning,
+                stacklevel=2,
+            )
 
 
 class NumberWidget(Widget):
     """
     Widget for converting numeric fields.
-
-    :param coerce_to_string: If True, render will return a string representation
-        of the value (None is returned as ""), otherwise the value is returned.
     """
-
-    def __init__(self, coerce_to_string=False):
-        self.coerce_to_string = coerce_to_string
 
     def is_empty(self, value):
         if isinstance(value, str):
@@ -72,8 +86,13 @@ class NumberWidget(Widget):
         return value is None or value == ""
 
     def render(self, value, obj=None):
+        self._obj_deprecation_warning(obj)
         if self.coerce_to_string:
-            return "" if value is None else number_format(value)
+            return (
+                ""
+                if value is None or not isinstance(value, numbers.Number)
+                else "" + number_format(value)
+            )
         return value
 
 
@@ -114,26 +133,26 @@ class CharWidget(Widget):
     """
     Widget for converting text fields.
 
-    :param coerce_to_string: If True, the value returned by clean() is cast to a
-      string.
-    :param allow_blank:  If True, and if coerce_to_string is True, then clean() will
-      return null values as empty strings, otherwise as null.
+    :param allow_blank:  If True, then :meth:`~import_export.widgets.Widget.clean`
+      will return null values as empty strings, otherwise as ``None``.
     """
 
-    def __init__(self, coerce_to_string=False, allow_blank=False):
+    def __init__(self, coerce_to_string=True, allow_blank=True):
         """ """
         self.coerce_to_string = coerce_to_string
         self.allow_blank = allow_blank
 
     def clean(self, value, row=None, **kwargs):
         val = super().clean(value, row, **kwargs)
-        if self.coerce_to_string is True:
-            if val is None:
-                if self.allow_blank is True:
-                    return ""
-            else:
-                return force_str(val)
-        return val
+        if val is None:
+            return "" if self.allow_blank is True else None
+        return force_str(val)
+
+    def render(self, value, obj=None):
+        self._obj_deprecation_warning(obj)
+        if self.coerce_to_string:
+            return "" if value is None else force_str(value)
+        return value
 
 
 class BooleanWidget(Widget):
@@ -157,34 +176,42 @@ class BooleanWidget(Widget):
         class BooleanExample(resources.ModelResource):
             warn = fields.Field(widget=widgets.BooleanWidget())
 
-            def before_import_row(self, row, row_number=None, **kwargs):
+            def before_import_row(self, row, **kwargs):
                 if "warn" in row.keys():
                     # munge "warn" to "True"
                     if row["warn"] in ["warn", "WARN"]:
                         row["warn"] = True
 
-                return super().before_import_row(row, row_number, **kwargs)
+                return super().before_import_row(row, **kwargs)
     """
 
     TRUE_VALUES = ["1", 1, True, "true", "TRUE", "True"]
     FALSE_VALUES = ["0", 0, False, "false", "FALSE", "False"]
     NULL_VALUES = ["", None, "null", "NULL", "none", "NONE", "None"]
 
-    def render(self, value, obj=None):
-        """
-        On export, ``True`` is represented as ``1``, ``False`` as ``0``, and
-        ``None``/NULL as a empty string.
-
-        Note that these values are also used on the import confirmation view.
-        """
-        if value in self.NULL_VALUES:
-            return ""
-        return self.TRUE_VALUES[0] if value else self.FALSE_VALUES[0]
+    def __init__(self, coerce_to_string=True):
+        """ """
+        self.coerce_to_string = coerce_to_string
 
     def clean(self, value, row=None, **kwargs):
         if value in self.NULL_VALUES:
             return None
         return True if value in self.TRUE_VALUES else False
+
+    def render(self, value, obj=None):
+        """
+        :return: ``True`` is represented as ``1``, ``False`` as ``0``, and
+          ``None``/NULL as an empty string.
+
+          If ``coerce_to_string`` is ``False``, the python Boolean type is
+          returned (may be ``None``).
+        """
+        self._obj_deprecation_warning(obj)
+        if self.coerce_to_string is False:
+            return value
+        if value in self.NULL_VALUES or not type(value) is bool:
+            return ""
+        return self.TRUE_VALUES[0] if value else self.FALSE_VALUES[0]
 
 
 class DateWidget(Widget):
@@ -195,7 +222,8 @@ class DateWidget(Widget):
     ``settings.DATE_INPUT_FORMATS`` or ``"%Y-%m-%d"`` is used.
     """
 
-    def __init__(self, format=None):
+    def __init__(self, format=None, coerce_to_string=True):
+        super().__init__(coerce_to_string=coerce_to_string)
         if format is None:
             if not settings.DATE_INPUT_FORMATS:
                 formats = ("%Y-%m-%d",)
@@ -206,6 +234,10 @@ class DateWidget(Widget):
         self.formats = formats
 
     def clean(self, value, row=None, **kwargs):
+        """
+        :returns: A python date instance.
+        :raises: ValueError if the value cannot be parsed using defined formats.
+        """
         if not value:
             return None
         if isinstance(value, date):
@@ -213,12 +245,15 @@ class DateWidget(Widget):
         for format in self.formats:
             try:
                 return datetime.strptime(value, format).date()
-            except (ValueError, TypeError):
-                continue
-        raise ValueError("Enter a valid date.")
+            except (ValueError, TypeError) as e:
+                logger.debug(str(e))
+        raise ValueError(_("Value could not be parsed using defined date formats."))
 
     def render(self, value, obj=None):
-        if not value:
+        self._obj_deprecation_warning(obj)
+        if self.coerce_to_string is False:
+            return value
+        if not value or not type(value) is date:
             return ""
         return format_datetime(value, self.formats[0])
 
@@ -231,7 +266,8 @@ class DateTimeWidget(Widget):
     ``settings.DATETIME_INPUT_FORMATS`` or ``"%Y-%m-%d %H:%M:%S"`` is used.
     """
 
-    def __init__(self, format=None):
+    def __init__(self, format=None, coerce_to_string=True):
+        super().__init__(coerce_to_string=coerce_to_string)
         if format is None:
             if not settings.DATETIME_INPUT_FORMATS:
                 formats = ("%Y-%m-%d %H:%M:%S",)
@@ -242,6 +278,10 @@ class DateTimeWidget(Widget):
         self.formats = formats
 
     def clean(self, value, row=None, **kwargs):
+        """
+        :returns: A python datetime instance.
+        :raises: ValueError if the value cannot be parsed using defined formats.
+        """
         dt = None
         if not value:
             return None
@@ -251,16 +291,19 @@ class DateTimeWidget(Widget):
             for format_ in self.formats:
                 try:
                     dt = datetime.strptime(value, format_)
-                except (ValueError, TypeError):
-                    continue
+                except (ValueError, TypeError) as e:
+                    logger.debug(str(e))
         if dt:
             if settings.USE_TZ and timezone.is_naive(dt):
                 dt = timezone.make_aware(dt)
             return dt
-        raise ValueError("Enter a valid date/time.")
+        raise ValueError(_("Value could not be parsed using defined datetime formats."))
 
     def render(self, value, obj=None):
-        if not value:
+        self._obj_deprecation_warning(obj)
+        if self.coerce_to_string is False:
+            return value
+        if not value or not type(value) is datetime:
             return ""
         if settings.USE_TZ:
             value = timezone.localtime(value)
@@ -275,7 +318,8 @@ class TimeWidget(Widget):
     ``settings.DATETIME_INPUT_FORMATS`` or ``"%H:%M:%S"`` is used.
     """
 
-    def __init__(self, format=None):
+    def __init__(self, format=None, coerce_to_string=True):
+        super().__init__(coerce_to_string=coerce_to_string)
         if format is None:
             if not settings.TIME_INPUT_FORMATS:
                 formats = ("%H:%M:%S",)
@@ -286,6 +330,10 @@ class TimeWidget(Widget):
         self.formats = formats
 
     def clean(self, value, row=None, **kwargs):
+        """
+        :returns: A python time instance.
+        :raises: ValueError if the value cannot be parsed using defined formats.
+        """
         if not value:
             return None
         if isinstance(value, time):
@@ -293,12 +341,15 @@ class TimeWidget(Widget):
         for format in self.formats:
             try:
                 return datetime.strptime(value, format).time()
-            except (ValueError, TypeError):
-                continue
-        raise ValueError("Enter a valid time.")
+            except (ValueError, TypeError) as e:
+                logger.debug(str(e))
+        raise ValueError(_("Value could not be parsed using defined time formats."))
 
     def render(self, value, obj=None):
-        if not value:
+        self._obj_deprecation_warning(obj)
+        if self.coerce_to_string is False:
+            return value
+        if not value or not type(value) is time:
             return ""
         return value.strftime(self.formats[0])
 
@@ -309,16 +360,24 @@ class DurationWidget(Widget):
     """
 
     def clean(self, value, row=None, **kwargs):
+        """
+        :returns: A python duration instance.
+        :raises: ValueError if the value cannot be parsed.
+        """
         if not value:
             return None
 
         try:
             return parse_duration(value)
-        except (ValueError, TypeError):
-            raise ValueError("Enter a valid duration.")
+        except (ValueError, TypeError) as e:
+            logger.debug(str(e))
+            raise ValueError(_("Value could not be parsed."))
 
     def render(self, value, obj=None):
-        if value is None:
+        self._obj_deprecation_warning(obj)
+        if self.coerce_to_string is False:
+            return value
+        if value is None or not type(value) is timedelta:
             return ""
         return str(value)
 
@@ -330,16 +389,27 @@ class SimpleArrayWidget(Widget):
     :param separator: Defaults to ``','``
     """
 
-    def __init__(self, separator=None):
+    def __init__(self, separator=None, coerce_to_string=True):
         if separator is None:
             separator = ","
         self.separator = separator
-        super().__init__()
+        super().__init__(coerce_to_string=coerce_to_string)
 
     def clean(self, value, row=None, **kwargs):
         return value.split(self.separator) if value else []
 
     def render(self, value, obj=None):
+        """
+        :return: A string with values separated by ``separator``.
+          If ``coerce_to_string`` is ``False``, the native array will be returned.
+          If ``value`` is None, None will be returned if ``coerce_to_string``
+            is ``False``, otherwise an empty string will be returned.
+        """
+        self._obj_deprecation_warning(obj)
+        if value is None:
+            return "" if self.coerce_to_string is True else None
+        if not self.coerce_to_string:
+            return value
         return self.separator.join(str(v) for v in value)
 
 
@@ -362,8 +432,14 @@ class JSONWidget(Widget):
                 return json.loads(val.replace("'", '"'))
 
     def render(self, value, obj=None):
+        """
+        :return: A JSON formatted string derived from ``value``.
+          ``coerce_to_string`` has no effect on the return value.
+        """
+        self._obj_deprecation_warning(obj)
         if value:
             return json.dumps(value)
+        return None
 
 
 class ForeignKeyWidget(Widget):
@@ -409,9 +485,17 @@ class ForeignKeyWidget(Widget):
         related object, default to False
     """
 
-    def __init__(self, model, field="pk", use_natural_foreign_keys=False, **kwargs):
+    def __init__(
+        self,
+        model,
+        field="pk",
+        use_natural_foreign_keys=False,
+        key_is_id=False,
+        **kwargs,
+    ):
         self.model = model
         self.field = field
+        self.key_is_id = key_is_id
         self.use_natural_foreign_keys = use_natural_foreign_keys
         super().__init__(**kwargs)
 
@@ -422,8 +506,12 @@ class ForeignKeyWidget(Widget):
         Overwrite this method if you want to limit the pool of objects from
         which the related object is retrieved.
 
-        :param value: The field's value in the datasource.
-        :param row: The datasource's current row.
+        :param value: The field's value in the dataset.
+        :param row: The dataset's current row.
+        :param \\*args:
+            Optional args.
+        :param \\**kwargs:
+            Optional kwargs.
 
         As an example; if you'd like to have ForeignKeyWidget look up a Person
         by their pre- **and** lastname column, you could subclass the widget
@@ -439,6 +527,16 @@ class ForeignKeyWidget(Widget):
         return self.model.objects.all()
 
     def clean(self, value, row=None, **kwargs):
+        """
+        :return: a single Foreign Key instance derived from the args.
+          ``None`` can be returned if the value passed is a null value.
+
+        :param value: The field's value in the dataset.
+        :param row: The dataset's current row.
+        :param \\**kwargs:
+            Optional kwargs.
+        :raises: ``ObjectDoesNotExist`` if no valid instance can be found.
+        """
         val = super().clean(value)
         if val:
             if self.use_natural_foreign_keys:
@@ -446,11 +544,37 @@ class ForeignKeyWidget(Widget):
                 value = json.loads(value)
                 return self.model.objects.get_by_natural_key(*value)
             else:
-                return self.get_queryset(value, row, **kwargs).get(**{self.field: val})
+                lookup_kwargs = self.get_lookup_kwargs(value, row, **kwargs)
+                obj = self.get_queryset(value, row, **kwargs).get(**lookup_kwargs)
+                if self.key_is_id:
+                    return obj.id
+                return obj
         else:
             return None
 
+    def get_lookup_kwargs(self, value, row, **kwargs):
+        """
+        :return: the key value pairs used to identify a model instance.
+          Override this to customize instance lookup.
+
+        :param value: The field's value in the dataset.
+        :param row: The dataset's current row.
+        :param \\**kwargs:
+            Optional kwargs.
+        """
+        return {self.field: value}
+
     def render(self, value, obj=None):
+        """
+        :return: A string representation of the related value.
+          If ``use_natural_foreign_keys``, the value's natural key is returned.
+          ``coerce_to_string`` has no effect on the return value.
+        """
+        self._obj_deprecation_warning(obj)
+
+        if self.key_is_id:
+            return value or ""
+
         if value is None:
             return ""
 
@@ -503,5 +627,13 @@ class ManyToManyWidget(Widget):
         return self.model.objects.filter(**{"%s__in" % self.field: ids})
 
     def render(self, value, obj=None):
-        ids = [smart_str(getattr(obj, self.field)) for obj in value.all()]
-        return self.separator.join(ids)
+        """
+        :return: A string with values separated by ``separator``.
+          ``None`` values are returned as empty strings.
+          ``coerce_to_string`` has no effect on the return value.
+        """
+        self._obj_deprecation_warning(obj)
+        if value is not None:
+            ids = [smart_str(getattr(obj, self.field)) for obj in value.all()]
+            return self.separator.join(ids)
+        return ""

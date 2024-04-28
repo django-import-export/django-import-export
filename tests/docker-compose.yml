@@ -9,10 +9,10 @@ services:
       IMPORT_EXPORT_POSTGRESQL_USER: ${IMPORT_EXPORT_POSTGRESQL_USER}
       IMPORT_EXPORT_POSTGRESQL_PASSWORD: ${IMPORT_EXPORT_POSTGRESQL_PASSWORD}
       POSTGRES_PASSWORD: ${IMPORT_EXPORT_POSTGRESQL_PASSWORD}
-    image: postgres:12
+    image: postgres:13
     restart: "no"
     ports:
-      - "5432:5432"
+      - "${IMPORT_EXPORT_POSTGRESQL_PORT:-5432}:5432"
     volumes:
       - ./docker/db/init-postgres-db.sh/:/docker-entrypoint-initdb.d/init-postgres-db.sh
       - postgres-db-data:/var/lib/postgresql/data
@@ -26,10 +26,11 @@ services:
       MYSQL_USER: ${IMPORT_EXPORT_MYSQL_USER}
       MYSQL_PASSWORD: ${IMPORT_EXPORT_MYSQL_PASSWORD}
       MYSQL_ROOT_PASSWORD: ${IMPORT_EXPORT_MYSQL_PASSWORD}
+      MYSQL_PORT:
     ports:
-      - "3306:3306"
+      - "${IMPORT_EXPORT_MYSQL_PORT:-3306}:3306"
     expose:
-      - '3306'
+      - '${IMPORT_EXPORT_MYSQL_PORT:-3306}'
     volumes:
       - ./docker/db/init-mysql-db.sh:/docker-entrypoint-initdb.d/init-mysql-db.sh
       - mysql-db-data:/var/lib/mysql

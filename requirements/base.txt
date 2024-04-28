@@ -1,4 +1,4 @@
 Django>=3.2
-# tablib temporarily pinned to 3.5.0 - see issue #1602
-tablib[html,ods,xls,xlsx,yaml]==3.5.0
+# # tablib temporarily pinned before v4 - see #1627
+tablib==3.5.0
 diff-match-patch
