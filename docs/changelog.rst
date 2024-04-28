@@ -98,7 +98,7 @@ i18n
 
 - updated translations for release-4 (`1775 <https://github.com/django-import-export/django-import-export/pull/1775>`_)
 
-3.3.9 (unreleased)
+3.3.9 (2024-04-28)
 ------------------
 
 - Update translations for Russian language (`1797 <https://github.com/django-import-export/django-import-export/pull/1797>`_)
