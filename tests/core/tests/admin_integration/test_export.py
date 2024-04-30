@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 import chardet
 import tablib
 from core.admin import BookAdmin, BookResource
-from core.models import Author, Book
+from core.models import Author, Book, UUIDCategory
 from core.tests.admin_integration.mixins import AdminTestMixin
 from core.tests.utils import ignore_utcnow_deprecation_warning
 from django.contrib.admin.sites import AdminSite
@@ -300,6 +300,13 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
             f"{b1.id},=SUM(1+1)\r\n".encode(),
             response.content,
         )
+
+    def test_export_model_with_custom_PK(self):
+        # issue 1800
+        UUIDCategory.objects.create(name="UUIDCategory")
+        response = self.client.get("/admin/core/uuidcategory/export/")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "UUIDCategoryResource")
 
 
 class FilteredExportAdminIntegrationTest(AdminTestMixin, TestCase):
