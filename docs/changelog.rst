@@ -4,7 +4,7 @@ Changelog
 4.0.1 (unreleased)
 ------------------
 
-- fix crash on export when model has no ``id`` (#1802)
+- fix crash on export when model has no ``id`` (`1802 <https://github.com/django-import-export/django-import-export/pull/1802>`_)
 
 4.0.0 (2024-04-27)
 ------------------
