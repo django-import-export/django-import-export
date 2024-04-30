@@ -1,4 +1,5 @@
 import functools
+import inspect
 import logging
 import traceback
 from collections import OrderedDict
@@ -1229,6 +1230,15 @@ class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
             if isinstance(result, str):
                 result = getattr(cls, result)(f)
         else:
+            # issue 1804
+            # The field class may be in a third party library as a subclass
+            # of a standard field class.
+            # iterate base classes to determine the correct widget class to use.
+            for base_class in inspect.getmro(f.__class__):
+                if base_class.__name__ in cls.WIDGETS_MAP:
+                    result = cls.WIDGETS_MAP[base_class.__name__]
+                    break
+
             try:
                 from django.contrib.postgres.fields import ArrayField
             except ImportError:

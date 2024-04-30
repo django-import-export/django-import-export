@@ -1,6 +1,11 @@
 Changelog
 =========
 
+4.0.1 ()
+-----------------------
+
+- fix Widget crash when django Field subclass is used (#)
+
 4.0.0 (2024-04-27)
 -----------------------
 
