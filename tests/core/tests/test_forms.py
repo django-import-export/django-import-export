@@ -70,11 +70,7 @@ class ImportFormMediaTest(TestCase):
                 widget=TestMediaWidget,
             )
 
-        class ResourceWithWidgetWithMedia(resources.ModelResource):
-            class Meta:
-                model = Author
-
-        form = CustomImportForm([CSV], [ResourceWithWidgetWithMedia])
+        form = CustomImportForm([CSV], [MyResource])
         media = form.media
         self.assertEqual(
             media._css,
