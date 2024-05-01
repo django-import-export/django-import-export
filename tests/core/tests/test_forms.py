@@ -1,4 +1,5 @@
 import django.forms
+from core.models import Author
 from django.test import TestCase
 
 from import_export import forms, resources
@@ -30,6 +31,63 @@ class FormTest(TestCase):
         self.assertEqual(
             form.fields["resource"].choices,
             [(0, "ModelResource"), (1, "My super resource")],
+        )
+
+
+class ImportFormMediaTest(TestCase):
+    def test_import_form_media(self):
+        form = forms.ImportForm([CSV], [MyResource])
+        media = form.media
+        self.assertEqual(
+            media._css,
+            {},
+        )
+        self.assertEqual(
+            media._js,
+            [
+                "admin/js/vendor/jquery/jquery.min.js",
+                "admin/js/jquery.init.js",
+                "import_export/guess_format.js",
+            ],
+        )
+
+    def test_import_form_and_custom_widget_media(self):
+        class TestMediaWidget(django.forms.TextInput):
+            """Dummy test widget with associated CSS and JS media."""
+
+            class Media:
+                css = {
+                    "all": ["test.css"],
+                }
+                js = ["test.js"]
+
+        class CustomImportForm(forms.ImportForm):
+            """Dummy custom import form with a custom widget."""
+
+            author = django.forms.ModelChoiceField(
+                queryset=Author.objects.none(),
+                required=True,
+                widget=TestMediaWidget,
+            )
+
+        class ResourceWithWidgetWithMedia(resources.ModelResource):
+            class Meta:
+                model = Author
+
+        form = CustomImportForm([CSV], [ResourceWithWidgetWithMedia])
+        media = form.media
+        self.assertEqual(
+            media._css,
+            {"all": ["test.css"]},
+        )
+        self.assertEqual(
+            media._js,
+            [
+                "test.js",
+                "admin/js/vendor/jquery/jquery.min.js",
+                "admin/js/jquery.init.js",
+                "import_export/guess_format.js",
+            ],
         )
 
 
