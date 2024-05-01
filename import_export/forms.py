@@ -70,14 +70,22 @@ class ImportForm(ImportExportFormBase):
 
     @property
     def media(self):
+        """Media required to render this form and all widgets within it."""
+        # Media required to render this form.
         extra = "" if settings.DEBUG else ".min"
-        return forms.Media(
+        media = forms.Media(
             js=(
                 f"admin/js/vendor/jquery/jquery{extra}.js",
                 "admin/js/jquery.init.js",
                 "import_export/guess_format.js",
             )
         )
+
+        # All other media required to render the widgets on this form.
+        for field in self.fields.values():
+            media += field.widget.media
+
+        return media
 
 
 class ConfirmImportForm(forms.Form):
