@@ -1126,7 +1126,7 @@ class Resource(metaclass=DeclarativeMetaclass):
         missing_headers = list()
 
         if self.get_import_id_fields() == ["id"]:
-            # this is the default case
+            # this is the default case, so ok if not present
             return
 
         for field_name in self.get_import_id_fields():
