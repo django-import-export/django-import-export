@@ -11,7 +11,7 @@ from core.tests.resources import (
 from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.test import TestCase
 
-from import_export import exceptions, results
+from import_export import exceptions, resources, results
 
 
 class ErrorHandlingTest(TestCase):
@@ -48,9 +48,8 @@ class ErrorHandlingTest(TestCase):
 
     def test_import_data_raises_field_specific_validation_errors(self):
         resource = AuthorResource()
-        resource._meta.import_id_fields = ["pk"]
-        dataset = tablib.Dataset(headers=["pk", "name", "birthday"])
-        dataset.append(["", "A.A.Milne", "1882test-01-18"])
+        dataset = tablib.Dataset(headers=["name", "birthday"])
+        dataset.append(["A.A.Milne", "1882test-01-18"])
 
         result = resource.import_data(dataset, raise_errors=False)
 
@@ -62,12 +61,9 @@ class ErrorHandlingTest(TestCase):
         self,
     ):
         resource = AuthorResource()
-        resource._meta.import_id_fields = ["pk"]
-        resource._meta.skip_unchanged = True
-
         author = Author.objects.create(name="Some author")
 
-        dataset = tablib.Dataset(headers=["pk", "birthday"])
+        dataset = tablib.Dataset(headers=["id", "birthday"])
         dataset.append([author.id, "1882test-01-18"])
 
         result = resource.import_data(dataset, raise_errors=False)
@@ -77,15 +73,19 @@ class ErrorHandlingTest(TestCase):
         self.assertIn("birthday", result.invalid_rows[0].field_specific_errors)
 
     def test_import_data_empty_dataset_with_collect_failed_rows(self):
-        resource = AuthorResource()
-        resource._meta.import_id_fields = ["pk"]
+        class _AuthorResource(resources.ModelResource):
+            class Meta:
+                model = Author
+                import_id_fields = ["non_existent_field"]
+
+        resource = _AuthorResource()
         with self.assertRaises(exceptions.ImportError) as e:
             resource.import_data(
                 tablib.Dataset(), collect_failed_rows=True, raise_errors=True
             )
         self.assertEqual(
             "The following fields are declared in 'import_id_fields' "
-            "but are not present in the resource fields: pk",
+            "but are not present in the resource fields: non_existent_field",
             str(e.exception),
         )
 
