@@ -171,7 +171,8 @@ class Resource(metaclass=DeclarativeMetaclass):
         for field in import_id_fields:
             if field.column_name not in row:
                 # if there is an 'import id field' which is not defined in the
-                # row, then it is not possible to return an existing instance
+                # row, then it is not possible to return an existing instance,
+                # so no need to proceed any further
                 return
         return instance_loader.get_instance(row)
 
