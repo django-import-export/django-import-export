@@ -1126,7 +1126,7 @@ class Resource(metaclass=DeclarativeMetaclass):
                 import_id_fields.append(self.fields[field_name])
 
         if missing_fields:
-            raise exceptions.FieldError(
+            logger.debug(
                 _(
                     "The following fields are declared in 'import_id_fields' but "
                     "are not present in the resource fields: %s"
@@ -1141,7 +1141,7 @@ class Resource(metaclass=DeclarativeMetaclass):
                 missing_headers.append(col)
 
         if missing_headers:
-            raise exceptions.FieldError(
+            logger.debug(
                 _(
                     "The following fields are declared in 'import_id_fields' but "
                     "are not present in the file headers: %s"
