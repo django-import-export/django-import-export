@@ -1,6 +1,12 @@
 Changelog
 =========
 
+
+4.0.1 (unreleased)
+------------------
+
+- Fix regression: allow imports when default ``import_id_field`` is not present (`1813 <https://github.com/django-import-export/django-import-export/pull/1813>`_)
+
 4.0.0 (2024-04-27)
 -----------------------
 
