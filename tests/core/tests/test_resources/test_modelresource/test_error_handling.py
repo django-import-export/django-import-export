@@ -48,7 +48,8 @@ class ErrorHandlingTest(TestCase):
 
     def test_import_data_raises_field_specific_validation_errors(self):
         resource = AuthorResource()
-        dataset = tablib.Dataset(headers=["id", "name", "birthday"])
+        resource._meta.import_id_fields = ["pk"]
+        dataset = tablib.Dataset(headers=["pk", "name", "birthday"])
         dataset.append(["", "A.A.Milne", "1882test-01-18"])
 
         result = resource.import_data(dataset, raise_errors=False)
@@ -61,11 +62,12 @@ class ErrorHandlingTest(TestCase):
         self,
     ):
         resource = AuthorResource()
+        resource._meta.import_id_fields = ["pk"]
         resource._meta.skip_unchanged = True
 
         author = Author.objects.create(name="Some author")
 
-        dataset = tablib.Dataset(headers=["id", "birthday"])
+        dataset = tablib.Dataset(headers=["pk", "birthday"])
         dataset.append([author.id, "1882test-01-18"])
 
         result = resource.import_data(dataset, raise_errors=False)
@@ -76,13 +78,14 @@ class ErrorHandlingTest(TestCase):
 
     def test_import_data_empty_dataset_with_collect_failed_rows(self):
         resource = AuthorResource()
+        resource._meta.import_id_fields = ["pk"]
         with self.assertRaises(exceptions.ImportError) as e:
             resource.import_data(
                 tablib.Dataset(), collect_failed_rows=True, raise_errors=True
             )
         self.assertEqual(
             "The following fields are declared in 'import_id_fields' "
-            "but are not present in the file headers: id",
+            "but are not present in the resource fields: pk",
             str(e.exception),
         )
 

@@ -167,6 +167,12 @@ class Resource(metaclass=DeclarativeMetaclass):
         """
         Calls the :doc:`InstanceLoader <api_instance_loaders>`.
         """
+        import_id_fields = [self.fields[f] for f in self.get_import_id_fields()]
+        for field in import_id_fields:
+            if field.column_name not in row:
+                # if there is an 'import id field' which is not defined in the
+                # row, then it is not possible to return an existing instance
+                return
         return instance_loader.get_instance(row)
 
     def get_or_init_instance(self, instance_loader, row):
@@ -1119,6 +1125,10 @@ class Resource(metaclass=DeclarativeMetaclass):
         missing_fields = list()
         missing_headers = list()
 
+        if self.get_import_id_fields() == ["id"]:
+            # this is the default case
+            return
+
         for field_name in self.get_import_id_fields():
             if field_name not in self.fields:
                 missing_fields.append(field_name)
@@ -1126,7 +1136,7 @@ class Resource(metaclass=DeclarativeMetaclass):
                 import_id_fields.append(self.fields[field_name])
 
         if missing_fields:
-            logger.debug(
+            raise exceptions.FieldError(
                 _(
                     "The following fields are declared in 'import_id_fields' but "
                     "are not present in the resource fields: %s"
@@ -1141,7 +1151,7 @@ class Resource(metaclass=DeclarativeMetaclass):
                 missing_headers.append(col)
 
         if missing_headers:
-            logger.debug(
+            raise exceptions.FieldError(
                 _(
                     "The following fields are declared in 'import_id_fields' but "
                     "are not present in the file headers: %s"
