@@ -2855,3 +2855,11 @@ class AfterImportComparisonTest(TestCase):
         # issue 1583 - assert that `original` object is available to after_import_row()
         self.resource.import_data(self.dataset, raise_errors=True)
         self.assertTrue(self.resource.is_published)
+
+    def test_import_row_with_no_defined_id_field(self):
+        """Ensure a row with no id field can be imported (issue 1812)."""
+        self.assertEqual(0, Author.objects.count())
+        dataset = tablib.Dataset(*[("J. R. R. Tolkien",)], headers=["name"])
+        self.resource = AuthorResource()
+        self.resource.import_data(dataset)
+        self.assertEqual(1, Author.objects.count())
