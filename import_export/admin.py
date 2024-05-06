@@ -876,7 +876,7 @@ class ExportActionMixin(ExportMixin):
         form = form_type(
             formats=formats,
             resources=self.get_export_resource_classes(request),
-            initial={"export_items": list(queryset.values_list("id", flat=True))},
+            initial={"export_items": list(queryset.values_list("pk", flat=True))},
         )
         # selected items are to be stored as a hidden input on the form
         form.fields["export_items"] = MultipleChoiceField(
