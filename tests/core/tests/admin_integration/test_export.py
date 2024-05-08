@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 import chardet
 import tablib
 from core.admin import BookAdmin, BookResource
-from core.models import Author, Book
+from core.models import Author, Book, UUIDCategory
 from core.tests.admin_integration.mixins import AdminTestMixin
 from core.tests.utils import ignore_utcnow_deprecation_warning
 from django.contrib.admin.sites import AdminSite
@@ -36,7 +36,7 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
         }
 
     def test_export(self):
-        response = self.client.get("/admin/core/book/export/")
+        response = self.client.get(self.book_export_url)
         self.assertEqual(response.status_code, 200)
         self.assertNotIn("Export 0 selected items.", str(response.content))
         form = response.context["form"]
@@ -46,7 +46,7 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
         date_str = datetime.now().strftime("%Y-%m-%d")
         # Should not contain COUNT queries from ModelAdmin.get_results()
         with self.assertNumQueries(6):
-            response = self.client.post("/admin/core/book/export/", data)
+            response = self.client.post(self.book_export_url, data)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.has_header("Content-Disposition"))
         self.assertEqual(response["Content-Type"], "text/csv")
@@ -65,7 +65,7 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
     ):
         # issue 1738
         mock_get_export_resource_kwargs.return_value = {"a": 1}
-        response = self.client.get("/admin/core/book/export/")
+        response = self.client.get(self.book_export_url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(2, mock_get_export_resource_kwargs.call_count)
 
@@ -78,14 +78,14 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
         # issue 1716
         # assert that the export call with a no-arg constructor
         # does not crash
-        response = self.client.get("/admin/core/book/export/")
+        response = self.client.get(self.book_export_url)
         self.assertEqual(response.status_code, 200)
 
     def test_get_export_queryset(self):
         model_admin = BookAdmin(Book, AdminSite())
 
         factory = RequestFactory()
-        request = factory.get("/admin/core/book/export/")
+        request = factory.get(self.book_export_url)
         request.user = User.objects.create_user("admin1")
 
         call_number = 0
@@ -112,7 +112,7 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
         model_admin = BookAdmin(Book, AdminSite())
 
         factory = RequestFactory()
-        request = factory.get("/admin/core/book/export/")
+        request = factory.get(self.book_export_url)
         request.user = User.objects.create_user("admin1")
 
         call_number = 0
@@ -167,13 +167,13 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
                 "booknameresource_id": True,
                 "booknameresource_name": True,
             }
-            response = self.client.post("/admin/core/book/export/", data)
+            response = self.client.post(self.book_export_url, data)
         self.assertEqual(response.status_code, 200)
         target_msg = "Some unknown error"
         self.assertIn(target_msg, str(response.content))
 
     def test_export_second_resource(self):
-        response = self.client.get("/admin/core/book/export/")
+        response = self.client.get(self.book_export_url)
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Export/Import only book names")
 
@@ -185,7 +185,7 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
             "booknameresource_name": True,
         }
         date_str = datetime.now().strftime("%Y-%m-%d")
-        response = self.client.post("/admin/core/book/export/", data)
+        response = self.client.post(self.book_export_url, data)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.has_header("Content-Disposition"))
         self.assertEqual(response["Content-Type"], "text/csv")
@@ -196,7 +196,7 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertEqual(b"id,name\r\n", response.content)
 
     def test_export_displays_resources_fields(self):
-        response = self.client.get("/admin/core/book/export/")
+        response = self.client.get(self.book_export_url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
             response.context["fields_list"],
@@ -235,12 +235,12 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
             self.client.get("/admin/core/category/export/")
 
     def test_returns_xlsx_export(self):
-        response = self.client.get("/admin/core/book/export/")
+        response = self.client.get(self.book_export_url)
         self.assertEqual(response.status_code, 200)
 
         xlsx_index = self._get_input_format_index("xlsx")
         data = {"format": str(xlsx_index), **self.bookresource_export_fields_payload}
-        response = self.client.post("/admin/core/book/export/", data)
+        response = self.client.post(self.book_export_url, data)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.has_header("Content-Disposition"))
         self.assertEqual(
@@ -253,12 +253,12 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
     def test_export_escape_formulae(self):
         Book.objects.create(id=1, name="=SUM(1+1)")
         Book.objects.create(id=2, name="<script>alert(1)</script>")
-        response = self.client.get("/admin/core/book/export/")
+        response = self.client.get(self.book_export_url)
         self.assertEqual(response.status_code, 200)
 
         xlsx_index = self._get_input_format_index("xlsx")
         data = {"format": str(xlsx_index), **self.bookresource_export_fields_payload}
-        response = self.client.post("/admin/core/book/export/", data)
+        response = self.client.post(self.book_export_url, data)
         self.assertEqual(response.status_code, 200)
         content = response.content
         wb = load_workbook(filename=BytesIO(content))
@@ -268,7 +268,7 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
     @override_settings(IMPORT_EXPORT_ESCAPE_FORMULAE_ON_EXPORT=True)
     def test_export_escape_formulae_csv(self):
         b1 = Book.objects.create(id=1, name="=SUM(1+1)")
-        response = self.client.get("/admin/core/book/export/")
+        response = self.client.get(self.book_export_url)
         self.assertEqual(response.status_code, 200)
 
         index = self._get_input_format_index("csv")
@@ -277,7 +277,7 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
             "bookresource_id": True,
             "bookresource_name": True,
         }
-        response = self.client.post("/admin/core/book/export/", data)
+        response = self.client.post(self.book_export_url, data)
         self.assertIn(
             f"{b1.id},SUM(1+1)\r\n".encode(),
             response.content,
@@ -286,7 +286,7 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
     @override_settings(IMPORT_EXPORT_ESCAPE_FORMULAE_ON_EXPORT=False)
     def test_export_escape_formulae_csv_false(self):
         b1 = Book.objects.create(id=1, name="=SUM(1+1)")
-        response = self.client.get("/admin/core/book/export/")
+        response = self.client.get(self.book_export_url)
         self.assertEqual(response.status_code, 200)
 
         index = self._get_input_format_index("csv")
@@ -295,11 +295,18 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
             "bookresource_id": True,
             "bookresource_name": True,
         }
-        response = self.client.post("/admin/core/book/export/", data)
+        response = self.client.post(self.book_export_url, data)
         self.assertIn(
             f"{b1.id},=SUM(1+1)\r\n".encode(),
             response.content,
         )
+
+    def test_export_model_with_custom_PK(self):
+        # issue 1800
+        UUIDCategory.objects.create(name="UUIDCategory")
+        response = self.client.get(self.uuid_category_export_url)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "UUIDCategoryResource")
 
 
 class FilteredExportAdminIntegrationTest(AdminTestMixin, TestCase):
@@ -311,7 +318,7 @@ class FilteredExportAdminIntegrationTest(AdminTestMixin, TestCase):
 
         data = {"format": "0", "author": str(author.id)}
         date_str = datetime.now().strftime("%Y-%m-%d")
-        response = self.client.post("/admin/core/ebook/export/", data)
+        response = self.client.post(self.ebook_export_url, data)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.has_header("Content-Disposition"))
         self.assertEqual(response["Content-Type"], "text/csv")
@@ -416,7 +423,7 @@ class TestExportEncoding(TestCase):
 
 class TestSelectableFieldsExportPage(AdminTestMixin, TestCase):
     def test_selectable_fields_rendered_with_resource_index_attribute(self) -> None:
-        response = self.client.get("/admin/core/book/export/")
+        response = self.client.get(self.book_export_url)
 
         self.assertEqual(response.status_code, 200)
         form_resources = response.context["form"].resources

@@ -733,7 +733,7 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
         form.fields["export_items"] = MultipleChoiceField(
             widget=MultipleHiddenInput,
             required=False,
-            choices=[(o.id, o.id) for o in self.model.objects.all()],
+            choices=[(o.pk, o.pk) for o in self.model.objects.all()],
         )
         if form.is_valid():
             file_format = formats[int(form.cleaned_data["format"])]()
@@ -876,7 +876,7 @@ class ExportActionMixin(ExportMixin):
         form = form_type(
             formats=formats,
             resources=self.get_export_resource_classes(request),
-            initial={"export_items": list(queryset.values_list("id", flat=True))},
+            initial={"export_items": list(queryset.values_list("pk", flat=True))},
         )
         # selected items are to be stored as a hidden input on the form
         form.fields["export_items"] = MultipleChoiceField(

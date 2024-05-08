@@ -56,6 +56,9 @@ class Category(models.Model):
     def __str__(self):
         return self.name
 
+    class Meta:
+        verbose_name_plural = "categories"
+
 
 class BookManager(models.Manager):
     """
@@ -157,6 +160,9 @@ class EBook(Book):
 class UUIDCategory(models.Model):
     catid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=32)
+
+    class Meta:
+        verbose_name_plural = "UUID categories"
 
 
 class UUIDBook(models.Model):
