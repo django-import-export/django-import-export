@@ -167,6 +167,13 @@ class Resource(metaclass=DeclarativeMetaclass):
         """
         Calls the :doc:`InstanceLoader <api_instance_loaders>`.
         """
+        import_id_fields = [self.fields[f] for f in self.get_import_id_fields()]
+        for field in import_id_fields:
+            if field.column_name not in row:
+                # if there is an 'import id field' which is not defined in the
+                # row, then it is not possible to return an existing instance,
+                # so no need to proceed any further
+                return
         return instance_loader.get_instance(row)
 
     def get_or_init_instance(self, instance_loader, row):
@@ -1118,6 +1125,10 @@ class Resource(metaclass=DeclarativeMetaclass):
         import_id_fields = list()
         missing_fields = list()
         missing_headers = list()
+
+        if self.get_import_id_fields() == ["id"]:
+            # this is the default case, so ok if not present
+            return
 
         for field_name in self.get_import_id_fields():
             if field_name not in self.fields:
