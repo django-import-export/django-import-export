@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 import tablib
 from core.models import Author, Book, Category
-from core.tests.resources import BookResource
+from core.tests.resources import AuthorResource, BookResource
 from django.test import TestCase
 
 from import_export import exceptions, fields, resources, widgets
@@ -364,3 +364,11 @@ class ImportWithMissingFields(TestCase):
             "- column name 'author_email' is not present in row"
         )
         self.assertEqual(2, mock_field_save.call_count)
+
+    def test_import_row_with_no_defined_id_field(self):
+        """Ensure a row with no id field can be imported (issue 1812)."""
+        self.assertEqual(0, Author.objects.count())
+        dataset = tablib.Dataset(*[("J. R. R. Tolkien",)], headers=["name"])
+        self.resource = AuthorResource()
+        self.resource.import_data(dataset)
+        self.assertEqual(1, Author.objects.count())

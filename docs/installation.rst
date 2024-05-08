@@ -161,7 +161,7 @@ but valid rows will have imported.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 A boolean value which will skip the 'file format' and 'resource' select page in the Admin UI
-when the export is requested from an Admin UI action.
+when the export is requested from an :ref:`Admin UI action<export_via_admin_action>`.
 If ``TRUE`` then the first element in the 'file format' and 'resource' lists will be used.
 By default this is ``FALSE``.
 

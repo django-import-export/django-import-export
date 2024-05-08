@@ -3,7 +3,7 @@ from unittest import mock
 from unittest.mock import MagicMock
 
 from core.admin import CategoryAdmin
-from core.models import Book, Category
+from core.models import Book, Category, UUIDCategory
 from core.tests.admin_integration.mixins import AdminTestMixin
 from django.contrib import admin
 from django.core.exceptions import PermissionDenied
@@ -44,7 +44,7 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
             "action": ["export_admin_action"],
             "_selected_action": [str(self.cat1.id)],
         }
-        response = self.client.post("/admin/core/category/", data)
+        response = self.client.post(self.category_change_url, data)
         self._check_export_response(response)
 
     def test_export_displays_ui_select_page(self):
@@ -52,7 +52,7 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
             "action": ["export_admin_action"],
             "_selected_action": [str(self.cat1.id)],
         }
-        response = self.client.post("/admin/core/category/", data)
+        response = self.client.post(self.category_change_url, data)
 
         self.assertEqual(response.status_code, 200)
         self.assertIn("form", response.context)
@@ -66,7 +66,7 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
             "action": ["export_admin_action"],
             "_selected_action": [str(self.cat1.id), str(self.cat2.id)],
         }
-        response = self.client.post("/admin/core/category/", data)
+        response = self.client.post(self.category_change_url, data)
 
         self.assertEqual(response.status_code, 200)
         self.assertIn("form", response.context)
@@ -77,6 +77,22 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
         )
         self.assertIn("Export 2 selected items.", str(response.content))
 
+    def test_action_export_model_with_custom_PK(self):
+        # issue 1800
+        cat = UUIDCategory.objects.create(name="UUIDCategory")
+        data = {
+            "action": ["export_admin_action"],
+            "_selected_action": [str(cat.pk)],
+        }
+        response = self.client.post(self.uuid_category_change_url, data)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("form", response.context)
+        export_form = response.context["form"]
+        data = export_form.initial
+        self.assertEqual([cat.pk], data["export_items"])
+        self.assertIn("Export 1 selected item.", str(response.content))
+
     def test_export_post(self):
         # create a POST request with data selected from the 'action' export
         data = {
@@ -85,7 +101,7 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
             **self.resource_fields_payload,
         }
         date_str = datetime.now().strftime("%Y-%m-%d")
-        response = self.client.post("/admin/core/category/export/", data)
+        response = self.client.post(self.category_export_url, data)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.has_header("Content-Disposition"))
         self.assertEqual(response["Content-Type"], "text/csv")

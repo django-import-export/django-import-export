@@ -1,17 +1,19 @@
 Changelog
 =========
 
-4.0.1 ()
------------------------
-
-- fix Widget crash when django Field subclass is used (#1805)
-
-4.0.0 (2024-04-27)
------------------------
-
 .. warning::
 
     Version 4 introduces breaking changes.  Please refer to :doc:`release notes<release_notes>`.
+
+4.0.1 (2024-05-08)
+------------------
+
+- fix crash on export when model has no ``id`` (`1802 <https://github.com/django-import-export/django-import-export/pull/1802>`_)
+- fix Widget crash when django Field subclass is used (`1805 <https://github.com/django-import-export/django-import-export/pull/1805>`_)
+- fix regression: allow imports when default ``import_id_field`` is not present (`1813 <https://github.com/django-import-export/django-import-export/pull/1813>`_)
+
+4.0.0 (2024-04-27)
+------------------
 
 Deprecations
 ############

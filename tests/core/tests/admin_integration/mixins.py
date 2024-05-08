@@ -8,8 +8,13 @@ from import_export.formats.base_formats import DEFAULT_FORMATS
 
 class AdminTestMixin(object):
     category_change_url = "/admin/core/category/"
+    uuid_category_change_url = "/admin/core/uuidcategory/"
+    category_export_url = "/admin/core/category/export/"
+    uuid_category_export_url = "/admin/core/uuidcategory/export/"
     book_import_url = "/admin/core/book/import/"
+    book_export_url = "/admin/core/book/export/"
     ebook_import_url = "/admin/core/ebook/import/"
+    ebook_export_url = "/admin/core/ebook/export/"
     book_process_import_url = "/admin/core/book/process_import/"
     legacybook_import_url = "/admin/core/legacybook/import/"
     legacybook_process_import_url = "/admin/core/legacybook/process_import/"
