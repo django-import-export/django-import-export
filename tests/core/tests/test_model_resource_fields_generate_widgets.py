@@ -1,6 +1,7 @@
 from unittest import TestCase
 
 import django
+from core.models import WithPositiveIntegerFields
 from django.contrib.contenttypes import fields as contenttype_fields
 from django.contrib.postgres import fields as postgres
 from django.contrib.postgres import search as postgres_search
@@ -10,8 +11,6 @@ from django.db.models.fields.related import RelatedField
 
 from import_export import widgets
 from import_export.resources import ModelResource
-
-from ..models import WithPositiveIntegerFields
 
 
 class ExampleResource(ModelResource):
@@ -87,7 +86,6 @@ class TestFieldWidgetMapping(TestCase):
             models.GenericIPAddressField,
             models.ImageField,
             models.IPAddressField,
-            models.SlugField,
             models.TextField,
             models.UUIDField,
             postgres.BigIntegerRangeField,
@@ -99,12 +97,6 @@ class TestFieldWidgetMapping(TestCase):
             postgres.IntegerRangeField,
             postgres.RangeField,
         }
-        if django.VERSION < (5, 1):
-            ci_char_fields = {
-                postgres.CICharField,
-                postgres.CIEmailField,
-            }
-            expected_has_default_widget |= ci_char_fields
         return expected_has_default_widget
 
     def _get_expected_not_presented_in_test_field_subclasses(self):
