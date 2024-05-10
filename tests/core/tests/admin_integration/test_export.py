@@ -308,6 +308,28 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "UUIDCategoryResource")
 
+    def test_export_with_custom_field(self):
+        # issue 1808
+        a = Author.objects.create(id=11, name="Ian Fleming")
+        data = {
+            "format": "0",
+            "author": a.id,
+            "resource": "",
+            "ebookresource_id": True,
+            "ebookresource_name": True,
+            "ebookresource_published": True,
+        }
+        date_str = datetime.now().strftime("%Y-%m-%d")
+        response = self.client.post(self.ebook_export_url, data)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.has_header("Content-Disposition"))
+        self.assertEqual(response["Content-Type"], "text/csv")
+        self.assertEqual(
+            response["Content-Disposition"],
+            'attachment; filename="EBook-{}.csv"'.format(date_str),
+        )
+        self.assertEqual(b"id,name,published_date\r\n", response.content)
+
 
 class FilteredExportAdminIntegrationTest(AdminTestMixin, TestCase):
     fixtures = ["category", "book", "author"]
@@ -316,7 +338,14 @@ class FilteredExportAdminIntegrationTest(AdminTestMixin, TestCase):
         # issue 1578
         author = Author.objects.get(name="Ian Fleming")
 
-        data = {"format": "0", "author": str(author.id)}
+        data = {
+            "format": "0",
+            "author": str(author.id),
+            "ebookresource_id": True,
+            "ebookresource_name": True,
+            "ebookresource_published": True,
+            "ebookresource_author_email": True,
+        }
         date_str = datetime.now().strftime("%Y-%m-%d")
         response = self.client.post(self.ebook_export_url, data)
         self.assertEqual(response.status_code, 200)

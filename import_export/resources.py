@@ -1046,16 +1046,21 @@ class Resource(metaclass=DeclarativeMetaclass):
             return [
                 self.export_field(field, instance)
                 for field in export_fields
-                if field.column_name in fields
+                if field.attribute in fields
             ]
 
         return [self.export_field(field, instance) for field in export_fields]
 
     def get_export_headers(self, fields=None):
-        headers = [force_str(field.column_name) for field in self.get_export_fields()]
+        export_fields = self.get_export_fields()
+        headers = [force_str(field.column_name) for field in export_fields]
 
         if isinstance(fields, list) and fields:
-            return [f for f in headers if f in fields]
+            headers = []
+            attr_names = {f.attribute: f.column_name for f in export_fields}
+            for field_name in fields:
+                headers.append(attr_names.get(field_name))
+            return headers
 
         return headers
 
@@ -1097,7 +1102,8 @@ class Resource(metaclass=DeclarativeMetaclass):
         dataset = tablib.Dataset(headers=headers)
 
         for obj in self.iter_queryset(queryset):
-            dataset.append(self.export_resource(obj, fields=export_fields))
+            r = self.export_resource(obj, fields=export_fields)
+            dataset.append(r)
 
         self.after_export(queryset, dataset, **kwargs)
 

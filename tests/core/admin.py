@@ -31,7 +31,7 @@ class BookNameResource(ModelResource):
         name = "Export/Import only book names"
 
 
-class BookAdmin(ImportExportModelAdmin):
+class BookAdmin(ExportActionModelAdmin, ImportExportModelAdmin):
     list_display = ("name", "author", "added")
     list_filter = ["categories", "author"]
     resource_classes = [BookResource, BookNameResource]
