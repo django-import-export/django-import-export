@@ -316,6 +316,7 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
             "author": a.id,
             "resource": "",
             "ebookresource_id": True,
+            "ebookresource_author_email": True,
             "ebookresource_name": True,
             "ebookresource_published": True,
         }
@@ -328,7 +329,7 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
             response["Content-Disposition"],
             'attachment; filename="EBook-{}.csv"'.format(date_str),
         )
-        self.assertEqual(b"id,name,published_date\r\n", response.content)
+        self.assertEqual(b"id,author_email,name,published_date\r\n", response.content)
 
 
 class FilteredExportAdminIntegrationTest(AdminTestMixin, TestCase):
@@ -342,9 +343,9 @@ class FilteredExportAdminIntegrationTest(AdminTestMixin, TestCase):
             "format": "0",
             "author": str(author.id),
             "ebookresource_id": True,
+            "ebookresource_author_email": True,
             "ebookresource_name": True,
             "ebookresource_published": True,
-            "ebookresource_author_email": True,
         }
         date_str = datetime.now().strftime("%Y-%m-%d")
         response = self.client.post(self.ebook_export_url, data)

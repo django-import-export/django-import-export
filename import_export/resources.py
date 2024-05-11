@@ -431,6 +431,9 @@ class Resource(metaclass=DeclarativeMetaclass):
         field.save(instance, row, is_m2m, **kwargs)
 
     def get_import_fields(self):
+        import_fields = []
+        for f in self.fields:
+            import_fields.append(f)
         return [self.fields[f] for f in self.get_import_order()]
 
     def import_obj(self, obj, data, dry_run, **kwargs):
@@ -1037,7 +1040,8 @@ class Resource(metaclass=DeclarativeMetaclass):
         return field.export(instance)
 
     def get_export_fields(self):
-        return [self.fields[f] for f in self.get_export_order()]
+        export_order = self.get_export_order()
+        return [self.fields[f] for f in export_order]
 
     def export_resource(self, instance, fields=None):
         export_fields = self.get_export_fields()
