@@ -1057,16 +1057,10 @@ class Resource(metaclass=DeclarativeMetaclass):
 
     def get_export_headers(self, fields=None):
         export_fields = self.get_export_fields()
-        headers = [force_str(field.column_name) for field in export_fields]
-
         if isinstance(fields, list) and fields:
-            headers = []
-            attr_names = {f.attribute: f.column_name for f in export_fields}
-            for field_name in fields:
-                headers.append(attr_names.get(field_name))
-            return headers
+            return [f.column_name for f in export_fields if f.attribute in fields]
 
-        return headers
+        return [force_str(field.column_name) for field in export_fields]
 
     def get_user_visible_fields(self):
         return self.get_fields()
