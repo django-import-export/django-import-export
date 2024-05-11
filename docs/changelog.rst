@@ -9,6 +9,7 @@ Changelog
 ------------------
 
 - fix export with custom column name (`1821 <https://github.com/django-import-export/django-import-export/pull/1821>`_)
+- fix allow ``column_name`` to be declared in ``fields`` list (`1815 <https://github.com/django-import-export/django-import-export/pull/1815>`_)
 
 4.0.1 (2024-05-08)
 ------------------

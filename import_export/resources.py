@@ -432,9 +432,17 @@ class Resource(metaclass=DeclarativeMetaclass):
 
     def get_import_fields(self):
         import_fields = []
-        for f in self.fields:
-            import_fields.append(f)
-        return [self.fields[f] for f in self.get_import_order()]
+        for field_name in self.get_import_order():
+            if field_name in self.fields:
+                import_fields.append(self.fields[field_name])
+                continue
+            # issue 1815
+            # allow for fields to be referenced by column_name in `fields` list
+            for field in self.fields.values():
+                if field.column_name == field_name:
+                    import_fields.append(field)
+                    continue
+        return import_fields
 
     def import_obj(self, obj, data, dry_run, **kwargs):
         warn(
@@ -1118,7 +1126,11 @@ class Resource(metaclass=DeclarativeMetaclass):
 
         order = list()
         [order.append(f) for f in defined_fields if f not in order]
-        return tuple(order) + tuple(k for k in self.fields if k not in order)
+        declared_fields = []
+        for field_name, field in self.fields.items():
+            if field_name not in order and field.column_name not in order:
+                declared_fields.append(field_name)
+        return tuple(order) + tuple(declared_fields)
 
     def _is_using_transactions(self, kwargs):
         return kwargs.get("using_transactions", False)
