@@ -8,6 +8,8 @@ Changelog
 4.0.2 (unreleased)
 ------------------
 
+- fix export with custom column name (`1821 <https://github.com/django-import-export/django-import-export/pull/1821>`_)
+
 4.0.1 (2024-05-08)
 ------------------
 
