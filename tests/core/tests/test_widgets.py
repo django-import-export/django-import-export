@@ -12,6 +12,7 @@ from django.test.utils import override_settings
 from django.utils import timezone
 
 from import_export import widgets
+from import_export.exceptions import WidgetError
 
 
 class WidgetTest(TestCase):
@@ -580,6 +581,16 @@ class ForeignKeyWidgetTest(TestCase, RowDeprecationTestMixin):
         self.assertEqual(
             self.natural_key_book_widget.render(self.book),
             json.dumps(self.book.natural_key()),
+        )
+
+    def test_natural_foreign_key_with_key_is_id(self):
+        with self.assertRaises(WidgetError) as e:
+            widgets.ForeignKeyWidget(
+                Author, use_natural_foreign_keys=True, key_is_id=True
+            )
+        self.assertEqual(
+            "use_natural_foreign_keys and key_is_id " "cannot both be True",
+            str(e.exception),
         )
 
 
