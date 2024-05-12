@@ -5,6 +5,11 @@ Changelog
 
     Version 4 introduces breaking changes.  Please refer to :doc:`release notes<release_notes>`.
 
+4.0.2 (unreleased)
+------------------
+
+- fix clash between ``key_is_id`` and ``use_natural_foreign_keys`` (`1816 <https://github.com/django-import-export/django-import-export/pull/1816>`_)
+
 4.0.1 (2024-05-08)
 ------------------
 
