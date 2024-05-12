@@ -8,7 +8,7 @@ Changelog
 4.0.2 (unreleased)
 ------------------
 
-- remove unreachable code (`1802 <https://github.com/django-import-export/django-import-export/pull/1802>`_)
+- remove unreachable code (`1825 <https://github.com/django-import-export/django-import-export/pull/1825>`_)
 
 4.0.1 (2024-05-08)
 ------------------
