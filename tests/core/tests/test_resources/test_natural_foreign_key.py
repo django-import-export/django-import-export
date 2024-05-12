@@ -60,7 +60,5 @@ class TestNaturalKeys(TestCase):
         Util for comparing datasets
         """
         self.assertEqual(len(expected_dataset), len(actual_dataset), message)
-        for expected_row, actual_row in zip(
-            expected_dataset, actual_dataset, strict=True
-        ):
+        for expected_row, actual_row in zip(expected_dataset, actual_dataset):
             self.assertEqual(expected_row, actual_row, message)
