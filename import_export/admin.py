@@ -18,8 +18,6 @@ from django.utils.module_loading import import_string
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_POST
 
-from import_export import exceptions
-
 from .forms import ConfirmImportForm, ImportForm, SelectableFieldsExportForm
 from .mixins import BaseExportMixin, BaseImportMixin
 from .results import RowResult
@@ -507,27 +505,20 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
                     imp_kwargs = self.get_import_data_kwargs(
                         request=request, form=import_form, **kwargs
                     )
-                    try:
-                        result = resource.import_data(
-                            dataset,
-                            dry_run=True,
-                            raise_errors=False,
-                            file_name=import_file.name,
-                            user=request.user,
-                            **imp_kwargs,
+                    result = resource.import_data(
+                        dataset,
+                        dry_run=True,
+                        raise_errors=False,
+                        file_name=import_file.name,
+                        user=request.user,
+                        **imp_kwargs,
+                    )
+                    context["result"] = result
+
+                    if not result.has_errors() and not result.has_validation_errors():
+                        context["confirm_form"] = self.create_confirm_form(
+                            request, import_form=import_form
                         )
-                        context["result"] = result
-
-                        if (
-                            not result.has_errors()
-                            and not result.has_validation_errors()
-                        ):
-                            context["confirm_form"] = self.create_confirm_form(
-                                request, import_form=import_form
-                            )
-                    except exceptions.FieldError as e:
-                        messages.error(request, str(e))
-
         else:
             res_kwargs = self.get_import_resource_kwargs(
                 request=request, form=import_form, **kwargs

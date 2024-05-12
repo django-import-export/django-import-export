@@ -5,6 +5,11 @@ Changelog
 
     Version 4 introduces breaking changes.  Please refer to :doc:`release notes<release_notes>`.
 
+4.0.2 (unreleased)
+------------------
+
+- remove unreachable code (`1802 <https://github.com/django-import-export/django-import-export/pull/1802>`_)
+
 4.0.1 (2024-05-08)
 ------------------
 
