@@ -8,7 +8,7 @@ Changelog
 4.0.1 (unreleased)
 ------------------
 
-- fix issue with widget assignment for custom ``ForeignKey`` subclasses (`<https://github.com/django-import-export/django-import-export/pull/>`_)
+- fix issue with widget assignment for custom ``ForeignKey`` subclasses (`1826 <https://github.com/django-import-export/django-import-export/pull/1826>`_)
 
 4.0.1 (2024-05-08)
 ------------------
