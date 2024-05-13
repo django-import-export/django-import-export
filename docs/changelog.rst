@@ -8,7 +8,7 @@ Changelog
 4.0.2 (unreleased)
 ------------------
 
-- performance: select of valid pks for export restricted to action exports (`1802 <https://github.com/django-import-export/django-import-export/pull/1802>`_)
+- performance: select of valid pks for export restricted to action exports (`1827 <https://github.com/django-import-export/django-import-export/pull/1827>`_)
 
 4.0.1 (2024-05-08)
 ------------------
