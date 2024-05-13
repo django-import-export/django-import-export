@@ -1,11 +1,11 @@
-from datetime import datetime
+from datetime import date, datetime
 from io import BytesIO
 from unittest import mock
 from unittest.mock import MagicMock, patch
 
 import chardet
 import tablib
-from core.admin import BookAdmin, BookResource
+from core.admin import BookAdmin, BookResource, EBookResource
 from core.models import Author, Book, UUIDCategory
 from core.tests.admin_integration.mixins import AdminTestMixin
 from core.tests.utils import ignore_utcnow_deprecation_warning
@@ -465,3 +465,44 @@ class TestSelectableFieldsExportPage(AdminTestMixin, TestCase):
                 response_content.count(f'resource-index="{index}"'),
                 len(resource_fields),
             )
+
+
+class CustomColumnNameExportTest(AdminTestMixin, TestCase):
+    """Test export ok when column name is defined in fields list (issue 1828)."""
+
+    def setUp(self):
+        super().setUp()
+        EBookResource._meta.fields = ("id", "author_email", "name", "published_date")
+
+    def tearDown(self):
+        super().tearDown()
+        EBookResource._meta.fields = ("id", "author_email", "name", "published")
+
+    def test_export_with_custom_field(self):
+        a = Author.objects.create(id=11, name="Ian Fleming")
+        book = Book.objects.create(
+            name="Moonraker", author=a, published=date(1955, 4, 5)
+        )
+        data = {
+            "format": "0",
+            "author": a.id,
+            "resource": "",
+            "ebookresource_id": True,
+            "ebookresource_author_email": True,
+            "ebookresource_name": True,
+            "ebookresource_published_date": True,
+        }
+        date_str = datetime.now().strftime("%Y-%m-%d")
+        response = self.client.post(self.ebook_export_url, data)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.has_header("Content-Disposition"))
+        self.assertEqual(response["Content-Type"], "text/csv")
+        self.assertEqual(
+            response["Content-Disposition"],
+            'attachment; filename="EBook-{}.csv"'.format(date_str),
+        )
+        s = (
+            "id,author_email,name,published_date\r\n"
+            f"{book.id},,Moonraker,1955-04-05\r\n"
+        )
+        self.assertEqual(str.encode(s), response.content)

@@ -963,7 +963,7 @@ class ConfirmImportPreviewOrderTest(AdminTestMixin, TestCase):
 
 
 class CustomColumnNameImportTest(AdminTestMixin, TestCase):
-    """Test preview order displayed correctly (issue 1815)."""
+    """Handle custom column name import (issue 1822)."""
 
     fixtures = ["author"]
 
