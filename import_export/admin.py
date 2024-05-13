@@ -733,7 +733,7 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
         form.fields["export_items"] = MultipleChoiceField(
             widget=MultipleHiddenInput,
             required=False,
-            choices=[(o.pk, o.pk) for o in self.model.objects.all()],
+            choices=[(pk, pk) for pk in self.get_valid_export_item_pks(request)],
         )
         if form.is_valid():
             file_format = formats[int(form.cleaned_data["format"])]()
@@ -770,6 +770,9 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
         context = self.init_request_context_data(request, form)
         request.current_app = self.admin_site.name
         return TemplateResponse(request, [self.export_template_name], context=context)
+
+    def get_valid_export_item_pks(self, request):
+        return self.model.objects.all().values_list("pk", flat=True)
 
     def changelist_view(self, request, extra_context=None):
         if extra_context is None:
@@ -873,16 +876,15 @@ class ExportActionMixin(ExportMixin):
 
         form_type = self.get_export_form_class()
         formats = self.get_export_formats()
+        export_items = list(queryset.values_list("pk", flat=True))
         form = form_type(
             formats=formats,
             resources=self.get_export_resource_classes(request),
-            initial={"export_items": list(queryset.values_list("pk", flat=True))},
+            initial={"export_items": export_items},
         )
         # selected items are to be stored as a hidden input on the form
         form.fields["export_items"] = MultipleChoiceField(
-            widget=MultipleHiddenInput,
-            required=False,
-            choices=[(str(o), str(o)) for o in queryset.all()],
+            widget=MultipleHiddenInput, required=False, choices=export_items
         )
         context = self.init_request_context_data(request, form)
 
