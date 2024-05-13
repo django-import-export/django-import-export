@@ -15,6 +15,7 @@ Changelog
 - fix issue with widget assignment for custom ``ForeignKey`` subclasses (`1826 <https://github.com/django-import-export/django-import-export/pull/1826>`_)
 - performance: select of valid pks for export restricted to action exports (`1827 <https://github.com/django-import-export/django-import-export/pull/1827>`_)
 - fix crash on export with custom column name (`1828 <https://github.com/django-import-export/django-import-export/pull/1828>`_)
+- remove outdated datetime formatting logic (`1830 <https://github.com/django-import-export/django-import-export/pull/1830>`_)
 
 4.0.1 (2024-05-08)
 ------------------
