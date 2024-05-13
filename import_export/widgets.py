@@ -20,13 +20,10 @@ logger = logging.getLogger(__name__)
 
 
 def format_datetime(value, datetime_format):
-    # conditional logic to handle correct formatting of dates
+    # handle correct formatting of dates
     # see https://code.djangoproject.com/ticket/32738
-    if django.VERSION[0] >= 4:
-        format = django.utils.formats.sanitize_strftime_format(datetime_format)
-        return value.strftime(format)
-    else:
-        return django.utils.datetime_safe.new_datetime(value).strftime(datetime_format)
+    format_ = django.utils.formats.sanitize_strftime_format(datetime_format)
+    return value.strftime(format_)
 
 
 class Widget:
