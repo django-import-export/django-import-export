@@ -45,7 +45,7 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
         data = {"format": "0", **self.bookresource_export_fields_payload}
         date_str = datetime.now().strftime("%Y-%m-%d")
         # Should not contain COUNT queries from ModelAdmin.get_results()
-        with self.assertNumQueries(6):
+        with self.assertNumQueries(5):
             response = self.client.post(self.book_export_url, data)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.has_header("Content-Disposition"))
@@ -327,8 +327,8 @@ class FilteredExportAdminIntegrationTest(AdminTestMixin, TestCase):
             'attachment; filename="EBook-{}.csv"'.format(date_str),
         )
         self.assertEqual(
-            b"id,author_email,name,published_date\r\n"
-            b"5,ian@example.com,The Man with the Golden Gun,1965-04-01\r\n",
+            b"id,author_email,name\r\n"
+            b"5,ian@example.com,The Man with the Golden Gun\r\n",
             response.content,
         )
 
