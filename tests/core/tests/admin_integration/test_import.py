@@ -4,7 +4,13 @@ from io import StringIO
 from unittest import mock
 from unittest.mock import patch
 
-from core.admin import AuthorAdmin, BookAdmin, CustomBookAdmin, ImportMixin
+from core.admin import (
+    AuthorAdmin,
+    BookAdmin,
+    CustomBookAdmin,
+    EBookResource,
+    ImportMixin,
+)
 from core.models import Author, Book, EBook, Parent
 from core.tests.admin_integration.mixins import AdminTestMixin
 from django.contrib.admin.models import DELETION, LogEntry
@@ -932,8 +938,14 @@ class ConfirmImportPreviewOrderTest(AdminTestMixin, TestCase):
         )
         # test header rendered in correct order
         target_header_re = (
-            r"<thead>[\\n\s]+<tr>[\\n\s]+<th></th>[\\n\s]+<th>id</th>"
-            r"[\\n\s]+<th>author_email</th>[\\n\s]+<th>name</th>[\\n\s]+</tr>[\\n\s]+"
+            r"<thead>[\\n\s]+"
+            r"<tr>[\\n\s]+"
+            r"<th></th>[\\n\s]+"
+            r"<th>id</th>[\\n\s]+"
+            r"<th>author_email</th>[\\n\s]+"
+            r"<th>name</th>[\\n\s]+"
+            r"<th>published_date</th>[\\n\s]+"
+            r"</tr>[\\n\s]+"
             "</thead>"
         )
         self.assertRegex(str(response.content), target_header_re)
@@ -944,6 +956,54 @@ class ConfirmImportPreviewOrderTest(AdminTestMixin, TestCase):
             r'<td><ins style="background:#e6ffe6;">1</ins></td>[\\n\s]+'
             r'<td><ins style="background:#e6ffe6;">test@example.com</ins></td>[\\n\s]+'
             r'<td><ins style="background:#e6ffe6;">Some book</ins></td>[\\n\s]+'
+            r"<td><span>None</span></td>[\\n\s]+"
+            "</tr>"
+        )
+        self.assertRegex(str(response.content), target_row_re)
+
+
+class CustomColumnNameImportTest(AdminTestMixin, TestCase):
+    """Test preview order displayed correctly (issue 1815)."""
+
+    fixtures = ["author"]
+
+    def setUp(self):
+        super().setUp()
+        EBookResource._meta.fields = ("id", "author_email", "name", "published_date")
+
+    def tearDown(self):
+        super().tearDown()
+        EBookResource._meta.fields = ("id", "author_email", "name", "published")
+
+    def test_import_preview_order(self):
+        author_id = Author.objects.first().id
+        response = self._do_import_post(
+            self.ebook_import_url,
+            "books.csv",
+            input_format="0",
+            data={"author": author_id},
+        )
+        # test header rendered in correct order
+        target_header_re = (
+            r"<thead>[\\n\s]+"
+            r"<tr>[\\n\s]+"
+            r"<th></th>[\\n\s]+"
+            r"<th>id</th>[\\n\s]+"
+            r"<th>author_email</th>[\\n\s]+"
+            r"<th>name</th>[\\n\s]+"
+            r"<th>published_date</th>[\\n\s]+"
+            r"</tr>[\\n\s]+"
+            "</thead>"
+        )
+        self.assertRegex(str(response.content), target_header_re)
+        # test row rendered in correct order
+        target_row_re = (
+            r'<tr class="new">[\\n\s]+'
+            r'<td class="import-type">[\\n\s]+New[\\n\s]+</td>[\\n\s]+'
+            r'<td><ins style="background:#e6ffe6;">1</ins></td>[\\n\s]+'
+            r'<td><ins style="background:#e6ffe6;">test@example.com</ins></td>[\\n\s]+'
+            r'<td><ins style="background:#e6ffe6;">Some book</ins></td>[\\n\s]+'
+            r"<td><span>None</span></td>[\\n\s]+"
             "</tr>"
         )
         self.assertRegex(str(response.content), target_row_re)

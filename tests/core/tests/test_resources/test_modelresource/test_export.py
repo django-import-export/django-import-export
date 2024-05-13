@@ -1,8 +1,7 @@
 import tablib
+from core.admin import BookResource
 from core.models import Author, Book
 from django.test import TestCase
-
-from tests.core.tests.resources import BookResource
 
 
 class ExportFunctionalityTest(TestCase):
@@ -22,7 +21,8 @@ class ExportFunctionalityTest(TestCase):
                 "name",
                 "author",
                 "author_email",
-                "published_date",
+                "imported",
+                "published",
                 "published_time",
                 "price",
                 "added",

@@ -8,6 +8,9 @@ Changelog
 4.0.2 (unreleased)
 ------------------
 
+- fix allow ``column_name`` to be declared in ``fields`` list (`1815 <https://github.com/django-import-export/django-import-export/pull/1815>`_)
+- fix export with custom column name (`1821 <https://github.com/django-import-export/django-import-export/pull/1821>`_)
+- fix clash between ``key_is_id`` and ``use_natural_foreign_keys`` (`1824 <https://github.com/django-import-export/django-import-export/pull/1824>`_)
 - remove unreachable code (`1825 <https://github.com/django-import-export/django-import-export/pull/1825>`_)
 
 4.0.1 (2024-05-08)
