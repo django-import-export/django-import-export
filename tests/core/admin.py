@@ -5,7 +5,6 @@ from import_export.admin import (
     ImportExportModelAdmin,
     ImportMixin,
 )
-from import_export.fields import Field
 from import_export.resources import ModelResource
 
 from .forms import CustomConfirmImportForm, CustomExportForm, CustomImportForm
@@ -51,8 +50,6 @@ class AuthorAdmin(ImportMixin, admin.ModelAdmin):
 
 
 class EBookResource(ModelResource):
-    published = Field(attribute="published", column_name="published_date")
-
     def __init__(self, **kwargs):
         super().__init__()
         self.author_id = kwargs.get("author_id")
@@ -62,7 +59,11 @@ class EBookResource(ModelResource):
 
     class Meta:
         model = EBook
-        fields = ("id", "author_email", "name", "published")
+        fields = (
+            "id",
+            "author_email",
+            "name",
+        )
 
 
 class CustomBookAdmin(ImportExportModelAdmin):
@@ -96,10 +97,10 @@ class CustomBookAdmin(ImportExportModelAdmin):
         # this is overridden to demonstrate that custom form fields can be used
         # to override the export query.
         # The dict returned here will be passed as kwargs to EBookResource
-        export_form = kwargs.get("export_form")
+        export_form = kwargs["export_form"]
         if export_form:
-            kwargs.update(author_id=export_form.cleaned_data["author"].id)
-        return kwargs
+            return dict(author_id=export_form.cleaned_data["author"].id)
+        return {}
 
 
 admin.site.register(Book, BookAdmin)
