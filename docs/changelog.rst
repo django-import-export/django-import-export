@@ -5,6 +5,11 @@ Changelog
 
     Version 4 introduces breaking changes.  Please refer to :doc:`release notes<release_notes>`.
 
+4.0.1 (unreleased)
+------------------
+
+- fix issue with widget assignment for custom ``ForeignKey`` subclasses (`<https://github.com/django-import-export/django-import-export/pull/>`_)
+
 4.0.1 (2024-05-08)
 ------------------
 

@@ -1248,6 +1248,8 @@ class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
             for base_class in inspect.getmro(f.__class__):
                 if base_class.__name__ in cls.WIDGETS_MAP:
                     result = cls.WIDGETS_MAP[base_class.__name__]
+                    if isinstance(result, str):
+                        result = getattr(cls, result)(f)
                     break
 
             try:
