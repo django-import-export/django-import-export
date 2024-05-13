@@ -128,6 +128,25 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
             self.assertTrue(200 <= response.status_code <= 399)
             mock_export_admin_action.assert_called()
 
+    def test_export_admin_action_with_restricted_pks(self):
+        data = {
+            "format": "0",
+            "export_items": [str(self.cat1.id)],
+            **self.resource_fields_payload,
+        }
+        # mock returning a set of pks which is not in the submitted range
+        with mock.patch(
+            "import_export.admin.ExportMixin.get_valid_export_item_pks"
+        ) as mock_valid_pks:
+            mock_valid_pks.return_value = [999]
+            response = self.client.post(self.category_export_url, data)
+            self.assertEqual(response.status_code, 200)
+            self.assertIn(
+                "Select a valid choice. "
+                f"{self.cat1.id} is not one of the available choices.",
+                str(response.content),
+            )
+
     def test_get_export_data_raises_PermissionDenied_when_no_export_permission_assigned(
         self,
     ):

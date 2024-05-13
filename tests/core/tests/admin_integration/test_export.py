@@ -45,7 +45,7 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
         data = {"format": "0", **self.bookresource_export_fields_payload}
         date_str = datetime.now().strftime("%Y-%m-%d")
         # Should not contain COUNT queries from ModelAdmin.get_results()
-        with self.assertNumQueries(6):
+        with self.assertNumQueries(5):
             response = self.client.post(self.book_export_url, data)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.has_header("Content-Disposition"))

@@ -13,6 +13,7 @@ Changelog
 - fix clash between ``key_is_id`` and ``use_natural_foreign_keys`` (`1824 <https://github.com/django-import-export/django-import-export/pull/1824>`_)
 - remove unreachable code (`1825 <https://github.com/django-import-export/django-import-export/pull/1825>`_)
 - fix issue with widget assignment for custom ``ForeignKey`` subclasses (`1826 <https://github.com/django-import-export/django-import-export/pull/1826>`_)
+- performance: select of valid pks for export restricted to action exports (`1827 <https://github.com/django-import-export/django-import-export/pull/1827>`_)
 
 4.0.1 (2024-05-08)
 ------------------

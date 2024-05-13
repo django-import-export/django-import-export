@@ -721,11 +721,14 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
             self.get_export_resource_classes(request),
             data=request.POST or None,
         )
-        form.fields["export_items"] = MultipleChoiceField(
-            widget=MultipleHiddenInput,
-            required=False,
-            choices=[(o.pk, o.pk) for o in self.model.objects.all()],
-        )
+        if request.POST and "export_items" in request.POST:
+            # this field is instantiated if the export is POSTed from the
+            # 'action' drop down
+            form.fields["export_items"] = MultipleChoiceField(
+                widget=MultipleHiddenInput,
+                required=False,
+                choices=[(pk, pk) for pk in self.get_valid_export_item_pks(request)],
+            )
         if form.is_valid():
             file_format = formats[int(form.cleaned_data["format"])]()
 
@@ -761,6 +764,18 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
         context = self.init_request_context_data(request, form)
         request.current_app = self.admin_site.name
         return TemplateResponse(request, [self.export_template_name], context=context)
+
+    def get_valid_export_item_pks(self, request):
+        """
+        Returns a list of valid pks for export.
+        This is used to validate which objects can be exported when exports are
+        triggered from the Admin UI 'action' dropdown.
+        This can be overridden to filter returned pks for performance and/or security
+        reasons.
+        :param request: The request object.
+        :returns: a list of valid pks (by default is all pks in table).
+        """
+        return self.model.objects.all().values_list("pk", flat=True)
 
     def changelist_view(self, request, extra_context=None):
         if extra_context is None:
@@ -835,6 +850,7 @@ class ExportActionMixin(ExportMixin):
         )
 
     def response_change(self, request, obj):
+        # called if the export is triggered from the instance detail page.
         if "_export-item" in request.POST:
             return self.export_admin_action(
                 request, self.model.objects.filter(id=obj.id)
@@ -864,16 +880,15 @@ class ExportActionMixin(ExportMixin):
 
         form_type = self.get_export_form_class()
         formats = self.get_export_formats()
+        export_items = list(queryset.values_list("pk", flat=True))
         form = form_type(
             formats=formats,
             resources=self.get_export_resource_classes(request),
-            initial={"export_items": list(queryset.values_list("pk", flat=True))},
+            initial={"export_items": export_items},
         )
         # selected items are to be stored as a hidden input on the form
         form.fields["export_items"] = MultipleChoiceField(
-            widget=MultipleHiddenInput,
-            required=False,
-            choices=[(str(o), str(o)) for o in queryset.all()],
+            widget=MultipleHiddenInput, required=False, choices=export_items
         )
         context = self.init_request_context_data(request, form)
 

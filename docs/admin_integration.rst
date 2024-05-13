@@ -200,7 +200,12 @@ this to refer to your own model instances.  In the example application, the 'Cat
 
 When 'Go' is clicked for the selected items, the user will be directed to the
 :ref:`export 'confirm' page<export_confirm>`.  It is possible to disable this extra step by setting the
-:ref:`import_export_skip_admin_action_export_ui` flag
+:ref:`import_export_skip_admin_action_export_ui` flag.
+
+.. note::
+
+    If deploying to a multi-tenant environment, you may need to use the to ensure that one set of users cannot export
+    data belonging to another set.  See :meth:`~import_export.admin.ExportMixin.get_valid_export_item_pks`.
 
 Export from model instance change form
 --------------------------------------
