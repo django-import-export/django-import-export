@@ -7,10 +7,11 @@ from django.contrib.postgres import fields as postgres
 from django.contrib.postgres import search as postgres_search
 from django.contrib.postgres.fields import ranges as postgres_ranges
 from django.db import models
-from django.db.models.fields.related import RelatedField
+from django.db.models.fields.related import ForeignKey, RelatedField
 
 from import_export import widgets
 from import_export.resources import ModelResource
+from import_export.widgets import ForeignKeyWidget
 
 
 class ExampleResource(ModelResource):
@@ -188,3 +189,22 @@ class TestFieldWidgetMapping(TestCase):
             postgres.RangeField(),
         ]
         return fields
+
+    def test_custom_fk_field(self):
+        # issue 1817 - if a 'custom' foreign key field is provided, then this should
+        # be handled when widgets are defined
+        class CustomForeignKey(ForeignKey):
+            def __init__(
+                self,
+                to,
+                on_delete,
+                **kwargs,
+            ):
+                super().__init__(to, on_delete, **kwargs)
+
+        resource_field = ModelResource.field_from_django_field(
+            "custom_fk",
+            CustomForeignKey(WithPositiveIntegerFields, on_delete=models.SET_NULL),
+            False,
+        )
+        self.assertEqual(ForeignKeyWidget, resource_field.widget.__class__)

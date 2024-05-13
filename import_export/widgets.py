@@ -14,6 +14,8 @@ from django.utils.encoding import force_str, smart_str
 from django.utils.formats import number_format
 from django.utils.translation import gettext_lazy as _
 
+from import_export.exceptions import WidgetError
+
 logger = logging.getLogger(__name__)
 
 
@@ -497,6 +499,10 @@ class ForeignKeyWidget(Widget):
         self.field = field
         self.key_is_id = key_is_id
         self.use_natural_foreign_keys = use_natural_foreign_keys
+        if use_natural_foreign_keys is True and key_is_id is True:
+            raise WidgetError(
+                _("use_natural_foreign_keys and key_is_id cannot both be True")
+            )
         super().__init__(**kwargs)
 
     def get_queryset(self, value, row, *args, **kwargs):
