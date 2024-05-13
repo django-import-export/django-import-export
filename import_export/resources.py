@@ -1306,7 +1306,11 @@ class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
         attribute = field_name
         column_name = field_name
         # To solve #974
-        if isinstance(django_field, ForeignKey) and "__" not in column_name:
+        if (
+            isinstance(django_field, ForeignKey)
+            and "__" not in column_name
+            and not cls._meta.use_natural_foreign_keys
+        ):
             attribute += "_id"
             widget_kwargs["key_is_id"] = True
 
