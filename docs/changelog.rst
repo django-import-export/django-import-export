@@ -5,9 +5,13 @@ Changelog
 
     Version 4 introduces breaking changes.  Please refer to :doc:`release notes<release_notes>`.
 
-4.0.1 (unreleased)
+4.0.2 (2024-05-13)
 ------------------
 
+- fix export with custom column name (`1821 <https://github.com/django-import-export/django-import-export/pull/1821>`_)
+- fix allow ``column_name`` to be declared in ``fields`` list (`1822 <https://github.com/django-import-export/django-import-export/pull/1822>`_)
+- fix clash between ``key_is_id`` and ``use_natural_foreign_keys`` (`1824 <https://github.com/django-import-export/django-import-export/pull/1824>`_)
+- remove unreachable code (`1825 <https://github.com/django-import-export/django-import-export/pull/1825>`_)
 - fix issue with widget assignment for custom ``ForeignKey`` subclasses (`1826 <https://github.com/django-import-export/django-import-export/pull/1826>`_)
 
 4.0.1 (2024-05-08)

@@ -10,6 +10,12 @@ class FieldError(ImportExportError):
     pass
 
 
+class WidgetError(ImportExportError):
+    """Raised when there is a misconfiguration with a Widget."""
+
+    pass
+
+
 class ImportError(ImportExportError):
     def __init__(self, error, number=None, row=None):
         """A wrapper for errors thrown from the import process.
