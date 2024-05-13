@@ -932,8 +932,14 @@ class ConfirmImportPreviewOrderTest(AdminTestMixin, TestCase):
         )
         # test header rendered in correct order
         target_header_re = (
-            r"<thead>[\\n\s]+<tr>[\\n\s]+<th></th>[\\n\s]+<th>id</th>"
-            r"[\\n\s]+<th>author_email</th>[\\n\s]+<th>name</th>[\\n\s]+</tr>[\\n\s]+"
+            r"<thead>[\\n\s]+"
+            r"<tr>[\\n\s]+"
+            r"<th></th>[\\n\s]+"
+            r"<th>id</th>[\\n\s]+"
+            r"<th>author_email</th>[\\n\s]+"
+            r"<th>name</th>[\\n\s]+"
+            r"<th>published_date</th>[\\n\s]+"
+            r"</tr>[\\n\s]+"
             "</thead>"
         )
         self.assertRegex(str(response.content), target_header_re)
@@ -944,6 +950,7 @@ class ConfirmImportPreviewOrderTest(AdminTestMixin, TestCase):
             r'<td><ins style="background:#e6ffe6;">1</ins></td>[\\n\s]+'
             r'<td><ins style="background:#e6ffe6;">test@example.com</ins></td>[\\n\s]+'
             r'<td><ins style="background:#e6ffe6;">Some book</ins></td>[\\n\s]+'
+            r"<td><span>None</span></td>[\\n\s]+"
             "</tr>"
         )
         self.assertRegex(str(response.content), target_row_re)

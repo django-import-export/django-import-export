@@ -431,6 +431,9 @@ class Resource(metaclass=DeclarativeMetaclass):
         field.save(instance, row, is_m2m, **kwargs)
 
     def get_import_fields(self):
+        import_fields = []
+        for f in self.fields:
+            import_fields.append(f)
         return [self.fields[f] for f in self.get_import_order()]
 
     def import_obj(self, obj, data, dry_run, **kwargs):
@@ -1037,7 +1040,8 @@ class Resource(metaclass=DeclarativeMetaclass):
         return field.export(instance)
 
     def get_export_fields(self):
-        return [self.fields[f] for f in self.get_export_order()]
+        export_order = self.get_export_order()
+        return [self.fields[f] for f in export_order]
 
     def export_resource(self, instance, fields=None):
         export_fields = self.get_export_fields()
@@ -1046,18 +1050,17 @@ class Resource(metaclass=DeclarativeMetaclass):
             return [
                 self.export_field(field, instance)
                 for field in export_fields
-                if field.column_name in fields
+                if field.attribute in fields
             ]
 
         return [self.export_field(field, instance) for field in export_fields]
 
     def get_export_headers(self, fields=None):
-        headers = [force_str(field.column_name) for field in self.get_export_fields()]
-
+        export_fields = self.get_export_fields()
         if isinstance(fields, list) and fields:
-            return [f for f in headers if f in fields]
+            return [f.column_name for f in export_fields if f.attribute in fields]
 
-        return headers
+        return [force_str(field.column_name) for field in export_fields]
 
     def get_user_visible_fields(self):
         return self.get_fields()
@@ -1097,7 +1100,8 @@ class Resource(metaclass=DeclarativeMetaclass):
         dataset = tablib.Dataset(headers=headers)
 
         for obj in self.iter_queryset(queryset):
-            dataset.append(self.export_resource(obj, fields=export_fields))
+            r = self.export_resource(obj, fields=export_fields)
+            dataset.append(r)
 
         self.after_export(queryset, dataset, **kwargs)
 

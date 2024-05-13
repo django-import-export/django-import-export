@@ -1,6 +1,10 @@
 from django import forms
 
-from import_export.forms import ConfirmImportForm, ExportForm, ImportForm
+from import_export.forms import (
+    ConfirmImportForm,
+    ImportForm,
+    SelectableFieldsExportForm,
+)
 
 from .models import Author
 
@@ -21,7 +25,7 @@ class CustomConfirmImportForm(AuthorFormMixin, ConfirmImportForm):
     pass
 
 
-class CustomExportForm(AuthorFormMixin, ExportForm):
+class CustomExportForm(AuthorFormMixin, SelectableFieldsExportForm):
     """Customized ExportForm, with author field required"""
 
     pass
