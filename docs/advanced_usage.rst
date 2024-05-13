@@ -42,6 +42,9 @@ Or the ``exclude`` option to blacklist fields::
 If both ``fields`` and ``exclude`` are declared, the ``fields`` declaration takes precedence, and ``exclude`` is
 ignored.
 
+In cases where a :ref:`custom column name<field_declaration>` is used, declare the name of the model attribute in the
+``fields`` list., not the column alias.
+
 .. _field_ordering:
 
 Field ordering
@@ -71,8 +74,6 @@ If no ``fields``, ``import_order`` or ``export_order`` is defined then fields ar
 class.  The order of declared fields in the model instance is preserved, and any non-model fields are last in the
 ordering.
 
-.. _field_declaration:
-
 Model relations
 ---------------
 
@@ -90,6 +91,8 @@ export.
 
 Note that declaring the relationship using this syntax sets ``field`` as readonly, meaning this field will be skipped
 when importing data. To understand how to import model relations, see :ref:`import_model_relations`.
+
+.. _field_declaration:
 
 Explicit field declaration
 --------------------------

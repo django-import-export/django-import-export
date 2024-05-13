@@ -80,7 +80,12 @@ class ModelDeclarativeMetaclass(DeclarativeMetaclass):
             # if they appear in the 'fields' iterable.
             declared_fields = dict()
             for field_name, field in new_class.fields.items():
-                if opts.fields is not None and field_name not in opts.fields:
+                column_name = field.column_name
+                if (
+                    opts.fields is not None
+                    and field_name not in opts.fields
+                    and column_name not in opts.fields
+                ):
                     continue
                 declared_fields[field_name] = field
 
