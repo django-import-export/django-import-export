@@ -2,11 +2,13 @@ from datetime import date
 from unittest.mock import patch
 
 import tablib
-from core.models import Author, Book, Category
+from core.models import Author, Book, Category, EBook
 from core.tests.resources import AuthorResource, BookResource
 from django.test import TestCase
 
 from import_export import exceptions, fields, resources, widgets
+from import_export.fields import Field
+from import_export.resources import ModelResource
 
 
 class AfterImportComparisonTest(TestCase):
@@ -372,3 +374,32 @@ class ImportWithMissingFields(TestCase):
         self.resource = AuthorResource()
         self.resource.import_data(dataset)
         self.assertEqual(1, Author.objects.count())
+
+
+class CustomColumnNameImportTest(TestCase):
+    """
+    If a custom field is declared, import should work if either the Field's
+    attribute name or column name is referenced in the ``fields`` list (issue 1815).
+    """
+
+    fixtures = ["author"]
+
+    class _EBookResource(ModelResource):
+        published = Field(attribute="published", column_name="published_date")
+
+        class Meta:
+            model = EBook
+            fields = ("id", "name", "published_date")
+
+    def setUp(self):
+        super().setUp()
+        self.resource = CustomColumnNameImportTest._EBookResource()
+
+    def test_import_with_column_alias_in_fields_list(self):
+        self.assertEqual(0, EBook.objects.count())
+        dataset = tablib.Dataset(
+            *[(1, "Moonraker", "1955-04-05")], headers=["id", "name", "published_date"]
+        )
+        self.resource.import_data(dataset, raise_errors=True)
+        self.assertEqual(1, EBook.objects.count())
+        self.assertEqual(date(1955, 4, 5), EBook.objects.first().published)

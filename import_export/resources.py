@@ -431,7 +431,18 @@ class Resource(metaclass=DeclarativeMetaclass):
         field.save(instance, row, is_m2m, **kwargs)
 
     def get_import_fields(self):
-        return [self.fields[f] for f in self.get_import_order()]
+        import_fields = []
+        for field_name in self.get_import_order():
+            if field_name in self.fields:
+                import_fields.append(self.fields[field_name])
+                continue
+            # issue 1815
+            # allow for fields to be referenced by column_name in `fields` list
+            for field in self.fields.values():
+                if field.column_name == field_name:
+                    import_fields.append(field)
+                    continue
+        return import_fields
 
     def import_obj(self, obj, data, dry_run, **kwargs):
         warn(
@@ -1037,7 +1048,8 @@ class Resource(metaclass=DeclarativeMetaclass):
         return field.export(instance)
 
     def get_export_fields(self):
-        return [self.fields[f] for f in self.get_export_order()]
+        export_order = self.get_export_order()
+        return [self.fields[f] for f in export_order]
 
     def export_resource(self, instance, fields=None):
         export_fields = self.get_export_fields()
@@ -1046,18 +1058,17 @@ class Resource(metaclass=DeclarativeMetaclass):
             return [
                 self.export_field(field, instance)
                 for field in export_fields
-                if field.column_name in fields
+                if field.attribute in fields
             ]
 
         return [self.export_field(field, instance) for field in export_fields]
 
     def get_export_headers(self, fields=None):
-        headers = [force_str(field.column_name) for field in self.get_export_fields()]
-
+        export_fields = self.get_export_fields()
         if isinstance(fields, list) and fields:
-            return [f for f in headers if f in fields]
+            return [f.column_name for f in export_fields if f.attribute in fields]
 
-        return headers
+        return [force_str(field.column_name) for field in export_fields]
 
     def get_user_visible_fields(self):
         return self.get_fields()
@@ -1097,7 +1108,8 @@ class Resource(metaclass=DeclarativeMetaclass):
         dataset = tablib.Dataset(headers=headers)
 
         for obj in self.iter_queryset(queryset):
-            dataset.append(self.export_resource(obj, fields=export_fields))
+            r = self.export_resource(obj, fields=export_fields)
+            dataset.append(r)
 
         self.after_export(queryset, dataset, **kwargs)
 
@@ -1114,7 +1126,11 @@ class Resource(metaclass=DeclarativeMetaclass):
 
         order = list()
         [order.append(f) for f in defined_fields if f not in order]
-        return tuple(order) + tuple(k for k in self.fields if k not in order)
+        declared_fields = []
+        for field_name, field in self.fields.items():
+            if field_name not in order and field.column_name not in order:
+                declared_fields.append(field_name)
+        return tuple(order) + tuple(declared_fields)
 
     def _is_using_transactions(self, kwargs):
         return kwargs.get("using_transactions", False)
@@ -1290,7 +1306,11 @@ class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
         attribute = field_name
         column_name = field_name
         # To solve #974
-        if isinstance(django_field, ForeignKey) and "__" not in column_name:
+        if (
+            isinstance(django_field, ForeignKey)
+            and "__" not in column_name
+            and not cls._meta.use_natural_foreign_keys
+        ):
             attribute += "_id"
             widget_kwargs["key_is_id"] = True
 
