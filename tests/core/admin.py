@@ -65,7 +65,7 @@ class EBookResource(ModelResource):
         fields = ("id", "author_email", "name", "published")
 
 
-class CustomBookAdmin(ImportExportModelAdmin):
+class CustomBookAdmin(ExportActionModelAdmin, ImportExportModelAdmin):
     """Example usage of custom import / export forms"""
 
     resource_classes = [EBookResource]

@@ -1048,8 +1048,18 @@ class Resource(metaclass=DeclarativeMetaclass):
         return field.export(instance)
 
     def get_export_fields(self):
-        export_order = self.get_export_order()
-        return [self.fields[f] for f in export_order]
+        export_fields = []
+        for field_name in self.get_export_order():
+            if field_name in self.fields:
+                export_fields.append(self.fields[field_name])
+                continue
+            # issue 1828
+            # allow for fields to be referenced by column_name in `fields` list
+            for field in self.fields.values():
+                if field.column_name == field_name:
+                    export_fields.append(field)
+                    continue
+        return export_fields
 
     def export_resource(self, instance, fields=None):
         export_fields = self.get_export_fields()
@@ -1058,7 +1068,7 @@ class Resource(metaclass=DeclarativeMetaclass):
             return [
                 self.export_field(field, instance)
                 for field in export_fields
-                if field.attribute in fields
+                if field.attribute in fields or field.column_name in fields
             ]
 
         return [self.export_field(field, instance) for field in export_fields]
@@ -1066,7 +1076,11 @@ class Resource(metaclass=DeclarativeMetaclass):
     def get_export_headers(self, fields=None):
         export_fields = self.get_export_fields()
         if isinstance(fields, list) and fields:
-            return [f.column_name for f in export_fields if f.attribute in fields]
+            return [
+                f.column_name
+                for f in export_fields
+                if f.attribute in fields or f.column_name in fields
+            ]
 
         return [force_str(field.column_name) for field in export_fields]
 
