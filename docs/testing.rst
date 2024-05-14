@@ -67,7 +67,7 @@ You can then run the script as follows:
 Enable logging
 ^^^^^^^^^^^^^^
 
-You can see console debug logging by updating the ``LOGGING`` block in `settings.py`::
+You can see console SQL debug logging by updating the ``LOGGING`` block in `settings.py`::
 
     LOGGING = {
         "version": 1,

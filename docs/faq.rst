@@ -239,3 +239,8 @@ If you want to modify the names of the columns on export, you can do so by overr
 
     class Meta:
       model = Book
+
+How to configure logging
+------------------------
+
+Refer to :ref:`logging configuration<logging>` for more information.
