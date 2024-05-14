@@ -167,8 +167,7 @@ How to handle large file uploads
 ---------------------------------
 
 If uploading large files, you may encounter time-outs.
-See :ref:`Celery:Using celery to perform imports` and :ref:`bulk_import:Bulk imports`.
-
+See :ref:`Using celery<celery>` and :ref:`bulk_import:Bulk imports`.
 
 How to use field other than `id` in Foreign Key lookup
 ------------------------------------------------------
