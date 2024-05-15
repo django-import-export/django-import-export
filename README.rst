@@ -105,6 +105,7 @@ Help and support
 * `FAQ <https://django-import-export.readthedocs.io/en/latest/faq.html>`_
 * `Getting help <https://django-import-export.readthedocs.io/en/latest/faq.html#what-s-the-best-way-to-communicate-a-problem-question-or-suggestion>`_
 * `Contributing <https://django-import-export.readthedocs.io/en/latest/faq.html#how-can-i-help>`_
+* Become a `sponsor <https://github.com/sponsors/django-import-export>`_
 * `Raise a security issue <https://github.com/django-import-export/django-import-export/blob/main/SECURITY.md>`_
 * Join our `discord <https://discord.gg/aCcec52kY4>`_
 
