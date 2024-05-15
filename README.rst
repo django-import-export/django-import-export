@@ -28,9 +28,10 @@ django-import-export
 
 .. |xfollow| image:: https://img.shields.io/twitter/url/https/twitter.com/django_import.svg?style=social&label=Follow%20%40django_import
    :alt: Follow us on X
+   :target: https://twitter.com/django_import
 
 .. |main_screenshot| image:: https://github.com/matthewhegarty/django-import-export/blob/doc-updates/docs/_static/images/screenshots/import-form.png
-   :width: 600
+   :width: 800
    :alt: screenshot of the import form in django-import-export
 
 |build| |coveralls| |pypi| |docs| |pyver| |djangover| |downloads| |xfollow|
@@ -38,20 +39,72 @@ django-import-export
 Introduction
 ============
 
-* Straightforward and reliable data import / export for your Django application.
-* Easily import / export multiple file types (csv, xlsx, json, pandas, html, yaml, etc).
-* Run programmatically or with built-in Django Admin Site integration.
-* Use Admin Site preview to check data before importing.
+Straightforward, reliable and comprehensive file import / export for your Django application.
+
+django-import-export lets you manage import / export to and from variety of sources (csv, xlsx, json etc).
+
+Includes optional integration with Django Admin site.
 
 |main_screenshot|
 
-`More screenshots <https://django-import-export.readthedocs.io/en/stable/>`_
+`More screenshots <https://django-import-export.readthedocs.io/en/latest/screenshots.html/>`_
 
-Links
-=====
+Features
+========
 
-* Documentation: https://django-import-export.readthedocs.io/en/stable/
-* GitHub: https://github.com/django-import-export/django-import-export/
-* Free software: BSD license
-* PyPI: https://pypi.org/project/django-import-export/
-* Twitter / X: https://twitter.com/django_import
+* Import / export via Admin UI integration or programmatically
+* Import to and from a variety of file formats (csv, json, xlsx, pandas, HTML, YAML etc)
+* Preview data before importing in Admin UI
+* Support for bulk import
+* Handles CRUD operations during import
+* Handles mapping foreign key relationships
+* Many-to-many relationship support
+* Validation and transformation of imported and exported data
+* Import / export the same model instance as different views ('`Resources <https://django-import-export.readthedocs.io/en/latest/advanced_usage.html#customize-resource-options>`_')
+* Export using natural keys for portability between environments
+* Export single object instances
+* Use django permissions to control import / export authorization
+* Internationalization support
+* Based on `tablib <https://github.com/jazzband/tablib>`_
+* Support for MySQL / PostgreSQL / SQLite
+* Extensible - add custom logic to control import / export
+* Handle import from various character encodings
+* `Celery <https://django-import-export.readthedocs.io/en/latest/celery.html>`_ integration
+* 100% test coverage
+* Supports dark mode :rocket:
+
+Example use-cases
+=================
+
+django-import-export is designed to be extensible and can be used to support a variety of operations.
+Here are some examples of how it has been used:
+
+* Configure external cron jobs to run an import or export at set times
+* Use `permissions <https://django-import-export.readthedocs.io/en/latest/installation.html#import-export-import-permission-code>`_ to define a subset of users able to import and export project data
+* Safely update project reference data by importing from version controlled csv
+* Create portable data to transfer between environments using `natural keys <https://django-import-export.readthedocs.io/en/latest/advanced_usage.html#django-natural-keys>`_
+* Manage user access to an application by importing externally version controlled auth user lists
+* Add `hooks <https://django-import-export.readthedocs.io/en/latest/advanced_usage.html#advanced-data-manipulation-on-export>`_ to anonymize data on export
+* `Modify import / export UI forms <https://django-import-export.readthedocs.io/en/latest/admin_integration.html#customize-admin-import-forms>`_ to add dynamic filtering on export / import.
+
+Getting started
+===============
+
+* `Installation <https://django-import-export.readthedocs.io/en/latest/installation.html>`_
+* `Getting started <https://django-import-export.readthedocs.io/en/latest/getting_started.html>`_
+* `Example application <https://django-import-export.readthedocs.io/en/latest/installation.html#exampleapp>`_
+
+Help and support
+================
+
+* `FAQ <https://django-import-export.readthedocs.io/en/latest/faq.html>`_
+* `Getting help <https://django-import-export.readthedocs.io/en/latest/faq.html#what-s-the-best-way-to-communicate-a-problem-question-or-suggestion>`_
+* `Contributing <https://django-import-export.readthedocs.io/en/latest/faq.html#how-can-i-help>`_
+* `Raise a security issue <https://github.com/django-import-export/django-import-export/blob/main/SECURITY.md>`_
+
+Releases
+========
+
+* `Release notes <https://django-import-export.readthedocs.io/en/latest/release_notes.html>`_
+* `Changelog <https://django-import-export.readthedocs.io/en/latest/changelog.html>`_
+

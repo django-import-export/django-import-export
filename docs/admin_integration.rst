@@ -1,3 +1,5 @@
+.. _admin-integration:
+
 =================
 Admin integration
 =================

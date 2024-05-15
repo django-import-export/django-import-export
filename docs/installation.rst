@@ -21,7 +21,7 @@ development version::
 
   pip install -e git+https://github.com/django-import-export/django-import-export.git#egg=django-import-export
 
-Now, you're good to go, unless you want to use import_export from the
+Now, you're good to go, unless you want to use import-export from the
 admin as well. In this case, you need to add it to your ``INSTALLED_APPS`` and
 let Django collect its static files.
 
