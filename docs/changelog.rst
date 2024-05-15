@@ -8,7 +8,7 @@ Changelog
 4.0.3 (unreleased)
 ------------------
 
-- re-add ``resource_class`` deprecation warning (`1821 <https://github.com/django-import-export/django-import-export/pull/1821>`_)
+- re-add ``resource_class`` deprecation warning (`1837 <https://github.com/django-import-export/django-import-export/pull/1837>`_)
 
 4.0.2 (2024-05-13)
 ------------------
