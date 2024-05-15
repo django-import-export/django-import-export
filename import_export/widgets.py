@@ -257,8 +257,10 @@ class DateWidget(BaseDateTimeWidget):
 
     def render(self, value, obj=None):
         self._obj_deprecation_warning(obj)
-        if self.coerce_to_string is False or not isinstance(value, date):
-            return value if self.coerce_to_string is False else ""
+        if self.coerce_to_string is False:
+            return value
+        if not value or not type(value) is date:
+            return ""
         return format_datetime(value, self.formats[0])
 
 
@@ -286,8 +288,10 @@ class DateTimeWidget(BaseDateTimeWidget):
 
     def render(self, value, obj=None):
         self._obj_deprecation_warning(obj)
-        if self.coerce_to_string is False or not isinstance(value, datetime):
-            return value if self.coerce_to_string is False else ""
+        if self.coerce_to_string is False:
+            return value
+        if not value or not type(value) is datetime:
+            return ""
         if settings.USE_TZ:
             value = timezone.localtime(value)
         return format_datetime(value, self.formats[0])
