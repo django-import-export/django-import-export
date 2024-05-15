@@ -29,6 +29,9 @@ django-import-export
 .. |xfollow| image:: https://img.shields.io/twitter/url/https/twitter.com/django_import.svg?style=social&label=Follow%20%40django_import
    :alt: Follow us on X
 
+.. |import1| image:: https://github.com/matthewhegarty/django-import-export/blob/doc-updates/docs/_static/images/screenshots/import-list-cropped.png
+    :alt: screenshot of the import form in django-import-export
+
 |build| |coveralls| |pypi| |docs| |pyver| |djangover| |downloads| |xfollow|
 
 Introduction
@@ -39,6 +42,7 @@ Introduction
 * Run programmatically or with built-in Django Admin Site integration.
 * Use Admin Site preview to check data before importing.
 
+|import1|
 
 Links
 =====
