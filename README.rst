@@ -41,9 +41,9 @@ Introduction
 
 Straightforward, reliable and comprehensive file import / export for your Django application.
 
-django-import-export lets you manage import / export to and from variety of sources (csv, xlsx, json etc).
+django-import-export lets you manage import / export to and from a variety of sources (csv, xlsx, json etc).
 
-Includes optional integration with Django Admin site.
+It can be run programmatically, or with optional integration with Django Admin site:
 
 |main_screenshot|
 
@@ -54,11 +54,11 @@ Features
 
 * Import / export via Admin UI integration or programmatically
 * Import to and from a variety of file formats (csv, json, xlsx, pandas, HTML, YAML etc)
-* Preview data before importing in Admin UI
+* `Preview <https://django-import-export.readthedocs.io/en/latest/screenshots.html/>`_ data before importing in Admin UI
 * Support for bulk import
-* Handles CRUD operations during import
-* Handles mapping foreign key relationships
-* Many-to-many relationship support
+* Handles `CRUD operations during import <https://django-import-export.readthedocs.io/en/latest/advanced_usage.html#create-or-update-model-instances>`_
+* Flexible handling of `foreign key <https://django-import-export.readthedocs.io/en/latest/advanced_usage.html#importing-model-relations>`_ relationships
+* `Many-to-many relationship <https://django-import-export.readthedocs.io/en/latest/advanced_usage.html#many-to-many-relations>`_ support
 * Validation and transformation of imported and exported data
 * Import / export the same model instance as different views ('`Resources <https://django-import-export.readthedocs.io/en/latest/advanced_usage.html#customize-resource-options>`_')
 * Export using natural keys for portability between environments
