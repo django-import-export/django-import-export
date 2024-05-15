@@ -81,7 +81,7 @@ Features
 Example use-cases
 =================
 
-django-import-export is designed to be extensible and can be used to support a variety of operations.
+*django-import-export* is designed to be extensible and can be used to support a variety of operations.
 Here are some examples of how it has been used in the wild:
 
 * Configure external cron jobs to run an import or export at set times
@@ -90,7 +90,7 @@ Here are some examples of how it has been used in the wild:
 * Create portable data to transfer between environments using `natural keys <https://django-import-export.readthedocs.io/en/latest/advanced_usage.html#django-natural-keys>`_
 * Manage user access to an application by importing externally version controlled auth user lists
 * Add `hooks <https://django-import-export.readthedocs.io/en/latest/advanced_usage.html#advanced-data-manipulation-on-export>`_ to anonymize data on export
-* `Modify import / export UI forms <https://django-import-export.readthedocs.io/en/latest/admin_integration.html#customize-admin-import-forms>`_ to add dynamic filtering on export / import.
+* `Modify import / export UI forms <https://django-import-export.readthedocs.io/en/latest/admin_integration.html#customize-admin-import-forms>`_ to add dynamic filtering on import / export.
 
 Getting started
 ===============
@@ -106,6 +106,7 @@ Help and support
 * `Getting help <https://django-import-export.readthedocs.io/en/latest/faq.html#what-s-the-best-way-to-communicate-a-problem-question-or-suggestion>`_
 * `Contributing <https://django-import-export.readthedocs.io/en/latest/faq.html#how-can-i-help>`_
 * `Raise a security issue <https://github.com/django-import-export/django-import-export/blob/main/SECURITY.md>`_
+* Join our `discord <https://discord.gg/aCcec52kY4>`_
 
 Releases
 ========

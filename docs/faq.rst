@@ -17,7 +17,7 @@ You can help in the following ways:
 
 * Reporting bugs or issues.
 
-* Answering questions which arise on Stack Overflow or as Github issues.
+* Answering questions which arise on `Stack Overflow <https://stackoverflow.com/questions/tagged/django-import-export/>`_ or as Github issues.
 
 * Providing translations for UI text.
 
