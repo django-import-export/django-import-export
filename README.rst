@@ -52,25 +52,27 @@ It can be run programmatically, or with optional integration with Django Admin s
 Features
 ========
 
-* Import / export via Admin UI integration or programmatically
+* Import / export via `Admin UI Integration <https://django-import-export.readthedocs.io/en/latest/admin_integration.html>`_ or `programmatically <https://django-import-export.readthedocs.io/en/latest/getting_started.html#importing-data>`_
 * Import to and from a variety of file formats (csv, json, xlsx, pandas, HTML, YAML etc)
 * `Preview <https://django-import-export.readthedocs.io/en/latest/screenshots.html/>`_ data before importing in Admin UI
-* Support for bulk import
+* Support for `bulk import <https://django-import-export.readthedocs.io/en/latest/bulk_import.html>`_
 * Handles `CRUD operations during import <https://django-import-export.readthedocs.io/en/latest/advanced_usage.html#create-or-update-model-instances>`_
 * Flexible handling of `foreign key <https://django-import-export.readthedocs.io/en/latest/advanced_usage.html#importing-model-relations>`_ relationships
 * `Many-to-many relationship <https://django-import-export.readthedocs.io/en/latest/advanced_usage.html#many-to-many-relations>`_ support
 * Validation and transformation of imported and exported data
 * Import / export the same model instance as different views ('`Resources <https://django-import-export.readthedocs.io/en/latest/advanced_usage.html#customize-resource-options>`_')
-* Export using natural keys for portability between environments
+* Export using `natural keys <https://django-import-export.readthedocs.io/en/latest/advanced_usage.html#django-natural-keys>`_ for portability between environments
+* `Select items for export <https://django-import-export.readthedocs.io/en/latest/screenshots.html/>`_ via the Admin UI object list
+* `Select fields for export <https://django-import-export.readthedocs.io/en/latest/screenshots.html/>`_ via the export form
 * Export single object instances
-* Use django permissions to control import / export authorization
+* Use `django permissions <https://django-import-export.readthedocs.io/en/latest/installation.html#import-export-import-permission-code>`_ to control import / export authorization
 * Internationalization support
 * Based on `tablib <https://github.com/jazzband/tablib>`_
 * Support for MySQL / PostgreSQL / SQLite
-* Extensible - add custom logic to control import / export
+* Extensible - `add custom logic to control import / export <https://django-import-export.readthedocs.io/en/latest/advanced_usage.html>`_
 * Handle import from various character encodings
 * `Celery <https://django-import-export.readthedocs.io/en/latest/celery.html>`_ integration
-* 100% test coverage
+* test coverage :100:
 * Supports dark mode :rocket:
 
 Example use-cases
