@@ -59,8 +59,9 @@ Features
 * Handles `CRUD operations during import <https://django-import-export.readthedocs.io/en/latest/advanced_usage.html#create-or-update-model-instances>`_
 * Flexible handling of `foreign key <https://django-import-export.readthedocs.io/en/latest/advanced_usage.html#importing-model-relations>`_ relationships
 * `Many-to-many relationship <https://django-import-export.readthedocs.io/en/latest/advanced_usage.html#many-to-many-relations>`_ support
-* Validation and transformation of imported and exported data
-* Import / export the same model instance as different views ('`Resources <https://django-import-export.readthedocs.io/en/latest/advanced_usage.html#customize-resource-options>`_')
+* `Validation <https://django-import-export.readthedocs.io/en/latest/advanced_usage.html#validation-during-import>`_ of imported data
+* Define custom `Transformations <https://django-import-export.readthedocs.io/en/latest/advanced_usage.html#advanced-data-manipulation-on-export>`_ for exported data
+* Import / export the same model instance as `different views <https://django-import-export.readthedocs.io/en/latest/advanced_usage.html#customize-resource-options>`_
 * Export using `natural keys <https://django-import-export.readthedocs.io/en/latest/advanced_usage.html#django-natural-keys>`_ for portability between environments
 * `Select items for export <https://django-import-export.readthedocs.io/en/latest/screenshots.html/>`_ via the Admin UI object list
 * `Select fields for export <https://django-import-export.readthedocs.io/en/latest/screenshots.html/>`_ via the export form
@@ -72,6 +73,7 @@ Features
 * Extensible - `add custom logic to control import / export <https://django-import-export.readthedocs.io/en/latest/advanced_usage.html>`_
 * Handle import from various character encodings
 * `Celery <https://django-import-export.readthedocs.io/en/latest/celery.html>`_ integration
+* Test locally with `Docker <https://django-import-export.readthedocs.io/en/latest/testing.html>`_
 * test coverage :100:
 * Supports dark mode :rocket:
 
