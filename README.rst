@@ -29,10 +29,19 @@ django-import-export
 .. |xfollow| image:: https://img.shields.io/twitter/url/https/twitter.com/django_import.svg?style=social&label=Follow%20%40django_import
    :alt: Follow us on X
 
-|build||coveralls||pypi||docs||pyver||djangover||downloads||xfollow|
+|build| |coveralls| |pypi| |docs| |pyver| |djangover| |downloads| |xfollow|
 
-django-import-export is a Django application and library for importing
-and exporting data from a variety of formats.  Includes Django Admin site integration.
+Introduction
+============
+
+* Straightforward and reliable data import / export for your Django application.
+* Easily import / export multiple file types (csv, xlsx, json, pandas, html, yaml, etc).
+* Run programmatically or with built-in Django Admin Site integration.
+* Use Admin Site preview to check data before importing.
+
+
+Links
+=====
 
 * Documentation: https://django-import-export.readthedocs.io/en/stable/
 * GitHub: https://github.com/django-import-export/django-import-export/
