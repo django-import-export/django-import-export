@@ -2,29 +2,31 @@
 Screenshots
 ===========
 
-.. |import-form| image:: https://github.com/matthewhegarty/django-import-export/blob/doc-updates/docs/_static/images/screenshots/import-form.png
+.. |import-form| image:: _static/images/screenshots/import-form.png
    :width: 600
    :alt: screenshot of the import form in django-import-export
 
-.. |confirm-import| image:: https://github.com/matthewhegarty/django-import-export/blob/doc-updates/docs/_static/images/screenshots/confirm-import.png
+.. |confirm-import| image:: _static/images/screenshots/confirm-import.png
    :width: 600
    :alt: screenshot of the import confirm page in django-import-export
 
-.. |import-complete| image:: https://github.com/matthewhegarty/django-import-export/blob/doc-updates/docs/_static/images/screenshots/import-complete.png
+.. |import-complete| image:: _static/images/screenshots/import-complete.png
    :width: 600
    :alt: screenshot of the import completed page in django-import-export
 
-.. |import-update-with-authors| image:: https://github.com/matthewhegarty/django-import-export/blob/doc-updates/docs/_static/images/screenshots/import-update-with-authors.png
+.. |import-update-with-authors| image:: _static/images/screenshots/import-update-with-authors.png
    :width: 600
    :alt: screenshot of import update with author information in django-import-export
 
-.. |export-selected-action| image:: https://github.com/matthewhegarty/django-import-export/blob/doc-updates/docs/_static/images/screenshots/export-selected-action.png
+.. |export-selected-action| image:: _static/images/screenshots/export-selected-action.png
    :width: 600
    :alt: screenshot of selecting existing records for export in django-import-export
 
-.. |export-form| image:: https://github.com/matthewhegarty/django-import-export/blob/doc-updates/docs/_static/images/screenshots/export-selected-action.png
+.. |export-form| image:: _static/images/screenshots/export-selected-action.png
    :width: 600
    :alt: screenshot of selecting existing records for export in django-import-export
+
+These are some screenshots for the Admin UI of the :ref:`example application<exampleapp>`.
 
 |import-form|
 
