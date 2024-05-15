@@ -41,9 +41,9 @@ Introduction
 
 Straightforward, reliable and comprehensive file import / export for your Django application.
 
-django-import-export lets you manage import / export to and from a variety of sources (csv, xlsx, json etc).
+*django-import-export* is an application and library which lets you manage import / export from / to a variety of sources (csv, xlsx, json etc).
 
-It can be run programmatically, or with optional integration with Django Admin site:
+Can be run programmatically, or with optional integration with the Django Admin site:
 
 |main_screenshot|
 
@@ -53,7 +53,7 @@ Features
 ========
 
 * Import / export via `Admin UI Integration <https://django-import-export.readthedocs.io/en/latest/admin_integration.html>`_ or `programmatically <https://django-import-export.readthedocs.io/en/latest/getting_started.html#importing-data>`_
-* Import to and from a variety of file formats (csv, json, xlsx, pandas, HTML, YAML etc)
+* Import to and from a variety of file formats (csv, json, xlsx, pandas, HTML, YAML... and anything else that `tablib <https://github.com/jazzband/tablib>`_ supports)
 * `Preview <https://django-import-export.readthedocs.io/en/latest/screenshots.html/>`_ data before importing in Admin UI
 * Support for `bulk import <https://django-import-export.readthedocs.io/en/latest/bulk_import.html>`_
 * Handles `CRUD operations during import <https://django-import-export.readthedocs.io/en/latest/advanced_usage.html#create-or-update-model-instances>`_
@@ -65,7 +65,7 @@ Features
 * Export using `natural keys <https://django-import-export.readthedocs.io/en/latest/advanced_usage.html#django-natural-keys>`_ for portability between environments
 * `Select items for export <https://django-import-export.readthedocs.io/en/latest/screenshots.html/>`_ via the Admin UI object list
 * `Select fields for export <https://django-import-export.readthedocs.io/en/latest/screenshots.html/>`_ via the export form
-* Export single object instances
+* `Export single object instances <https://django-import-export.readthedocs.io/en/latest/admin_integration.html#export-from-model-instance-change-form>`_
 * Use `django permissions <https://django-import-export.readthedocs.io/en/latest/installation.html#import-export-import-permission-code>`_ to control import / export authorization
 * Internationalization support
 * Based on `tablib <https://github.com/jazzband/tablib>`_
@@ -74,6 +74,7 @@ Features
 * Handle import from various character encodings
 * `Celery <https://django-import-export.readthedocs.io/en/latest/celery.html>`_ integration
 * Test locally with `Docker <https://django-import-export.readthedocs.io/en/latest/testing.html>`_
+* Comprehensive `documentation <https://django-import-export.readthedocs.io/en/latest/index.html>`_
 * test coverage :100:
 * Supports dark mode :rocket:
 
@@ -81,7 +82,7 @@ Example use-cases
 =================
 
 django-import-export is designed to be extensible and can be used to support a variety of operations.
-Here are some examples of how it has been used:
+Here are some examples of how it has been used in the wild:
 
 * Configure external cron jobs to run an import or export at set times
 * Use `permissions <https://django-import-export.readthedocs.io/en/latest/installation.html#import-export-import-permission-code>`_ to define a subset of users able to import and export project data
