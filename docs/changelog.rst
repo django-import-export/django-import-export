@@ -9,6 +9,7 @@ Changelog
 ------------------
 
 - Clarified documentation when importing with ``import_id_fields``  (`1836 <https://github.com/django-import-export/django-import-export/pull/1836>`_)
+- re-add ``resource_class`` deprecation warning (`1837 <https://github.com/django-import-export/django-import-export/pull/1837>`_)
 
 4.0.2 (2024-05-13)
 ------------------
