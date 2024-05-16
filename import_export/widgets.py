@@ -233,14 +233,16 @@ class BaseDateTimeWidget(Widget, ABC):
         Raise ValueError if parsing fails."""
         if not value:
             return None
-        if isinstance(value, value_type):
-            return value
-        for format_ in self.formats:
-            try:
-                return value_type.strptime(value, format_)
-            except (ValueError, TypeError) as e:
-                logger.debug(str(e))
-        raise ValueError(_("Value could not be parsed using defined formats."))
+        try:
+            if value_type is date:
+                return datetime.strptime(value, self.formats[0]).date()
+            elif value_type is time:
+                return datetime.strptime(value, self.formats[0]).time()
+            elif value_type is datetime:
+                return datetime.strptime(value, self.formats[0])
+        except (ValueError, TypeError) as e:
+            logger.debug(str(e))
+            raise ValueError(_("Value could not be parsed using defined formats."))
 
 
 class DateWidget(BaseDateTimeWidget):
