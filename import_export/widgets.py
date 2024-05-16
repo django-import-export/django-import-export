@@ -1,7 +1,7 @@
 import json
 import logging
 import numbers
-from abc import ABC, abstractmethod
+from abc import ABC
 from datetime import date, datetime, time, timedelta
 from decimal import Decimal
 from warnings import warn
@@ -228,7 +228,6 @@ class BaseDateTimeWidget(Widget, ABC):
         super().__init__(coerce_to_string=coerce_to_string)
         self.formats = (format,) if format else (input_formats or (default_format,))
 
-    @abstractmethod
     def parse_value(self, value, value_type):
         """Attempt to parse the value using the provided formats.
         Raise ValueError if parsing fails."""
