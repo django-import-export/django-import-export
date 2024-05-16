@@ -33,7 +33,7 @@ django-import-export
 .. |discord|  image:: https://img.shields.io/discord/1240294048653119508?style=flat
    :alt: Discord
 
-.. |main_screenshot| image:: https://github.com/matthewhegarty/django-import-export/blob/doc-updates/docs/_static/images/screenshots/import-form.png
+.. |main_screenshot| image:: https://github.com/django-import-export/django-import-export/blob/main/docs/_static/images/screenshots/import-form.png
    :width: 800
    :alt: screenshot of the import form in django-import-export
 
