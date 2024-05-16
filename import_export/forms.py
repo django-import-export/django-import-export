@@ -70,8 +70,9 @@ class ImportForm(ImportExportFormBase):
 
     @property
     def media(self):
+        media = super().media
         extra = "" if settings.DEBUG else ".min"
-        return forms.Media(
+        return media + forms.Media(
             js=(
                 f"admin/js/vendor/jquery/jquery{extra}.js",
                 "admin/js/jquery.init.js",

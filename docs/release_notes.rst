@@ -69,6 +69,15 @@ of :class:`~import_export.exceptions.ImportError` is raised.  This exception wra
 
 See `this PR <https://github.com/django-import-export/django-import-export/issues/1729>`_.
 
+Check ``import_id_fields``
+--------------------------
+
+Prior to v4 we had numerous issues where users were confused when imports failed due to declared ``import_id_fields``
+not being present in the dataset.  We added functionality in v4 to check for this and to raise a clearer error message.
+
+In some use-cases, it is a requirement that ``import_id_fields`` are not in the dataset, and are generated dynamically.
+If this affects your implementation, start with the documentation :ref:`here<import_id_fields_error_on_import>`.
+
 Deprecations
 ============
 
