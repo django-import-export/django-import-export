@@ -37,7 +37,7 @@ django-import-export
    :width: 800
    :alt: screenshot of the import form in django-import-export
 
-|build| |coveralls| |pypi| |docs| |pyver| |djangover| |downloads| |xfollow|
+|build| |coveralls| |pypi| |docs| |pyver| |djangover| |downloads| |xfollow| |discord|
 
 Introduction
 ============
