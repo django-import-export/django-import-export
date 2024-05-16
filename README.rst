@@ -30,7 +30,10 @@ django-import-export
    :alt: Follow us on X
    :target: https://twitter.com/django_import
 
-.. |main_screenshot| image:: https://github.com/django-import-export/django-import-export/blob/main/docs/_static/images/screenshots/import-form.png
+.. |discord|  image:: https://img.shields.io/discord/1240294048653119508?style=flat
+   :alt: Discord
+
+.. |main_screenshot| image:: https://github.com/matthewhegarty/django-import-export/blob/doc-updates/docs/_static/images/screenshots/import-form.png
    :width: 800
    :alt: screenshot of the import form in django-import-export
 
@@ -47,7 +50,7 @@ Can be run programmatically, or with optional integration with the Django Admin 
 
 |main_screenshot|
 
-`More screenshots <https://django-import-export.readthedocs.io/en/latest/screenshots.html/>`_
+`More screenshots <https://django-import-export.readthedocs.io/en/latest/screenshots.html>`_
 
 Features
 ========
@@ -75,6 +78,7 @@ Features
 * `Celery <https://django-import-export.readthedocs.io/en/latest/celery.html>`_ integration
 * Test locally with `Docker <https://django-import-export.readthedocs.io/en/latest/testing.html>`_
 * Comprehensive `documentation <https://django-import-export.readthedocs.io/en/latest/index.html>`_
+* `Extensible API <https://django-import-export.readthedocs.io/en/latest/api_admin.html>`_
 * test coverage :100:
 * Supports dark mode :rocket:
 
@@ -102,6 +106,7 @@ Getting started
 Help and support
 ================
 
+* `Documentation <https://django-import-export.readthedocs.io/en/latest/>`_
 * `FAQ <https://django-import-export.readthedocs.io/en/latest/faq.html>`_
 * `Getting help <https://django-import-export.readthedocs.io/en/latest/faq.html#what-s-the-best-way-to-communicate-a-problem-question-or-suggestion>`_
 * `Contributing <https://django-import-export.readthedocs.io/en/latest/faq.html#how-can-i-help>`_
