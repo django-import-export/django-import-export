@@ -5,11 +5,14 @@ Changelog
 
     Version 4 introduces breaking changes.  Please refer to :doc:`release notes<release_notes>`.
 
-4.0.3 (unreleased)
+4.0.3 (2024-05-16)
 ------------------
 
+- Support widgets with CSS and JS media in ImportForm (`1807 <https://github.com/django-import-export/django-import-export/pull/1807>`_)
+- Documentation updates (`1833 <https://github.com/django-import-export/django-import-export/pull/1833>`_)
 - Clarified documentation when importing with ``import_id_fields``  (`1836 <https://github.com/django-import-export/django-import-export/pull/1836>`_)
 - re-add ``resource_class`` deprecation warning (`1837 <https://github.com/django-import-export/django-import-export/pull/1837>`_)
+- fixed Arabic translation for 'import' word (`1838 <https://github.com/django-import-export/django-import-export/pull/1838>`_)
 
 4.0.2 (2024-05-13)
 ------------------

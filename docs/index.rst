@@ -45,6 +45,7 @@ exporting data with included admin integration.
    celery
    testing
    faq
+   screenshots
    release_notes
    changelog
 

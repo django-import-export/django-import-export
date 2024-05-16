@@ -21,7 +21,7 @@ development version::
 
   pip install -e git+https://github.com/django-import-export/django-import-export.git#egg=django-import-export
 
-Now, you're good to go, unless you want to use import_export from the
+Now, you're good to go, unless you want to use import-export from the
 admin as well. In this case, you need to add it to your ``INSTALLED_APPS`` and
 let Django collect its static files.
 
@@ -239,3 +239,25 @@ You can initialize and run the example application as follows::
 Go to http://127.0.0.1:8000
 
 For example import files, see :ref:`getting_started:Test data`.
+
+.. _logging:
+
+Configure logging
+=================
+
+You can adjust the log level to see output as required.
+This is an example configuration to be placed in your application settings::
+
+    LOGGING = {
+        "handlers": {
+            "console": {"level": "DEBUG", "class": "logging.StreamHandler"},
+        },
+        "loggers": {
+            "django.db.backends": {"level": "INFO", "handlers": ["console"]},
+            "import_export": {
+                "handlers": ["console"],
+                "level": "INFO",
+            },
+        },
+    }
+
