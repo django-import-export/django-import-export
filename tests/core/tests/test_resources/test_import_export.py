@@ -330,6 +330,27 @@ class ImportIdFieldsTestCase(TestCase):
             str(e.exception),
         )
 
+    def test_dynamic_import_id_fields(self):
+        # issue 1834
+        class BookResource(resources.ModelResource):
+            def before_import(self, dataset, **kwargs):
+                # mimic a 'dynamic field' - i.e. append field which exists on
+                # Book model, but not in dataset
+                dataset.headers.append("price")
+                super().before_import(dataset, **kwargs)
+
+            class Meta:
+                model = Book
+                import_id_fields = ("price",)
+
+        self.resource = BookResource()
+        dataset = tablib.Dataset(
+            *[(self.book.pk, "Goldeneye", "ian.fleming@example.com")],
+            headers=["id", "name", "author_email"],
+        )
+        self.resource.import_data(dataset, raise_errors=True)
+        self.assertEqual("Goldeneye", Book.objects.latest("id").name)
+
 
 class ImportWithMissingFields(TestCase):
     # issue 1517
