@@ -233,16 +233,20 @@ class BaseDateTimeWidget(Widget, ABC):
         Raise ValueError if parsing fails."""
         if not value:
             return None
-        try:
-            if value_type is date:
-                return datetime.strptime(value, self.formats[0]).date()
-            elif value_type is time:
-                return datetime.strptime(value, self.formats[0]).time()
-            elif value_type is datetime:
-                return datetime.strptime(value, self.formats[0])
-        except (ValueError, TypeError) as e:
-            logger.debug(str(e))
-            raise ValueError(_("Value could not be parsed using defined formats."))
+        if isinstance(value, value_type):
+            return value
+
+        for format_ in self.formats:
+            try:
+                parsed_date = datetime.strptime(value, format_)
+                if value_type is date:
+                    return parsed_date.date()
+                if value_type is time:
+                    return parsed_date.time()
+                return parsed_date
+            except (ValueError, TypeError) as e:
+                logger.debug(str(e))
+        raise ValueError("Value could not be parsed using defined formats.")
 
 
 class DateWidget(BaseDateTimeWidget):
@@ -296,9 +300,11 @@ class DateTimeWidget(BaseDateTimeWidget):
         :raises: ValueError if the value cannot be parsed using defined formats.
         """
         dt = self.parse_value(value, datetime)
-        if settings.USE_TZ and timezone.is_naive(dt):
-            return timezone.make_aware(dt)
-        return dt
+        if dt:
+            if settings.USE_TZ and timezone.is_naive(dt):
+                return timezone.make_aware(dt)
+            return dt
+        raise ValueError(_("Value could not be parsed using defined datetime formats."))
 
     def render(self, value, obj=None):
         self._obj_deprecation_warning(obj)

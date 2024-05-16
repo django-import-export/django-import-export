@@ -145,7 +145,7 @@ class DateWidgetTest(TestCase, RowDeprecationTestMixin):
     def test_clean_raises_ValueError(self, mock_logger):
         self.widget = widgets.DateWidget("x")
         with self.assertRaisesRegex(
-            ValueError, "Value could not be parsed using defined date formats."
+            ValueError, "Value could not be parsed using defined formats."
         ):
             self.widget.clean("2021-05-01")
         mock_logger.debug.assert_called_with(
@@ -188,7 +188,7 @@ class DateTimeWidgetTest(TestCase, RowDeprecationTestMixin):
     def test_clean_raises_ValueError(self, mock_logger):
         self.widget = widgets.DateTimeWidget("x")
         with self.assertRaisesRegex(
-            ValueError, "Value could not be parsed using defined datetime formats."
+            ValueError, "Value could not be parsed using defined formats."
         ):
             self.widget.clean("2021-05-01")
         mock_logger.debug.assert_called_with(
@@ -297,7 +297,7 @@ class TimeWidgetTest(TestCase, RowDeprecationTestMixin):
     def test_clean_raises_ValueError(self, mock_logger):
         self.widget = widgets.TimeWidget("x")
         with self.assertRaisesRegex(
-            ValueError, "Value could not be parsed using defined time formats."
+            ValueError, "Value could not be parsed using defined formats."
         ):
             self.widget.clean("20:15:00")
         mock_logger.debug.assert_called_with(
