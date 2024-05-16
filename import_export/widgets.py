@@ -1,6 +1,7 @@
 import json
 import logging
 import numbers
+from abc import ABC, abstractmethod
 from datetime import date, datetime, time, timedelta
 from decimal import Decimal
 from warnings import warn
@@ -213,17 +214,24 @@ class BooleanWidget(Widget):
         return self.TRUE_VALUES[0] if value else self.FALSE_VALUES[0]
 
 
-class BaseDateTimeWidget(Widget):
-    """ Base widget for handling date and datetime conversions. """
+class BaseDateTimeWidget(Widget, ABC):
+    """Base widget for handling date and datetime conversions.
+    This class should not be instantiated directly."""
 
-    def __init__(self, format=None, input_formats=None, default_format="%Y-%m-%d",
-                 coerce_to_string=True):
+    def __init__(
+        self,
+        format=None,
+        input_formats=None,
+        default_format="%Y-%m-%d",
+        coerce_to_string=True,
+    ):
         super().__init__(coerce_to_string=coerce_to_string)
-        # Initialize formats based on provided format or fallback to default settings
         self.formats = (format,) if format else (input_formats or (default_format,))
 
+    @abstractmethod
     def parse_value(self, value, value_type):
-        """ Attempt to parse the value using the provided formats. Raise ValueError if parsing fails. """
+        """Attempt to parse the value using the provided formats.
+        Raise ValueError if parsing fails."""
         if not value:
             return None
         if isinstance(value, value_type):
@@ -245,8 +253,9 @@ class DateWidget(BaseDateTimeWidget):
     """
 
     def __init__(self, format=None, coerce_to_string=True):
-        super().__init__(format, settings.DATE_INPUT_FORMATS, "%Y-%m-%d",
-                         coerce_to_string)
+        super().__init__(
+            format, settings.DATE_INPUT_FORMATS, "%Y-%m-%d", coerce_to_string
+        )
 
     def clean(self, value, row=None, **kwargs):
         """
@@ -273,8 +282,12 @@ class DateTimeWidget(BaseDateTimeWidget):
     """
 
     def __init__(self, format=None, coerce_to_string=True):
-        super().__init__(format, settings.DATETIME_INPUT_FORMATS, "%Y-%m-%d %H:%M:%S",
-                         coerce_to_string)
+        super().__init__(
+            format,
+            settings.DATETIME_INPUT_FORMATS,
+            "%Y-%m-%d %H:%M:%S",
+            coerce_to_string,
+        )
 
     def clean(self, value, row=None, **kwargs):
         """
@@ -306,8 +319,9 @@ class TimeWidget(BaseDateTimeWidget):
     """
 
     def __init__(self, format=None, coerce_to_string=True):
-        super().__init__(format, settings.TIME_INPUT_FORMATS, "%H:%M:%S",
-                         coerce_to_string)
+        super().__init__(
+            format, settings.TIME_INPUT_FORMATS, "%H:%M:%S", coerce_to_string
+        )
 
     def clean(self, value, row=None, **kwargs):
         """
