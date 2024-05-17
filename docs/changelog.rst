@@ -8,7 +8,7 @@ Changelog
 4.0.4 (unreleased)
 ------------------
 
-- Documentation updates ()
+- Documentation updates (`1840 <https://github.com/django-import-export/django-import-export/pull/1840>`_)
 
 4.0.3 (2024-05-16)
 ------------------
