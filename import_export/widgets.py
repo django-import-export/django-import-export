@@ -1,7 +1,6 @@
 import json
 import logging
 import numbers
-from abc import ABC
 from datetime import date, datetime, time, timedelta
 from decimal import Decimal
 from warnings import warn
@@ -214,9 +213,8 @@ class BooleanWidget(Widget):
         return self.TRUE_VALUES[0] if value else self.FALSE_VALUES[0]
 
 
-class BaseDateTimeWidget(Widget, ABC):
-    """Base widget for handling date and datetime conversions.
-    This class should not be instantiated directly."""
+class BaseDateTimeMixin(Widget):
+    """Internal Mixin for shared logic with date and datetime conversions."""
 
     def __init__(
         self,
@@ -249,7 +247,7 @@ class BaseDateTimeWidget(Widget, ABC):
         raise ValueError("Value could not be parsed using defined formats.")
 
 
-class DateWidget(BaseDateTimeWidget):
+class DateWidget(BaseDateTimeMixin, Widget):
     """
     Widget for converting date fields to Python date instances.
 
@@ -278,7 +276,7 @@ class DateWidget(BaseDateTimeWidget):
         return format_datetime(value, self.formats[0])
 
 
-class DateTimeWidget(BaseDateTimeWidget):
+class DateTimeWidget(BaseDateTimeMixin, Widget):
     """
     Widget for converting datetime fields to Python datetime instances.
 
@@ -317,7 +315,7 @@ class DateTimeWidget(BaseDateTimeWidget):
         return format_datetime(value, self.formats[0])
 
 
-class TimeWidget(BaseDateTimeWidget):
+class TimeWidget(BaseDateTimeMixin, Widget):
     """
     Widget for converting time fields.
 

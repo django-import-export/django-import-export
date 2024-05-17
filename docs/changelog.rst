@@ -5,6 +5,11 @@ Changelog
 
     Version 4 introduces breaking changes.  Please refer to :doc:`release notes<release_notes>`.
 
+4.0.4 (unreleased)
+------------------
+
+- Refactored ``DateWidget`` & ``DateTimeWidget`` to remove code duplication (`1839 <https://github.com/django-import-export/django-import-export/pull/1839>`_)
+
 4.0.3 (2024-05-16)
 ------------------
 
