@@ -300,11 +300,11 @@ class DateTimeWidget(BaseDateTimeWidget):
         :raises: ValueError if the value cannot be parsed using defined formats.
         """
         dt = self.parse_value(value, datetime)
-        if dt:
-            if settings.USE_TZ and timezone.is_naive(dt):
-                return timezone.make_aware(dt)
-            return dt
-        raise ValueError(_("Value could not be parsed using defined datetime formats."))
+        if dt is None:
+            return None
+        if settings.USE_TZ and timezone.is_naive(dt):
+            return timezone.make_aware(dt)
+        return dt
 
     def render(self, value, obj=None):
         self._obj_deprecation_warning(obj)
