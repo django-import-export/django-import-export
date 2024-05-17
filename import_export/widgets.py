@@ -26,6 +26,40 @@ def format_datetime(value, datetime_format):
     return value.strftime(format_)
 
 
+class _ParseDateTimeMixin(object):
+    """Internal Mixin for shared logic with date and datetime conversions."""
+
+    def __init__(
+        self,
+        format=None,
+        input_formats=None,
+        default_format="%Y-%m-%d",
+        coerce_to_string=True,
+    ):
+        super().__init__(coerce_to_string=coerce_to_string)
+        self.formats = (format,) if format else (input_formats or (default_format,))
+
+    def _parse_value(self, value, value_type):
+        """Attempt to parse the value using the provided formats.
+        Raise ValueError if parsing fails."""
+        if not value:
+            return None
+        if isinstance(value, value_type):
+            return value
+
+        for format_ in self.formats:
+            try:
+                parsed_date = datetime.strptime(value, format_)
+                if value_type is date:
+                    return parsed_date.date()
+                if value_type is time:
+                    return parsed_date.time()
+                return parsed_date
+            except (ValueError, TypeError) as e:
+                logger.debug(str(e))
+        raise ValueError("Value could not be parsed using defined formats.")
+
+
 class Widget:
     """
     A Widget handles converting between import and export representations.
@@ -213,40 +247,25 @@ class BooleanWidget(Widget):
         return self.TRUE_VALUES[0] if value else self.FALSE_VALUES[0]
 
 
-class DateWidget(Widget):
+class DateWidget(_ParseDateTimeMixin, Widget):
     """
-    Widget for converting date fields.
+    Widget for converting date fields to Python date instances.
 
     Takes optional ``format`` parameter. If none is set, either
     ``settings.DATE_INPUT_FORMATS`` or ``"%Y-%m-%d"`` is used.
     """
 
     def __init__(self, format=None, coerce_to_string=True):
-        super().__init__(coerce_to_string=coerce_to_string)
-        if format is None:
-            if not settings.DATE_INPUT_FORMATS:
-                formats = ("%Y-%m-%d",)
-            else:
-                formats = settings.DATE_INPUT_FORMATS
-        else:
-            formats = (format,)
-        self.formats = formats
+        super().__init__(
+            format, settings.DATE_INPUT_FORMATS, "%Y-%m-%d", coerce_to_string
+        )
 
     def clean(self, value, row=None, **kwargs):
         """
         :returns: A python date instance.
         :raises: ValueError if the value cannot be parsed using defined formats.
         """
-        if not value:
-            return None
-        if isinstance(value, date):
-            return value
-        for format in self.formats:
-            try:
-                return datetime.strptime(value, format).date()
-            except (ValueError, TypeError) as e:
-                logger.debug(str(e))
-        raise ValueError(_("Value could not be parsed using defined date formats."))
+        return self._parse_value(value, date)
 
     def render(self, value, obj=None):
         self._obj_deprecation_warning(obj)
@@ -257,46 +276,33 @@ class DateWidget(Widget):
         return format_datetime(value, self.formats[0])
 
 
-class DateTimeWidget(Widget):
+class DateTimeWidget(_ParseDateTimeMixin, Widget):
     """
-    Widget for converting date fields.
+    Widget for converting datetime fields to Python datetime instances.
 
     Takes optional ``format`` parameter. If none is set, either
     ``settings.DATETIME_INPUT_FORMATS`` or ``"%Y-%m-%d %H:%M:%S"`` is used.
     """
 
     def __init__(self, format=None, coerce_to_string=True):
-        super().__init__(coerce_to_string=coerce_to_string)
-        if format is None:
-            if not settings.DATETIME_INPUT_FORMATS:
-                formats = ("%Y-%m-%d %H:%M:%S",)
-            else:
-                formats = settings.DATETIME_INPUT_FORMATS
-        else:
-            formats = (format,)
-        self.formats = formats
+        super().__init__(
+            format,
+            settings.DATETIME_INPUT_FORMATS,
+            "%Y-%m-%d %H:%M:%S",
+            coerce_to_string,
+        )
 
     def clean(self, value, row=None, **kwargs):
         """
         :returns: A python datetime instance.
         :raises: ValueError if the value cannot be parsed using defined formats.
         """
-        dt = None
-        if not value:
+        dt = self._parse_value(value, datetime)
+        if dt is None:
             return None
-        if isinstance(value, datetime):
-            dt = value
-        else:
-            for format_ in self.formats:
-                try:
-                    dt = datetime.strptime(value, format_)
-                except (ValueError, TypeError) as e:
-                    logger.debug(str(e))
-        if dt:
-            if settings.USE_TZ and timezone.is_naive(dt):
-                dt = timezone.make_aware(dt)
-            return dt
-        raise ValueError(_("Value could not be parsed using defined datetime formats."))
+        if settings.USE_TZ and timezone.is_naive(dt):
+            return timezone.make_aware(dt)
+        return dt
 
     def render(self, value, obj=None):
         self._obj_deprecation_warning(obj)
@@ -309,7 +315,7 @@ class DateTimeWidget(Widget):
         return format_datetime(value, self.formats[0])
 
 
-class TimeWidget(Widget):
+class TimeWidget(_ParseDateTimeMixin, Widget):
     """
     Widget for converting time fields.
 
@@ -318,31 +324,16 @@ class TimeWidget(Widget):
     """
 
     def __init__(self, format=None, coerce_to_string=True):
-        super().__init__(coerce_to_string=coerce_to_string)
-        if format is None:
-            if not settings.TIME_INPUT_FORMATS:
-                formats = ("%H:%M:%S",)
-            else:
-                formats = settings.TIME_INPUT_FORMATS
-        else:
-            formats = (format,)
-        self.formats = formats
+        super().__init__(
+            format, settings.TIME_INPUT_FORMATS, "%H:%M:%S", coerce_to_string
+        )
 
     def clean(self, value, row=None, **kwargs):
         """
         :returns: A python time instance.
         :raises: ValueError if the value cannot be parsed using defined formats.
         """
-        if not value:
-            return None
-        if isinstance(value, time):
-            return value
-        for format in self.formats:
-            try:
-                return datetime.strptime(value, format).time()
-            except (ValueError, TypeError) as e:
-                logger.debug(str(e))
-        raise ValueError(_("Value could not be parsed using defined time formats."))
+        return self._parse_value(value, time)
 
     def render(self, value, obj=None):
         self._obj_deprecation_warning(obj)
