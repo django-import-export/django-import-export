@@ -26,6 +26,40 @@ def format_datetime(value, datetime_format):
     return value.strftime(format_)
 
 
+class _ParseDateTimeMixin(object):
+    """Internal Mixin for shared logic with date and datetime conversions."""
+
+    def __init__(
+        self,
+        format=None,
+        input_formats=None,
+        default_format="%Y-%m-%d",
+        coerce_to_string=True,
+    ):
+        super().__init__(coerce_to_string=coerce_to_string)
+        self.formats = (format,) if format else (input_formats or (default_format,))
+
+    def _parse_value(self, value, value_type):
+        """Attempt to parse the value using the provided formats.
+        Raise ValueError if parsing fails."""
+        if not value:
+            return None
+        if isinstance(value, value_type):
+            return value
+
+        for format_ in self.formats:
+            try:
+                parsed_date = datetime.strptime(value, format_)
+                if value_type is date:
+                    return parsed_date.date()
+                if value_type is time:
+                    return parsed_date.time()
+                return parsed_date
+            except (ValueError, TypeError) as e:
+                logger.debug(str(e))
+        raise ValueError("Value could not be parsed using defined formats.")
+
+
 class Widget:
     """
     A Widget handles converting between import and export representations.
@@ -213,41 +247,7 @@ class BooleanWidget(Widget):
         return self.TRUE_VALUES[0] if value else self.FALSE_VALUES[0]
 
 
-class BaseDateTimeMixin(Widget):
-    """Internal Mixin for shared logic with date and datetime conversions."""
-
-    def __init__(
-        self,
-        format=None,
-        input_formats=None,
-        default_format="%Y-%m-%d",
-        coerce_to_string=True,
-    ):
-        super().__init__(coerce_to_string=coerce_to_string)
-        self.formats = (format,) if format else (input_formats or (default_format,))
-
-    def parse_value(self, value, value_type):
-        """Attempt to parse the value using the provided formats.
-        Raise ValueError if parsing fails."""
-        if not value:
-            return None
-        if isinstance(value, value_type):
-            return value
-
-        for format_ in self.formats:
-            try:
-                parsed_date = datetime.strptime(value, format_)
-                if value_type is date:
-                    return parsed_date.date()
-                if value_type is time:
-                    return parsed_date.time()
-                return parsed_date
-            except (ValueError, TypeError) as e:
-                logger.debug(str(e))
-        raise ValueError("Value could not be parsed using defined formats.")
-
-
-class DateWidget(BaseDateTimeMixin, Widget):
+class DateWidget(_ParseDateTimeMixin, Widget):
     """
     Widget for converting date fields to Python date instances.
 
@@ -265,7 +265,7 @@ class DateWidget(BaseDateTimeMixin, Widget):
         :returns: A python date instance.
         :raises: ValueError if the value cannot be parsed using defined formats.
         """
-        return self.parse_value(value, date)
+        return self._parse_value(value, date)
 
     def render(self, value, obj=None):
         self._obj_deprecation_warning(obj)
@@ -276,7 +276,7 @@ class DateWidget(BaseDateTimeMixin, Widget):
         return format_datetime(value, self.formats[0])
 
 
-class DateTimeWidget(BaseDateTimeMixin, Widget):
+class DateTimeWidget(_ParseDateTimeMixin, Widget):
     """
     Widget for converting datetime fields to Python datetime instances.
 
@@ -297,7 +297,7 @@ class DateTimeWidget(BaseDateTimeMixin, Widget):
         :returns: A python datetime instance.
         :raises: ValueError if the value cannot be parsed using defined formats.
         """
-        dt = self.parse_value(value, datetime)
+        dt = self._parse_value(value, datetime)
         if dt is None:
             return None
         if settings.USE_TZ and timezone.is_naive(dt):
@@ -315,7 +315,7 @@ class DateTimeWidget(BaseDateTimeMixin, Widget):
         return format_datetime(value, self.formats[0])
 
 
-class TimeWidget(BaseDateTimeMixin, Widget):
+class TimeWidget(_ParseDateTimeMixin, Widget):
     """
     Widget for converting time fields.
 
@@ -333,7 +333,7 @@ class TimeWidget(BaseDateTimeMixin, Widget):
         :returns: A python time instance.
         :raises: ValueError if the value cannot be parsed using defined formats.
         """
-        return self.parse_value(value, time)
+        return self._parse_value(value, time)
 
     def render(self, value, obj=None):
         self._obj_deprecation_warning(obj)
