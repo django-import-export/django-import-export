@@ -5,6 +5,11 @@ Changelog
 
     Version 4 introduces breaking changes.  Please refer to :doc:`release notes<release_notes>`.
 
+4.0.4 (unreleased)
+------------------
+
+- Documentation updates ()
+
 4.0.3 (2024-05-16)
 ------------------
 

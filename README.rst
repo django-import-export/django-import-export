@@ -114,6 +114,11 @@ Help and support
 * `Raise a security issue <https://github.com/django-import-export/django-import-export/blob/main/SECURITY.md>`_
 * Join our `discord <https://discord.gg/aCcec52kY4>`_
 
+Commercial support
+==================
+
+Commercial support is provided by `Bellaport Systems Ltd <https://www.bellaport.co.uk>`_
+
 Releases
 ========
 
