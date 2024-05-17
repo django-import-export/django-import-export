@@ -38,7 +38,7 @@ msgstr ""
 #: admin.py:539 templates/admin/import_export/change_list_import_item.html:5
 #: templates/admin/import_export/import.html:19
 msgid "Import"
-msgstr "إستبراد"
+msgstr "إستيراد"
 
 #: admin.py:785 templates/admin/import_export/change_form.html:8
 #: templates/admin/import_export/change_list_export_item.html:5

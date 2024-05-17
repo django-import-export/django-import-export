@@ -1,4 +1,5 @@
 import logging
+import warnings
 from warnings import warn
 
 from django.conf import settings
@@ -20,6 +21,7 @@ class BaseImportExportMixin:
     interface.
     """
 
+    resource_class = None
     resource_classes = []
 
     @property
@@ -47,11 +49,30 @@ class BaseImportExportMixin:
         :param request: The request object.
         :returns: The Resource classes.
         """
-        if not self.resource_classes:
+        if self.resource_classes and self.resource_class:
+            raise Exception(
+                "Only one of 'resource_class' and 'resource_classes' can be set"
+            )
+        if hasattr(self, "get_resource_class"):
+            warnings.warn(
+                "The 'get_resource_class()' method has been deprecated. "
+                "Please implement the new 'get_resource_classes()' method",
+                DeprecationWarning,
+            )
+            return [self.get_resource_class()]
+        if self.resource_class:
+            warnings.warn(
+                "The 'resource_class' field has been deprecated. "
+                "Please implement the new 'resource_classes' field",
+                DeprecationWarning,
+            )
+        if not self.resource_classes and not self.resource_class:
             return [modelresource_factory(self.model)]
-        return self.resource_classes
+        if self.resource_classes:
+            return self.resource_classes
+        return [self.resource_class]
 
-    def get_resource_kwargs(self, request, **kwargs):
+    def get_resource_kwargs(self, request, *args, **kwargs):
         """
         Return the kwargs which are to be passed to the Resource constructor.
         Can be overridden to provide additional kwarg params.
@@ -84,6 +105,13 @@ class BaseImportMixin(BaseImportExportMixin):
         :param request: The request object.
         Returns ResourceClass subscriptable (list, tuple, ...) to use for import.
         """
+        if hasattr(self, "get_import_resource_class"):
+            warnings.warn(
+                "The 'get_import_resource_class()' method has been deprecated. "
+                "Please implement the new 'get_import_resource_classes()' method",
+                DeprecationWarning,
+            )
+            return [self.get_import_resource_class()]
         resource_classes = self.get_resource_classes(request)
         self.check_resource_classes(resource_classes)
         return resource_classes
@@ -129,6 +157,13 @@ class BaseExportMixin(BaseImportExportMixin):
         :param request: The request object.
         :returns: The Resource classes.
         """
+        if hasattr(self, "get_export_resource_class"):
+            warnings.warn(
+                "The 'get_export_resource_class()' method has been deprecated. "
+                "Please implement the new 'get_export_resource_classes()' method",
+                DeprecationWarning,
+            )
+            return [self.get_export_resource_class()]
         resource_classes = self.get_resource_classes(request)
         self.check_resource_classes(resource_classes)
         return resource_classes

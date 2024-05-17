@@ -17,7 +17,7 @@ You can help in the following ways:
 
 * Reporting bugs or issues.
 
-* Answering questions which arise on Stack Overflow or as Github issues.
+* Answering questions which arise on `Stack Overflow <https://stackoverflow.com/questions/tagged/django-import-export/>`_ or as Github issues.
 
 * Providing translations for UI text.
 
@@ -30,8 +30,10 @@ We encourage you to read the :doc:`contributing guidelines <contributing>`.
 Common issues
 =============
 
-FieldError on import
---------------------
+.. _import_id_fields_error_on_import:
+
+``import_id_fields`` error on import
+------------------------------------
 
 The following error message can be seen on import:
 
@@ -40,9 +42,11 @@ The following error message can be seen on import:
 This indicates that the Resource has not been configured correctly, and the import logic fails.  Specifically,
 the import process is attempting to use either the defined or default values for
 :attr:`~import_export.options.ResourceOptions.import_id_fields` and no matching field has been detected in the resource
-fields.
+fields. See :ref:`advanced_usage:Create or update model instances`.
 
-See :ref:`advanced_usage:Create or update model instances`.
+In cases where you are deliberately using generated fields in ``import_id_fields`` and these fields are not present in
+the dataset, then you need to modify the resource definition to accommodate this.
+See :ref:`dynamic_fields`.
 
 How to handle double-save from Signals
 --------------------------------------
@@ -167,8 +171,7 @@ How to handle large file uploads
 ---------------------------------
 
 If uploading large files, you may encounter time-outs.
-See :ref:`Celery:Using celery to perform imports` and :ref:`bulk_import:Bulk imports`.
-
+See :ref:`Using celery<celery>` and :ref:`bulk_import:Bulk imports`.
 
 How to use field other than `id` in Foreign Key lookup
 ------------------------------------------------------
@@ -239,3 +242,8 @@ If you want to modify the names of the columns on export, you can do so by overr
 
     class Meta:
       model = Book
+
+How to configure logging
+------------------------
+
+Refer to :ref:`logging configuration<logging>` for more information.

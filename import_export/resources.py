@@ -1153,6 +1153,13 @@ class Resource(metaclass=DeclarativeMetaclass):
         return kwargs.get("dry_run", False)
 
     def _check_import_id_fields(self, headers):
+        """
+        Provides a safety check with a meaningful error message for cases where
+        the ``import_id_fields`` declaration contains a field which is not in the
+        dataset.  For most use-cases this is an error, so we detect and raise.
+        There are conditions, such as 'dynamic fields' where this does not apply.
+        See issue 1834 for more information.
+        """
         import_id_fields = list()
         missing_fields = list()
         missing_headers = list()

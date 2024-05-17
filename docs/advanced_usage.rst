@@ -577,6 +577,48 @@ For example, you can use the 'isbn' number instead of 'id' to uniquely identify 
     field(s) select more than one row, then a ``MultipleObjectsReturned`` exception will be raised.  If no row is
     identified, then ``DoesNotExist`` exception will be raised.
 
+.. _dynamic_fields:
+
+Using 'dynamic fields' to identify existing instances
+-----------------------------------------------------
+
+There are some use-cases where a field defined in ``import_id_fields`` is not present in the dataset.  An example of
+this would be dynamic fields, where a field is generated from other data and then used as an identifier.  For example::
+
+    class BookResource(resources.ModelResource):
+
+        def before_import_row(self, row, **kwargs):
+            # generate a value for an existing field, based on another field
+            row["hash_id"] = hashlib.sha256(row["name"].encode()).hexdigest()
+
+        class Meta:
+            model = Book
+            # A 'dynamic field' - i.e. is used to identify existing rows
+            # but is not present in the dataset
+            import_id_fields = ("hash_id",)
+
+In the above example, a dynamic field called *hash_id* is generated and added to the dataset.  In this example, an
+error will be raised because *hash_id* is not present in the dataset.  To resolve this, update the dataset before
+import to add the dynamic field as a header::
+
+    class BookResource(resources.ModelResource):
+
+        def before_import(self, dataset, **kwargs):
+            # mimic a 'dynamic field' - i.e. append field which exists on
+            # Book model, but not in dataset
+            dataset.headers.append("hash_id")
+            super().before_import(dataset, **kwargs)
+
+        def before_import_row(self, row, **kwargs):
+            row["hash_id"] = hashlib.sha256(row["name"].encode()).hexdigest()
+
+        class Meta:
+            model = Book
+            # A 'dynamic field' - i.e. is used to identify existing rows
+            # but is not present in the dataset
+            import_id_fields = ("hash_id",)
+
+
 Access instances after import
 =============================
 
