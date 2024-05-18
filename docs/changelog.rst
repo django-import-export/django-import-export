@@ -9,6 +9,7 @@ Changelog
 ------------------
 
 - Release note documentation updated (`1840 <https://github.com/django-import-export/django-import-export/pull/1840>`_)
+- Refactored ``DateWidget`` & ``DateTimeWidget`` to remove code duplication (`1839 <https://github.com/django-import-export/django-import-export/pull/1839>`_)
 
 4.0.3 (2024-05-16)
 ------------------
