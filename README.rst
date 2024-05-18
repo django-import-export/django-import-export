@@ -33,16 +33,10 @@ django-import-export
 .. |discord|  image:: https://img.shields.io/discord/1240294048653119508?style=flat
    :alt: Discord
 
-.. |demo_video| raw:: html
-
-    <!-- Raw file was added as a comment to this issue
-       - https://github.com/django-import-export/django-import-export/pull/1833#issuecomment-2118777440
-       -->
-    <video width="100%" height="540" controls>
-      <source src="https://github.com/django-import-export/django-import-export/assets/6249838/e4fe14f8-e4b8-4aab-8c46-822d3b65a1f4
-" type="video/mp4">
-      Your browser does not support the video tag.
-   </video>
+.. |demo_video| image:: https://github.com/django-import-export/django-import-export/assets/6249838/e4fe14f8-e4b8-4aab-8c46-822d3b65a1f4
+   :height: 540px
+   :width: 100%
+   :loading: embed
 
 |build| |coveralls| |pypi| |docs| |pyver| |djangover| |downloads| |xfollow| |discord|
 
