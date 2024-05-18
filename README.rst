@@ -33,9 +33,16 @@ django-import-export
 .. |discord|  image:: https://img.shields.io/discord/1240294048653119508?style=flat
    :alt: Discord
 
-.. |main_screenshot| image:: https://github.com/django-import-export/django-import-export/blob/main/docs/_static/images/screenshots/import-form.png
-   :width: 800
-   :alt: screenshot of the import form in django-import-export
+.. |demo_video| raw:: html
+
+    <!-- Raw file was added as a comment to this issue
+       - https://github.com/django-import-export/django-import-export/pull/1833#issuecomment-2118777440
+       -->
+    <video width="100%" height="540" controls>
+      <source src="https://github.com/django-import-export/django-import-export/assets/6249838/e4fe14f8-e4b8-4aab-8c46-822d3b65a1f4
+" type="video/mp4">
+      Your browser does not support the video tag.
+   </video>
 
 |build| |coveralls| |pypi| |docs| |pyver| |djangover| |downloads| |xfollow| |discord|
 
@@ -48,9 +55,9 @@ Straightforward, reliable and comprehensive file import / export for your Django
 
 Can be run programmatically, or with optional integration with the Django Admin site:
 
-|main_screenshot|
+|demo_video|
 
-`More screenshots <https://django-import-export.readthedocs.io/en/latest/screenshots.html>`_
+`Screenshots <https://django-import-export.readthedocs.io/en/latest/screenshots.html>`_
 
 Features
 ========
@@ -59,7 +66,7 @@ Features
 * Import to and from a variety of file formats (csv, json, xlsx, pandas, HTML, YAML... and anything else that `tablib <https://github.com/jazzband/tablib>`_ supports)
 * `Preview <https://django-import-export.readthedocs.io/en/latest/screenshots.html/>`_ data before importing in Admin UI
 * Support for `bulk import <https://django-import-export.readthedocs.io/en/latest/bulk_import.html>`_
-* Handles `CRUD operations during import <https://django-import-export.readthedocs.io/en/latest/advanced_usage.html#create-or-update-model-instances>`_
+* Handles `CRUD (and 'skip') operations during import <https://django-import-export.readthedocs.io/en/latest/advanced_usage.html#create-or-update-model-instances>`_
 * Flexible handling of `foreign key <https://django-import-export.readthedocs.io/en/latest/advanced_usage.html#importing-model-relations>`_ relationships
 * `Many-to-many relationship <https://django-import-export.readthedocs.io/en/latest/advanced_usage.html#many-to-many-relations>`_ support
 * `Validation <https://django-import-export.readthedocs.io/en/latest/advanced_usage.html#validation-during-import>`_ of imported data
