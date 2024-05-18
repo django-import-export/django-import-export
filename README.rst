@@ -33,10 +33,6 @@ django-import-export
 .. |discord|  image:: https://img.shields.io/discord/1240294048653119508?style=flat
    :alt: Discord
 
-.. |main_screenshot| image:: https://github.com/django-import-export/django-import-export/blob/main/docs/_static/images/screenshots/import-form.png
-   :width: 800
-   :alt: screenshot of the import form in django-import-export
-
 |build| |coveralls| |pypi| |docs| |pyver| |djangover| |downloads| |xfollow| |discord|
 
 Introduction
@@ -48,9 +44,13 @@ Straightforward, reliable and comprehensive file import / export for your Django
 
 Can be run programmatically, or with optional integration with the Django Admin site:
 
-|main_screenshot|
+..
+  source of this video uploaded to this issue comment:
+  https://github.com/django-import-export/django-import-export/pull/1833#issuecomment-2118777440
 
-`More screenshots <https://django-import-export.readthedocs.io/en/latest/screenshots.html>`_
+https://github.com/django-import-export/django-import-export/assets/6249838/a410b6a6-07f3-462d-ba6d-f78a02543600
+
+`Screenshots <https://django-import-export.readthedocs.io/en/latest/screenshots.html>`_
 
 Features
 ========
@@ -59,7 +59,7 @@ Features
 * Import to and from a variety of file formats (csv, json, xlsx, pandas, HTML, YAML... and anything else that `tablib <https://github.com/jazzband/tablib>`_ supports)
 * `Preview <https://django-import-export.readthedocs.io/en/latest/screenshots.html/>`_ data before importing in Admin UI
 * Support for `bulk import <https://django-import-export.readthedocs.io/en/latest/bulk_import.html>`_
-* Handles `CRUD operations during import <https://django-import-export.readthedocs.io/en/latest/advanced_usage.html#create-or-update-model-instances>`_
+* Handles `CRUD (and 'skip') operations during import <https://django-import-export.readthedocs.io/en/latest/advanced_usage.html#create-or-update-model-instances>`_
 * Flexible handling of `foreign key <https://django-import-export.readthedocs.io/en/latest/advanced_usage.html#importing-model-relations>`_ relationships
 * `Many-to-many relationship <https://django-import-export.readthedocs.io/en/latest/advanced_usage.html#many-to-many-relations>`_ support
 * `Validation <https://django-import-export.readthedocs.io/en/latest/advanced_usage.html#validation-during-import>`_ of imported data
@@ -113,6 +113,11 @@ Help and support
 * Become a `sponsor <https://github.com/sponsors/django-import-export>`_
 * `Raise a security issue <https://github.com/django-import-export/django-import-export/blob/main/SECURITY.md>`_
 * Join our `discord <https://discord.gg/aCcec52kY4>`_
+
+Commercial support
+==================
+
+Commercial support is provided by `Bellaport Systems Ltd <https://www.bellaport.co.uk>`_
 
 Releases
 ========

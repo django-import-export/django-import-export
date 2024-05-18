@@ -90,6 +90,14 @@ Deprecations
 
 * See :ref:`renamed_methods`.
 
+* In the Admin UI, the declaration of ``resource_class`` is replaced by ``resource_classes``::
+
+      class BookAdmin(ImportExportModelAdmin):
+        # remove this line
+        # resource_class = BookResource
+        # replace with this
+        resource_classes = [BookResource]
+
 Admin UI
 ========
 
