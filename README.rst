@@ -48,7 +48,7 @@ Can be run programmatically, or with optional integration with the Django Admin 
   source of this video uploaded to this issue comment:
   https://github.com/django-import-export/django-import-export/pull/1833#issuecomment-2118777440
 
-https://github.com/django-import-export/django-import-export/assets/6249838/28a91f56-82af-4f0b-b6de-e88709561593
+https://github.com/django-import-export/django-import-export/assets/6249838/ab56d8ba-c307-4bdf-8fa9-225669c72b37
 
 `Screenshots <https://django-import-export.readthedocs.io/en/latest/screenshots.html>`_
 
