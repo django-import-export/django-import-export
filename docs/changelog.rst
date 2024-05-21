@@ -10,8 +10,8 @@ Changelog
 
 - Release note documentation updated (`1840 <https://github.com/django-import-export/django-import-export/pull/1840>`_)
 - Refactored ``DateWidget`` & ``DateTimeWidget`` to remove code duplication (`1839 <https://github.com/django-import-export/django-import-export/pull/1839>`_)
-- Fix admin UI display of field import order (`1845 <https://github.com/django-import-export/django-import-export/pull/1845>`_)
 - Added missing migration to example app (`1843 <https://github.com/django-import-export/django-import-export/pull/1843>`_)
+- Fix admin UI display of field import order (`1849 <https://github.com/django-import-export/django-import-export/pull/1849>`_)
 
 4.0.3 (2024-05-16)
 ------------------
