@@ -1009,9 +1009,28 @@ class CustomColumnNameImportTest(AdminTestMixin, TestCase):
         self.assertRegex(str(response.content), target_row_re)
 
 
-class ImportOrderTestTest(AdminTestMixin, TestCase):
+class DefaultFieldsImportOrderTest(AdminTestMixin, TestCase):
     """
-    Display correct import order (issue 1845).
+    Display correct import order based on default 'fields' declaration (issue 1845).
+    Ensure that the prompt text on the import page renders the
+    fields in the correct order.
+    """
+
+    fixtures = ["author"]
+
+    def test_import_preview_order(self):
+        response = self.client.get(self.ebook_import_url)
+        # test display rendered in correct order
+        target_re = (
+            r"This importer will import the following fields:[\\n\s]+"
+            r"<code>id, author_email, name, published_date</code>[\\n\s]+"
+        )
+        self.assertRegex(str(response.content), target_re)
+
+
+class DeclaredImportOrderTest(AdminTestMixin, TestCase):
+    """
+    Display correct import order when 'import_order' is declared (issue 1845).
     Ensure that the prompt text on the import page renders the
     fields in the correct order.
     """
