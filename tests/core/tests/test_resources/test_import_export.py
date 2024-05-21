@@ -254,6 +254,7 @@ class ImportExportFieldOrderTest(TestCase):
         self.assertEqual(self.resource.get_export_order(), self.resource._meta.fields)
 
     def test_declared_field_export_order(self):
+        # issue 1846
         class DeclaredModelFieldBookResource(
             ImportExportFieldOrderTest.BaseBookResource
         ):
