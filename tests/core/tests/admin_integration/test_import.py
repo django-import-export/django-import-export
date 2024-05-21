@@ -1016,8 +1016,6 @@ class DefaultFieldsImportOrderTest(AdminTestMixin, TestCase):
     fields in the correct order.
     """
 
-    fixtures = ["author"]
-
     def test_import_preview_order(self):
         response = self.client.get(self.ebook_import_url)
         # test display rendered in correct order
@@ -1034,8 +1032,6 @@ class DeclaredImportOrderTest(AdminTestMixin, TestCase):
     Ensure that the prompt text on the import page renders the
     fields in the correct order.
     """
-
-    fixtures = ["author"]
 
     def setUp(self):
         super().setUp()
