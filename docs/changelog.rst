@@ -5,6 +5,11 @@ Changelog
 
     Version 4 introduces breaking changes.  Please refer to :doc:`release notes<release_notes>`.
 
+4.0.5 (2024-05-23)
+------------------
+
+- Fix for invalid build due to malformed README.rst (`1851 <https://github.com/django-import-export/django-import-export/pull/1851>`_)
+
 4.0.4 (2024-05-23)
 ------------------
 

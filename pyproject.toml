@@ -61,9 +61,6 @@ Changelog = "https://github.com/django-import-export/django-import-export/blob/m
 platforms = ["OS Independent"]
 license-files = ["LICENSE", "AUTHORS"]
 
-[tool.setuptools.dynamic]
-readme = {file = ["README.rst"]}
-
 [tool.setuptools_scm]
 write_to = "import_export/_version.py"
 local_scheme = "no-local-version"
