@@ -34,7 +34,7 @@ For pre-releases, the release version has to be activated via the readthedocs UI
 
 ### Troubleshooting
 
-The build can fail with errors such as:
+The build can fail on 'publish to PyPI' with errors such as:
 
 ```
 `long_description` has syntax errors in markup and would not be rendered on PyPI.
