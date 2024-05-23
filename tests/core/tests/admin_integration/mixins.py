@@ -20,6 +20,8 @@ class AdminTestMixin(object):
     legacybook_process_import_url = "/admin/core/legacybook/process_import/"
     child_import_url = "/admin/core/child/import/"
     child_process_import_url = "/admin/core/child/process_import/"
+    car_import_url = "/admin/core/car/import/"
+    car_export_url = "/admin/core/car/export/"
 
     def setUp(self):
         super().setUp()

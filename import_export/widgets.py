@@ -541,7 +541,7 @@ class ForeignKeyWidget(Widget):
                 lookup_kwargs = self.get_lookup_kwargs(value, row, **kwargs)
                 obj = self.get_queryset(value, row, **kwargs).get(**lookup_kwargs)
                 if self.key_is_id:
-                    return obj.id
+                    return obj.pk
                 return obj
         else:
             return None
