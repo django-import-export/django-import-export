@@ -63,21 +63,21 @@ Features
 * Flexible handling of `foreign key <https://django-import-export.readthedocs.io/en/latest/advanced_usage.html#importing-model-relations>`_ relationships
 * `Many-to-many relationship <https://django-import-export.readthedocs.io/en/latest/advanced_usage.html#many-to-many-relations>`_ support
 * `Validation <https://django-import-export.readthedocs.io/en/latest/advanced_usage.html#validation-during-import>`_ of imported data
-* Define custom `Transformations <https://django-import-export.readthedocs.io/en/latest/advanced_usage.html#advanced-data-manipulation-on-export>`_ for exported data
+* Define custom `transformations <https://django-import-export.readthedocs.io/en/latest/advanced_usage.html#advanced-data-manipulation-on-export>`_ for exported data
 * Import / export the same model instance as `different views <https://django-import-export.readthedocs.io/en/latest/advanced_usage.html#customize-resource-options>`_
-* Export using `natural keys <https://django-import-export.readthedocs.io/en/latest/advanced_usage.html#django-natural-keys>`_ for portability between environments
+* Export using `natural keys <https://django-import-export.readthedocs.io/en/latest/advanced_usage.html#django-natural-keys>`__ for portability between environments
 * `Select items for export <https://django-import-export.readthedocs.io/en/latest/screenshots.html/>`_ via the Admin UI object list
 * `Select fields for export <https://django-import-export.readthedocs.io/en/latest/screenshots.html/>`_ via the export form
 * `Export single object instances <https://django-import-export.readthedocs.io/en/latest/admin_integration.html#export-from-model-instance-change-form>`_
 * Use `django permissions <https://django-import-export.readthedocs.io/en/latest/installation.html#import-export-import-permission-code>`_ to control import / export authorization
 * Internationalization support
-* Based on `tablib <https://github.com/jazzband/tablib>`_
+* Based on `tablib <https://github.com/jazzband/tablib>`__
 * Support for MySQL / PostgreSQL / SQLite
 * Extensible - `add custom logic to control import / export <https://django-import-export.readthedocs.io/en/latest/advanced_usage.html>`_
 * Handle import from various character encodings
 * `Celery <https://django-import-export.readthedocs.io/en/latest/celery.html>`_ integration
 * Test locally with `Docker <https://django-import-export.readthedocs.io/en/latest/testing.html>`_
-* Comprehensive `documentation <https://django-import-export.readthedocs.io/en/latest/index.html>`_
+* Comprehensive `documentation <https://django-import-export.readthedocs.io/en/latest/index.html>`__
 * `Extensible API <https://django-import-export.readthedocs.io/en/latest/api_admin.html>`_
 * test coverage :100:
 * Supports dark mode :rocket:
@@ -100,7 +100,7 @@ Getting started
 ===============
 
 * `Installation <https://django-import-export.readthedocs.io/en/latest/installation.html>`_
-* `Getting started <https://django-import-export.readthedocs.io/en/latest/getting_started.html>`_
+* `Getting started <https://django-import-export.readthedocs.io/en/latest/getting_started.html>`__
 * `Example application <https://django-import-export.readthedocs.io/en/latest/installation.html#exampleapp>`_
 
 Help and support
