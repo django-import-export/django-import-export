@@ -14,7 +14,8 @@ description = "Django application and library for importing and exporting data w
 keywords = ["django", "import", "export"]
 license = {file = "LICENSE"}
 requires-python = ">=3.8"
-dynamic = ["version", "readme"]
+readme = "README.rst"
+dynamic = ["version"]
 classifiers = [
     "Framework :: Django",
     "Framework :: Django :: 4.2",
@@ -59,9 +60,6 @@ Changelog = "https://github.com/django-import-export/django-import-export/blob/m
 [tool.setuptools]
 platforms = ["OS Independent"]
 license-files = ["LICENSE", "AUTHORS"]
-
-[tool.setuptools.dynamic]
-readme = {file = ["README.rst"]}
 
 [tool.setuptools_scm]
 write_to = "import_export/_version.py"

@@ -31,3 +31,19 @@ readthedocs should be checked after each release to ensure that the docs have bu
 Login to [readthedocs.org](https://readthedocs.org) to check that the build ran OK (click on 'Builds' tab).
 
 For pre-releases, the release version has to be activated via the readthedocs UI before it can be built.
+
+### Troubleshooting
+
+The build can fail on 'publish to PyPI' with errors such as:
+
+```
+`long_description` has syntax errors in markup and would not be rendered on PyPI.
+```
+
+This is because the README.rst contains syntax errors and cannot be rendered.  You can check this with:
+
+```
+pip install readme_renderer
+python setup.py check -r -s
+```
+If there are duplicate target names, you can correct this with [underscores](https://github.com/sphinx-doc/sphinx/issues/3921#issuecomment-315581557).

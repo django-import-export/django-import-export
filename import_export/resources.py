@@ -1085,7 +1085,7 @@ class Resource(metaclass=DeclarativeMetaclass):
         return [force_str(field.column_name) for field in export_fields]
 
     def get_user_visible_fields(self):
-        return self.get_fields()
+        return self.get_import_fields()
 
     def iter_queryset(self, queryset):
         if not isinstance(queryset, QuerySet):

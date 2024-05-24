@@ -7,8 +7,6 @@ on:
   pull_request:
     branches:
     - main
-    # temporary - remove after release 4
-    - release-4
 
 jobs:
   test:

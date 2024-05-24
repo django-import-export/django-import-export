@@ -5,11 +5,18 @@ Changelog
 
     Version 4 introduces breaking changes.  Please refer to :doc:`release notes<release_notes>`.
 
-4.0.4 (unreleased)
+4.0.5 (2024-05-23)
 ------------------
 
-- Release note documentation updated (`1840 <https://github.com/django-import-export/django-import-export/pull/1840>`_)
+- Fix for invalid build due to malformed README.rst (`1851 <https://github.com/django-import-export/django-import-export/pull/1851>`_)
+
+4.0.4 (2024-05-23)
+------------------
+
 - Refactored ``DateWidget`` & ``DateTimeWidget`` to remove code duplication (`1839 <https://github.com/django-import-export/django-import-export/pull/1839>`_)
+- Release note documentation updated (`1840 <https://github.com/django-import-export/django-import-export/pull/1840>`_)
+- Added missing migration to example app (`1843 <https://github.com/django-import-export/django-import-export/pull/1843>`_)
+- Fix admin UI display of field import order (`1849 <https://github.com/django-import-export/django-import-export/pull/1849>`_)
 
 4.0.3 (2024-05-16)
 ------------------
