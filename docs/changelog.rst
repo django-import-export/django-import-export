@@ -8,6 +8,7 @@ Changelog
 4.0.6 (2024-05-24)
 ------------------
 
+- Added additional test for export field order (`1848 <https://github.com/django-import-export/django-import-export/pull/1848>`_)
 - fix crash on export from action when instance has custom PK (`1854 <https://github.com/django-import-export/django-import-export/pull/1854>`_)
 
 4.0.5 (2024-05-23)
