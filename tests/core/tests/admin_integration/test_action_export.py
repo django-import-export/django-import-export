@@ -192,6 +192,27 @@ class TestExportButtonOnChangeForm(AdminTestMixin, TestCase):
         )
         self.assertIn("Export 1 selected item", str(response.content))
 
+    def test_export_button_on_change_form_for_custom_pk(self):
+        self.cat1 = UUIDCategory.objects.create(name="Cat 1")
+        self.change_url = reverse(
+            "%s:%s_%s_change"
+            % (
+                "admin",
+                "core",
+                "uuidcategory",
+            ),
+            args=[self.cat1.pk],
+        )
+        response = self.client.get(self.change_url)
+        self.assertIn(
+            self.target_str,
+            str(response.content),
+        )
+        response = self.client.post(
+            self.change_url, data={"_export-item": "Export", "name": self.cat1.name}
+        )
+        self.assertIn("Export 1 selected item", str(response.content))
+
     def test_save_button_on_change_form(self):
         # test default behavior is retained when saving an instance ChangeForm
         response = self.client.post(

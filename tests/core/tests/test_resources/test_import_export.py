@@ -254,6 +254,35 @@ class ImportExportFieldOrderTest(TestCase):
         self.resource = DeclaredModelFieldBookResource()
         self.assertEqual(self.resource.get_export_order(), self.resource._meta.fields)
 
+    def test_declared_field_export_order(self):
+        # issue 1846
+        class DeclaredModelFieldBookResource(
+            ImportExportFieldOrderTest.BaseBookResource
+        ):
+            published = fields.Field(
+                attribute="published",
+                column_name="date published",
+                widget=widgets.DateWidget("%d.%m.%Y"),
+            )
+
+            class Meta:
+                model = Book
+                fields = (
+                    "id",
+                    "author",
+                    "published",
+                )
+                export_order = (
+                    "published",
+                    "id",
+                    "author",
+                )
+
+        self.resource = DeclaredModelFieldBookResource()
+        data = self.resource.export()
+        target = f"date published,id,author\r\n,{self.pk},\r\n"
+        self.assertEqual(target, data.csv)
+
 
 class ImportIdFieldsTestCase(TestCase):
     class BookResource(resources.ModelResource):
