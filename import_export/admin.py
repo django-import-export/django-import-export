@@ -853,7 +853,7 @@ class ExportActionMixin(ExportMixin):
         # called if the export is triggered from the instance detail page.
         if "_export-item" in request.POST:
             return self.export_admin_action(
-                request, self.model.objects.filter(id=obj.id)
+                request, self.model.objects.filter(pk=obj.pk)
             )
         return super().response_change(request, obj)
 
