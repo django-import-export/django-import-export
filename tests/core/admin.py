@@ -8,7 +8,16 @@ from import_export.admin import (
 from import_export.resources import ModelResource
 
 from .forms import CustomConfirmImportForm, CustomExportForm, CustomImportForm
-from .models import Author, Book, Category, Child, EBook, LegacyBook
+from .models import (
+    Author,
+    Book,
+    Category,
+    Child,
+    EBook,
+    LegacyBook,
+    UUIDBook,
+    UUIDCategory,
+)
 
 
 class ChildAdmin(ImportMixin, admin.ModelAdmin):
@@ -40,6 +49,14 @@ class BookAdmin(ImportExportModelAdmin):
 class CategoryAdmin(ExportActionModelAdmin):
     def export_admin_action(self, request, queryset):
         return super().export_admin_action(request, queryset)
+
+
+class UUIDBookAdmin(ImportExportModelAdmin):
+    pass
+
+
+class UUIDCategoryAdmin(ExportActionModelAdmin):
+    pass
 
 
 class AuthorAdmin(ImportMixin, admin.ModelAdmin):
@@ -119,3 +136,5 @@ admin.site.register(Author, AuthorAdmin)
 admin.site.register(Child, ChildAdmin)
 admin.site.register(EBook, CustomBookAdmin)
 admin.site.register(LegacyBook, LegacyBookAdmin)
+admin.site.register(UUIDBook, UUIDBookAdmin)
+admin.site.register(UUIDCategory, UUIDCategoryAdmin)

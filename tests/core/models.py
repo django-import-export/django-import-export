@@ -169,6 +169,9 @@ class UUIDCategory(models.Model):
     catid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=32)
 
+    def __str__(self):
+        return self.name
+
 
 class UUIDBook(models.Model):
     """A model which uses a UUID pk (issue 1274)"""
@@ -176,3 +179,6 @@ class UUIDBook(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField("Book name", max_length=100)
     categories = models.ManyToManyField(UUIDCategory, blank=True)
+
+    def __str__(self):
+        return self.name
