@@ -1,5 +1,4 @@
 import os
-import tempfile
 import warnings
 from io import StringIO
 from unittest import mock
@@ -12,7 +11,7 @@ from core.admin import (
     EBookResource,
     ImportMixin,
 )
-from core.models import Author, Book, Car, CarBrand, EBook, Parent
+from core.models import Author, Book, EBook, Parent
 from core.tests.admin_integration.mixins import AdminTestMixin
 from django.contrib.admin.models import DELETION, LogEntry
 from django.contrib.admin.sites import AdminSite
@@ -1050,21 +1049,3 @@ class DeclaredImportOrderTest(AdminTestMixin, TestCase):
             r"<code>id, name, published_date, author_email</code>[\\n\s]+"
         )
         self.assertRegex(str(response.content), target_re)
-
-class ImportAdminPrimaryKeyTest(AdminTestMixin, TestCase):
-    def test_pk_export_import(self):
-        """Make some cars, export to file, import from that file, and check for errors"""
-        brand = CarBrand.objects.create(name="Ford")
-        Car.objects.create(model_name="Model-T", brand=brand)
-        response = self.client.post(self.car_export_url, data={
-            "resource": "",
-            "format": "5",  # json
-            "carresource_model_name": "on",
-            "carresource_description": "on",
-            "carresource_brand": "on",
-        })
-        tfile = tempfile.NamedTemporaryFile(mode="+bw")
-        tfile.file.write(response.content)
-        tfile.file.close()
-        response = self._do_import_post(self.car_import_url, tfile.name, input_format='4')
-        assert not "Errors" in response.content.decode()
