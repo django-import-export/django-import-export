@@ -5,6 +5,11 @@ Changelog
 
     Version 4 introduces breaking changes.  Please refer to :doc:`release notes<release_notes>`.
 
+4.0.5 (2024-05-24)
+------------------
+
+- Added additional test for export field order (`1848 <https://github.com/django-import-export/django-import-export/pull/1848>`_)
+
 4.0.5 (2024-05-23)
 ------------------
 
