@@ -5,7 +5,7 @@ Changelog
 
     Version 4 introduces breaking changes.  Please refer to :doc:`release notes<release_notes>`.
 
-4.0.6 (unreleased)
+4.0.6 (2024-05-24)
 ------------------
 
 - fix crash on export from action when instance has custom PK (`1854 <https://github.com/django-import-export/django-import-export/pull/1854>`_)
