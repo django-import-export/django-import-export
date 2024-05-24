@@ -161,6 +161,9 @@ class UUIDCategory(models.Model):
     catid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=32)
 
+    def __str__(self):
+        return "%s" % self.name
+
     class Meta:
         verbose_name_plural = "UUID categories"
 
@@ -177,12 +180,19 @@ class WithPositiveIntegerFields(models.Model):
     big = models.PositiveBigIntegerField(null=True)
     small = models.PositiveSmallIntegerField(null=True)
 
+
 class CarBrand(models.Model):
     """Class with a named primary key"""
+
     name = models.CharField(max_length=100, primary_key=True)
+
 
 class Car(models.Model):
     """Class that references a model with a named primary key"""
+
     model_name = models.CharField(max_length=100, primary_key=True)
     brand = models.ForeignKey(CarBrand, on_delete=models.CASCADE)
     description = models.CharField(max_length=100, blank=True)
+
+    def __str__(self):
+        return "%s" % self.name

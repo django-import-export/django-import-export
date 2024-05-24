@@ -10,7 +10,7 @@ from import_export.fields import Field
 from import_export.resources import ModelResource
 
 from .forms import CustomConfirmImportForm, CustomExportForm, CustomImportForm
-from .models import Author, Book, Car, Category, Child, EBook, UUIDCategory
+from .models import Author, Book, Car, Category, Child, EBook, UUIDBook, UUIDCategory
 
 
 class ChildAdmin(ImportMixin, admin.ModelAdmin):
@@ -40,6 +40,10 @@ class BookAdmin(ImportExportModelAdmin):
 
 
 class CategoryAdmin(ExportActionModelAdmin):
+    pass
+
+
+class UUIDBookAdmin(ImportExportModelAdmin):
     pass
 
 
@@ -108,6 +112,7 @@ class CarResource(ModelResource):
         model = Car
         import_id_fields = ("model_name",)
 
+
 class CarAdmin(ImportExportModelAdmin, ExportActionMixin):
     resource_classes = [CarResource]
 
@@ -118,4 +123,6 @@ admin.site.register(Category, CategoryAdmin)
 admin.site.register(Author, AuthorAdmin)
 admin.site.register(Child, ChildAdmin)
 admin.site.register(EBook, CustomBookAdmin)
+admin.site.register(UUIDCategory, UUIDCategoryAdmin)
+admin.site.register(UUIDBook, UUIDBookAdmin)
 admin.site.register(UUIDCategory, UUIDCategoryAdmin)
