@@ -1051,20 +1051,26 @@ class DeclaredImportOrderTest(AdminTestMixin, TestCase):
         )
         self.assertRegex(str(response.content), target_re)
 
+
 class ImportAdminPrimaryKeyTest(AdminTestMixin, TestCase):
     def test_pk_export_import(self):
         """Make some cars, export to file, import from that file, and check for errors"""
         brand = CarBrand.objects.create(name="Ford")
         Car.objects.create(model_name="Model-T", brand=brand)
-        response = self.client.post(self.car_export_url, data={
-            "resource": "",
-            "format": "5",  # json
-            "carresource_model_name": "on",
-            "carresource_description": "on",
-            "carresource_brand": "on",
-        })
+        response = self.client.post(
+            self.car_export_url,
+            data={
+                "resource": "",
+                "format": "5",  # json
+                "carresource_model_name": "on",
+                "carresource_description": "on",
+                "carresource_brand": "on",
+            },
+        )
         tfile = tempfile.NamedTemporaryFile(mode="+bw")
         tfile.file.write(response.content)
         tfile.file.close()
-        response = self._do_import_post(self.car_import_url, tfile.name, input_format='4')
+        response = self._do_import_post(
+            self.car_import_url, tfile.name, input_format="4"
+        )
         assert not "Errors" in response.content.decode()

@@ -108,6 +108,7 @@ class CarResource(ModelResource):
         model = Car
         import_id_fields = ("model_name",)
 
+
 class CarAdmin(ImportExportModelAdmin, ExportActionMixin):
     resource_classes = [CarResource]
 
