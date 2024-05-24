@@ -1,7 +1,6 @@
 from django.contrib import admin
 
 from import_export.admin import (
-    ExportActionMixin,
     ExportActionModelAdmin,
     ImportExportModelAdmin,
     ImportMixin,
@@ -10,7 +9,7 @@ from import_export.fields import Field
 from import_export.resources import ModelResource
 
 from .forms import CustomConfirmImportForm, CustomExportForm, CustomImportForm
-from .models import Author, Book, Car, Category, Child, EBook, UUIDBook, UUIDCategory
+from .models import Author, Book, Category, Child, EBook, UUIDBook, UUIDCategory
 
 
 class ChildAdmin(ImportMixin, admin.ModelAdmin):
@@ -107,22 +106,10 @@ class CustomBookAdmin(ExportActionModelAdmin, ImportExportModelAdmin):
         return kwargs
 
 
-class CarResource(ModelResource):
-    class Meta:
-        model = Car
-        import_id_fields = ("model_name",)
-
-
-class CarAdmin(ImportExportModelAdmin, ExportActionMixin):
-    resource_classes = [CarResource]
-
-
 admin.site.register(Book, BookAdmin)
-admin.site.register(Car, CarAdmin)
 admin.site.register(Category, CategoryAdmin)
 admin.site.register(Author, AuthorAdmin)
 admin.site.register(Child, ChildAdmin)
 admin.site.register(EBook, CustomBookAdmin)
 admin.site.register(UUIDCategory, UUIDCategoryAdmin)
 admin.site.register(UUIDBook, UUIDBookAdmin)
-admin.site.register(UUIDCategory, UUIDCategoryAdmin)

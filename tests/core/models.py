@@ -162,7 +162,7 @@ class UUIDCategory(models.Model):
     name = models.CharField(max_length=32)
 
     def __str__(self):
-        return "%s" % self.name
+        return self.name
 
     class Meta:
         verbose_name_plural = "UUID categories"
@@ -173,26 +173,13 @@ class UUIDBook(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField("Book name", max_length=100)
+    author = models.ForeignKey(Author, blank=True, null=True, on_delete=models.CASCADE)
     categories = models.ManyToManyField(UUIDCategory, blank=True)
+
+    def __str__(self):
+        return self.name
 
 
 class WithPositiveIntegerFields(models.Model):
     big = models.PositiveBigIntegerField(null=True)
     small = models.PositiveSmallIntegerField(null=True)
-
-
-class CarBrand(models.Model):
-    """Class with a named primary key"""
-
-    name = models.CharField(max_length=100, primary_key=True)
-
-
-class Car(models.Model):
-    """Class that references a model with a named primary key"""
-
-    model_name = models.CharField(max_length=100, primary_key=True)
-    brand = models.ForeignKey(CarBrand, on_delete=models.CASCADE)
-    description = models.CharField(max_length=100, blank=True)
-
-    def __str__(self):
-        return "%s" % self.name
