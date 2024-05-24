@@ -54,6 +54,11 @@ class AuthorAdmin(ImportMixin, admin.ModelAdmin):
     pass
 
 
+class UUIDBookResource(ModelResource):
+    class Meta:
+        model = UUIDBook
+
+
 class EBookResource(ModelResource):
     published = Field(attribute="published", column_name="published_date")
 

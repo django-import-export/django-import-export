@@ -2,7 +2,8 @@ from datetime import date
 from unittest.mock import patch
 
 import tablib
-from core.models import Author, Book, Category, EBook
+from core.admin import UUIDBookResource
+from core.models import Author, Book, Category, EBook, NamedAuthor, UUIDBook
 from core.tests.resources import AuthorResource, BookResource
 from django.test import TestCase
 
@@ -424,3 +425,24 @@ class CustomColumnNameImportTest(TestCase):
         self.resource.import_data(dataset, raise_errors=True)
         self.assertEqual(1, EBook.objects.count())
         self.assertEqual(date(1955, 4, 5), EBook.objects.first().published)
+
+
+class CustomPrimaryKeyRelationImportTest(TestCase):
+    """
+    Test issue 1852.
+    Ensure import works when a relation has a custom primary key.
+    """
+
+    def setUp(self):
+        super().setUp()
+        # The name for this object is the PK
+        self.named_author = NamedAuthor.objects.create(name="Ian Fleming")
+        self.resource = UUIDBookResource()
+
+    def test_custom_column_name_warns_if_not_present(self):
+        dataset = tablib.Dataset(
+            *[("Moonraker", "Ian Fleming")], headers=["name", "author"]
+        )
+        self.assertEqual(0, UUIDBook.objects.count())
+        self.resource.import_data(dataset, raise_errors=True)
+        self.assertEqual(1, UUIDBook.objects.count())

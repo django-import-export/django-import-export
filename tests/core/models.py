@@ -157,6 +157,12 @@ class EBook(Book):
         proxy = True
 
 
+class NamedAuthor(models.Model):
+    """Class with a named primary key"""
+
+    name = models.CharField(max_length=256, primary_key=True)
+
+
 class UUIDCategory(models.Model):
     catid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=32)
@@ -173,7 +179,9 @@ class UUIDBook(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField("Book name", max_length=100)
-    author = models.ForeignKey(Author, blank=True, null=True, on_delete=models.CASCADE)
+    author = models.ForeignKey(
+        NamedAuthor, blank=True, null=True, on_delete=models.CASCADE
+    )
     categories = models.ManyToManyField(UUIDCategory, blank=True)
 
     def __str__(self):
