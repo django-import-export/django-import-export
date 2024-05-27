@@ -1071,8 +1071,9 @@ class Resource(metaclass=DeclarativeMetaclass):
             return [
                 self.export_field(field, instance)
                 for field in export_fields
-                if field.attribute in fields or field.column_name in fields or
-                field.original_name in fields
+                if field.attribute in fields
+                or field.column_name in fields
+                or field.original_name in fields
             ]
 
         return [self.export_field(field, instance) for field in export_fields]
@@ -1083,8 +1084,9 @@ class Resource(metaclass=DeclarativeMetaclass):
             return [
                 f.column_name
                 for f in export_fields
-                if f.attribute in fields or f.column_name in fields or
-                f.original_name in fields
+                if f.attribute in fields
+                or f.column_name in fields
+                or f.original_name in fields
             ]
 
         return [force_str(field.column_name) for field in export_fields]
