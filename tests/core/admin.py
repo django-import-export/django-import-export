@@ -9,7 +9,7 @@ from import_export.fields import Field
 from import_export.resources import ModelResource
 
 from .forms import CustomConfirmImportForm, CustomExportForm, CustomImportForm
-from .models import Author, Book, Category, Child, EBook, UUIDCategory
+from .models import Author, Book, Category, Child, EBook, UUIDBook, UUIDCategory
 
 
 class ChildAdmin(ImportMixin, admin.ModelAdmin):
@@ -42,12 +42,21 @@ class CategoryAdmin(ExportActionModelAdmin):
     pass
 
 
+class UUIDBookAdmin(ImportExportModelAdmin):
+    pass
+
+
 class UUIDCategoryAdmin(ExportActionModelAdmin):
     pass
 
 
 class AuthorAdmin(ImportMixin, admin.ModelAdmin):
     pass
+
+
+class UUIDBookResource(ModelResource):
+    class Meta:
+        model = UUIDBook
 
 
 class EBookResource(ModelResource):
@@ -108,3 +117,4 @@ admin.site.register(Author, AuthorAdmin)
 admin.site.register(Child, ChildAdmin)
 admin.site.register(EBook, CustomBookAdmin)
 admin.site.register(UUIDCategory, UUIDCategoryAdmin)
+admin.site.register(UUIDBook, UUIDBookAdmin)
