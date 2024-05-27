@@ -932,7 +932,7 @@ class ConfirmImportPreviewOrderTest(AdminTestMixin, TestCase):
         author_id = Author.objects.first().id
         response = self._do_import_post(
             self.ebook_import_url,
-            "books.csv",
+            "ebooks.csv",
             input_format="0",
             data={"author": author_id},
         )
@@ -942,7 +942,7 @@ class ConfirmImportPreviewOrderTest(AdminTestMixin, TestCase):
             r"<tr>[\\n\s]+"
             r"<th></th>[\\n\s]+"
             r"<th>id</th>[\\n\s]+"
-            r"<th>author_email</th>[\\n\s]+"
+            r"<th>Email of the author</th>[\\n\s]+"
             r"<th>name</th>[\\n\s]+"
             r"<th>published_date</th>[\\n\s]+"
             r"</tr>[\\n\s]+"
@@ -979,7 +979,7 @@ class CustomColumnNameImportTest(AdminTestMixin, TestCase):
         author_id = Author.objects.first().id
         response = self._do_import_post(
             self.ebook_import_url,
-            "books.csv",
+            "ebooks.csv",
             input_format="0",
             data={"author": author_id},
         )
@@ -989,7 +989,7 @@ class CustomColumnNameImportTest(AdminTestMixin, TestCase):
             r"<tr>[\\n\s]+"
             r"<th></th>[\\n\s]+"
             r"<th>id</th>[\\n\s]+"
-            r"<th>author_email</th>[\\n\s]+"
+            r"<th>Email of the author</th>[\\n\s]+"
             r"<th>name</th>[\\n\s]+"
             r"<th>published_date</th>[\\n\s]+"
             r"</tr>[\\n\s]+"
@@ -1021,7 +1021,7 @@ class DefaultFieldsImportOrderTest(AdminTestMixin, TestCase):
         # test display rendered in correct order
         target_re = (
             r"This importer will import the following fields:[\\n\s]+"
-            r"<code>id, author_email, name, published_date</code>[\\n\s]+"
+            r"<code>id, Email of the author, name, published_date</code>[\\n\s]+"
         )
         self.assertRegex(str(response.content), target_re)
 
@@ -1046,6 +1046,6 @@ class DeclaredImportOrderTest(AdminTestMixin, TestCase):
         # test display rendered in correct order
         target_re = (
             r"This importer will import the following fields:[\\n\s]+"
-            r"<code>id, name, published_date, author_email</code>[\\n\s]+"
+            r"<code>id, name, published_date, Email of the author</code>[\\n\s]+"
         )
         self.assertRegex(str(response.content), target_re)

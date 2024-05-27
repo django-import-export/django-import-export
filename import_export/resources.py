@@ -1051,12 +1051,15 @@ class Resource(metaclass=DeclarativeMetaclass):
         export_fields = []
         for field_name in self.get_export_order():
             if field_name in self.fields:
-                export_fields.append(self.fields[field_name])
+                field = self.fields[field_name]
+                field.original_name = field_name
+                export_fields.append(field)
                 continue
             # issue 1828
             # allow for fields to be referenced by column_name in `fields` list
             for field in self.fields.values():
                 if field.column_name == field_name:
+                    field.original_name = field_name
                     export_fields.append(field)
                     continue
         return export_fields
@@ -1068,7 +1071,8 @@ class Resource(metaclass=DeclarativeMetaclass):
             return [
                 self.export_field(field, instance)
                 for field in export_fields
-                if field.attribute in fields or field.column_name in fields
+                if field.attribute in fields or field.column_name in fields or
+                field.original_name in fields
             ]
 
         return [self.export_field(field, instance) for field in export_fields]
@@ -1079,7 +1083,8 @@ class Resource(metaclass=DeclarativeMetaclass):
             return [
                 f.column_name
                 for f in export_fields
-                if f.attribute in fields or f.column_name in fields
+                if f.attribute in fields or f.column_name in fields or
+                f.original_name in fields
             ]
 
         return [force_str(field.column_name) for field in export_fields]

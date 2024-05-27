@@ -61,6 +61,7 @@ class UUIDBookResource(ModelResource):
 
 class EBookResource(ModelResource):
     published = Field(attribute="published", column_name="published_date")
+    author_email = Field(attribute="author_email", column_name="Email of the author")
 
     def __init__(self, **kwargs):
         super().__init__()
