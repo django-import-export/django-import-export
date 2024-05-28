@@ -180,6 +180,21 @@ class SelectableFieldsExportFormTest(TestCase):
             django.forms.ValidationError, self.form.get_selected_resource_export_fields
         )
 
+    def test_get_field_label(self):
+        """ test SelectableFieldsExportForm._get_field_label """
+        form = forms.SelectableFieldsExportForm(
+            formats=(CSV,), resources=(BookResource,)
+        )
+        resource = BookResource()
+        self.assertEqual(
+            form._get_field_label(resource, "bookresource_id"),
+            "Bookresource Id",
+        )
+        self.assertEqual(
+            form._get_field_label(resource, "published"),
+            "Published (published_date)"
+        )
+
     def test_get_selected_resrource_fields(self) -> None:
         data = {"resource": "0", "format": "0"}
         form = forms.SelectableFieldsExportForm(
