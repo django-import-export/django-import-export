@@ -8,7 +8,7 @@ Changelog
 4.0.7 (unreleased)
 ------------------
 
-- fix documentation to show correct method for reading form data on export ()
+- fix documentation to show correct method for reading form data on export (`1859 <https://github.com/django-import-export/django-import-export/pull/1859>`_)
 
 4.0.6 (2024-05-27)
 ------------------
