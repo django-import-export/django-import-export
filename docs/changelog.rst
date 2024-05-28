@@ -5,6 +5,11 @@ Changelog
 
     Version 4 introduces breaking changes.  Please refer to :doc:`release notes<release_notes>`.
 
+4.0.7 (unreleased)
+------------------
+
+- fix documentation to show correct method for reading form data on export ()
+
 4.0.6 (2024-05-27)
 ------------------
 
