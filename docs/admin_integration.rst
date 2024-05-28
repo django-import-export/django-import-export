@@ -352,11 +352,11 @@ Customize ``ModelAdmin`` (for example see ``tests/core/admin.py``)::
         resource_classes = [EBookResource]
         export_form_class = CustomExportForm
 
-    def get_export_resource_kwargs(self, request, **kwargs):
-        export_form = kwargs.get("export_form")
-        if export_form:
-            kwargs.update(author_id=export_form.cleaned_data["author"].id)
-        return kwargs
+        def get_export_resource_kwargs(self, request, **kwargs):
+            export_form = kwargs.get("export_form")
+            if export_form:
+                kwargs.update(author_id=export_form.cleaned_data["author"].id)
+            return kwargs
 
     admin.site.register(Book, CustomBookAdmin)
 
