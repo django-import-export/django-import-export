@@ -317,7 +317,7 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertContains(
             response,
             '<label for="id_ebookresource_published">'
-            'Published (published_date):</label>',
+            "Published (published_date):</label>",
             html=True,
         )
         self.assertContains(

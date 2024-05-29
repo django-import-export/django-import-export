@@ -181,7 +181,7 @@ class SelectableFieldsExportFormTest(TestCase):
         )
 
     def test_get_field_label(self):
-        """ test SelectableFieldsExportForm._get_field_label """
+        """test SelectableFieldsExportForm._get_field_label"""
         form = forms.SelectableFieldsExportForm(
             formats=(CSV,), resources=(BookResource,)
         )
@@ -191,8 +191,7 @@ class SelectableFieldsExportFormTest(TestCase):
             "Bookresource Id",
         )
         self.assertEqual(
-            form._get_field_label(resource, "published"),
-            "Published (published_date)"
+            form._get_field_label(resource, "published"), "Published (published_date)"
         )
 
     def test_get_selected_resrource_fields(self) -> None:
