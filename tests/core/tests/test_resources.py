@@ -2863,3 +2863,45 @@ class AfterImportComparisonTest(TestCase):
         self.resource = AuthorResource()
         self.resource.import_data(dataset)
         self.assertEqual(1, Author.objects.count())
+
+
+class ImportExportFieldOrderTest(TestCase):
+    def setUp(self):
+        super().setUp()
+        self.pk = Book.objects.create(name="Ulysses", price="1.99").pk
+        self.dataset = tablib.Dataset(headers=["id", "name", "price"])
+        row = [self.pk, "Some book", "19.99"]
+        self.dataset.append(row)
+
+    def test_export_fields_column_name(self):
+        """Test export with declared export_fields and custom column_name"""
+
+        # issue 1846
+        class DeclaredModelFieldBookResource(resources.ModelResource):
+            published = fields.Field(
+                attribute="published",
+                column_name="datePublished",
+                widget=widgets.DateWidget("%d.%m.%Y"),
+            )
+            author = fields.Field(column_name="AuthorFooName")
+
+            class Meta:
+                model = Book
+                fields = (
+                    "id",
+                    "author",
+                    "published",
+                )
+                export_order = (
+                    "published",
+                    "id",
+                    "author",
+                )
+
+            def dehydrate_author(self, obj):
+                return obj.author
+
+        self.resource = DeclaredModelFieldBookResource()
+        data = self.resource.export(export_fields=["published", "id", "author"])
+        target = f"datePublished,id,AuthorFooName\r\n,{self.pk},\r\n"
+        self.assertEqual(target, data.csv)
