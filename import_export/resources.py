@@ -1064,29 +1064,26 @@ class Resource(metaclass=DeclarativeMetaclass):
                     continue
         return export_fields
 
-    def export_resource(self, instance, fields=None):
+    def get_enabled_export_fields(self, fields):
         export_fields = self.get_export_fields()
 
         if isinstance(fields, list) and fields:
             return [
-                self.export_field(field, instance)
+                field
                 for field in export_fields
-                if field.attribute in fields or field.column_name in fields or
-                field.original_name in fields
+                if field.attribute in fields
+                or field.column_name in fields
+                or field.original_name in fields
             ]
 
+        return export_fields
+
+    def export_resource(self, instance, fields=None):
+        export_fields = self.get_enabled_export_fields(fields)
         return [self.export_field(field, instance) for field in export_fields]
 
     def get_export_headers(self, fields=None):
-        export_fields = self.get_export_fields()
-        if isinstance(fields, list) and fields:
-            return [
-                f.column_name
-                for f in export_fields
-                if f.attribute in fields or f.column_name in fields or
-                f.original_name in fields
-            ]
-
+        export_fields = self.get_enabled_export_fields(fields)
         return [force_str(field.column_name) for field in export_fields]
 
     def get_user_visible_fields(self):
