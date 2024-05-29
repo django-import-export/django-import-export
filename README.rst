@@ -23,53 +23,13 @@ django-import-export
 .. image:: https://img.shields.io/pypi/djversions/django-import-export
     :alt: PyPI - Django Version
 
+.. image:: https://static.pepy.tech/personalized-badge/django-import-export?period=month&units=international_system&left_color=black&right_color=blue&left_text=Downloads/month
+    :target: https://pepy.tech/project/django-import-export
+
 django-import-export is a Django application and library for importing
-and exporting data with included admin integration.
-
-Features:
-
-* support multiple formats (Excel, CSV, JSON, ...
-  and everything else that `tablib`_ supports)
-
-* admin integration for importing
-
-* preview import changes
-
-* admin integration for exporting
-
-* export data respecting admin filters
-
-.. image:: https://raw.githubusercontent.com/django-import-export/django-import-export/main/docs/_static/images/django-import-export-change.png
-
+and exporting data from a variety of formats.  Includes Django Admin site integration.
 
 * Documentation: https://django-import-export.readthedocs.io/en/stable/
 * GitHub: https://github.com/django-import-export/django-import-export/
 * Free software: BSD license
 * PyPI: https://pypi.org/project/django-import-export/
-
-Example app
------------
-
-To run the demo app::
-
-    cd tests
-    ./manage.py makemigrations
-    ./manage.py migrate
-    ./manage.py createsuperuser
-    ./manage.py loaddata category book
-    ./manage.py runserver
-
-Contribute
-----------
-
-If you'd like to contribute, simply fork `the repository`_, commit your
-changes to the **develop** branch (or branch off of it), and send a pull
-request. Make sure you add yourself to AUTHORS_.
-
-As most projects, we try to follow PEP8_ as closely as possible. Please bear
-in mind that most pull requests will be rejected without proper unit testing.
-
-.. _`PEP8`: https://www.python.org/dev/peps/pep-0008/
-.. _`tablib`: https://github.com/jazzband/tablib
-.. _`the repository`: https://github.com/django-import-export/django-import-export/
-.. _AUTHORS: https://github.com/django-import-export/django-import-export/blob/master/AUTHORS

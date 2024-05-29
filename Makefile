@@ -22,9 +22,6 @@ clean-tests: ## remove pytest artifacts
 	rm -fr htmlcov/
 	rm -fr django-import-export/
 
-lint: ## check style with isort
-	isort --check-only .
-
 test: ## run tests quickly with the default Python
 	$(RUN_TEST_COMMAND)
 

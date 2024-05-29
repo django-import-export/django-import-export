@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-10-18 20:53+0100\n"
+"POT-Creation-Date: 2023-11-08 18:22+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,49 +18,50 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: admin.py:158
+#: admin.py:239
 #, python-format
 msgid "%s through import_export"
 msgstr ""
 
-#: admin.py:164
+#: admin.py:246
 msgid "Import finished, with {} new and {} updated {}."
 msgstr ""
 
-#: admin.py:262
+#: admin.py:491
 #, python-format
-msgid "<h1>Imported file has a wrong encoding: %s</h1>"
+msgid ""
+"%(exc_name)s encountered while trying to read file. Ensure you have chosen "
+"the correct format for the file."
 msgstr ""
 
-#: admin.py:264
-#, python-format
-msgid "<h1>%s encountered while trying to read file: %s</h1>"
-msgstr ""
-
-#: admin.py:295 templates/admin/import_export/change_list_import_item.html:5
-#: templates/admin/import_export/import.html:10
+#: admin.py:642 templates/admin/import_export/change_list_import_item.html:5
+#: templates/admin/import_export/import.html:19
 msgid "Import"
 msgstr "インポート"
 
-#: admin.py:429 templates/admin/import_export/change_list_export_item.html:5
-#: templates/admin/import_export/export.html:7
+#: admin.py:827 templates/admin/import_export/change_list_export_item.html:5
+#: templates/admin/import_export/export.html:12
 msgid "Export"
 msgstr "エクスポート"
 
-#: admin.py:490
+#: admin.py:892
 msgid "You must select an export format."
 msgstr "エクスポートフォーマットを選択してください。"
 
-#: admin.py:513
+#: admin.py:917
 #, python-format
 msgid "Export selected %(verbose_name_plural)s"
 msgstr "選択した %(verbose_name_plural)s をエクスポート"
 
-#: forms.py:10
+#: forms.py:12
+msgid "Resource"
+msgstr ""
+
+#: forms.py:40
 msgid "File to import"
 msgstr "インポートするファイル"
 
-#: forms.py:13 forms.py:41 forms.py:66
+#: forms.py:42 forms.py:83 forms.py:116
 msgid "Format"
 msgstr "フォーマット"
 
@@ -68,12 +69,12 @@ msgstr "フォーマット"
 msgid "Home"
 msgstr "ホーム"
 
-#: templates/admin/import_export/export.html:31
-#: templates/admin/import_export/import.html:52
+#: templates/admin/import_export/export.html:36
+#: templates/admin/import_export/import.html:78
 msgid "Submit"
 msgstr "確定"
 
-#: templates/admin/import_export/import.html:20
+#: templates/admin/import_export/import.html:30
 msgid ""
 "Below is a preview of data to be imported. If you are satisfied with the "
 "results, click 'Confirm import'"
@@ -81,60 +82,57 @@ msgstr ""
 "インポートされるデータのプレビューを表示しています。この内容で問題なければ"
 "「インポート実行」をクリックしてください。"
 
-#: templates/admin/import_export/import.html:23
+#: templates/admin/import_export/import.html:33
 msgid "Confirm import"
 msgstr "インポート実行"
 
-#: templates/admin/import_export/import.html:31
+#: templates/admin/import_export/import.html:44
 msgid "This importer will import the following fields: "
 msgstr "以下の列をインポートします。"
 
-#: templates/admin/import_export/import.html:61
-#: templates/admin/import_export/import.html:90
+#: templates/admin/import_export/import.html:89
+#: templates/admin/import_export/import.html:120
 msgid "Errors"
 msgstr "エラー"
 
-#: templates/admin/import_export/import.html:72
+#: templates/admin/import_export/import.html:100
 msgid "Line number"
 msgstr "行番号"
 
-#: templates/admin/import_export/import.html:82
+#: templates/admin/import_export/import.html:112
 msgid "Some rows failed to validate"
 msgstr ""
 
-#: templates/admin/import_export/import.html:84
+#: templates/admin/import_export/import.html:114
 msgid ""
 "Please correct these errors in your data where possible, then reupload it "
 "using the form above."
 msgstr ""
 
-#: templates/admin/import_export/import.html:89
+#: templates/admin/import_export/import.html:119
 msgid "Row"
 msgstr ""
 
-#: templates/admin/import_export/import.html:116
+#: templates/admin/import_export/import.html:146
 msgid "Non field specific"
 msgstr ""
 
-#: templates/admin/import_export/import.html:137
+#: templates/admin/import_export/import.html:169
 msgid "Preview"
 msgstr "プレビュー"
 
-#: templates/admin/import_export/import.html:152
+#: templates/admin/import_export/import.html:184
 msgid "New"
 msgstr "新規"
 
-#: templates/admin/import_export/import.html:154
+#: templates/admin/import_export/import.html:186
 msgid "Skipped"
 msgstr "スキップ"
 
-#: templates/admin/import_export/import.html:156
+#: templates/admin/import_export/import.html:188
 msgid "Delete"
 msgstr "削除"
 
-#: templates/admin/import_export/import.html:158
+#: templates/admin/import_export/import.html:190
 msgid "Update"
 msgstr "更新"
-
-#~ msgid "Import finished"
-#~ msgstr "インポートが完了しました。"

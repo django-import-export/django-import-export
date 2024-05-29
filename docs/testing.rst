@@ -1,23 +1,30 @@
 Testing
 =======
 
-All tests can be run using `tox <https://tox.wiki/en/latest/>`_ simply by running the `tox` command.  By default, tests are run against a local sqlite2 instance.  `pyenv <https://github.com/pyenv/pyenv>`_ can be used to manage multiple python installations.
+All tests can be run using `tox <https://tox.wiki/en/latest/>`_ simply by running the `tox` command.  By default, tests
+are run against a local sqlite2 instance.  `pyenv <https://github.com/pyenv/pyenv>`_ can be used to manage multiple
+python installations.
 
 MySql / Postgres tests
 ######################
 
 By using Docker, you can also run tests against either a MySQL db and/or Postgres.
 
-The ``IMPORT_EXPORT_TEST_TYPE`` must be set according to the type of tests you wish to run.  Set to 'postgres' for postgres tests, and 'mysql-innodb' for mysql tests.  If this environment variable is blank (or is any other value) then the default sqlite2 db will be used.
+The ``IMPORT_EXPORT_TEST_TYPE`` must be set according to the type of tests you wish to run.  Set to 'postgres' for
+postgres tests, and 'mysql-innodb' for mysql tests.  If this environment variable is blank (or is any other value) then
+the default sqlite2 db will be used.
 
-This process is scripted in ``runtests.sh``.  Assuming that you have docker installed on your system, running ``runtests.sh`` will run tox against sqlite2, mysql and postgres.  You can edit this script to customise testing as you wish.
+This process is scripted in ``runtests.sh``.  Assuming that you have docker installed on your system, running
+``runtests.sh`` will run tox against sqlite2, mysql and postgres.  You can edit this script to customise testing as you
+wish.
 
 Note that this is the process which is undertaken by CI builds.
 
 Coverage
 ########
 
-Coverage data is written in parallel mode by default (defined in ``setup.cfg``).  After a tox run, you can view coverage data as follows:
+Coverage data is written in parallel mode by default (defined in ``setup.cfg``).  After a tox run, you can view coverage
+data as follows:
 
 .. code-block:: bash
 
@@ -34,7 +41,9 @@ Bulk testing
 
 There is a helper script available to generate and profile bulk loads.  See ``scripts/bulk_import.py``.
 
-You can use this script by configuring environment variables as defined above, and then installing and running the test application.  In order to run the helper script, you will need to install ``requirements/test.txt``, and then add `django-extensions` to `settings.py` (`INSTALLED_APPS`).
+You can use this script by configuring environment variables as defined above, and then installing and running the test
+application.  In order to run the helper script, you will need to install ``requirements/test.txt``, and then add
+`django-extensions` to `settings.py` (`INSTALLED_APPS`).
 
 You can then run the script as follows:
 
@@ -45,5 +54,21 @@ You can then run the script as follows:
 
   # pass 'create', 'update' or 'delete' to run the single test
   ./manage.py runscript bulk_import --script-args create
+
+Enable logging
+^^^^^^^^^^^^^^
+
+You can see console debug logging by updating the ``LOGGING`` block in `settings.py`::
+
+    LOGGING = {
+        "version": 1,
+        "handlers": {"console": {"class": "logging.StreamHandler"}},
+        "root": {
+            "handlers": ["console"],
+        },
+        "loggers": {
+            "django.db.backends": {"level": "DEBUG", "handlers": ["console"]},
+        }
+    }
 
 
