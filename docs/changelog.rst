@@ -5,6 +5,11 @@ Changelog
 
     Version 4 introduces breaking changes.  Please refer to :doc:`release notes<release_notes>`.
 
+4.0.7 (unreleased)
+------------------
+
+- Fix for #1846 - exporting fields with changed column_name doesn't work in v4
+
 4.0.6 (2024-05-27)
 ------------------
 
