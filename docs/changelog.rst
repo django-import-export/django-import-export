@@ -5,9 +5,10 @@ Changelog
 
     Version 4 introduces breaking changes.  Please refer to :doc:`release notes<release_notes>`.
 
-4.0.7 (unreleased)
+4.0.7 (2024-05-30)
 ------------------
 
+- fix documentation to show correct method for reading form data on export (`1859 <https://github.com/django-import-export/django-import-export/pull/1859>`_)
 - Admin UI: display both field name and column_name on export (`1857 <https://github.com/django-import-export/django-import-export/pull/1857>`_)
 
 4.0.6 (2024-05-27)
