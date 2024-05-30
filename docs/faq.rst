@@ -129,8 +129,26 @@ Consider enabling :ref:`import_export_skip_admin_confirm` as a workaround.
 See `this issue <https://github.com/django-import-export/django-import-export/issues/560>`_ for more detailed
 discussion.
 
-Not Null constraint fails when importing blank Charfield
+Not Null constraint fails when importing blank CharField
 --------------------------------------------------------
+
+This was an issue in v3 which is resolved in v4. The issue arises when importing from Excel because empty cells
+are converted to ``None`` during import.  If the import process attempted to save a null value then a 'NOT NULL'
+exception was raised.
+
+In v4, initialization checks to see if the Django ``CharField`` has
+`blank <https://docs.djangoproject.com/en/stable/ref/models/fields/#blank>`_ set to ``True``.
+If it does, then null values or empty strings are persisted as empty strings.
+
+If it is necessary to persist ``None`` instead of an empty string, then the ``allow_blank`` widget parameter can be
+set::
+
+    class BookResource(resources.ModelResource):
+
+        name = Field(widget=CharWidget(allow_blank=False))
+
+        class Meta:
+            model = Book
 
 See `this issue <https://github.com/django-import-export/django-import-export/issues/1485>`_.
 

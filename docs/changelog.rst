@@ -5,6 +5,8 @@ Changelog
 
     Version 4 introduces breaking changes.  Please refer to :doc:`release notes<release_notes>`.
 
+- docs: clarify changes to ``CharWidget`` in v4 ()
+
 4.0.6 (2024-05-27)
 ------------------
 
