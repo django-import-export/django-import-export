@@ -26,6 +26,6 @@ class CustomConfirmImportForm(AuthorFormMixin, ConfirmImportForm):
 
 
 class CustomExportForm(AuthorFormMixin, SelectableFieldsExportForm):
-    """Customized ExportForm, with author field required"""
+    """Customized ExportForm, with author field required."""
 
-    pass
+    author = forms.ModelChoiceField(queryset=Author.objects.all(), required=True)

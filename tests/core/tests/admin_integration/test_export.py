@@ -348,7 +348,9 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
             response["Content-Disposition"],
             'attachment; filename="EBook-{}.csv"'.format(date_str),
         )
-        self.assertEqual(b"id,author_email,name,published_date\r\n", response.content)
+        self.assertEqual(
+            b"id,Email of the author,name,published_date\r\n", response.content
+        )
 
 
 class FilteredExportAdminIntegrationTest(AdminTestMixin, TestCase):
@@ -376,7 +378,7 @@ class FilteredExportAdminIntegrationTest(AdminTestMixin, TestCase):
             'attachment; filename="EBook-{}.csv"'.format(date_str),
         )
         self.assertEqual(
-            b"id,author_email,name,published_date\r\n"
+            b"id,Email of the author,name,published_date\r\n"
             b"5,ian@example.com,The Man with the Golden Gun,1965-04-01\r\n",
             response.content,
         )
@@ -521,7 +523,39 @@ class CustomColumnNameExportTest(AdminTestMixin, TestCase):
             'attachment; filename="EBook-{}.csv"'.format(date_str),
         )
         s = (
-            "id,author_email,name,published_date\r\n"
+            "id,Email of the author,name,published_date\r\n"
             f"{book.id},,Moonraker,1955-04-05\r\n"
         )
+        self.assertEqual(str.encode(s), response.content)
+
+
+class FilteredExportTest(AdminTestMixin, TestCase):
+    """
+    Tests that exports can be filtered by a custom form field.
+    This process is demonstrated in the documentation.
+    """
+
+    def test_filtered_export(self):
+        a1 = Author.objects.create(id=11, name="Ian Fleming")
+        a2 = Author.objects.create(id=12, name="James Joyce")
+        b1 = Book.objects.create(name="Moonraker", author=a1)
+        b2 = Book.objects.create(name="Ulysses", author=a2)
+        response = self.client.get(self.ebook_export_url)
+        self.assertEqual(response.status_code, 200)
+        data = {
+            "format": "0",
+            "author": a1.id,
+            "resource": "",
+            "ebookresource_id": True,
+            "ebookresource_name": True,
+        }
+        response = self.client.post(self.ebook_export_url, data)
+        self.assertEqual(response.status_code, 200)
+        s = "id,name\r\n" f"{b1.id},Moonraker\r\n"
+        self.assertEqual(str.encode(s), response.content)
+
+        data["author"] = a2.id
+        response = self.client.post(self.ebook_export_url, data)
+        self.assertEqual(response.status_code, 200)
+        s = "id,name\r\n" f"{b2.id},Ulysses\r\n"
         self.assertEqual(str.encode(s), response.content)

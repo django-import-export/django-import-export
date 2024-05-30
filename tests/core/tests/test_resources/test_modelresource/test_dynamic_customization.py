@@ -118,9 +118,7 @@ class DynamicBehaviorCustomizationTest(TestCase):
 
     def test_after_import_raises_error(self):
         class B(BookResource):
-            def after_import(
-                self, dataset, result, using_transactions, dry_run, **kwargs
-            ):
+            def after_import(self, dataset, result, **kwargs):
                 raise Exception("This is an invalid dataset")
 
         resource = B()
@@ -187,7 +185,7 @@ class DynamicBehaviorCustomizationTest(TestCase):
         self.assertEqual({"sound": "quack"}, B.fields["published"])
 
     def test_readonly_annotated_field_import_and_export(self):
-        class B(BookResource):
+        class B(resources.ModelResource):
             total_categories = fields.Field("total_categories", readonly=True)
 
             class Meta:

@@ -5,10 +5,14 @@ Changelog
 
     Version 4 introduces breaking changes.  Please refer to :doc:`release notes<release_notes>`.
 
-4.0.7 (unreleased)
+4.0.7 (2024-05-30)
 ------------------
 
-- Admin UI: display both field name and column_name on export (`1857 <https://github.com/django-import-export/django-import-export/pull/1857>`_)
+- fix documentation to show correct method for reading form data on export (`1859 <https://github.com/django-import-export/django-import-export/pull/1859>`_)
+- Admin UI: display both field name and column name on export (`1857 <https://github.com/django-import-export/django-import-export/pull/1857>`_)
+- fix export declared field with custom column name (`1861 <https://github.com/django-import-export/django-import-export/pull/1861>`_)
+- fix declared fields do not have correct Widget class set (`1861 <https://github.com/django-import-export/django-import-export/pull/1861>`_)
+- docs: clarify changes to ``CharWidget`` in v4 (`1862 <https://github.com/django-import-export/django-import-export/pull/1862>`_)
 - refactor :class:`~import_export.resources.Resource` to remove code duplication in export (`1863 <https://github.com/django-import-export/django-import-export/pull/1863>`_)
 
 4.0.6 (2024-05-27)
