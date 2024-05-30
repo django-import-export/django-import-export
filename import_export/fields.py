@@ -100,7 +100,7 @@ class Field:
         Returns the value of the instance's attribute.
         """
         if self.attribute is None:
-            return None
+            raise AttributeError("Field attribute cannot be null")
 
         attrs = self.attribute.split("__")
         value = instance
