@@ -31,6 +31,11 @@ Functional changes
 CharWidget
 ----------
 
+Constructor arguments are dynamically set during instantiation based on the properties of the underlying Django
+db CharField.  If the db field has `blank <https://docs.djangoproject.com/en/stable/ref/models/fields/#blank>`_
+set to True, then incoming values of empty strings or null are stored as empty strings.
+See :class:`~import_export.widgets.CharWidget`.
+
 :meth:`~import_export.widgets.CharWidget.clean` will now return a string type as the default.
 The ``coerce_to_string`` option introduced in v3 is no longer used in this method.
 

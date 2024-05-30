@@ -10,6 +10,7 @@ Changelog
 
 - fix documentation to show correct method for reading form data on export (`1859 <https://github.com/django-import-export/django-import-export/pull/1859>`_)
 - Admin UI: display both field name and column_name on export (`1857 <https://github.com/django-import-export/django-import-export/pull/1857>`_)
+- docs: clarify changes to ``CharWidget`` in v4 (`1862 <https://github.com/django-import-export/django-import-export/pull/1862>`_)
 
 4.0.6 (2024-05-27)
 ------------------
