@@ -9,6 +9,7 @@ Changelog
 ------------------
 
 - Admin UI: display both field name and column_name on export (`1857 <https://github.com/django-import-export/django-import-export/pull/1857>`_)
+- refactor resources to remove code duplication in export (`1863 <https://github.com/django-import-export/django-import-export/pull/1863>`_)
 
 4.0.6 (2024-05-27)
 ------------------

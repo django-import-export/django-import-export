@@ -1061,18 +1061,6 @@ class Resource(metaclass=DeclarativeMetaclass):
                     continue
         return export_fields
 
-    def _get_enabled_export_fields(self, fields):
-        export_fields = self.get_export_fields()
-
-        if isinstance(fields, list) and fields:
-            return [
-                field
-                for field in export_fields
-                if field.attribute in fields or field.column_name in fields
-            ]
-
-        return export_fields
-
     def export_resource(self, instance, fields=None):
         export_fields = self._get_enabled_export_fields(fields)
         return [self.export_field(field, instance) for field in export_fields]
@@ -1194,6 +1182,18 @@ class Resource(metaclass=DeclarativeMetaclass):
                     % ", ".join(missing_headers)
                 )
             )
+
+    def _get_enabled_export_fields(self, fields_):
+        export_fields = self.get_export_fields()
+
+        if isinstance(fields_, list) and fields_:
+            return [
+                field
+                for field in export_fields
+                if field.attribute in fields_ or field.column_name in fields_
+            ]
+
+        return export_fields
 
 
 class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
