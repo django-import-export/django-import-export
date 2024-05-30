@@ -417,27 +417,6 @@ class ImportIdFieldsTestCase(TestCase):
 
 class ImportWithMissingFields(TestCase):
     # issue 1517
-
-    @patch("import_export.resources.logger")
-    @patch("import_export.fields.Field.save")
-    def test_import_with_missing_instance_attribute(self, mock_field_save, mock_logger):
-        class _BookResource(resources.ModelResource):
-            name = fields.Field(column_name="name")
-
-            class Meta:
-                model = Book
-
-        dataset = tablib.Dataset(*[(1, "Some book")], headers=["id", "name"])
-        self.resource = _BookResource()
-        result = self.resource.import_data(dataset)
-        self.assertFalse(result.has_errors())
-        target = (
-            "skipping field '<import_export.fields.Field: name>' "
-            "- field attribute is not defined"
-        )
-        mock_logger.debug.assert_any_call(target)
-        self.assertEqual(1, mock_field_save.call_count)
-
     @patch("import_export.resources.logger")
     @patch("import_export.fields.Field.save")
     def test_import_with_missing_field_in_row(self, mock_field_save, mock_logger):

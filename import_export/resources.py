@@ -419,9 +419,6 @@ class Resource(metaclass=DeclarativeMetaclass):
         :param \**kwargs:
             See :meth:`import_row`
         """
-        if not field.attribute:
-            logger.debug(f"skipping field '{field}' - field attribute is not defined")
-            return
         if field.column_name not in row:
             logger.debug(
                 f"skipping field '{field}' "
@@ -1051,39 +1048,37 @@ class Resource(metaclass=DeclarativeMetaclass):
         export_fields = []
         for field_name in self.get_export_order():
             if field_name in self.fields:
-                field = self.fields[field_name]
-                field.original_name = field_name
-                export_fields.append(field)
+                export_fields.append(self.fields[field_name])
                 continue
             # issue 1828
             # allow for fields to be referenced by column_name in `fields` list
             for field in self.fields.values():
                 if field.column_name == field_name:
-                    field.original_name = field_name
                     export_fields.append(field)
                     continue
         return export_fields
 
-    def get_enabled_export_fields(self, fields):
+    def export_resource(self, instance, fields=None):
         export_fields = self.get_export_fields()
 
         if isinstance(fields, list) and fields:
             return [
-                field
+                self.export_field(field, instance)
                 for field in export_fields
-                if field.attribute in fields
-                or field.column_name in fields
-                or field.original_name in fields
+                if field.attribute in fields or field.column_name in fields
             ]
 
-        return export_fields
-
-    def export_resource(self, instance, fields=None):
-        export_fields = self.get_enabled_export_fields(fields)
         return [self.export_field(field, instance) for field in export_fields]
 
     def get_export_headers(self, fields=None):
-        export_fields = self.get_enabled_export_fields(fields)
+        export_fields = self.get_export_fields()
+        if isinstance(fields, list) and fields:
+            return [
+                f.column_name
+                for f in export_fields
+                if f.attribute in fields or f.column_name in fields
+            ]
+
         return [force_str(field.column_name) for field in export_fields]
 
     def get_user_visible_fields(self):
@@ -1320,7 +1315,7 @@ class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
         return widget_kwargs
 
     @classmethod
-    def field_from_django_field(cls, field_name, django_field, readonly):
+    def field_from_django_field(cls, field_name, django_field, readonly=False):
         """
         Returns a Resource Field instance for the given Django model field.
         """

@@ -1,7 +1,12 @@
+from datetime import date
+
 import tablib
 from core.admin import BookResource
-from core.models import Author, Book
+from core.models import Author, Book, EBook
 from django.test import TestCase
+
+from import_export.fields import Field
+from import_export.resources import ModelResource
 
 
 class ExportFunctionalityTest(TestCase):
@@ -75,3 +80,19 @@ class ExportFunctionalityTest(TestCase):
         self.resource.export(queryset=Book.objects.all(), **{"a": 1})
         self.assertEqual(Book.objects.count(), len(self.resource.qs))
         self.assertEqual(dict(a=1), self.resource.kwargs_)
+
+    def test_export_declared_field(self):
+        # test that declared fields have the correct widget set
+        class EBookResource(ModelResource):
+            published = Field(column_name="published")
+
+            class Meta:
+                model = EBook
+                fields = ("id", "published")
+
+        resource = EBookResource()
+
+        self.book.published = date(1955, 4, 5)
+        self.book.save()
+        dataset = resource.export()
+        self.assertEqual("1955-04-05", dataset.dict[0]["published"])
