@@ -134,6 +134,13 @@ class SelectableFieldsExportForm(ExportForm):
         ]
         self.order_fields(ordered_fields)
 
+    def _get_field_label(self, resource: ModelResource, field_name: str) -> str:
+        title = field_name.replace("_", " ").title()
+        field = resource.fields.get(field_name)
+        if field and field.column_name != field_name:
+            title = f"{title} ({field.column_name})"
+        return title
+
     def _create_boolean_fields(self, resource: ModelResource, index: int) -> None:
         # Initiate resource to get ordered export fields
         fields = resource().get_export_order()
@@ -143,7 +150,7 @@ class SelectableFieldsExportForm(ExportForm):
         for field in fields:
             field_name = self.create_boolean_field_name(resource, field)
             boolean_field = forms.BooleanField(
-                label=field.replace("_", " ").title(),
+                label=self._get_field_label(resource, field),
                 initial=True,
                 required=False,
             )

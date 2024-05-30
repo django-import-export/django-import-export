@@ -308,6 +308,25 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "UUIDCategoryResource")
 
+    def test_export_get(self):
+        """
+        Test export view get method.
+        Test that field checkboxes are displayied with names as discussed under #1846
+        """
+        response = self.client.get(self.ebook_export_url)
+        self.assertContains(
+            response,
+            '<label for="id_ebookresource_published">'
+            "Published (published_date):</label>",
+            html=True,
+        )
+        self.assertContains(
+            response,
+            '<input type="checkbox" name="ebookresource_published" resource-id="0" '
+            'id="id_ebookresource_published" checked="">',
+            html=True,
+        )
+
     def test_export_with_custom_field(self):
         # issue 1808
         a = Author.objects.create(id=11, name="Ian Fleming")
