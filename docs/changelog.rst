@@ -8,8 +8,8 @@ Changelog
 4.0.7 (unreleased)
 ------------------
 
-- fix export declared field with custom column name (#1846)
-- fix declared fields do not have correct Widget class set ()
+- fix export declared field with custom column name (`1861 <https://github.com/django-import-export/django-import-export/pull/1861>`_)
+- fix declared fields do not have correct Widget class set (`1861 <https://github.com/django-import-export/django-import-export/pull/1861>`_)
 
 4.0.6 (2024-05-27)
 ------------------
