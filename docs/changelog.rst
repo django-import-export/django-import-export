@@ -13,6 +13,7 @@ Changelog
 - fix export declared field with custom column name (`1861 <https://github.com/django-import-export/django-import-export/pull/1861>`_)
 - fix declared fields do not have correct Widget class set (`1861 <https://github.com/django-import-export/django-import-export/pull/1861>`_)
 - docs: clarify changes to ``CharWidget`` in v4 (`1862 <https://github.com/django-import-export/django-import-export/pull/1862>`_)
+- refactor :class:`~import_export.resources.Resource` to remove code duplication in export (`1863 <https://github.com/django-import-export/django-import-export/pull/1863>`_)
 
 4.0.6 (2024-05-27)
 ------------------
