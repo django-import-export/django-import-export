@@ -312,7 +312,7 @@ class ImportExportFieldOrderTest(TestCase):
                 return obj.author
 
         self.resource = DeclaredModelFieldBookResource()
-        data = self.resource.export(export_fields=["published", "id", "author"])
+        data = self.resource.export()
         target = f"datePublished,id,AuthorFooName\r\n,{self.pk},\r\n"
         self.assertEqual(target, data.csv)
 
