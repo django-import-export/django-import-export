@@ -419,9 +419,6 @@ class Resource(metaclass=DeclarativeMetaclass):
         :param \**kwargs:
             See :meth:`import_row`
         """
-        if not field.attribute:
-            logger.debug(f"skipping field '{field}' - field attribute is not defined")
-            return
         if field.column_name not in row:
             logger.debug(
                 f"skipping field '{field}' "

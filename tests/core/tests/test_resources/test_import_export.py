@@ -255,7 +255,7 @@ class ImportExportFieldOrderTest(TestCase):
         self.assertEqual(self.resource.get_export_order(), self.resource._meta.fields)
 
     def test_declared_field_export_order(self):
-        # issue 1846
+        # issue 1848
         class DeclaredModelFieldBookResource(
             ImportExportFieldOrderTest.BaseBookResource
         ):
@@ -281,6 +281,39 @@ class ImportExportFieldOrderTest(TestCase):
         self.resource = DeclaredModelFieldBookResource()
         data = self.resource.export()
         target = f"date published,id,author\r\n,{self.pk},\r\n"
+        self.assertEqual(target, data.csv)
+
+    def test_export_fields_column_name(self):
+        """Test export with declared export_fields and custom column_name"""
+
+        # issue 1846
+        class DeclaredModelFieldBookResource(resources.ModelResource):
+            published = fields.Field(
+                attribute="published",
+                column_name="datePublished",
+                widget=widgets.DateWidget("%d.%m.%Y"),
+            )
+            author = fields.Field(column_name="AuthorFooName")
+
+            class Meta:
+                model = Book
+                fields = (
+                    "id",
+                    "author",
+                    "published",
+                )
+                export_order = (
+                    "published",
+                    "id",
+                    "author",
+                )
+
+            def dehydrate_author(self, obj):
+                return obj.author
+
+        self.resource = DeclaredModelFieldBookResource()
+        data = self.resource.export()
+        target = f"datePublished,id,AuthorFooName\r\n,{self.pk},\r\n"
         self.assertEqual(target, data.csv)
 
 
@@ -384,27 +417,6 @@ class ImportIdFieldsTestCase(TestCase):
 
 class ImportWithMissingFields(TestCase):
     # issue 1517
-
-    @patch("import_export.resources.logger")
-    @patch("import_export.fields.Field.save")
-    def test_import_with_missing_instance_attribute(self, mock_field_save, mock_logger):
-        class _BookResource(resources.ModelResource):
-            name = fields.Field(column_name="name")
-
-            class Meta:
-                model = Book
-
-        dataset = tablib.Dataset(*[(1, "Some book")], headers=["id", "name"])
-        self.resource = _BookResource()
-        result = self.resource.import_data(dataset)
-        self.assertFalse(result.has_errors())
-        target = (
-            "skipping field '<import_export.fields.Field: name>' "
-            "- field attribute is not defined"
-        )
-        mock_logger.debug.assert_any_call(target)
-        self.assertEqual(1, mock_field_save.call_count)
-
     @patch("import_export.resources.logger")
     @patch("import_export.fields.Field.save")
     def test_import_with_missing_field_in_row(self, mock_field_save, mock_logger):

@@ -348,7 +348,9 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
             response["Content-Disposition"],
             'attachment; filename="EBook-{}.csv"'.format(date_str),
         )
-        self.assertEqual(b"id,author_email,name,published_date\r\n", response.content)
+        self.assertEqual(
+            b"id,Email of the author,name,published_date\r\n", response.content
+        )
 
 
 class FilteredExportAdminIntegrationTest(AdminTestMixin, TestCase):
@@ -376,7 +378,7 @@ class FilteredExportAdminIntegrationTest(AdminTestMixin, TestCase):
             'attachment; filename="EBook-{}.csv"'.format(date_str),
         )
         self.assertEqual(
-            b"id,author_email,name,published_date\r\n"
+            b"id,Email of the author,name,published_date\r\n"
             b"5,ian@example.com,The Man with the Golden Gun,1965-04-01\r\n",
             response.content,
         )
@@ -521,7 +523,7 @@ class CustomColumnNameExportTest(AdminTestMixin, TestCase):
             'attachment; filename="EBook-{}.csv"'.format(date_str),
         )
         s = (
-            "id,author_email,name,published_date\r\n"
+            "id,Email of the author,name,published_date\r\n"
             f"{book.id},,Moonraker,1955-04-05\r\n"
         )
         self.assertEqual(str.encode(s), response.content)
