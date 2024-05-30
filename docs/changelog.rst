@@ -8,7 +8,7 @@ Changelog
 4.0.7 (unreleased)
 ------------------
 
-- Export from admin: display both field name and column_name (if available)
+- Admin UI: display both field name and column_name on export (`1857 <https://github.com/django-import-export/django-import-export/pull/1857>`_)
 
 4.0.6 (2024-05-27)
 ------------------
