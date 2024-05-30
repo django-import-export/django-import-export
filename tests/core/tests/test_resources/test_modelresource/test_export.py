@@ -83,6 +83,7 @@ class ExportFunctionalityTest(TestCase):
 
     def test_export_declared_field(self):
         # test that declared fields have the correct widget set
+        # #1860
         class EBookResource(ModelResource):
             published = Field(column_name="published")
 

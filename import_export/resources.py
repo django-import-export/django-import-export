@@ -1315,7 +1315,7 @@ class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
         return widget_kwargs
 
     @classmethod
-    def field_from_django_field(cls, field_name, django_field, readonly=False):
+    def field_from_django_field(cls, field_name, django_field, readonly):
         """
         Returns a Resource Field instance for the given Django model field.
         """

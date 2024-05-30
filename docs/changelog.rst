@@ -8,7 +8,8 @@ Changelog
 4.0.7 (unreleased)
 ------------------
 
-- Fix for #1846 - exporting fields with changed column_name doesn't work in v4
+- fix export declared field with custom column name (#1846)
+- fix declared fields do not have correct Widget class set ()
 
 4.0.6 (2024-05-27)
 ------------------
