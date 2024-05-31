@@ -187,8 +187,6 @@ Alternatively, widget parameters can be overridden using the widgets dict declar
                 'published': {'format': '%d.%m.%Y'},
             }
 
-
-
 Declaring fields may affect the export order of the fields.  If this is an issue, you can declare the
 :attr:`~import_export.options.ResourceOptions.export_order` attribute. See :ref:`field_ordering`.
 
