@@ -5,6 +5,8 @@ Changelog
 
     Version 4 introduces breaking changes.  Please refer to :doc:`release notes<release_notes>`.
 
+- clarify documentation ()
+
 4.0.7 (2024-05-30)
 ------------------
 

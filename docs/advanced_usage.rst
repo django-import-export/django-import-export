@@ -109,6 +109,9 @@ column name (i.e. row header)::
         class Meta:
             model = Book
 
+The ``attribute`` kwarg is optional and if it is not declared, the value is taken to be the name of the field
+(e.g. 'published').
+
 .. seealso::
 
     :doc:`/api_fields`
@@ -186,21 +189,28 @@ dict declaration::
                 'published': {'format': '%d.%m.%Y'},
             }
 
+
+.. _modify_render_return_type:
+
 Modify :meth:`.render` return type
 ----------------------------------
 
 By default, :meth:`.render` will return a string type for export.  There may be use cases where a native type is
-required from export.  If so, you can use the ``coerce_to_string`` parameter if the widget supports it.
+required from export (such as exporting to Excel).  If so, you can use the ``coerce_to_string`` parameter if the
+widget supports it.
 
 By default, ``coerce_to_string`` is ``True``, but if you set this to ``False``, then the native type will be returned
 during export::
 
     class BookResource(resources.ModelResource):
-        published = Field(attribute='published', column_name='published_date',
-            widget=DateWidget(format='%Y-%m-%d', coerce_to_string=False))
+        published = Field(widget=DateWidget(coerce_to_string=False))
 
         class Meta:
             model = Book
+
+If you need different export formats for different file types, then the only way to do this at present is to declare
+multiple Resource configurations.  For example, *ExcelBookResource*, *CsvBookResource*.  For each custom Resource,
+You would need to declare Widgets with the ``coerce_to_string`` value set as desired.
 
 .. seealso::
 
