@@ -177,9 +177,7 @@ importing and exporting resource::
         class Meta:
             model = Book
 
-Declaring fields may affect the export order of the fields.  If this is an issue, you can either declare the
-:attr:`~import_export.options.ResourceOptions.export_order` attribute, or declare widget parameters using the widgets
-dict declaration::
+Alternatively, widget parameters can be overridden using the widgets dict declaration::
 
     class BookResource(resources.ModelResource):
 
@@ -189,6 +187,10 @@ dict declaration::
                 'published': {'format': '%d.%m.%Y'},
             }
 
+
+
+Declaring fields may affect the export order of the fields.  If this is an issue, you can declare the
+:attr:`~import_export.options.ResourceOptions.export_order` attribute. See :ref:`field_ordering`.
 
 .. _modify_render_return_type:
 
