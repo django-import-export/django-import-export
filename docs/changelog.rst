@@ -9,6 +9,7 @@ Changelog
 ------------------
 
 - Enable skip export confirm page ()
+- docs: clarify widget configuration (`1865 <https://github.com/django-import-export/django-import-export/pull/1865>`_)
 
 4.0.7 (2024-05-30)
 ------------------

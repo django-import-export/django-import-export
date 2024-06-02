@@ -59,7 +59,11 @@ Prior to v4, the export format returned from ``render()`` varied between Widget 
 In v4, return values are rendered as strings by default (where applicable), with
 ``None`` values returned as empty strings.  Widget params can modify this behavior.
 
-Refer to the :doc:`documentation<api_widgets>` for more information.
+This causes a change when exporting to Excel.  In v3, certain fields, such as numeric values, were rendered as their
+native type.  In v4, all fields are now rendered as strings.  To preserve the v3 behavior when exporting to Excel,
+set the ``coerce_to_string`` param to ``False``.  See :ref:`documentation<modify_render_return_type>`.
+
+:doc:`Widget API documentation<api_widgets>`.
 
 Export field order
 ------------------
