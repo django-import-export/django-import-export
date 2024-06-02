@@ -5,6 +5,9 @@ Changelog
 
     Version 4 introduces breaking changes.  Please refer to :doc:`release notes<release_notes>`.
 
+4.0.8 (2024-06-02)
+------------------
+
 - docs: clarify widget configuration (`1865 <https://github.com/django-import-export/django-import-export/pull/1865>`_)
 
 4.0.7 (2024-05-30)
