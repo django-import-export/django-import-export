@@ -716,6 +716,12 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
 
         form_type = self.get_export_form_class()
         formats = self.get_export_formats()
+        if (
+            getattr(settings, "IMPORT_EXPORT_SKIP_ADMIN_ACTION_EXPORT_UI", False)
+            is True
+        ):
+            return self._do_file_export(formats[0](), request, None)
+
         form = form_type(
             formats,
             self.get_export_resource_classes(request),
@@ -743,21 +749,9 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
                 queryset = self.get_export_queryset(request)
 
             try:
-                export_data = self.get_export_data(
-                    file_format,
-                    request,
-                    queryset,
-                    encoding=self.to_encoding,
-                    export_form=form,
+                return self._do_file_export(
+                    file_format, request, queryset, export_form=form
                 )
-                content_type = file_format.get_content_type()
-                response = HttpResponse(export_data, content_type=content_type)
-                response["Content-Disposition"] = 'attachment; filename="%s"' % (
-                    self.get_export_filename(request, queryset, file_format),
-                )
-
-                post_export.send(sender=None, model=self.model)
-                return response
             except FieldError as e:
                 messages.error(request, str(e))
 
@@ -805,6 +799,22 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
             for res in self.get_export_resource_classes(request)
         ]
         return context
+
+    def _do_file_export(self, file_format, request, queryset, export_form=None):
+        export_data = self.get_export_data(
+            file_format,
+            request,
+            queryset,
+            encoding=self.to_encoding,
+            export_form=export_form,
+        )
+        content_type = file_format.get_content_type()
+        response = HttpResponse(export_data, content_type=content_type)
+        response["Content-Disposition"] = 'attachment; filename="%s"' % (
+            self.get_export_filename(request, queryset, file_format),
+        )
+        post_export.send(sender=None, model=self.model)
+        return response
 
 
 class ImportExportMixin(ImportMixin, ExportMixin):
@@ -867,16 +877,7 @@ class ExportActionMixin(ExportMixin):
             is True
         ):
             file_format = formats[0]()
-
-            export_data = self.get_export_data(
-                file_format, request, queryset, encoding=self.to_encoding
-            )
-            content_type = file_format.get_content_type()
-            response = HttpResponse(export_data, content_type=content_type)
-            response["Content-Disposition"] = 'attachment; filename="%s"' % (
-                self.get_export_filename(request, queryset, file_format),
-            )
-            return response
+            return self._do_file_export(file_format, request, queryset)
 
         form_type = self.get_export_form_class()
         formats = self.get_export_formats()
