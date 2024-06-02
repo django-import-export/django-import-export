@@ -23,8 +23,11 @@ clean-tests: ## remove pytest artifacts
 	rm -fr htmlcov/
 	rm -fr django-import-export/
 
-test: ## run tests quickly with the default Python
+test: ## run tests with the default Python
 	$(RUN_TEST_COMMAND)
+
+testp: ## run tests in parallel with the default Python
+	$(RUN_TEST_COMMAND) --parallel
 
 messages: ## generate locale file translations
 	cd import_export && django-admin makemessages -a && django-admin compilemessages && cd ..

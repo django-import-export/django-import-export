@@ -13,7 +13,7 @@ def main():
     retval = os.system(
         "python -W error::DeprecationWarning -W error::PendingDeprecationWarning "
         f"{coverage_args} "
-        "./tests/manage.py test core --settings=settings"
+        "./tests/manage.py test core --settings=settings --parallel"
     )
     if retval != 0:
         exit(1)
