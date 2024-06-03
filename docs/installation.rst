@@ -165,7 +165,7 @@ This can be used to enable '1 click exports' from the Admin UI.
 
 If enabled:
 
-* the first element in the :attr:`~import_export.options.ResourceOptions.resource_classes` list will be used.
+* the first element in the :attr:`~import_export.mixins.BaseImportExportMixin.resource_classes` list will be used.
 * the first element in the :ref:`export_formats` list will be used.
 
 .. _import_export_skip_admin_action_export_ui:
