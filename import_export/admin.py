@@ -712,7 +712,7 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
 
     def export_action(self, request):
         """
-        Handles the default workflow for both the 'export confirm' page and the
+        Handles the default workflow for both the export form and the
         export of data to file.
         """
         if not self.has_export_permission(request):
@@ -720,10 +720,7 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
 
         form_type = self.get_export_form_class()
         formats = self.get_export_formats()
-        if (
-            getattr(settings, "IMPORT_EXPORT_SKIP_ADMIN_ACTION_EXPORT_UI", False)
-            is True
-        ):
+        if getattr(settings, "IMPORT_EXPORT_SKIP_ADMIN_EXPORT_UI", False) is True:
             return self._do_file_export(formats[0](), request, None)
 
         form = form_type(

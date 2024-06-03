@@ -155,15 +155,28 @@ Note that if you disable transaction support via configuration (or if your datab
 does not support transactions), then validation errors will still be presented to the user
 but valid rows will have imported.
 
+.. _import_export_skip_admin_export_ui:
+
+``IMPORT_EXPORT_SKIP_ADMIN_EXPORT_UI``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A boolean value which will skip the :ref:`export form<admin_ui_exporting>` in the Admin UI.
+This can be used to enable '1 click exports' from the Admin UI.
+
+If enabled:
+
+* the first element in the :attr:`~import_export.options.ResourceOptions.resource_classes` list will be used.
+* the first element in the :ref:`export_formats` list will be used.
+
 .. _import_export_skip_admin_action_export_ui:
 
 ``IMPORT_EXPORT_SKIP_ADMIN_ACTION_EXPORT_UI``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-A boolean value which will skip the 'file format' and 'resource' select page in the Admin UI
-when the export is requested from an :ref:`Admin UI action<export_via_admin_action>`.
-If ``TRUE`` then the first element in the 'file format' and 'resource' lists will be used.
-By default this is ``FALSE``.
+This setting is the same as :ref:`import_export_skip_admin_export_ui` but is used when the export is
+requested from an :ref:`Admin UI action<export_via_admin_action>`.
+
+This setting will be overridden if :ref:`import_export_skip_admin_export_ui` is enabled.
 
 .. _import_export_escape_formulae_on_export:
 

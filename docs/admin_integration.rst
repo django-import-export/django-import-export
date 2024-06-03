@@ -147,6 +147,8 @@ How to format UI error messages
 Admin UI import error messages can be formatted using the :attr:`~import_export.admin.ImportMixin.import_error_display`
 attribute.
 
+.. _admin_ui_exporting:
+
 Exporting
 ---------
 

@@ -69,9 +69,9 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(2, mock_get_export_resource_kwargs.call_count)
 
-    @override_settings(IMPORT_EXPORT_SKIP_ADMIN_CONFIRM=True)
-    def test_export_skips_confirm_page(self):
-        Book.objects.create(name="Moonraker", published=date(1955, 4, 5))
+    @override_settings(IMPORT_EXPORT_SKIP_ADMIN_EXPORT_UI=True)
+    def test_export_skips_export_form(self):
+        book = Book.objects.create(name="Moonraker", published=date(1955, 4, 5))
         response = self.client.get(self.ebook_export_url)
         date_str = datetime.now().strftime("%Y-%m-%d")
         self.assertEqual(response.status_code, 200)
@@ -81,10 +81,11 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
             response["Content-Disposition"],
             'attachment; filename="EBook-{}.csv"'.format(date_str),
         )
-        self.assertEqual(
-            b"id,Email of the author,name,published_date\r\n'",
-            response.content,
+        s = (
+            "id,Email of the author,name,published_date\r\n"
+            f"{book.id},,Moonraker,1955-04-05\r\n"
         )
+        self.assertEqual(s.encode(), response.content)
 
     def book_resource_init(self, **kwargs):
         # stub call to the resource constructor
