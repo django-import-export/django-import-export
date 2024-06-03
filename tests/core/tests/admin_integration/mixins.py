@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 
 from core.admin import BookAdmin
 from django.contrib.auth.models import User
@@ -93,3 +94,16 @@ class AdminTestMixin(object):
                 % (format, DEFAULT_FORMATS)
             )
         return xlsx_index
+
+    def _check_export_file_response(
+        self, response, target_file_contents, file_prefix="Book"
+    ):
+        date_str = datetime.now().strftime("%Y-%m-%d")
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.has_header("Content-Disposition"))
+        self.assertEqual(response["Content-Type"], "text/csv")
+        self.assertEqual(
+            response["Content-Disposition"],
+            'attachment; filename="{}-{}.csv"'.format(file_prefix, date_str),
+        )
+        self.assertEqual(target_file_contents.encode(), response.content)

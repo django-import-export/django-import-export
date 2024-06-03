@@ -35,6 +35,21 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
             "bookresource_categories": True,
         }
 
+    def _check_export_response(self, response, book_id):
+        date_str = datetime.now().strftime("%Y-%m-%d")
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.has_header("Content-Disposition"))
+        self.assertEqual(response["Content-Type"], "text/csv")
+        self.assertEqual(
+            response["Content-Disposition"],
+            'attachment; filename="EBook-{}.csv"'.format(date_str),
+        )
+        s = (
+            "id,Email of the author,name,published_date\r\n"
+            f"{book_id},,Moonraker,1955-04-05\r\n"
+        )
+        self.assertEqual(s.encode(), response.content)
+
     def test_export(self):
         response = self.client.get(self.book_export_url)
         self.assertEqual(response.status_code, 200)
@@ -73,19 +88,7 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
     def test_export_skips_export_form(self):
         book = Book.objects.create(name="Moonraker", published=date(1955, 4, 5))
         response = self.client.get(self.ebook_export_url)
-        date_str = datetime.now().strftime("%Y-%m-%d")
-        self.assertEqual(response.status_code, 200)
-        self.assertTrue(response.has_header("Content-Disposition"))
-        self.assertEqual(response["Content-Type"], "text/csv")
-        self.assertEqual(
-            response["Content-Disposition"],
-            'attachment; filename="EBook-{}.csv"'.format(date_str),
-        )
-        s = (
-            "id,Email of the author,name,published_date\r\n"
-            f"{book.id},,Moonraker,1955-04-05\r\n"
-        )
-        self.assertEqual(s.encode(), response.content)
+        self._check_export_response(response, book.id)
 
     def book_resource_init(self, **kwargs):
         # stub call to the resource constructor
@@ -577,3 +580,18 @@ class FilteredExportTest(AdminTestMixin, TestCase):
         self.assertEqual(response.status_code, 200)
         s = "id,name\r\n" f"{b2.id},Ulysses\r\n"
         self.assertEqual(str.encode(s), response.content)
+
+
+class SkipExportFormTest(AdminTestMixin, TestCase):
+    def setUp(self):
+        super().setUp()
+
+    @override_settings(IMPORT_EXPORT_SKIP_ADMIN_EXPORT_UI=True)
+    def test_export_skips_export_form(self):
+        book = Book.objects.create(name="Moonraker", published=date(1955, 4, 5))
+        response = self.client.get(self.ebook_export_url)
+        s = (
+            "id,Email of the author,name,published_date\r\n"
+            f"{book.id},,Moonraker,1955-04-05\r\n"
+        )
+        self._check_export_file_response(response, s, file_prefix="EBook")
