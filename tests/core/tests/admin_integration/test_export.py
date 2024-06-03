@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 import chardet
 import tablib
 from core.admin import BookAdmin, BookResource, EBookResource
-from core.models import Author, Book, UUIDCategory
+from core.models import Author, Book, EBook, UUIDCategory
 from core.tests.admin_integration.mixins import AdminTestMixin
 from core.tests.utils import ignore_utcnow_deprecation_warning
 from django.contrib.admin.sites import AdminSite
@@ -595,3 +595,27 @@ class SkipExportFormTest(AdminTestMixin, TestCase):
             f"{book.id},,Moonraker,1955-04-05\r\n"
         )
         self._check_export_file_response(response, s, file_prefix="EBook")
+
+
+class SkipExportFormResourceConfigTest(AdminTestMixin, TestCase):
+    def setUp(self):
+        super().setUp()
+        self.model_admin = BookAdmin(EBook, AdminSite())
+
+        book = Book.objects.create(name="Moonraker", published=date(1955, 4, 5))
+        self.target_file_contents = (
+            "id,name,author,author_email,imported,published,"
+            "published_time,price,added,categories\r\n"
+            f"{book.id},Moonraker,,,0,1955-04-05,,,,\r\n"
+        )
+
+        factory = RequestFactory()
+        self.request = factory.get(self.book_export_url, follow=True)
+        self.request.user = User.objects.create_user("admin1")
+
+    def test_export_skips_export_form(self):
+        self.model_admin.skip_export_form = True
+        response = self.model_admin.export_action(self.request)
+        self._check_export_file_response(
+            response, self.target_file_contents, file_prefix="EBook"
+        )

@@ -145,6 +145,11 @@ class BaseImportMixin(BaseImportExportMixin):
 class BaseExportMixin(BaseImportExportMixin):
     model = None
 
+    #: If enabled, the export workflow skips the export form and
+    #: exports the data directly.
+    #: See :ref:`import_export_skip_admin_export_ui`.
+    skip_export_form = False
+
     def get_export_formats(self):
         """
         Returns available export formats.
@@ -214,6 +219,14 @@ class BaseExportMixin(BaseImportExportMixin):
             file_format.get_extension(),
         )
         return filename
+
+    def is_skip_export_form_enabled(self):
+        if (
+            getattr(settings, "IMPORT_EXPORT_SKIP_ADMIN_EXPORT_UI", False)
+            or self.skip_export_form is True
+        ):
+            return True
+        return False
 
 
 class ExportViewMixin(BaseExportMixin):

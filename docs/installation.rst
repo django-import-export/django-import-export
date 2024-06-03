@@ -168,6 +168,8 @@ If enabled:
 * the first element in the :attr:`~import_export.mixins.BaseImportExportMixin.resource_classes` list will be used.
 * the first element in the :ref:`export_formats` list will be used.
 
+This flag can be enabled for the model using the :attr:`~import_export.admin.ExportMixin.skip_export_form` flag.
+
 .. _import_export_skip_admin_action_export_ui:
 
 ``IMPORT_EXPORT_SKIP_ADMIN_ACTION_EXPORT_UI``

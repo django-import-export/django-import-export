@@ -720,7 +720,7 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
 
         form_type = self.get_export_form_class()
         formats = self.get_export_formats()
-        if getattr(settings, "IMPORT_EXPORT_SKIP_ADMIN_EXPORT_UI", False) is True:
+        if self.is_skip_export_form_enabled():
             return self._do_file_export(formats[0](), request, None)
 
         form = form_type(
@@ -874,7 +874,8 @@ class ExportActionMixin(ExportMixin):
         """
         formats = self.get_export_formats()
         if (
-            getattr(settings, "IMPORT_EXPORT_SKIP_ADMIN_ACTION_EXPORT_UI", False)
+            self.is_skip_export_form_enabled()
+            or getattr(settings, "IMPORT_EXPORT_SKIP_ADMIN_ACTION_EXPORT_UI", False)
             is True
         ):
             file_format = formats[0]()

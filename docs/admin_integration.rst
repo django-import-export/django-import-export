@@ -178,6 +178,9 @@ where 'resource', 'fields' and 'file format' can be selected.
 Once 'submit' is clicked, the export file will be automatically downloaded to the client (usually to the 'Downloads'
 folder).
 
+It is possible to disable this extra step by setting the :ref:`import_export_skip_admin_export_ui` flag,
+or by setting :attr:`~import_export.admin.ExportMixin.skip_export_form`.
+
 .. _export_via_admin_action:
 
 Exporting via Admin action
@@ -203,8 +206,11 @@ Note that the above example refers specifically to the :ref:`example application
 this to refer to your own model instances.  In the example application, the 'Category' model has this functionality.
 
 When 'Go' is clicked for the selected items, the user will be directed to the
-:ref:`export 'confirm' page<export_confirm>`.  It is possible to disable this extra step by setting the
-:ref:`import_export_skip_admin_action_export_ui` flag.
+:ref:`export 'confirm' page<export_confirm>`.
+
+It is possible to disable this extra step by setting the :ref:`import_export_skip_admin_action_export_ui` or
+:ref:`import_export_skip_admin_export_ui` flags, or by setting
+:attr:`~import_export.admin.ExportMixin.skip_export_form`.
 
 .. note::
 

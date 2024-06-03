@@ -8,14 +8,12 @@ import os
 
 
 def main():
-    coverage_args = (
-        "-m coverage run --parallel-mode" if os.environ.get("COVERAGE") else ""
-    )
+    coverage_args = "-m coverage run" if os.environ.get("COVERAGE") else ""
 
     retval = os.system(
         "python -W error::DeprecationWarning -W error::PendingDeprecationWarning "
         f"{coverage_args} "
-        "./tests/manage.py test core --settings=settings --parallel"
+        "./tests/manage.py test core --settings=settings"
     )
     if retval != 0:
         exit(1)
