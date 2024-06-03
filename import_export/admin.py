@@ -711,6 +711,10 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
         return self.export_form_class
 
     def export_action(self, request):
+        """
+        Handles the default workflow for both the 'export confirm' page and the
+        export of data to file.
+        """
         if not self.has_export_permission(request):
             raise PermissionDenied
 
