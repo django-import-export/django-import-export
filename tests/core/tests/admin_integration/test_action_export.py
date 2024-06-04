@@ -244,7 +244,62 @@ class TestExportButtonOnChangeForm(AdminTestMixin, TestCase):
         self.assertNotIn(self.target_str, str(response.content))
 
 
-class TestSkipExportFormSettings(AdminTestMixin, TestCase):
+class SkipSettingsTestMixin(object):
+    def _test_export_button_on_change_form_skip_export_form_enabled(self):
+        self.model_admin.skip_export_form = True
+        response = self.model_admin.export_action(self.request)
+        target_file_contents = "id,name\r\n" f"{self.cat1.id},Cat 1\r\n"
+        self.assertEqual(target_file_contents.encode(), response.content)
+
+    def _test_export_button_on_change_form_skip_export_setting_enabled(self):
+        response = self.model_admin.export_action(self.request)
+        target_file_contents = "id,name\r\n" f"{self.cat1.id},Cat 1\r\n"
+        self.assertEqual(target_file_contents.encode(), response.content)
+
+    def _test_export_button_on_change_form_skip_export_form_from_action_enabled(self):
+        self.model_admin.skip_export_form_from_action = True
+        response = self.model_admin.export_action(self.request)
+        target_file_contents = "id,name\r\n" f"{self.cat1.id},Cat 1\r\n"
+        self.assertEqual(target_file_contents.encode(), response.content)
+
+    def _test_export_button_on_change_form_skip_export_from_action_setting_enabled(
+        self,
+    ):
+        response = self.model_admin.export_action(self.request)
+        target_file_contents = "id,name\r\n" f"{self.cat1.id},Cat 1\r\n"
+        self.assertEqual(target_file_contents.encode(), response.content)
+
+
+class TestSkipExportFormFromAction(SkipSettingsTestMixin, AdminTestMixin, TestCase):
+    def setUp(self):
+        super().setUp()
+        self.cat1 = Category.objects.create(name="Cat 1")
+        self.model_admin = CategoryAdmin(Category, AdminSite())
+
+        factory = RequestFactory()
+        data = {
+            "action": ["export_admin_action"],
+            "_selected_action": [str(self.cat1.id)],
+        }
+        self.request = factory.post(self.category_change_url, data=data)
+        self.request.user = User.objects.create_user("admin1")
+
+    def test_export_button_on_change_form_skip_export_form_enabled(self):
+        self._test_export_button_on_change_form_skip_export_form_enabled()
+
+    @override_settings(IMPORT_EXPORT_SKIP_ADMIN_EXPORT_UI=True)
+    def test_export_button_on_change_form_skip_export_setting_enabled(self):
+        self._test_export_button_on_change_form_skip_export_setting_enabled()
+
+    def test_export_button_on_change_form_skip_export_form_from_action_enabled(self):
+        self._test_export_button_on_change_form_skip_export_form_from_action_enabled()
+
+    @override_settings(IMPORT_EXPORT_SKIP_ADMIN_ACTION_EXPORT_UI=True)
+    def test_export_button_on_change_form_skip_export_from_action_setting_enabled(self):
+        self._test_export_button_on_change_form_skip_export_from_action_setting_enabled()  # noqa: E501
+
+
+class TestSkipExportFormFromChangeForm(SkipSettingsTestMixin, AdminTestMixin, TestCase):
     def setUp(self):
         super().setUp()
         self.cat1 = Category.objects.create(name="Cat 1")
@@ -266,25 +321,15 @@ class TestSkipExportFormSettings(AdminTestMixin, TestCase):
         self.request.user = User.objects.create_user("admin1")
 
     def test_export_button_on_change_form_skip_export_form_enabled(self):
-        self.model_admin.skip_export_form = True
-        response = self.model_admin.export_action(self.request)
-        target_file_contents = "id,name\r\n" f"{self.cat1.id},Cat 1\r\n"
-        self.assertEqual(target_file_contents.encode(), response.content)
+        self._test_export_button_on_change_form_skip_export_form_enabled()
 
     @override_settings(IMPORT_EXPORT_SKIP_ADMIN_EXPORT_UI=True)
     def test_export_button_on_change_form_skip_export_setting_enabled(self):
-        response = self.model_admin.export_action(self.request)
-        target_file_contents = "id,name\r\n" f"{self.cat1.id},Cat 1\r\n"
-        self.assertEqual(target_file_contents.encode(), response.content)
+        self._test_export_button_on_change_form_skip_export_form_enabled()
 
     def test_export_button_on_change_form_skip_export_form_from_action_enabled(self):
-        self.model_admin.skip_export_form_from_action = True
-        response = self.model_admin.export_action(self.request)
-        target_file_contents = "id,name\r\n" f"{self.cat1.id},Cat 1\r\n"
-        self.assertEqual(target_file_contents.encode(), response.content)
+        self._test_export_button_on_change_form_skip_export_form_enabled()
 
     @override_settings(IMPORT_EXPORT_SKIP_ADMIN_ACTION_EXPORT_UI=True)
     def test_export_button_on_change_form_skip_export_from_action_setting_enabled(self):
-        response = self.model_admin.export_action(self.request)
-        target_file_contents = "id,name\r\n" f"{self.cat1.id},Cat 1\r\n"
-        self.assertEqual(target_file_contents.encode(), response.content)
+        self._test_export_button_on_change_form_skip_export_from_action_setting_enabled()  # noqa: E501
