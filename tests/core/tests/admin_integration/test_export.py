@@ -582,7 +582,7 @@ class FilteredExportTest(AdminTestMixin, TestCase):
         self.assertEqual(str.encode(s), response.content)
 
 
-class SkipExportFormTest(AdminTestMixin, TestCase):
+class TestSkipExportFormSettings(AdminTestMixin, TestCase):
     def setUp(self):
         super().setUp()
 
