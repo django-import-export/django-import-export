@@ -619,3 +619,10 @@ class SkipExportFormResourceConfigTest(AdminTestMixin, TestCase):
         self._check_export_file_response(
             response, self.target_file_contents, file_prefix="EBook"
         )
+
+    @override_settings(IMPORT_EXPORT_SKIP_ADMIN_EXPORT_UI=True)
+    def test_export_skips_export_form_setting_enabled(self):
+        response = self.model_admin.export_action(self.request)
+        self._check_export_file_response(
+            response, self.target_file_contents, file_prefix="EBook"
+        )
