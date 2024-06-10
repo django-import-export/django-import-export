@@ -155,20 +155,24 @@ Note that if you disable transaction support via configuration (or if your datab
 does not support transactions), then validation errors will still be presented to the user
 but valid rows will have imported.
 
+This flag can be enabled for the model admin using the :attr:`~import_export.mixins.BaseImportMixin.skip_import_confirm`
+flag.
+
 .. _import_export_skip_admin_export_ui:
 
 ``IMPORT_EXPORT_SKIP_ADMIN_EXPORT_UI``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 A boolean value which will skip the :ref:`export form<admin_ui_exporting>` in the Admin UI.
-This can be used to enable '1 click exports' from the Admin UI.
+The file will be exported in a single step.
 
 If enabled:
 
 * the first element in the :attr:`~import_export.mixins.BaseImportExportMixin.resource_classes` list will be used.
 * the first element in the :ref:`export_formats` list will be used.
 
-This flag can be enabled for the model using the :attr:`~import_export.admin.ExportMixin.skip_export_form` flag.
+This flag can be enabled for the model admin using the :attr:`~import_export.mixins.BaseExportMixin.skip_export_form`
+flag.
 
 .. _import_export_skip_admin_action_export_ui:
 
