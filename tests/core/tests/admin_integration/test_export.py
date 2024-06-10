@@ -1,7 +1,7 @@
 from datetime import date, datetime
 from io import BytesIO
 from unittest import mock
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, PropertyMock, patch
 
 import chardet
 import tablib
@@ -58,6 +58,24 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
             b"id,name,author_email,categories\r\n",
             response.content,
         )
+
+    def test_export_with_skip_export_form_from_action(self):
+        # setting should have no effect
+        with patch(
+            "core.admin.BookAdmin.skip_export_form_from_action",
+            new_callable=PropertyMock,
+            return_value=True,
+        ):
+            response = self.client.get(self.book_export_url)
+            target_re = r"This exporter will export the following fields:"
+            self.assertRegex(str(response.content), target_re)
+
+    @override_settings(IMPORT_EXPORT_SKIP_ADMIN_ACTION_EXPORT_UI=True)
+    def test_export_with_skip_export_form_from_action_setting(self):
+        # setting should have no effect
+        response = self.client.get(self.book_export_url)
+        target_re = r"This exporter will export the following fields:"
+        self.assertRegex(str(response.content), target_re)
 
     @mock.patch("core.admin.BookAdmin.get_export_resource_kwargs")
     def test_export_passes_export_resource_kwargs(
@@ -311,7 +329,7 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
     def test_export_get(self):
         """
         Test export view get method.
-        Test that field checkboxes are displayied with names as discussed under #1846
+        Test that field checkboxes are displayed with names as discussed under #1846
         """
         response = self.client.get(self.ebook_export_url)
         self.assertContains(

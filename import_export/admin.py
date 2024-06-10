@@ -720,10 +720,7 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
 
         form_type = self.get_export_form_class()
         formats = self.get_export_formats()
-        if (
-            self.is_skip_export_form_enabled()
-            or self.is_skip_export_form_from_action_enabled()
-        ):
+        if self.is_skip_export_form_enabled():
             return self._do_file_export(formats[0](), request, None)
 
         form = form_type(
