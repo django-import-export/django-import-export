@@ -1,6 +1,6 @@
 from datetime import datetime
 from unittest import mock
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, PropertyMock, patch
 
 from core.admin import CategoryAdmin
 from core.models import Book, Category, UUIDCategory
@@ -244,36 +244,16 @@ class TestExportButtonOnChangeForm(AdminTestMixin, TestCase):
         self.assertNotIn(self.target_str, str(response.content))
 
 
-class SkipSettingsTestMixin(object):
-    def _test_export_button_on_change_form_skip_export_form_enabled(self):
-        self.model_admin.skip_export_form = True
-        response = self.model_admin.export_action(self.request)
-        target_file_contents = "id,name\r\n" f"{self.cat1.id},Cat 1\r\n"
-        self.assertEqual(target_file_contents.encode(), response.content)
+class TestSkipExportFormFromAction(AdminTestMixin, TestCase):
+    """
+    Test config values when export is initiated from the 'Export' action in the action
+    menu.
+    """
 
-    def _test_export_button_on_change_form_skip_export_setting_enabled(self):
-        response = self.model_admin.export_action(self.request)
-        target_file_contents = "id,name\r\n" f"{self.cat1.id},Cat 1\r\n"
-        self.assertEqual(target_file_contents.encode(), response.content)
-
-    def _test_export_button_on_change_form_skip_export_form_from_action_enabled(self):
-        self.model_admin.skip_export_form_from_action = True
-        response = self.model_admin.export_action(self.request)
-        target_file_contents = "id,name\r\n" f"{self.cat1.id},Cat 1\r\n"
-        self.assertEqual(target_file_contents.encode(), response.content)
-
-    def _test_export_button_on_change_form_skip_export_from_action_setting_enabled(
-        self,
-    ):
-        response = self.model_admin.export_action(self.request)
-        target_file_contents = "id,name\r\n" f"{self.cat1.id},Cat 1\r\n"
-        self.assertEqual(target_file_contents.encode(), response.content)
-
-
-class TestSkipExportFormFromAction(SkipSettingsTestMixin, AdminTestMixin, TestCase):
     def setUp(self):
         super().setUp()
         self.cat1 = Category.objects.create(name="Cat 1")
+        self.queryset = Category.objects.all()
         self.model_admin = CategoryAdmin(Category, AdminSite())
 
         factory = RequestFactory()
@@ -284,25 +264,29 @@ class TestSkipExportFormFromAction(SkipSettingsTestMixin, AdminTestMixin, TestCa
         self.request = factory.post(self.category_change_url, data=data)
         self.request.user = User.objects.create_user("admin1")
 
-    def test_export_button_on_change_form_skip_export_form_enabled(self):
-        self._test_export_button_on_change_form_skip_export_form_enabled()
-
-    @override_settings(IMPORT_EXPORT_SKIP_ADMIN_EXPORT_UI=True)
-    def test_export_button_on_change_form_skip_export_setting_enabled(self):
-        self._test_export_button_on_change_form_skip_export_setting_enabled()
-
-    def test_export_button_on_change_form_skip_export_form_from_action_enabled(self):
-        self._test_export_button_on_change_form_skip_export_form_from_action_enabled()
+    def test_skip_export_form_from_action_enabled(self):
+        self.model_admin.skip_export_form_from_action = True
+        response = self.model_admin.export_admin_action(self.request, self.queryset)
+        target_file_contents = "id,name\r\n" f"{self.cat1.id},Cat 1\r\n"
+        self.assertEqual(target_file_contents.encode(), response.content)
 
     @override_settings(IMPORT_EXPORT_SKIP_ADMIN_ACTION_EXPORT_UI=True)
-    def test_export_button_on_change_form_skip_export_from_action_setting_enabled(self):
-        self._test_export_button_on_change_form_skip_export_from_action_setting_enabled()  # noqa: E501
+    def test_skip_export_form_from_action_setting_enabled(self):
+        response = self.model_admin.export_admin_action(self.request, self.queryset)
+        target_file_contents = "id,name\r\n" f"{self.cat1.id},Cat 1\r\n"
+        self.assertEqual(target_file_contents.encode(), response.content)
 
 
-class TestSkipExportFormFromChangeForm(SkipSettingsTestMixin, AdminTestMixin, TestCase):
+class TestSkipExportFormFromChangeForm(AdminTestMixin, TestCase):
+    """
+    Test config values when export is initiated from the 'Export' button on the Change
+    form.
+    """
+
     def setUp(self):
         super().setUp()
         self.cat1 = Category.objects.create(name="Cat 1")
+        self.queryset = Category.objects.all()
         self.model_admin = CategoryAdmin(Category, AdminSite())
 
         self.change_url = reverse(
@@ -320,16 +304,41 @@ class TestSkipExportFormFromChangeForm(SkipSettingsTestMixin, AdminTestMixin, Te
         )
         self.request.user = User.objects.create_user("admin1")
 
-    def test_export_button_on_change_form_skip_export_form_enabled(self):
-        self._test_export_button_on_change_form_skip_export_form_enabled()
+    def test_export_button_on_change_form_skip_export_form_from_action_enabled(self):
+        self.model_admin.skip_export_form_from_action = True
+        response = self.model_admin.export_admin_action(self.request, self.queryset)
+        target_file_contents = "id,name\r\n" f"{self.cat1.id},Cat 1\r\n"
+        self.assertEqual(target_file_contents.encode(), response.content)
+
+    @override_settings(IMPORT_EXPORT_SKIP_ADMIN_ACTION_EXPORT_UI=True)
+    def test_export_button_on_change_form_skip_export_form_from_action_setting_enabled(
+        self,
+    ):
+        self.model_admin.skip_export_form_from_action = True
+        response = self.model_admin.export_admin_action(self.request, self.queryset)
+        target_file_contents = "id,name\r\n" f"{self.cat1.id},Cat 1\r\n"
+        self.assertEqual(target_file_contents.encode(), response.content)
 
     @override_settings(IMPORT_EXPORT_SKIP_ADMIN_EXPORT_UI=True)
     def test_export_button_on_change_form_skip_export_setting_enabled(self):
-        self._test_export_button_on_change_form_skip_export_form_enabled()
+        # this property has no effect - IMPORT_EXPORT_SKIP_ADMIN_ACTION_EXPORT_UI
+        # should be set instead
+        response = self.client.post(
+            self.change_url, data={"_export-item": "Export", "name": self.cat1.name}
+        )
+        target_re = r"This exporter will export the following fields:"
+        self.assertRegex(str(response.content), target_re)
 
-    def test_export_button_on_change_form_skip_export_form_from_action_enabled(self):
-        self._test_export_button_on_change_form_skip_export_form_enabled()
-
-    @override_settings(IMPORT_EXPORT_SKIP_ADMIN_ACTION_EXPORT_UI=True)
-    def test_export_button_on_change_form_skip_export_from_action_setting_enabled(self):
-        self._test_export_button_on_change_form_skip_export_from_action_setting_enabled()  # noqa: E501
+    def test_export_button_on_change_form_skip_export_form_enabled(self):
+        # this property has no effect - skip_export_form_from_action
+        # should be set instead
+        with patch(
+            "core.admin.CategoryAdmin.skip_export_form",
+            new_callable=PropertyMock,
+            return_value=True,
+        ):
+            response = self.client.post(
+                self.change_url, data={"_export-item": "Export", "name": self.cat1.name}
+            )
+            target_re = r"This exporter will export the following fields:"
+            self.assertRegex(str(response.content), target_re)

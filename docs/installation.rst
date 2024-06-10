@@ -180,9 +180,8 @@ flag.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This setting is the same as :ref:`import_export_skip_admin_export_ui` but is used when the export is
-requested from an :ref:`Admin UI action<export_via_admin_action>`.
-
-This setting will be overridden if :ref:`import_export_skip_admin_export_ui` is enabled.
+requested from an :ref:`Admin UI action<export_via_admin_action>`, or from the 'Export' button on the
+:ref:`change form <export_from_model_change_form>`.
 
 .. _import_export_escape_formulae_on_export:
 

@@ -217,6 +217,8 @@ It is possible to disable this extra step by setting the :ref:`import_export_ski
     If deploying to a multi-tenant environment, you may need to use the to ensure that one set of users cannot export
     data belonging to another set.  See :meth:`~import_export.admin.ExportMixin.get_valid_export_item_pks`.
 
+.. _export_from_model_change_form:
+
 Export from model instance change form
 --------------------------------------
 
