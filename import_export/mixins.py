@@ -100,6 +100,11 @@ class BaseImportExportMixin:
 
 
 class BaseImportMixin(BaseImportExportMixin):
+    #: If enabled, the import workflow skips the import confirm page
+    #: and imports the data directly.
+    #: See :ref:`import_export_skip_admin_confirm`.
+    skip_import_confirm = False
+
     def get_import_resource_classes(self, request):
         """
         :param request: The request object.
@@ -141,9 +146,25 @@ class BaseImportMixin(BaseImportExportMixin):
         resource_index = self.get_resource_index(form)
         return self.get_import_resource_classes(request)[resource_index]
 
+    def is_skip_import_confirm_enabled(self):
+        return (
+            getattr(settings, "IMPORT_EXPORT_SKIP_ADMIN_CONFIRM", False)
+            or self.skip_import_confirm is True
+        )
+
 
 class BaseExportMixin(BaseImportExportMixin):
     model = None
+
+    #: If enabled, the export workflow skips the export form and
+    #: exports the data directly.
+    #: See :ref:`import_export_skip_admin_export_ui`.
+    skip_export_form = False
+
+    #: If enabled, the export workflow from Admin UI action menu
+    #: skips the export form and exports the data directly.
+    #: See :ref:`import_export_skip_admin_action_export_ui`.
+    skip_export_form_from_action = False
 
     def get_export_formats(self):
         """
@@ -214,6 +235,18 @@ class BaseExportMixin(BaseImportExportMixin):
             file_format.get_extension(),
         )
         return filename
+
+    def is_skip_export_form_enabled(self):
+        return (
+            getattr(settings, "IMPORT_EXPORT_SKIP_ADMIN_EXPORT_UI", False)
+            or self.skip_export_form is True
+        )
+
+    def is_skip_export_form_from_action_enabled(self):
+        return (
+            getattr(settings, "IMPORT_EXPORT_SKIP_ADMIN_ACTION_EXPORT_UI", False)
+            or self.skip_export_form_from_action is True
+        )
 
 
 class ExportViewMixin(BaseExportMixin):

@@ -2,7 +2,7 @@ import os
 import warnings
 from io import StringIO
 from unittest import mock
-from unittest.mock import patch
+from unittest.mock import PropertyMock, patch
 
 from core.admin import (
     AuthorAdmin,
@@ -59,6 +59,21 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         data = confirm_form.initial
         self.assertEqual(data["original_file_name"], "books.csv")
         response = self.client.post(self.book_process_import_url, data, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response,
+            _(
+                "Import finished: {} new, {} updated, {} deleted and {} skipped {}."
+            ).format(1, 0, 0, 0, Book._meta.verbose_name_plural),
+        )
+
+    @patch(
+        "core.admin.BookAdmin.skip_import_confirm",
+        new_callable=PropertyMock,
+        return_value=True,
+    )
+    def test_import_skips_confirm_page(self, mock_skip_import_confirm):
+        response = self._do_import_post(self.book_import_url, "books.csv", follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertContains(
             response,

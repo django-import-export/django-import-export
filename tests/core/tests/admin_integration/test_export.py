@@ -1,12 +1,12 @@
 from datetime import date, datetime
 from io import BytesIO
 from unittest import mock
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, PropertyMock, patch
 
 import chardet
 import tablib
 from core.admin import BookAdmin, BookResource, EBookResource
-from core.models import Author, Book, UUIDCategory
+from core.models import Author, Book, EBook, UUIDCategory
 from core.tests.admin_integration.mixins import AdminTestMixin
 from core.tests.utils import ignore_utcnow_deprecation_warning
 from django.contrib.admin.sites import AdminSite
@@ -58,6 +58,24 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
             b"id,name,author_email,categories\r\n",
             response.content,
         )
+
+    def test_export_with_skip_export_form_from_action(self):
+        # setting should have no effect
+        with patch(
+            "core.admin.BookAdmin.skip_export_form_from_action",
+            new_callable=PropertyMock,
+            return_value=True,
+        ):
+            response = self.client.get(self.book_export_url)
+            target_re = r"This exporter will export the following fields:"
+            self.assertRegex(str(response.content), target_re)
+
+    @override_settings(IMPORT_EXPORT_SKIP_ADMIN_ACTION_EXPORT_UI=True)
+    def test_export_with_skip_export_form_from_action_setting(self):
+        # setting should have no effect
+        response = self.client.get(self.book_export_url)
+        target_re = r"This exporter will export the following fields:"
+        self.assertRegex(str(response.content), target_re)
 
     @mock.patch("core.admin.BookAdmin.get_export_resource_kwargs")
     def test_export_passes_export_resource_kwargs(
@@ -311,7 +329,7 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
     def test_export_get(self):
         """
         Test export view get method.
-        Test that field checkboxes are displayied with names as discussed under #1846
+        Test that field checkboxes are displayed with names as discussed under #1846
         """
         response = self.client.get(self.ebook_export_url)
         self.assertContains(
@@ -559,3 +577,34 @@ class FilteredExportTest(AdminTestMixin, TestCase):
         self.assertEqual(response.status_code, 200)
         s = "id,name\r\n" f"{b2.id},Ulysses\r\n"
         self.assertEqual(str.encode(s), response.content)
+
+
+class SkipExportFormResourceConfigTest(AdminTestMixin, TestCase):
+    def setUp(self):
+        super().setUp()
+        self.model_admin = BookAdmin(EBook, AdminSite())
+
+        book = Book.objects.create(name="Moonraker", published=date(1955, 4, 5))
+        self.target_file_contents = (
+            "id,name,author,author_email,imported,published,"
+            "published_time,price,added,categories\r\n"
+            f"{book.id},Moonraker,,,0,1955-04-05,,,,\r\n"
+        )
+
+        factory = RequestFactory()
+        self.request = factory.get(self.book_export_url, follow=True)
+        self.request.user = User.objects.create_user("admin1")
+
+    def test_export_skips_export_form(self):
+        self.model_admin.skip_export_form = True
+        response = self.model_admin.export_action(self.request)
+        self._check_export_file_response(
+            response, self.target_file_contents, file_prefix="EBook"
+        )
+
+    @override_settings(IMPORT_EXPORT_SKIP_ADMIN_EXPORT_UI=True)
+    def test_export_skips_export_form_setting_enabled(self):
+        response = self.model_admin.export_action(self.request)
+        self._check_export_file_response(
+            response, self.target_file_contents, file_prefix="EBook"
+        )

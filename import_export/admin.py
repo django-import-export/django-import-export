@@ -439,7 +439,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
                 input_format.encoding = self.from_encoding
             import_file = import_form.cleaned_data["import_file"]
 
-            if getattr(settings, "IMPORT_EXPORT_SKIP_ADMIN_CONFIRM", False):
+            if self.is_skip_import_confirm_enabled():
                 # This setting means we are going to skip the import confirmation step.
                 # Go ahead and process the file for import in a transaction
                 # If there are any errors, we roll back the transaction.
@@ -711,11 +711,18 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
         return self.export_form_class
 
     def export_action(self, request):
+        """
+        Handles the default workflow for both the export form and the
+        export of data to file.
+        """
         if not self.has_export_permission(request):
             raise PermissionDenied
 
         form_type = self.get_export_form_class()
         formats = self.get_export_formats()
+        if self.is_skip_export_form_enabled():
+            return self._do_file_export(formats[0](), request, None)
+
         form = form_type(
             formats,
             self.get_export_resource_classes(request),
@@ -743,21 +750,9 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
                 queryset = self.get_export_queryset(request)
 
             try:
-                export_data = self.get_export_data(
-                    file_format,
-                    request,
-                    queryset,
-                    encoding=self.to_encoding,
-                    export_form=form,
+                return self._do_file_export(
+                    file_format, request, queryset, export_form=form
                 )
-                content_type = file_format.get_content_type()
-                response = HttpResponse(export_data, content_type=content_type)
-                response["Content-Disposition"] = 'attachment; filename="%s"' % (
-                    self.get_export_filename(request, queryset, file_format),
-                )
-
-                post_export.send(sender=None, model=self.model)
-                return response
             except FieldError as e:
                 messages.error(request, str(e))
 
@@ -805,6 +800,22 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
             for res in self.get_export_resource_classes(request)
         ]
         return context
+
+    def _do_file_export(self, file_format, request, queryset, export_form=None):
+        export_data = self.get_export_data(
+            file_format,
+            request,
+            queryset,
+            encoding=self.to_encoding,
+            export_form=export_form,
+        )
+        content_type = file_format.get_content_type()
+        response = HttpResponse(export_data, content_type=content_type)
+        response["Content-Disposition"] = 'attachment; filename="%s"' % (
+            self.get_export_filename(request, queryset, file_format),
+        )
+        post_export.send(sender=None, model=self.model)
+        return response
 
 
 class ImportExportMixin(ImportMixin, ExportMixin):
@@ -862,21 +873,9 @@ class ExportActionMixin(ExportMixin):
         Action runs on POST from instance action menu (if enabled).
         """
         formats = self.get_export_formats()
-        if (
-            getattr(settings, "IMPORT_EXPORT_SKIP_ADMIN_ACTION_EXPORT_UI", False)
-            is True
-        ):
+        if self.is_skip_export_form_from_action_enabled():
             file_format = formats[0]()
-
-            export_data = self.get_export_data(
-                file_format, request, queryset, encoding=self.to_encoding
-            )
-            content_type = file_format.get_content_type()
-            response = HttpResponse(export_data, content_type=content_type)
-            response["Content-Disposition"] = 'attachment; filename="%s"' % (
-                self.get_export_filename(request, queryset, file_format),
-            )
-            return response
+            return self._do_file_export(file_format, request, queryset)
 
         form_type = self.get_export_form_class()
         formats = self.get_export_formats()

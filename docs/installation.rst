@@ -155,15 +155,34 @@ Note that if you disable transaction support via configuration (or if your datab
 does not support transactions), then validation errors will still be presented to the user
 but valid rows will have imported.
 
+This flag can be enabled for the model admin using the :attr:`~import_export.mixins.BaseImportMixin.skip_import_confirm`
+flag.
+
+.. _import_export_skip_admin_export_ui:
+
+``IMPORT_EXPORT_SKIP_ADMIN_EXPORT_UI``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A boolean value which will skip the :ref:`export form<admin_ui_exporting>` in the Admin UI, when the export is
+initiated from the :ref:`change list page<admin_ui_exporting>`.
+The file will be exported in a single step.
+
+If enabled:
+
+* the first element in the :attr:`~import_export.mixins.BaseImportExportMixin.resource_classes` list will be used.
+* the first element in the :ref:`export_formats` list will be used.
+
+This flag can be enabled for the model admin using the :attr:`~import_export.mixins.BaseExportMixin.skip_export_form`
+flag.
+
 .. _import_export_skip_admin_action_export_ui:
 
 ``IMPORT_EXPORT_SKIP_ADMIN_ACTION_EXPORT_UI``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-A boolean value which will skip the 'file format' and 'resource' select page in the Admin UI
-when the export is requested from an :ref:`Admin UI action<export_via_admin_action>`.
-If ``TRUE`` then the first element in the 'file format' and 'resource' lists will be used.
-By default this is ``FALSE``.
+A boolean value which will skip the :ref:`export form<admin_ui_exporting>` in the Admin UI, but only when the export is
+requested from an :ref:`Admin UI action<export_via_admin_action>`, or from the 'Export' button on the
+:ref:`change form <export_from_model_change_form>`.
 
 .. _import_export_escape_formulae_on_export:
 
