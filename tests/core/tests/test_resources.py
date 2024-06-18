@@ -24,13 +24,15 @@ from django.utils.encoding import force_str
 from django.utils.html import strip_tags
 
 from import_export import fields, resources, results, widgets
+from import_export.fields import Field
 from import_export.instance_loaders import ModelInstanceLoader
-from import_export.resources import Diff
+from import_export.resources import Diff, ModelResource
 
 from ..models import (
     Author,
     Book,
     Category,
+    EBook,
     Entry,
     Person,
     Profile,
@@ -550,6 +552,22 @@ class ModelResourceTest(TestCase):
         with self.assertNumQueries(2):
             dataset = self.resource.export(Book.objects.all())
             self.assertEqual(len(dataset), 1)
+
+    def test_export_declared_field(self):
+        # test behaviour of export when no attribute is set
+        class EBookResource(ModelResource):
+            published = Field(column_name="published")
+
+            class Meta:
+                model = EBook
+                fields = ("id", "published")
+
+        resource = EBookResource()
+
+        self.book.published = date(1955, 4, 5)
+        self.book.save()
+        dataset = resource.export()
+        self.assertEqual("", dataset.dict[0]["published"])
 
     def test_export_iterable(self):
         with self.assertNumQueries(2):
