@@ -36,6 +36,7 @@ class FieldTest(TestCase):
         self.assertEqual(self.field.export(self.obj), self.row["name"])
 
     def test_export_none(self):
+        # 1872
         instance = Obj(name=None)
         self.assertEqual("", self.field.export(instance))
 

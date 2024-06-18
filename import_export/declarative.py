@@ -51,8 +51,6 @@ class DeclarativeMetaclass(type):
                 field = attrs.pop(field_name)
                 if not field.column_name:
                     field.column_name = field_name
-                # if not field.attribute:
-                #     field.attribute = field_name
                 declared_fields.append((field_name, field))
 
         attrs["fields"] = OrderedDict(declared_fields)
