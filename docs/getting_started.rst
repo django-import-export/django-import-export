@@ -114,20 +114,23 @@ Deleting data
 To delete objects during import, implement the
 :meth:`~import_export.resources.Resource.for_delete` method on
 your :class:`~import_export.resources.Resource` class.
+You should add custom logic which will signify which rows are to be deleted.
 
-The following is an example resource which expects a ``delete`` field in the
-dataset. An import using this resource will delete model instances for rows
-that have their column ``delete`` set to ``1``::
+For example, suppose you would like to have a field in the import dataset to indicate which rows should be deleted.
+You could include a field called *delete* which has either a 1 or 0 value.
+
+In this case, declare the resource as follows::
 
     class BookResource(resources.ModelResource):
-        delete = fields.Field(widget=widgets.BooleanWidget())
 
         def for_delete(self, row, instance):
-            return self.fields['delete'].clean(row)
+            return row["delete"] == "1"
 
         class Meta:
             model = Book
 
+If the delete flag is set on a *'new'* instance (i.e. the row does not already exist in the db) then the row will be
+skipped.
 
 .. _exporting_data:
 
