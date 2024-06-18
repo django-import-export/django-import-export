@@ -35,6 +35,11 @@ class FieldTest(TestCase):
     def test_export(self):
         self.assertEqual(self.field.export(self.obj), self.row["name"])
 
+    def test_export_none(self):
+        # 1872
+        instance = Obj(name=None)
+        self.assertEqual("", self.field.export(instance))
+
     def test_save(self):
         self.row["name"] = "foo"
         self.field.save(self.obj, self.row)
@@ -154,6 +159,4 @@ class FieldTest(TestCase):
 
     def test_get_value_with_no_attribute(self):
         self.field.attribute = None
-        with self.assertRaises(AttributeError) as e:
-            self.field.get_value(self.obj)
-        self.assertEqual("Field attribute cannot be null", str(e.exception))
+        self.assertIsNone(self.field.get_value(self.obj))

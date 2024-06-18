@@ -82,8 +82,8 @@ class ExportFunctionalityTest(TestCase):
         self.assertEqual(dict(a=1), self.resource.kwargs_)
 
     def test_export_declared_field(self):
-        # test that declared fields have the correct widget set
-        # #1860
+        # test that declared fields with no attribute return empty value
+        # see 1874
         class EBookResource(ModelResource):
             published = Field(column_name="published")
 
@@ -96,4 +96,4 @@ class ExportFunctionalityTest(TestCase):
         self.book.published = date(1955, 4, 5)
         self.book.save()
         dataset = resource.export()
-        self.assertEqual("1955-04-05", dataset.dict[0]["published"])
+        self.assertEqual("", dataset.dict[0]["published"])
