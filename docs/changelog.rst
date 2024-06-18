@@ -5,7 +5,13 @@ Changelog
 
     Version 4 introduces breaking changes.  Please refer to :doc:`release notes<release_notes>`.
 
-4.0.8 (unreleased)
+4.0.9 (2024-06-18)
+------------------
+
+- fix default ``Field`` returns empty string instead of *'None'*  (`1872 <https://github.com/django-import-export/django-import-export/pull/1872>`_)
+- revert setting default value for ``attribute`` (`1875 <https://github.com/django-import-export/django-import-export/pull/1875>`_)
+
+4.0.8 (2024-06-13)
 ------------------
 
 - docs: clarify widget configuration (`1865 <https://github.com/django-import-export/django-import-export/pull/1865>`_)
