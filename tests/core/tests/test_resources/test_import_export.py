@@ -487,3 +487,36 @@ class CustomPrimaryKeyRelationImportTest(TestCase):
         self.assertEqual(0, UUIDBook.objects.count())
         self.resource.import_data(dataset, raise_errors=True)
         self.assertEqual(1, UUIDBook.objects.count())
+
+
+class DeclaredFieldWithNoAttributeTestCase(TestCase):
+    """
+    If a custom field is declared, import should skip setting an attribute if the
+    Field declaration has no attribute name.
+    # 1874
+    """
+
+    class _EBookResource(ModelResource):
+        published = Field(column_name="published")
+
+        class Meta:
+            model = EBook
+            fields = ("id", "name", "published")
+
+    def setUp(self):
+        super().setUp()
+        self.resource = DeclaredFieldWithNoAttributeTestCase._EBookResource()
+
+    @patch("import_export.resources.logger")
+    def test_import_with_no_attribute(self, mock_logger):
+        self.assertEqual(0, EBook.objects.count())
+        dataset = tablib.Dataset(
+            *[(1, "Moonraker", "1955-04-05")], headers=["id", "name", "published"]
+        )
+        self.resource.import_data(dataset, raise_errors=True)
+        self.assertEqual(1, EBook.objects.count())
+        self.assertIsNone(EBook.objects.first().published)
+        mock_logger.debug.assert_any_call(
+            "skipping field '<import_export.fields.Field: published>' "
+            "- field attribute is not defined"
+        )
