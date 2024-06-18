@@ -109,7 +109,9 @@ column name (i.e. row header)::
         class Meta:
             model = Book
 
-The ``attribute`` parameter is optional and if not supplied then the field will be skipped during import.
+The ``attribute`` parameter is optional and if not supplied then the field will be skipped during import and export.
+It is possible to enable export for the field by declaring a :ref:`dehydrate<advanced_data_manipulation_on_export>`
+method.
 
 .. seealso::
 
@@ -489,7 +491,7 @@ Then if the import was being called from another module, we would pass the ``pub
     >>> resource = BookResource(publisher_id=1)
 
 If you need to pass dynamic values to the Resource from an `Admin integration`_, refer to
-:ref:`advanced_usage:How to dynamically set resource values`.
+See :ref:`dynamically_set_resource_values`.
 
 Django Natural Keys
 -------------------
@@ -718,7 +720,7 @@ You can define your resource to take the associated instance as a param, and the
         class Meta:
             model = Book
 
-See also :ref:`advanced_usage:How to dynamically set resource values`.
+See :ref:`dynamically_set_resource_values`.
 
 .. _advanced_data_manipulation_on_export:
 
@@ -758,7 +760,7 @@ Filtering querysets during export
 =================================
 
 You can use :meth:`~import_export.resources.Resource.filter_export` to filter querysets
-during export.  See also `Customize admin export forms`_.
+during export.  See also :ref:`customize_admin_export_forms`.
 
 Signals
 =======

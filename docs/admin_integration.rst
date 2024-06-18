@@ -338,6 +338,8 @@ The parameters can then be read from ``Resource`` methods, such as:
     :doc:`/api_admin`
         available mixins and options.
 
+.. _customize_admin_export_forms:
+
 Customize admin export forms
 ----------------------------
 

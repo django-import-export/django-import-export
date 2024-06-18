@@ -87,7 +87,6 @@ Your signal receiver can then include conditional logic to handle this flag::
 Further discussion `here <https://github.com/django-import-export/django-import-export/issues/1078/>`_
 and `here <https://stackoverflow.com/a/71625152/39296/>`_.
 
-
 How to dynamically set resource values
 --------------------------------------
 
