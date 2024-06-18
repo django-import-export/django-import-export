@@ -95,7 +95,7 @@ class Widget:
         :return: By default, this value will be a string, with ``None`` values returned
           as empty strings.
         """
-        return force_str(value)
+        return force_str(value) if value is not None else ""
 
     def _obj_deprecation_warning(self, obj):
         if obj is not None:

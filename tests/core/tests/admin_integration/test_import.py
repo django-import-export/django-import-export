@@ -971,7 +971,7 @@ class ConfirmImportPreviewOrderTest(AdminTestMixin, TestCase):
             r'<td><ins style="background:#e6ffe6;">1</ins></td>[\\n\s]+'
             r'<td><ins style="background:#e6ffe6;">test@example.com</ins></td>[\\n\s]+'
             r'<td><ins style="background:#e6ffe6;">Some book</ins></td>[\\n\s]+'
-            r"<td><span>None</span></td>[\\n\s]+"
+            r"<td></td>[\\n\s]+"
             "</tr>"
         )
         self.assertRegex(str(response.content), target_row_re)
@@ -1018,7 +1018,7 @@ class CustomColumnNameImportTest(AdminTestMixin, TestCase):
             r'<td><ins style="background:#e6ffe6;">1</ins></td>[\\n\s]+'
             r'<td><ins style="background:#e6ffe6;">test@example.com</ins></td>[\\n\s]+'
             r'<td><ins style="background:#e6ffe6;">Some book</ins></td>[\\n\s]+'
-            r"<td><span>None</span></td>[\\n\s]+"
+            r"<td></td>[\\n\s]+"
             "</tr>"
         )
         self.assertRegex(str(response.content), target_row_re)

@@ -83,6 +83,7 @@ class ExportFunctionalityTest(TestCase):
 
     def test_export_declared_field(self):
         # test that declared fields with no attribute return empty value
+        # see 1874
         class EBookResource(ModelResource):
             published = Field(column_name="published")
 
