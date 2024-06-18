@@ -109,8 +109,7 @@ column name (i.e. row header)::
         class Meta:
             model = Book
 
-The ``attribute`` kwarg is optional and if it is not declared, the value is taken to be the name of the field
-(e.g. 'published').
+The ``attribute`` parameter is optional and if not supplied then the field will be skipped during import.
 
 .. seealso::
 
