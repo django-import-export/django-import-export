@@ -79,7 +79,7 @@ class ExportFunctionalityTest(TestCase):
         # when queryset is supplied, it should be passed to before_export()
         self.resource.export(queryset=Book.objects.all(), **{"a": 1})
         self.assertEqual(Book.objects.count(), len(self.resource.qs))
-        self.assertEqual(dict(a=1), self.resource.kwargs_)
+        self.assertEqual({"a": 1}, self.resource.kwargs_)
 
     def test_export_declared_field(self):
         # test that declared fields with no attribute return empty value

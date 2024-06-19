@@ -13,7 +13,7 @@ from import_export.resources import modelresource_factory
 
 class ExportViewMixinTest(TestCase):
     class TestExportForm(forms.ExportForm):
-        cleaned_data = dict()
+        cleaned_data = {}
 
     def setUp(self):
         self.url = reverse("export-category")

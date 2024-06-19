@@ -493,7 +493,7 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
 
     def test_get_context_data_returns_empty_dict(self):
         m = ExportMixin()
-        self.assertEqual(dict(), m.get_context_data())
+        self.assertEqual({}, m.get_context_data())
 
     @patch("import_export.admin.logger")
     def test_issue_1521_change_list_template_as_property(self, mock_logger):

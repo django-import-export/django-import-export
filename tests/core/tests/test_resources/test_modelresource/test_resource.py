@@ -106,7 +106,7 @@ class ResourceTestCase(TestCase):
         book = Book()
         self.my_resource._meta.clean_model_instances = True
         self.my_resource.validate_instance(book)
-        target = dict()
+        target = {}
         full_clean_mock.assert_called_once_with(
             exclude=target.keys(), validate_unique=True
         )
