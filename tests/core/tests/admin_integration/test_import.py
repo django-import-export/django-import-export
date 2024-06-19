@@ -218,7 +218,7 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
             response = self._do_import_post(self.book_import_url, "books.csv")
         self.assertEqual(response.status_code, 200)
         target_msg = "some unknown error"
-        self.assertIn(target_msg, str(response.content))
+        self.assertIn(target_msg, response.content.decode())
 
     @override_settings(LANGUAGE_CODE="es")
     def test_import_action_handles_ValueError_as_form_error_with_translation(self):
@@ -531,8 +531,9 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         form = response.context["form"]
         self.assertEqual(1, len(form.fields["format"].choices))
         self.assertTrue(form.fields["format"].widget.attrs["readonly"])
-        self.assertIn("xlsx", str(response.content))
-        self.assertNotIn('select name="format"', str(response.content))
+        content = response.content.decode()
+        self.assertIn("xlsx", content)
+        self.assertNotIn('select name="format"', content)
 
     @override_settings(IMPORT_FORMATS=[])
     def test_export_empty_import_formats(self):
@@ -557,52 +558,56 @@ class TestImportErrorMessageFormat(AdminTestMixin, TestCase):
     def test_result_error_display_default(self):
         response = self.model_admin.import_action(self.request)
         response.render()
-        self.assertIn("import-error-display-message", str(response.content))
+        content = response.content.decode()
+        self.assertIn("import-error-display-message", content)
         self.assertIn(
             "Line number: 1 - Author matching query does not exist.",
-            str(response.content),
+            content,
         )
-        self.assertNotIn("import-error-display-row", str(response.content))
-        self.assertNotIn("import-error-display-traceback", str(response.content))
+        self.assertNotIn("import-error-display-row", content)
+        self.assertNotIn("import-error-display-traceback", content)
 
     def test_result_error_display_message_only(self):
         self.model_admin.import_error_display = ("message",)
 
         response = self.model_admin.import_action(self.request)
         response.render()
+        content = response.content.decode()
         self.assertIn(
             "Line number: 1 - Author matching query does not exist.",
-            str(response.content),
+            content,
         )
-        self.assertIn("import-error-display-message", str(response.content))
-        self.assertNotIn("import-error-display-row", str(response.content))
-        self.assertNotIn("import-error-display-traceback", str(response.content))
+        self.assertIn("import-error-display-message", content)
+        self.assertNotIn("import-error-display-row", content)
+        self.assertNotIn("import-error-display-traceback", content)
 
     def test_result_error_display_row_only(self):
         self.model_admin.import_error_display = ("row",)
 
         response = self.model_admin.import_action(self.request)
         response.render()
+        content = response.content.decode()
         self.assertNotIn(
             "Line number: 1 - Author matching query does not exist.",
-            str(response.content),
+            content,
         )
-        self.assertNotIn("import-error-display-message", str(response.content))
-        self.assertIn("import-error-display-row", str(response.content))
-        self.assertNotIn("import-error-display-traceback", str(response.content))
+        self.assertNotIn("import-error-display-message", content)
+        self.assertIn("import-error-display-row", content)
+        self.assertNotIn("import-error-display-traceback", content)
 
     def test_result_error_display_traceback_only(self):
         self.model_admin.import_error_display = ("traceback",)
 
         response = self.model_admin.import_action(self.request)
         response.render()
+        content = response.content.decode()
         self.assertNotIn(
             "Line number: 1 - Author matching query does not exist.",
-            str(response.content),
+            content,
         )
-        self.assertNotIn("import-error-display-message", str(response.content))
-        self.assertNotIn("import-error-display-row", str(response.content))
-        self.assertIn("import-error-display-traceback", str(response.content))
+        self.assertNotIn("import-error-display-message", content)
+        self.assertNotIn("import-error-display-row", content)
+        self.assertIn("import-error-display-traceback", content)
 
 
 class ConfirmImportEncodingTest(AdminTestMixin, TestCase):
@@ -826,7 +831,7 @@ class TestImportSkipConfirm(AdminTestMixin, TransactionTestCase):
         )
         self.assertEqual(response.status_code, status_code)
         if regex_in_response is not None:
-            self.assertRegex(str(response.content), regex_in_response)
+            self.assertRegex(response.content.decode(), regex_in_response)
 
     def test_import_action_create(self):
         self._is_str_in_response(
@@ -858,7 +863,7 @@ class TestImportSkipConfirm(AdminTestMixin, TransactionTestCase):
         with mock.patch("core.models.Book.save") as mock_save:
             mock_save.side_effect = ValueError("some unknown error")
             response = self._do_import_post(self.book_import_url, "books.csv")
-        self.assertIn("some unknown error", str(response.content))
+        self.assertIn("some unknown error", response.content.decode())
 
     @override_settings(IMPORT_EXPORT_USE_TRANSACTIONS=True)
     def test_import_transaction_enabled_validation_error(self):
@@ -883,7 +888,7 @@ class TestImportSkipConfirm(AdminTestMixin, TransactionTestCase):
         with mock.patch("core.admin.BookResource.skip_row") as mock_skip:
             mock_skip.side_effect = [None, ValueError("some unknown error"), None]
             response = self._do_import_post(self.book_import_url, "books.json", index)
-        self.assertIn("some unknown error", str(response.content))
+        self.assertIn("some unknown error", response.content.decode())
         self.assertEqual(0, Book.objects.count())
 
     @override_settings(IMPORT_EXPORT_USE_TRANSACTIONS=False)
@@ -894,7 +899,7 @@ class TestImportSkipConfirm(AdminTestMixin, TransactionTestCase):
         with mock.patch("core.admin.BookResource.skip_row") as mock_skip:
             mock_skip.side_effect = [None, ValueError("some unknown error"), None]
             response = self._do_import_post(self.book_import_url, "books.json", index)
-        self.assertIn("some unknown error", str(response.content))
+        self.assertIn("some unknown error", response.content.decode())
         self.assertEqual(2, Book.objects.count())
 
     def test_import_action_mac(self):
@@ -963,7 +968,7 @@ class ConfirmImportPreviewOrderTest(AdminTestMixin, TestCase):
             r"</tr>[\\n\s]+"
             "</thead>"
         )
-        self.assertRegex(str(response.content), target_header_re)
+        self.assertRegex(response.content.decode(), target_header_re)
         # test row rendered in correct order
         target_row_re = (
             r'<tr class="new">[\\n\s]+'
@@ -974,7 +979,7 @@ class ConfirmImportPreviewOrderTest(AdminTestMixin, TestCase):
             r"<td></td>[\\n\s]+"
             "</tr>"
         )
-        self.assertRegex(str(response.content), target_row_re)
+        self.assertRegex(response.content.decode(), target_row_re)
 
 
 class CustomColumnNameImportTest(AdminTestMixin, TestCase):
@@ -1010,7 +1015,7 @@ class CustomColumnNameImportTest(AdminTestMixin, TestCase):
             r"</tr>[\\n\s]+"
             "</thead>"
         )
-        self.assertRegex(str(response.content), target_header_re)
+        self.assertRegex(response.content.decode(), target_header_re)
         # test row rendered in correct order
         target_row_re = (
             r'<tr class="new">[\\n\s]+'
@@ -1021,7 +1026,7 @@ class CustomColumnNameImportTest(AdminTestMixin, TestCase):
             r"<td></td>[\\n\s]+"
             "</tr>"
         )
-        self.assertRegex(str(response.content), target_row_re)
+        self.assertRegex(response.content.decode(), target_row_re)
 
 
 class DefaultFieldsImportOrderTest(AdminTestMixin, TestCase):
@@ -1038,7 +1043,7 @@ class DefaultFieldsImportOrderTest(AdminTestMixin, TestCase):
             r"This importer will import the following fields:[\\n\s]+"
             r"<code>id, Email of the author, name, published_date</code>[\\n\s]+"
         )
-        self.assertRegex(str(response.content), target_re)
+        self.assertRegex(response.content.decode(), target_re)
 
 
 class DeclaredImportOrderTest(AdminTestMixin, TestCase):
@@ -1063,4 +1068,4 @@ class DeclaredImportOrderTest(AdminTestMixin, TestCase):
             r"This importer will import the following fields:[\\n\s]+"
             r"<code>id, name, published_date, Email of the author</code>[\\n\s]+"
         )
-        self.assertRegex(str(response.content), target_re)
+        self.assertRegex(response.content.decode(), target_re)
