@@ -1,8 +1,11 @@
 import logging
+import sys
+import traceback
 from collections import OrderedDict
 
 from django.core.exceptions import NON_FIELD_ERRORS
 from django.utils.encoding import force_str
+from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from tablib import Dataset
 
@@ -10,11 +13,29 @@ logger = logging.getLogger(__name__)
 
 
 class Error:
-    def __init__(self, error, traceback=None, row=None, number=None):
+    def __init__(self, error, row=None, number=None):
         self.error = error
-        self.traceback = traceback
         self.row = row
         self.number = number
+
+    def __repr__(self):
+        result = f"<Error: {self.error!r}"
+        if self.row is not None:
+            result += f" at row {self.row}"
+        if self.number is not None:
+            result += f" at number {self.number}"
+        result += ">"
+        return result
+
+    @cached_property
+    def traceback(self):
+        if sys.version_info >= (3, 10):
+            lines = traceback.format_exception(self.error)
+        else:
+            lines = traceback.format_exception(
+                None, self.error, self.error.__traceback__
+            )
+        return "".join(lines)
 
 
 class RowResult:

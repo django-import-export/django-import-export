@@ -2,13 +2,48 @@ from unittest.mock import patch
 
 from core.models import Book
 from django.core.exceptions import ValidationError
-from django.test.testcases import TestCase
+from django.test import SimpleTestCase
 from tablib import Dataset
 
 from import_export.results import Error, Result, RowResult
 
 
-class ResultTest(TestCase):
+class ErrorTest(SimpleTestCase):
+    def test_repr_no_details(self):
+        try:
+            1 / 0
+        except Exception as exc:
+            error = Error(exc)
+
+        self.assertEqual(repr(error), "<Error: ZeroDivisionError('division by zero')>")
+
+    def test_repr_all_details(self):
+        try:
+            1 / 0
+        except Exception as exc:
+            error = Error(exc, row=1, number=2)
+
+        self.assertEqual(
+            repr(error),
+            "<Error: ZeroDivisionError('division by zero') at row 1 at number 2>",
+        )
+
+    def test_traceback(self):
+        try:
+            1 / 0
+        except Exception as exc:
+            error = Error(exc)
+
+        self.assertTrue(
+            error.traceback.startswith("Traceback (most recent call last):\n")
+        )
+        self.assertIn(
+            "ZeroDivisionError: division by zero\n",
+            error.traceback,
+        )
+
+
+class ResultTest(SimpleTestCase):
     def setUp(self):
         self.result = Result()
         headers = ["id", "book_name"]

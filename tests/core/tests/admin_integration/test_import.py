@@ -603,6 +603,7 @@ class TestImportErrorMessageFormat(AdminTestMixin, TestCase):
         self.assertNotIn("import-error-display-message", str(response.content))
         self.assertNotIn("import-error-display-row", str(response.content))
         self.assertIn("import-error-display-traceback", str(response.content))
+        self.assertIn("Traceback (most recent call last)", str(response.content))
 
 
 class ConfirmImportEncodingTest(AdminTestMixin, TestCase):
