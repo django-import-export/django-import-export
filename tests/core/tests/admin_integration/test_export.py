@@ -38,7 +38,7 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
     def test_export(self):
         response = self.client.get(self.book_export_url)
         self.assertEqual(response.status_code, 200)
-        self.assertNotIn("Export 0 selected items.", str(response.content))
+        self.assertNotIn("Export 0 selected items.", response.content.decode())
         form = response.context["form"]
         self.assertEqual(2, len(form.fields["resource"].choices))
 
@@ -68,14 +68,14 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
         ):
             response = self.client.get(self.book_export_url)
             target_re = r"This exporter will export the following fields:"
-            self.assertRegex(str(response.content), target_re)
+            self.assertRegex(response.content.decode(), target_re)
 
     @override_settings(IMPORT_EXPORT_SKIP_ADMIN_ACTION_EXPORT_UI=True)
     def test_export_with_skip_export_form_from_action_setting(self):
         # setting should have no effect
         response = self.client.get(self.book_export_url)
         target_re = r"This exporter will export the following fields:"
-        self.assertRegex(str(response.content), target_re)
+        self.assertRegex(response.content.decode(), target_re)
 
     @mock.patch("core.admin.BookAdmin.get_export_resource_kwargs")
     def test_export_passes_export_resource_kwargs(
@@ -168,12 +168,13 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
     def test_get_export_form_single_resource(self):
         response = self.client.get("/admin/core/category/export/")
         self.assertEqual(response.status_code, 200)
-        self.assertNotIn("Export 0 selected items.", str(response.content))
+        content = response.content.decode()
+        self.assertNotIn("Export 0 selected items.", content)
         form = response.context["form"]
         self.assertEqual(0, len(form.fields["resource"].choices))
         self.assertTrue(form.fields["resource"].widget.attrs["readonly"])
-        self.assertIn("CategoryResource", str(response.content))
-        self.assertNotIn('select name="resource"', str(response.content))
+        self.assertIn("CategoryResource", content)
+        self.assertNotIn('select name="resource"', content)
 
     def test_get_export_FieldError(self):
         # issue 1723
@@ -188,7 +189,7 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
             response = self.client.post(self.book_export_url, data)
         self.assertEqual(response.status_code, 200)
         target_msg = "Some unknown error"
-        self.assertIn(target_msg, str(response.content))
+        self.assertIn(target_msg, response.content.decode())
 
     def test_export_second_resource(self):
         response = self.client.get(self.book_export_url)
@@ -244,8 +245,9 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
         form = response.context["form"]
         self.assertEqual(1, len(form.fields["format"].choices))
         self.assertTrue(form.fields["format"].widget.attrs["readonly"])
-        self.assertIn("xlsx", str(response.content))
-        self.assertNotIn('select name="format"', str(response.content))
+        content = response.content.decode()
+        self.assertIn("xlsx", content)
+        self.assertNotIn('select name="format"', content)
 
     @override_settings(EXPORT_FORMATS=[])
     def test_export_empty_export_formats(self):
@@ -496,12 +498,11 @@ class TestSelectableFieldsExportPage(AdminTestMixin, TestCase):
 
         self.assertEqual(response.status_code, 200)
         form_resources = response.context["form"].resources
-        response_content = str(response.content)
-
+        content = response.content.decode()
         for index, resource in enumerate(form_resources):
             resource_fields = resource().get_export_order()
             self.assertEqual(
-                response_content.count(f'resource-index="{index}"'),
+                content.count(f'resource-index="{index}"'),
                 len(resource_fields),
             )
 
@@ -544,7 +545,7 @@ class CustomColumnNameExportTest(AdminTestMixin, TestCase):
             "id,Email of the author,name,published_date\r\n"
             f"{book.id},,Moonraker,1955-04-05\r\n"
         )
-        self.assertEqual(str.encode(s), response.content)
+        self.assertEqual(s.encode(), response.content)
 
 
 class FilteredExportTest(AdminTestMixin, TestCase):
@@ -570,13 +571,13 @@ class FilteredExportTest(AdminTestMixin, TestCase):
         response = self.client.post(self.ebook_export_url, data)
         self.assertEqual(response.status_code, 200)
         s = "id,name\r\n" f"{b1.id},Moonraker\r\n"
-        self.assertEqual(str.encode(s), response.content)
+        self.assertEqual(s.encode(), response.content)
 
         data["author"] = a2.id
         response = self.client.post(self.ebook_export_url, data)
         self.assertEqual(response.status_code, 200)
         s = "id,name\r\n" f"{b2.id},Ulysses\r\n"
-        self.assertEqual(str.encode(s), response.content)
+        self.assertEqual(s.encode(), response.content)
 
 
 class SkipExportFormResourceConfigTest(AdminTestMixin, TestCase):

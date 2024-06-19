@@ -61,7 +61,7 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
         export_form = response.context["form"]
         data = export_form.initial
         self.assertEqual([self.cat1.id], data["export_items"])
-        self.assertIn("Export 1 selected item.", str(response.content))
+        self.assertIn("Export 1 selected item.", response.content.decode())
 
     def test_export_displays_ui_select_page_multiple_items(self):
         data = {
@@ -77,7 +77,7 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertEqual(
             sorted([self.cat1.id, self.cat2.id]), sorted(data["export_items"])
         )
-        self.assertIn("Export 2 selected items.", str(response.content))
+        self.assertIn("Export 2 selected items.", response.content.decode())
 
     def test_action_export_model_with_custom_PK(self):
         # issue 1800
@@ -93,7 +93,7 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
         export_form = response.context["form"]
         data = export_form.initial
         self.assertEqual([cat.pk], data["export_items"])
-        self.assertIn("Export 1 selected item.", str(response.content))
+        self.assertIn("Export 1 selected item.", response.content.decode())
 
     def test_export_post(self):
         # create a POST request with data selected from the 'action' export
@@ -146,7 +146,7 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
             self.assertIn(
                 "Select a valid choice. "
                 f"{self.cat1.id} is not one of the available choices.",
-                str(response.content),
+                response.content.decode(),
             )
 
     def test_get_export_data_raises_PermissionDenied_when_no_export_permission_assigned(
@@ -185,14 +185,11 @@ class TestExportButtonOnChangeForm(AdminTestMixin, TestCase):
 
     def test_export_button_on_change_form(self):
         response = self.client.get(self.change_url)
-        self.assertIn(
-            self.target_str,
-            str(response.content),
-        )
+        self.assertIn(self.target_str, response.content.decode())
         response = self.client.post(
             self.change_url, data={"_export-item": "Export", "name": self.cat1.name}
         )
-        self.assertIn("Export 1 selected item", str(response.content))
+        self.assertIn("Export 1 selected item", response.content.decode())
 
     def test_export_button_on_change_form_for_custom_pk(self):
         self.cat1 = UUIDCategory.objects.create(name="Cat 1")
@@ -206,14 +203,11 @@ class TestExportButtonOnChangeForm(AdminTestMixin, TestCase):
             args=[self.cat1.pk],
         )
         response = self.client.get(self.change_url)
-        self.assertIn(
-            self.target_str,
-            str(response.content),
-        )
+        self.assertIn(self.target_str, response.content.decode())
         response = self.client.post(
             self.change_url, data={"_export-item": "Export", "name": self.cat1.name}
         )
-        self.assertIn("Export 1 selected item", str(response.content))
+        self.assertIn("Export 1 selected item", response.content.decode())
 
     def test_save_button_on_change_form(self):
         # test default behavior is retained when saving an instance ChangeForm
@@ -221,7 +215,7 @@ class TestExportButtonOnChangeForm(AdminTestMixin, TestCase):
             self.change_url, data={"_save": "Save", "name": self.cat1.name}, follow=True
         )
         target_str = f"The category.*{self.cat1.name}.*was changed successfully."
-        self.assertRegex(str(response.content), target_str)
+        self.assertRegex(response.content.decode(), target_str)
 
     def test_export_button_on_change_form_disabled(self):
         class MockCategoryAdmin(CategoryAdmin):
@@ -236,12 +230,12 @@ class TestExportButtonOnChangeForm(AdminTestMixin, TestCase):
         response = category_admin.change_view(request, str(self.cat1.id))
         response.render()
 
-        self.assertIn(self.target_str, str(response.content))
+        self.assertIn(self.target_str, response.content.decode())
 
         category_admin.show_change_form_export = False
         response = category_admin.change_view(request, str(self.cat1.id))
         response.render()
-        self.assertNotIn(self.target_str, str(response.content))
+        self.assertNotIn(self.target_str, response.content.decode())
 
 
 class TestSkipExportFormFromAction(AdminTestMixin, TestCase):
@@ -327,7 +321,7 @@ class TestSkipExportFormFromChangeForm(AdminTestMixin, TestCase):
             self.change_url, data={"_export-item": "Export", "name": self.cat1.name}
         )
         target_re = r"This exporter will export the following fields:"
-        self.assertRegex(str(response.content), target_re)
+        self.assertRegex(response.content.decode(), target_re)
 
     def test_export_button_on_change_form_skip_export_form_enabled(self):
         # this property has no effect - skip_export_form_from_action
@@ -341,4 +335,4 @@ class TestSkipExportFormFromChangeForm(AdminTestMixin, TestCase):
                 self.change_url, data={"_export-item": "Export", "name": self.cat1.name}
             )
             target_re = r"This exporter will export the following fields:"
-            self.assertRegex(str(response.content), target_re)
+            self.assertRegex(response.content.decode(), target_re)
