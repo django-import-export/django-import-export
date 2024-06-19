@@ -89,9 +89,9 @@ class Resource(metaclass=DeclarativeMetaclass):
         self.fields = deepcopy(self.fields)
 
         # lists to hold model instances in memory when bulk operations are enabled
-        self.create_instances = list()
-        self.update_instances = list()
-        self.delete_instances = list()
+        self.create_instances = []
+        self.update_instances = []
+        self.delete_instances = []
 
     @classmethod
     def get_result_class(self):
@@ -578,9 +578,7 @@ class Resource(metaclass=DeclarativeMetaclass):
                 # have not been written to the 'instance' at this point
                 instance_values = list(field.clean(row))
                 original_values = (
-                    list()
-                    if original.pk is None
-                    else list(field.get_value(original).all())
+                    [] if original.pk is None else list(field.get_value(original).all())
                 )
                 if len(instance_values) != len(original_values):
                     return False
@@ -1123,7 +1121,7 @@ class Resource(metaclass=DeclarativeMetaclass):
         # get any defined fields
         defined_fields = order_fields + tuple(getattr(self._meta, "fields") or ())
 
-        order = list()
+        order = []
         [order.append(f) for f in defined_fields if f not in order]
         declared_fields = []
         for field_name, field in self.fields.items():
@@ -1145,9 +1143,9 @@ class Resource(metaclass=DeclarativeMetaclass):
         There are conditions, such as 'dynamic fields' where this does not apply.
         See issue 1834 for more information.
         """
-        import_id_fields = list()
-        missing_fields = list()
-        missing_headers = list()
+        import_id_fields = []
+        missing_fields = []
+        missing_headers = []
 
         if self.get_import_id_fields() == ["id"]:
             # this is the default case, so ok if not present

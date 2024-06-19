@@ -420,7 +420,7 @@ class TestExportEncoding(TestCase):
             return dataset
 
         def get_export_queryset(self, request):
-            return list()
+            return []
 
         def get_export_filename(self, request, queryset, file_format):
             return "f"
@@ -432,7 +432,7 @@ class TestExportEncoding(TestCase):
     def test_to_encoding_not_set_default_encoding_is_utf8(self):
         self.export_mixin = self.TestMixin(test_str="teststr")
         data = self.export_mixin.get_export_data(
-            self.file_format, self.mock_request, list()
+            self.file_format, self.mock_request, []
         )
         csv_dataset = tablib.import_set(data)
         self.assertEqual("teststr", csv_dataset.dict[0]["name"])
@@ -440,7 +440,7 @@ class TestExportEncoding(TestCase):
     def test_to_encoding_set(self):
         self.export_mixin = self.TestMixin(test_str="ハローワールド")
         data = self.export_mixin.get_export_data(
-            self.file_format, self.mock_request, list(), encoding="shift-jis"
+            self.file_format, self.mock_request, [], encoding="shift-jis"
         )
         encoding = chardet.detect(bytes(data))["encoding"]
         self.assertEqual("SHIFT_JIS", encoding)
@@ -451,7 +451,7 @@ class TestExportEncoding(TestCase):
             self.export_mixin.get_export_data(
                 self.file_format,
                 self.mock_request,
-                list(),
+                [],
                 encoding="bad-encoding",
             )
 
@@ -462,7 +462,7 @@ class TestExportEncoding(TestCase):
         data = self.export_mixin.get_export_data(
             self.file_format,
             self.mock_request,
-            list(),
+            [],
         )
         binary_dataset = tablib.import_set(data)
         self.assertEqual("teststr", binary_dataset.dict[0]["name"])
@@ -487,7 +487,7 @@ class TestExportEncoding(TestCase):
         with mock.patch(
             "import_export.admin.ExportMixin.get_export_data"
         ) as mock_get_export_data:
-            self.export_mixin.export_admin_action(self.mock_request, list())
+            self.export_mixin.export_admin_action(self.mock_request, [])
             encoding_kwarg = mock_get_export_data.call_args_list[0][1]["encoding"]
             self.assertEqual("utf-8", encoding_kwarg)
 

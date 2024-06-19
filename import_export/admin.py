@@ -432,7 +432,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
 
         import_formats = self.get_import_formats()
         import_form = self.create_import_form(request)
-        resources = list()
+        resources = []
         if request.POST and import_form.is_valid():
             input_format = import_formats[int(import_form.cleaned_data["format"])]()
             if not input_format.is_binary():
@@ -556,9 +556,9 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         """
         Create appropriate LogEntry instances for the result.
         """
-        rows = dict()
+        rows = {}
         for row in result:
-            rows.setdefault(row.import_type, list())
+            rows.setdefault(row.import_type, [])
             rows[row.import_type].append(row.instance)
 
         self._create_log_entries(request.user.pk, rows)

@@ -680,7 +680,7 @@ class JSONWidgetTest(TestCase, RowDeprecationTestMixin):
 
     def test_render_none(self):
         self.assertEqual(self.widget.render(None), None)
-        self.assertEqual(self.widget.render(dict()), None)
+        self.assertEqual(self.widget.render({}), None)
         self.assertEqual(self.widget.render({"value": None}), '{"value": null}')
 
 

@@ -50,7 +50,7 @@ class AdminTestMixin(object):
         )
         with open(filename, "rb") as f:
             if data is None:
-                data = dict()
+                data = {}
             data.update(
                 {
                     "format": str(input_format),

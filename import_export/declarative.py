@@ -78,7 +78,7 @@ class ModelDeclarativeMetaclass(DeclarativeMetaclass):
             # class.
             # if 'fields' property is defined, declared fields can only be included
             # if they appear in the 'fields' iterable.
-            declared_fields = dict()
+            declared_fields = {}
             for field_name, field in new_class.fields.items():
                 column_name = field.column_name
                 if (
