@@ -1119,7 +1119,7 @@ class Resource(metaclass=DeclarativeMetaclass):
         Return a list of field names, respecting any defined ordering.
         """
         # get any declared 'order' fields
-        order_fields = getattr(self._meta, order_field) or ()
+        order_fields = tuple(getattr(self._meta, order_field) or ())
         # get any defined fields
         defined_fields = order_fields + tuple(getattr(self._meta, "fields") or ())
 
