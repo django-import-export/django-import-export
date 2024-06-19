@@ -44,7 +44,7 @@ class AfterImportComparisonTest(TestCase):
 class ImportExportFieldOrderTest(TestCase):
     class BaseBookResource(resources.ModelResource):
         def __init__(self):
-            self.field_names = list()
+            self.field_names = []
 
         def get_queryset(self):
             return Book.objects.all().order_by("id")

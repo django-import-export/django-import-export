@@ -120,7 +120,7 @@ class SelectableFieldsExportForm(ExportForm):
         """
         self.resources = resources
         self.is_selectable_fields_form = True
-        self.resource_fields = {resource.__name__: list() for resource in resources}
+        self.resource_fields = {resource.__name__: [] for resource in resources}
 
         for index, resource in enumerate(resources):
             boolean_fields = self._create_boolean_fields(resource, index)
@@ -130,7 +130,7 @@ class SelectableFieldsExportForm(ExportForm):
         ordered_fields = [
             "resource",
             # flatten resource fields lists
-            *chain(*[fields for fields in self.resource_fields.values()]),
+            *chain(*self.resource_fields.values()),
         ]
         self.order_fields(ordered_fields)
 
@@ -262,9 +262,9 @@ class SelectableFieldsExportForm(ExportForm):
         """
         Validate if any field for resource was selected in form data
         """
-        resource_fields = [field for field in resource().get_export_order()]
+        resource_fields = list(resource().get_export_order())
 
-        if not any([v for k, v in self.cleaned_data.items() if k in resource_fields]):
+        if not any(v for k, v in self.cleaned_data.items() if k in resource_fields):
             raise forms.ValidationError(
                 _("""Select at least 1 field for "%(resource_name)s" to export"""),
                 code="invalid",
