@@ -10,7 +10,7 @@ dist/
 .tox/
 .idea/
 *.python-version
-.coverage
+.coverage*
 *.sw[po]
 .DS_Store
 
