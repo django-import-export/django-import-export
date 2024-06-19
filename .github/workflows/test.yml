@@ -17,7 +17,6 @@ jobs:
       IMPORT_EXPORT_POSTGRESQL_PASSWORD: somepass
       IMPORT_EXPORT_MYSQL_USER: root
       IMPORT_EXPORT_MYSQL_PASSWORD: root
-      COVERAGE: 1
     strategy:
       fail-fast: true
       matrix:

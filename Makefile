@@ -33,7 +33,7 @@ messages: ## generate locale file translations
 	cd import_export && django-admin makemessages -a && django-admin compilemessages && cd ..
 
 coverage: ## generates codecov report
-	coverage run tests/manage.py test core --settings=
+	coverage run tests/manage.py test core
 	coverage combine
 	coverage report
 
