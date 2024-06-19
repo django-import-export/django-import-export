@@ -107,3 +107,7 @@ if django.VERSION >= (4, 1):
     FORM_RENDERER = "django.forms.renderers.DjangoDivFormRenderer"
 if django.VERSION >= (5, 0):
     FORM_RENDERER = "django.forms.renderers.DjangoTemplates"
+
+PASSWORD_HASHERS = [
+    "django.contrib.auth.hashers.MD5PasswordHasher",
+]
