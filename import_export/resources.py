@@ -1,7 +1,6 @@
 import functools
 import inspect
 import logging
-import traceback
 from collections import OrderedDict
 from copy import deepcopy
 from html import escape
@@ -678,10 +677,7 @@ class Resource(metaclass=DeclarativeMetaclass):
     def handle_import_error(self, result, error, raise_errors=False):
         logger.debug(error, exc_info=error)
         if result:
-            tb_info = traceback.format_exc()
-            result.append_base_error(
-                self.get_error_result_class()(error, traceback=tb_info)
-            )
+            result.append_base_error(self.get_error_result_class()(error))
         if raise_errors:
             raise exceptions.ImportError(error)
 
@@ -783,11 +779,8 @@ class Resource(metaclass=DeclarativeMetaclass):
             # when only the original error is likely to be relevant
             if not isinstance(e, TransactionManagementError):
                 logger.debug(e, exc_info=e)
-            tb_info = traceback.format_exc()
             row_result.errors.append(
-                self.get_error_result_class()(
-                    e, traceback=tb_info, row=row, number=kwargs["row_number"]
-                )
+                self.get_error_result_class()(e, row=row, number=kwargs["row_number"])
             )
 
         return row_result
