@@ -10,6 +10,7 @@ Changelog
 
 - docs: clarify widget configuration (`1865 <https://github.com/django-import-export/django-import-export/pull/1865>`_)
 - Enable skip export confirm page (`1867 <https://github.com/django-import-export/django-import-export/pull/1867>`_)
+- Admin UI: display checkboxes before labels in export form (`1884 <https://github.com/django-import-export/django-import-export/pull/1884>`_)
 
 4.0.7 (2024-05-30)
 ------------------
@@ -1032,4 +1033,3 @@ Documentation
 -----
 
 * Refactor api
-
