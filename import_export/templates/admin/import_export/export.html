@@ -52,13 +52,19 @@
         {% endif %}
         {{ field.errors }}
 
-        {{ field.label_tag }}
+        {% if not field.field.is_selectable_field %}
+          {{ field.label_tag }}
+        {% endif %}
 
         {% if field.field.widget.attrs.readonly %}
           {{ field.field.value }}
           {{ field.as_hidden }}
           {% else %}
           {{ field }}
+        {% endif %}
+
+        {% if field.field.is_selectable_field %}
+          {{ field.label_tag }}
         {% endif %}
 
         {% if field.field.help_text %}

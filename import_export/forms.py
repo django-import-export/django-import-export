@@ -151,6 +151,7 @@ class SelectableFieldsExportForm(ExportForm):
             field_name = self.create_boolean_field_name(resource, field)
             boolean_field = forms.BooleanField(
                 label=self._get_field_label(resource, field),
+                label_suffix="",
                 initial=True,
                 required=False,
             )
