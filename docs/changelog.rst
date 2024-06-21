@@ -8,6 +8,12 @@ Changelog
 4.1.0 (unreleased)
 ------------------
 
+- Improve tox setup (`1879 <https://github.com/django-import-export/django-import-export/pull/1879>`_)
+- Speed up tests 10x (`1880 <https://github.com/django-import-export/django-import-export/pull/1880>`_)
+- Use literals to create lists and dicts (`1881 <https://github.com/django-import-export/django-import-export/pull/1881>`_)
+- Improve Error class (`1882 <https://github.com/django-import-export/django-import-export/pull/1882>`_)
+- Fix response content assertions (`1883 <https://github.com/django-import-export/django-import-export/pull/1883>`_)
+- Display checkbox before label in export form (`1884 <https://github.com/django-import-export/django-import-export/pull/1884>`_)
 - deprecated unused method: :meth:`~import_export.resources.Resource.get_fields` (`1885 <https://github.com/django-import-export/django-import-export/pull/1885>`_)
 
 4.0.9 (2024-06-18)
