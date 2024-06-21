@@ -23,16 +23,12 @@ class ModelResourceTransactionTest(TransactionTestCase):
         result = resource.import_data(dataset, dry_run=True, use_transactions=True)
 
         row_diff = result.rows[0].diff
-        fields = resource.get_fields()
-
-        id_field = resource.fields["id"]
-        id_diff = row_diff[fields.index(id_field)]
+        id_diff = row_diff[0]
         # id diff should exist because in rollbacked transaction
         # FooBook has been saved
         self.assertTrue(id_diff)
 
-        category_field = resource.fields["categories"]
-        categories_diff = row_diff[fields.index(category_field)]
+        categories_diff = row_diff[8]
         self.assertEqual(strip_tags(categories_diff), force_str(cat1.pk))
 
         # check that it is really rollbacked

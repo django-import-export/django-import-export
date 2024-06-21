@@ -42,7 +42,7 @@ class RelationshipFieldTest(TestCase):
         author = Author.objects.create(name="Author")
         self.book.author = author
         resource = B()
-        full_title = resource.export_field(resource.get_fields()[0], self.book)
+        full_title = resource.export_field(resource.fields["full_title"], self.book)
         self.assertEqual(
             full_title, "%s by %s" % (self.book.name, self.book.author.name)
         )
@@ -64,7 +64,7 @@ class RelationshipFieldTest(TestCase):
         self.book.author = author
         resource = B()
 
-        full_title = resource.export_field(resource.get_fields()[0], self.book)
+        full_title = resource.export_field(resource.fields["full_title"], self.book)
         self.assertEqual(full_title, f"{self.book.name} by {self.book.author.name}")
 
     def test_invalid_relation_field_name(self):
