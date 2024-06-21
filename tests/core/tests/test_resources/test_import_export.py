@@ -62,7 +62,7 @@ class ImportExportFieldOrderTest(TestCase):
     class OrderedBookResource(BaseBookResource):
         class Meta:
             fields = ("price", "id", "name")
-            import_order = ("price", "name", "id")
+            import_order = ["price", "name", "id"]
             export_order = ("price", "name", "id")
             model = Book
 
@@ -81,6 +81,12 @@ class ImportExportFieldOrderTest(TestCase):
     class FieldsAsListBookResource(BaseBookResource):
         class Meta:
             fields = ["id", "price", "name"]
+            model = Book
+
+    class MixedIterableBookResource(BaseBookResource):
+        class Meta:
+            fields = ("price", "id", "name")
+            import_order = ["price", "name", "id"]
             model = Book
 
     class DeclaredModelFieldBookResource(BaseBookResource):
@@ -118,6 +124,12 @@ class ImportExportFieldOrderTest(TestCase):
         self.dataset = tablib.Dataset(headers=["id", "name", "price"])
         row = [self.pk, "Some book", "19.99"]
         self.dataset.append(row)
+
+    def test_mixed_iterable(self):
+        # 1878
+        self.resource = ImportExportFieldOrderTest.MixedIterableBookResource()
+        self.resource.import_data(self.dataset)
+        self.assertEqual(["price", "name", "id"], self.resource.field_names)
 
     def test_defined_import_order(self):
         self.resource = ImportExportFieldOrderTest.OrderedBookResource()
