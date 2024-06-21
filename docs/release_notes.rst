@@ -2,8 +2,14 @@
 Release Notes
 =============
 
-v4
-==
+v4.1
+====
+
+The ``Resource.get_fields()`` method is no longer called within the package and has been deprecated.
+If you have overridden this method then it should be removed.
+
+v4.0
+====
 
 v4 introduces significant updates to import-export.  We have taken the opportunity to introduce
 breaking changes in order to fix some long-standing issues.

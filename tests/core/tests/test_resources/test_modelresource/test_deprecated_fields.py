@@ -62,3 +62,12 @@ class DeprecatedMethodTest(TestCase):
             warnings.filterwarnings("ignore", category=DeprecationWarning)
             resource.after_import_instance(self.obj, True, row_number=1)
         self.assertEqual(1, resource.kwargs["row_number"])
+
+    def test_get_fields_deprecated(self):
+        resource = BookResource()
+        with self.assertWarnsRegex(
+            DeprecationWarning,
+            r"The 'get_fields\(\)' method is deprecated "
+            "and will be removed in a future release",
+        ):
+            resource.get_fields()

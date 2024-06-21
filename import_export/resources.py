@@ -140,10 +140,12 @@ class Resource(metaclass=DeclarativeMetaclass):
             return self._meta.chunk_size
 
     def get_fields(self, **kwargs):
-        """
-        Returns list of fields (unordered).
-        """
-        return list(self.fields.values())
+        warn(
+            "The 'get_fields()' method is deprecated and will be removed "
+            "in a future release",
+            DeprecationWarning,
+            stacklevel=2,
+        )
 
     def get_field_name(self, field):
         """
