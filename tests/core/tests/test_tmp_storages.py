@@ -1,9 +1,7 @@
 import io
 import os
-from unittest import skipUnless
 from unittest.mock import mock_open, patch
 
-import django
 from django.core.cache import cache
 from django.core.files.storage import FileSystemStorage, default_storage
 from django.test import TestCase
@@ -136,21 +134,7 @@ class CustomizedStorage(object):
         self.delete_count += 1
 
 
-@skipUnless(django.VERSION <= (4, 2), "Django 4.2")
-class CustomizedMediaStorageTestDjango42(TestCase):
-    @override_settings(IMPORT_EXPORT_DEFAULT_FILE_STORAGE=CustomizedStorage)
-    def test_MediaStorage_uses_custom_storage_implementation(self):
-        tmp_storage = TestMediaStorage()
-        tmp_storage.save(b"a")
-        self.assertEqual(1, tmp_storage._storage.save_count)
-        tmp_storage.read()
-        self.assertEqual(1, tmp_storage._storage.open_count)
-        tmp_storage.remove()
-        self.assertEqual(1, tmp_storage._storage.delete_count)
-
-
-@skipUnless(django.VERSION >= (5, 0), "Django 5.0")
-class CustomizedMediaStorageTestDjango50(TestCase):
+class CustomizedMediaStorageTestDjango(TestCase):
     @override_settings(
         STORAGES={
             "import_export": {
