@@ -2,8 +2,6 @@ import os
 import tempfile
 from uuid import uuid4
 
-import django
-from django.conf import settings
 from django.core.cache import cache
 from django.core.files.base import ContentFile
 
@@ -73,11 +71,7 @@ class MediaStorage(BaseStorage):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        if django.VERSION[:2] > (4, 2):
-            self._configure_storage()
-        else:
-            self._configure_storage_legacy()
-
+        self._configure_storage()
         self.MEDIA_FOLDER = kwargs.get("MEDIA_FOLDER", "django-import-export")
 
         # issue 1589 - Ensure that for MediaStorage, we read in binary mode
@@ -91,12 +85,6 @@ class MediaStorage(BaseStorage):
         self._storage = (
             sh["import_export"] if "import_export" in sh.backends else sh["default"]
         )
-
-    def _configure_storage_legacy(self):
-        from django.core.files.storage import default_storage
-
-        storage_class = getattr(settings, "IMPORT_EXPORT_DEFAULT_FILE_STORAGE", None)
-        self._storage = storage_class() if storage_class else default_storage
 
     def save(self, data):
         if not self.name:

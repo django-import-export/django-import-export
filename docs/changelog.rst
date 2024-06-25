@@ -5,6 +5,11 @@ Changelog
 
     Version 4 introduces breaking changes.  Please refer to :doc:`release notes<release_notes>`.
 
+4.0.10 (2024-06-25)
+------------------
+
+- remove django version check for custom storages (`1889 <https://github.com/django-import-export/django-import-export/pull/1889>`_)
+
 4.0.9 (2024-06-18)
 ------------------
 
