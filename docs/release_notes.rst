@@ -3,13 +3,13 @@ Release Notes
 =============
 
 v4.1
-====
+----
 
 The ``Resource.get_fields()`` method is no longer called within the package and has been deprecated.
 If you have overridden this method then it should be removed.
 
 v4.0
-====
+----
 
 v4 introduces significant updates to import-export.  We have taken the opportunity to introduce
 breaking changes in order to fix some long-standing issues.
@@ -20,7 +20,7 @@ thoroughly before deploying v4 to production.
 This guide describes the major changes and how to upgrade.
 
 Installation
-============
+^^^^^^^^^^^^
 
 We have modified installation methods to allow for optional dependencies.
 This means that you have to explicitly declare dependencies when installing import-export.
@@ -32,10 +32,10 @@ installation)::
   django-import-export[all]
 
 Functional changes
-==================
+^^^^^^^^^^^^^^^^^^
 
 CharWidget
-----------
+""""""""""
 
 Constructor arguments are dynamically set during instantiation based on the properties of the underlying Django
 db CharField.  If the db field has `blank <https://docs.djangoproject.com/en/stable/ref/models/fields/#blank>`_
@@ -46,7 +46,7 @@ See :class:`~import_export.widgets.CharWidget`.
 The ``coerce_to_string`` option introduced in v3 is no longer used in this method.
 
 Validation error messages
--------------------------
+"""""""""""""""""""""""""
 
 The following widgets have had validation error messages updated:
 
@@ -56,7 +56,7 @@ The following widgets have had validation error messages updated:
 * :class:`~import_export.widgets.DurationWidget`
 
 Export format
--------------
+"""""""""""""
 
 We have standardized the export output which is returned from
 :meth:`~import_export.widgets.Widget.render`.
@@ -72,12 +72,12 @@ set the ``coerce_to_string`` param to ``False``.  See :ref:`documentation<modify
 :doc:`Widget API documentation<api_widgets>`.
 
 Export field order
-------------------
+""""""""""""""""""
 
 The ordering rules for exported fields has been standardized. See :ref:`documentation<field_ordering>`.
 
 Error output
-------------
+""""""""""""
 
 If the ``raise_errors`` parameter of :meth:`~import_export.resources.Resource.import_data` is ``True``, then an instance
 of :class:`~import_export.exceptions.ImportError` is raised.  This exception wraps the underlying exception.
@@ -85,7 +85,7 @@ of :class:`~import_export.exceptions.ImportError` is raised.  This exception wra
 See `this PR <https://github.com/django-import-export/django-import-export/issues/1729>`_.
 
 Check ``import_id_fields``
---------------------------
+""""""""""""""""""""""""""
 
 Prior to v4 we had numerous issues where users were confused when imports failed due to declared ``import_id_fields``
 not being present in the dataset.  We added functionality in v4 to check for this and to raise a clearer error message.
@@ -94,7 +94,7 @@ In some use-cases, it is a requirement that ``import_id_fields`` are not in the 
 If this affects your implementation, start with the documentation :ref:`here<import_id_fields_error_on_import>`.
 
 Deprecations
-============
+^^^^^^^^^^^^
 
 * The ``obj`` param passed to :meth:`~import_export.widgets.Widget.render` is deprecated.
   The :meth:`~import_export.widgets.Widget.render` method should not need to have a reference to
@@ -114,10 +114,10 @@ Deprecations
         resource_classes = [BookResource]
 
 Admin UI
-========
+^^^^^^^^
 
 LogEntry
---------
+""""""""
 
 ``LogEntry`` instances are created during import for creates, updates and deletes.
 The functionality to store ``LogEntry`` has changed in v4 in order to address a deprecation in Django 5.
@@ -127,7 +127,7 @@ For this to work correctly, deleted instances are now always copied and retained
 This only occurs for delete operations initiated from the Admin UI.
 
 Export action
--------------
+"""""""""""""
 
 The export action has been updated to include the export workflow.  Prior to v4, it was possible to select export
 selected items using an export admin action.  However this meant that the export workflow was skipped and it was not
@@ -135,7 +135,7 @@ possible to select the export resource.  This has been fixed in v4 so that expor
 exporting via the Admin UI action.  For more information see :ref:`export documentation<export_via_admin_action>`.
 
 Export selected fields
-----------------------
+""""""""""""""""""""""
 
 The :ref:`export 'confirm' page<export_confirm>` now includes selectable fields for export.
 If you wish to revert to the previous (v3) version of the export confirm screen, add a
@@ -145,13 +145,13 @@ If you wish to revert to the previous (v3) version of the export confirm screen,
     export_form_class = ExportForm
 
 Success message
----------------
+"""""""""""""""
 
 The success message shown on successful import has been updated to include the number of 'deleted' and 'skipped' rows.
 See `this PR <https://github.com/django-import-export/django-import-export/issues/1691>`_.
 
 Import error messages
----------------------
+"""""""""""""""""""""
 
 The default error message for import errors has been modified to simplify the format.
 Error messages now contain the error message only by default.  The row and traceback are not presented.
@@ -166,7 +166,7 @@ Admin class definition.  For example::
 See `this issue <https://github.com/django-import-export/django-import-export/issues/1724>`_.
 
 API changes
-===========
+^^^^^^^^^^^
 
 v4 of import-export contains a number of changes to the API.  These changes are summarized in the table below.
 Refer to
@@ -185,12 +185,12 @@ This has been done to resolve inconsistency issues where the parameters differed
 easier extensibility.
 
 :class:`import_export.resources.Resource`
------------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. _renamed_methods:
 
 Renamed methods
-^^^^^^^^^^^^^^^
+"""""""""""""""
 
 .. list-table::
    :header-rows: 1
@@ -211,7 +211,7 @@ Renamed methods
         * ``row_number`` now in ``kwargs``
 
 Parameter changes
-^^^^^^^^^^^^^^^^^
+"""""""""""""""""
 
 This section describes methods in which the parameters have changed.
 
@@ -326,10 +326,10 @@ This section describes methods in which the parameters have changed.
 
 
 :class:`import_export.mixins.BaseImportExportMixin`
----------------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Parameter changes
-^^^^^^^^^^^^^^^^^
+"""""""""""""""""
 
 .. list-table::
    :header-rows: 1
@@ -347,10 +347,10 @@ Parameter changes
      -  * unused ``*args`` list removed
 
 :class:`import_export.mixins.BaseImportMixin`
----------------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Parameter changes
-^^^^^^^^^^^^^^^^^
+"""""""""""""""""
 
 .. list-table::
    :header-rows: 1
@@ -372,10 +372,10 @@ Parameter changes
      -  * Added ``request`` param
 
 :class:`import_export.mixins.BaseExportMixin`
----------------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Parameter changes
-^^^^^^^^^^^^^^^^^
+"""""""""""""""""
 
 .. list-table::
    :header-rows: 1
@@ -402,10 +402,10 @@ Parameter changes
 
 
 :class:`import_export.fields.Field`
------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Parameter changes
-^^^^^^^^^^^^^^^^^
+"""""""""""""""""
 
 .. list-table::
    :header-rows: 1
@@ -433,7 +433,7 @@ Parameter changes
 
 
 :class:`import_export.forms.ImportExportFormBase`
--------------------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 If you have subclassed one of the :mod:`~import_export.forms` then you may need to
 modify the parameters passed to constructors.
@@ -445,7 +445,7 @@ The ``file_format`` field of :class:`~import_export.forms.ExportForm` has been r
 :attr:`~import_export.forms.ImportExportFormBase.format`.
 
 Parameter changes
-^^^^^^^^^^^^^^^^^
+"""""""""""""""""
 
 .. list-table::
    :header-rows: 1

@@ -9,6 +9,9 @@ Ensure that ``CHANGELOG.rst`` is up-to-date with the correct version number and 
 To create a new published release, follow the instructions [here](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository).
 Ensure you create the new tag to correspond with the release as required.
 
+Always build the release from `main` because ReadTheDocs builds documentation from `main`,
+so if another branch is used, then the documentation will be incomplete.
+
 1. Go to the [Releases](https://github.com/django-import-export/django-import-export/releases) page
 2. Click 'Draft a new release'
 3. Choose or create a new tag

@@ -5,7 +5,7 @@ Changelog
 
     Version 4 introduces breaking changes.  Please refer to :doc:`release notes<release_notes>`.
 
-4.1.0 (unreleased)
+4.1.0 (2024-06-25)
 ------------------
 
 - Improve tox setup (`1879 <https://github.com/django-import-export/django-import-export/pull/1879>`_)
@@ -13,8 +13,13 @@ Changelog
 - Use literals to create lists and dicts (`1881 <https://github.com/django-import-export/django-import-export/pull/1881>`_)
 - Improve Error class (`1882 <https://github.com/django-import-export/django-import-export/pull/1882>`_)
 - Fix response content assertions (`1883 <https://github.com/django-import-export/django-import-export/pull/1883>`_)
-- Display checkbox before label in export form (`1884 <https://github.com/django-import-export/django-import-export/pull/1884>`_)
+- Admin UI: display checkboxes before labels in export form (`1884 <https://github.com/django-import-export/django-import-export/pull/1884>`_)
 - deprecated unused method: :meth:`~import_export.resources.Resource.get_fields` (`1885 <https://github.com/django-import-export/django-import-export/pull/1885>`_)
+
+4.0.10 (2024-06-25)
+------------------
+
+- remove django version check for custom storages (`1889 <https://github.com/django-import-export/django-import-export/pull/1889>`_)
 
 4.0.9 (2024-06-18)
 ------------------
@@ -28,7 +33,6 @@ Changelog
 
 - docs: clarify widget configuration (`1865 <https://github.com/django-import-export/django-import-export/pull/1865>`_)
 - Enable skip export confirm page (`1867 <https://github.com/django-import-export/django-import-export/pull/1867>`_)
-- Admin UI: display checkboxes before labels in export form (`1884 <https://github.com/django-import-export/django-import-export/pull/1884>`_)
 
 4.0.7 (2024-05-30)
 ------------------
