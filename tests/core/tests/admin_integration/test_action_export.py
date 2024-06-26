@@ -149,6 +149,63 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
                 response.content.decode(),
             )
 
+    def _perform_export_action_calls_modeladmin_get_queryset_test(self, data):
+        # Issue #1864
+        # ModelAdmin's get_queryset should be used in the ModelAdmin mixins
+        with mock.patch(
+            "core.admin.CategoryAdmin.get_queryset"
+        ) as mock_modeladmin_get_queryset, mock.patch(
+            "import_export.admin.ExportMixin.get_data_for_export"
+        ) as mock_get_data_for_export:
+            mock_queryset = mock.MagicMock(name="MockQuerySet")
+            mock_queryset.filter.return_value = mock_queryset
+            mock_queryset.order_by.return_value = mock_queryset
+
+            mock_modeladmin_get_queryset.return_value = mock_queryset
+
+            self.client.post(self.category_export_url, data)
+
+            mock_modeladmin_get_queryset.assert_called()
+            mock_get_data_for_export.assert_called()
+
+            args, kwargs = mock_get_data_for_export.call_args
+            mock_get_data_for_export.assert_called_with(
+                args[0], mock_queryset, **kwargs
+            )
+
+    def test_export_action_calls_modeladmin_get_queryset(self):
+        # Issue #1864
+        # Test with specific export items
+
+        data = {
+            "format": "0",
+            "export_items": [str(self.cat1.id)],
+            **self.resource_fields_payload,
+        }
+        self._perform_export_action_calls_modeladmin_get_queryset_test(data)
+
+    def test_export_action_calls_modeladmin_get_queryset_all_items(self):
+        # Issue #1864
+        # Test without specific export items
+
+        data = {
+            "format": "0",
+            **self.resource_fields_payload,
+        }
+        self._perform_export_action_calls_modeladmin_get_queryset_test(data)
+
+    @override_settings(IMPORT_EXPORT_SKIP_ADMIN_EXPORT_UI=True)
+    def test_export_action_calls_modeladmin_get_queryset_skip_export_ui(self):
+        # Issue #1864
+        # Test with specific export items and skip UI
+
+        data = {
+            "format": "0",
+            "export_items": [str(self.cat1.id)],
+            **self.resource_fields_payload,
+        }
+        self._perform_export_action_calls_modeladmin_get_queryset_test(data)
+
     def test_get_export_data_raises_PermissionDenied_when_no_export_permission_assigned(
         self,
     ):
