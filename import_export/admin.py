@@ -630,7 +630,10 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
 
     def get_export_queryset(self, request):
         """
-        Returns export queryset.
+        Returns export queryset. The queryset is obtained by calling
+        ModelAdmin
+        `get_queryset()
+        <https://docs.djangoproject.com/en/dev/ref/contrib/admin/#django.contrib.admin.ModelAdmin.get_queryset>`_.
 
         Default implementation respects applied search and filters.
         """
