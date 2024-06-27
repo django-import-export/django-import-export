@@ -3,7 +3,18 @@ Changelog
 
 .. warning::
 
-    Version 4 introduces breaking changes.  Please refer to :doc:`release notes<release_notes>`.
+    Version 5 introduces breaking changes.  Please refer to :doc:`release notes<release_notes>`.
+
+5.0.0 (unreleased)
+------------------
+
+- Removed the deprecated :meth:`~import_export.admin.ExportMixin.get_valid_export_item_pks` method in favour of :meth:`~import_export.admin.ExportMixin.get_queryset`
+
+4.2.0 (unreleased)
+------------------
+
+- Consistent queryset creation in ModelAdmin export mixin (`1890 <https://github.com/django-import-export/django-import-export/pull/1890>`_)
+- Deprecated :meth:`~import_export.admin.ExportMixin.get_valid_export_item_pks` in favour of :meth:`~import_export.admin.ExportMixin.get_queryset` (`1890 <https://github.com/django-import-export/django-import-export/pull/1890>`_)
 
 4.1.0 (2024-06-25)
 ------------------
