@@ -11,7 +11,7 @@ This should have no impact on existing implementations.
 
 This change also made :meth:`~import_export.admin.ExportMixin.get_valid_export_item_pks` obsolete, as the
 ModelAdmin's :meth:`~import_export.admin.ExportMixin.get_queryset` or 
-:meth:`~import_export.admin.ExportMixin.get_export_queryset` can be used insted. The
+:meth:`~import_export.admin.ExportMixin.get_export_queryset` can be used instead. The
 :meth:`~import_export.admin.ExportMixin.get_valid_export_item_pks` method is now deprecated.
 
 See `PR 1890 <https://github.com/django-import-export/django-import-export/issues/1890>`_.
