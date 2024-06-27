@@ -9,6 +9,7 @@ Changelog
 ------------------
 
 - Consistent queryset creation in ModelAdmin export mixin (`1890 <https://github.com/django-import-export/django-import-export/pull/1890>`_)
+- Deprecated :meth:`~import_export.admin.ExportMixin.get_valid_export_item_pks` in favour of :meth:`~import_export.admin.ExportMixin.get_queryset` (`1890 <https://github.com/django-import-export/django-import-export/pull/1890>`_)
 
 4.1.0 (2024-06-25)
 ------------------

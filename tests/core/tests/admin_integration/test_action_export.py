@@ -149,6 +149,25 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
                 response.content.decode(),
             )
 
+    def test_export_admin_action_with_restricted_pks_deprecated(self):
+        data = {
+            "format": "0",
+            "export_items": [str(self.cat1.id)],
+            **self.resource_fields_payload,
+        }
+        with mock.patch(
+            "core.admin.CategoryAdmin.get_valid_export_item_pks"
+        ) as mock_valid_pks:
+            mock_valid_pks.return_value = [999]
+            with self.assertWarnsRegex(
+                DeprecationWarning,
+                r"The 'get_valid_export_item_pks\(\)' method is deprecated and will be "
+                "removed in a future release. Overwrite the ModelAdmin's get_queryset "
+                "method to filter items instead. If you want to filter only the "
+                "exported items, overwrite the get_export_queryset method.",
+            ):
+                self.client.post(self.category_export_url, data)
+
     def _perform_export_action_calls_modeladmin_get_queryset_test(self, data):
         # Issue #1864
         # ModelAdmin's get_queryset should be used in the ModelAdmin mixins

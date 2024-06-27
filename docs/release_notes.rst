@@ -9,7 +9,12 @@ When exporting via :ref:`admin action<export_via_admin_action>`, the queryset is
 :meth:`~import_export.admin.ExportMixin.get_queryset` instead of the Model's default queryset.
 This should have no impact on existing implementations.
 
-See `PR 1890<https://github.com/django-import-export/django-import-export/issues/1890>`_.
+This change also made :meth:`~import_export.admin.ExportMixin.get_valid_export_item_pks` obsolete, as the
+ModelAdmin's :meth:`~import_export.admin.ExportMixin.get_queryset` or 
+:meth:`~import_export.admin.ExportMixin.get_export_queryset` can be used insted. The
+:meth:`~import_export.admin.ExportMixin.get_valid_export_item_pks` method is now deprecated.
+
+See `PR 1890 <https://github.com/django-import-export/django-import-export/issues/1890>`_.
 
 v4.1
 ----

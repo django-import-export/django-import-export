@@ -732,6 +732,21 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
         if request.POST and "export_items" in request.POST:
             # this field is instantiated if the export is POSTed from the
             # 'action' drop down
+
+            if (
+                type(self).get_valid_export_item_pks
+                != ExportMixin.get_valid_export_item_pks
+            ):
+                warnings.warn(
+                    "The 'get_valid_export_item_pks()' method is deprecated and will "
+                    "be removed in a future release. Overwrite the ModelAdmin's "
+                    "get_queryset method to filter items instead. If you want to "
+                    "filter only the exported items, overwrite the "
+                    "get_export_queryset method.",
+                    DeprecationWarning,
+                    stacklevel=2,
+                )
+
             form.fields["export_items"] = MultipleChoiceField(
                 widget=MultipleHiddenInput,
                 required=False,
@@ -759,6 +774,9 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
 
     def get_valid_export_item_pks(self, request):
         """
+        DEPRECATED: This method is deprecated and will be removed in the future.
+        Overwrite get_queryset() or get_export_queryset() instead.
+
         Returns a list of valid pks for export.
         This is used to validate which objects can be exported when exports are
         triggered from the Admin UI 'action' dropdown.
