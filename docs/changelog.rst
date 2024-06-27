@@ -5,6 +5,11 @@ Changelog
 
     Version 4 introduces breaking changes.  Please refer to :doc:`release notes<release_notes>`.
 
+4.2.0 (unreleased)
+------------------
+
+- Consistent queryset creation in ModelAdmin export mixin (`1890 <https://github.com/django-import-export/django-import-export/pull/1890>`_)
+
 4.1.0 (2024-06-25)
 ------------------
 
