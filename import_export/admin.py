@@ -736,16 +736,15 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
             # this field is instantiated if the export is POSTed from the
             # 'action' drop down
 
+            # Only issue the deprecation warning for users who have actually
+            # overriden the get_valid_export_item_pks method.
             if (
                 type(self).get_valid_export_item_pks
                 != ExportMixin.get_valid_export_item_pks
             ):
                 warnings.warn(
                     "The 'get_valid_export_item_pks()' method is deprecated and will "
-                    "be removed in a future release. Overwrite the ModelAdmin's "
-                    "get_queryset method to filter items instead. If you want to "
-                    "filter only the exported items, overwrite the "
-                    "get_export_queryset method.",
+                    "be removed in a future release",
                     DeprecationWarning,
                     stacklevel=2,
                 )

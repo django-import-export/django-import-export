@@ -162,9 +162,7 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
             with self.assertWarnsRegex(
                 DeprecationWarning,
                 r"The 'get_valid_export_item_pks\(\)' method is deprecated and will be "
-                "removed in a future release. Overwrite the ModelAdmin's get_queryset "
-                "method to filter items instead. If you want to filter only the "
-                "exported items, overwrite the get_export_queryset method.",
+                "removed in a future release",
             ):
                 self.client.post(self.category_export_url, data)
 
