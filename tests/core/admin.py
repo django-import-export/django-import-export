@@ -39,7 +39,8 @@ class BookAdmin(ImportExportModelAdmin):
 
 
 class CategoryAdmin(ExportActionModelAdmin):
-    pass
+    def get_queryset(self, request):
+        return Category.objects.all()
 
 
 class UUIDBookAdmin(ImportExportModelAdmin):

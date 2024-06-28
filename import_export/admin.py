@@ -630,7 +630,10 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
 
     def get_export_queryset(self, request):
         """
-        Returns export queryset.
+        Returns export queryset. The queryset is obtained by calling
+        ModelAdmin
+        `get_queryset()
+        <https://docs.djangoproject.com/en/dev/ref/contrib/admin/#django.contrib.admin.ModelAdmin.get_queryset>`_.
 
         Default implementation respects applied search and filters.
         """
@@ -720,8 +723,9 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
 
         form_type = self.get_export_form_class()
         formats = self.get_export_formats()
+        queryset = self.get_export_queryset(request)
         if self.is_skip_export_form_enabled():
-            return self._do_file_export(formats[0](), request, None)
+            return self._do_file_export(formats[0](), request, queryset)
 
         form = form_type(
             formats,
@@ -731,6 +735,20 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
         if request.POST and "export_items" in request.POST:
             # this field is instantiated if the export is POSTed from the
             # 'action' drop down
+
+            # Only issue the deprecation warning for users who have actually
+            # overriden the get_valid_export_item_pks method.
+            if (
+                type(self).get_valid_export_item_pks
+                != ExportMixin.get_valid_export_item_pks
+            ):
+                warnings.warn(
+                    "The 'get_valid_export_item_pks()' method is deprecated and will "
+                    "be removed in a future release",
+                    DeprecationWarning,
+                    stacklevel=2,
+                )
+
             form.fields["export_items"] = MultipleChoiceField(
                 widget=MultipleHiddenInput,
                 required=False,
@@ -743,11 +761,7 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
                 # this request has arisen from an Admin UI action
                 # export item pks are stored in form data
                 # so generate the queryset from the stored pks
-                queryset = self.model.objects.filter(
-                    pk__in=form.cleaned_data["export_items"]
-                )
-            else:
-                queryset = self.get_export_queryset(request)
+                queryset = queryset.filter(pk__in=form.cleaned_data["export_items"])
 
             try:
                 return self._do_file_export(
@@ -762,11 +776,15 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
 
     def get_valid_export_item_pks(self, request):
         """
+        DEPRECATED: This method is deprecated and will be removed in the future.
+        Overwrite get_queryset() or get_export_queryset() instead.
+
         Returns a list of valid pks for export.
         This is used to validate which objects can be exported when exports are
         triggered from the Admin UI 'action' dropdown.
         This can be overridden to filter returned pks for performance and/or security
         reasons.
+
         :param request: The request object.
         :returns: a list of valid pks (by default is all pks in table).
         """
