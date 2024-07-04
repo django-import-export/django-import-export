@@ -62,7 +62,7 @@ class UUIDBookResource(ModelResource):
 class EBookResource(ModelResource):
     published = Field(attribute="published", column_name="published_date")
     author_email = Field(attribute="author_email", column_name="Email of the author")
-    author_name = Field(attribute="author__name", column_name="Author Name")
+    auteur_name = Field(attribute="author__name", column_name="Author Name")
 
     def __init__(self, **kwargs):
         super().__init__()
@@ -73,7 +73,7 @@ class EBookResource(ModelResource):
 
     class Meta:
         model = EBook
-        fields = ("id", "author_email", "name", "published", "author_name")
+        fields = ("id", "author_email", "name", "published", "auteur_name")
 
 
 class CustomBookAdmin(ExportActionModelAdmin, ImportExportModelAdmin):

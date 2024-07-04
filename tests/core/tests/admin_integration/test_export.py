@@ -512,20 +512,26 @@ class CustomColumnNameExportTest(AdminTestMixin, TestCase):
 
     def setUp(self):
         super().setUp()
-        EBookResource._meta.fields = ("id", "author_email", "name", "published_date")
+        self.author = Author.objects.create(id=11, name="Ian Fleming")
+        self.book = Book.objects.create(
+            name="Moonraker", author=self.author, published=date(1955, 4, 5)
+        )
+        EBookResource._meta.fields = (
+            "id",
+            "author_email",
+            "name",
+            "published_date",
+            "auteur_name",
+        )
 
     def tearDown(self):
         super().tearDown()
         EBookResource._meta.fields = ("id", "author_email", "name", "published")
 
     def test_export_with_custom_field(self):
-        a = Author.objects.create(id=11, name="Ian Fleming")
-        book = Book.objects.create(
-            name="Moonraker", author=a, published=date(1955, 4, 5)
-        )
         data = {
             "format": "0",
-            "author": a.id,
+            "author": self.author.id,
             "resource": "",
             "ebookresource_id": True,
             "ebookresource_author_email": True,
@@ -543,9 +549,28 @@ class CustomColumnNameExportTest(AdminTestMixin, TestCase):
         )
         s = (
             "id,Email of the author,name,published_date\r\n"
-            f"{book.id},,Moonraker,1955-04-05\r\n"
+            f"{self.book.id},,Moonraker,1955-04-05\r\n"
         )
-        self.assertEqual(s.encode(), response.content)
+        self.assertEqual(s, response.content.decode())
+
+    def test_export_with_custom_name(self):
+        # issue 1893
+        data = {
+            "format": "0",
+            "author": self.author.id,
+            "resource": "",
+            "ebookresource_id": True,
+            "ebookresource_author_email": True,
+            "ebookresource_name": True,
+            "ebookresource_published_date": True,
+            "ebookresource_auteur_name": True,
+        }
+        response = self.client.post(self.ebook_export_url, data)
+        s = (
+            "id,Email of the author,name,published_date,Author Name\r\n"
+            f"{self.book.id},,Moonraker,1955-04-05,Ian Fleming\r\n"
+        )
+        self.assertEqual(s, response.content.decode())
 
 
 class FilteredExportTest(AdminTestMixin, TestCase):
