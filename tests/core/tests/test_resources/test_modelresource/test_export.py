@@ -10,6 +10,8 @@ from import_export.resources import ModelResource
 
 
 class ExportFunctionalityTest(TestCase):
+    fixtures = ["author"]
+
     def setUp(self):
         self.resource = BookResource()
         self.book = Book.objects.create(name="Some book")
@@ -97,3 +99,21 @@ class ExportFunctionalityTest(TestCase):
         self.book.save()
         dataset = resource.export()
         self.assertEqual("", dataset.dict[0]["published"])
+
+    def test_export_declared_field_custom_name(self):
+        # test that declared fields with a name which differs from attribute and
+        # column_name is exported
+        # see 1893
+        class EBookResource(ModelResource):
+            auteur_name = Field(attribute="author__name", column_name="Author Name")
+
+            class Meta:
+                model = EBook
+                fields = ("id", "auteur_name")
+
+        resource = EBookResource()
+
+        self.book.author = Author.objects.get(pk=5)
+        self.book.save()
+        dataset = resource.export()
+        self.assertEqual("Ian Fleming", dataset.dict[0]["Author Name"])

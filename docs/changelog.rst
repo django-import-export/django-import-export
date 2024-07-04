@@ -5,6 +5,11 @@ Changelog
 
     Version 4 introduces breaking changes.  Please refer to :doc:`release notes<release_notes>`.
 
+4.1.1 (unreleased)
+------------------
+
+- Fix export for fields with custom declared name (`1894 <https://github.com/django-import-export/django-import-export/pull/1894>`_)
+
 4.1.0 (2024-06-25)
 ------------------
 
