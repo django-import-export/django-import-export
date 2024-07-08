@@ -5,6 +5,11 @@ Changelog
 
     Version 4 introduces breaking changes.  Please refer to :doc:`release notes<release_notes>`.
 
+4.1.1 (unreleased)
+------------------
+
+- Restore return value for deprecated method :meth:`~import_export.resources.Resource.get_fields` (`1897 <https://github.com/django-import-export/django-import-export/pull/1897>`_).
+
 4.1.0 (2024-06-25)
 ------------------
 

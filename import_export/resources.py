@@ -146,6 +146,7 @@ class Resource(metaclass=DeclarativeMetaclass):
             DeprecationWarning,
             stacklevel=2,
         )
+        return list(self.fields.values())
 
     def get_field_name(self, field):
         """
