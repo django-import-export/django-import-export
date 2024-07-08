@@ -280,13 +280,16 @@ class ExportViewMixin(BaseExportMixin):
 
 
 class ExportViewFormMixin(ExportViewMixin, FormView):
-    def form_valid(self, form):
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
         warn(
             "ExportViewFormMixin is deprecated and will be removed "
-            "in a future release",
+            "in a future release.",
             DeprecationWarning,
             stacklevel=2,
         )
+
+    def form_valid(self, form):
         formats = self.get_export_formats()
         file_format = formats[int(form.cleaned_data["format"])]()
         if hasattr(self, "get_filterset"):
