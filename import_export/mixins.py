@@ -54,16 +54,20 @@ class BaseImportExportMixin:
                 "Only one of 'resource_class' and 'resource_classes' can be set"
             )
         if hasattr(self, "get_resource_class"):
+            cls = self.__class__
             warnings.warn(
                 "The 'get_resource_class()' method has been deprecated. "
-                "Please implement the new 'get_resource_classes()' method",
+                "Please implement the new 'get_resource_classes()' method in "
+                f"{cls.__module__}.{cls.__qualname__}",
                 DeprecationWarning,
             )
             return [self.get_resource_class()]
         if self.resource_class:
+            cls = self.__class__
             warnings.warn(
                 "The 'resource_class' field has been deprecated. "
-                "Please implement the new 'resource_classes' field",
+                "Please implement the new 'resource_classes' field in "
+                f"{cls.__module__}.{cls.__qualname__}",
                 DeprecationWarning,
             )
         if not self.resource_classes and not self.resource_class:
@@ -111,9 +115,11 @@ class BaseImportMixin(BaseImportExportMixin):
         Returns ResourceClass subscriptable (list, tuple, ...) to use for import.
         """
         if hasattr(self, "get_import_resource_class"):
+            cls = self.__class__
             warnings.warn(
                 "The 'get_import_resource_class()' method has been deprecated. "
-                "Please implement the new 'get_import_resource_classes()' method",
+                "Please implement the new 'get_import_resource_classes()' method in"
+                f"{cls.__module__}.{cls.__qualname__}",
                 DeprecationWarning,
             )
             return [self.get_import_resource_class()]
@@ -179,9 +185,11 @@ class BaseExportMixin(BaseImportExportMixin):
         :returns: The Resource classes.
         """
         if hasattr(self, "get_export_resource_class"):
+            cls = self.__class__
             warnings.warn(
                 "The 'get_export_resource_class()' method has been deprecated. "
-                "Please implement the new 'get_export_resource_classes()' method",
+                "Please implement the new 'get_export_resource_classes()' method "
+                f"in {cls.__module__}.{cls.__qualname__}",
                 DeprecationWarning,
             )
             return [self.get_export_resource_class()]
