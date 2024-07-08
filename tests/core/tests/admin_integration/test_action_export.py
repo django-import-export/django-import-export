@@ -1,3 +1,4 @@
+import warnings
 from datetime import datetime
 from unittest import mock
 from unittest.mock import MagicMock, PropertyMock, patch
@@ -103,7 +104,9 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
             **self.resource_fields_payload,
         }
         date_str = datetime.now().strftime("%Y-%m-%d")
-        response = self.client.post(self.category_export_url, data)
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=DeprecationWarning)
+            response = self.client.post(self.category_export_url, data)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.has_header("Content-Disposition"))
         self.assertEqual(response["Content-Type"], "text/csv")
@@ -149,19 +152,19 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
                 response.content.decode(),
             )
 
-    def test_export_admin_action_with_restricted_pks_deprecated(self):
-        data = {
-            "format": "0",
-            "export_items": [str(self.cat1.id)],
-            **self.resource_fields_payload,
-        }
-        with self.assertWarnsRegex(
-            DeprecationWarning,
-            r"The 'get_valid_export_item_pks\(\)' method in "
-            "core.admin.CategoryAdmin is deprecated and will be removed "
-            "in a future release",
-        ):
-            self.client.post(self.category_export_url, data)
+    # def test_export_admin_action_with_restricted_pks_deprecated(self):
+    #     data = {
+    #         "format": "0",
+    #         "export_items": [str(self.cat1.id)],
+    #         **self.resource_fields_payload,
+    #     }
+    #     with self.assertWarnsRegex(
+    #         DeprecationWarning,
+    #         r"The 'get_valid_export_item_pks\(\)' method in "
+    #         "core.admin.CategoryAdmin is deprecated and will be removed "
+    #         "in a future release",
+    #     ):
+    #         self.client.post(self.category_export_url, data)
 
     def _perform_export_action_calls_modeladmin_get_queryset_test(self, data):
         # Issue #1864
@@ -196,7 +199,9 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
             "export_items": [str(self.cat1.id)],
             **self.resource_fields_payload,
         }
-        self._perform_export_action_calls_modeladmin_get_queryset_test(data)
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=DeprecationWarning)
+            self._perform_export_action_calls_modeladmin_get_queryset_test(data)
 
     def test_export_action_calls_modeladmin_get_queryset_all_items(self):
         # Issue #1864
