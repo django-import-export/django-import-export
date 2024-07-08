@@ -155,16 +155,13 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
             "export_items": [str(self.cat1.id)],
             **self.resource_fields_payload,
         }
-        with mock.patch(
-            "core.admin.CategoryAdmin.get_valid_export_item_pks"
-        ) as mock_valid_pks:
-            mock_valid_pks.return_value = [999]
-            with self.assertWarnsRegex(
-                DeprecationWarning,
-                r"The 'get_valid_export_item_pks\(\)' method is deprecated and will be "
-                "removed in a future release",
-            ):
-                self.client.post(self.category_export_url, data)
+        with self.assertWarnsRegex(
+            DeprecationWarning,
+            r"The 'get_valid_export_item_pks\(\)' method in "
+            "core.admin.CategoryAdmin is deprecated and will be removed "
+            "in a future release",
+        ):
+            self.client.post(self.category_export_url, data)
 
     def _perform_export_action_calls_modeladmin_get_queryset_test(self, data):
         # Issue #1864

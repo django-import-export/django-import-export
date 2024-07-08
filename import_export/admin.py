@@ -735,20 +735,6 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
         if request.POST and "export_items" in request.POST:
             # this field is instantiated if the export is POSTed from the
             # 'action' drop down
-
-            # Only issue the deprecation warning for users who have actually
-            # overriden the get_valid_export_item_pks method.
-            if (
-                type(self).get_valid_export_item_pks
-                != ExportMixin.get_valid_export_item_pks
-            ):
-                warnings.warn(
-                    "The 'get_valid_export_item_pks()' method is deprecated and will "
-                    "be removed in a future release",
-                    DeprecationWarning,
-                    stacklevel=2,
-                )
-
             form.fields["export_items"] = MultipleChoiceField(
                 widget=MultipleHiddenInput,
                 required=False,
@@ -788,6 +774,14 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
         :param request: The request object.
         :returns: a list of valid pks (by default is all pks in table).
         """
+        cls = self.__class__
+        warnings.warn(
+            "The 'get_valid_export_item_pks()' method in "
+            f"{cls.__module__}.{cls.__qualname__} "
+            "is deprecated and will "
+            "be removed in a future release",
+            DeprecationWarning,
+        )
         return self.model.objects.all().values_list("pk", flat=True)
 
     def changelist_view(self, request, extra_context=None):
