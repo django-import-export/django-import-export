@@ -68,9 +68,8 @@ class Field:
         Displays the module, class and name of the field.
         """
         path = "%s.%s" % (self.__class__.__module__, self.__class__.__name__)
-        column_name = getattr(self, "column_name", None)
-        if column_name is not None:
-            return "<%s: %s>" % (path, column_name)
+        if self.column_name is not None:
+            return "<%s: %s>" % (path, self.column_name)
         return "<%s>" % path
 
     def clean(self, row, **kwargs):

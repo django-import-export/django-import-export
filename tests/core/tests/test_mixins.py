@@ -197,25 +197,28 @@ class MixinModelAdminTest(TestCase):
         """Test that the mixin throws error if user didn't
         migrate to resource_classes"""
         admin = self.BaseModelResourceClassTest()
-        with self.assertWarnsRegex(
-            DeprecationWarning,
-            r"^The 'get_export_resource_class\(\)' method has been deprecated. "
-            r"Please implement the new 'get_export_resource_classes\(\)' method$",
-        ):
+        msg = (
+            "The 'get_export_resource_class()' method has been deprecated. "
+            "Please implement the new 'get_export_resource_classes()' method in "
+            "core.tests.test_mixins.MixinModelAdminTest.BaseModelResourceClassTest"
+        )
+        with self.assertWarns(DeprecationWarning, msg=msg):
             admin.get_export_resource_classes(self.request)
 
-        with self.assertWarnsRegex(
-            DeprecationWarning,
-            r"^The 'get_import_resource_class\(\)' method has been deprecated. "
-            r"Please implement the new 'get_import_resource_classes\(\)' method$",
-        ):
+        msg = (
+            "The 'get_import_resource_class()' method has been deprecated. "
+            "Please implement the new 'get_import_resource_classes()' method in "
+            "core.tests.test_mixins.MixinModelAdminTest.BaseModelResourceClassTest"
+        )
+        with self.assertWarns(DeprecationWarning, msg=msg):
             admin.get_import_resource_classes(self.request)
 
-        with self.assertWarnsRegex(
-            DeprecationWarning,
-            r"^The 'resource_class' field has been deprecated. "
-            r"Please implement the new 'resource_classes' field$",
-        ):
+        msg = (
+            "The 'resource_class' field has been deprecated. "
+            "Please implement the new 'resource_classes' field in "
+            "core.tests.test_mixins.MixinModelAdminTest.BaseModelResourceClassTest"
+        )
+        with self.assertWarns(DeprecationWarning, msg=msg):
             self.assertEqual(
                 admin.get_resource_classes(self.request), [resources.Resource]
             )
@@ -231,11 +234,13 @@ class MixinModelAdminTest(TestCase):
         """Test that the mixin throws error if user
         didn't migrate to resource_classes"""
         admin = self.BaseModelGetExportResourceClassTest()
-        with self.assertWarnsRegex(
-            DeprecationWarning,
-            r"^The 'get_resource_class\(\)' method has been deprecated. "
-            r"Please implement the new 'get_resource_classes\(\)' method$",
-        ):
+        msg = (
+            "The 'get_resource_class()' method has been deprecated. "
+            "Please implement the new 'get_resource_classes()' method in "
+            "core.tests.test_mixins.MixinModelAdminTest."
+            "BaseModelGetExportResourceClassTest"
+        )
+        with self.assertWarns(DeprecationWarning, msg=msg):
             admin.get_resource_classes(self.request)
 
     class BaseModelAdminFaultyResourceClassesTest(mixins.BaseExportMixin):
@@ -306,19 +311,16 @@ class MixinModelAdminTest(TestCase):
         still return list of resources.
         """
         admin = self.BaseModelResourceClassOldTest()
-        with self.assertWarnsRegex(
-            DeprecationWarning,
-            r"^The 'get_resource_class\(\)' method has been deprecated. "
-            r"Please implement the new 'get_resource_classes\(\)' method$",
-        ):
+        msg = (
+            "The 'get_resource_class()' method has been deprecated. "
+            "Please implement the new 'get_resource_classes()' method in "
+            "core.tests.test_mixins.MixinModelAdminTest.BaseModelResourceClassOldTest"
+        )
+        with self.assertWarns(DeprecationWarning, msg=msg):
             self.assertEqual(
                 admin.get_export_resource_classes(self.request), [FooResource]
             )
-        with self.assertWarnsRegex(
-            DeprecationWarning,
-            r"^The 'get_resource_class\(\)' method has been deprecated. "
-            r"Please implement the new 'get_resource_classes\(\)' method$",
-        ):
+        with self.assertWarns(DeprecationWarning, msg=msg):
             self.assertEqual(
                 admin.get_import_resource_classes(self.request), [FooResource]
             )
