@@ -46,22 +46,23 @@ class ExportViewMixinTest(TestCase):
         """
         content_type = "text/csv"
 
-        class TestMixin(mixins.ExportViewFormMixin):
-            def __init__(self):
-                self.model = MagicMock()
-                self.request = MagicMock(spec=HttpRequest)
-                self.model.__name__ = "mockModel"
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=DeprecationWarning)
 
-            def get_queryset(self):
-                return MagicMock()
+            class TestMixin(mixins.ExportViewFormMixin):
+                def __init__(self):
+                    self.model = MagicMock()
+                    self.request = MagicMock(spec=HttpRequest)
+                    self.model.__name__ = "mockModel"
+
+                def get_queryset(self):
+                    return MagicMock()
 
         m = TestMixin()
         with mock.patch("import_export.mixins.HttpResponse") as mock_http_response:
             # on first instantiation, raise TypeError, on second, return mock
             mock_http_response.side_effect = [TypeError(), mock_http_response]
-            with warnings.catch_warnings():
-                warnings.filterwarnings("ignore", category=DeprecationWarning)
-                m.form_valid(self.form)
+            m.form_valid(self.form)
             self.assertEqual(
                 content_type, mock_http_response.call_args_list[0][1]["content_type"]
             )
@@ -75,27 +76,28 @@ class ExportViewMixinTest(TestCase):
         method, then this is called as required.
         """
 
-        class TestMixin(mixins.ExportViewFormMixin):
-            mock_get_filterset_call_count = 0
-            mock_get_filterset_class_call_count = 0
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=DeprecationWarning)
 
-            def __init__(self):
-                self.model = MagicMock()
-                self.request = MagicMock(spec=HttpRequest)
-                self.model.__name__ = "mockModel"
+            class TestMixin(mixins.ExportViewFormMixin):
+                mock_get_filterset_call_count = 0
+                mock_get_filterset_class_call_count = 0
 
-            def get_filterset(self, filterset_class):
-                self.mock_get_filterset_call_count += 1
-                return MagicMock()
+                def __init__(self):
+                    self.model = MagicMock()
+                    self.request = MagicMock(spec=HttpRequest)
+                    self.model.__name__ = "mockModel"
 
-            def get_filterset_class(self):
-                self.mock_get_filterset_class_call_count += 1
-                return MagicMock()
+                def get_filterset(self, filterset_class):
+                    self.mock_get_filterset_call_count += 1
+                    return MagicMock()
+
+                def get_filterset_class(self):
+                    self.mock_get_filterset_class_call_count += 1
+                    return MagicMock()
 
         m = TestMixin()
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", category=DeprecationWarning)
-            res = m.form_valid(self.form)
+        res = m.form_valid(self.form)
         self.assertEqual(200, res.status_code)
         self.assertEqual(1, m.mock_get_filterset_call_count)
         self.assertEqual(1, m.mock_get_filterset_class_call_count)

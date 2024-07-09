@@ -5,6 +5,11 @@ Changelog
 
     Version 4 introduces breaking changes.  Please refer to :doc:`release notes<release_notes>`.
 
+4.1.2 (Unreleased)
+------------------
+
+- Improve deprecation warning for ``ExportViewFormMixin`` to report at point of class definition (`1900 <https://github.com/django-import-export/django-import-export/pull/1900>`_).
+
 4.1.1 (2024-07-08)
 ------------------
 
