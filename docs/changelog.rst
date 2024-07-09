@@ -5,18 +5,24 @@ Changelog
 
     Version 4 introduces breaking changes.  Please refer to :doc:`release notes<release_notes>`.
 
+
 4.2.0 (unreleased)
 ------------------
 
 - Consistent queryset creation in ModelAdmin export mixin (`1890 <https://github.com/django-import-export/django-import-export/pull/1890>`_)
 - Deprecated :meth:`~import_export.admin.ExportMixin.get_valid_export_item_pks` in favour of :meth:`~import_export.admin.ExportMixin.get_queryset` (`1890 <https://github.com/django-import-export/django-import-export/pull/1890>`_)
 
+4.1.2 (Unreleased)
+------------------
+
+- Improve deprecation warning for ``ExportViewFormMixin`` to report at point of class definition (`1900 <https://github.com/django-import-export/django-import-export/pull/1900>`_)
+
 4.1.1 (2024-07-08)
 ------------------
 
-- Restore return value for deprecated method :meth:`~import_export.resources.Resource.get_fields` (`1897 <https://github.com/django-import-export/django-import-export/pull/1897>`_).
-- Remove use of ``getattr()`` in ``Field.__repr__()``  (`1898 <https://github.com/django-import-export/django-import-export/pull/1898>`_).
-- Add class path to deprecated method warnings  (`1899 <https://github.com/django-import-export/django-import-export/pull/1899>`_).
+- Restore return value for deprecated method :meth:`~import_export.resources.Resource.get_fields` (`1897 <https://github.com/django-import-export/django-import-export/pull/1897>`_)
+- Remove use of ``getattr()`` in ``Field.__repr__()``  (`1898 <https://github.com/django-import-export/django-import-export/pull/1898>`_)
+- Add class path to deprecated method warnings  (`1899 <https://github.com/django-import-export/django-import-export/pull/1899>`_)
 
 4.1.0 (2024-06-25)
 ------------------
