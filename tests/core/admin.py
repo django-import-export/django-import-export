@@ -5,6 +5,7 @@ from import_export.admin import (
     ImportExportModelAdmin,
     ImportMixin,
 )
+from import_export.fields import Field
 from import_export.resources import ModelResource
 
 from .forms import CustomConfirmImportForm, CustomExportForm, CustomImportForm
@@ -64,6 +65,10 @@ class AuthorAdmin(ImportMixin, admin.ModelAdmin):
 
 
 class EBookResource(ModelResource):
+    published = Field(attribute="published", column_name="published_date")
+    author_email = Field(attribute="author_email", column_name="Email of the author")
+    auteur_name = Field(attribute="author__name", column_name="Author Name")
+
     def __init__(self, **kwargs):
         super().__init__()
         self.author_id = kwargs.get("author_id")
@@ -73,6 +78,7 @@ class EBookResource(ModelResource):
 
     class Meta:
         model = EBook
+        fields = ("id", "author_email", "name", "published", "auteur_name")
 
 
 class CustomBookAdmin(ImportExportModelAdmin):

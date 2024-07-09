@@ -1,6 +1,6 @@
 import os.path
 import warnings
-from datetime import datetime
+from datetime import date, datetime
 from io import BytesIO
 from unittest import mock
 from unittest.mock import MagicMock, patch
@@ -13,6 +13,7 @@ from core.admin import (
     BookAdmin,
     BookResource,
     CustomBookAdmin,
+    EBookResource,
     ImportMixin,
 )
 from core.models import Author, Book, Category, EBook, Parent
@@ -1623,3 +1624,71 @@ class TestImportSkipConfirm(AdminTestMixin, TransactionTestCase):
             follow=True,
             str_in_response="Import finished, with 1 new and 0 updated books.",
         )
+
+
+class CustomColumnNameExportTest(AdminTestMixin, TestCase):
+    """Test export ok when column name is defined in fields list (issue 1828)."""
+
+    ebook_export_url = "/admin/core/ebook/export/"
+
+    def setUp(self):
+        super().setUp()
+        self.author = Author.objects.create(id=11, name="Ian Fleming")
+        self.book = Book.objects.create(
+            name="Moonraker", author=self.author, published=date(1955, 4, 5)
+        )
+        EBookResource._meta.fields = (
+            "id",
+            "author_email",
+            "name",
+            "published_date",
+            "auteur_name",
+        )
+
+    def tearDown(self):
+        super().tearDown()
+        EBookResource._meta.fields = ("id", "author_email", "name", "published")
+
+    def test_export_with_custom_field(self):
+        data = {
+            "format": "0",
+            "author": self.author.id,
+            "resource": "",
+            "ebookresource_id": True,
+            "ebookresource_author_email": True,
+            "ebookresource_name": True,
+            "ebookresource_published_date": True,
+        }
+        date_str = datetime.now().strftime("%Y-%m-%d")
+        response = self.client.post(self.ebook_export_url, data)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.has_header("Content-Disposition"))
+        self.assertEqual(response["Content-Type"], "text/csv")
+        self.assertEqual(
+            response["Content-Disposition"],
+            'attachment; filename="EBook-{}.csv"'.format(date_str),
+        )
+        s = (
+            "id,Email of the author,name,published_date\r\n"
+            f"{self.book.id},,Moonraker,1955-04-05\r\n"
+        )
+        self.assertEqual(s, response.content.decode())
+
+    def test_export_with_custom_name(self):
+        # issue 1893
+        data = {
+            "format": "0",
+            "author": self.author.id,
+            "resource": "",
+            "ebookresource_id": True,
+            "ebookresource_author_email": True,
+            "ebookresource_name": True,
+            "ebookresource_published_date": True,
+            "ebookresource_auteur_name": True,
+        }
+        response = self.client.post(self.ebook_export_url, data)
+        s = (
+            "id,Email of the author,name,published_date,Author Name\r\n"
+            f"{self.book.id},,Moonraker,1955-04-05,Ian Fleming\r\n"
+        )
+        self.assertEqual(s, response.content.decode())
