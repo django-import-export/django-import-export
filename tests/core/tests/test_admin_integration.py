@@ -933,10 +933,8 @@ class FilteredExportAdminIntegrationTest(AdminTestMixin, TestCase):
             'attachment; filename="EBook-{}.csv"'.format(date_str),
         )
         self.assertEqual(
-            b"id,name,author,author_email,imported,published,"
-            b"published_time,price,added,categories\r\n"
-            b"5,The Man with the Golden Gun,5,ian@example.com,"
-            b"0,1965-04-01,21:00:00,5.00,,2\r\n",
+            b"published_date,Email of the author,Author Name,id,name\r\n"
+            b"1965-04-01,ian@example.com,Ian Fleming,5,The Man with the Golden Gun\r\n",
             response.content,
         )
 
@@ -1651,13 +1649,8 @@ class CustomColumnNameExportTest(AdminTestMixin, TestCase):
 
     def test_export_with_custom_field(self):
         data = {
-            "format": "0",
+            "file_format": "0",
             "author": self.author.id,
-            "resource": "",
-            "ebookresource_id": True,
-            "ebookresource_author_email": True,
-            "ebookresource_name": True,
-            "ebookresource_published_date": True,
         }
         date_str = datetime.now().strftime("%Y-%m-%d")
         response = self.client.post(self.ebook_export_url, data)
@@ -1669,26 +1662,20 @@ class CustomColumnNameExportTest(AdminTestMixin, TestCase):
             'attachment; filename="EBook-{}.csv"'.format(date_str),
         )
         s = (
-            "id,Email of the author,name,published_date\r\n"
-            f"{self.book.id},,Moonraker,1955-04-05\r\n"
+            "published_date,Email of the author,Author Name,id,name\r\n"
+            f"1955-04-05,,Ian Fleming,{self.book.id},Moonraker\r\n"
         )
         self.assertEqual(s, response.content.decode())
 
     def test_export_with_custom_name(self):
         # issue 1893
         data = {
-            "format": "0",
+            "file_format": "0",
             "author": self.author.id,
-            "resource": "",
-            "ebookresource_id": True,
-            "ebookresource_author_email": True,
-            "ebookresource_name": True,
-            "ebookresource_published_date": True,
-            "ebookresource_auteur_name": True,
         }
         response = self.client.post(self.ebook_export_url, data)
         s = (
-            "id,Email of the author,name,published_date,Author Name\r\n"
-            f"{self.book.id},,Moonraker,1955-04-05,Ian Fleming\r\n"
+            "published_date,Email of the author,Author Name,id,name\r\n"
+            f"1955-04-05,,Ian Fleming,{self.book.id},Moonraker\r\n"
         )
         self.assertEqual(s, response.content.decode())

@@ -109,7 +109,7 @@ class CustomBookAdmin(ImportExportModelAdmin):
         # this is overridden to demonstrate that custom form fields can be used
         # to override the export query.
         # The dict returned here will be passed as kwargs to EBookResource
-        export_form = kwargs["export_form"]
+        export_form = kwargs.get("export_form")
         if export_form:
             return dict(author_id=export_form.cleaned_data["author"].id)
         return {}
