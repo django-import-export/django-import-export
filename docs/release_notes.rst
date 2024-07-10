@@ -2,6 +2,13 @@
 Release Notes
 =============
 
+v4.2
+----
+
+Removed internal method ``__get_enabled_export_fields()`` in favour of passing the selected fields list as a
+new parameter to :meth:`~import_export.resources.Resource.export_resource` and
+:meth:`~import_export.resources.Resource.get_export_headers`.
+
 v4.1
 ----
 
