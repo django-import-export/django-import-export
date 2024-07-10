@@ -1048,7 +1048,6 @@ class Resource(metaclass=DeclarativeMetaclass):
         for field_name in export_order:
             if field_name in fields_:
                 export_fields.append(self._select_field(field_name))
-                continue
         return export_fields
 
     def export_resource(self, instance, selected_fields=None):
@@ -1106,13 +1105,17 @@ class Resource(metaclass=DeclarativeMetaclass):
 
     def _select_field(self, target_field_name):
         # select field from fields based on either declared name or column name
+        if target_field_name in self.fields:
+            return self.fields[target_field_name]
+
         for field_name, field in self.fields.items():
-            if (
-                target_field_name == field_name
-                or target_field_name == field.column_name
-            ):
+            if target_field_name == field.column_name:
                 return field
-        return None
+        # it should have been possible to identify the declared field
+        # but raise an error if not
+        raise ValueError(
+            _(f"cannot identify field for export with name '{target_field_name}'")
+        )
 
     def _get_ordered_field_names(self, order_field):
         """
