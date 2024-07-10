@@ -19,7 +19,6 @@ Changelog
 4.1.0 (2024-06-25)
 ------------------
 
-- Improve tox setup (`1879 <https://github.com/django-import-export/django-import-export/pull/1879>`_)
 - Improve Error class (`1882 <https://github.com/django-import-export/django-import-export/pull/1882>`_)
 - Fix response content assertions (`1883 <https://github.com/django-import-export/django-import-export/pull/1883>`_)
 - Admin UI: display checkboxes before labels in export form (`1884 <https://github.com/django-import-export/django-import-export/pull/1884>`_)
