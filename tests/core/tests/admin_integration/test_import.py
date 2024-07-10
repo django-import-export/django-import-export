@@ -966,6 +966,7 @@ class ConfirmImportPreviewOrderTest(AdminTestMixin, TestCase):
             r"<th>Email of the author</th>[\\n\s]+"
             r"<th>name</th>[\\n\s]+"
             r"<th>published_date</th>[\\n\s]+"
+            r"<th>Author Name</th>[\\n\s]+"
             r"</tr>[\\n\s]+"
             "</thead>"
         )
@@ -977,6 +978,7 @@ class ConfirmImportPreviewOrderTest(AdminTestMixin, TestCase):
             r'<td><ins style="background:#e6ffe6;">1</ins></td>[\\n\s]+'
             r'<td><ins style="background:#e6ffe6;">test@example.com</ins></td>[\\n\s]+'
             r'<td><ins style="background:#e6ffe6;">Some book</ins></td>[\\n\s]+'
+            r"<td></td>[\\n\s]+"
             r"<td></td>[\\n\s]+"
             "</tr>"
         )
@@ -1013,6 +1015,7 @@ class CustomColumnNameImportTest(AdminTestMixin, TestCase):
             r"<th>Email of the author</th>[\\n\s]+"
             r"<th>name</th>[\\n\s]+"
             r"<th>published_date</th>[\\n\s]+"
+            r"<th>Author Name</th>[\\n\s]+"
             r"</tr>[\\n\s]+"
             "</thead>"
         )
@@ -1024,6 +1027,7 @@ class CustomColumnNameImportTest(AdminTestMixin, TestCase):
             r'<td><ins style="background:#e6ffe6;">1</ins></td>[\\n\s]+'
             r'<td><ins style="background:#e6ffe6;">test@example.com</ins></td>[\\n\s]+'
             r'<td><ins style="background:#e6ffe6;">Some book</ins></td>[\\n\s]+'
+            r"<td></td>[\\n\s]+"
             r"<td></td>[\\n\s]+"
             "</tr>"
         )
@@ -1042,7 +1046,8 @@ class DefaultFieldsImportOrderTest(AdminTestMixin, TestCase):
         # test display rendered in correct order
         target_re = (
             r"This importer will import the following fields:[\\n\s]+"
-            r"<code>id, Email of the author, name, published_date</code>[\\n\s]+"
+            r"<code>id, Email of the author, name, published_date, Author Name</code>"
+            r"[\\n\s]+"
         )
         self.assertRegex(response.content.decode(), target_re)
 
@@ -1067,6 +1072,7 @@ class DeclaredImportOrderTest(AdminTestMixin, TestCase):
         # test display rendered in correct order
         target_re = (
             r"This importer will import the following fields:[\\n\s]+"
-            r"<code>id, name, published_date, Email of the author</code>[\\n\s]+"
+            r"<code>id, name, published_date, Email of the author, Author Name</code>"
+            r"[\\n\s]+"
         )
         self.assertRegex(response.content.decode(), target_re)
