@@ -720,8 +720,9 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
 
         form_type = self.get_export_form_class()
         formats = self.get_export_formats()
+        queryset = self.get_export_queryset(request)
         if self.is_skip_export_form_enabled():
-            return self._do_file_export(formats[0](), request, None)
+            return self._do_file_export(formats[0](), request, queryset)
 
         form = form_type(
             formats,
@@ -734,7 +735,7 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
             form.fields["export_items"] = MultipleChoiceField(
                 widget=MultipleHiddenInput,
                 required=False,
-                choices=[(pk, pk) for pk in self.get_valid_export_item_pks(request)],
+                choices=[(pk, pk) for pk in queryset.values_list("pk", flat=True)],
             )
         if form.is_valid():
             file_format = formats[int(form.cleaned_data["format"])]()
@@ -743,11 +744,7 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
                 # this request has arisen from an Admin UI action
                 # export item pks are stored in form data
                 # so generate the queryset from the stored pks
-                queryset = self.model.objects.filter(
-                    pk__in=form.cleaned_data["export_items"]
-                )
-            else:
-                queryset = self.get_export_queryset(request)
+                queryset = queryset.filter(pk__in=form.cleaned_data["export_items"])
 
             try:
                 return self._do_file_export(
@@ -759,18 +756,6 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
         context = self.init_request_context_data(request, form)
         request.current_app = self.admin_site.name
         return TemplateResponse(request, [self.export_template_name], context=context)
-
-    def get_valid_export_item_pks(self, request):
-        """
-        Returns a list of valid pks for export.
-        This is used to validate which objects can be exported when exports are
-        triggered from the Admin UI 'action' dropdown.
-        This can be overridden to filter returned pks for performance and/or security
-        reasons.
-        :param request: The request object.
-        :returns: a list of valid pks (by default is all pks in table).
-        """
-        return self.model.objects.all().values_list("pk", flat=True)
 
     def changelist_view(self, request, extra_context=None):
         if extra_context is None:
