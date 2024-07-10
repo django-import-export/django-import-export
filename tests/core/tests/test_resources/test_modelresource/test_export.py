@@ -119,14 +119,6 @@ class ExportFunctionalityTest(TestCase):
         self.assertEqual("Ian Fleming", dataset.dict[0]["Author Name"])
 
     def test_select_field_raises_ValueError(self):
-        class EBookResource(ModelResource):
-            published = Field(column_name="published_date")
-
-            class Meta:
-                model = EBook
-                fields = ("id", "published_date")
-
-        resource = EBookResource()
         r = "cannot identify field for export with name 'unknown'"
         with self.assertRaisesRegex(ValueError, r):
-            resource._select_field("unknown")
+            self.resource._select_field("unknown")
