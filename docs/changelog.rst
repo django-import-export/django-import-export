@@ -9,21 +9,17 @@ Changelog
 ------------------
 
 - Improve deprecation warning for ``ExportViewFormMixin`` to report at point of class definition (`1900 <https://github.com/django-import-export/django-import-export/pull/1900>`_).
-- Fix export for fields with custom declared name (`1894 <https://github.com/django-import-export/django-import-export/pull/1894>`_)
+- Fix export for fields with custom declared name (`1903 <https://github.com/django-import-export/django-import-export/pull/1903>`_)
 
 4.1.1 (2024-07-08)
 ------------------
 
 - Restore return value for deprecated method :meth:`~import_export.resources.Resource.get_fields` (`1897 <https://github.com/django-import-export/django-import-export/pull/1897>`_).
-- Remove use of ``getattr()`` in ``Field.__repr__()``  (`1898 <https://github.com/django-import-export/django-import-export/pull/1898>`_).
-- Add class path to deprecated method warnings  (`1899 <https://github.com/django-import-export/django-import-export/pull/1899>`_).
 
 4.1.0 (2024-06-25)
 ------------------
 
 - Improve tox setup (`1879 <https://github.com/django-import-export/django-import-export/pull/1879>`_)
-- Speed up tests 10x (`1880 <https://github.com/django-import-export/django-import-export/pull/1880>`_)
-- Use literals to create lists and dicts (`1881 <https://github.com/django-import-export/django-import-export/pull/1881>`_)
 - Improve Error class (`1882 <https://github.com/django-import-export/django-import-export/pull/1882>`_)
 - Fix response content assertions (`1883 <https://github.com/django-import-export/django-import-export/pull/1883>`_)
 - Admin UI: display checkboxes before labels in export form (`1884 <https://github.com/django-import-export/django-import-export/pull/1884>`_)
