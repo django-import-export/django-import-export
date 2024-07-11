@@ -178,12 +178,14 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
             return self.process_result(result, request)
         else:
             context = self.admin_site.each_context(request)
-            context.update({
-                'title': _('Import'),
-                'confirm_form': confirm_form,
-                'opts': self.model._meta,
-                'errors': confirm_form.errors,
-            })
+            context.update(
+                {
+                    "title": _("Import"),
+                    "confirm_form": confirm_form,
+                    "opts": self.model._meta,
+                    "errors": confirm_form.errors,
+                }
+            )
             return TemplateResponse(request, [self.import_template_name], context)
 
     def process_dataset(
