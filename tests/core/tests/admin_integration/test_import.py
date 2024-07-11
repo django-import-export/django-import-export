@@ -420,6 +420,15 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
 
         data = confirm_form.initial
         self.assertEqual(data["original_file_name"], "books.csv")
+        # manipulate data to make the payload invalid
+        data['author'] = ''
+        response = self.client.post(
+            "/admin/core/ebook/process_import/", data, follow=True
+        )
+        # check if error is captured gracefully
+        self.assertEquals(response.context['errors'], {'author': ['This field is required.']})
+        # restore the correct data and resubmit
+        data['author'] = 11
         response = self.client.post(
             "/admin/core/ebook/process_import/", data, follow=True
         )
