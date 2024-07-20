@@ -420,16 +420,75 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
 
         data = confirm_form.initial
         self.assertEqual(data["original_file_name"], "books.csv")
+        response = self.client.post(
+            "/admin/core/ebook/process_import/", data, follow=True
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response,
+            _(
+                "Import finished: {} new, {} updated, {} deleted and {} skipped {}."
+            ).format(1, 0, 0, 0, EBook._meta.verbose_name_plural),
+        )
+
+    def test_import_with_customized_form_handles_form_validation(self):
+        """Test if admin import handles errors gracefully when confirm_form is
+        invalid for eg. if a required field (in this case 'Author') is left blank.
+        """
+        # We use customized BookAdmin (CustomBookAdmin) with modified import
+        # form, which requires Author to be selected (from available authors).
+        # Note that url is /admin/core/ebook/import (and not: ...book/import)!
+
+        # We need a author in the db to select from in the admin import custom
+        # forms, first we will submit data with invalid author_id and if the
+        # error is handled correctly, resubmit form with correct author_id and
+        # check if data is imported successfully
+        Author.objects.create(id=11, name="Test Author")
+
+        # GET the import form
+        response = self.client.get("/admin/core/ebook/import/")
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "admin/import_export/import.html")
+        self.assertContains(response, 'form action=""')
+
+        # POST the import form
+        input_format = "0"
+        filename = os.path.join(
+            os.path.dirname(__file__),
+            os.path.pardir,
+            os.path.pardir,
+            "exports",
+            "books.csv",
+        )
+        with open(filename, "rb") as fobj:
+            data = {"author": 11, "format": input_format, "import_file": fobj}
+            response = self.client.post("/admin/core/ebook/import/", data)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("result", response.context)
+        self.assertFalse(response.context["result"].has_errors())
+        self.assertIn("confirm_form", response.context)
+        confirm_form = response.context["confirm_form"]
+        self.assertIsInstance(
+            confirm_form,
+            CustomBookAdmin(EBook, "ebook/import").get_confirm_form_class(None),
+        )
+
+        data = confirm_form.initial
+        self.assertEqual(data["original_file_name"], "books.csv")
+
         # manipulate data to make the payload invalid
         data["author"] = ""
         response = self.client.post(
             "/admin/core/ebook/process_import/", data, follow=True
         )
+
         # check if error is captured gracefully
         self.assertEqual(
             response.context["errors"], {"author": ["This field is required."]}
         )
-        # restore the correct data and resubmit
+
+        # resubmit with valid data
         data["author"] = 11
         response = self.client.post(
             "/admin/core/ebook/process_import/", data, follow=True
