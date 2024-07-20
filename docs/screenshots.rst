@@ -22,7 +22,7 @@ Screenshots
    :width: 600
    :alt: screenshot of selecting existing records for export in django-import-export
 
-.. |export-form| image:: _static/images/screenshots/export-selected-action.png
+.. |export-form| image:: _static/images/screenshots/export-form.png
    :width: 600
    :alt: screenshot of selecting existing records for export in django-import-export
 
