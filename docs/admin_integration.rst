@@ -210,12 +210,15 @@ When 'Go' is clicked for the selected items, the user will be directed to the
 
 It is possible to disable this extra step by setting the :ref:`import_export_skip_admin_action_export_ui` or
 :ref:`import_export_skip_admin_export_ui` flags, or by setting
+:attr:`~import_export.admin.ExportMixin.skip_export_form_from_action` or
 :attr:`~import_export.admin.ExportMixin.skip_export_form`.
 
 .. note::
 
-    If deploying to a multi-tenant environment, you may need to use the to ensure that one set of users cannot export
-    data belonging to another set.  See :meth:`~import_export.admin.ExportMixin.get_valid_export_item_pks`.
+    If deploying to a multi-tenant environment, you may need to ensure that one set of users cannot export
+    data belonging to another set.  To do this, filter the range of exportable items to be limited to only
+    those items which users should be permitted to export.
+    See :meth:`~import_export.admin.ExportMixin.get_export_queryset`.
 
 .. _export_from_model_change_form:
 
