@@ -309,6 +309,13 @@ To iterate over all generic errors produced from an import, pass ``False`` to ``
         for field, error in row.error.error_dict.items():
             print(f"{field}: {error} ({error.row})")
 
+
+.. note::
+
+  `full_clean() <https://docs.djangoproject.com/en/stable/ref/models/instances/#django.db.models.Model.full_clean>`_
+  is only called on the model instance if the Resource option
+  :attr:`~import_export.options.ResourceOptions.clean_model_instances` is enabled.
+
 Field level validation
 ----------------------
 

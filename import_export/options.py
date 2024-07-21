@@ -87,7 +87,9 @@ class ResourceOptions:
 
     clean_model_instances = False
     """
-    Controls whether ``instance.full_clean()`` is called during the import
+    Controls whether
+    `full_clean <https://docs.djangoproject.com/en/stable/ref/models/instances/#django.db.models.Model.full_clean>`_ # noqa: E501
+    is called during the import
     process to identify potential validation errors for each (non skipped) row.
     The default value is ``False``.
     """
