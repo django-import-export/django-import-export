@@ -1041,26 +1041,21 @@ class Resource(metaclass=DeclarativeMetaclass):
             return method(instance)
         return field.export(instance)
 
-    def get_export_fields(self):
+    def get_export_fields(self, selected_fields=None):
+        fields_ = selected_fields if selected_fields else self.fields
         export_fields = []
-        for field_name in self.get_export_order():
-            if field_name in self.fields:
-                export_fields.append(self.fields[field_name])
-                continue
-            # issue 1828
-            # allow for fields to be referenced by column_name in `fields` list
-            for field in self.fields.values():
-                if field.column_name == field_name:
-                    export_fields.append(field)
-                    continue
+        export_order = self.get_export_order()
+        for field_name in export_order:
+            if field_name in fields_:
+                export_fields.append(self._select_field(field_name))
         return export_fields
 
-    def export_resource(self, instance, fields=None):
-        export_fields = self._get_enabled_export_fields(fields)
+    def export_resource(self, instance, selected_fields=None):
+        export_fields = self.get_export_fields(selected_fields)
         return [self.export_field(field, instance) for field in export_fields]
 
-    def get_export_headers(self, fields=None):
-        export_fields = self._get_enabled_export_fields(fields)
+    def get_export_headers(self, selected_fields=None):
+        export_fields = self.get_export_fields(selected_fields)
         return [force_str(field.column_name) for field in export_fields]
 
     def get_user_visible_fields(self):
@@ -1097,16 +1092,30 @@ class Resource(metaclass=DeclarativeMetaclass):
             queryset = self.get_queryset()
         queryset = self.filter_export(queryset, **kwargs)
         export_fields = kwargs.get("export_fields", None)
-        headers = self.get_export_headers(fields=export_fields)
+        headers = self.get_export_headers(selected_fields=export_fields)
         dataset = tablib.Dataset(headers=headers)
 
         for obj in self.iter_queryset(queryset):
-            r = self.export_resource(obj, fields=export_fields)
+            r = self.export_resource(obj, selected_fields=export_fields)
             dataset.append(r)
 
         self.after_export(queryset, dataset, **kwargs)
 
         return dataset
+
+    def _select_field(self, target_field_name):
+        # select field from fields based on either declared name or column name
+        if target_field_name in self.fields:
+            return self.fields[target_field_name]
+
+        for field_name, field in self.fields.items():
+            if target_field_name == field.column_name:
+                return field
+        # it should have been possible to identify the declared field
+        # but raise an error if not
+        raise ValueError(
+            _(f"cannot identify field for export with name '{target_field_name}'")
+        )
 
     def _get_ordered_field_names(self, order_field):
         """
@@ -1176,18 +1185,6 @@ class Resource(metaclass=DeclarativeMetaclass):
                     % ", ".join(missing_headers)
                 )
             )
-
-    def _get_enabled_export_fields(self, fields_):
-        export_fields = self.get_export_fields()
-
-        if isinstance(fields_, list) and fields_:
-            return [
-                field
-                for field in export_fields
-                if field.attribute in fields_ or field.column_name in fields_
-            ]
-
-        return export_fields
 
 
 class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
