@@ -123,7 +123,7 @@ class DateWidgetTest(TestCase, RowDeprecationTestMixin):
     def test_render(self):
         self.assertEqual(self.widget.render(self.date), "13.08.2012")
 
-    def test_render_dervied_date(self):
+    def test_render_derived_date(self):
         derived_date = CustomDate(2012, 8, 13)
         self.assertEqual(self.widget.render(derived_date), "13.08.2012")
 
@@ -187,9 +187,9 @@ class DateTimeWidgetTest(TestCase, RowDeprecationTestMixin):
     def test_render(self):
         self.assertEqual(self.widget.render(self.datetime), "13.08.2012 18:00:00")
 
-    def test_render_dervied_datetime(self):
-        derived_date_time = CustomDateTime(2012, 8, 13, 18, 0, 0)
-        self.assertEqual(self.widget.render(derived_date_time), "13.08.2012 18:00:00")
+    def test_render_derived_datetime(self):
+        derived_datetime = CustomDateTime(2012, 8, 13, 18, 0, 0)
+        self.assertEqual(self.widget.render(derived_datetime), "13.08.2012 18:00:00")
 
     def test_render_none(self):
         self.assertEqual(self.widget.render(None), "")
