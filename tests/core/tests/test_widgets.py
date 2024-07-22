@@ -26,7 +26,7 @@ class WidgetTest(TestCase):
         self.assertEqual("1", self.widget.render(1))
 
 
-class RowDeprecationTestMixin(object):
+class RowDeprecationTestMixin:
     def test_render_row_deprecation(self):
         with self.assertWarnsRegex(
             DeprecationWarning,
@@ -533,7 +533,7 @@ class ForeignKeyWidgetTest(TestCase, RowDeprecationTestMixin):
         self.assertEqual(target_author, res)
 
     def test_render_handles_value_error(self):
-        class TestObj(object):
+        class TestObj:
             @property
             def attr(self):
                 raise ValueError("some error")
@@ -602,21 +602,21 @@ class ManyToManyWidget(TestCase, RowDeprecationTestMixin):
         self.cat2 = Category.objects.create(name="Cat 2")
 
     def test_clean(self):
-        value = "%s,%s" % (self.cat1.pk, self.cat2.pk)
+        value = f"{self.cat1.pk},{self.cat2.pk}"
         cleaned_data = self.widget.clean(value)
         self.assertEqual(len(cleaned_data), 2)
         self.assertIn(self.cat1, cleaned_data)
         self.assertIn(self.cat2, cleaned_data)
 
     def test_clean_field(self):
-        value = "%s,%s" % (self.cat1.name, self.cat2.name)
+        value = f"{self.cat1.name},{self.cat2.name}"
         cleaned_data = self.widget_name.clean(value)
         self.assertEqual(len(cleaned_data), 2)
         self.assertIn(self.cat1, cleaned_data)
         self.assertIn(self.cat2, cleaned_data)
 
     def test_clean_field_spaces(self):
-        value = "%s, %s" % (self.cat1.name, self.cat2.name)
+        value = f"{self.cat1.name}, {self.cat2.name}"
         cleaned_data = self.widget_name.clean(value)
         self.assertEqual(len(cleaned_data), 2)
         self.assertIn(self.cat1, cleaned_data)
@@ -648,11 +648,11 @@ class ManyToManyWidget(TestCase, RowDeprecationTestMixin):
     def test_render(self):
         self.assertEqual(
             self.widget.render(Category.objects.order_by("id")),
-            "%s,%s" % (self.cat1.pk, self.cat2.pk),
+            f"{self.cat1.pk},{self.cat2.pk}",
         )
         self.assertEqual(
             self.widget_name.render(Category.objects.order_by("id")),
-            "%s,%s" % (self.cat1.name, self.cat2.name),
+            f"{self.cat1.name},{self.cat2.name}",
         )
 
     def test_render_value_none_as_blank(self):

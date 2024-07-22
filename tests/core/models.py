@@ -113,7 +113,7 @@ class Child(models.Model):
     name = models.CharField(max_length=100)
 
     def __str__(self):
-        return "%s - child of %s" % (self.name, self.parent.name)
+        return f"{self.name} - child of {self.parent.name}"
 
 
 class Profile(models.Model):

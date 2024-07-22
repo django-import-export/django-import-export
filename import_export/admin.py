@@ -127,7 +127,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
 
         opts = self.opts
         codename = get_permission_codename(IMPORT_PERMISSION_CODE, opts)
-        return request.user.has_perm("%s.%s" % (opts.app_label, codename))
+        return request.user.has_perm(f"{opts.app_label}.{codename}")
 
     def get_urls(self):
         urls = super().get_urls()
@@ -414,7 +414,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
             read_mode=input_format.get_read_mode(),
             **self.get_tmp_storage_class_kwargs(),
         )
-        data = bytes()
+        data = b""
         for chunk in import_file.chunks():
             data += chunk
 
@@ -457,7 +457,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
                 # rollback_on_validation_errors is set to True so that we rollback on
                 # validation errors. If this is not done validation errors would be
                 # silently skipped.
-                data = bytes()
+                data = b""
                 for chunk in import_file.chunks():
                     data += chunk
                 try:
@@ -637,7 +637,7 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
 
         opts = self.opts
         codename = get_permission_codename(EXPORT_PERMISSION_CODE, opts)
-        return request.user.has_perm("%s.%s" % (opts.app_label, codename))
+        return request.user.has_perm(f"{opts.app_label}.{codename}")
 
     def get_export_queryset(self, request):
         """
@@ -834,7 +834,7 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
         )
         content_type = file_format.get_content_type()
         response = HttpResponse(export_data, content_type=content_type)
-        response["Content-Disposition"] = 'attachment; filename="%s"' % (
+        response["Content-Disposition"] = 'attachment; filename="{}"'.format(
             self.get_export_filename(request, queryset, file_format),
         )
         post_export.send(sender=None, model=self.model)
