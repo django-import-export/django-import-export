@@ -271,7 +271,7 @@ class DateWidget(_ParseDateTimeMixin, Widget):
         self._obj_deprecation_warning(obj)
         if self.coerce_to_string is False:
             return value
-        if not value or not type(value) is date:
+        if not value or not isinstance(value, date):
             return ""
         return format_datetime(value, self.formats[0])
 
@@ -308,7 +308,7 @@ class DateTimeWidget(_ParseDateTimeMixin, Widget):
         self._obj_deprecation_warning(obj)
         if self.coerce_to_string is False:
             return value
-        if not value or not type(value) is datetime:
+        if not value or not isinstance(value, datetime):
             return ""
         if settings.USE_TZ:
             value = timezone.localtime(value)
@@ -339,7 +339,7 @@ class TimeWidget(_ParseDateTimeMixin, Widget):
         self._obj_deprecation_warning(obj)
         if self.coerce_to_string is False:
             return value
-        if not value or not type(value) is time:
+        if not value or not isinstance(value, time):
             return ""
         return value.strftime(self.formats[0])
 

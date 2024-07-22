@@ -109,6 +109,12 @@ class FormatDatetimeTest(TestCase):
         )
 
 
+class CustomDate(date):
+    """test derived instance of date"""
+
+    pass
+
+
 class DateWidgetTest(TestCase, RowDeprecationTestMixin):
     def setUp(self):
         self.date = date(2012, 8, 13)
@@ -116,6 +122,10 @@ class DateWidgetTest(TestCase, RowDeprecationTestMixin):
 
     def test_render(self):
         self.assertEqual(self.widget.render(self.date), "13.08.2012")
+
+    def test_render_dervied_date(self):
+        derived_date = CustomDate(2012, 8, 13)
+        self.assertEqual(self.widget.render(derived_date), "13.08.2012")
 
     def test_render_none(self):
         self.assertEqual(self.widget.render(None), "")
@@ -163,6 +173,12 @@ class DateWidgetTest(TestCase, RowDeprecationTestMixin):
         self.assertEqual(("%Y-%m-%d",), self.widget.formats)
 
 
+class CustomDateTime(datetime):
+    """test derived instance of datetime"""
+
+    pass
+
+
 class DateTimeWidgetTest(TestCase, RowDeprecationTestMixin):
     def setUp(self):
         self.datetime = datetime(2012, 8, 13, 18, 0, 0)
@@ -170,6 +186,10 @@ class DateTimeWidgetTest(TestCase, RowDeprecationTestMixin):
 
     def test_render(self):
         self.assertEqual(self.widget.render(self.datetime), "13.08.2012 18:00:00")
+
+    def test_render_dervied_datetime(self):
+        derived_date_time = CustomDateTime(2012, 8, 13, 18, 0, 0)
+        self.assertEqual(self.widget.render(derived_date_time), "13.08.2012 18:00:00")
 
     def test_render_none(self):
         self.assertEqual(self.widget.render(None), "")
@@ -267,6 +287,12 @@ class DateTimeWidgetBefore1900Test(TestCase):
         self.assertEqual(self.datetime, self.widget.clean("13.08.1868"))
 
 
+class CustomTime(time):
+    """test derived instance of time"""
+
+    pass
+
+
 class TimeWidgetTest(TestCase, RowDeprecationTestMixin):
     def setUp(self):
         self.time = time(20, 15, 0)
@@ -274,6 +300,10 @@ class TimeWidgetTest(TestCase, RowDeprecationTestMixin):
 
     def test_render(self):
         self.assertEqual(self.widget.render(self.time), "20:15:00")
+
+    def test_render_derived_time(self):
+        derived_time = CustomTime(20, 15, 0)
+        self.assertEqual(self.widget.render(derived_time), "20:15:00")
 
     def test_render_none(self):
         self.assertEqual(self.widget.render(None), "")
