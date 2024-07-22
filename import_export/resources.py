@@ -1,5 +1,4 @@
 import functools
-import inspect
 import logging
 from collections import OrderedDict
 from copy import deepcopy
@@ -1270,7 +1269,7 @@ class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
             # The field class may be in a third party library as a subclass
             # of a standard field class.
             # iterate base classes to determine the correct widget class to use.
-            for base_class in inspect.getmro(f.__class__):
+            for base_class in f.__class__.__mro__:
                 if base_class.__name__ in cls.WIDGETS_MAP:
                     result = cls.WIDGETS_MAP[base_class.__name__]
                     if isinstance(result, str):

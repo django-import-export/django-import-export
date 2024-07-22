@@ -9,6 +9,7 @@ from core.admin import BookAdmin, BookResource, EBookResource
 from core.models import Author, Book, EBook, UUIDCategory
 from core.tests.admin_integration.mixins import AdminTestMixin
 from core.tests.utils import ignore_utcnow_deprecation_warning
+from django import forms
 from django.contrib.admin.sites import AdminSite
 from django.contrib.admin.views.main import ChangeList
 from django.contrib.auth.models import User
@@ -171,10 +172,8 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
         content = response.content.decode()
         self.assertNotIn("Export 0 selected items.", content)
         form = response.context["form"]
-        self.assertEqual(0, len(form.fields["resource"].choices))
-        self.assertTrue(form.fields["resource"].widget.attrs["readonly"])
-        self.assertIn("CategoryResource", content)
-        self.assertNotIn('select name="resource"', content)
+        self.assertIsInstance(form.fields["resource"].widget, forms.HiddenInput)
+        self.assertEqual(form.initial["resource"], "0")
 
     def test_get_export_FieldError(self):
         # issue 1723
@@ -325,8 +324,13 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
         # issue 1800
         UUIDCategory.objects.create(name="UUIDCategory")
         response = self.client.get(self.uuid_category_export_url)
+
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "UUIDCategoryResource")
+        form = response.context["form"]
+        self.assertEqual(
+            form.fields["resource"].choices,
+            [(0, "UUIDCategoryResource")],
+        )
 
     def test_export_get(self):
         """
