@@ -67,9 +67,9 @@ class Field:
         """
         Displays the module, class and name of the field.
         """
-        path = "%s.%s" % (self.__class__.__module__, self.__class__.__name__)
+        path = f"{self.__class__.__module__}.{self.__class__.__name__}"
         if self.column_name is not None:
-            return "<%s: %s>" % (path, self.column_name)
+            return f"<{path}: {self.column_name}>"
         return "<%s>" % path
 
     def clean(self, row, **kwargs):

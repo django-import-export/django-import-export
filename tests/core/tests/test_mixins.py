@@ -105,7 +105,7 @@ class ExportViewMixinTest(TestCase):
 
 class BaseImportMixinTest(TestCase):
     def test_get_import_formats(self):
-        class Format(object):
+        class Format:
             def __init__(self, id, can_import):
                 self.id = id
                 self.val = can_import
@@ -347,7 +347,7 @@ class BaseExportMixinTest(TestCase):
         self.assertEqual(m.kwargs, target_kwargs)
 
     def test_get_export_formats(self):
-        class Format(object):
+        class Format:
             def __init__(self, can_export):
                 self.val = can_export
 

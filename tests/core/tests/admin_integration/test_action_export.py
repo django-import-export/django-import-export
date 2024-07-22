@@ -38,7 +38,7 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
         date_str = datetime.now().strftime("%Y-%m-%d")
         self.assertEqual(
             response["Content-Disposition"],
-            'attachment; filename="Category-{}.csv"'.format(date_str),
+            f'attachment; filename="Category-{date_str}.csv"',
         )
 
     @override_settings(IMPORT_EXPORT_SKIP_ADMIN_ACTION_EXPORT_UI=True)
@@ -112,7 +112,7 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertEqual(response["Content-Type"], "text/csv")
         self.assertEqual(
             response["Content-Disposition"],
-            'attachment; filename="Category-{}.csv"'.format(date_str),
+            f'attachment; filename="Category-{date_str}.csv"',
         )
         target_str = f"id,name\r\n{self.cat1.id},Cat 1\r\n"
         self.assertEqual(target_str.encode(), response.content)

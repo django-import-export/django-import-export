@@ -4,6 +4,11 @@ repos:
     hooks:
     - id: django-upgrade
       args: [--target-version, "4.2"]
+  - repo: https://github.com/asottile/pyupgrade
+    rev: v3.16.0
+    hooks:
+    - id: pyupgrade
+      args: [--py38-plus]
   - repo: https://github.com/psf/black-pre-commit-mirror
     rev: 24.4.2
     hooks:

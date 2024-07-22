@@ -156,7 +156,7 @@ class Resource(metaclass=DeclarativeMetaclass):
             if f == field:
                 return field_name
         raise AttributeError(
-            "Field %s does not exists in %s resource" % (field, self.__class__)
+            f"Field {field} does not exists in {self.__class__} resource"
         )
 
     def init_instance(self, row=None):
@@ -1381,9 +1381,9 @@ def modelresource_factory(model, resource_class=ModelResource):
     Factory for creating ``ModelResource`` class for given Django model.
     """
     attrs = {"model": model}
-    Meta = type(str("Meta"), (object,), attrs)
+    Meta = type("Meta", (object,), attrs)
 
-    class_name = model.__name__ + str("Resource")
+    class_name = model.__name__ + "Resource"
 
     class_attrs = {
         "Meta": Meta,

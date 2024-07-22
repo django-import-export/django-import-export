@@ -7,7 +7,7 @@ from django.contrib.auth.models import User
 from import_export.formats.base_formats import DEFAULT_FORMATS
 
 
-class AdminTestMixin(object):
+class AdminTestMixin:
     category_change_url = "/admin/core/category/"
     uuid_category_change_url = "/admin/core/uuidcategory/"
     category_export_url = "/admin/core/category/export/"
@@ -104,6 +104,6 @@ class AdminTestMixin(object):
         self.assertEqual(response["Content-Type"], "text/csv")
         self.assertEqual(
             response["Content-Disposition"],
-            'attachment; filename="{}-{}.csv"'.format(file_prefix, date_str),
+            f'attachment; filename="{file_prefix}-{date_str}.csv"',
         )
         self.assertEqual(target_file_contents.encode(), response.content)

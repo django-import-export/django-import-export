@@ -101,7 +101,7 @@ class ResultTest(SimpleTestCase):
     @patch("import_export.results.logger")
     def test_add_instance_info_instance_unserializable(self, mock_logger):
         # issue 1763
-        class UnserializableBook(object):
+        class UnserializableBook:
             # will raise TypeError
             def __str__(self):
                 return None

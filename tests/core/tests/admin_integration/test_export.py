@@ -52,7 +52,7 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertEqual(response["Content-Type"], "text/csv")
         self.assertEqual(
             response["Content-Disposition"],
-            'attachment; filename="Book-{}.csv"'.format(date_str),
+            f'attachment; filename="Book-{date_str}.csv"',
         )
         self.assertEqual(
             b"id,name,author_email,categories\r\n",
@@ -210,7 +210,7 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertEqual(response["Content-Type"], "text/csv")
         self.assertEqual(
             response["Content-Disposition"],
-            'attachment; filename="Book-{}.csv"'.format(date_str),
+            f'attachment; filename="Book-{date_str}.csv"',
         )
         self.assertEqual(b"id,name\r\n", response.content)
 
@@ -366,7 +366,7 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertEqual(response["Content-Type"], "text/csv")
         self.assertEqual(
             response["Content-Disposition"],
-            'attachment; filename="EBook-{}.csv"'.format(date_str),
+            f'attachment; filename="EBook-{date_str}.csv"',
         )
         self.assertEqual(
             b"id,Email of the author,name,published_date\r\n", response.content
@@ -395,7 +395,7 @@ class FilteredExportAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertEqual(response["Content-Type"], "text/csv")
         self.assertEqual(
             response["Content-Disposition"],
-            'attachment; filename="EBook-{}.csv"'.format(date_str),
+            f'attachment; filename="EBook-{date_str}.csv"',
         )
         self.assertEqual(
             b"id,Email of the author,name,published_date\r\n"
@@ -545,7 +545,7 @@ class CustomColumnNameExportTest(AdminTestMixin, TestCase):
         self.assertEqual(response["Content-Type"], "text/csv")
         self.assertEqual(
             response["Content-Disposition"],
-            'attachment; filename="EBook-{}.csv"'.format(date_str),
+            f'attachment; filename="EBook-{date_str}.csv"',
         )
         s = (
             "id,Email of the author,name,published_date\r\n"

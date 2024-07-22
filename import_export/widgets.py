@@ -26,7 +26,7 @@ def format_datetime(value, datetime_format):
     return value.strftime(format_)
 
 
-class _ParseDateTimeMixin(object):
+class _ParseDateTimeMixin:
     """Internal Mixin for shared logic with date and datetime conversions."""
 
     def __init__(
