@@ -1,5 +1,4 @@
 import os
-import warnings
 from io import StringIO
 from unittest import mock
 from unittest.mock import PropertyMock, patch
@@ -179,14 +178,7 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
             "'UnicodeDecodeError' encountered while trying to read file. "
             "Ensure you have chosen the correct format for the file."
         )
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", category=DeprecationWarning)
-            try:
-                self.assertFormError(
-                    response.context["form"], "import_file", target_msg
-                )
-            except TypeError:
-                self.assertFormError(response, "form", "import_file", target_msg)
+        self.assertFormError(response.context["form"], "import_file", target_msg)
 
     def test_import_action_handles_ValueError_as_form_error(self):
         with mock.patch(
@@ -199,15 +191,7 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
             "'ValueError' encountered while trying to read file. "
             "Ensure you have chosen the correct format for the file."
         )
-
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", category=DeprecationWarning)
-            try:
-                self.assertFormError(
-                    response.context["form"], "import_file", target_msg
-                )
-            except TypeError:
-                self.assertFormError(response, "form", "import_file", target_msg)
+        self.assertFormError(response.context["form"], "import_file", target_msg)
 
     def test_import_action_handles_FieldError(self):
         # issue 1722
@@ -232,15 +216,7 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
             "Se encontró 'ValueError' mientras se intentaba leer el archivo. "
             "Asegúrese que seleccionó el formato correcto para el archivo."
         )
-
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", category=DeprecationWarning)
-            try:
-                self.assertFormError(
-                    response.context["form"], "import_file", target_msg
-                )
-            except TypeError:
-                self.assertFormError(response, "form", "import_file", target_msg)
+        self.assertFormError(response.context["form"], "import_file", target_msg)
 
     def test_import_action_invalidates_data_sheet_with_no_headers_or_data(self):
         # GET the import form
@@ -257,15 +233,7 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
             "No valid data to import. Ensure your file "
             "has the correct headers or data for import."
         )
-
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", category=DeprecationWarning)
-            try:
-                self.assertFormError(
-                    response.context["form"], "import_file", target_msg
-                )
-            except TypeError:
-                self.assertFormError(response, "form", "import_file", target_msg)
+        self.assertFormError(response.context["form"], "import_file", target_msg)
 
     def test_delete_from_admin(self):
         # test delete from admin site (see #432)

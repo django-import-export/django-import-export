@@ -113,9 +113,8 @@ class TestFieldWidgetMapping(TestCase):
             postgres_search.SearchVectorField,
             RelatedField,
             postgres_ranges.ContinuousRangeField,
+            postgres_search._Float4Field,
         }
-        if django.VERSION >= (4, 2):
-            expected_not_presented_fields |= {postgres_search._Float4Field}
         if django.VERSION >= (5, 0):
             expected_not_presented_fields |= {models.GeneratedField}
         if django.VERSION >= (5, 1):

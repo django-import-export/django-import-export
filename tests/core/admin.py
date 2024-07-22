@@ -12,6 +12,7 @@ from .forms import CustomConfirmImportForm, CustomExportForm, CustomImportForm
 from .models import Author, Book, Category, Child, EBook, UUIDBook, UUIDCategory
 
 
+@admin.register(Child)
 class ChildAdmin(ImportMixin, admin.ModelAdmin):
     pass
 
@@ -31,6 +32,7 @@ class BookNameResource(ModelResource):
         name = "Export/Import only book names"
 
 
+@admin.register(Book)
 class BookAdmin(ImportExportModelAdmin):
     list_display = ("name", "author", "added")
     list_filter = ["categories", "author"]
@@ -38,19 +40,23 @@ class BookAdmin(ImportExportModelAdmin):
     change_list_template = "core/admin/change_list.html"
 
 
+@admin.register(Category)
 class CategoryAdmin(ExportActionModelAdmin):
     def get_queryset(self, request):
         return Category.objects.all()
 
 
+@admin.register(UUIDBook)
 class UUIDBookAdmin(ImportExportModelAdmin):
     pass
 
 
+@admin.register(UUIDCategory)
 class UUIDCategoryAdmin(ExportActionModelAdmin):
     pass
 
 
+@admin.register(Author)
 class AuthorAdmin(ImportMixin, admin.ModelAdmin):
     pass
 
@@ -77,6 +83,7 @@ class EBookResource(ModelResource):
         fields = ("id", "author_email", "name", "published", "auteur_name")
 
 
+@admin.register(EBook)
 class CustomBookAdmin(ExportActionModelAdmin, ImportExportModelAdmin):
     """Example usage of custom import / export forms"""
 
@@ -112,12 +119,3 @@ class CustomBookAdmin(ExportActionModelAdmin, ImportExportModelAdmin):
         if export_form:
             kwargs.update(author_id=export_form.cleaned_data["author"].id)
         return kwargs
-
-
-admin.site.register(Book, BookAdmin)
-admin.site.register(Category, CategoryAdmin)
-admin.site.register(Author, AuthorAdmin)
-admin.site.register(Child, ChildAdmin)
-admin.site.register(EBook, CustomBookAdmin)
-admin.site.register(UUIDCategory, UUIDCategoryAdmin)
-admin.site.register(UUIDBook, UUIDBookAdmin)
