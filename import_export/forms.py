@@ -29,14 +29,12 @@ class ImportExportFormBase(forms.Form):
     def _init_resources(self, resources):
         if not resources:
             raise ValueError("no defined resources")
+        self.fields["resource"].choices = [
+            (i, resource.get_display_name()) for i, resource in enumerate(resources)
+        ]
         if len(resources) == 1:
-            self.fields["resource"].value = resources[0].get_display_name()
-            self.fields["resource"].widget.attrs["readonly"] = True
-        if len(resources) > 1:
-            resource_choices = []
-            for i, resource in enumerate(resources):
-                resource_choices.append((i, resource.get_display_name()))
-            self.fields["resource"].choices = resource_choices
+            self.fields["resource"].widget = forms.HiddenInput()
+            self.initial["resource"] = "0"
 
     def _init_formats(self, formats):
         if not formats:
