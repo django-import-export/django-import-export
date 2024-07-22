@@ -44,7 +44,7 @@
 
       {% block form_detail %}
           <fieldset class="module aligned">
-          {% for field in form %}
+          {% for field in form.visible_fields %}
             <div class="form-row">
               {{ field.errors }}
 
@@ -61,6 +61,9 @@
               <p class="help">{{ field.field.help_text|safe }}</p>
               {% endif %}
             </div>
+          {% endfor %}
+          {% for field in form.hidden_fields %}
+              {{ field }}
           {% endfor %}
         </fieldset>
       {% endblock %}
