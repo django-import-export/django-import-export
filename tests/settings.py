@@ -103,10 +103,11 @@ LOGGING = {
 }
 
 USE_TZ = False
-if django.VERSION >= (4, 1):
-    FORM_RENDERER = "django.forms.renderers.DjangoDivFormRenderer"
+
 if django.VERSION >= (5, 0):
     FORM_RENDERER = "django.forms.renderers.DjangoTemplates"
+else:
+    FORM_RENDERER = "django.forms.renderers.DjangoDivFormRenderer"
 
 PASSWORD_HASHERS = [
     "django.contrib.auth.hashers.MD5PasswordHasher",
