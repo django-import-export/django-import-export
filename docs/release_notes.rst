@@ -20,6 +20,17 @@ v4.2
   new parameter to :meth:`~import_export.resources.Resource.export_resource` and
   :meth:`~import_export.resources.Resource.get_export_headers`.
 
+* Hide the "Resource" form when it only has one option, to avoid potentially confusing text in the interface like
+  "Resource: BookResource". To undo this change, use a form subclass that changes the field’s widget to a
+  ``django.forms.Select``.  See `1908 <https://github.com/django-import-export/django-import-export/issues/1908>`_
+
+*  `tablib <https://github.com/jazzband/tablib>`_ has been upgraded from v3.5.0 to 3.6.1.
+   This upgrade removes tablib's dependency on `MarkupPy <https://github.com/jazzband/tablib/pull/554>`_ in favour
+   of ElementTree.  If you export to HTML, then this change may affect your output format, particularly if you have
+   already escaped HTML characters in the text.
+
+   See `issue 1627 <https://github.com/django-import-export/django-import-export/issues/1627>`_.
+
 v4.1
 ----
 

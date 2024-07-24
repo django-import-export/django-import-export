@@ -34,16 +34,15 @@ classifiers = [
     "Topic :: Software Development",
 ]
 
-# tablib temporarily using master before v4
 dependencies = [
     "diff-match-patch",
     "Django>=4.2",
-    "tablib==3.5.0"
+    "tablib>=3.6.1"
 ]
 
 [project.optional-dependencies]
 all = [
-    "tablib[all]==3.5.0"
+    "tablib[all]>=3.6.1"
 ]
 cli = ["tablib[cli]"]
 ods = ["tablib[ods]"]

@@ -11,15 +11,11 @@ Changelog
 
 - Consistent queryset creation in ModelAdmin export mixin (`1890 <https://github.com/django-import-export/django-import-export/pull/1890>`_)
 - Deprecated :meth:`~import_export.admin.ExportMixin.get_valid_export_item_pks` in favour of :meth:`~import_export.admin.ExportMixin.get_queryset` (`1890 <https://github.com/django-import-export/django-import-export/pull/1890>`_)
-- Fix export for fields with custom declared name (`1903 <https://github.com/django-import-export/django-import-export/pull/1903>`_)
-- Hide the “Resource” form when it only has one option, to avoid potentially confusing text in the interface like “Resource: BookResource”.
-  To undo this change, use a form subclass that changes the field’s widget to a ``django.forms.Select``.
-  (`1908 <https://github.com/django-import-export/django-import-export/issues/1908>`__)
-
-4.1.2 (Unreleased)
-------------------
-
 - Improve deprecation warning for ``ExportViewFormMixin`` to report at point of class definition (`1900 <https://github.com/django-import-export/django-import-export/pull/1900>`_)
+- Fix export for fields with custom declared name (`1903 <https://github.com/django-import-export/django-import-export/pull/1903>`_)
+- Hide the "Resource" form when it only has one option (`1908 <https://github.com/django-import-export/django-import-export/issues/1908>`_)
+- Update date, time and datetime widget render method to handle derived instance (`1918 <https://github.com/django-import-export/django-import-export/issues/1918>`_)
+- Upgraded tablib version (`1627 <https://github.com/django-import-export/django-import-export/issues/1627>`_)
 
 4.1.1 (2024-07-08)
 ------------------
