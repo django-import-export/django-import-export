@@ -1,5 +1,11 @@
 ## Release process
 
+Pull requests automatically have [pre-commit](https://pre-commit.com/) checks applied via
+the [pre-commit.ci](https://pre-commit.ci/) Github application.
+These checks will run automatically once the Github application is installed.
+The checks run off the `.pre-commit-config.yaml` file, and that file can be used to apply
+additional config to the CI process.
+
 #### Pre-release
 
 Ensure that ``CHANGELOG.rst`` is up-to-date with the correct version number and release date.
