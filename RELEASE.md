@@ -6,11 +6,11 @@ These checks will run automatically once the Github application is installed.
 The checks run off the `.pre-commit-config.yaml` file, and that file can be used to apply
 additional config to the CI process.
 
-#### Pre-release
+### Pre-release
 
 Ensure that `CHANGELOG.rst` is up-to-date with the correct version number and release date.
 
-#### Perform the release
+### Perform the release
 
 To create a new published release, follow the instructions [here](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository).
 Ensure you create the new tag to correspond with the release as required.
