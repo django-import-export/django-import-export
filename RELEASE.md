@@ -8,7 +8,7 @@ additional config to the CI process.
 
 #### Pre-release
 
-Ensure that ``CHANGELOG.rst`` is up-to-date with the correct version number and release date.
+Ensure that `CHANGELOG.rst` is up-to-date with the correct version number and release date.
 
 #### Perform the release
 
