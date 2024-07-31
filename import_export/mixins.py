@@ -11,6 +11,7 @@ from .formats import base_formats
 from .forms import SelectableFieldsExportForm
 from .resources import modelresource_factory
 from .signals import post_export
+from .formats.base_formats import DATA_TYPE_RICH_FORMATS
 
 logger = logging.getLogger(__name__)
 
@@ -264,7 +265,8 @@ class ExportViewMixin(BaseExportMixin):
         """
         Returns file_format representation for given queryset.
         """
-        data = self.get_data_for_export(self.request, queryset, **kwargs)
+        coerce_to_string = (type(file_format) not in DATA_TYPE_RICH_FORMATS)
+        data = self.get_data_for_export(self.request, queryset, coerce_to_string=coerce_to_string, **kwargs)
         export_data = file_format.export_data(data)
         return export_data
 

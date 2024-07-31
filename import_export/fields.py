@@ -139,12 +139,13 @@ class Field:
                     else:
                         getattr(instance, attrs[-1]).set(cleaned)
 
-    def export(self, instance):
+    def export(self, instance, **kwargs):
         """
         Returns value from the provided instance converted to export
         representation.
         """
         value = self.get_value(instance)
+        self.widget.coerce_to_string = kwargs.get("coerce_to_string", True)
         return self.widget.render(value)
 
     def get_dehydrate_method(self, field_name=None):

@@ -23,6 +23,7 @@ from .mixins import BaseExportMixin, BaseImportMixin
 from .results import RowResult
 from .signals import post_export, post_import
 from .tmp_storages import TempFolderStorage
+from .formats.base_formats import DATA_TYPE_RICH_FORMATS
 
 logger = logging.getLogger(__name__)
 
@@ -701,9 +702,11 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
         if not self.has_export_permission(request):
             raise PermissionDenied
 
+        coerce_to_string = (type(file_format) not in DATA_TYPE_RICH_FORMATS)
         data = self.get_data_for_export(
             request,
             queryset,
+            coerce_to_string=coerce_to_string,
             **kwargs,
         )
         export_data = file_format.export_data(data)
