@@ -86,6 +86,10 @@ class ModelDeclarativeMetaclass(DeclarativeMetaclass):
                     and field_name not in opts.fields
                     and column_name not in opts.fields
                 ):
+                    logger.warning(
+                        f"ignoring field '{field_name}' because not declared "
+                        "in 'fields' whitelist"
+                    )
                     continue
                 declared_fields[field_name] = field
 
