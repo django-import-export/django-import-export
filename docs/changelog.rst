@@ -16,6 +16,7 @@ Changelog
 - Hide the "Resource" form when it only has one option (`1908 <https://github.com/django-import-export/django-import-export/issues/1908>`_)
 - Update date, time and datetime widget render method to handle derived instance (`1918 <https://github.com/django-import-export/django-import-export/issues/1918>`_)
 - Upgraded tablib version (`1627 <https://github.com/django-import-export/django-import-export/issues/1627>`_)
+- Add support for Django 5.1 (`1926 <https://github.com/django-import-export/django-import-export/issues/1926>`_)
 
 4.1.1 (2024-07-08)
 ------------------
