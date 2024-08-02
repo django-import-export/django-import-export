@@ -17,6 +17,7 @@ Changelog
 - Update date, time and datetime widget render method to handle derived instance (`1918 <https://github.com/django-import-export/django-import-export/issues/1918>`_)
 - Upgraded tablib version (`1627 <https://github.com/django-import-export/django-import-export/issues/1627>`_)
 - Add support for Django 5.1 (`1926 <https://github.com/django-import-export/django-import-export/issues/1926>`_)
+- Avoid using thousand separators in :meth:`~import_export.widgets.NumberWidget.render` (`1928 <https://github.com/django-import-export/django-import-export/issues/1928>`_)
 
 4.1.1 (2024-07-08)
 ------------------
