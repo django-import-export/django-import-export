@@ -8,10 +8,11 @@ from warnings import warn
 import django
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
-from django.utils import timezone
+from django.utils import numberformat, timezone
 from django.utils.dateparse import parse_duration
 from django.utils.encoding import force_str, smart_str
-from django.utils.formats import number_format
+from django.utils.formats import get_format
+from django.utils.translation import get_language
 from django.utils.translation import gettext_lazy as _
 
 from import_export.exceptions import WidgetError
@@ -121,10 +122,18 @@ class NumberWidget(Widget):
     def render(self, value, obj=None):
         self._obj_deprecation_warning(obj)
         if self.coerce_to_string:
-            return (
-                ""
-                if value is None or not isinstance(value, numbers.Number)
-                else "" + number_format(value)
+            if value is None or not isinstance(value, numbers.Number):
+                return ""
+            # Format the number avoiding the thousand separator
+            lang = get_language()
+            # The `"" +` casts SafeString to str
+            return "" + numberformat.format(
+                value,
+                get_format("DECIMAL_SEPARATOR", lang, use_l10n=True),
+                None,
+                get_format("NUMBER_GROUPING", lang, use_l10n=True),
+                "",
+                use_l10n=True,
             )
         return value
 

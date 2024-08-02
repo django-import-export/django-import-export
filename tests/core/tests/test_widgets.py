@@ -404,8 +404,15 @@ class NumberWidgetTest(TestCase, RowDeprecationTestMixin):
         self.assertEqual(self.widget.render("a"), "")
 
     @override_settings(LANGUAGE_CODE="fr-fr")
-    def test_locale_render_coerce_to_string_gte4(self):
+    def test_locale_render_coerce_to_string(self):
         self.assertEqual("11,111", self.widget_coerce_to_string.render(self.value))
+
+    @override_settings(USE_THOUSAND_SEPARATOR=True)
+    def test_locale_render_coerce_to_string_no_thousand_separator(self):
+        self.assertEqual(
+            self.widget_coerce_to_string.render(1234),
+            "1234",
+        )
 
     def test_coerce_to_string_value_is_None(self):
         self.assertEqual("", self.widget_coerce_to_string.render(None))
@@ -436,8 +443,12 @@ class FloatWidgetTest(TestCase, RowDeprecationTestMixin):
         self.assertEqual(self.widget.clean("\r\n\t"), None)
 
     @override_settings(LANGUAGE_CODE="fr-fr")
-    def test_locale_render_coerce_to_string_gte4(self):
+    def test_locale_render_coerce_to_string(self):
         self.assertEqual(self.widget_coerce_to_string.render(self.value), "11,111")
+
+    @override_settings(USE_THOUSAND_SEPARATOR=True)
+    def test_locale_render_coerce_to_string_no_thousand_separator(self):
+        self.assertEqual(self.widget_coerce_to_string.render(1234), "1234")
 
 
 class DecimalWidgetTest(TestCase, RowDeprecationTestMixin):
@@ -469,8 +480,12 @@ class DecimalWidgetTest(TestCase, RowDeprecationTestMixin):
         self.assertEqual(self.widget.clean("\r\n\t"), None)
 
     @override_settings(LANGUAGE_CODE="fr-fr")
-    def test_locale_render_coerce_to_string_gte4(self):
+    def test_locale_render_coerce_to_string(self):
         self.assertEqual(self.widget.render(self.value), "11,111")
+
+    @override_settings(USE_THOUSAND_SEPARATOR=True)
+    def test_locale_render_coerce_to_string_no_thousand_separator(self):
+        self.assertEqual(self.widget.render(1234), "1234")
 
 
 class IntegerWidgetTest(TestCase, RowDeprecationTestMixin):
@@ -499,8 +514,12 @@ class IntegerWidgetTest(TestCase, RowDeprecationTestMixin):
         self.assertEqual(self.widget.render("a"), "")
 
     @override_settings(LANGUAGE_CODE="fr-fr")
-    def test_locale_render_gte_django4(self):
+    def test_locale_render(self):
         self.assertEqual(self.widget_coerce_to_string.render(self.value), "0")
+
+    @override_settings(USE_THOUSAND_SEPARATOR=True)
+    def test_locale_render_no_thousand_separator(self):
+        self.assertEqual(self.widget_coerce_to_string.render(1234), "1234")
 
 
 class ForeignKeyWidgetTest(TestCase, RowDeprecationTestMixin):
