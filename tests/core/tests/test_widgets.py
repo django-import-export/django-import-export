@@ -420,6 +420,22 @@ class FloatWidgetTest(TestCase, RowDeprecationTestMixin):
     def test_clean(self):
         self.assertEqual(self.widget.clean(11.111), self.value)
 
+    @override_settings(USE_THOUSAND_SEPARATOR=True)
+    def test_clean_numeric_separators(self):
+        self.assertEqual(self.widget.clean("1,234.5"), 1234.5)
+
+    @override_settings(LANGUAGE_CODE="ar", USE_THOUSAND_SEPARATOR=True)
+    def test_clean_numeric_separators_arabic(self):
+        self.assertEqual(self.widget.clean("1.234,5"), 1234.5)
+
+    @override_settings(LANGUAGE_CODE="zh-hans", USE_THOUSAND_SEPARATOR=True)
+    def test_clean_numeric_separators_chinese_simplified(self):
+        self.assertEqual(self.widget.clean("1234.5"), 1234.5)
+
+    @override_settings(LANGUAGE_CODE="fr", USE_THOUSAND_SEPARATOR=True)
+    def test_clean_numeric_separators_french(self):
+        self.assertEqual(self.widget.clean("1\xa0234,5"), 1234.5)
+
     def test_render(self):
         self.assertEqual(self.widget.render(self.value), "11.111")
 
@@ -448,6 +464,22 @@ class DecimalWidgetTest(TestCase, RowDeprecationTestMixin):
     def test_clean(self):
         self.assertEqual(self.widget.clean("11.111"), self.value)
         self.assertEqual(self.widget.clean(11.111), self.value)
+
+    @override_settings(USE_THOUSAND_SEPARATOR=True)
+    def test_clean_numeric_separators(self):
+        self.assertEqual(self.widget.clean("1,234.5"), Decimal("1234.5"))
+
+    @override_settings(LANGUAGE_CODE="ar", USE_THOUSAND_SEPARATOR=True)
+    def test_clean_numeric_separators_arabic(self):
+        self.assertEqual(self.widget.clean("1.234,5"), Decimal("1234.5"))
+
+    @override_settings(LANGUAGE_CODE="zh-hans", USE_THOUSAND_SEPARATOR=True)
+    def test_clean_numeric_separators_chinese_simplified(self):
+        self.assertEqual(self.widget.clean("1234.5"), Decimal("1234.5"))
+
+    @override_settings(LANGUAGE_CODE="fr", USE_THOUSAND_SEPARATOR=True)
+    def test_clean_numeric_separators_french(self):
+        self.assertEqual(self.widget.clean("1\xa0234,5"), Decimal("1234.5"))
 
     def test_render_coerce_to_string_is_False(self):
         self.widget = widgets.DecimalWidget(coerce_to_string=False)
@@ -494,6 +526,22 @@ class IntegerWidgetTest(TestCase, RowDeprecationTestMixin):
         self.assertEqual(self.widget.clean(""), None)
         self.assertEqual(self.widget.clean(" "), None)
         self.assertEqual(self.widget.clean("\n\t\r"), None)
+
+    @override_settings(USE_THOUSAND_SEPARATOR=True)
+    def test_clean_numeric_separators(self):
+        self.assertEqual(self.widget.clean("1,234.5"), 1234)
+
+    @override_settings(LANGUAGE_CODE="ar", USE_THOUSAND_SEPARATOR=True)
+    def test_clean_numeric_separators_arabic(self):
+        self.assertEqual(self.widget.clean("1.234,5"), 1234)
+
+    @override_settings(LANGUAGE_CODE="zh-hans", USE_THOUSAND_SEPARATOR=True)
+    def test_clean_numeric_separators_chinese_simplified(self):
+        self.assertEqual(self.widget.clean("1234.5"), 1234)
+
+    @override_settings(LANGUAGE_CODE="fr", USE_THOUSAND_SEPARATOR=True)
+    def test_clean_numeric_separators_french(self):
+        self.assertEqual(self.widget.clean("1\xa0234,5"), 1234)
 
     def test_render_invalid_type(self):
         self.assertEqual(self.widget.render("a"), "")
