@@ -18,12 +18,12 @@ from django.utils.module_loading import import_string
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_POST
 
+from .formats.base_formats import DATA_TYPE_RICH_FORMATS
 from .forms import ConfirmImportForm, ImportForm, SelectableFieldsExportForm
 from .mixins import BaseExportMixin, BaseImportMixin
 from .results import RowResult
 from .signals import post_export, post_import
 from .tmp_storages import TempFolderStorage
-from .formats.base_formats import DATA_TYPE_RICH_FORMATS
 
 logger = logging.getLogger(__name__)
 
@@ -702,7 +702,7 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
         if not self.has_export_permission(request):
             raise PermissionDenied
 
-        coerce_to_string = (type(file_format) not in DATA_TYPE_RICH_FORMATS)
+        coerce_to_string = type(file_format) not in DATA_TYPE_RICH_FORMATS
         data = self.get_data_for_export(
             request,
             queryset,
