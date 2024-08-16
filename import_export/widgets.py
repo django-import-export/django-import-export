@@ -34,7 +34,7 @@ class _ParseDateTimeMixin:
         format=None,
         input_formats=None,
         default_format="%Y-%m-%d",
-        coerce_to_string=True,
+        coerce_to_string=None,
     ):
         super().__init__(coerce_to_string=coerce_to_string)
         self.formats = (format,) if format else (input_formats or (default_format,))
@@ -65,13 +65,20 @@ class Widget:
     A Widget handles converting between import and export representations.
     """
 
-    def __init__(self, coerce_to_string=True):
+    def __init__(self, coerce_to_string=None):
         """
         :param coerce_to_string: If True, :meth:`~import_export.widgets.Widget.render`
           will return a string representation of the value, otherwise the value is
           returned.
         """
-        self.coerce_to_string = coerce_to_string
+        if coerce_to_string == None:
+            # if coerce_to_string is not explicitly defined.
+            self.coerce_to_string = True
+            self.coerce_to_string_is_explicitly_defined = False
+        else:
+            # if coerce_to_string is explicitly defined with, for eg. a custom widget.
+            self.coerce_to_string = coerce_to_string
+            self.coerce_to_string_is_explicitly_defined = True
 
     def clean(self, value, row=None, **kwargs):
         """
@@ -170,10 +177,10 @@ class CharWidget(Widget):
       will return null values as empty strings, otherwise as ``None``.
     """
 
-    def __init__(self, coerce_to_string=True, allow_blank=True):
+    def __init__(self, coerce_to_string=None, allow_blank=True):
         """ """
-        self.coerce_to_string = coerce_to_string
         self.allow_blank = allow_blank
+        super().__init__(coerce_to_string)
 
     def clean(self, value, row=None, **kwargs):
         val = super().clean(value, row, **kwargs)
@@ -222,9 +229,9 @@ class BooleanWidget(Widget):
     FALSE_VALUES = ["0", 0, False, "false", "FALSE", "False"]
     NULL_VALUES = ["", None, "null", "NULL", "none", "NONE", "None"]
 
-    def __init__(self, coerce_to_string=True):
+    def __init__(self, coerce_to_string=None):
         """ """
-        self.coerce_to_string = coerce_to_string
+        super().__init__(coerce_to_string)
 
     def clean(self, value, row=None, **kwargs):
         if value in self.NULL_VALUES:
@@ -255,7 +262,7 @@ class DateWidget(_ParseDateTimeMixin, Widget):
     ``settings.DATE_INPUT_FORMATS`` or ``"%Y-%m-%d"`` is used.
     """
 
-    def __init__(self, format=None, coerce_to_string=True):
+    def __init__(self, format=None, coerce_to_string=None):
         super().__init__(
             format, settings.DATE_INPUT_FORMATS, "%Y-%m-%d", coerce_to_string
         )
@@ -284,7 +291,7 @@ class DateTimeWidget(_ParseDateTimeMixin, Widget):
     ``settings.DATETIME_INPUT_FORMATS`` or ``"%Y-%m-%d %H:%M:%S"`` is used.
     """
 
-    def __init__(self, format=None, coerce_to_string=True):
+    def __init__(self, format=None, coerce_to_string=None):
         super().__init__(
             format,
             settings.DATETIME_INPUT_FORMATS,
@@ -323,7 +330,7 @@ class TimeWidget(_ParseDateTimeMixin, Widget):
     ``settings.DATETIME_INPUT_FORMATS`` or ``"%H:%M:%S"`` is used.
     """
 
-    def __init__(self, format=None, coerce_to_string=True):
+    def __init__(self, format=None, coerce_to_string=None):
         super().__init__(
             format, settings.TIME_INPUT_FORMATS, "%H:%M:%S", coerce_to_string
         )
@@ -379,7 +386,7 @@ class SimpleArrayWidget(Widget):
     :param separator: Defaults to ``','``
     """
 
-    def __init__(self, separator=None, coerce_to_string=True):
+    def __init__(self, separator=None, coerce_to_string=None):
         if separator is None:
             separator = ","
         self.separator = separator

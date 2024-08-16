@@ -145,7 +145,8 @@ class Field:
         representation.
         """
         value = self.get_value(instance)
-        self.widget.coerce_to_string = kwargs.get("coerce_to_string", True)
+        if not self.widget.coerce_to_string_is_explicitly_defined:
+            self.widget.coerce_to_string = kwargs.get("coerce_to_string", True)
         return self.widget.render(value)
 
     def get_dehydrate_method(self, field_name=None):
