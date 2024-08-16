@@ -65,17 +65,16 @@ class Widget:
     A Widget handles converting between import and export representations.
     """
 
+    coerce_to_string = True
+    coerce_to_string_is_explicitly_defined = False
+
     def __init__(self, coerce_to_string=None):
         """
         :param coerce_to_string: If True, :meth:`~import_export.widgets.Widget.render`
           will return a string representation of the value, otherwise the value is
           returned.
         """
-        if coerce_to_string == None:
-            # if coerce_to_string is not explicitly defined.
-            self.coerce_to_string = True
-            self.coerce_to_string_is_explicitly_defined = False
-        else:
+        if coerce_to_string is not None:
             # if coerce_to_string is explicitly defined with, for eg. a custom widget.
             self.coerce_to_string = coerce_to_string
             self.coerce_to_string_is_explicitly_defined = True
