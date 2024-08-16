@@ -11,7 +11,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.utils import timezone
 from django.utils.dateparse import parse_duration
 from django.utils.encoding import force_str, smart_str
-from django.utils.formats import number_format
+from django.utils.formats import number_format, sanitize_separators
 from django.utils.translation import gettext_lazy as _
 
 from import_export.exceptions import WidgetError
@@ -137,7 +137,7 @@ class FloatWidget(NumberWidget):
     def clean(self, value, row=None, **kwargs):
         if self.is_empty(value):
             return None
-        return float(value)
+        return float(sanitize_separators(value))
 
 
 class IntegerWidget(NumberWidget):
@@ -148,7 +148,7 @@ class IntegerWidget(NumberWidget):
     def clean(self, value, row=None, **kwargs):
         if self.is_empty(value):
             return None
-        return int(Decimal(value))
+        return int(Decimal(sanitize_separators(value)))
 
 
 class DecimalWidget(NumberWidget):
@@ -159,7 +159,7 @@ class DecimalWidget(NumberWidget):
     def clean(self, value, row=None, **kwargs):
         if self.is_empty(value):
             return None
-        return Decimal(force_str(value))
+        return Decimal(force_str(sanitize_separators(value)))
 
 
 class CharWidget(Widget):

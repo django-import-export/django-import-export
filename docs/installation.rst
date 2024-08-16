@@ -268,6 +268,7 @@ You can adjust the log level to see output as required.
 This is an example configuration to be placed in your application settings::
 
     LOGGING = {
+        "version" 1,
         "handlers": {
             "console": {"level": "DEBUG", "class": "logging.StreamHandler"},
         },
