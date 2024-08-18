@@ -46,8 +46,7 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
         date_str = datetime.now().strftime("%Y-%m-%d")
         # Should not contain COUNT queries from ModelAdmin.get_results()
         with self.assertNumQueries(5):
-            response = self.client.post(self.book_export_url, data)
-        self.assertEqual(response.status_code, 200)
+            response = self._post_url_response(self.book_export_url, data)
         self.assertTrue(response.has_header("Content-Disposition"))
         self.assertEqual(response["Content-Type"], "text/csv")
         self.assertEqual(
@@ -181,8 +180,7 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
                 "booknameresource_id": True,
                 "booknameresource_name": True,
             }
-            response = self.client.post(self.book_export_url, data)
-        self.assertEqual(response.status_code, 200)
+            response = self._post_url_response(self.book_export_url, data)
         target_msg = "Some unknown error"
         self.assertIn(target_msg, response.content.decode())
 
@@ -201,8 +199,7 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
             "booknameresource_name": True,
         }
         date_str = datetime.now().strftime("%Y-%m-%d")
-        response = self.client.post(self.book_export_url, data)
-        self.assertEqual(response.status_code, 200)
+        response = self._post_url_response(self.book_export_url, data)
         self.assertTrue(response.has_header("Content-Disposition"))
         self.assertEqual(response["Content-Type"], "text/csv")
         self.assertEqual(
@@ -256,8 +253,7 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
 
         xlsx_index = self._get_input_format_index("xlsx")
         data = {"format": str(xlsx_index), **self.bookresource_export_fields_payload}
-        response = self.client.post(self.book_export_url, data)
-        self.assertEqual(response.status_code, 200)
+        response = self._post_url_response(self.book_export_url, data)
         self.assertTrue(response.has_header("Content-Disposition"))
         self.assertEqual(
             response["Content-Type"],
@@ -273,8 +269,7 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
 
         xlsx_index = self._get_input_format_index("xlsx")
         data = {"format": str(xlsx_index), **self.bookresource_export_fields_payload}
-        response = self.client.post(self.book_export_url, data)
-        self.assertEqual(response.status_code, 200)
+        response = self._post_url_response(self.book_export_url, data)
         content = response.content
         wb = load_workbook(filename=BytesIO(content))
         self.assertEqual("<script>alert(1)</script>", wb.active["B2"].value)
@@ -291,7 +286,7 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
             "bookresource_id": True,
             "bookresource_name": True,
         }
-        response = self.client.post(self.book_export_url, data)
+        response = self._post_url_response(self.book_export_url, data)
         self.assertIn(
             f"{b1.id},SUM(1+1)\r\n".encode(),
             response.content,
@@ -308,7 +303,7 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
             "bookresource_id": True,
             "bookresource_name": True,
         }
-        response = self.client.post(self.book_export_url, data)
+        response = self._post_url_response(self.book_export_url, data)
         self.assertIn(
             f"{b1.id},=SUM(1+1)\r\n".encode(),
             response.content,
@@ -356,8 +351,7 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
             "ebookresource_published": True,
         }
         date_str = datetime.now().strftime("%Y-%m-%d")
-        response = self.client.post(self.ebook_export_url, data)
-        self.assertEqual(response.status_code, 200)
+        response = self._post_url_response(self.ebook_export_url, data)
         self.assertTrue(response.has_header("Content-Disposition"))
         self.assertEqual(response["Content-Type"], "text/csv")
         self.assertEqual(
@@ -385,8 +379,7 @@ class FilteredExportAdminIntegrationTest(AdminTestMixin, TestCase):
             "ebookresource_published": True,
         }
         date_str = datetime.now().strftime("%Y-%m-%d")
-        response = self.client.post(self.ebook_export_url, data)
-        self.assertEqual(response.status_code, 200)
+        response = self._post_url_response(self.ebook_export_url, data)
         self.assertTrue(response.has_header("Content-Disposition"))
         self.assertEqual(response["Content-Type"], "text/csv")
         self.assertEqual(
@@ -533,8 +526,7 @@ class CustomColumnNameExportTest(AdminTestMixin, TestCase):
             "ebookresource_published_date": True,
         }
         date_str = datetime.now().strftime("%Y-%m-%d")
-        response = self.client.post(self.ebook_export_url, data)
-        self.assertEqual(response.status_code, 200)
+        response = self._post_url_response(self.ebook_export_url, data)
         self.assertTrue(response.has_header("Content-Disposition"))
         self.assertEqual(response["Content-Type"], "text/csv")
         self.assertEqual(
@@ -559,7 +551,7 @@ class CustomColumnNameExportTest(AdminTestMixin, TestCase):
             "ebookresource_published_date": True,
             "ebookresource_auteur_name": True,
         }
-        response = self.client.post(self.ebook_export_url, data)
+        response = self._post_url_response(self.ebook_export_url, data)
         s = (
             "id,Email of the author,name,published_date,Author Name\r\n"
             f"{self.book.id},,Moonraker,1955-04-05,Ian Fleming\r\n"
@@ -586,14 +578,12 @@ class FilteredExportTest(AdminTestMixin, TestCase):
             "ebookresource_id": True,
             "ebookresource_name": True,
         }
-        response = self.client.post(self.ebook_export_url, data)
-        self.assertEqual(response.status_code, 200)
+        response = self._post_url_response(self.ebook_export_url, data)
         s = "id,name\r\n" f"{b1.id},Moonraker\r\n"
         self.assertEqual(s.encode(), response.content)
 
         data["author"] = a2.id
-        response = self.client.post(self.ebook_export_url, data)
-        self.assertEqual(response.status_code, 200)
+        response = self._post_url_response(self.ebook_export_url, data)
         s = "id,name\r\n" f"{b2.id},Ulysses\r\n"
         self.assertEqual(s.encode(), response.content)
 

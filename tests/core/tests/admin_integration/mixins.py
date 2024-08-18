@@ -131,3 +131,8 @@ class AdminTestMixin:
             assert "text/html" in response.headers[
                 "Content-Type"], "Response is not HTML"
         return response
+
+    def _post_url_response(self, url, data, expected_status_code=200, follow=False):
+        response = self.client.post(url, data, follow=follow)
+        assert response.status_code == expected_status_code
+        return response

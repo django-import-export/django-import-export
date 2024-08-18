@@ -31,7 +31,7 @@ class ImportAdminSecurityTests(AdminTestMixin, TestCase):
             "original_file_name": "books.csv",
         }
         with self.assertRaises(FileNotFoundError):
-            self.client.post(self.book_process_import_url, data)
+            self._post_url_response(self.book_process_import_url, data)
 
     def test_import_buttons_visible_without_add_permission(self):
         # When using ImportMixin, users should be able to see the import button

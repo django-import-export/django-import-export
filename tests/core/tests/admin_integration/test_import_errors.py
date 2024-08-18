@@ -105,9 +105,8 @@ class ImportErrorHandlingTests(AdminTestMixin, TestCase):
         )
         with open(filename, "rb") as fobj:
             data = {"author": 11, "format": input_format, "import_file": fobj}
-            response = self.client.post(self.ebook_import_url, data)
+            response = self._post_url_response(self.ebook_import_url, data)
 
-        self.assertEqual(response.status_code, 200)
         self.assertIn("result", response.context)
         self.assertFalse(response.context["result"].has_errors())
         self.assertIn("confirm_form", response.context)
@@ -122,7 +121,7 @@ class ImportErrorHandlingTests(AdminTestMixin, TestCase):
 
         # manipulate data to make the payload invalid
         data["author"] = ""
-        response = self.client.post(
+        response = self._post_url_response(
             self.ebook_process_import_url, data, follow=True
         )
 
@@ -133,7 +132,7 @@ class ImportErrorHandlingTests(AdminTestMixin, TestCase):
 
         # resubmit with valid data
         data["author"] = 11
-        response = self.client.post(
+        response = self._post_url_response(
             self.ebook_process_import_url, data, follow=True
         )
         self.assertEqual(response.status_code, 200)

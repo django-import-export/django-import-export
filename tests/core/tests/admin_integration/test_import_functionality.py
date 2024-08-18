@@ -47,8 +47,7 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertEqual(response.status_code, 200)
         confirm_form = response.context["confirm_form"]
         data = confirm_form.initial
-        response = self.client.post(self.book_process_import_url, data, follow=True)
-        self.assertEqual(response.status_code, 200)
+        self._post_url_response(self.book_process_import_url, data, follow=True)
 
         # check the LogEntry was created as expected
         deleted_entry = LogEntry.objects.latest("id")
@@ -169,8 +168,8 @@ class ImportFileHandlingTests(AdminTestMixin, TestCase):
 
         data = confirm_form.initial
         self.assertEqual(data["original_file_name"], "books.csv")
-        response = self.client.post(self.book_process_import_url, data, follow=True)
-        self.assertEqual(response.status_code, 200)
+        response = self._post_url_response(self.book_process_import_url, data,
+                                           follow=True)
         self.assertContains(
             response,
             _(
@@ -195,8 +194,8 @@ class ImportFileHandlingTests(AdminTestMixin, TestCase):
 
         data = confirm_form.initial
         self.assertEqual(data["original_file_name"], "books-mac.csv")
-        response = self.client.post(self.book_process_import_url, data, follow=True)
-        self.assertEqual(response.status_code, 200)
+        response = self._post_url_response(self.book_process_import_url, data,
+                                           follow=True)
         self.assertContains(
             response,
             _(
@@ -225,8 +224,8 @@ class ImportFileHandlingTests(AdminTestMixin, TestCase):
 
         data = confirm_form.initial
         self.assertEqual(data["original_file_name"], "books.csv")
-        response = self.client.post(self.book_process_import_url, data, follow=True)
-        self.assertEqual(response.status_code, 200)
+        response = self._post_url_response(self.book_process_import_url, data,
+                                           follow=True)
         self.assertContains(
             response,
             _(
@@ -244,8 +243,8 @@ class ImportLogEntryTest(AdminTestMixin, TestCase):
         self.assertEqual(response.status_code, 200)
         confirm_form = response.context["confirm_form"]
         data = confirm_form.initial
-        response = self.client.post(self.book_process_import_url, data, follow=True)
-        self.assertEqual(response.status_code, 200)
+        response = self._post_url_response(self.book_process_import_url, data,
+                                           follow=True)
         book = LogEntry.objects.latest("id")
         self.assertEqual(book.object_repr, "Some book")
         self.assertEqual(book.object_id, str(1))
@@ -256,10 +255,9 @@ class ImportLogEntryTest(AdminTestMixin, TestCase):
         self.assertEqual(response.status_code, 200)
         confirm_form = response.context["confirm_form"]
         data = confirm_form.initial
-        response = self.client.post(
+        self._post_url_response(
             self.child_process_import_url, data, follow=True
         )
-        self.assertEqual(response.status_code, 200)
         child = LogEntry.objects.latest("id")
         self.assertEqual(child.object_repr, "Some - child of Some Parent")
         self.assertEqual(child.object_id, str(1))

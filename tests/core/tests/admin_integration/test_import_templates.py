@@ -119,9 +119,7 @@ class ImportTemplateTests(AdminTestMixin, TestCase):
         )
         with open(filename, "rb") as fobj:
             data = {"author": 11, "format": input_format, "import_file": fobj}
-            response = self.client.post(self.ebook_import_url, data)
-
-        self.assertEqual(response.status_code, 200)
+            response = self._post_url_response(self.ebook_import_url, data)
         self.assertIn("result", response.context)
         self.assertFalse(response.context["result"].has_errors())
         self.assertIn("confirm_form", response.context)
@@ -133,10 +131,9 @@ class ImportTemplateTests(AdminTestMixin, TestCase):
 
         data = confirm_form.initial
         self.assertEqual(data["original_file_name"], "books.csv")
-        response = self.client.post(
+        response = self._post_url_response(
             self.process_ebook_import_url, data, follow=True
         )
-        self.assertEqual(response.status_code, 200)
         self.assertContains(
             response,
             _(
