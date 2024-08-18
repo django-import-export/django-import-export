@@ -399,6 +399,7 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertEqual(False, wb.active["C2"].value)
         self.assertEqual(datetime(10, 8, 2), wb.active["D2"].value)
 
+
 class FilteredExportAdminIntegrationTest(AdminTestMixin, TestCase):
     fixtures = ["category", "book", "author"]
 
