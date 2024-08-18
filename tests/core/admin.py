@@ -71,7 +71,7 @@ class EBookResource(ModelResource):
     published = Field(
         attribute="published",
         column_name="published_date",
-        widget=DateWidget(coerce_to_string=True)
+        widget=DateWidget(coerce_to_string=True),
     )
     author_email = Field(attribute="author_email", column_name="Email of the author")
     auteur_name = Field(attribute="author__name", column_name="Author Name")

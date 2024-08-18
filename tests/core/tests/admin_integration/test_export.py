@@ -405,7 +405,9 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
         (via for eg a custom resource), exported data obeys the constraint.
         """
         author = Author.objects.create(name="Ian Fleming")
-        EBook.objects.create(id=1, name="name", published=date(2000, 4, 5), author=author)
+        EBook.objects.create(
+            id=1, name="name", published=date(2000, 4, 5), author=author
+        )
         data = {
             "format": "2",
             "author": author.id,
@@ -421,6 +423,7 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertEqual(1, wb.active["A2"].value)
         self.assertEqual("name", wb.active["B2"].value)
         self.assertEqual("2000-04-05", wb.active["C2"].value)
+
 
 class FilteredExportAdminIntegrationTest(AdminTestMixin, TestCase):
     fixtures = ["category", "book", "author"]
