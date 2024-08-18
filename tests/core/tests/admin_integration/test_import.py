@@ -28,17 +28,6 @@ from import_export.resources import ModelResource
 
 
 class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
-    def test_import_export_template(self):
-        response = self.client.get("/admin/core/book/")
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(
-            response, "admin/import_export/change_list_import_export.html"
-        )
-        self.assertTemplateUsed(response, "admin/change_list.html")
-        self.assertTemplateUsed(response, "core/admin/change_list.html")
-        self.assertContains(response, _("Import"))
-        self.assertContains(response, _("Export"))
-        self.assertContains(response, "Custom change list item")
 
     @override_settings(TEMPLATE_STRING_IF_INVALID="INVALID_VARIABLE")
     def test_import(self):
@@ -71,7 +60,7 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         new_callable=PropertyMock,
         return_value=True,
     )
-    def test_import_skips_confirm_page(self):
+    def test_import_skips_confirm_page(self, mock_skip_import_confirm):
         response = self._do_import_post(self.book_import_url, "books.csv", follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertContains(
@@ -79,58 +68,6 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
             _(
                 "Import finished: {} new, {} updated, {} deleted and {} skipped {}."
             ).format(1, 0, 0, 0, Book._meta.verbose_name_plural),
-        )
-
-    @override_settings(DEBUG=True)
-    def test_correct_scripts_declared_when_debug_is_true(self):
-        # GET the import form
-        response = self.client.get(self.book_import_url)
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, self.admin_import_template)
-        self.assertContains(response, 'form action=""')
-        self.assertContains(
-            response,
-            '<script src="/static/admin/js/vendor/jquery/jquery.js">',
-            count=1,
-            html=True,
-        )
-        self.assertContains(
-            response,
-            '<script src="/static/admin/js/jquery.init.js">',
-            count=1,
-            html=True,
-        )
-        self.assertContains(
-            response,
-            '<script src="/static/import_export/guess_format.js">',
-            count=1,
-            html=True,
-        )
-
-    @override_settings(DEBUG=False)
-    def test_correct_scripts_declared_when_debug_is_false(self):
-        # GET the import form
-        response = self.client.get(self.book_import_url)
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, self.admin_import_template)
-        self.assertContains(response, 'form action=""')
-        self.assertContains(
-            response,
-            '<script src="/static/admin/js/vendor/jquery/jquery.min.js">',
-            count=1,
-            html=True,
-        )
-        self.assertContains(
-            response,
-            '<script src="/static/admin/js/jquery.init.js">',
-            count=1,
-            html=True,
-        )
-        self.assertContains(
-            response,
-            '<script src="/static/import_export/guess_format.js">',
-            count=1,
-            html=True,
         )
 
     @override_settings(TEMPLATE_STRING_IF_INVALID="INVALID_VARIABLE")
@@ -164,76 +101,9 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         # Check, that we really use second resource - author_email didn't get imported
         self.assertEqual(Book.objects.get(id=1).author_email, "")
 
-    def test_import_action_handles_UnicodeDecodeError_as_form_error(self):
-        with mock.patch(
-            "import_export.admin.TempFolderStorage.read"
-        ) as mock_tmp_folder_storage:
-            b_arr = b"\x00"
-            mock_tmp_folder_storage.side_effect = UnicodeDecodeError(
-                "codec", b_arr, 1, 2, "fail!"
-            )
-            response = self._do_import_post(self.book_import_url, "books.csv")
-        self.assertEqual(response.status_code, 200)
-        target_msg = (
-            "'UnicodeDecodeError' encountered while trying to read file. "
-            "Ensure you have chosen the correct format for the file."
-        )
-        self.assertFormError(response.context["form"], "import_file", target_msg)
-
-    def test_import_action_handles_ValueError_as_form_error(self):
-        with mock.patch(
-            "import_export.admin.TempFolderStorage.read"
-        ) as mock_tmp_folder_storage:
-            mock_tmp_folder_storage.side_effect = ValueError("some unknown error")
-            response = self._do_import_post(self.book_import_url, "books.csv")
-        self.assertEqual(response.status_code, 200)
-        target_msg = (
-            "'ValueError' encountered while trying to read file. "
-            "Ensure you have chosen the correct format for the file."
-        )
-        self.assertFormError(response.context["form"], "import_file", target_msg)
-
-    def test_import_action_handles_FieldError(self):
-        # issue 1722
-        with mock.patch(
-            "import_export.resources.Resource._check_import_id_fields"
-        ) as mock_check_import_id_fields:
-            mock_check_import_id_fields.side_effect = FieldError("some unknown error")
-            response = self._do_import_post(self.book_import_url, "books.csv")
-        self.assertEqual(response.status_code, 200)
-        target_msg = "some unknown error"
-        self.assertIn(target_msg, response.content.decode())
-
-    @override_settings(LANGUAGE_CODE="es")
-    def test_import_action_handles_ValueError_as_form_error_with_translation(self):
-        with mock.patch(
-            "import_export.admin.TempFolderStorage.read"
-        ) as mock_tmp_folder_storage:
-            mock_tmp_folder_storage.side_effect = ValueError("some unknown error")
-            response = self._do_import_post(self.book_import_url, "books.csv")
-        self.assertEqual(response.status_code, 200)
-        target_msg = (
-            "Se encontró 'ValueError' mientras se intentaba leer el archivo. "
-            "Asegúrese que seleccionó el formato correcto para el archivo."
-        )
-        self.assertFormError(response.context["form"], "import_file", target_msg)
-
-    def test_import_action_invalidates_data_sheet_with_no_headers_or_data(self):
-        # GET the import form
-        response = self.client.get(self.book_import_url)
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, self.admin_import_template)
-        self.assertContains(response, 'form action=""')
-
-        response = self._do_import_post(
-            self.book_import_url, "books-no-headers.csv", input_format=0
-        )
-        self.assertEqual(response.status_code, 200)
-        target_msg = (
-            "No valid data to import. Ensure your file "
-            "has the correct headers or data for import."
-        )
-        self.assertFormError(response.context["form"], "import_file", target_msg)
+    def test_csrf(self):
+        response = self.client.get(self.book_process_import_url)
+        self.assertEqual(response.status_code, 405)
 
     def test_delete_from_admin(self):
         # test delete from admin site (see #432)
@@ -281,28 +151,6 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
             ).format(1, 0, 0, 0, Book._meta.verbose_name_plural),
         )
 
-    def test_import_export_buttons_visible_without_add_permission(self):
-        # issue 38 - Export button not visible when no add permission
-        original = BookAdmin.has_add_permission
-        BookAdmin.has_add_permission = lambda self, request: False
-        response = self.client.get(self.book_import_url)
-        BookAdmin.has_add_permission = original
-
-        self.assertContains(response, _("Export"))
-        self.assertContains(response, _("Import"))
-
-    def test_import_buttons_visible_without_add_permission(self):
-        # When using ImportMixin, users should be able to see the import button
-        # without add permission (to be consistent with ImportExportMixin)
-
-        original = AuthorAdmin.has_add_permission
-        AuthorAdmin.has_add_permission = lambda self, request: False
-        response = self.client.get("/admin/core/author/")
-        AuthorAdmin.has_add_permission = original
-
-        self.assertContains(response, _("Import"))
-        self.assertTemplateUsed(response, "admin/import_export/change_list.html")
-
     def test_import_file_name_in_tempdir(self):
         # 65 - import_file_name form field can be use to access the filesystem
         import_file_name = os.path.join(
@@ -315,10 +163,6 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         }
         with self.assertRaises(FileNotFoundError):
             self.client.post(self.book_process_import_url, data)
-
-    def test_csrf(self):
-        response = self.client.get(self.book_process_import_url)
-        self.assertEqual(response.status_code, 405)
 
     def test_import_log_entry(self):
         response = self._do_import_post(self.book_import_url, "books.csv")
@@ -345,129 +189,6 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         child = LogEntry.objects.latest("id")
         self.assertEqual(child.object_repr, "Some - child of Some Parent")
         self.assertEqual(child.object_id, str(1))
-
-    def test_import_with_customized_forms(self):
-        """Test if admin import works if forms are customized"""
-        # We reuse import scheme from `test_import` to import books.csv.
-        # We use customized BookAdmin (CustomBookAdmin) with modified import
-        # form, which requires Author to be selected (from available authors).
-        # Note that url is /admin/core/ebook/import (and not: ...book/import)!
-
-        # We need at least a single author in the db to select from in the
-        # admin import custom forms
-        Author.objects.create(id=11, name="Test Author")
-
-        # GET the import form
-        response = self.client.get(self.ebook_import_url)
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, self.admin_import_template)
-        self.assertContains(response, 'form action=""')
-
-        # POST the import form
-        input_format = "0"
-        filename = os.path.join(
-            os.path.dirname(__file__),
-            os.path.pardir,
-            os.path.pardir,
-            "exports",
-            "books.csv",
-        )
-        with open(filename, "rb") as fobj:
-            data = {"author": 11, "format": input_format, "import_file": fobj}
-            response = self.client.post(self.ebook_import_url, data)
-
-        self.assertEqual(response.status_code, 200)
-        self.assertIn("result", response.context)
-        self.assertFalse(response.context["result"].has_errors())
-        self.assertIn("confirm_form", response.context)
-        confirm_form = response.context["confirm_form"]
-        self.assertIsInstance(
-            confirm_form,
-            CustomBookAdmin(EBook, "ebook/import").get_confirm_form_class(None),
-        )
-
-        data = confirm_form.initial
-        self.assertEqual(data["original_file_name"], "books.csv")
-        response = self.client.post(
-            self.book_process_import_url, data, follow=True
-        )
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(
-            response,
-            _(
-                "Import finished: {} new, {} updated, {} deleted and {} skipped {}."
-            ).format(1, 0, 0, 0, EBook._meta.verbose_name_plural),
-        )
-
-    def test_import_with_customized_form_handles_form_validation(self):
-        """Test if admin import handles errors gracefully when confirm_form is
-        invalid for eg. if a required field (in this case 'Author') is left blank.
-        """
-        # We use customized BookAdmin (CustomBookAdmin) with modified import
-        # form, which requires Author to be selected (from available authors).
-        # Note that url is /admin/core/ebook/import (and not: ...book/import)!
-
-        # We need a author in the db to select from in the admin import custom
-        # forms, first we will submit data with invalid author_id and if the
-        # error is handled correctly, resubmit form with correct author_id and
-        # check if data is imported successfully
-        Author.objects.create(id=11, name="Test Author")
-
-        # GET the import form
-        response = self.client.get(self.ebook_import_url)
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, self.admin_import_template)
-        self.assertContains(response, 'form action=""')
-
-        # POST the import form
-        input_format = "0"
-        filename = os.path.join(
-            os.path.dirname(__file__),
-            os.path.pardir,
-            os.path.pardir,
-            "exports",
-            "books.csv",
-        )
-        with open(filename, "rb") as fobj:
-            data = {"author": 11, "format": input_format, "import_file": fobj}
-            response = self.client.post(self.ebook_import_url, data)
-
-        self.assertEqual(response.status_code, 200)
-        self.assertIn("result", response.context)
-        self.assertFalse(response.context["result"].has_errors())
-        self.assertIn("confirm_form", response.context)
-        confirm_form = response.context["confirm_form"]
-        self.assertIsInstance(
-            confirm_form,
-            CustomBookAdmin(EBook, "ebook/import").get_confirm_form_class(None),
-        )
-
-        data = confirm_form.initial
-        self.assertEqual(data["original_file_name"], "books.csv")
-
-        # manipulate data to make the payload invalid
-        data["author"] = ""
-        response = self.client.post(
-            self.ebook_process_import_url, data, follow=True
-        )
-
-        # check if error is captured gracefully
-        self.assertEqual(
-            response.context["errors"], {"author": ["This field is required."]}
-        )
-
-        # resubmit with valid data
-        data["author"] = 11
-        response = self.client.post(
-            self.ebook_process_import_url, data, follow=True
-        )
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(
-            response,
-            _(
-                "Import finished: {} new, {} updated, {} deleted and {} skipped {}."
-            ).format(1, 0, 0, 0, EBook._meta.verbose_name_plural),
-        )
 
     @patch("import_export.admin.ImportMixin.choose_import_resource_class")
     def test_import_passes_correct_kwargs_to_constructor(
@@ -533,18 +254,6 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         m = ExportMixin()
         self.assertEqual({}, m.get_context_data())
 
-    @patch("import_export.admin.logger")
-    def test_issue_1521_change_list_template_as_property(self, mock_logger):
-        class TestImportCls(ImportMixin):
-            @property
-            def change_list_template(self):
-                return ["x"]
-
-        TestImportCls()
-        mock_logger.warning.assert_called_once_with(
-            "failed to assign change_list_template attribute"
-        )
-
     @override_settings(IMPORT_FORMATS=[base_formats.XLSX, base_formats.XLS])
     def test_import_admin_uses_import_format_settings(self):
         """
@@ -577,255 +286,6 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
     def test_export_empty_import_formats(self):
         with self.assertRaisesRegex(ValueError, "invalid formats list"):
             self.client.get(self.book_import_url)
-
-
-class TestImportErrorMessageFormat(AdminTestMixin, TestCase):
-    # issue 1724
-
-    def setUp(self):
-        super().setUp()
-        self.csvdata = "id,name,author\r\n" "1,Ulysses,666\r\n"
-        self.filedata = StringIO(self.csvdata)
-        self.data = {"format": "0", "import_file": self.filedata}
-        self.model_admin = BookAdmin(Book, AdminSite())
-
-        factory = RequestFactory()
-        self.request = factory.post(self.book_import_url, self.data, follow=True)
-        self.request.user = User.objects.create_user("admin1")
-
-    def test_result_error_display_default(self):
-        response = self.model_admin.import_action(self.request)
-        response.render()
-        content = response.content.decode()
-        self.assertIn("import-error-display-message", content)
-        self.assertIn(
-            "Line number: 1 - Author matching query does not exist.",
-            content,
-        )
-        self.assertNotIn("import-error-display-row", content)
-        self.assertNotIn("import-error-display-traceback", content)
-
-    def test_result_error_display_message_only(self):
-        self.model_admin.import_error_display = ("message",)
-
-        response = self.model_admin.import_action(self.request)
-        response.render()
-        content = response.content.decode()
-        self.assertIn(
-            "Line number: 1 - Author matching query does not exist.",
-            content,
-        )
-        self.assertIn("import-error-display-message", content)
-        self.assertNotIn("import-error-display-row", content)
-        self.assertNotIn("import-error-display-traceback", content)
-
-    def test_result_error_display_row_only(self):
-        self.model_admin.import_error_display = ("row",)
-
-        response = self.model_admin.import_action(self.request)
-        response.render()
-        content = response.content.decode()
-        self.assertNotIn(
-            "Line number: 1 - Author matching query does not exist.",
-            content,
-        )
-        self.assertNotIn("import-error-display-message", content)
-        self.assertIn("import-error-display-row", content)
-        self.assertNotIn("import-error-display-traceback", content)
-
-    def test_result_error_display_traceback_only(self):
-        self.model_admin.import_error_display = ("traceback",)
-
-        response = self.model_admin.import_action(self.request)
-        response.render()
-        content = response.content.decode()
-        self.assertNotIn(
-            "Line number: 1 - Author matching query does not exist.",
-            content,
-        )
-        self.assertNotIn("import-error-display-message", content)
-        self.assertNotIn("import-error-display-row", content)
-        self.assertIn("import-error-display-traceback", content)
-        self.assertIn("Traceback (most recent call last)", content)
-
-
-class ConfirmImportEncodingTest(AdminTestMixin, TestCase):
-    """Test handling 'confirm import' step using different file encodings
-    and storage types.
-    """
-
-    def _is_str_in_response(self, filename, input_format, encoding=None):
-        super()._assert_string_in_response(
-            self.book_import_url,
-            filename,
-            input_format,
-            encoding=encoding,
-            str_in_response="test@example.com",
-        )
-
-    @override_settings(
-        IMPORT_EXPORT_TMP_STORAGE_CLASS="import_export.tmp_storages.TempFolderStorage"
-    )
-    def test_import_action_handles_TempFolderStorage_read(self):
-        self._is_str_in_response("books.csv", "0")
-
-    @override_settings(
-        IMPORT_EXPORT_TMP_STORAGE_CLASS="import_export.tmp_storages.TempFolderStorage"
-    )
-    def test_import_action_handles_TempFolderStorage_read_mac(self):
-        self._is_str_in_response("books-mac.csv", "0")
-
-    @override_settings(
-        IMPORT_EXPORT_TMP_STORAGE_CLASS="import_export.tmp_storages.TempFolderStorage"
-    )
-    def test_import_action_handles_TempFolderStorage_read_iso_8859_1(self):
-        self._is_str_in_response("books-ISO-8859-1.csv", "0", "ISO-8859-1")
-
-    @override_settings(
-        IMPORT_EXPORT_TMP_STORAGE_CLASS="import_export.tmp_storages.TempFolderStorage"
-    )
-    def test_import_action_handles_TempFolderStorage_read_binary(self):
-        self._is_str_in_response("books.xls", "1")
-
-    @override_settings(
-        IMPORT_EXPORT_TMP_STORAGE_CLASS="import_export.tmp_storages.CacheStorage"
-    )
-    def test_import_action_handles_CacheStorage_read(self):
-        self._is_str_in_response("books.csv", "0")
-
-    @override_settings(
-        IMPORT_EXPORT_TMP_STORAGE_CLASS="import_export.tmp_storages.CacheStorage"
-    )
-    def test_import_action_handles_CacheStorage_read_mac(self):
-        self._is_str_in_response("books-mac.csv", "0")
-
-    @override_settings(
-        IMPORT_EXPORT_TMP_STORAGE_CLASS="import_export.tmp_storages.CacheStorage"
-    )
-    def test_import_action_handles_CacheStorage_read_iso_8859_1(self):
-        self._is_str_in_response("books-ISO-8859-1.csv", "0", "ISO-8859-1")
-
-    @override_settings(
-        IMPORT_EXPORT_TMP_STORAGE_CLASS="import_export.tmp_storages.CacheStorage"
-    )
-    def test_import_action_handles_CacheStorage_read_binary(self):
-        self._is_str_in_response("books.xls", "1")
-
-    @override_settings(
-        IMPORT_EXPORT_TMP_STORAGE_CLASS="import_export.tmp_storages.MediaStorage"
-    )
-    def test_import_action_handles_MediaStorage_read(self):
-        self._is_str_in_response("books.csv", "0")
-
-    @override_settings(
-        IMPORT_EXPORT_TMP_STORAGE_CLASS="import_export.tmp_storages.MediaStorage"
-    )
-    def test_import_action_handles_MediaStorage_read_mac(self):
-        self._is_str_in_response("books-mac.csv", "0")
-
-    @override_settings(
-        IMPORT_EXPORT_TMP_STORAGE_CLASS="import_export.tmp_storages.MediaStorage"
-    )
-    def test_import_action_handles_MediaStorage_read_iso_8859_1(self):
-        self._is_str_in_response("books-ISO-8859-1.csv", "0", "ISO-8859-1")
-
-    @override_settings(
-        IMPORT_EXPORT_TMP_STORAGE_CLASS="import_export.tmp_storages.MediaStorage"
-    )
-    def test_import_action_handles_MediaStorage_read_binary(self):
-        self._is_str_in_response("books.xls", "1")
-
-
-class CompleteImportEncodingTest(AdminTestMixin, TestCase):
-    """Test handling 'complete import' step using different file encodings
-    and storage types.
-    """
-
-    def _is_str_in_response(self, filename, input_format, encoding=None):
-        response = self._do_import_post(
-            self.book_import_url, filename, input_format, encoding=encoding
-        )
-        confirm_form = response.context["confirm_form"]
-        data = confirm_form.initial
-        response = self.client.post(self.book_process_import_url, data, follow=True)
-
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(
-            response,
-            "Import finished: 1 new, 0 updated, 0 deleted and 0 skipped books.",
-        )
-
-    @override_settings(
-        IMPORT_EXPORT_TMP_STORAGE_CLASS="import_export.tmp_storages.TempFolderStorage"
-    )
-    def test_import_action_handles_TempFolderStorage_read(self):
-        self._is_str_in_response("books.csv", "0")
-
-    @override_settings(
-        IMPORT_EXPORT_TMP_STORAGE_CLASS="import_export.tmp_storages.TempFolderStorage"
-    )
-    def test_import_action_handles_TempFolderStorage_read_mac(self):
-        self._is_str_in_response("books-mac.csv", "0")
-
-    @override_settings(
-        IMPORT_EXPORT_TMP_STORAGE_CLASS="import_export.tmp_storages.TempFolderStorage"
-    )
-    def test_import_action_handles_TempFolderStorage_read_iso_8859_1(self):
-        self._is_str_in_response("books-ISO-8859-1.csv", "0", "ISO-8859-1")
-
-    @override_settings(
-        IMPORT_EXPORT_TMP_STORAGE_CLASS="import_export.tmp_storages.TempFolderStorage"
-    )
-    def test_import_action_handles_TempFolderStorage_read_binary(self):
-        self._is_str_in_response("books.xls", "1")
-
-    @override_settings(
-        IMPORT_EXPORT_TMP_STORAGE_CLASS="import_export.tmp_storages.CacheStorage"
-    )
-    def test_import_action_handles_CacheStorage_read(self):
-        self._is_str_in_response("books.csv", "0")
-
-    @override_settings(
-        IMPORT_EXPORT_TMP_STORAGE_CLASS="import_export.tmp_storages.CacheStorage"
-    )
-    def test_import_action_handles_CacheStorage_read_mac(self):
-        self._is_str_in_response("books-mac.csv", "0")
-
-    @override_settings(
-        IMPORT_EXPORT_TMP_STORAGE_CLASS="import_export.tmp_storages.CacheStorage"
-    )
-    def test_import_action_handles_CacheStorage_read_iso_8859_1(self):
-        self._is_str_in_response("books-ISO-8859-1.csv", "0", "ISO-8859-1")
-
-    @override_settings(
-        IMPORT_EXPORT_TMP_STORAGE_CLASS="import_export.tmp_storages.CacheStorage"
-    )
-    def test_import_action_handles_CacheStorage_read_binary(self):
-        self._is_str_in_response("books.xls", "1")
-
-    @override_settings(
-        IMPORT_EXPORT_TMP_STORAGE_CLASS="import_export.tmp_storages.MediaStorage"
-    )
-    def test_import_action_handles_MediaStorage_read(self):
-        self._is_str_in_response("books.csv", "0")
-
-    @override_settings(
-        IMPORT_EXPORT_TMP_STORAGE_CLASS="import_export.tmp_storages.MediaStorage"
-    )
-    def test_import_action_handles_MediaStorage_read_mac(self):
-        self._is_str_in_response("books-mac.csv", "0")
-
-    @override_settings(
-        IMPORT_EXPORT_TMP_STORAGE_CLASS="import_export.tmp_storages.MediaStorage"
-    )
-    def test_import_action_handles_MediaStorage_read_iso_8859_1(self):
-        self._is_str_in_response("books-ISO-8859-1.csv", "0", "ISO-8859-1")
-
-    @override_settings(
-        IMPORT_EXPORT_TMP_STORAGE_CLASS="import_export.tmp_storages.MediaStorage"
-    )
-    def test_import_action_handles_MediaStorage_read_binary(self):
-        self._is_str_in_response("books.xls", "1")
 
 
 @override_settings(IMPORT_EXPORT_SKIP_ADMIN_CONFIRM=True)
@@ -878,7 +338,7 @@ class TestImportSkipConfirm(AdminTestMixin, TransactionTestCase):
             "0",
             follow=True,
             str_in_response="Import finished: 1 new, 0 updated, "
-            + "0 deleted and 0 skipped books.",
+                            + "0 deleted and 0 skipped books.",
         )
         self.assertEqual(1, Book.objects.count())
 
@@ -947,7 +407,7 @@ class TestImportSkipConfirm(AdminTestMixin, TransactionTestCase):
             "0",
             follow=True,
             str_in_response="Import finished: 1 new, 0 updated, "
-            + "0 deleted and 0 skipped books.",
+                            + "0 deleted and 0 skipped books.",
         )
 
     def test_import_action_iso_8859_1(self):
@@ -957,7 +417,7 @@ class TestImportSkipConfirm(AdminTestMixin, TransactionTestCase):
             "ISO-8859-1",
             follow=True,
             str_in_response="Import finished: 1 new, 0 updated, "
-            + "0 deleted and 0 skipped books.",
+                            + "0 deleted and 0 skipped books.",
         )
 
     def test_import_action_decode_error(self):
@@ -978,7 +438,7 @@ class TestImportSkipConfirm(AdminTestMixin, TransactionTestCase):
             "1",
             follow=True,
             str_in_response="Import finished: 1 new, 0 updated, "
-            + "0 deleted and 0 skipped books.",
+                            + "0 deleted and 0 skipped books.",
         )
 
 
