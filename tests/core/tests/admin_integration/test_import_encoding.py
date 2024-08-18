@@ -1,20 +1,6 @@
-import os
-from io import StringIO
-from unittest import mock
-
 from core.tests.admin_integration.mixins import AdminTestMixin
-from django.contrib.admin.sites import AdminSite
-from django.contrib.auth.models import User
-from django.test import RequestFactory
 from django.test.testcases import TestCase
 from django.test.utils import override_settings
-from django.utils.translation import gettext_lazy as _
-
-from import_export.admin import ExportMixin
-from import_export.exceptions import FieldError
-from import_export.formats import base_formats
-from import_export.formats.base_formats import XLSX
-from import_export.resources import ModelResource
 
 
 class ConfirmImportEncodingTest(AdminTestMixin, TestCase):

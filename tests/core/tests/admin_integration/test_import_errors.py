@@ -1,30 +1,21 @@
 import os
 from io import StringIO
 from unittest import mock
-from unittest.mock import PropertyMock, patch
 
 from core.admin import (
-    AuthorAdmin,
     BookAdmin,
     CustomBookAdmin,
-    EBookResource,
-    ImportMixin,
 )
-from core.models import Author, Book, EBook, Parent
+from core.models import Author, Book, EBook
 from core.tests.admin_integration.mixins import AdminTestMixin
-from django.contrib.admin.models import DELETION, LogEntry
 from django.contrib.admin.sites import AdminSite
 from django.contrib.auth.models import User
 from django.test import RequestFactory
-from django.test.testcases import TestCase, TransactionTestCase
+from django.test.testcases import TestCase
 from django.test.utils import override_settings
 from django.utils.translation import gettext_lazy as _
 
-from import_export.admin import ExportMixin
 from import_export.exceptions import FieldError
-from import_export.formats import base_formats
-from import_export.formats.base_formats import XLSX
-from import_export.resources import ModelResource
 
 
 class ImportErrorHandlingTests(AdminTestMixin, TestCase):
@@ -98,11 +89,11 @@ class ImportErrorHandlingTests(AdminTestMixin, TestCase):
         Author.objects.create(id=11, name="Test Author")
 
         # GET the import form
-        response = self.client.get(self.ebook_import_url)
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, self.admin_import_template)
-        self.assertContains(response, 'form action=""')
-
+        response = self._get_url_response(
+            self.ebook_import_url,
+            str_in_response='form action=""'
+        )
+        self.assertTemplateUsed(response, self.admin_import_template_url)
         # POST the import form
         input_format = "0"
         filename = os.path.join(
@@ -174,6 +165,24 @@ class ImportErrorHandlingTests(AdminTestMixin, TestCase):
             mock_save.side_effect = ValueError("some unknown error")
             response = self._do_import_post(self.book_import_url, "books.csv")
         self.assertIn("some unknown error", response.content.decode())
+
+    def test_import_action_invalidates_data_sheet_with_no_headers_or_data(self):
+        # GET the import form
+        response = self._get_url_response(
+            self.book_import_url,
+            str_in_response='form action=""'
+        )
+        self.assertTemplateUsed(response, self.admin_import_template_url)
+
+        response = self._do_import_post(
+            self.book_import_url, "books-no-headers.csv", input_format=0
+        )
+        self.assertEqual(response.status_code, 200)
+        target_msg = (
+            "No valid data to import. Ensure your file "
+            "has the correct headers or data for import."
+        )
+        self.assertFormError(response.context["form"], "import_file", target_msg)
 
 
 class TestImportErrorMessageFormat(AdminTestMixin, TestCase):

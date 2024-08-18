@@ -260,8 +260,7 @@ class TestExportButtonOnChangeForm(AdminTestMixin, TestCase):
         )
 
     def test_export_button_on_change_form(self):
-        response = self.client.get(self.change_url)
-        self.assertIn(self.target_str, response.content.decode())
+        self._get_url_response(self.change_url, str_in_response=self.target_str)
         response = self.client.post(
             self.change_url, data={"_export-item": "Export", "name": self.cat1.name}
         )

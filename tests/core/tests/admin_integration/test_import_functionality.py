@@ -1,59 +1,26 @@
 import os
-from io import StringIO
 from unittest import mock
 from unittest.mock import PropertyMock, patch
 
 from core.admin import (
-    AuthorAdmin,
     BookAdmin,
-    CustomBookAdmin,
     EBookResource,
     ImportMixin,
 )
-from core.models import Author, Book, EBook, Parent
+from core.models import Author, Book, Parent
 from core.tests.admin_integration.mixins import AdminTestMixin
 from django.contrib.admin.models import DELETION, LogEntry
-from django.contrib.admin.sites import AdminSite
-from django.contrib.auth.models import User
-from django.test import RequestFactory
 from django.test.testcases import TestCase, TransactionTestCase
 from django.test.utils import override_settings
 from django.utils.translation import gettext_lazy as _
 
 from import_export.admin import ExportMixin
-from import_export.exceptions import FieldError
 from import_export.formats import base_formats
 from import_export.formats.base_formats import XLSX
 from import_export.resources import ModelResource
 
 
 class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
-
-    @override_settings(TEMPLATE_STRING_IF_INVALID="INVALID_VARIABLE")
-    def test_import(self):
-        # GET the import form
-        response = self.client.get(self.book_import_url)
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, self.admin_import_template)
-        self.assertContains(response, 'form action=""')
-
-        response = self._do_import_post(self.book_import_url, "books.csv")
-        self.assertEqual(response.status_code, 200)
-        self.assertIn("result", response.context)
-        self.assertFalse(response.context["result"].has_errors())
-        self.assertIn("confirm_form", response.context)
-        confirm_form = response.context["confirm_form"]
-
-        data = confirm_form.initial
-        self.assertEqual(data["original_file_name"], "books.csv")
-        response = self.client.post(self.book_process_import_url, data, follow=True)
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(
-            response,
-            _(
-                "Import finished: {} new, {} updated, {} deleted and {} skipped {}."
-            ).format(1, 0, 0, 0, Book._meta.verbose_name_plural),
-        )
 
     @patch(
         "core.admin.BookAdmin.skip_import_confirm",
@@ -69,41 +36,6 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
                 "Import finished: {} new, {} updated, {} deleted and {} skipped {}."
             ).format(1, 0, 0, 0, Book._meta.verbose_name_plural),
         )
-
-    @override_settings(TEMPLATE_STRING_IF_INVALID="INVALID_VARIABLE")
-    def test_import_second_resource(self):
-        Book.objects.create(id=1)
-
-        # GET the import form
-        response = self.client.get(self.book_import_url)
-        self.assertContains(response, "Export/Import only book names")
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, self.admin_import_template)
-        self.assertContains(response, 'form action=""')
-
-        response = self._do_import_post(self.book_import_url, "books.csv", resource=1)
-        self.assertEqual(response.status_code, 200)
-        self.assertIn("result", response.context)
-        self.assertFalse(response.context["result"].has_errors())
-        self.assertIn("confirm_form", response.context)
-        confirm_form = response.context["confirm_form"]
-
-        data = confirm_form.initial
-        self.assertEqual(data["original_file_name"], "books.csv")
-        response = self.client.post(self.book_process_import_url, data, follow=True)
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(
-            response,
-            _(
-                "Import finished: {} new, {} updated, {} deleted and {} skipped {}."
-            ).format(0, 1, 0, 0, Book._meta.verbose_name_plural),
-        )
-        # Check, that we really use second resource - author_email didn't get imported
-        self.assertEqual(Book.objects.get(id=1).author_email, "")
-
-    def test_csrf(self):
-        response = self.client.get(self.book_process_import_url)
-        self.assertEqual(response.status_code, 405)
 
     def test_delete_from_admin(self):
         # test delete from admin site (see #432)
@@ -126,70 +58,6 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertEqual("", deleted_entry.object_repr)
 
     @override_settings(TEMPLATE_STRING_IF_INVALID="INVALID_VARIABLE")
-    def test_import_mac(self):
-        # GET the import form
-        response = self.client.get(self.book_import_url)
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, self.admin_import_template)
-        self.assertContains(response, 'form action=""')
-
-        response = self._do_import_post(self.book_import_url, "books-mac.csv")
-        self.assertEqual(response.status_code, 200)
-        self.assertIn("result", response.context)
-        self.assertFalse(response.context["result"].has_errors())
-        self.assertIn("confirm_form", response.context)
-        confirm_form = response.context["confirm_form"]
-
-        data = confirm_form.initial
-        self.assertEqual(data["original_file_name"], "books-mac.csv")
-        response = self.client.post(self.book_process_import_url, data, follow=True)
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(
-            response,
-            _(
-                "Import finished: {} new, {} updated, {} deleted and {} skipped {}."
-            ).format(1, 0, 0, 0, Book._meta.verbose_name_plural),
-        )
-
-    def test_import_file_name_in_tempdir(self):
-        # 65 - import_file_name form field can be use to access the filesystem
-        import_file_name = os.path.join(
-            os.path.dirname(__file__), os.path.pardir, "exports", "books.csv"
-        )
-        data = {
-            "format": "0",
-            "import_file_name": import_file_name,
-            "original_file_name": "books.csv",
-        }
-        with self.assertRaises(FileNotFoundError):
-            self.client.post(self.book_process_import_url, data)
-
-    def test_import_log_entry(self):
-        response = self._do_import_post(self.book_import_url, "books.csv")
-
-        self.assertEqual(response.status_code, 200)
-        confirm_form = response.context["confirm_form"]
-        data = confirm_form.initial
-        response = self.client.post(self.book_process_import_url, data, follow=True)
-        self.assertEqual(response.status_code, 200)
-        book = LogEntry.objects.latest("id")
-        self.assertEqual(book.object_repr, "Some book")
-        self.assertEqual(book.object_id, str(1))
-
-    def test_import_log_entry_with_fk(self):
-        Parent.objects.create(id=1234, name="Some Parent")
-        response = self._do_import_post(self.child_import_url, "child.csv")
-        self.assertEqual(response.status_code, 200)
-        confirm_form = response.context["confirm_form"]
-        data = confirm_form.initial
-        response = self.client.post(
-            self.child_process_import_url, data, follow=True
-        )
-        self.assertEqual(response.status_code, 200)
-        child = LogEntry.objects.latest("id")
-        self.assertEqual(child.object_repr, "Some - child of Some Parent")
-        self.assertEqual(child.object_id, str(1))
-
     @patch("import_export.admin.ImportMixin.choose_import_resource_class")
     def test_import_passes_correct_kwargs_to_constructor(
         self, mock_choose_import_resource_class
@@ -213,11 +81,6 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
 
         response = self._do_import_post(self.book_import_url, "books.csv")
         self.assertEqual(response.status_code, 200)
-
-    def test_get_skip_admin_log_attribute(self):
-        m = ImportMixin()
-        m.skip_admin_log = True
-        self.assertTrue(m.get_skip_admin_log())
 
     def test_get_tmp_storage_class_attribute(self):
         """Mock dynamically loading a class defined by an attribute"""
@@ -260,7 +123,7 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         Test that import form only avails the formats provided by the
         IMPORT_FORMATS setting
         """
-        request = self.client.get(self.book_import_url).wsgi_request
+        request = self._get_url_response(self.book_import_url).wsgi_request
         mock_site = mock.MagicMock()
         import_form = BookAdmin(Book, mock_site).create_import_form(request)
 
@@ -274,7 +137,7 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
 
     @override_settings(IMPORT_FORMATS=[XLSX])
     def test_get_export_form_single_format(self):
-        response = self.client.get(self.book_import_url)
+        response = self._get_url_response(self.book_import_url)
         form = response.context["form"]
         self.assertEqual(1, len(form.fields["format"].choices))
         self.assertTrue(form.fields["format"].widget.attrs["readonly"])
@@ -285,7 +148,126 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
     @override_settings(IMPORT_FORMATS=[])
     def test_export_empty_import_formats(self):
         with self.assertRaisesRegex(ValueError, "invalid formats list"):
-            self.client.get(self.book_import_url)
+            self._get_url_response(self.book_import_url)
+
+
+class ImportFileHandlingTests(AdminTestMixin, TestCase):
+    @override_settings(TEMPLATE_STRING_IF_INVALID="INVALID_VARIABLE")
+    def test_import(self):
+        # GET the import form
+        response = self._get_url_response(
+            self.book_import_url,
+            str_in_response='form action=""')
+        self.assertTemplateUsed(response, self.admin_import_template_url)
+
+        response = self._do_import_post(self.book_import_url, "books.csv")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("result", response.context)
+        self.assertFalse(response.context["result"].has_errors())
+        self.assertIn("confirm_form", response.context)
+        confirm_form = response.context["confirm_form"]
+
+        data = confirm_form.initial
+        self.assertEqual(data["original_file_name"], "books.csv")
+        response = self.client.post(self.book_process_import_url, data, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response,
+            _(
+                "Import finished: {} new, {} updated, {} deleted and {} skipped {}."
+            ).format(1, 0, 0, 0, Book._meta.verbose_name_plural),
+        )
+
+    def test_import_mac(self):
+        # GET the import form
+        response = self._get_url_response(
+            self.book_import_url,
+            str_in_response='form action=""'
+        )
+        self.assertTemplateUsed(response, self.admin_import_template_url)
+
+        response = self._do_import_post(self.book_import_url, "books-mac.csv")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("result", response.context)
+        self.assertFalse(response.context["result"].has_errors())
+        self.assertIn("confirm_form", response.context)
+        confirm_form = response.context["confirm_form"]
+
+        data = confirm_form.initial
+        self.assertEqual(data["original_file_name"], "books-mac.csv")
+        response = self.client.post(self.book_process_import_url, data, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response,
+            _(
+                "Import finished: {} new, {} updated, {} deleted and {} skipped {}."
+            ).format(1, 0, 0, 0, Book._meta.verbose_name_plural),
+        )
+
+    @override_settings(TEMPLATE_STRING_IF_INVALID="INVALID_VARIABLE")
+    def test_import_second_resource(self):
+        Book.objects.create(id=1)
+
+        # GET the import form
+        response = self._get_url_response(
+            self.book_import_url,
+            str_in_response="Export/Import only book names"
+        )
+        self.assertTemplateUsed(response, self.admin_import_template_url)
+        self.assertContains(response, 'form action=""')
+
+        response = self._do_import_post(self.book_import_url, "books.csv", resource=1)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("result", response.context)
+        self.assertFalse(response.context["result"].has_errors())
+        self.assertIn("confirm_form", response.context)
+        confirm_form = response.context["confirm_form"]
+
+        data = confirm_form.initial
+        self.assertEqual(data["original_file_name"], "books.csv")
+        response = self.client.post(self.book_process_import_url, data, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response,
+            _(
+                "Import finished: {} new, {} updated, {} deleted and {} skipped {}."
+            ).format(0, 1, 0, 0, Book._meta.verbose_name_plural),
+        )
+        # Check, that we really use second resource - author_email didn't get imported
+        self.assertEqual(Book.objects.get(id=1).author_email, "")
+
+
+class ImportLogEntryTest(AdminTestMixin, TestCase):
+    def test_import_log_entry(self):
+        response = self._do_import_post(self.book_import_url, "books.csv")
+
+        self.assertEqual(response.status_code, 200)
+        confirm_form = response.context["confirm_form"]
+        data = confirm_form.initial
+        response = self.client.post(self.book_process_import_url, data, follow=True)
+        self.assertEqual(response.status_code, 200)
+        book = LogEntry.objects.latest("id")
+        self.assertEqual(book.object_repr, "Some book")
+        self.assertEqual(book.object_id, str(1))
+
+    def test_import_log_entry_with_fk(self):
+        Parent.objects.create(id=1234, name="Some Parent")
+        response = self._do_import_post(self.child_import_url, "child.csv")
+        self.assertEqual(response.status_code, 200)
+        confirm_form = response.context["confirm_form"]
+        data = confirm_form.initial
+        response = self.client.post(
+            self.child_process_import_url, data, follow=True
+        )
+        self.assertEqual(response.status_code, 200)
+        child = LogEntry.objects.latest("id")
+        self.assertEqual(child.object_repr, "Some - child of Some Parent")
+        self.assertEqual(child.object_id, str(1))
+
+    def test_get_skip_admin_log_attribute(self):
+        m = ImportMixin()
+        m.skip_admin_log = True
+        self.assertTrue(m.get_skip_admin_log())
 
 
 @override_settings(IMPORT_EXPORT_SKIP_ADMIN_CONFIRM=True)
@@ -540,7 +522,7 @@ class DefaultFieldsImportOrderTest(AdminTestMixin, TestCase):
     """
 
     def test_import_preview_order(self):
-        response = self.client.get(self.ebook_import_url)
+        response = self._get_url_response(self.ebook_import_url)
         # test display rendered in correct order
         target_re = (
             r"This importer will import the following fields:[\\n\s]+"
@@ -566,7 +548,7 @@ class DeclaredImportOrderTest(AdminTestMixin, TestCase):
         EBookResource._meta.import_order = ()
 
     def test_import_preview_order(self):
-        response = self.client.get(self.ebook_import_url)
+        response = self._get_url_response(self.ebook_import_url)
         # test display rendered in correct order
         target_re = (
             r"This importer will import the following fields:[\\n\s]+"
