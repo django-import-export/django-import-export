@@ -378,9 +378,9 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
 
     def test_dynamic_coerce_to_string_derivation(self):
         """
-        Test to check if coerce_to_string is set to False,
-        that is, data is exported in appropriate data type
-        when file format supports native data types.
+        Test to ensure that when coerce_to_string is not explicitly
+        defined, data is exported in its native data type (if the file
+        format supports it) rather than being coerced to a string.
         """
         Book.objects.create(id=1, name="name", added=datetime(10, 8, 2))
         data = {
@@ -399,6 +399,28 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertEqual(False, wb.active["C2"].value)
         self.assertEqual(datetime(10, 8, 2), wb.active["D2"].value)
 
+    def test_dynamic_coerce_to_string_derivation_with_custom_resource(self):
+        """
+        Test to ensure that when coerce_to_string is explicitly defined
+        (via for eg a custom resource), exported data obeys the constraint.
+        """
+        author = Author.objects.create(name="Ian Fleming")
+        EBook.objects.create(id=1, name="name", published=date(2000, 4, 5), author=author)
+        data = {
+            "format": "2",
+            "author": author.id,
+            "resource": "",
+            "ebookresource_id": True,
+            "ebookresource_name": True,
+            "ebookresource_published": True,
+        }
+        response = self.client.post(self.ebook_export_url, data)
+        self.assertEqual(response.status_code, 200)
+        content = response.content
+        wb = load_workbook(filename=BytesIO(content))
+        self.assertEqual(1, wb.active["A2"].value)
+        self.assertEqual("name", wb.active["B2"].value)
+        self.assertEqual("2000-04-05", wb.active["C2"].value)
 
 class FilteredExportAdminIntegrationTest(AdminTestMixin, TestCase):
     fixtures = ["category", "book", "author"]

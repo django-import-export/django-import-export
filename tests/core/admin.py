@@ -7,6 +7,7 @@ from import_export.admin import (
 )
 from import_export.fields import Field
 from import_export.resources import ModelResource
+from import_export.widgets import DateWidget
 
 from .forms import CustomConfirmImportForm, CustomExportForm, CustomImportForm
 from .models import Author, Book, Category, Child, EBook, UUIDBook, UUIDCategory
@@ -67,7 +68,11 @@ class UUIDBookResource(ModelResource):
 
 
 class EBookResource(ModelResource):
-    published = Field(attribute="published", column_name="published_date")
+    published = Field(
+        attribute="published",
+        column_name="published_date",
+        widget=DateWidget(coerce_to_string=True)
+    )
     author_email = Field(attribute="author_email", column_name="Email of the author")
     auteur_name = Field(attribute="author__name", column_name="Author Name")
 
