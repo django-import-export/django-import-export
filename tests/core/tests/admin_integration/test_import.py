@@ -45,7 +45,7 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         # GET the import form
         response = self.client.get(self.book_import_url)
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "admin/import_export/import.html")
+        self.assertTemplateUsed(response, self.admin_import_template)
         self.assertContains(response, 'form action=""')
 
         response = self._do_import_post(self.book_import_url, "books.csv")
@@ -71,7 +71,7 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         new_callable=PropertyMock,
         return_value=True,
     )
-    def test_import_skips_confirm_page(self, mock_skip_import_confirm):
+    def test_import_skips_confirm_page(self):
         response = self._do_import_post(self.book_import_url, "books.csv", follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertContains(
@@ -86,7 +86,7 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         # GET the import form
         response = self.client.get(self.book_import_url)
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "admin/import_export/import.html")
+        self.assertTemplateUsed(response, self.admin_import_template)
         self.assertContains(response, 'form action=""')
         self.assertContains(
             response,
@@ -112,7 +112,7 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         # GET the import form
         response = self.client.get(self.book_import_url)
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "admin/import_export/import.html")
+        self.assertTemplateUsed(response, self.admin_import_template)
         self.assertContains(response, 'form action=""')
         self.assertContains(
             response,
@@ -141,7 +141,7 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         response = self.client.get(self.book_import_url)
         self.assertContains(response, "Export/Import only book names")
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "admin/import_export/import.html")
+        self.assertTemplateUsed(response, self.admin_import_template)
         self.assertContains(response, 'form action=""')
 
         response = self._do_import_post(self.book_import_url, "books.csv", resource=1)
@@ -222,7 +222,7 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         # GET the import form
         response = self.client.get(self.book_import_url)
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "admin/import_export/import.html")
+        self.assertTemplateUsed(response, self.admin_import_template)
         self.assertContains(response, 'form action=""')
 
         response = self._do_import_post(
@@ -260,7 +260,7 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         # GET the import form
         response = self.client.get(self.book_import_url)
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "admin/import_export/import.html")
+        self.assertTemplateUsed(response, self.admin_import_template)
         self.assertContains(response, 'form action=""')
 
         response = self._do_import_post(self.book_import_url, "books-mac.csv")
@@ -285,7 +285,7 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         # issue 38 - Export button not visible when no add permission
         original = BookAdmin.has_add_permission
         BookAdmin.has_add_permission = lambda self, request: False
-        response = self.client.get("/admin/core/book/")
+        response = self.client.get(self.book_import_url)
         BookAdmin.has_add_permission = original
 
         self.assertContains(response, _("Export"))
@@ -339,7 +339,7 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         confirm_form = response.context["confirm_form"]
         data = confirm_form.initial
         response = self.client.post(
-            "/admin/core/child/process_import/", data, follow=True
+            self.child_process_import_url, data, follow=True
         )
         self.assertEqual(response.status_code, 200)
         child = LogEntry.objects.latest("id")
@@ -358,9 +358,9 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         Author.objects.create(id=11, name="Test Author")
 
         # GET the import form
-        response = self.client.get("/admin/core/ebook/import/")
+        response = self.client.get(self.ebook_import_url)
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "admin/import_export/import.html")
+        self.assertTemplateUsed(response, self.admin_import_template)
         self.assertContains(response, 'form action=""')
 
         # POST the import form
@@ -374,7 +374,7 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         )
         with open(filename, "rb") as fobj:
             data = {"author": 11, "format": input_format, "import_file": fobj}
-            response = self.client.post("/admin/core/ebook/import/", data)
+            response = self.client.post(self.ebook_import_url, data)
 
         self.assertEqual(response.status_code, 200)
         self.assertIn("result", response.context)
@@ -389,7 +389,7 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         data = confirm_form.initial
         self.assertEqual(data["original_file_name"], "books.csv")
         response = self.client.post(
-            "/admin/core/ebook/process_import/", data, follow=True
+            self.book_process_import_url, data, follow=True
         )
         self.assertEqual(response.status_code, 200)
         self.assertContains(
@@ -414,9 +414,9 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         Author.objects.create(id=11, name="Test Author")
 
         # GET the import form
-        response = self.client.get("/admin/core/ebook/import/")
+        response = self.client.get(self.ebook_import_url)
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "admin/import_export/import.html")
+        self.assertTemplateUsed(response, self.admin_import_template)
         self.assertContains(response, 'form action=""')
 
         # POST the import form
@@ -430,7 +430,7 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         )
         with open(filename, "rb") as fobj:
             data = {"author": 11, "format": input_format, "import_file": fobj}
-            response = self.client.post("/admin/core/ebook/import/", data)
+            response = self.client.post(self.ebook_import_url, data)
 
         self.assertEqual(response.status_code, 200)
         self.assertIn("result", response.context)
@@ -448,7 +448,7 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         # manipulate data to make the payload invalid
         data["author"] = ""
         response = self.client.post(
-            "/admin/core/ebook/process_import/", data, follow=True
+            self.ebook_process_import_url, data, follow=True
         )
 
         # check if error is captured gracefully
@@ -459,7 +459,7 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         # resubmit with valid data
         data["author"] = 11
         response = self.client.post(
-            "/admin/core/ebook/process_import/", data, follow=True
+            self.ebook_process_import_url, data, follow=True
         )
         self.assertEqual(response.status_code, 200)
         self.assertContains(

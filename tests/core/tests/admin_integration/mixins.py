@@ -17,10 +17,12 @@ class AdminTestMixin:
     ebook_import_url = "/admin/core/ebook/import/"
     ebook_export_url = "/admin/core/ebook/export/"
     book_process_import_url = "/admin/core/book/process_import/"
+    ebook_process_import_url = "/admin/core/ebook/process_import/"
     legacybook_import_url = "/admin/core/legacybook/import/"
     legacybook_process_import_url = "/admin/core/legacybook/process_import/"
     child_import_url = "/admin/core/child/import/"
     child_process_import_url = "/admin/core/child/process_import/"
+    admin_import_template = "admin/import_export/import.html"
 
     def setUp(self):
         super().setUp()
