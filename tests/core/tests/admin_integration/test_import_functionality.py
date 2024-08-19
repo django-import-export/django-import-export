@@ -2,11 +2,7 @@ import os
 from unittest import mock
 from unittest.mock import PropertyMock, patch
 
-from core.admin import (
-    BookAdmin,
-    EBookResource,
-    ImportMixin,
-)
+from core.admin import BookAdmin, EBookResource, ImportMixin
 from core.models import Author, Book, Parent
 from core.tests.admin_integration.mixins import AdminTestMixin
 from django.contrib.admin.models import DELETION, LogEntry
@@ -155,8 +151,8 @@ class ImportFileHandlingTests(AdminTestMixin, TestCase):
     def test_import(self):
         # GET the import form
         response = self._get_url_response(
-            self.book_import_url,
-            str_in_response='form action=""')
+            self.book_import_url, str_in_response='form action=""'
+        )
         self.assertTemplateUsed(response, self.admin_import_template_url)
 
         response = self._do_import_post(self.book_import_url, "books.csv")
@@ -168,8 +164,9 @@ class ImportFileHandlingTests(AdminTestMixin, TestCase):
 
         data = confirm_form.initial
         self.assertEqual(data["original_file_name"], "books.csv")
-        response = self._post_url_response(self.book_process_import_url, data,
-                                           follow=True)
+        response = self._post_url_response(
+            self.book_process_import_url, data, follow=True
+        )
         self.assertContains(
             response,
             _(
@@ -180,8 +177,7 @@ class ImportFileHandlingTests(AdminTestMixin, TestCase):
     def test_import_mac(self):
         # GET the import form
         response = self._get_url_response(
-            self.book_import_url,
-            str_in_response='form action=""'
+            self.book_import_url, str_in_response='form action=""'
         )
         self.assertTemplateUsed(response, self.admin_import_template_url)
 
@@ -194,8 +190,9 @@ class ImportFileHandlingTests(AdminTestMixin, TestCase):
 
         data = confirm_form.initial
         self.assertEqual(data["original_file_name"], "books-mac.csv")
-        response = self._post_url_response(self.book_process_import_url, data,
-                                           follow=True)
+        response = self._post_url_response(
+            self.book_process_import_url, data, follow=True
+        )
         self.assertContains(
             response,
             _(
@@ -209,8 +206,7 @@ class ImportFileHandlingTests(AdminTestMixin, TestCase):
 
         # GET the import form
         response = self._get_url_response(
-            self.book_import_url,
-            str_in_response="Export/Import only book names"
+            self.book_import_url, str_in_response="Export/Import only book names"
         )
         self.assertTemplateUsed(response, self.admin_import_template_url)
         self.assertContains(response, 'form action=""')
@@ -224,8 +220,9 @@ class ImportFileHandlingTests(AdminTestMixin, TestCase):
 
         data = confirm_form.initial
         self.assertEqual(data["original_file_name"], "books.csv")
-        response = self._post_url_response(self.book_process_import_url, data,
-                                           follow=True)
+        response = self._post_url_response(
+            self.book_process_import_url, data, follow=True
+        )
         self.assertContains(
             response,
             _(
@@ -243,8 +240,9 @@ class ImportLogEntryTest(AdminTestMixin, TestCase):
         self.assertEqual(response.status_code, 200)
         confirm_form = response.context["confirm_form"]
         data = confirm_form.initial
-        response = self._post_url_response(self.book_process_import_url, data,
-                                           follow=True)
+        response = self._post_url_response(
+            self.book_process_import_url, data, follow=True
+        )
         book = LogEntry.objects.latest("id")
         self.assertEqual(book.object_repr, "Some book")
         self.assertEqual(book.object_id, str(1))
@@ -255,9 +253,7 @@ class ImportLogEntryTest(AdminTestMixin, TestCase):
         self.assertEqual(response.status_code, 200)
         confirm_form = response.context["confirm_form"]
         data = confirm_form.initial
-        self._post_url_response(
-            self.child_process_import_url, data, follow=True
-        )
+        self._post_url_response(self.child_process_import_url, data, follow=True)
         child = LogEntry.objects.latest("id")
         self.assertEqual(child.object_repr, "Some - child of Some Parent")
         self.assertEqual(child.object_id, str(1))
@@ -318,7 +314,7 @@ class TestImportSkipConfirm(AdminTestMixin, TransactionTestCase):
             "0",
             follow=True,
             str_in_response="Import finished: 1 new, 0 updated, "
-                            + "0 deleted and 0 skipped books.",
+            + "0 deleted and 0 skipped books.",
         )
         self.assertEqual(1, Book.objects.count())
 
@@ -387,7 +383,7 @@ class TestImportSkipConfirm(AdminTestMixin, TransactionTestCase):
             "0",
             follow=True,
             str_in_response="Import finished: 1 new, 0 updated, "
-                            + "0 deleted and 0 skipped books.",
+            + "0 deleted and 0 skipped books.",
         )
 
     def test_import_action_iso_8859_1(self):
@@ -397,7 +393,7 @@ class TestImportSkipConfirm(AdminTestMixin, TransactionTestCase):
             "ISO-8859-1",
             follow=True,
             str_in_response="Import finished: 1 new, 0 updated, "
-                            + "0 deleted and 0 skipped books.",
+            + "0 deleted and 0 skipped books.",
         )
 
     def test_import_action_decode_error(self):
@@ -418,7 +414,7 @@ class TestImportSkipConfirm(AdminTestMixin, TransactionTestCase):
             "1",
             follow=True,
             str_in_response="Import finished: 1 new, 0 updated, "
-                            + "0 deleted and 0 skipped books.",
+            + "0 deleted and 0 skipped books.",
         )
 
 

@@ -31,9 +31,6 @@ class AdminTestMixin:
     change_list_template_url = "admin/import_export/change_list_import_export.html"
     import_export_import_template_url = "admin/import_export/import.html"
 
-
-
-
     def setUp(self):
         super().setUp()
         self.user = User.objects.create_user("admin", "admin@example.com", "password")
@@ -128,8 +125,9 @@ class AdminTestMixin:
         if str_in_response is not None:
             assert str_in_response in response.content.decode()
         if html:
-            assert "text/html" in response.headers[
-                "Content-Type"], "Response is not HTML"
+            assert (
+                "text/html" in response.headers["Content-Type"]
+            ), "Response is not HTML"
         return response
 
     def _post_url_response(self, url, data, expected_status_code=200, follow=False):

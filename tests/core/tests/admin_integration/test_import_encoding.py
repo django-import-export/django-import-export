@@ -101,8 +101,9 @@ class CompleteImportEncodingTest(AdminTestMixin, TestCase):
         )
         confirm_form = response.context["confirm_form"]
         data = confirm_form.initial
-        response = self._post_url_response(self.book_process_import_url, data,
-                                           follow=True)
+        response = self._post_url_response(
+            self.book_process_import_url, data, follow=True
+        )
         self.assertContains(
             response,
             "Import finished: 1 new, 0 updated, 0 deleted and 0 skipped books.",

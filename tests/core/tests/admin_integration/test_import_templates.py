@@ -1,12 +1,7 @@
 import os
 from unittest.mock import patch
 
-from core.admin import (
-    AuthorAdmin,
-    BookAdmin,
-    CustomBookAdmin,
-    ImportMixin,
-)
+from core.admin import AuthorAdmin, BookAdmin, CustomBookAdmin, ImportMixin
 from core.models import Author, EBook
 from core.tests.admin_integration.mixins import AdminTestMixin
 from django.test.testcases import TestCase
@@ -18,9 +13,7 @@ class ImportTemplateTests(AdminTestMixin, TestCase):
 
     def test_import_export_template(self):
         response = self._get_url_response(self.core_book_url)
-        self.assertTemplateUsed(
-            response, self.change_list_template_url
-        )
+        self.assertTemplateUsed(response, self.change_list_template_url)
         self.assertTemplateUsed(response, self.change_list_url)
         self.assertTemplateUsed(response, self.change_list_url)
         self.assertContains(response, _("Import"))
@@ -44,8 +37,7 @@ class ImportTemplateTests(AdminTestMixin, TestCase):
     def test_correct_scripts_declared_when_debug_is_true(self):
         # GET the import form
         response = self._get_url_response(
-            self.book_import_url,
-            str_in_response="form action="
+            self.book_import_url, str_in_response="form action="
         )
         self.assertTemplateUsed(response, self.admin_import_template_url)
         self.assertContains(
@@ -140,4 +132,3 @@ class ImportTemplateTests(AdminTestMixin, TestCase):
                 "Import finished: {} new, {} updated, {} deleted and {} skipped {}."
             ).format(1, 0, 0, 0, EBook._meta.verbose_name_plural),
         )
-

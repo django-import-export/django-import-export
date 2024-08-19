@@ -1,9 +1,6 @@
 import os
 
-from core.admin import (
-    AuthorAdmin,
-    BookAdmin,
-)
+from core.admin import AuthorAdmin, BookAdmin
 from core.tests.admin_integration.mixins import AdminTestMixin
 from django.test.testcases import TestCase, TransactionTestCase
 from django.test.utils import override_settings
@@ -16,9 +13,7 @@ from import_export.formats import base_formats
 class ImportAdminSecurityTests(AdminTestMixin, TestCase):
 
     def test_csrf(self):
-        self._get_url_response(
-            self.book_process_import_url, expected_status_code=405
-        )
+        self._get_url_response(self.book_process_import_url, expected_status_code=405)
 
     def test_import_file_name_in_tempdir(self):
         # 65 - import_file_name form field can be use to access the filesystem

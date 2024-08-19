@@ -2,10 +2,7 @@ import os
 from io import StringIO
 from unittest import mock
 
-from core.admin import (
-    BookAdmin,
-    CustomBookAdmin,
-)
+from core.admin import BookAdmin, CustomBookAdmin
 from core.models import Author, Book, EBook
 from core.tests.admin_integration.mixins import AdminTestMixin
 from django.contrib.admin.sites import AdminSite
@@ -90,8 +87,7 @@ class ImportErrorHandlingTests(AdminTestMixin, TestCase):
 
         # GET the import form
         response = self._get_url_response(
-            self.ebook_import_url,
-            str_in_response='form action=""'
+            self.ebook_import_url, str_in_response='form action=""'
         )
         self.assertTemplateUsed(response, self.admin_import_template_url)
         # POST the import form
@@ -168,8 +164,7 @@ class ImportErrorHandlingTests(AdminTestMixin, TestCase):
     def test_import_action_invalidates_data_sheet_with_no_headers_or_data(self):
         # GET the import form
         response = self._get_url_response(
-            self.book_import_url,
-            str_in_response='form action=""'
+            self.book_import_url, str_in_response='form action=""'
         )
         self.assertTemplateUsed(response, self.admin_import_template_url)
 

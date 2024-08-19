@@ -186,10 +186,8 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
 
     def test_export_second_resource(self):
         self._get_url_response(
-            self.book_export_url,
-            str_in_response="Export/Import only book names"
+            self.book_export_url, str_in_response="Export/Import only book names"
         )
-
 
         data = {
             "format": "0",
