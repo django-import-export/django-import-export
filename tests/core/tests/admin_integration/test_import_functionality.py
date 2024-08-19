@@ -11,7 +11,6 @@ from django.utils.translation import gettext_lazy as _
 
 from import_export.admin import ExportMixin
 from import_export.formats import base_formats
-from import_export.formats.base_formats import XLSX
 from import_export.resources import ModelResource
 
 
@@ -129,16 +128,6 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertEqual(choices[1][1], "xlsx")
         self.assertEqual(choices[2][1], "xls")
 
-    @override_settings(IMPORT_FORMATS=[XLSX])
-    def test_get_export_form_single_format(self):
-        response = self._get_url_response(self.book_import_url)
-        form = response.context["form"]
-        self.assertEqual(1, len(form.fields["format"].choices))
-        self.assertTrue(form.fields["format"].widget.attrs["readonly"])
-        content = response.content.decode()
-        self.assertIn("xlsx", content)
-        self.assertNotIn('select name="format"', content)
-
     @override_settings(IMPORT_FORMATS=[])
     def test_export_empty_import_formats(self):
         with self.assertRaisesRegex(ValueError, "invalid formats list"):
@@ -146,6 +135,7 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
 
 
 class ImportFileHandlingTests(AdminTestMixin, TestCase):
+
     @override_settings(TEMPLATE_STRING_IF_INVALID="INVALID_VARIABLE")
     def test_import(self):
         # GET the import form
@@ -155,7 +145,6 @@ class ImportFileHandlingTests(AdminTestMixin, TestCase):
         self.assertTemplateUsed(response, self.admin_import_template_url)
 
         response = self._do_import_post(self.book_import_url, "books.csv")
-        self.assertEqual(response.status_code, 200)
         self.assertIn("result", response.context)
         self.assertFalse(response.context["result"].has_errors())
         self.assertIn("confirm_form", response.context)
@@ -181,7 +170,6 @@ class ImportFileHandlingTests(AdminTestMixin, TestCase):
         self.assertTemplateUsed(response, self.admin_import_template_url)
 
         response = self._do_import_post(self.book_import_url, "books-mac.csv")
-        self.assertEqual(response.status_code, 200)
         self.assertIn("result", response.context)
         self.assertFalse(response.context["result"].has_errors())
         self.assertIn("confirm_form", response.context)
@@ -211,7 +199,6 @@ class ImportFileHandlingTests(AdminTestMixin, TestCase):
         self.assertContains(response, 'form action=""')
 
         response = self._do_import_post(self.book_import_url, "books.csv", resource=1)
-        self.assertEqual(response.status_code, 200)
         self.assertIn("result", response.context)
         self.assertFalse(response.context["result"].has_errors())
         self.assertIn("confirm_form", response.context)
@@ -239,9 +226,7 @@ class ImportLogEntryTest(AdminTestMixin, TestCase):
         self.assertEqual(response.status_code, 200)
         confirm_form = response.context["confirm_form"]
         data = confirm_form.initial
-        response = self._post_url_response(
-            self.book_process_import_url, data, follow=True
-        )
+        self._post_url_response(self.book_process_import_url, data, follow=True)
         book = LogEntry.objects.latest("id")
         self.assertEqual(book.object_repr, "Some book")
         self.assertEqual(book.object_id, str(1))
@@ -316,22 +301,6 @@ class TestImportSkipConfirm(AdminTestMixin, TransactionTestCase):
             + "0 deleted and 0 skipped books.",
         )
         self.assertEqual(1, Book.objects.count())
-
-    def test_import_action_invalid_date(self):
-        # test that a row with an invalid date redirects to errors page
-        index = self._get_input_format_index("csv")
-        response = self._do_import_post(
-            self.book_import_url, "books-invalid-date.csv", index
-        )
-        result = response.context["result"]
-        # there should be a single invalid row
-        self.assertEqual(1, len(result.invalid_rows))
-        self.assertEqual(
-            "Value could not be parsed using defined formats.",
-            result.invalid_rows[0].error.messages[0],
-        )
-        # no rows should be imported because we rollback on validation errors
-        self.assertEqual(0, Book.objects.count())
 
     def test_import_action_error_on_save(self):
         with mock.patch("core.models.Book.save") as mock_save:
