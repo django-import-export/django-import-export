@@ -1,4 +1,3 @@
-import os
 from unittest import mock
 from unittest.mock import PropertyMock, patch
 

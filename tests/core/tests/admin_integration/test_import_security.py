@@ -2,12 +2,8 @@ import os
 
 from core.admin import AuthorAdmin, BookAdmin
 from core.tests.admin_integration.mixins import AdminTestMixin
-from django.test.testcases import TestCase, TransactionTestCase
-from django.test.utils import override_settings
+from django.test.testcases import TestCase
 from django.utils.translation import gettext_lazy as _
-
-from import_export.admin import ExportMixin
-from import_export.formats import base_formats
 
 
 class ImportAdminSecurityTests(AdminTestMixin, TestCase):
