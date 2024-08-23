@@ -34,7 +34,7 @@ class _ParseDateTimeMixin:
         format=None,
         input_formats=None,
         default_format="%Y-%m-%d",
-        coerce_to_string=None,
+        coerce_to_string=True,
     ):
         super().__init__(coerce_to_string=coerce_to_string)
         self.formats = (format,) if format else (input_formats or (default_format,))
@@ -66,18 +66,14 @@ class Widget:
     """
 
     coerce_to_string = True
-    coerce_to_string_is_explicitly_defined = False
 
-    def __init__(self, coerce_to_string=None):
+    def __init__(self, coerce_to_string=True):
         """
         :param coerce_to_string: If True, :meth:`~import_export.widgets.Widget.render`
           will return a string representation of the value, otherwise the value is
           returned.
         """
-        if coerce_to_string is not None:
-            # if coerce_to_string is explicitly defined with, for eg. a custom widget.
-            self.coerce_to_string = coerce_to_string
-            self.coerce_to_string_is_explicitly_defined = True
+        self.coerce_to_string = coerce_to_string
 
     def clean(self, value, row=None, **kwargs):
         """
@@ -90,7 +86,7 @@ class Widget:
         """
         return value
 
-    def render(self, value, obj=None):
+    def render(self, value, obj=None, **kwargs):
         """
         Returns an export representation of a python value.
 
@@ -124,9 +120,9 @@ class NumberWidget(Widget):
         # 0 is not empty
         return value is None or value == ""
 
-    def render(self, value, obj=None):
+    def render(self, value, obj=None, **kwargs):
         self._obj_deprecation_warning(obj)
-        if self.coerce_to_string:
+        if self.coerce_to_string and not kwargs.get("use_native_type"):
             return (
                 ""
                 if value is None or not isinstance(value, numbers.Number)
@@ -176,7 +172,7 @@ class CharWidget(Widget):
       will return null values as empty strings, otherwise as ``None``.
     """
 
-    def __init__(self, coerce_to_string=None, allow_blank=True):
+    def __init__(self, coerce_to_string=True, allow_blank=True):
         """ """
         self.allow_blank = allow_blank
         super().__init__(coerce_to_string)
@@ -187,7 +183,7 @@ class CharWidget(Widget):
             return "" if self.allow_blank is True else None
         return force_str(val)
 
-    def render(self, value, obj=None):
+    def render(self, value, obj=None, **kwargs):
         self._obj_deprecation_warning(obj)
         if self.coerce_to_string:
             return "" if value is None else force_str(value)
@@ -228,7 +224,7 @@ class BooleanWidget(Widget):
     FALSE_VALUES = ["0", 0, False, "false", "FALSE", "False"]
     NULL_VALUES = ["", None, "null", "NULL", "none", "NONE", "None"]
 
-    def __init__(self, coerce_to_string=None):
+    def __init__(self, coerce_to_string=True):
         """ """
         super().__init__(coerce_to_string)
 
@@ -237,7 +233,7 @@ class BooleanWidget(Widget):
             return None
         return True if value in self.TRUE_VALUES else False
 
-    def render(self, value, obj=None):
+    def render(self, value, obj=None, **kwargs):
         """
         :return: ``True`` is represented as ``1``, ``False`` as ``0``, and
           ``None``/NULL as an empty string.
@@ -246,7 +242,7 @@ class BooleanWidget(Widget):
           returned (may be ``None``).
         """
         self._obj_deprecation_warning(obj)
-        if self.coerce_to_string is False:
+        if self.coerce_to_string is False or kwargs.get("use_native_type"):
             return value
         if value in self.NULL_VALUES or not type(value) is bool:
             return ""
@@ -261,7 +257,7 @@ class DateWidget(_ParseDateTimeMixin, Widget):
     ``settings.DATE_INPUT_FORMATS`` or ``"%Y-%m-%d"`` is used.
     """
 
-    def __init__(self, format=None, coerce_to_string=None):
+    def __init__(self, format=None, coerce_to_string=True):
         super().__init__(
             format, settings.DATE_INPUT_FORMATS, "%Y-%m-%d", coerce_to_string
         )
@@ -273,7 +269,7 @@ class DateWidget(_ParseDateTimeMixin, Widget):
         """
         return self._parse_value(value, date)
 
-    def render(self, value, obj=None):
+    def render(self, value, obj=None, **kwargs):
         self._obj_deprecation_warning(obj)
         if self.coerce_to_string is False:
             return value
@@ -290,7 +286,7 @@ class DateTimeWidget(_ParseDateTimeMixin, Widget):
     ``settings.DATETIME_INPUT_FORMATS`` or ``"%Y-%m-%d %H:%M:%S"`` is used.
     """
 
-    def __init__(self, format=None, coerce_to_string=None):
+    def __init__(self, format=None, coerce_to_string=True):
         super().__init__(
             format,
             settings.DATETIME_INPUT_FORMATS,
@@ -310,9 +306,9 @@ class DateTimeWidget(_ParseDateTimeMixin, Widget):
             return timezone.make_aware(dt)
         return dt
 
-    def render(self, value, obj=None):
+    def render(self, value, obj=None, **kwargs):
         self._obj_deprecation_warning(obj)
-        if self.coerce_to_string is False:
+        if self.coerce_to_string is False or kwargs.get("use_native_type"):
             return value
         if not value or not isinstance(value, datetime):
             return ""
@@ -329,7 +325,7 @@ class TimeWidget(_ParseDateTimeMixin, Widget):
     ``settings.DATETIME_INPUT_FORMATS`` or ``"%H:%M:%S"`` is used.
     """
 
-    def __init__(self, format=None, coerce_to_string=None):
+    def __init__(self, format=None, coerce_to_string=True):
         super().__init__(
             format, settings.TIME_INPUT_FORMATS, "%H:%M:%S", coerce_to_string
         )
@@ -341,7 +337,7 @@ class TimeWidget(_ParseDateTimeMixin, Widget):
         """
         return self._parse_value(value, time)
 
-    def render(self, value, obj=None):
+    def render(self, value, obj=None, **kwargs):
         self._obj_deprecation_warning(obj)
         if self.coerce_to_string is False:
             return value
@@ -369,7 +365,7 @@ class DurationWidget(Widget):
             logger.debug(str(e))
             raise ValueError(_("Value could not be parsed."))
 
-    def render(self, value, obj=None):
+    def render(self, value, obj=None, **kwargs):
         self._obj_deprecation_warning(obj)
         if self.coerce_to_string is False:
             return value
@@ -385,7 +381,7 @@ class SimpleArrayWidget(Widget):
     :param separator: Defaults to ``','``
     """
 
-    def __init__(self, separator=None, coerce_to_string=None):
+    def __init__(self, separator=None, coerce_to_string=True):
         if separator is None:
             separator = ","
         self.separator = separator
@@ -394,7 +390,7 @@ class SimpleArrayWidget(Widget):
     def clean(self, value, row=None, **kwargs):
         return value.split(self.separator) if value else []
 
-    def render(self, value, obj=None):
+    def render(self, value, obj=None, **kwargs):
         """
         :return: A string with values separated by ``separator``.
           If ``coerce_to_string`` is ``False``, the native array will be returned.
@@ -427,7 +423,7 @@ class JSONWidget(Widget):
             except json.decoder.JSONDecodeError:
                 return json.loads(val.replace("'", '"'))
 
-    def render(self, value, obj=None):
+    def render(self, value, obj=None, **kwargs):
         """
         :return: A JSON formatted string derived from ``value``.
           ``coerce_to_string`` has no effect on the return value.
@@ -564,7 +560,7 @@ class ForeignKeyWidget(Widget):
         """
         return {self.field: value}
 
-    def render(self, value, obj=None):
+    def render(self, value, obj=None, **kwargs):
         """
         :return: A string representation of the related value.
           If ``use_natural_foreign_keys``, the value's natural key is returned.
@@ -626,7 +622,7 @@ class ManyToManyWidget(Widget):
             ids = filter(None, [i.strip() for i in ids])
         return self.model.objects.filter(**{"%s__in" % self.field: ids})
 
-    def render(self, value, obj=None):
+    def render(self, value, obj=None, **kwargs):
         """
         :return: A string with values separated by ``separator``.
           ``None`` values are returned as empty strings.
