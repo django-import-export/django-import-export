@@ -65,8 +65,6 @@ class Widget:
     A Widget handles converting between import and export representations.
     """
 
-    coerce_to_string = True
-
     def __init__(self, coerce_to_string=True):
         """
         :param coerce_to_string: If True, :meth:`~import_export.widgets.Widget.render`
