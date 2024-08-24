@@ -21,7 +21,7 @@ from django.test.utils import override_settings
 from openpyxl.reader.excel import load_workbook
 from tablib import Dataset
 
-from import_export import formats
+from import_export import fields, formats, resources, widgets
 from import_export.admin import ExportActionMixin, ExportMixin
 from import_export.formats.base_formats import XLSX
 
@@ -376,54 +376,6 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
             b"id,Email of the author,name,published_date\r\n", response.content
         )
 
-    def test_dynamic_coerce_to_string_derivation(self):
-        """
-        Test to ensure that when coerce_to_string is not explicitly
-        defined, data is exported in its native data type (if the file
-        format supports it) rather than being coerced to a string.
-        """
-        Book.objects.create(id=1, name="name", added=datetime(10, 8, 2))
-        data = {
-            "format": "2",
-            "bookresource_id": True,
-            "bookresource_name": True,
-            "bookresource_imported": True,
-            "bookresource_added": True,
-        }
-        response = self.client.post(self.book_export_url, data)
-        self.assertEqual(response.status_code, 200)
-        content = response.content
-        wb = load_workbook(filename=BytesIO(content))
-        self.assertEqual(1, wb.active["A2"].value)
-        self.assertEqual("name", wb.active["B2"].value)
-        self.assertEqual(False, wb.active["C2"].value)
-        self.assertEqual(datetime(10, 8, 2), wb.active["D2"].value)
-
-    def test_dynamic_coerce_to_string_derivation_with_custom_resource(self):
-        """
-        Test to ensure that when coerce_to_string is explicitly defined
-        (via for eg a custom resource), exported data obeys the constraint.
-        """
-        author = Author.objects.create(name="Ian Fleming")
-        EBook.objects.create(
-            id=1, name="name", published=date(2000, 4, 5), author=author
-        )
-        data = {
-            "format": "2",
-            "author": author.id,
-            "resource": "",
-            "ebookresource_id": True,
-            "ebookresource_name": True,
-            "ebookresource_published": True,
-        }
-        response = self.client.post(self.ebook_export_url, data)
-        self.assertEqual(response.status_code, 200)
-        content = response.content
-        wb = load_workbook(filename=BytesIO(content))
-        self.assertEqual(1, wb.active["A2"].value)
-        self.assertEqual("name", wb.active["B2"].value)
-        self.assertEqual("2000-04-05", wb.active["C2"].value)
-
 
 class FilteredExportAdminIntegrationTest(AdminTestMixin, TestCase):
     fixtures = ["category", "book", "author"]
@@ -686,3 +638,67 @@ class SkipExportFormResourceConfigTest(AdminTestMixin, TestCase):
         self._check_export_file_response(
             response, self.target_file_contents, file_prefix="EBook"
         )
+
+
+class ExportBinaryFieldsTest(AdminTestMixin, TestCase):
+    # Test that Dates, Booleans, numbers etc are retained as native types
+    # when exporting to XLSX, XLS, ODS (see #1939)
+
+    class DeclaredModelFieldBookResource(resources.ModelResource):
+        # declare a field and enforce export output as str (coerce_to_string)
+        id = fields.Field(
+            attribute="id",
+            widget=widgets.NumberWidget(coerce_to_string=True),
+        )
+        # FIXME is attribute required?
+        imported = fields.Field(
+            attribute="imported",
+            widget=widgets.BooleanWidget(coerce_to_string=True),
+        )
+        published = fields.Field(
+            attribute="published",
+            widget=widgets.DateWidget("%d.%m.%Y", coerce_to_string=True),
+        )
+
+        class Meta:
+            model = Book
+            export_order = ("id", "imported", "published")
+
+    def test_dynamic_type_export(self):
+        Book.objects.create(id=101, published=datetime(2010, 8, 2), imported=True)
+        data = {
+            "format": "2",
+            "bookresource_id": True,
+            "bookresource_imported": True,
+            "bookresource_published": True,
+        }
+        response = self.client.post(self.book_export_url, data)
+        self.assertEqual(response.status_code, 200)
+        content = response.content
+        wb = load_workbook(filename=BytesIO(content))
+        self.assertEqual(101, wb.active["A2"].value)
+        self.assertEqual(True, wb.active["B2"].value)
+        self.assertEqual(datetime(2010, 8, 2), wb.active["C2"].value)
+
+    @patch("import_export.mixins.BaseExportMixin.choose_export_resource_class")
+    def test_dynamic_export_with_custom_resource(
+        self, mock_choose_export_resource_class
+    ):
+        # Test that `coerce_to_string` is respected
+        mock_choose_export_resource_class.return_value = (
+            self.DeclaredModelFieldBookResource
+        )
+        Book.objects.create(id=101, published=date(2000, 4, 5), imported=True)
+        data = {
+            "format": "2",
+            "bookresource_id": True,
+            "bookresource_imported": True,
+            "bookresource_published": True,
+        }
+        response = self.client.post(self.book_export_url, data)
+        self.assertEqual(response.status_code, 200)
+        content = response.content
+        wb = load_workbook(filename=BytesIO(content))
+        self.assertEqual("101", wb.active["A2"].value)
+        self.assertEqual("1", wb.active["B2"].value)
+        self.assertEqual("05.04.2000", wb.active["C2"].value)

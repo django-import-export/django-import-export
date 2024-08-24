@@ -120,7 +120,9 @@ class NumberWidget(Widget):
 
     def render(self, value, obj=None, **kwargs):
         self._obj_deprecation_warning(obj)
-        if self.coerce_to_string and not kwargs.get("use_native_type"):
+        if kwargs.get("use_native_type"):
+            return value
+        if self.coerce_to_string:
             return (
                 ""
                 if value is None or not isinstance(value, numbers.Number)
@@ -240,11 +242,11 @@ class BooleanWidget(Widget):
           returned (may be ``None``).
         """
         self._obj_deprecation_warning(obj)
-        if self.coerce_to_string is False or kwargs.get("use_native_type"):
-            return value
-        if value in self.NULL_VALUES or not type(value) is bool:
-            return ""
-        return self.TRUE_VALUES[0] if value else self.FALSE_VALUES[0]
+        if self.coerce_to_string:
+            if value in self.NULL_VALUES or not type(value) is bool:
+                return ""
+            return self.TRUE_VALUES[0] if value else self.FALSE_VALUES[0]
+        return value
 
 
 class DateWidget(_ParseDateTimeMixin, Widget):

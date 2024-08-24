@@ -197,8 +197,7 @@ Modify :meth:`.render` return type
 ----------------------------------
 
 By default, :meth:`.render` will return a string type for export.  There may be use cases where a native type is
-required from export (such as exporting to Excel).  If so, you can use the ``coerce_to_string`` parameter if the
-widget supports it.
+required from export.  If so, you can use the ``coerce_to_string`` parameter if the widget supports it.
 
 By default, ``coerce_to_string`` is ``True``, but if you set this to ``False``, then the native type will be returned
 during export::
@@ -209,9 +208,8 @@ during export::
         class Meta:
             model = Book
 
-If you need different export formats for different file types, then the only way to do this at present is to declare
-multiple Resource configurations.  For example, *ExcelBookResource*, *CsvBookResource*.  For each custom Resource,
-You would need to declare Widgets with the ``coerce_to_string`` value set as desired.
+If exporting via the Admin interface, the export logic will detect if exporting to either XLSX, XLS or ODS format,
+and will set native types for *Numeric*, *Boolean* and *Date* values.
 
 .. seealso::
 
