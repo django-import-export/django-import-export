@@ -258,16 +258,14 @@ class BaseExportMixin(BaseImportExportMixin):
 
 
 class ExportViewMixin(BaseExportMixin):
+    # Deprecated, and will be removed in a future release (see #1666)
     form_class = SelectableFieldsExportForm
 
     def get_export_data(self, file_format, queryset, **kwargs):
         """
         Returns file_format representation for given queryset.
         """
-        coerce_to_string = type(file_format) not in base_formats.DATA_TYPE_RICH_FORMATS
-        data = self.get_data_for_export(
-            self.request, queryset, coerce_to_string=coerce_to_string, **kwargs
-        )
+        data = self.get_data_for_export(self.request, queryset, **kwargs)
         export_data = file_format.export_data(data)
         return export_data
 
@@ -283,6 +281,7 @@ class ExportViewMixin(BaseExportMixin):
 
 
 class ExportViewFormMixin(ExportViewMixin, FormView):
+    # Deprecated, and will be removed in a future release (see #1666)
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
         warn(

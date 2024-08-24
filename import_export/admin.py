@@ -18,7 +18,7 @@ from django.utils.module_loading import import_string
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_POST
 
-from .formats.base_formats import DATA_TYPE_RICH_FORMATS
+from .formats.base_formats import BINARY_FORMATS
 from .forms import ConfirmImportForm, ImportForm, SelectableFieldsExportForm
 from .mixins import BaseExportMixin, BaseImportMixin
 from .results import RowResult
@@ -702,7 +702,7 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
         if not self.has_export_permission(request):
             raise PermissionDenied
 
-        use_native_type = type(file_format) in DATA_TYPE_RICH_FORMATS
+        use_native_type = type(file_format) in BINARY_FORMATS
         data = self.get_data_for_export(
             request,
             queryset,

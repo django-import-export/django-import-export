@@ -231,8 +231,8 @@ DEFAULT_FORMATS = [
 ]
 
 #: These are the formats which support different data types (such as datetime
-#: and numbers) for which coerce_to_string is to be set false dynamically.
-DATA_TYPE_RICH_FORMATS = [
+#: and numbers) for which `coerce_to_string` is to be set false dynamically.
+BINARY_FORMATS = [
     fmt
     for fmt in (
         XLS,
