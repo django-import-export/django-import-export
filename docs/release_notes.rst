@@ -26,10 +26,32 @@ v4.2
 
 *  `tablib <https://github.com/jazzband/tablib>`_ has been upgraded from v3.5.0 to 3.6.1.
    This upgrade removes tablib's dependency on `MarkupPy <https://github.com/jazzband/tablib/pull/554>`_ in favour
-   of ElementTree.  If you export to HTML, then this change may affect your output format, particularly if you have
+   of ``ElementTree``.  If you export to HTML, then this change may affect your output format, particularly if you have
    already escaped HTML characters in the text.
 
    See `issue 1627 <https://github.com/django-import-export/django-import-export/issues/1627>`_.
+
+* This release fixes a regression introduced in v4 numeric, boolean and date/time widgets write string values to
+  spreadsheet formats (ODS, XLS, XLSX).
+
+  There are two breaking changes:
+
+  * If you have subclassed :meth:`~import_export.widgets.Widget.render` (or any subclass), then you will need to
+    change the method signature:
+
+.. list-table::
+   :header-rows: 1
+
+   * - Previous
+     - New
+     - Summary
+
+   * - ``render(self, value, obj=None)``
+     - ``render(self, value, obj=None, **kwargs)``
+     - * added ``kwargs`` param
+
+  * The means that the ``coerce_to_string`` value which is passed to :class:`~import_export.widgets.Widget` is now
+    ignored if you are exporting to a spreadsheet format from the Admin interface.
 
 v4.1
 ----
