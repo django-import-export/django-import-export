@@ -120,9 +120,7 @@ class NumberWidget(Widget):
 
     def render(self, value, obj=None, **kwargs):
         self._obj_deprecation_warning(obj)
-        if kwargs.get("use_native_type"):
-            return value
-        if self.coerce_to_string:
+        if self.coerce_to_string and not kwargs.get("force_native_type"):
             return (
                 ""
                 if value is None or not isinstance(value, numbers.Number)
@@ -184,6 +182,7 @@ class CharWidget(Widget):
         return force_str(val)
 
     def render(self, value, obj=None, **kwargs):
+        # FIXME - how are nulls exported to XLSX
         self._obj_deprecation_warning(obj)
         if self.coerce_to_string:
             return "" if value is None else force_str(value)
@@ -242,7 +241,7 @@ class BooleanWidget(Widget):
           returned (may be ``None``).
         """
         self._obj_deprecation_warning(obj)
-        if self.coerce_to_string:
+        if self.coerce_to_string and not kwargs.get("force_native_type"):
             if value in self.NULL_VALUES or not type(value) is bool:
                 return ""
             return self.TRUE_VALUES[0] if value else self.FALSE_VALUES[0]
@@ -271,7 +270,7 @@ class DateWidget(_ParseDateTimeMixin, Widget):
 
     def render(self, value, obj=None, **kwargs):
         self._obj_deprecation_warning(obj)
-        if self.coerce_to_string is False:
+        if self.coerce_to_string is False or kwargs.get("force_native_type"):
             return value
         if not value or not isinstance(value, date):
             return ""
@@ -308,7 +307,7 @@ class DateTimeWidget(_ParseDateTimeMixin, Widget):
 
     def render(self, value, obj=None, **kwargs):
         self._obj_deprecation_warning(obj)
-        if self.coerce_to_string is False or kwargs.get("use_native_type"):
+        if self.coerce_to_string is False or kwargs.get("force_native_type"):
             return value
         if not value or not isinstance(value, datetime):
             return ""
@@ -339,7 +338,7 @@ class TimeWidget(_ParseDateTimeMixin, Widget):
 
     def render(self, value, obj=None, **kwargs):
         self._obj_deprecation_warning(obj)
-        if self.coerce_to_string is False:
+        if self.coerce_to_string is False or kwargs.get("force_native_type"):
             return value
         if not value or not isinstance(value, time):
             return ""
@@ -367,7 +366,7 @@ class DurationWidget(Widget):
 
     def render(self, value, obj=None, **kwargs):
         self._obj_deprecation_warning(obj)
-        if self.coerce_to_string is False:
+        if self.coerce_to_string is False or kwargs.get("force_native_type"):
             return value
         if value is None or not type(value) is timedelta:
             return ""

@@ -684,11 +684,11 @@ class ExportBinaryFieldsTest(AdminTestMixin, TestCase):
     def test_dynamic_export_with_custom_resource(
         self, mock_choose_export_resource_class
     ):
-        # Test that `coerce_to_string` is respected
+        # Test that `coerce_to_string` is ignored
         mock_choose_export_resource_class.return_value = (
             self.DeclaredModelFieldBookResource
         )
-        Book.objects.create(id=101, published=date(2000, 4, 5), imported=True)
+        Book.objects.create(id=101, published=date(2000, 8, 2), imported=True)
         data = {
             "format": "2",
             "bookresource_id": True,
@@ -699,6 +699,6 @@ class ExportBinaryFieldsTest(AdminTestMixin, TestCase):
         self.assertEqual(response.status_code, 200)
         content = response.content
         wb = load_workbook(filename=BytesIO(content))
-        self.assertEqual("101", wb.active["A2"].value)
-        self.assertEqual("1", wb.active["B2"].value)
-        self.assertEqual("05.04.2000", wb.active["C2"].value)
+        self.assertEqual(101, wb.active["A2"].value)
+        self.assertEqual(1, wb.active["B2"].value)
+        self.assertEqual(datetime(2000, 8, 2), wb.active["C2"].value)

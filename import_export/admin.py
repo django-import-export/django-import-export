@@ -702,11 +702,11 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
         if not self.has_export_permission(request):
             raise PermissionDenied
 
-        use_native_type = type(file_format) in BINARY_FORMATS
+        force_native_type = type(file_format) in BINARY_FORMATS
         data = self.get_data_for_export(
             request,
             queryset,
-            use_native_type=use_native_type,
+            force_native_type=force_native_type,
             **kwargs,
         )
         export_data = file_format.export_data(data)
