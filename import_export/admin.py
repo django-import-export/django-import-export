@@ -934,7 +934,7 @@ class ExportActionMixin(ExportMixin):
         """
         actions = super().get_actions(request)
         if not self.has_export_permission(request):
-            return actions        
+            return actions
         actions.update(
             export_admin_action=(
                 type(self).export_admin_action,
