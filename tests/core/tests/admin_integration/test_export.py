@@ -650,7 +650,6 @@ class ExportBinaryFieldsTest(AdminTestMixin, TestCase):
             attribute="id",
             widget=widgets.NumberWidget(coerce_to_string=True),
         )
-        # FIXME is attribute required?
         imported = fields.Field(
             attribute="imported",
             widget=widgets.BooleanWidget(coerce_to_string=True),
