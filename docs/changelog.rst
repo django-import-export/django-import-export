@@ -3,10 +3,12 @@ Changelog
 
 .. warning::
 
-    Version 4 introduces breaking changes.  Please refer to :doc:`release notes<release_notes>`.
+    If upgrading from v3, v4 introduces breaking changes.  Please refer to :doc:`release notes<release_notes>`.
 
 4.2.0 (unreleased)
 ------------------
+
+This release contains breaking changes.  Please refer to :doc:`release notes<release_notes>`.
 
 - Consistent queryset creation in ModelAdmin export mixin (`1890 <https://github.com/django-import-export/django-import-export/pull/1890>`_)
 - Deprecated :meth:`~import_export.admin.ExportMixin.get_valid_export_item_pks` in favour of :meth:`~import_export.admin.ExportMixin.get_queryset` (`1890 <https://github.com/django-import-export/django-import-export/pull/1890>`_)
@@ -18,7 +20,7 @@ Changelog
 - Add support for Django 5.1 (`1926 <https://github.com/django-import-export/django-import-export/issues/1926>`_)
 - Added warning log for declared fields excluded from fields whitelist (`1930 <https://github.com/django-import-export/django-import-export/issues/1930>`_)
 - Accept numbers using the numeric separators of the current language in number widgets (:meth:`~import_export.widgets.FloatWidget`, :meth:`~import_export.widgets.IntegerWidget`, :meth:`~import_export.widgets.DecimalWidget`) (`1927 <https://github.com/django-import-export/django-import-export/issues/1927>`_)
-- Fix v3 regression: handle native types on export to spreadsheet (`1939 <https://github.com/django-import-export/django-import-export/issues/1939>`_)
+- Fix v3 regression: handle native types on export to spreadsheet (`1927 <https://github.com/django-import-export/django-import-export/issues/1927>`_)
 
 4.1.1 (2024-07-08)
 ------------------

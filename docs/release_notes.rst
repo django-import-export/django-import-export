@@ -31,12 +31,17 @@ v4.2
 
    See `issue 1627 <https://github.com/django-import-export/django-import-export/issues/1627>`_.
 
-* This release fixes a regression introduced in v4 numeric, boolean and date/time widgets write string values to
-  spreadsheet formats (ODS, XLS, XLSX).
+Breaking changes
+^^^^^^^^^^^^^^^^
 
-  There are two breaking changes:
+* This release fixes a regression introduced in v4. From v4.2, numeric, boolean and date/time widgets are written as
+  native values to spreadsheet formats (ODS, XLS, XLSX).  This was the default behavior in v3.
+  See :ref:`documentation<modify_render_return_type>`.
 
-  * If you have subclassed :meth:`~import_export.widgets.Widget.render` (or any subclass), then you will need to
+   * This means that the ``coerce_to_string`` value which is passed to :class:`~import_export.widgets.Widget` is now
+    ignored if you are exporting to a spreadsheet format from the Admin interface.
+
+  * If you have subclassed Widget :meth:`~import_export.widgets.Widget.render` (or any subclass), then you will need to
     change the method signature:
 
 .. list-table::
@@ -49,9 +54,6 @@ v4.2
    * - ``render(self, value, obj=None)``
      - ``render(self, value, obj=None, **kwargs)``
      - * added ``kwargs`` param
-
-  * The means that the ``coerce_to_string`` value which is passed to :class:`~import_export.widgets.Widget` is now
-    ignored if you are exporting to a spreadsheet format from the Admin interface.
 
 v4.1
 ----
