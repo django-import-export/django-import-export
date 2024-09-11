@@ -19,7 +19,7 @@ Changelog
 - Add support for Django 5.1 (`1926 <https://github.com/django-import-export/django-import-export/issues/1926>`_)
 - Added warning log for declared fields excluded from fields whitelist (`1930 <https://github.com/django-import-export/django-import-export/issues/1930>`_)
 - Accept numbers using the numeric separators of the current language in number widgets (:meth:`~import_export.widgets.FloatWidget`, :meth:`~import_export.widgets.IntegerWidget`, :meth:`~import_export.widgets.DecimalWidget`) (`1927 <https://github.com/django-import-export/django-import-export/issues/1927>`_)
-- Fix crash for Django 5.1 when rows are skipped (`1937 <https://github.com/django-import-export/django-import-export/issues/1937>`_)
+- Fix crash for Django 5.1 when rows are skipped (`1944 <https://github.com/django-import-export/django-import-export/issues/1944>`_)
 
 4.1.1 (2024-07-08)
 ------------------
