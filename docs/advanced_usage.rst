@@ -209,7 +209,10 @@ during export::
             model = Book
 
 If exporting via the Admin interface, the export logic will detect if exporting to either XLSX, XLS or ODS format,
-and will set native types for *Numeric*, *Boolean* and *Date* values.
+and will set native types for *Numeric*, *Boolean* and *Date* values.  This means that the ``coerce_to_string`` value
+will be ignored and the native types will be returned.  This is because in most use-cases the native type will be
+expected in the exported format.  If you need to modify this behavior and enforce string types in "binary" file formats
+then the only way to do this is to override the widget ``render()`` method.
 
 .. seealso::
 
