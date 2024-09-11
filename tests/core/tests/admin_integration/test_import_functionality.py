@@ -247,6 +247,18 @@ class ImportLogEntryTest(AdminTestMixin, TestCase):
         m.skip_admin_log = True
         self.assertTrue(m.get_skip_admin_log())
 
+    @patch("import_export.resources.Resource.skip_row")
+    def test_import_log_entry_skip_row(self, mock_skip_row):
+        # test issue 1937
+        mock_skip_row.return_value = True
+        response = self._do_import_post(self.book_import_url, "books.csv")
+
+        self.assertEqual(response.status_code, 200)
+        confirm_form = response.context["confirm_form"]
+        data = confirm_form.initial
+        self._post_url_response(self.book_process_import_url, data, follow=True)
+        self.assertEqual(0, LogEntry.objects.count())
+
 
 @override_settings(IMPORT_EXPORT_SKIP_ADMIN_CONFIRM=True)
 class TestImportSkipConfirm(AdminTestMixin, TransactionTestCase):

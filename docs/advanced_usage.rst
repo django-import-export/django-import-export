@@ -686,7 +686,6 @@ the data in the import row is the same as the persisted data or not.  You can co
 row if it is duplicate by using setting :attr:`~import_export.options.ResourceOptions.skip_unchanged`.
 
 If :attr:`~import_export.options.ResourceOptions.skip_unchanged` is enabled, then the import process will check each
-ns
 defined import field and perform a simple comparison with the existing instance, and if all comparisons are equal, then
 the row is skipped.  Skipped rows are recorded in the row :class:`~import_export.results.RowResult` object.
 
