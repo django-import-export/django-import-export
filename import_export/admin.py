@@ -232,10 +232,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
                 }
                 content_type_id = ContentType.objects.get_for_model(self.model).pk
                 for row in result:
-                    if (
-                        row.import_type != row.IMPORT_TYPE_ERROR
-                        and row.import_type != row.IMPORT_TYPE_SKIP
-                    ):
+                    if row.import_type in logentry_map.keys():
                         with warnings.catch_warnings():
                             if django.VERSION >= (5,):
                                 from django.utils.deprecation import (
