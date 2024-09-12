@@ -14,6 +14,7 @@ from django.shortcuts import render
 from django.template.response import TemplateResponse
 from django.urls import path, reverse
 from django.utils.decorators import method_decorator
+from django.utils.deprecation import RemovedInDjango60Warning
 from django.utils.module_loading import import_string
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_POST
@@ -238,7 +239,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
                     ):
                         with warnings.catch_warnings():
                             warnings.filterwarnings(
-                                "ignore", category=DeprecationWarning
+                                "ignore", category=RemovedInDjango60Warning
                             )
                             LogEntry.objects.log_action(
                                 user_id=request.user.pk,
