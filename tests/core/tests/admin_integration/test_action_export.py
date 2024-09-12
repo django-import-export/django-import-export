@@ -47,7 +47,7 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
             "action": ["export_admin_action"],
             "_selected_action": [str(self.cat1.id)],
         }
-        response = self.client.post(self.category_change_url, data)
+        response = self._post_url_response(self.category_change_url, data)
         self._check_export_response(response)
 
     def test_export_displays_ui_select_page(self):
@@ -55,9 +55,7 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
             "action": ["export_admin_action"],
             "_selected_action": [str(self.cat1.id)],
         }
-        response = self.client.post(self.category_change_url, data)
-
-        self.assertEqual(response.status_code, 200)
+        response = self._post_url_response(self.category_change_url, data)
         self.assertIn("form", response.context)
         export_form = response.context["form"]
         data = export_form.initial
@@ -69,9 +67,7 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
             "action": ["export_admin_action"],
             "_selected_action": [str(self.cat1.id), str(self.cat2.id)],
         }
-        response = self.client.post(self.category_change_url, data)
-
-        self.assertEqual(response.status_code, 200)
+        response = self._post_url_response(self.category_change_url, data)
         self.assertIn("form", response.context)
         export_form = response.context["form"]
         data = export_form.initial
@@ -87,9 +83,7 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
             "action": ["export_admin_action"],
             "_selected_action": [str(cat.pk)],
         }
-        response = self.client.post(self.uuid_category_change_url, data)
-
-        self.assertEqual(response.status_code, 200)
+        response = self._post_url_response(self.uuid_category_change_url, data)
         self.assertIn("form", response.context)
         export_form = response.context["form"]
         data = export_form.initial
@@ -106,8 +100,7 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
         date_str = datetime.now().strftime("%Y-%m-%d")
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", category=DeprecationWarning)
-            response = self.client.post(self.category_export_url, data)
-        self.assertEqual(response.status_code, 200)
+            response = self._post_url_response(self.category_export_url, data)
         self.assertTrue(response.has_header("Content-Disposition"))
         self.assertEqual(response["Content-Type"], "text/csv")
         self.assertEqual(
@@ -144,8 +137,7 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
             "import_export.admin.ExportMixin.get_valid_export_item_pks"
         ) as mock_valid_pks:
             mock_valid_pks.return_value = [999]
-            response = self.client.post(self.category_export_url, data)
-            self.assertEqual(response.status_code, 200)
+            response = self._post_url_response(self.category_export_url, data)
             self.assertIn(
                 "Select a valid choice. "
                 f"{self.cat1.id} is not one of the available choices.",
@@ -164,7 +156,7 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
             "core.admin.CategoryAdmin is deprecated and will be removed "
             "in a future release",
         ):
-            self.client.post(self.category_export_url, data)
+            self._post_url_response(self.category_export_url, data)
 
     def _perform_export_action_calls_modeladmin_get_queryset_test(self, data):
         # Issue #1864
@@ -180,7 +172,7 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
 
             mock_modeladmin_get_queryset.return_value = mock_queryset
 
-            self.client.post(self.category_export_url, data)
+            self._post_url_response(self.category_export_url, data)
 
             mock_modeladmin_get_queryset.assert_called()
             mock_get_data_for_export.assert_called()
@@ -260,9 +252,8 @@ class TestExportButtonOnChangeForm(AdminTestMixin, TestCase):
         )
 
     def test_export_button_on_change_form(self):
-        response = self.client.get(self.change_url)
-        self.assertIn(self.target_str, response.content.decode())
-        response = self.client.post(
+        self._get_url_response(self.change_url, str_in_response=self.target_str)
+        response = self._post_url_response(
             self.change_url, data={"_export-item": "Export", "name": self.cat1.name}
         )
         self.assertIn("Export 1 selected item", response.content.decode())
@@ -280,14 +271,14 @@ class TestExportButtonOnChangeForm(AdminTestMixin, TestCase):
         )
         response = self.client.get(self.change_url)
         self.assertIn(self.target_str, response.content.decode())
-        response = self.client.post(
+        response = self._post_url_response(
             self.change_url, data={"_export-item": "Export", "name": self.cat1.name}
         )
         self.assertIn("Export 1 selected item", response.content.decode())
 
     def test_save_button_on_change_form(self):
         # test default behavior is retained when saving an instance ChangeForm
-        response = self.client.post(
+        response = self._post_url_response(
             self.change_url, data={"_save": "Save", "name": self.cat1.name}, follow=True
         )
         target_str = f"The category.*{self.cat1.name}.*was changed successfully."
@@ -393,7 +384,7 @@ class TestSkipExportFormFromChangeForm(AdminTestMixin, TestCase):
     def test_export_button_on_change_form_skip_export_setting_enabled(self):
         # this property has no effect - IMPORT_EXPORT_SKIP_ADMIN_ACTION_EXPORT_UI
         # should be set instead
-        response = self.client.post(
+        response = self._post_url_response(
             self.change_url, data={"_export-item": "Export", "name": self.cat1.name}
         )
         target_re = r"This exporter will export the following fields:"
@@ -407,7 +398,7 @@ class TestSkipExportFormFromChangeForm(AdminTestMixin, TestCase):
             new_callable=PropertyMock,
             return_value=True,
         ):
-            response = self.client.post(
+            response = self._post_url_response(
                 self.change_url, data={"_export-item": "Export", "name": self.cat1.name}
             )
             target_re = r"This exporter will export the following fields:"
