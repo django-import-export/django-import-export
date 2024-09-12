@@ -38,11 +38,11 @@ Breaking changes
   native values to spreadsheet formats (ODS, XLS, XLSX).  This was the default behavior in v3.
   See :ref:`documentation<modify_render_return_type>`.
 
-   * This means that the ``coerce_to_string`` value which is passed to :class:`~import_export.widgets.Widget` is now
-    ignored if you are exporting to a spreadsheet format from the Admin interface.
+  This means that the ``coerce_to_string`` value which is passed to :class:`~import_export.widgets.Widget` is now
+  ignored if you are exporting to a spreadsheet format from the Admin interface.
 
-  * If you have subclassed Widget :meth:`~import_export.widgets.Widget.render` (or any subclass), then you will need to
-    change the method signature:
+  If you have subclassed ``Widget`` :meth:`~import_export.widgets.Widget.render` (or any subclass), or ``Field``
+  :meth:`~import_export.fields.Field.export`, then you will need to change the method signature:
 
 .. list-table::
    :header-rows: 1
@@ -51,8 +51,12 @@ Breaking changes
      - New
      - Summary
 
-   * - ``render(self, value, obj=None)``
-     - ``render(self, value, obj=None, **kwargs)``
+   * - ``Widget.render(self, value, obj=None)``
+     - ``Widget.render(self, value, obj=None, **kwargs)``
+     - * added ``kwargs`` param
+
+   * - ``Field.export(self, instance)``
+     - ``Field.export(self, instance, **kwargs)``
      - * added ``kwargs`` param
 
 v4.1
