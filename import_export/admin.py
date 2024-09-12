@@ -587,10 +587,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
             RowResult.IMPORT_TYPE_DELETE: DELETION,
         }
         for import_type, instances in rows.items():
-            if import_type not in (
-                RowResult.IMPORT_TYPE_SKIP,
-                RowResult.IMPORT_TYPE_ERROR,
-            ):
+            if import_type in logentry_map.keys():
                 action_flag = logentry_map[import_type]
                 self._create_log_entry(
                     user_pk, rows[import_type], import_type, action_flag

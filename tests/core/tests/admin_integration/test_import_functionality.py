@@ -5,6 +5,7 @@ from core.admin import BookAdmin, EBookResource, ImportMixin
 from core.models import Author, Book, Parent
 from core.tests.admin_integration.mixins import AdminTestMixin
 from django.contrib.admin.models import DELETION, LogEntry
+from django.core.exceptions import ValidationError
 from django.test.testcases import TestCase, TransactionTestCase
 from django.test.utils import override_settings
 from django.utils.translation import gettext_lazy as _
@@ -268,6 +269,18 @@ class ImportLogEntryTest(AdminTestMixin, TestCase):
         data = confirm_form.initial
         with mock.patch("core.admin.BookResource.skip_row") as mock_skip:
             mock_skip.side_effect = ValueError("some unknown error")
+            self._post_url_response(self.book_process_import_url, data, follow=True)
+        self.assertEqual(0, LogEntry.objects.count())
+
+    def test_import_log_entry_validation_error_row(self):
+        # ensure that validation error rows do not create log entries
+        response = self._do_import_post(self.book_import_url, "books.csv")
+
+        self.assertEqual(response.status_code, 200)
+        confirm_form = response.context["confirm_form"]
+        data = confirm_form.initial
+        with mock.patch("core.admin.BookResource.skip_row") as mock_skip:
+            mock_skip.side_effect = ValidationError("some unknown error")
             self._post_url_response(self.book_process_import_url, data, follow=True)
         self.assertEqual(0, LogEntry.objects.count())
 
