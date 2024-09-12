@@ -222,7 +222,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
     def generate_log_entries(self, result, request):
         if not self.get_skip_admin_log():
             # Add imported objects to LogEntry
-            if django.VERSION >= (6,):
+            if django.VERSION >= (5, 1):
                 self._log_actions(result, request)
             else:
                 logentry_map = {
@@ -587,8 +587,11 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
             RowResult.IMPORT_TYPE_DELETE: DELETION,
         }
         for import_type, instances in rows.items():
-            action_flag = logentry_map[import_type]
-            self._create_log_entry(user_pk, rows[import_type], import_type, action_flag)
+            if import_type in logentry_map.keys():
+                action_flag = logentry_map[import_type]
+                self._create_log_entry(
+                    user_pk, rows[import_type], import_type, action_flag
+                )
 
     def _create_log_entry(self, user_pk, rows, import_type, action_flag):
         if len(rows) > 0:

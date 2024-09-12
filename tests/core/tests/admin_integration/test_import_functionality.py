@@ -249,7 +249,7 @@ class ImportLogEntryTest(AdminTestMixin, TestCase):
 
     @patch("import_export.resources.Resource.skip_row")
     def test_import_log_entry_skip_row(self, mock_skip_row):
-        # test issue 1937
+        # test issue 1937 - ensure that skipped rows do not create log entries
         mock_skip_row.return_value = True
         response = self._do_import_post(self.book_import_url, "books.csv")
 
@@ -257,6 +257,18 @@ class ImportLogEntryTest(AdminTestMixin, TestCase):
         confirm_form = response.context["confirm_form"]
         data = confirm_form.initial
         self._post_url_response(self.book_process_import_url, data, follow=True)
+        self.assertEqual(0, LogEntry.objects.count())
+
+    def test_import_log_entry_error_row(self):
+        # ensure that error rows do not create log entries
+        response = self._do_import_post(self.book_import_url, "books.csv")
+
+        self.assertEqual(response.status_code, 200)
+        confirm_form = response.context["confirm_form"]
+        data = confirm_form.initial
+        with mock.patch("core.admin.BookResource.skip_row") as mock_skip:
+            mock_skip.side_effect = ValueError("some unknown error")
+            self._post_url_response(self.book_process_import_url, data, follow=True)
         self.assertEqual(0, LogEntry.objects.count())
 
 
