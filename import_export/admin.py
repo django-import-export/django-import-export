@@ -944,13 +944,14 @@ class ExportActionMixin(ExportMixin):
         Adds the export action to the list of available actions.
         """
         actions = super().get_actions(request)
-        actions.update(
-            export_admin_action=(
-                type(self).export_admin_action,
-                "export_admin_action",
-                _("Export selected %(verbose_name_plural)s"),
+        if self.has_export_permission(request):
+            actions.update(
+                export_admin_action=(
+                    type(self).export_admin_action,
+                    "export_admin_action",
+                    _("Export selected %(verbose_name_plural)s"),
+                )
             )
-        )
         return actions
 
 
