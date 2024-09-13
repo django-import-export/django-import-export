@@ -124,7 +124,7 @@ class ImportExportPermissionTest(AdminTestMixin, TestCase):
         widget = "export_link"
         self.assertIn(widget, response.content.decode())
 
-    @override_settings(IMPORT_EXPORT_IMPORT_PERMISSION_CODE="export")
+    @override_settings(IMPORT_EXPORT_EXPORT_PERMISSION_CODE="export")
     def test_export_button_for_export_permission(self):
         content_type = ContentType.objects.get_for_model(Category)
         Permission.objects.create(
@@ -149,6 +149,7 @@ class ImportExportPermissionTest(AdminTestMixin, TestCase):
         )
         self.assertNotIn(export_btn, response.content.decode())
 
+        # add export permission and the button should be displayed
         self.set_user_model_permission("export", "category")
         response = self.client.get(self.change_url)
         self.assertIn(export_btn, response.content.decode())
