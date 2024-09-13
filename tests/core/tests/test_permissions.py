@@ -1,7 +1,7 @@
 import os.path
 
-from admin_integration.mixins import AdminTestMixin
 from core.models import Category
+from core.tests.admin_integration.mixins import AdminTestMixin
 from django.contrib.auth.models import Permission, User
 from django.contrib.contenttypes.models import ContentType
 from django.test.testcases import TestCase
