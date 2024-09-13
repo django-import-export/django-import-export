@@ -41,23 +41,26 @@ Breaking changes
   This means that the ``coerce_to_string`` value which is passed to :class:`~import_export.widgets.Widget` is now
   ignored if you are exporting to a spreadsheet format from the Admin interface.
 
-  If you have subclassed ``Widget`` :meth:`~import_export.widgets.Widget.render` (or any subclass), or ``Field``
-  :meth:`~import_export.fields.Field.export`, then you will need to change the method signature:
+  If you have subclassed ``Widget``, ``Field`` or ``Resource``, then you may need to adjust your code to include
+  the ``**kwargs`` param as follows:
 
 .. list-table::
    :header-rows: 1
 
    * - Previous
      - New
-     - Summary
 
    * - ``Widget.render(self, value, obj=None)``
      - ``Widget.render(self, value, obj=None, **kwargs)``
-     - * added ``kwargs`` param
 
    * - ``Field.export(self, instance)``
      - ``Field.export(self, instance, **kwargs)``
-     - * added ``kwargs`` param
+
+   * - ``Resource.export_field(self, field, instance)``
+     - ``Resource.export_field(self, field, instance, **kwargs)``
+
+   * - ``Resource.export_resource(self, instance, selected_fields=None)``
+     - ``Resource.export_resource(self, instance, selected_fields=None, **kwargs)``
 
 v4.1
 ----
