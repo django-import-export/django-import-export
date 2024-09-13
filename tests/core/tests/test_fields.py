@@ -110,7 +110,7 @@ class FieldTest(TestCase):
         method_name = field.get_dehydrate_method(resource_field_name)
         self.assertEqual(method_name, custom_dehydrate_method)
 
-    def testget_dehydrate_method_with_callable(self):
+    def test_get_dehydrate_method_with_callable(self):
         field = fields.Field(
             attribute="foo", column_name="bar", dehydrate_method=lambda x: x
         )
