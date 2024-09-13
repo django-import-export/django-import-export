@@ -944,8 +944,6 @@ class ExportActionMixin(ExportMixin):
         Adds the export action to the list of available actions.
         """
         actions = super().get_actions(request)
-        if not self.has_export_permission(request):
-            return actions
         actions.update(
             export_admin_action=(
                 type(self).export_admin_action,
