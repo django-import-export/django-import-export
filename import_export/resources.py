@@ -1031,14 +1031,14 @@ class Resource(metaclass=DeclarativeMetaclass):
         """
         return queryset
 
-    def export_field(self, field, instance):
+    def export_field(self, field, instance, **kwargs):
         field_name = self.get_field_name(field)
         dehydrate_method = field.get_dehydrate_method(field_name)
 
         method = getattr(self, dehydrate_method, None)
         if method is not None:
             return method(instance)
-        return field.export(instance)
+        return field.export(instance, **kwargs)
 
     def get_export_fields(self, selected_fields=None):
         fields_ = selected_fields if selected_fields else self.fields
@@ -1049,9 +1049,9 @@ class Resource(metaclass=DeclarativeMetaclass):
                 export_fields.append(self._select_field(field_name))
         return export_fields
 
-    def export_resource(self, instance, selected_fields=None):
+    def export_resource(self, instance, selected_fields=None, **kwargs):
         export_fields = self.get_export_fields(selected_fields)
-        return [self.export_field(field, instance) for field in export_fields]
+        return [self.export_field(field, instance, **kwargs) for field in export_fields]
 
     def get_export_headers(self, selected_fields=None):
         export_fields = self.get_export_fields(selected_fields)
@@ -1095,7 +1095,7 @@ class Resource(metaclass=DeclarativeMetaclass):
         dataset = tablib.Dataset(headers=headers)
 
         for obj in self.iter_queryset(queryset):
-            r = self.export_resource(obj, selected_fields=export_fields)
+            r = self.export_resource(obj, selected_fields=export_fields, **kwargs)
             dataset.append(r)
 
         self.after_export(queryset, dataset, **kwargs)
