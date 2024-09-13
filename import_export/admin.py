@@ -233,14 +233,17 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
                 }
                 content_type_id = ContentType.objects.get_for_model(self.model).pk
                 for row in result:
-                    if (
-                        row.import_type != row.IMPORT_TYPE_ERROR
-                        and row.import_type != row.IMPORT_TYPE_SKIP
-                    ):
+                    if row.import_type in logentry_map.keys():
                         with warnings.catch_warnings():
-                            warnings.filterwarnings(
-                                "ignore", category=PendingDeprecationWarning
-                            )
+                            if django.VERSION >= (5,):
+                                from django.utils.deprecation import (
+                                    RemovedInDjango60Warning,
+                                )
+
+                                cat = RemovedInDjango60Warning
+                            else:
+                                cat = DeprecationWarning
+                            warnings.simplefilter("ignore", category=cat)
                             LogEntry.objects.log_action(
                                 user_id=request.user.pk,
                                 content_type_id=content_type_id,
@@ -582,8 +585,11 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
             RowResult.IMPORT_TYPE_DELETE: DELETION,
         }
         for import_type, instances in rows.items():
-            action_flag = logentry_map[import_type]
-            self._create_log_entry(user_pk, rows[import_type], import_type, action_flag)
+            if import_type in logentry_map.keys():
+                action_flag = logentry_map[import_type]
+                self._create_log_entry(
+                    user_pk, rows[import_type], import_type, action_flag
+                )
 
     def _create_log_entry(self, user_pk, rows, import_type, action_flag):
         if len(rows) > 0:

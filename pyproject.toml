@@ -43,14 +43,14 @@ dependencies = [
 
 [project.optional-dependencies]
 all = [
-    "tablib[all]>=3.6.1"
+    "tablib[all]"
 ]
 cli = ["tablib[cli]"]
 ods = ["tablib[ods]"]
 pandas = ["tablib[pandas]"]
-xls = ["tablib[xls]==3.5.0"]
-xlsx = ["tablib[xlsx]==3.5.0"]
-yaml = ["tablib[yaml]==3.5.0"]
+xls = ["tablib[xls]"]
+xlsx = ["tablib[xlsx]"]
+yaml = ["tablib[yaml]"]
 
 [project.urls]
 Documentation = "https://django-import-export.readthedocs.io/en/stable/"
