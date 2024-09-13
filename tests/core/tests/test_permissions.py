@@ -3,8 +3,10 @@ import os.path
 from admin_integration.mixins import AdminTestMixin
 from core.models import Category
 from django.contrib.auth.models import Permission, User
+from django.contrib.contenttypes.models import ContentType
 from django.test.testcases import TestCase
 from django.test.utils import override_settings
+from django.urls import reverse
 
 
 class ImportExportPermissionTest(AdminTestMixin, TestCase):
@@ -121,3 +123,32 @@ class ImportExportPermissionTest(AdminTestMixin, TestCase):
         self.assertNotIn(widget, response.content.decode())
         widget = "export_link"
         self.assertIn(widget, response.content.decode())
+
+    @override_settings(IMPORT_EXPORT_IMPORT_PERMISSION_CODE="export")
+    def test_export_button_for_export_permission(self):
+        content_type = ContentType.objects.get_for_model(Category)
+        Permission.objects.create(
+            codename="export_category",
+            name="Can export category",
+            content_type=content_type,
+        )
+        self.set_user_model_permission("view", "category")
+        self.cat1 = Category.objects.create(name="Cat 1")
+        self.change_url = reverse(
+            "%s:%s_%s_change"
+            % (
+                "admin",
+                "core",
+                "category",
+            ),
+            args=[self.cat1.pk],
+        )
+        response = self.client.get(self.change_url)
+        export_btn = (
+            '<input type="submit" value="Export" class="default" name="_export-item">'
+        )
+        self.assertNotIn(export_btn, response.content.decode())
+
+        self.set_user_model_permission("export", "category")
+        response = self.client.get(self.change_url)
+        self.assertIn(export_btn, response.content.decode())

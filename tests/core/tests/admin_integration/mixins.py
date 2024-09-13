@@ -11,7 +11,6 @@ class AdminTestMixin:
     category_change_url = "/admin/core/category/"
     category_export_url = "/admin/core/category/export/"
     uuid_category_change_url = "/admin/core/uuidcategory/"
-    category_export_url = "/admin/core/category/export/"
     uuid_category_export_url = "/admin/core/uuidcategory/export/"
     book_import_url = "/admin/core/book/import/"
     book_export_url = "/admin/core/book/export/"
