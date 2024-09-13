@@ -884,7 +884,7 @@ class ExportActionMixin(ExportMixin):
 
     def change_view(self, request, object_id, form_url="", extra_context=None):
         extra_context = extra_context or {}
-        extra_context["show_change_form_export"] = self.show_change_form_export
+        extra_context["show_change_form_export"] = self.show_change_form_export and self.has_export_permission(request)
         return super().change_view(
             request,
             object_id,
