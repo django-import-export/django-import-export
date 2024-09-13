@@ -26,10 +26,41 @@ v4.2
 
 *  `tablib <https://github.com/jazzband/tablib>`_ has been upgraded from v3.5.0 to 3.6.1.
    This upgrade removes tablib's dependency on `MarkupPy <https://github.com/jazzband/tablib/pull/554>`_ in favour
-   of ElementTree.  If you export to HTML, then this change may affect your output format, particularly if you have
+   of ``ElementTree``.  If you export to HTML, then this change may affect your output format, particularly if you have
    already escaped HTML characters in the text.
 
    See `issue 1627 <https://github.com/django-import-export/django-import-export/issues/1627>`_.
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+
+* This release fixes a regression introduced in v4. From v4.2, numeric, boolean and date/time widgets are written as
+  native values to spreadsheet formats (ODS, XLS, XLSX).  This was the default behavior in v3.
+  See :ref:`documentation<modify_render_return_type>`.
+
+  This means that the ``coerce_to_string`` value which is passed to :class:`~import_export.widgets.Widget` is now
+  ignored if you are exporting to a spreadsheet format from the Admin interface.
+
+  If you have subclassed ``Widget``, ``Field`` or ``Resource``, then you may need to adjust your code to include
+  the ``**kwargs`` param as follows:
+
+.. list-table::
+   :header-rows: 1
+
+   * - Previous
+     - New
+
+   * - ``Widget.render(self, value, obj=None)``
+     - ``Widget.render(self, value, obj=None, **kwargs)``
+
+   * - ``Field.export(self, instance)``
+     - ``Field.export(self, instance, **kwargs)``
+
+   * - ``Resource.export_field(self, field, instance)``
+     - ``Resource.export_field(self, field, instance, **kwargs)``
+
+   * - ``Resource.export_resource(self, instance, selected_fields=None)``
+     - ``Resource.export_resource(self, instance, selected_fields=None, **kwargs)``
 
 v4.1
 ----

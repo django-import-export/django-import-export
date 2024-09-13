@@ -197,8 +197,7 @@ Modify :meth:`.render` return type
 ----------------------------------
 
 By default, :meth:`.render` will return a string type for export.  There may be use cases where a native type is
-required from export (such as exporting to Excel).  If so, you can use the ``coerce_to_string`` parameter if the
-widget supports it.
+required from export.  If so, you can use the ``coerce_to_string`` parameter if the widget supports it.
 
 By default, ``coerce_to_string`` is ``True``, but if you set this to ``False``, then the native type will be returned
 during export::
@@ -209,9 +208,11 @@ during export::
         class Meta:
             model = Book
 
-If you need different export formats for different file types, then the only way to do this at present is to declare
-multiple Resource configurations.  For example, *ExcelBookResource*, *CsvBookResource*.  For each custom Resource,
-You would need to declare Widgets with the ``coerce_to_string`` value set as desired.
+If exporting via the Admin interface, the export logic will detect if exporting to either XLSX, XLS or ODS format,
+and will set native types for *Numeric*, *Boolean* and *Date* values.  This means that the ``coerce_to_string`` value
+will be ignored and the native types will be returned.  This is because in most use-cases the native type will be
+expected in the exported format.  If you need to modify this behavior and enforce string types in "binary" file formats
+then the only way to do this is to override the widget ``render()`` method.
 
 .. seealso::
 
@@ -686,7 +687,6 @@ the data in the import row is the same as the persisted data or not.  You can co
 row if it is duplicate by using setting :attr:`~import_export.options.ResourceOptions.skip_unchanged`.
 
 If :attr:`~import_export.options.ResourceOptions.skip_unchanged` is enabled, then the import process will check each
-ns
 defined import field and perform a simple comparison with the existing instance, and if all comparisons are equal, then
 the row is skipped.  Skipped rows are recorded in the row :class:`~import_export.results.RowResult` object.
 

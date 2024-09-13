@@ -229,3 +229,15 @@ DEFAULT_FORMATS = [
     )
     if fmt.is_available()
 ]
+
+#: These are the formats which support different data types (such as datetime
+#: and numbers) for which `coerce_to_string` is to be set false dynamically.
+BINARY_FORMATS = [
+    fmt
+    for fmt in (
+        XLS,
+        XLSX,
+        ODS,
+    )
+    if fmt.is_available()
+]

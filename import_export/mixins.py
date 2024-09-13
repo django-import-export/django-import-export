@@ -258,6 +258,7 @@ class BaseExportMixin(BaseImportExportMixin):
 
 
 class ExportViewMixin(BaseExportMixin):
+    # Deprecated, and will be removed in a future release (see #1666)
     form_class = SelectableFieldsExportForm
 
     def get_export_data(self, file_format, queryset, **kwargs):
@@ -280,6 +281,7 @@ class ExportViewMixin(BaseExportMixin):
 
 
 class ExportViewFormMixin(ExportViewMixin, FormView):
+    # Deprecated, and will be removed in a future release (see #1666)
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
         warn(
