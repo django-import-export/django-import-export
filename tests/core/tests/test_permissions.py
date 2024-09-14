@@ -153,3 +153,25 @@ class ImportExportPermissionTest(AdminTestMixin, TestCase):
         self.set_user_model_permission("export", "category")
         response = self.client.get(self.change_url)
         self.assertIn(export_btn, response.content.decode())
+
+    @override_settings(IMPORT_EXPORT_EXPORT_PERMISSION_CODE="export")
+    def test_action_dropdown_contains_export_action(self):
+        content_type = ContentType.objects.get_for_model(Category)
+        Permission.objects.create(
+            codename="export_category",
+            name="Can export category",
+            content_type=content_type,
+        )
+        self.set_user_model_permission("view", "category")
+        self.cat1 = Category.objects.create(name="Cat 1")
+
+        response = self.client.get(self.category_change_url)
+        export_option = (
+            '<option value="export_admin_action">Export selected categories</option>'
+        )
+        self.assertNotIn(export_option, response.content.decode())
+
+        # add export permission and the button should be displayed
+        self.set_user_model_permission("export", "category")
+        response = self.client.get(self.category_change_url)
+        self.assertIn(export_option, response.content.decode())
