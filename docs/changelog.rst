@@ -22,6 +22,7 @@ This release contains breaking changes.  Please refer to :doc:`release notes<rel
 - Accept numbers using the numeric separators of the current language in number widgets (:meth:`~import_export.widgets.FloatWidget`, :meth:`~import_export.widgets.IntegerWidget`, :meth:`~import_export.widgets.DecimalWidget`) (`1927 <https://github.com/django-import-export/django-import-export/issues/1927>`_)
 - Fix v3 regression: handle native types on export to spreadsheet (`1927 <https://github.com/django-import-export/django-import-export/issues/1927>`_)
 - Fix crash for Django 5.1 when rows are skipped (`1944 <https://github.com/django-import-export/django-import-export/issues/1944>`_)
+- Allow callable in dehydrate method (`1950 <https://github.com/django-import-export/django-import-export/issues/1950>`_)
 
 4.1.1 (2024-07-08)
 ------------------
