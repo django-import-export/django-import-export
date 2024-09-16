@@ -10,18 +10,19 @@ Changelog
 
 This release contains breaking changes.  Please refer to :doc:`release notes<release_notes>`.
 
+- Upgraded tablib version (`1627 <https://github.com/django-import-export/django-import-export/issues/1627>`_)
 - Consistent queryset creation in ModelAdmin export mixin (`1890 <https://github.com/django-import-export/django-import-export/pull/1890>`_)
 - Deprecated :meth:`~import_export.admin.ExportMixin.get_valid_export_item_pks` in favour of :meth:`~import_export.admin.ExportMixin.get_queryset` (`1890 <https://github.com/django-import-export/django-import-export/pull/1890>`_)
 - Improve deprecation warning for ``ExportViewFormMixin`` to report at point of class definition (`1900 <https://github.com/django-import-export/django-import-export/pull/1900>`_)
 - Fix export for fields with custom declared name (`1903 <https://github.com/django-import-export/django-import-export/pull/1903>`_)
 - Hide the "Resource" form when it only has one option (`1908 <https://github.com/django-import-export/django-import-export/issues/1908>`_)
 - Update date, time and datetime widget render method to handle derived instance (`1918 <https://github.com/django-import-export/django-import-export/issues/1918>`_)
-- Upgraded tablib version (`1627 <https://github.com/django-import-export/django-import-export/issues/1627>`_)
 - Add support for Django 5.1 (`1926 <https://github.com/django-import-export/django-import-export/issues/1926>`_)
-- Added warning log for declared fields excluded from fields whitelist (`1930 <https://github.com/django-import-export/django-import-export/issues/1930>`_)
 - Accept numbers using the numeric separators of the current language in number widgets (:meth:`~import_export.widgets.FloatWidget`, :meth:`~import_export.widgets.IntegerWidget`, :meth:`~import_export.widgets.DecimalWidget`) (`1927 <https://github.com/django-import-export/django-import-export/issues/1927>`_)
-- Fix v3 regression: handle native types on export to spreadsheet (`1927 <https://github.com/django-import-export/django-import-export/issues/1927>`_)
+- Added warning log for declared fields excluded from fields whitelist (`1930 <https://github.com/django-import-export/django-import-export/issues/1930>`_)
+- Fix v3 regression: handle native types on export to spreadsheet (`1939 <https://github.com/django-import-export/django-import-export/issues/1939>`_)
 - Fix crash for Django 5.1 when rows are skipped (`1944 <https://github.com/django-import-export/django-import-export/issues/1944>`_)
+- Document overriding formats (`1868 <https://github.com/django-import-export/django-import-export/issues/1868>`_)
 
 4.1.1 (2024-07-08)
 ------------------
