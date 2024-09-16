@@ -207,6 +207,8 @@ The values must be those provided in ``import_export.formats.base_formats`` e.g
     from import_export.formats.base_formats import XLSX
     IMPORT_EXPORT_FORMATS = [XLSX]
 
+This can be set for a specific model admin by declaring the ``import_export_formats`` attribute.
+
 .. _import_formats:
 
 ``IMPORT_FORMATS``
@@ -222,6 +224,8 @@ The values must be those provided in ``import_export.formats.base_formats`` e.g
     from import_export.formats.base_formats import CSV, XLSX
     IMPORT_FORMATS = [CSV, XLSX]
 
+This can be set for a specific model admin by declaring the ``import_formats`` attribute.
+
 .. _export_formats:
 
 ``EXPORT_FORMATS``
@@ -236,6 +240,8 @@ The values must be those provided in ``import_export.formats.base_formats`` e.g
     # settings.py
     from import_export.formats.base_formats import XLSX
     EXPORT_FORMATS = [XLSX]
+
+This can be set for a specific model admin by declaring the ``export_formats`` attribute.
 
 .. _exampleapp:
 
