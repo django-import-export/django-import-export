@@ -19,6 +19,8 @@ This release contains breaking changes.  Please refer to :doc:`release notes<rel
 - Update date, time and datetime widget render method to handle derived instance (`1918 <https://github.com/django-import-export/django-import-export/issues/1918>`_)
 - Add support for Django 5.1 (`1926 <https://github.com/django-import-export/django-import-export/issues/1926>`_)
 - Accept numbers using the numeric separators of the current language in number widgets (:meth:`~import_export.widgets.FloatWidget`, :meth:`~import_export.widgets.IntegerWidget`, :meth:`~import_export.widgets.DecimalWidget`) (`1927 <https://github.com/django-import-export/django-import-export/issues/1927>`_)
+- Fix v3 regression: handle native types on export to spreadsheet (`1927 <https://github.com/django-import-export/django-import-export/issues/1927>`_)
+- Fix export button displayed on change screen when export permission not assigned (`1942 <https://github.com/django-import-export/django-import-export/issues/1942>`_)
 - Added warning log for declared fields excluded from fields whitelist (`1930 <https://github.com/django-import-export/django-import-export/issues/1930>`_)
 - Fix v3 regression: handle native types on export to spreadsheet (`1939 <https://github.com/django-import-export/django-import-export/issues/1939>`_)
 - Fix crash for Django 5.1 when rows are skipped (`1944 <https://github.com/django-import-export/django-import-export/issues/1944>`_)

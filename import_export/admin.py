@@ -884,7 +884,9 @@ class ExportActionMixin(ExportMixin):
 
     def change_view(self, request, object_id, form_url="", extra_context=None):
         extra_context = extra_context or {}
-        extra_context["show_change_form_export"] = self.show_change_form_export
+        extra_context["show_change_form_export"] = (
+            self.show_change_form_export and self.has_export_permission(request)
+        )
         return super().change_view(
             request,
             object_id,
@@ -942,13 +944,14 @@ class ExportActionMixin(ExportMixin):
         Adds the export action to the list of available actions.
         """
         actions = super().get_actions(request)
-        actions.update(
-            export_admin_action=(
-                type(self).export_admin_action,
-                "export_admin_action",
-                _("Export selected %(verbose_name_plural)s"),
+        if self.has_export_permission(request):
+            actions.update(
+                export_admin_action=(
+                    type(self).export_admin_action,
+                    "export_admin_action",
+                    _("Export selected %(verbose_name_plural)s"),
+                )
             )
-        )
         return actions
 
 
