@@ -23,7 +23,9 @@ from tablib import Dataset
 
 from import_export import fields, formats, resources, widgets
 from import_export.admin import ExportActionMixin, ExportMixin
+from import_export.fields import Field
 from import_export.formats.base_formats import XLSX
+from import_export.resources import ModelResource
 
 
 class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
@@ -554,6 +556,38 @@ class CustomColumnNameExportTest(AdminTestMixin, TestCase):
             "id,Email of the author,name,published_date,Author Name\r\n"
             f"{self.book.id},,Moonraker,1955-04-05,Ian Fleming\r\n"
         )
+        self.assertEqual(s, response.content.decode())
+
+
+class DeclaredFieldExportTest(AdminTestMixin, TestCase):
+    """
+    If a custom field is declared, export should work if either the Field's
+    if no `fields` declaration is present.
+    issue 1953
+    """
+
+    class _BookResource(ModelResource):
+        name = Field(attribute="author__name", column_name="Author Name")
+
+        class Meta:
+            model = Book
+
+    def setUp(self):
+        super().setUp()
+        self.resource = DeclaredFieldExportTest._BookResource()
+        self.author = Author.objects.create(id=11, name="Ian Fleming")
+        self.book = Book.objects.create(
+            name="Moonraker", author=self.author, published=date(1955, 4, 5)
+        )
+
+    def test_export_with_declared_author_name_field(self):
+        data = {
+            "format": "0",
+            "resource": "0",
+            "bookresource_name": True,
+        }
+        response = self._post_url_response(self.book_export_url, data)
+        s = "Author Name\r\nIan Fleming\r\n"
         self.assertEqual(s, response.content.decode())
 
 
