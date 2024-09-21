@@ -561,9 +561,9 @@ class CustomColumnNameExportTest(AdminTestMixin, TestCase):
 
 class DeclaredFieldExportTest(AdminTestMixin, TestCase):
     """
-    If a custom field is declared, export should work if either the Field's
+    If a custom field is declared, export should work
     if no `fields` declaration is present.
-    issue 1953
+    (issue 1953)
     """
 
     class _BookResource(ModelResource):
