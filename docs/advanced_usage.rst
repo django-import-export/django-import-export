@@ -759,9 +759,30 @@ In this case, the export looks like this:
     full_title,id,name,author,author_email,imported,published,price,categories
     Some book by 1,2,Some book,1,,0,2012-12-05,8.85,1
 
-It is also possible to pass a method name in to the :meth:`~import_export.fields.Field` constructor.  If this method
-name is supplied, then that method
-will be called as the 'dehydrate' method.
+It is also possible to pass a method name or a callable to the :meth:`~import_export.fields.Field` constructor. If this method name or callable is supplied, then it will be called as the 'dehydrate' method. For example::
+
+    from import_export.fields import Field
+
+    # Using method name
+    class BookResource(resources.ModelResource):
+        full_title = Field(dehydrate_method='custom_dehydrate_method')
+
+        class Meta:
+            model = Book
+
+        def custom_dehydrate_method(self, book):
+            return f"{book.name} by {book.author.name}"
+
+    # Using a callable directly
+    def custom_dehydrate_callable(book):
+        return f"{book.name} by {book.author.name}"
+
+    class BookResource(resources.ModelResource):
+        full_title = Field(dehydrate_method=custom_dehydrate_callable)
+
+        class Meta:
+            model = Book
+
 
 Filtering querysets during export
 =================================

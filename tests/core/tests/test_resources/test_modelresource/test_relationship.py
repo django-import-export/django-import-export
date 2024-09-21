@@ -45,6 +45,23 @@ class RelationshipFieldTest(TestCase):
         full_title = resource.export_field(resource.fields["full_title"], self.book)
         self.assertEqual(full_title, f"{self.book.name} by {self.book.author.name}")
 
+    def test_dehydrating_field_using_callable(self):
+        class B(resources.ModelResource):
+            full_title = fields.Field(
+                column_name="Full title",
+                dehydrate_method=lambda obj: f"{obj.name} by {obj.author.name}",
+            )
+
+            class Meta:
+                model = Book
+                fields = ("author__name", "full_title")
+
+        author = Author.objects.create(name="Author")
+        self.book.author = author
+        resource = B()
+        full_title = resource.export_field(resource.fields["full_title"], self.book)
+        self.assertEqual(full_title, f"{self.book.name} by {self.book.author.name}")
+
     def test_dehydrate_field_using_custom_dehydrate_field_method(self):
         class B(resources.ModelResource):
             full_title = fields.Field(

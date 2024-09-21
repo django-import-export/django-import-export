@@ -24,6 +24,7 @@ This release contains breaking changes.  Please refer to :doc:`release notes<rel
 - Added warning log for declared fields excluded from fields whitelist (`1930 <https://github.com/django-import-export/django-import-export/issues/1930>`_)
 - Fix v3 regression: handle native types on export to spreadsheet (`1939 <https://github.com/django-import-export/django-import-export/issues/1939>`_)
 - Fix crash for Django 5.1 when rows are skipped (`1944 <https://github.com/django-import-export/django-import-export/issues/1944>`_)
+- Allow callable in dehydrate method (`1950 <https://github.com/django-import-export/django-import-export/issues/1950>`_)
 - Document overriding formats (`1868 <https://github.com/django-import-export/django-import-export/issues/1868>`_)
 
 4.1.1 (2024-07-08)
