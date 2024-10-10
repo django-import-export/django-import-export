@@ -108,8 +108,12 @@ column name (i.e. row header)::
         class Meta:
             model = Book
 
-The ``attribute`` parameter is optional and if not supplied it will default to the declared resource attribute name
-(e.g. 'published_field').
+The ``attribute`` parameter is optional, and if omitted it means that:
+
+  1. The field will be ignored during import.
+
+  2. The field can be exported if the Resource attribute name ('published_field') relates to a field on the associated
+     model.
 
 If using the ``fields`` attribute to :ref:`declare fields<field_declaration>` then the declared resource attribute
 name must appear in the ``fields`` list::
