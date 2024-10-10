@@ -574,13 +574,16 @@ class DeclaredFieldWithAttributeExportTest(AdminTestMixin, TestCase):
 
     def setUp(self):
         super().setUp()
-        self.resource = DeclaredFieldWithAttributeExportTest._BookResource()
         self.author = Author.objects.create(id=11, name="Ian Fleming")
         self.book = Book.objects.create(
             name="Moonraker", author=self.author, published=date(1955, 4, 5)
         )
 
-    def test_export_with_declared_author_name_field(self):
+    @patch("import_export.mixins.BaseExportMixin.choose_export_resource_class")
+    def test_export_with_declared_author_name_field(
+        self, mock_choose_export_resource_class
+    ):
+        mock_choose_export_resource_class.return_value = self._BookResource
         data = {
             "format": "0",
             "resource": "0",
@@ -607,13 +610,16 @@ class DeclaredFieldWithAttributeAndFieldsExportTest(AdminTestMixin, TestCase):
 
     def setUp(self):
         super().setUp()
-        self.resource = DeclaredFieldWithAttributeAndFieldsExportTest._BookResource()
         self.author = Author.objects.create(id=11, name="Ian Fleming")
         self.book = Book.objects.create(
             name="Moonraker", author=self.author, published=date(1955, 4, 5)
         )
 
-    def test_export_with_declared_author_name_field(self):
+    @patch("import_export.mixins.BaseExportMixin.choose_export_resource_class")
+    def test_export_with_declared_author_name_field(
+        self, mock_choose_export_resource_class
+    ):
+        mock_choose_export_resource_class.return_value = self._BookResource
         data = {
             "format": "0",
             "resource": "0",
@@ -638,12 +644,15 @@ class DeclaredFieldWithNoAttributeExportTest(AdminTestMixin, TestCase):
 
     def setUp(self):
         super().setUp()
-        self.resource = DeclaredFieldWithAttributeExportTest._BookResource()
         self.book = Book.objects.create(
             name="Moonraker", author_email="ian@fleming.com"
         )
 
-    def test_export_with_declared_author_email_field(self):
+    @patch("import_export.mixins.BaseExportMixin.choose_export_resource_class")
+    def test_export_with_declared_author_email_field(
+        self, mock_choose_export_resource_class
+    ):
+        mock_choose_export_resource_class.return_value = self._BookResource
         data = {"format": "0", "resource": "0", "bookresource_author_email": True}
         response = self._post_url_response(self.book_export_url, data)
         s = "Author Email\r\nian@fleming.com\r\n"
