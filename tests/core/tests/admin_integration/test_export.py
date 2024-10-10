@@ -562,7 +562,7 @@ class CustomColumnNameExportTest(AdminTestMixin, TestCase):
 class DeclaredFieldWithAttributeExportTest(AdminTestMixin, TestCase):
     """
     If a custom field is declared, export should work
-    if no `fields` declaration is present.
+    even if no `fields` declaration is present.
     (issue 1953)
     """
 
@@ -575,6 +575,39 @@ class DeclaredFieldWithAttributeExportTest(AdminTestMixin, TestCase):
     def setUp(self):
         super().setUp()
         self.resource = DeclaredFieldWithAttributeExportTest._BookResource()
+        self.author = Author.objects.create(id=11, name="Ian Fleming")
+        self.book = Book.objects.create(
+            name="Moonraker", author=self.author, published=date(1955, 4, 5)
+        )
+
+    def test_export_with_declared_author_name_field(self):
+        data = {
+            "format": "0",
+            "resource": "0",
+            "bookresource_name": True,
+        }
+        response = self._post_url_response(self.book_export_url, data)
+        s = "Author Name\r\nIan Fleming\r\n"
+        self.assertEqual(s, response.content.decode())
+
+
+class DeclaredFieldWithAttributeAndFieldsExportTest(AdminTestMixin, TestCase):
+    """
+    If a custom field is declared, export should work
+    when `fields` declaration is present.
+    (issue 1953)
+    """
+
+    class _BookResource(ModelResource):
+        name = Field(attribute="author__name", column_name="Author Name")
+
+        class Meta:
+            fields = ("name",)
+            model = Book
+
+    def setUp(self):
+        super().setUp()
+        self.resource = DeclaredFieldWithAttributeAndFieldsExportTest._BookResource()
         self.author = Author.objects.create(id=11, name="Ian Fleming")
         self.book = Book.objects.create(
             name="Moonraker", author=self.author, published=date(1955, 4, 5)
