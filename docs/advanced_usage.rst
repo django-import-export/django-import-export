@@ -112,8 +112,8 @@ The ``attribute`` parameter is optional, and if omitted it means that:
 
   1. The field will be ignored during import.
 
-  2. The field can be exported if the Resource attribute name ('published_field') relates to a field on the associated
-     model.
+  2. The field will be present during export, but will have an empty value unless a
+     :ref:`dehydrate<advanced_data_manipulation_on_export>` method is defined.
 
 If using the ``fields`` attribute to :ref:`declare fields<field_declaration>` then the declared resource attribute
 name must appear in the ``fields`` list::

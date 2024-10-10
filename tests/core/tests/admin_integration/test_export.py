@@ -630,6 +630,34 @@ class DeclaredFieldWithAttributeAndFieldsExportTest(AdminTestMixin, TestCase):
         self.assertEqual(s, response.content.decode())
 
 
+class DeclaredFieldWithNoAttributeExportTest(AdminTestMixin, TestCase):
+    """
+    If a custom field is declared with no attribute the field should be skipped.
+    """
+
+    class _BookResource(ModelResource):
+        author_email = Field(column_name="Author Email")
+
+        class Meta:
+            model = Book
+
+    def setUp(self):
+        super().setUp()
+        self.book = Book.objects.create(
+            name="Moonraker", author_email="ian@fleming.com"
+        )
+
+    @patch("import_export.mixins.BaseExportMixin.choose_export_resource_class")
+    def test_export_with_declared_author_email_field(
+        self, mock_choose_export_resource_class
+    ):
+        mock_choose_export_resource_class.return_value = self._BookResource
+        data = {"format": "0", "resource": "0", "bookresource_author_email": True}
+        response = self._post_url_response(self.book_export_url, data)
+        s = 'Author Email\r\n""\r\n'
+        self.assertEqual(s, response.content.decode())
+
+
 class FilteredExportTest(AdminTestMixin, TestCase):
     """
     Tests that exports can be filtered by a custom form field.
