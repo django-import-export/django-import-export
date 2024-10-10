@@ -18,7 +18,6 @@ class ChildAdmin(ImportMixin, admin.ModelAdmin):
 
 
 class BookResource(ModelResource):
-    author_email = Field(column_name="Author Email")
 
     class Meta:
         model = Book

@@ -632,7 +632,8 @@ class DeclaredFieldWithAttributeAndFieldsExportTest(AdminTestMixin, TestCase):
 
 class DeclaredFieldWithNoAttributeExportTest(AdminTestMixin, TestCase):
     """
-    If a custom field is declared with no attribute the field should be skipped.
+    If a custom field is declared with no attribute the field will be present
+    but with an empty string.
     """
 
     class _BookResource(ModelResource):
