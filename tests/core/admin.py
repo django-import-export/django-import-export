@@ -18,6 +18,7 @@ class ChildAdmin(ImportMixin, admin.ModelAdmin):
 
 
 class BookResource(ModelResource):
+
     class Meta:
         model = Book
 
