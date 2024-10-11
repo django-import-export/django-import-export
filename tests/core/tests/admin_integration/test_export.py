@@ -1,4 +1,3 @@
-import warnings
 from datetime import date, datetime
 from io import BytesIO
 from unittest import mock
@@ -695,11 +694,11 @@ class DeclaredFieldWithIncorrectNameInFieldsExportTest(AdminTestMixin, TestCase)
             "ebookresource_a": True,
             "author": self.author.id,
         }
-        with warnings.catch_warnings(record=True, category=UserWarning) as w:
+        with self.assertWarns(UserWarning) as w:
             response = self._post_url_response(self.ebook_export_url, data)
-            self.assertEqual(1, len(w))
             self.assertEqual(
-                "cannot identify field for export with name 'a'", str(w[-1].message)
+                "cannot identify field for export with name 'a'",
+                str(w.warnings[-1].message),
             )
         s = "id\r\n1\r\n"
         self.assertEqual(s, response.content.decode())
