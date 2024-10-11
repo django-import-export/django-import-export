@@ -95,7 +95,7 @@ Here are some examples of how it has been used in the wild:
 * Manage user access to an application by importing externally version controlled auth user lists
 * Add `hooks <https://django-import-export.readthedocs.io/en/latest/advanced_usage.html#advanced-data-manipulation-on-export>`_ to anonymize data on export
 * `Modify import / export UI forms <https://django-import-export.readthedocs.io/en/latest/admin_integration.html#customize-admin-import-forms>`_ to add dynamic filtering on import / export.
-* Build a migration layer between platforms, for example *django-import-export* has been used to export from `Wordpress <https://wordpress.org/>` to `Wagtail <https://wagtail.org/>`
+* Build a migration layer between platforms, for example *django-import-export* has been used to process exports from `Wordpress <https://wordpress.org/>` and import to `Wagtail <https://wagtail.org/>`
 
 Getting started
 ===============
