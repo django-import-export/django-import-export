@@ -1,3 +1,4 @@
+import warnings
 from datetime import date, datetime
 from io import BytesIO
 from unittest import mock
@@ -656,6 +657,50 @@ class DeclaredFieldWithNoAttributeExportTest(AdminTestMixin, TestCase):
         data = {"format": "0", "resource": "0", "bookresource_author_email": True}
         response = self._post_url_response(self.book_export_url, data)
         s = 'Author Email\r\n""\r\n'
+        self.assertEqual(s, response.content.decode())
+
+
+class DeclaredFieldWithIncorrectNameInFieldsExportTest(AdminTestMixin, TestCase):
+    """
+    If a custom field is declared with no attribute the process should not crash
+    if that field is not in `fields`.
+    issue #1959
+    """
+
+    class _BookResource(ModelResource):
+        author_email = Field(column_name="Author Email")
+
+        class Meta:
+            fields = ("a",)
+            model = Book
+
+    def setUp(self):
+        super().setUp()
+        self.book = Book.objects.create(
+            name="Moonraker", author_email="ian@fleming.com"
+        )
+
+    @patch("import_export.mixins.BaseExportMixin.choose_export_resource_class")
+    @patch("import_export.forms.SelectableFieldsExportForm.get_selected_resource")
+    def test_export_with_declared_author_email_field(
+        self, mock_get_selected_resource, mock_choose_export_resource_class
+    ):
+        mock_get_selected_resource.return_value = self._BookResource
+        mock_choose_export_resource_class.return_value = self._BookResource
+        data = {
+            "format": "0",
+            "resource": "0",
+            "_bookresource_a": True,
+            "_bookresource_id": True,
+        }
+        with warnings.catch_warnings(record=True, category=UserWarning) as w:
+            warnings.simplefilter("always")
+            response = self._post_url_response(self.book_export_url, data)
+            self.assertEqual(1, len(w))
+            self.assertEqual(
+                "cannot identify field for export with name 'a'", str(w[-1].message)
+            )
+        s = "\r\n"
         self.assertEqual(s, response.content.decode())
 
 
