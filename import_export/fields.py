@@ -31,8 +31,9 @@ class Field:
       This can be used if the widget returns null, but there is a default instance
       value which should not be overwritten.
 
-    :param dehydrate_method: Lets you choose your own method for dehydration rather
-        than using `dehydrate_{field_name}` syntax.
+    :param dehydrate_method: You can provide a `dehydrate_method` as a string to use
+        instead of the default `dehydrate_{field_name}` syntax, or you can provide
+        a callable that will be executed with the instance as its argument.
 
     :param m2m_add: changes save of this field to add the values, if they do not exist,
         to a ManyToMany field instead of setting all values.  Only useful if field is

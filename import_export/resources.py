@@ -1035,7 +1035,11 @@ class Resource(metaclass=DeclarativeMetaclass):
         field_name = self.get_field_name(field)
         dehydrate_method = field.get_dehydrate_method(field_name)
 
-        method = getattr(self, dehydrate_method, None)
+        if callable(dehydrate_method):
+            method = dehydrate_method
+        else:
+            method = getattr(self, dehydrate_method, None)
+
         if method is not None:
             return method(instance)
         return field.export(instance, **kwargs)
