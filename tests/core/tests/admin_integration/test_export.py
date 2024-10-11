@@ -676,31 +676,32 @@ class DeclaredFieldWithIncorrectNameInFieldsExportTest(AdminTestMixin, TestCase)
 
     def setUp(self):
         super().setUp()
+        self.author = Author.objects.create(id=11, name="Ian Fleming")
         self.book = Book.objects.create(
-            name="Moonraker", author_email="ian@fleming.com"
+            name="Moonraker", author_email="ian@fleming.com", author=self.author
         )
 
-    @patch("import_export.mixins.BaseExportMixin.choose_export_resource_class")
-    @patch("import_export.forms.SelectableFieldsExportForm.get_selected_resource")
-    def test_export_with_declared_author_email_field(
-        self, mock_get_selected_resource, mock_choose_export_resource_class
-    ):
-        mock_get_selected_resource.return_value = self._BookResource
-        mock_choose_export_resource_class.return_value = self._BookResource
+        EBookResource._meta.fields = ("a",)
+
+    def tearDown(self):
+        super().tearDown()
+        EBookResource._meta.fields = ("id", "author_email", "name", "published")
+
+    def test_export_with_declared_author_email_field(self):
         data = {
             "format": "0",
             "resource": "0",
-            "_bookresource_a": True,
-            "_bookresource_id": True,
+            "ebookresource_id": True,
+            "ebookresource_a": True,
+            "author": self.author.id,
         }
         with warnings.catch_warnings(record=True, category=UserWarning) as w:
-            warnings.simplefilter("always")
-            response = self._post_url_response(self.book_export_url, data)
+            response = self._post_url_response(self.ebook_export_url, data)
             self.assertEqual(1, len(w))
             self.assertEqual(
                 "cannot identify field for export with name 'a'", str(w[-1].message)
             )
-        s = "\r\n"
+        s = "id\r\n1\r\n"
         self.assertEqual(s, response.content.decode())
 
 
