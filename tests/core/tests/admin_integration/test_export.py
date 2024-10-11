@@ -503,6 +503,7 @@ class CustomColumnNameExportTest(AdminTestMixin, TestCase):
         self.book = Book.objects.create(
             name="Moonraker", author=self.author, published=date(1955, 4, 5)
         )
+        self.orig_fields = EBookResource._meta.fields
         EBookResource._meta.fields = (
             "id",
             "author_email",
@@ -513,7 +514,7 @@ class CustomColumnNameExportTest(AdminTestMixin, TestCase):
 
     def tearDown(self):
         super().tearDown()
-        EBookResource._meta.fields = ("id", "author_email", "name", "published")
+        EBookResource._meta.fields = self.orig_fields
 
     def test_export_with_custom_field(self):
         data = {
@@ -666,25 +667,18 @@ class DeclaredFieldWithIncorrectNameInFieldsExportTest(AdminTestMixin, TestCase)
     issue #1959
     """
 
-    class _BookResource(ModelResource):
-        author_email = Field(column_name="Author Email")
-
-        class Meta:
-            fields = ("a",)
-            model = Book
-
     def setUp(self):
         super().setUp()
         self.author = Author.objects.create(id=11, name="Ian Fleming")
         self.book = Book.objects.create(
             name="Moonraker", author_email="ian@fleming.com", author=self.author
         )
-
+        self.orig_fields = EBookResource._meta.fields
         EBookResource._meta.fields = ("a",)
 
     def tearDown(self):
         super().tearDown()
-        EBookResource._meta.fields = ("id", "author_email", "name", "published")
+        EBookResource._meta.fields = self.orig_fields
 
     def test_export_with_declared_author_email_field(self):
         data = {
