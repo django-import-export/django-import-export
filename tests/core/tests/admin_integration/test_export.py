@@ -23,7 +23,9 @@ from tablib import Dataset
 
 from import_export import fields, formats, resources, widgets
 from import_export.admin import ExportActionMixin, ExportMixin
+from import_export.fields import Field
 from import_export.formats.base_formats import XLSX
+from import_export.resources import ModelResource
 
 
 class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
@@ -554,6 +556,106 @@ class CustomColumnNameExportTest(AdminTestMixin, TestCase):
             "id,Email of the author,name,published_date,Author Name\r\n"
             f"{self.book.id},,Moonraker,1955-04-05,Ian Fleming\r\n"
         )
+        self.assertEqual(s, response.content.decode())
+
+
+class DeclaredFieldWithAttributeExportTest(AdminTestMixin, TestCase):
+    """
+    If a custom field is declared, export should work
+    even if no `fields` declaration is present.
+    (issue 1953)
+    """
+
+    class _BookResource(ModelResource):
+        name = Field(attribute="author__name", column_name="Author Name")
+
+        class Meta:
+            model = Book
+
+    def setUp(self):
+        super().setUp()
+        self.author = Author.objects.create(id=11, name="Ian Fleming")
+        self.book = Book.objects.create(
+            name="Moonraker", author=self.author, published=date(1955, 4, 5)
+        )
+
+    @patch("import_export.mixins.BaseExportMixin.choose_export_resource_class")
+    def test_export_with_declared_author_name_field(
+        self, mock_choose_export_resource_class
+    ):
+        mock_choose_export_resource_class.return_value = self._BookResource
+        data = {
+            "format": "0",
+            "resource": "0",
+            "bookresource_name": True,
+        }
+        response = self._post_url_response(self.book_export_url, data)
+        s = "Author Name\r\nIan Fleming\r\n"
+        self.assertEqual(s, response.content.decode())
+
+
+class DeclaredFieldWithAttributeAndFieldsExportTest(AdminTestMixin, TestCase):
+    """
+    If a custom field is declared, export should work
+    when `fields` declaration is present.
+    (issue 1953)
+    """
+
+    class _BookResource(ModelResource):
+        name = Field(attribute="author__name", column_name="Author Name")
+
+        class Meta:
+            fields = ("name",)
+            model = Book
+
+    def setUp(self):
+        super().setUp()
+        self.author = Author.objects.create(id=11, name="Ian Fleming")
+        self.book = Book.objects.create(
+            name="Moonraker", author=self.author, published=date(1955, 4, 5)
+        )
+
+    @patch("import_export.mixins.BaseExportMixin.choose_export_resource_class")
+    def test_export_with_declared_author_name_field(
+        self, mock_choose_export_resource_class
+    ):
+        mock_choose_export_resource_class.return_value = self._BookResource
+        data = {
+            "format": "0",
+            "resource": "0",
+            "bookresource_name": True,
+        }
+        response = self._post_url_response(self.book_export_url, data)
+        s = "Author Name\r\nIan Fleming\r\n"
+        self.assertEqual(s, response.content.decode())
+
+
+class DeclaredFieldWithNoAttributeExportTest(AdminTestMixin, TestCase):
+    """
+    If a custom field is declared with no attribute the field will be present
+    but with an empty string.
+    """
+
+    class _BookResource(ModelResource):
+        author_email = Field(column_name="Author Email")
+
+        class Meta:
+            model = Book
+
+    def setUp(self):
+        super().setUp()
+        self.book = Book.objects.create(
+            name="Moonraker", author_email="ian@fleming.com"
+        )
+
+    @patch("import_export.mixins.BaseExportMixin.choose_export_resource_class")
+    def test_export_with_declared_author_email_field(
+        self, mock_choose_export_resource_class
+    ):
+        mock_choose_export_resource_class.return_value = self._BookResource
+        data = {"format": "0", "resource": "0", "bookresource_author_email": True}
+        response = self._post_url_response(self.book_export_url, data)
+        s = 'Author Email\r\n""\r\n'
         self.assertEqual(s, response.content.decode())
 
 

@@ -18,10 +18,12 @@ In a simple case, the name of the row headers will map exactly onto the names of
 process will handle this mapping.  In more complex cases, model attributes and row headers may differ, and we will need
 to declare explicitly declare this mapping. See :ref:`field_declaration` for more information.
 
-Declare import fields
----------------------
+.. _declare_fields:
 
-You can optionally use the ``fields`` declaration to affect which fields are handled during import.
+Declare fields
+--------------
+
+You can optionally use the ``fields`` declaration to affect which fields are handled during import / export.
 
 To affect which model fields will be included in a resource, use the ``fields`` option to whitelist fields::
 
@@ -42,19 +44,10 @@ Or the ``exclude`` option to blacklist fields::
 If both ``fields`` and ``exclude`` are declared, the ``fields`` declaration takes precedence, and ``exclude`` is
 ignored.
 
-In cases where a :ref:`custom column name<field_declaration>` is used, declare the name of the model attribute in the
-``fields`` list., not the column alias.
-
 .. _field_ordering:
 
 Field ordering
 --------------
-
-The precedence for the order of fields for import / export is defined as follows:
-
-  * ``import_order`` or ``export_order`` (if defined)
-  * ``fields`` (if defined)
-  * The order derived from the underlying model instance.
 
 When importing or exporting, the ordering defined by ``fields`` is used, however an explicit order for importing or
 exporting fields can be set using the either the ``import_order`` or ``export_order`` options::
@@ -66,6 +59,12 @@ exporting fields can be set using the either the ``import_order`` or ``export_or
             fields = ('id', 'name', 'author', 'price',)
             import_order = ('id', 'price',)
             export_order = ('id', 'price', 'author', 'name')
+
+The precedence for the order of fields for import / export is defined as follows:
+
+  * ``import_order`` or ``export_order`` (if defined)
+  * ``fields`` (if defined)
+  * The order derived from the underlying model instance.
 
 Where ``import_order`` or ``export_order`` contains a subset of ``fields`` then the ``import_order`` and
 ``export_order`` fields will be processed first.
@@ -104,14 +103,27 @@ column name (i.e. row header)::
     from import_export.fields import Field
 
     class BookResource(resources.ModelResource):
-        published = Field(attribute='published', column_name='published_date')
+        published_field = Field(attribute='published', column_name='published_date')
 
         class Meta:
             model = Book
 
-The ``attribute`` parameter is optional and if not supplied then the field will be skipped during import and export.
-It is possible to enable export for the field by declaring a :ref:`dehydrate<advanced_data_manipulation_on_export>`
-method.
+The ``attribute`` parameter is optional, and if omitted it means that:
+
+  1. The field will be ignored during import.
+
+  2. The field will be present during export, but will have an empty value unless a
+     :ref:`dehydrate<advanced_data_manipulation_on_export>` method is defined.
+
+If using the ``fields`` attribute to :ref:`declare fields<field_declaration>` then the declared resource attribute
+name must appear in the ``fields`` list::
+
+    class BookResource(ModelResource):
+        published_field = Field(attribute='published', column_name='published_date')
+
+        class Meta:
+            fields = ("published_field",)
+            model = Book
 
 .. seealso::
 
