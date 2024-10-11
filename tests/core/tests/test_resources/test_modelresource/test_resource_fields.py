@@ -1,8 +1,13 @@
+import warnings
+
 import tablib
 from core.models import Book
 from django.test import TestCase
 
 from import_export import fields, resources
+
+# ignore warnings which result from invalid field declaration (#1930)
+warnings.simplefilter("ignore")
 
 
 class ModelResourceFieldDeclarations(TestCase):
@@ -16,6 +21,7 @@ class ModelResourceFieldDeclarations(TestCase):
             fields = ("id", "price")
 
     def setUp(self):
+
         self.book = Book.objects.create(name="Moonraker", price=".99")
         self.resource = ModelResourceFieldDeclarations.MyBookResource()
 

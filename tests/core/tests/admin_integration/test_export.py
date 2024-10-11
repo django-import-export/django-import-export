@@ -503,6 +503,7 @@ class CustomColumnNameExportTest(AdminTestMixin, TestCase):
         self.book = Book.objects.create(
             name="Moonraker", author=self.author, published=date(1955, 4, 5)
         )
+        self.orig_fields = EBookResource._meta.fields
         EBookResource._meta.fields = (
             "id",
             "author_email",
@@ -513,7 +514,7 @@ class CustomColumnNameExportTest(AdminTestMixin, TestCase):
 
     def tearDown(self):
         super().tearDown()
-        EBookResource._meta.fields = ("id", "author_email", "name", "published")
+        EBookResource._meta.fields = self.orig_fields
 
     def test_export_with_custom_field(self):
         data = {
@@ -656,6 +657,44 @@ class DeclaredFieldWithNoAttributeExportTest(AdminTestMixin, TestCase):
         data = {"format": "0", "resource": "0", "bookresource_author_email": True}
         response = self._post_url_response(self.book_export_url, data)
         s = 'Author Email\r\n""\r\n'
+        self.assertEqual(s, response.content.decode())
+
+
+class DeclaredFieldWithIncorrectNameInFieldsExportTest(AdminTestMixin, TestCase):
+    """
+    If a custom field is declared with no attribute the process should not crash
+    if that field is not in `fields`.
+    issue #1959
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.author = Author.objects.create(id=11, name="Ian Fleming")
+        self.book = Book.objects.create(
+            name="Moonraker", author_email="ian@fleming.com", author=self.author
+        )
+        self.orig_fields = EBookResource._meta.fields
+        EBookResource._meta.fields = ("a",)
+
+    def tearDown(self):
+        super().tearDown()
+        EBookResource._meta.fields = self.orig_fields
+
+    def test_export_with_declared_author_email_field(self):
+        data = {
+            "format": "0",
+            "resource": "0",
+            "ebookresource_id": True,
+            "ebookresource_a": True,
+            "author": self.author.id,
+        }
+        with self.assertWarns(UserWarning) as w:
+            response = self._post_url_response(self.ebook_export_url, data)
+            self.assertEqual(
+                "cannot identify field for export with name 'a'",
+                str(w.warnings[-1].message),
+            )
+        s = f"id\r\n{self.book.id}\r\n"
         self.assertEqual(s, response.content.decode())
 
 

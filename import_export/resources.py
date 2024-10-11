@@ -1050,7 +1050,9 @@ class Resource(metaclass=DeclarativeMetaclass):
         export_order = self.get_export_order()
         for field_name in export_order:
             if field_name in fields_:
-                export_fields.append(self._select_field(field_name))
+                field = self._select_field(field_name)
+                if field is not None:
+                    export_fields.append(field)
         return export_fields
 
     def export_resource(self, instance, selected_fields=None, **kwargs):
@@ -1059,7 +1061,7 @@ class Resource(metaclass=DeclarativeMetaclass):
 
     def get_export_headers(self, selected_fields=None):
         export_fields = self.get_export_fields(selected_fields)
-        return [force_str(field.column_name) for field in export_fields]
+        return [force_str(field.column_name) for field in export_fields if field]
 
     def get_user_visible_fields(self):
         return self.get_import_fields()
@@ -1115,10 +1117,8 @@ class Resource(metaclass=DeclarativeMetaclass):
             if target_field_name == field.column_name:
                 return field
         # it should have been possible to identify the declared field
-        # but raise an error if not
-        raise ValueError(
-            _(f"cannot identify field for export with name '{target_field_name}'")
-        )
+        # but warn if not
+        warn(f"cannot identify field for export with name '{target_field_name}'")
 
     def _get_ordered_field_names(self, order_field):
         """
