@@ -694,7 +694,7 @@ class DeclaredFieldWithIncorrectNameInFieldsExportTest(AdminTestMixin, TestCase)
                 "cannot identify field for export with name 'a'",
                 str(w.warnings[-1].message),
             )
-        s = "id\r\n1\r\n"
+        s = f"id\r\n{self.book.id}\r\n"
         self.assertEqual(s, response.content.decode())
 
 
