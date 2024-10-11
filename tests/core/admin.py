@@ -18,10 +18,8 @@ class ChildAdmin(ImportMixin, admin.ModelAdmin):
 
 
 class BookResource(ModelResource):
-    # author_email = Field(column_name="Author Email")
 
     class Meta:
-        # fields = ("author_name",)
         model = Book
 
     def for_delete(self, row, instance):
