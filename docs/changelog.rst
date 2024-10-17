@@ -5,8 +5,8 @@ Changelog
 
     If upgrading from v3, v4 introduces breaking changes.  Please refer to :doc:`release notes<release_notes>`.
 
-4.2.0 (unreleased)
-------------------
+4.2.0-rc.0 (2024-10-17)
+-----------------------
 
 This release contains breaking changes.  Please refer to :doc:`release notes<release_notes>`.
 
