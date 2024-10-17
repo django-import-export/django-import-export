@@ -33,7 +33,11 @@ django-import-export
 .. |discord|  image:: https://img.shields.io/discord/1240294048653119508?style=flat
    :alt: Discord
 
-|build| |coveralls| |pypi| |docs| |pyver| |djangover| |downloads| |xfollow| |discord|
+.. |gurubase|  image:: https://img.shields.io/badge/Gurubase-Ask%20Django%20Import%20Export%20Guru-006BFF
+   :alt: Gurubase
+   :target: https://gurubase.io/g/django-import-export
+
+|build| |coveralls| |pypi| |docs| |pyver| |djangover| |downloads| |xfollow| |discord| |gurubase|
 
 Introduction
 ============
@@ -114,6 +118,7 @@ Help and support
 * Become a `sponsor <https://github.com/sponsors/django-import-export>`_
 * `Raise a security issue <https://github.com/django-import-export/django-import-export/blob/main/SECURITY.md>`_
 * Join our `discord <https://discord.gg/aCcec52kY4>`_
+* Ask `Django Import Export Guru <hhttps://gurubase.io/g/django-import-export)>`_
 
 Commercial support
 ==================
