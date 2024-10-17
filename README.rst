@@ -118,7 +118,7 @@ Help and support
 * Become a `sponsor <https://github.com/sponsors/django-import-export>`_
 * `Raise a security issue <https://github.com/django-import-export/django-import-export/blob/main/SECURITY.md>`_
 * Join our `discord <https://discord.gg/aCcec52kY4>`_
-* Ask `Django Import Export Guru <hhttps://gurubase.io/g/django-import-export)>`_
+* Ask `Django Import Export Guru <hhttps://gurubase.io/g/django-import-export>`_
 
 Commercial support
 ==================
