@@ -207,7 +207,7 @@ The values must be those provided in ``import_export.formats.base_formats`` e.g
     from import_export.formats.base_formats import XLSX
     IMPORT_EXPORT_FORMATS = [XLSX]
 
-This can be set for a specific model admin by declaring the ``import_export_formats`` attribute.
+This can be set for a specific model admin by declaring the ``formats`` attribute.
 
 .. _import_formats:
 
