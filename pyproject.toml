@@ -36,9 +36,9 @@ classifiers = [
 ]
 
 dependencies = [
-    "diff-match-patch>=20241021",
+    "diff-match-patch==20241021",
     "Django>=4.2",
-    "tablib>=3.6.1"
+    "tablib==3.7.0"
 ]
 
 [project.optional-dependencies]
