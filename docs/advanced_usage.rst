@@ -757,8 +757,8 @@ See :ref:`dynamically_set_resource_values`.
 
 .. _advanced_data_manipulation_on_export:
 
-Advanced data manipulation on export
-====================================
+Data manipulation on export
+===========================
 
 Not all data can be easily extracted from an object/model attribute.
 In order to turn complicated data model into a (generally simpler) processed
@@ -785,7 +785,8 @@ In this case, the export looks like this:
     full_title,id,name,author,author_email,imported,published,price,categories
     Some book by 1,2,Some book,1,,0,2012-12-05,8.85,1
 
-It is also possible to pass a method name or a callable to the :meth:`~import_export.fields.Field` constructor. If this method name or callable is supplied, then it will be called as the 'dehydrate' method. For example::
+It is also possible to pass a method name or a callable to the :meth:`~import_export.fields.Field` constructor.
+If this method name or callable is supplied, then it will be called as the 'dehydrate' method. For example::
 
     from import_export.fields import Field
 
@@ -815,6 +816,38 @@ Filtering querysets during export
 
 You can use :meth:`~import_export.resources.Resource.filter_export` to filter querysets
 during export.  See also :ref:`customize_admin_export_forms`.
+
+Modify dataset after export
+===========================
+
+The :meth:`~import_export.resources.Resource.after_export` method allows you to modify the
+`tablib <https://tablib.readthedocs.io/en/stable/tutorial.html>`_ dataset before it is rendered in the export format.
+
+This can be useful for adding dynamic columns or applying custom logic to the final dataset.
+
+Modify xlsx format
+==================
+
+It is possible to modify the output of any XLSX export.  The output bytes can be read and then modified using the
+`openpyxl <https://openpyxl.readthedocs.io/en/stable/>`_ library (which can be included as an import_export
+dependency).
+
+You can override :meth:`~import_export.admin.ExportMixin.get_export_data` as follows::
+
+    def get_export_data(self, file_format, request, queryset, **kwargs):
+        blob = super().get_export_data(file_format, request, queryset, **kwargs)
+        workbook_data = BytesIO(blob)
+        workbook_data.seek(0)
+        wb = openpyxl.load_workbook(workbook_data)
+        # modify workbook as required
+        output = BytesIO()
+        wb.save(output)
+        return output.getvalue()
+
+Custom export file name
+=======================
+
+Customize the export file name by overriding :meth:`~import_export.admin.ExportMixin.get_export_filename`.
 
 Signals
 =======
