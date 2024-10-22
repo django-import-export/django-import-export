@@ -76,8 +76,7 @@ ordering.
 Model relations
 ---------------
 
-When defining :class:`~import_export.resources.ModelResource` fields it is
-possible to follow model relationships::
+When defining :class:`~import_export.resources.ModelResource` fields it is possible to follow model relationships::
 
     class BookResource(resources.ModelResource):
 
@@ -88,8 +87,13 @@ possible to follow model relationships::
 This example declares that the ``Author.name`` value (which has a foreign key relation to ``Book``) will appear in the
 export.
 
-Note that declaring the relationship using this syntax sets ``field`` as readonly, meaning this field will be skipped
-when importing data. To understand how to import model relations, see :ref:`import_model_relations`.
+Declaring the relationship using this syntax means the following:
+
+  * The field will be skipped when importing data. To understand how to import model relations, see
+    :ref:`import_model_relations`.
+
+  * The default string value of the field will be exported. To have full control over the format of the export,
+    see :ref:`field_declaration`.
 
 .. _field_declaration:
 
@@ -130,40 +134,9 @@ name must appear in the ``fields`` list::
     :doc:`/api_fields`
         Available field types and options.
 
-Custom workflow based on import values
---------------------------------------
+    :ref:`field_widgets`
 
-You can extend the import process to add workflow based on changes to persisted model instances.
-
-For example, suppose you are importing a list of books and you require additional workflow on the date of publication.
-In this example, we assume there is an existing unpublished book instance which has a null 'published' field.
-
-There will be a one-off operation to take place on the date of publication, which will be identified by the presence of
-the 'published' field in the import file.
-
-To achieve this, we need to test the existing value taken from the persisted instance (i.e. prior to import
-changes) against the incoming value on the updated instance.
-Both ``instance`` and ``original`` are attributes of :class:`~import_export.results.RowResult`.
-
-You can override the :meth:`~import_export.resources.Resource.after_import_row` method to check if the
-value changes::
-
-  class BookResource(resources.ModelResource):
-
-    def after_import_row(self, row, row_result, **kwargs):
-        if getattr(row_result.original, "published") is None \
-            and getattr(row_result.instance, "published") is not None:
-            # import value is different from stored value.
-            # exec custom workflow...
-
-    class Meta:
-        model = Book
-        store_instance = True
-
-.. note::
-
-  * The ``original`` attribute will be null if :attr:`~import_export.options.ResourceOptions.skip_diff` is True.
-  * The ``instance`` attribute will be null if :attr:`~import_export.options.ResourceOptions.store_instance` is False.
+.. _field_widgets:
 
 Field widgets
 =============
@@ -230,6 +203,41 @@ then the only way to do this is to override the widget ``render()`` method.
 
     :doc:`/api_widgets`
         Available widget types and options.
+
+Custom workflow based on import values
+--------------------------------------
+
+You can extend the import process to add workflow based on changes to persisted model instances.
+
+For example, suppose you are importing a list of books and you require additional workflow on the date of publication.
+In this example, we assume there is an existing unpublished book instance which has a null 'published' field.
+
+There will be a one-off operation to take place on the date of publication, which will be identified by the presence of
+the 'published' field in the import file.
+
+To achieve this, we need to test the existing value taken from the persisted instance (i.e. prior to import
+changes) against the incoming value on the updated instance.
+Both ``instance`` and ``original`` are attributes of :class:`~import_export.results.RowResult`.
+
+You can override the :meth:`~import_export.resources.Resource.after_import_row` method to check if the
+value changes::
+
+  class BookResource(resources.ModelResource):
+
+    def after_import_row(self, row, row_result, **kwargs):
+        if getattr(row_result.original, "published") is None \
+            and getattr(row_result.instance, "published") is not None:
+            # import value is different from stored value.
+            # exec custom workflow...
+
+    class Meta:
+        model = Book
+        store_instance = True
+
+.. note::
+
+  * The ``original`` attribute will be null if :attr:`~import_export.options.ResourceOptions.skip_diff` is True.
+  * The ``instance`` attribute will be null if :attr:`~import_export.options.ResourceOptions.store_instance` is False.
 
 Validation during import
 ========================
@@ -424,6 +432,12 @@ given arg, then the import process will raise either ``DoesNotExist`` or ``Multi
 See also :ref:`advanced_usage:Creating non existent relations`.
 
 Refer to the :class:`~.ForeignKeyWidget` documentation for more detailed information.
+
+.. note::
+
+    If you are exporting a field which uses ``ForeignKeyWidget`` then the default field value will be exported.
+    If you need better control over the format of the exported value (for example, formatting a date), then use a
+    :ref:`dehydrate<advanced_data_manipulation_on_export>` method
 
 Many-to-many relations
 ----------------------
@@ -743,8 +757,8 @@ See :ref:`dynamically_set_resource_values`.
 
 .. _advanced_data_manipulation_on_export:
 
-Advanced data manipulation on export
-====================================
+Data manipulation on export
+===========================
 
 Not all data can be easily extracted from an object/model attribute.
 In order to turn complicated data model into a (generally simpler) processed
@@ -771,7 +785,8 @@ In this case, the export looks like this:
     full_title,id,name,author,author_email,imported,published,price,categories
     Some book by 1,2,Some book,1,,0,2012-12-05,8.85,1
 
-It is also possible to pass a method name or a callable to the :meth:`~import_export.fields.Field` constructor. If this method name or callable is supplied, then it will be called as the 'dehydrate' method. For example::
+It is also possible to pass a method name or a callable to the :meth:`~import_export.fields.Field` constructor.
+If this method name or callable is supplied, then it will be called as the 'dehydrate' method. For example::
 
     from import_export.fields import Field
 
@@ -801,6 +816,38 @@ Filtering querysets during export
 
 You can use :meth:`~import_export.resources.Resource.filter_export` to filter querysets
 during export.  See also :ref:`customize_admin_export_forms`.
+
+Modify dataset after export
+===========================
+
+The :meth:`~import_export.resources.Resource.after_export` method allows you to modify the
+`tablib <https://tablib.readthedocs.io/en/stable/tutorial.html>`_ dataset before it is rendered in the export format.
+
+This can be useful for adding dynamic columns or applying custom logic to the final dataset.
+
+Modify xlsx format
+==================
+
+It is possible to modify the output of any XLSX export.  The output bytes can be read and then modified using the
+`openpyxl <https://openpyxl.readthedocs.io/en/stable/>`_ library (which can be included as an import_export
+dependency).
+
+You can override :meth:`~import_export.admin.ExportMixin.get_export_data` as follows::
+
+    def get_export_data(self, file_format, request, queryset, **kwargs):
+        blob = super().get_export_data(file_format, request, queryset, **kwargs)
+        workbook_data = BytesIO(blob)
+        workbook_data.seek(0)
+        wb = openpyxl.load_workbook(workbook_data)
+        # modify workbook as required
+        output = BytesIO()
+        wb.save(output)
+        return output.getvalue()
+
+Custom export file name
+=======================
+
+Customize the export file name by overriding :meth:`~import_export.admin.ExportMixin.get_export_filename`.
 
 Signals
 =======
