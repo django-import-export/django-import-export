@@ -1,9 +1,9 @@
-psycopg2-binary==2.9.9
-mysqlclient==2.2.0
+psycopg2-binary==2.9.10
+mysqlclient==2.2.5
 chardet==5.2.0
-pytz==2023.3
+pytz==2024.2
 memory-profiler==0.61.0
 django-extensions==3.2.3
-coverage==7.3.2
-tablib[all]>=3.6.1
-setuptools-scm==8.0.4
+coverage==7.6.4
+tablib[all]>=3.7.0
+setuptools-scm==8.1.0
