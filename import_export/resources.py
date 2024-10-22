@@ -1022,7 +1022,7 @@ class Resource(metaclass=DeclarativeMetaclass):
         r"""
         Override to filter an export queryset.
 
-        :param queryset: The queryset for export (optional).
+        :param queryset: The queryset for export.
 
         :param \**kwargs:
             Metadata which may be associated with the export.
