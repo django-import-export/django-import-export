@@ -425,6 +425,10 @@ See also :ref:`advanced_usage:Creating non existent relations`.
 
 Refer to the :class:`~.ForeignKeyWidget` documentation for more detailed information.
 
+Note that if you are *exporting* a field defined by ``ForeignKeyWidget`` then the default formatting for the field
+will be applied.  If you need more control over the formatting then the best way is to create a subclass of
+``ForeignKeyWidget`` and use that as your Field's widget.
+
 Many-to-many relations
 ----------------------
 
