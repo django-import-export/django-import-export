@@ -2,9 +2,9 @@ from datetime import date
 from unittest import mock
 
 import tablib
+from core.admin import BookResource
 from core.models import Book
 from django.test import TestCase
-from resources import BookResource
 
 from import_export import fields
 from import_export.exceptions import FieldError
