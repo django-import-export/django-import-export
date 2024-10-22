@@ -13,7 +13,7 @@ maintainers = [
 description = "Django application and library for importing and exporting data with included admin integration."
 keywords = ["django", "import", "export"]
 license = {file = "LICENSE"}
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 readme = "README.rst"
 dynamic = ["version"]
 classifiers = [
@@ -26,19 +26,19 @@ classifiers = [
     "Operating System :: OS Independent",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3 :: Only",
     "Topic :: Software Development",
 ]
 
 dependencies = [
-    "diff-match-patch",
+    "diff-match-patch==20241021",
     "Django>=4.2",
-    "tablib>=3.6.1"
+    "tablib==3.7.0"
 ]
 
 [project.optional-dependencies]

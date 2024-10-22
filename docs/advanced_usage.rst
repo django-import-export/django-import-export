@@ -435,9 +435,11 @@ Refer to the :class:`~.ForeignKeyWidget` documentation for more detailed informa
 
 .. note::
 
-    If you are exporting a field which uses ``ForeignKeyWidget`` then the default field value will be exported.
+    If you are exporting a field which uses ``ForeignKeyWidget`` then the default formatting for the field will be
+    applied.
     If you need better control over the format of the exported value (for example, formatting a date), then use a
-    :ref:`dehydrate<advanced_data_manipulation_on_export>` method
+    :ref:`dehydrate<advanced_data_manipulation_on_export>` method or create a subclass of ``ForeignKeyWidget``.
+    Override :meth:`~import_export.widgets.Widget.render` to create custom formatting of output.
 
 Many-to-many relations
 ----------------------

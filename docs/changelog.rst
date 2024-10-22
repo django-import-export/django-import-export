@@ -27,6 +27,7 @@ This release contains breaking changes.  Please refer to :doc:`release notes<rel
 - Fix crash for Django 5.1 when rows are skipped (`1944 <https://github.com/django-import-export/django-import-export/issues/1944>`_)
 - Allow callable in dehydrate method (`1950 <https://github.com/django-import-export/django-import-export/issues/1950>`_)
 - Fix crash when Resource fields declared incorrectly (`1963 <https://github.com/django-import-export/django-import-export/issues/1963>`_)
+- Updated dependencies (`1979 <https://github.com/django-import-export/django-import-export/issues/1979>`_)
 
 4.1.1 (2024-07-08)
 ------------------
