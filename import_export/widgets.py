@@ -613,7 +613,7 @@ class ManyToManyWidget(Widget):
 
     def clean(self, value, row=None, **kwargs):
         if not value:
-            return None
+            return self.model.objects.none()
         if isinstance(value, (float, int)):
             ids = [int(value)]
         else:

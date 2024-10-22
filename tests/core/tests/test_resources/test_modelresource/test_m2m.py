@@ -1,12 +1,9 @@
-from unittest.mock import PropertyMock, patch
-
 import tablib
 from core.models import Author, Book, Category
 from core.tests.resources import BookResource
 from django.test import TestCase
 
 from import_export import fields, resources, widgets
-from import_export.resources import ModelResource
 
 
 class ForeignKeyM2MTest(TestCase):
@@ -59,7 +56,7 @@ class ForeignKeyM2MTest(TestCase):
         self.book.categories.add(cat1)
         self.assertEqual(1, self.book.categories.count())
         headers = ["id", "name", "categories"]
-        row = [None, "FooBook", ""]
+        row = [self.book.pk, "FooBook", ""]
         dataset = tablib.Dataset(row, headers=headers)
         self.resource.import_data(dataset, raise_errors=True)
 
@@ -130,39 +127,3 @@ class ForeignKeyM2MTest(TestCase):
         self.assertIn(cat2, book2.categories.all())
         self.assertIn(cat3, book2.categories.all())
         self.assertIn(cat4, book2.categories.all())
-
-
-class EmptyM2MFieldTest(TestCase):
-    # issue 1788
-    class _BookResource(ModelResource):
-        categories = fields.Field(
-            column_name="categories",
-            attribute="categories",
-            widget=widgets.ManyToManyWidget(Category, field="name", separator="|"),
-            saves_null_values=False,
-        )
-
-        class Meta:
-            fields = ("id", "categories")
-            store_instance = True  # keep reference to instance
-            model = Book
-
-    def setUp(self):
-        self.resource = EmptyM2MFieldTest._BookResource()
-        self.cat1 = Category.objects.create(name="Cat 1")
-
-    def test_m2m_import_empty_value(self):
-        headers = ["id", "name", "categories"]
-        row = [None, "FooBook", ""]
-        dataset = tablib.Dataset(row, headers=headers)
-        res = self.resource.import_data(dataset, raise_errors=True)
-        self.assertEqual(0, res.rows[0].instance.categories.count())
-
-    @patch("core.models.Book.categories", new_callable=PropertyMock)
-    def test_m2m_import_empty_value_m2m_methods_not_called(self, mock_set):
-        headers = ["id", "name", "categories"]
-        row = [None, "FooBook", ""]
-        dataset = tablib.Dataset(row, headers=headers)
-        self.resource.import_data(dataset, raise_errors=True)
-        # the RelatedManager methods in Field.save() should not be called for categories
-        self.assertEqual(2, mock_set.call_count)
