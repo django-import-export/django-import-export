@@ -161,11 +161,14 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
     def _perform_export_action_calls_modeladmin_get_queryset_test(self, data):
         # Issue #1864
         # ModelAdmin's get_queryset should be used in the ModelAdmin mixins
-        with mock.patch(
-            "core.admin.CategoryAdmin.get_queryset"
-        ) as mock_modeladmin_get_queryset, mock.patch(
-            "import_export.admin.ExportMixin.get_data_for_export"
-        ) as mock_get_data_for_export:
+        with (
+            mock.patch(
+                "core.admin.CategoryAdmin.get_queryset"
+            ) as mock_modeladmin_get_queryset,
+            mock.patch(
+                "import_export.admin.ExportMixin.get_data_for_export"
+            ) as mock_get_data_for_export,
+        ):
             mock_queryset = mock.MagicMock(name="MockQuerySet")
             mock_queryset.filter.return_value = mock_queryset
             mock_queryset.order_by.return_value = mock_queryset
