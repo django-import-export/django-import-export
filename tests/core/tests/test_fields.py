@@ -2,8 +2,8 @@ from datetime import date
 from unittest import mock
 
 import tablib
-from core.admin import BookResource
 from core.models import Book
+from core.tests.resources import BookResource
 from django.test import TestCase
 
 from import_export import fields
