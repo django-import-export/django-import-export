@@ -51,7 +51,7 @@ Bulk testing
 There is a helper script available to generate and profile bulk loads.  See ``scripts/bulk_import.py``.
 
 You can use this script by configuring environment variables as defined above, and then installing and running the test
-application.  In order to run the helper script, you will need to install ``pip install .[tests]``, and then add
+application.  In order to run the helper script, you will need to install ``pip install '.[tests]'``, and then add
 `django-extensions` to `settings.py` (`INSTALLED_APPS`).
 
 You can then run the script as follows:
