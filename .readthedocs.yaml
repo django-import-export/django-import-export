@@ -1,7 +1,3 @@
-# Read the Docs configuration file for Sphinx projects
-# See https://docs.readthedocs.io/en/stable/config-file/v2.html for details
-
-# Required
 version: 2
 
 build:
@@ -12,9 +8,9 @@ build:
 sphinx:
   configuration: docs/conf.py
 
-# Optional but recommended, declare the Python requirements required
-# to build your documentation
-# See https://docs.readthedocs.io/en/stable/guides/reproducible-builds.html
 python:
    install:
-   - requirements: requirements/docs.txt
+   - method: pip
+     path: .
+     extra_requirements:
+      - docs

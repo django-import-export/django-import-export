@@ -48,7 +48,7 @@ install-test-requirements: ## install requirements for testing
 	pip install -r requirements/test.txt
 
 install-docs-requirements:  ## install requirements for docs
-	pip install -r requirements/docs.txt
+	pip install --editable .[docs]
 
 install-requirements: install-base-requirements install-test-requirements install-docs-requirements
 
