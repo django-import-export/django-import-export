@@ -85,37 +85,37 @@ profile = "black"
 
 [tool.tox]
 legacy_tox_ini = """
-[tox]
-min_version = 4.0
-envlist =
-       {py39}-{django42}
-       {py310,py311,py312,py313}-{django42,django50,django51,djangomain}
-       py313-djangomain-tablibdev
+    [tox]
+    min_version = 4.0
+    envlist =
+        {py39}-{django42}
+        {py310,py311,py312,py313}-{django42,django50,django51,djangomain}
+        py313-djangomain-tablibdev
 
-[testenv]
-setenv = PYTHONPATH = {toxinidir}/tests
-commands =
-    python \
-        -W error::DeprecationWarning \
-        -W error::PendingDeprecationWarning \
-        -m coverage run \
-        ./tests/manage.py test core \
-        {posargs}
-deps =
-    tablibdev: -egit+https://github.com/jazzband/tablib.git@master#egg=tablib
-    django42: Django>=4.2,<5.0
-    django50: Django>=5.0,<5.1
-    django51: Django>=5.1,<5.2
-    djangomain: https://github.com/django/django/archive/main.tar.gz
-    .[tests]
+    [testenv]
+    setenv = PYTHONPATH = {toxinidir}/tests
+    commands =
+        python \
+            -W error::DeprecationWarning \
+            -W error::PendingDeprecationWarning \
+            -m coverage run \
+            ./tests/manage.py test core \
+            {posargs}
+    deps =
+        tablibdev: -egit+https://github.com/jazzband/tablib.git@master#egg=tablib
+        django42: Django>=4.2,<5.0
+        django50: Django>=5.0,<5.1
+        django51: Django>=5.1,<5.2
+        djangomain: https://github.com/django/django/archive/main.tar.gz
+        .[tests]
 
-# if postgres / mysql environment variables exist, we can go ahead and run db specific tests
-passenv =
-    IMPORT_EXPORT_POSTGRESQL_USER
-    IMPORT_EXPORT_POSTGRESQL_PASSWORD
-    IMPORT_EXPORT_POSTGRESQL_PORT
-    IMPORT_EXPORT_MYSQL_USER
-    IMPORT_EXPORT_MYSQL_PASSWORD
-    IMPORT_EXPORT_MYSQL_PORT
-    IMPORT_EXPORT_TEST_TYPE
+    # if postgres / mysql environment variables exist, we can go ahead and run db specific tests
+    passenv =
+        IMPORT_EXPORT_POSTGRESQL_USER
+        IMPORT_EXPORT_POSTGRESQL_PASSWORD
+        IMPORT_EXPORT_POSTGRESQL_PORT
+        IMPORT_EXPORT_MYSQL_USER
+        IMPORT_EXPORT_MYSQL_PASSWORD
+        IMPORT_EXPORT_MYSQL_PORT
+        IMPORT_EXPORT_TEST_TYPE
 """
