@@ -1,4 +1,3 @@
-version: '3.3'
 services:
   postgresdb:
     container_name: importexport_pgdb
@@ -16,6 +15,11 @@ services:
     volumes:
       - ./docker/db/init-postgres-db.sh/:/docker-entrypoint-initdb.d/init-postgres-db.sh
       - postgres-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "sh -c 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}'"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
   mysqldb:
     container_name: importexport_mysqldb
     image: mysql:8.0
@@ -34,6 +38,11 @@ services:
     volumes:
       - ./docker/db/init-mysql-db.sh:/docker-entrypoint-initdb.d/init-mysql-db.sh
       - mysql-db-data:/var/lib/mysql
+    healthcheck:
+      test: mysqladmin ping -h 127.0.0.1 -u $$MYSQL_USER --password=$$MYSQL_PASSWORD
+      interval: 10s
+      timeout: 3s
+      retries: 3
 
 volumes:
   postgres-db-data:
