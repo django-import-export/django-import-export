@@ -72,6 +72,9 @@ The two step process is:
 
    A screenshot of the 'confirm import' view.
 
+
+.. _import_confirmation:
+
 Import confirmation
 -------------------
 
