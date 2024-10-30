@@ -227,7 +227,7 @@ confirmation.
 
 To resolve this, you should avoid using temporary file system storage in multi server environments.
 
-Refer to :ref:`import process<import-process>` for more information.
+Refer to :ref:`customizable_storage` for more information.
 
 How to export large datasets
 ----------------------------

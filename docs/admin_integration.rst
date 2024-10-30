@@ -106,6 +106,8 @@ Temporary resources are removed when data is successfully imported after the con
     This will need to be understood and managed in production settings.
     For example, using a cache expiration policy or cron job to clear stale resources.
 
+.. _customizable_storage:
+
 Customizable storage
 ^^^^^^^^^^^^^^^^^^^^^
 
