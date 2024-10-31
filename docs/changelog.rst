@@ -9,6 +9,7 @@ Changelog
 ------------------
 
 - Removed dependency files in favour of ``pyproject.toml`` (`1982 <https://github.com/django-import-export/django-import-export/issues/1982>`_)
+- Documentation updates (`1989 <https://github.com/django-import-export/django-import-export/issues/1989>`_)
 
 4.2.0 (2024-10-23)
 ------------------
