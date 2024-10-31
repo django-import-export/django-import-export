@@ -827,6 +827,26 @@ The :meth:`~import_export.resources.Resource.after_export` method allows you to 
 
 This can be useful for adding dynamic columns or applying custom logic to the final dataset.
 
+Import and export with different fields
+=======================================
+
+If you would like to import one set of fields, and then export a different set, then the recommended way to do this
+is to define two resources::
+
+    class BookImportResource(ModelResource):
+        class Meta:
+            model = Book
+            fields = ["id", "name"]
+
+
+    class BookExportResource(ModelResource):
+        class Meta:
+            model = Book
+            fields = ["id", "name", "published"]
+
+If you are using these resources in the Admin UI, declare them in your
+:ref:`admin class<import_export_skip_admin_confirm>`.
+
 Modify xlsx format
 ==================
 
@@ -909,4 +929,7 @@ This issue may be more prevalent if using :doc:`bulk imports<bulk_import>`.  Thi
 memory for longer before being written in bulk, therefore there is potentially more risk of another process modifying
 an instance before it has been persisted.
 
-.. _import-process:
+Additional configuration
+========================
+
+Please refer to the :doc:`API documentation<api_resources>` for additional configuration options.
