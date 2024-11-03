@@ -780,7 +780,7 @@ class Resource(metaclass=DeclarativeMetaclass):
             # There is no point logging a transaction error for each row
             # when only the original error is likely to be relevant
             if not isinstance(e, TransactionManagementError):
-                logger.debug(e, exc_info=e)
+                logger.debug(e, exc_info=True)
             row_result.errors.append(
                 self.get_error_result_class()(e, row=row, number=kwargs["row_number"])
             )
