@@ -72,6 +72,9 @@ The two step process is:
 
    A screenshot of the 'confirm import' view.
 
+
+.. _import_confirmation:
+
 Import confirmation
 -------------------
 
@@ -99,12 +102,17 @@ Your choice of temporary storage will be influenced by the following factors:
 
 Temporary resources are removed when data is successfully imported after the confirmation step.
 
+**For sensitive data you will need to understand exactly how temporary files are being stored and to ensure
+that data is properly secured and managed.**
+
 .. warning::
 
     If users do not complete the confirmation step of the workflow,
     or if there are errors during import, then temporary resources may not be deleted.
     This will need to be understood and managed in production settings.
     For example, using a cache expiration policy or cron job to clear stale resources.
+
+.. _customizable_storage:
 
 Customizable storage
 ^^^^^^^^^^^^^^^^^^^^^
