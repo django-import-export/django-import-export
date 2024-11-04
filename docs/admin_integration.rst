@@ -103,7 +103,7 @@ Your choice of temporary storage will be influenced by the following factors:
 Temporary resources are removed when data is successfully imported after the confirmation step.
 
 **For sensitive data you will need to understand exactly how temporary files are being stored and to ensure
-that it is properly secured and managed.**
+that data is properly secured and managed.**
 
 .. warning::
 
