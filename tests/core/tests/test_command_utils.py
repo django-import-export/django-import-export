@@ -45,7 +45,7 @@ class GetFormatClassTest(TestCase):
         with self.assertRaises(CommandError) as context:
             get_format_class(invalid_format, None)
         self.assertIn(
-            "Cannot import 'EXCEL' or import_export.formats.base_formats.EXCEL",
+            "Cannot import 'EXCEL' or 'import_export.formats.base_formats.EXCEL'",
             str(context.exception),
         )
 

@@ -1,6 +1,6 @@
 import tempfile
-from io import StringIO
 from unittest.mock import patch
+from io import BytesIO, StringIO, TextIOWrapper
 
 from core.models import Book
 from django.core.management import call_command
@@ -32,7 +32,7 @@ class ImportCommandTest(TestCase):
 
         self.assertEqual(Book.objects.count(), 1)
 
-    @patch("sys.stdin", new_callable=StringIO)
+    @patch("sys.stdin", new_callable=lambda: TextIOWrapper(BytesIO()))
     def test_import_command_with_stdin(self, mock_stdin):
         mock_stdin.write(CSV_CONTENT)
         mock_stdin.seek(0)

@@ -57,7 +57,10 @@ class Command(BaseCommand):
         resource = get_resource_class(model_or_resource_class)()
         format_class = get_format_class(format_name, file_name, encoding)
         if file_name == "-":
-            data = sys.stdin.buffer.read()
+            if format_class.is_binary():
+                data = sys.stdin.buffer.read()
+            else:
+                data = sys.stdin.read()
         else:
             with open(file_name, format_class.get_read_mode()) as file:
                 data = file.read()
