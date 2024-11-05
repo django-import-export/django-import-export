@@ -1,5 +1,4 @@
 from io import BytesIO, StringIO, TextIOWrapper
-
 from unittest.mock import Mock
 
 from core.models import Book
