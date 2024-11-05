@@ -22,7 +22,7 @@ class GetResourceClassTest(TestCase):
         self.assertEqual(resource_class, BookResource)
 
     def test_invalid_name(self):
-        invalid_name = "invalid.module.name"
+        invalid_name = "invalid.model"
         with self.assertRaises(CommandError) as context:
             get_resource_class(invalid_name)
         self.assertEqual(
