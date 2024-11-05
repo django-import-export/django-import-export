@@ -55,7 +55,7 @@ def get_format_class(format_name, file_name, encoding=None):
                 format_class = import_string(fallback_format_name)
             except ImportError:
                 raise CommandError(
-                    f"Cannot import '{format_name}' or {fallback_format_name}"
+                    f"Cannot import '{format_name}' or '{fallback_format_name}'"
                     " format class."
                 )
         return format_class(encoding=encoding)
