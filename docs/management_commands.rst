@@ -64,11 +64,11 @@ Import data from file into auth.User model using default model resource:
 
 .. code-block:: bash
 
-    python manage.py import_data auth.User users.csv
+    python manage.py import auth.User users.csv
 
 Import data from file using custom model resource, raising errors:
 
 .. code-block:: bash
 
-    python manage.py import_data --raise-errors helper.MyUserResource users.csv
+    python manage.py import --raise-errors helper.MyUserResource users.csv
 
