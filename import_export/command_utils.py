@@ -54,10 +54,16 @@ def get_format_class(format_name, file_name, encoding=None):
             try:
                 format_class = import_string(fallback_format_name)
             except ImportError:
-                raise CommandError(
-                    f"Cannot import '{format_name}' or '{fallback_format_name}'"
-                    " format class."
-                )
+                # fallback to uppercase format name
+                try:
+                    format_class = import_string(
+                        f"import_export.formats.base_formats.{format_name.upper()}"
+                    )
+                except ImportError:
+                    raise CommandError(
+                        f"Cannot import '{format_name}' or '{fallback_format_name}'"
+                        " format class."
+                    )
         return format_class(encoding=encoding)
 
     else:
