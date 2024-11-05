@@ -1,4 +1,6 @@
-from io import BytesIO, TextIOWrapper
+from io import BytesIO, StringIO, TextIOWrapper
+
+from unittest.mock import Mock
 
 from core.models import Book
 from django.core.management import call_command
@@ -32,3 +34,14 @@ class ExportCommandTest(TestCase):
             data,
             "id,name,author,author_email,imported,published,published_time,price,added,categories\n100,Some book,,,0,,,,,\n",  # noqa
         )
+
+    def test_export_command_binary_data(self):
+        Book.objects.create(id=100, name="Some book")
+        out = TextIOWrapper(BytesIO())
+        err = StringIO()
+        out.isatty = Mock(return_value=True)
+
+        with self.assertRaises(SystemExit):
+            call_command("export", "xls", "core.Book", stdout=out, stderr=err)
+
+        assert "This is a binary format" in err.getvalue()

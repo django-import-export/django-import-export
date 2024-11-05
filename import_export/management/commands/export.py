@@ -1,3 +1,4 @@
+import sys
 from django.core.management.base import BaseCommand
 
 from import_export.command_utils import (
@@ -46,4 +47,12 @@ class Command(BaseCommand):
             else:
                 export_data = export_data.encode()
 
+        if format_class.is_binary() and self.stdout.isatty():
+            self.stderr.write(
+                self.style.ERROR(
+                    "This is a binary format and your terminal does not support "
+                    "binary data. Redirect the output to a file."
+                )
+            )
+            sys.exit(1)
         self.stdout.buffer.write(export_data)
