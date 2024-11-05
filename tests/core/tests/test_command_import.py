@@ -1,10 +1,14 @@
 import tempfile
-from unittest.mock import patch
 from io import BytesIO, StringIO, TextIOWrapper
+from unittest.mock import patch
 
 from core.models import Book
 from django.core.management import call_command
 from django.test import TestCase
+
+from build.lib.import_export.resources import ModelResource
+from import_export.formats.base_formats import XLSX
+from import_export.resources import modelresource_factory
 
 CSV_CONTENT = """\
 id,name,author,author_email,imported,published,published_time,price,added,categories
@@ -15,6 +19,14 @@ CSV_CONTENT_WITH_ERRORS = """\
 id,name,author,author_email,imported,published,published_time,price,added,categories
 Some book updat,,test@example.com,0,,,10.50,,1
 """
+
+
+class BookResourceWithError(ModelResource):
+    def before_import(self, *args, **kwargs):
+        raise Exception("Import base errors")
+
+    class Meta:
+        model = Book
 
 
 class ImportCommandTest(TestCase):
@@ -42,6 +54,19 @@ class ImportCommandTest(TestCase):
         )
 
         self.assertEqual(Book.objects.count(), 1)
+
+    @patch("sys.stdin", new_callable=lambda: TextIOWrapper(BytesIO()))
+    def test_import_command_with_stdin_binary_format(self, mock_stdin):
+        # create binary export data
+        resource = modelresource_factory(Book)()
+        data = resource.export()
+        export_data = XLSX().export_data(data)
+        mock_stdin.buffer.write(export_data)
+        mock_stdin.seek(0)
+
+        call_command(
+            "import", "core.Book", "-", stdout=self.out, stderr=self.err, format="XLSX"
+        )
 
     def test_import_command_dry_run(self):
         with tempfile.NamedTemporaryFile(mode="w+", suffix=".csv") as tmp_csv:
@@ -73,3 +98,19 @@ class ImportCommandTest(TestCase):
 
         assert "Import errors!" in self.err.getvalue()
         self.assertEqual(Book.objects.count(), 0)
+
+    def test_import_command_with_base_errors(self):
+        with tempfile.NamedTemporaryFile(mode="w+", suffix=".csv") as tmp_csv:
+            tmp_csv.write(CSV_CONTENT)
+            tmp_csv.seek(0)
+            with self.assertRaises(SystemExit):
+                call_command(
+                    "import",
+                    "core.tests.test_command_import.BookResourceWithError",
+                    tmp_csv.name,
+                    stdout=self.out,
+                    stderr=self.err,
+                )
+
+            assert "Import base errors" in self.err.getvalue()
+            self.assertEqual(Book.objects.count(), 0)

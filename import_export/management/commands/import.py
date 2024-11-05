@@ -77,7 +77,7 @@ class Command(BaseCommand):
         if result.has_errors():
             self.stderr.write(self.style.ERROR("Import errors!"))
             for error in result.base_errors:
-                self.stdout.write(error.error, self.style.ERROR)
+                self.stderr.write(repr(error.error), self.style.ERROR)
             for line, errors in result.row_errors():
                 for error in errors:
                     self.stderr.write(
