@@ -4,8 +4,8 @@ from django.http.response import mimetypes
 from django.utils.module_loading import import_string
 
 from import_export.formats import base_formats
-from import_export.resources import modelresource_factory
 from import_export.formats.base_formats import DEFAULT_FORMATS
+from import_export.resources import modelresource_factory
 
 
 def get_resource_class(model_or_resource_class):

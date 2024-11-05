@@ -1,14 +1,14 @@
-from django.test import TestCase
-from django.core.management import CommandError
-from import_export.formats import base_formats
-
-from core.models import Book
 from core.admin import BookResource
+from core.models import Book
+from django.core.management import CommandError
+from django.test import TestCase
+
 from import_export.command_utils import (
-    get_resource_class,
-    get_format_class,
     get_default_format_names,
+    get_format_class,
+    get_resource_class,
 )
+from import_export.formats import base_formats
 
 
 class GetResourceClassTest(TestCase):

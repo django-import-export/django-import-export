@@ -1,5 +1,7 @@
 import sys
+
 from django.core.management.base import BaseCommand
+
 from import_export.command_utils import (
     get_default_format_names,
     get_format_class,

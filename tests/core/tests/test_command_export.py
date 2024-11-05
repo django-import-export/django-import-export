@@ -1,8 +1,8 @@
+from io import BytesIO, TextIOWrapper
+
+from core.models import Book
 from django.core.management import call_command
 from django.test import TestCase
-
-from io import BytesIO, TextIOWrapper
-from core.models import Book
 
 
 class ExportCommandTest(TestCase):

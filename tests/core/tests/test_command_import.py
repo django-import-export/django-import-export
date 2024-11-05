@@ -1,10 +1,10 @@
 import tempfile
+from io import StringIO
 from unittest.mock import patch
+
+from core.models import Book
 from django.core.management import call_command
 from django.test import TestCase
-
-from io import StringIO
-from core.models import Book
 
 CSV_CONTENT = """\
 id,name,author,author_email,imported,published,published_time,price,added,categories
