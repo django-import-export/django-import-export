@@ -5,6 +5,7 @@ from import_export.command_utils import (
     get_format_class,
     get_resource_class,
 )
+from import_export.results import RowResult
 
 
 class Command(BaseCommand):
@@ -79,9 +80,13 @@ class Command(BaseCommand):
                     )
             sys.exit(1)
         else:
-            if dry_run:
-                self.stderr.write(
-                    self.style.NOTICE(
-                        f"Import successful. {result.total_rows} rows imported."
-                    )
-                )
+            success_message = (
+                "Import finished: {} new, {} updated, {} deleted and {} skipped {}."
+            ).format(
+                result.totals[RowResult.IMPORT_TYPE_NEW],
+                result.totals[RowResult.IMPORT_TYPE_UPDATE],
+                result.totals[RowResult.IMPORT_TYPE_DELETE],
+                result.totals[RowResult.IMPORT_TYPE_SKIP],
+                resource._meta.model._meta.verbose_name_plural,
+            )
+            self.stderr.write(self.style.NOTICE(success_message))
