@@ -2,11 +2,11 @@ import tempfile
 from io import BytesIO, StringIO, TextIOWrapper
 from unittest.mock import patch
 
+from build.lib.import_export.resources import ModelResource
 from core.models import Book
 from django.core.management import call_command
 from django.test import TestCase
 
-from build.lib.import_export.resources import ModelResource
 from import_export.formats.base_formats import XLSX
 from import_export.resources import modelresource_factory
 
