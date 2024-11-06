@@ -28,7 +28,8 @@ class Command(BaseCommand):
         )
         parser.add_argument(
             "--encoding",
-            help="Specify the encoding to use for the exported data (e.g., 'utf-8').",
+            help="Specify the encoding to use for the exported data (e.g., 'utf-8'). "
+            "This applies to text-based formats.",
         )
 
     def handle(self, *args, **options):

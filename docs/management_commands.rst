@@ -34,13 +34,12 @@ Another example:
 
     python manage.py export XLSX mymodule.resources.MyResource
 
-This command will export the data from ``MyResource`` resource in XLSX format
-using utf-8 encoding.
+This command will export the data from ``MyResource`` resource in XLSX format.
 
 Import Command
 --------------
 
-The ``import`` command allows you to import data from a file into a specified
+The ``import`` command allows you to import data from a file using a specified
 Django model or a custom resource class.
 
 Usage
