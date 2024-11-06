@@ -3,7 +3,6 @@ from django.core.management.base import CommandError
 from django.http.response import mimetypes
 from django.utils.module_loading import import_string
 
-from import_export.formats import base_formats
 from import_export.formats.base_formats import DEFAULT_FORMATS
 from import_export.resources import modelresource_factory
 
@@ -31,16 +30,7 @@ def get_resource_class(model_or_resource_class):
     )
 
 
-MIME_TYPE_FORMAT_MAPPING = {
-    "text/csv": base_formats.CSV,
-    "application/vnd.ms-excel": base_formats.XLS,
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": base_formats.XLSX,  # noqa: E501
-    "text/tab-separated-values": base_formats.TSV,
-    "application/vnd.oasis.opendocument.spreadsheet": base_formats.ODS,
-    "application/json": base_formats.JSON,
-    "application/x-yaml": base_formats.YAML,
-    "text/html": base_formats.HTML,
-}
+MIME_TYPE_FORMAT_MAPPING = {format.CONTENT_TYPE: format for format in DEFAULT_FORMATS}
 
 
 def get_format_class(format_name, file_name, encoding=None):
