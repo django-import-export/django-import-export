@@ -15,6 +15,7 @@ from django.utils.formats import number_format, sanitize_separators
 from django.utils.translation import gettext_lazy as _
 
 from import_export.exceptions import WidgetError
+from import_export.formats.base_formats import XLS, XLSX
 
 logger = logging.getLogger(__name__)
 
@@ -308,7 +309,11 @@ class DateTimeWidget(_ParseDateTimeMixin, Widget):
     def render(self, value, obj=None, **kwargs):
         self._obj_deprecation_warning(obj)
         if self.coerce_to_string is False or kwargs.get("force_native_type"):
-            return value
+            return (
+                value.replace(tzinfo=None)
+                if kwargs.get("file_format") in [XLS, XLSX]
+                else value
+            )
         if not value or not isinstance(value, datetime):
             return ""
         if settings.USE_TZ:

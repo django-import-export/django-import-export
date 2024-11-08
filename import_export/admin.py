@@ -713,6 +713,7 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
             request,
             queryset,
             force_native_type=force_native_type,
+            file_format=type(file_format),
             **kwargs,
         )
         export_data = file_format.export_data(data)
