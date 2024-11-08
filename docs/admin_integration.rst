@@ -4,11 +4,12 @@
 Admin integration
 =================
 
-One of the main features of import-export is the support for integration with the
-`Django Admin site <https://docs.djangoproject.com/en/stable/ref/contrib/admin/>`_.
+One of the main features of import-export is the support for integration with the Django Admin site.
 This provides a convenient interface for importing and exporting Django objects.
+Refer to the `Django Admin documentation <https://docs.djangoproject.com/en/stable/ref/contrib/admin/>`_ for details
+of how to enable and configure the admin site.
 
-Please install and run the :ref:`example application<exampleapp>`  to become familiar with Admin integration.
+You can also install and run the :ref:`example application<exampleapp>`  to become familiar with Admin integration.
 
 Integrating import-export with your application requires extra configuration.
 
@@ -19,13 +20,14 @@ mixins (:class:`~import_export.admin.ImportMixin`,
 :class:`~import_export.admin.ImportExportMixin`)::
 
     # app/admin.py
+    from django.contrib import admin
     from .models import Book
     from import_export.admin import ImportExportModelAdmin
 
+    @admin.register(Book)
     class BookAdmin(ImportExportModelAdmin):
         resource_classes = [BookResource]
 
-    admin.site.register(Book, BookAdmin)
 
 Once this configuration is present (and server is restarted), 'import' and 'export' buttons will be presented to the
 user.

@@ -409,7 +409,7 @@ csv file, then we can have a single field which references an author by name.
 
 We would have to declare our ``BookResource`` to use the author name as the foreign key reference::
 
-        from import_export import fields, resources
+        from import_export import fields
         from import_export.widgets import ForeignKeyWidget
 
         class BookResource(resources.ModelResource):
