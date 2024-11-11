@@ -5,7 +5,7 @@ Changelog
 
     If upgrading from v3, v4 introduces breaking changes.  Please refer to :doc:`release notes<release_notes>`.
 
-4.3.0 (unreleased)
+4.2.1 (2024-11-11)
 ------------------
 
 - Removed dependency files in favour of ``pyproject.toml`` (`1982 <https://github.com/django-import-export/django-import-export/issues/1982>`_)
