@@ -308,10 +308,10 @@ class DateTimeWidget(_ParseDateTimeMixin, Widget):
     def render(self, value, obj=None, **kwargs):
         self._obj_deprecation_warning(obj)
         force_native_type = kwargs.get("force_native_type")
-        if self.coerce_to_string is False or force_native_type:
-            return value.replace(tzinfo=None) if force_native_type else value
         if not value or not isinstance(value, datetime):
             return ""
+        if self.coerce_to_string is False or force_native_type:
+            return value.replace(tzinfo=None) if force_native_type else value
         if settings.USE_TZ:
             value = timezone.localtime(value)
         return format_datetime(value, self.formats[0])
