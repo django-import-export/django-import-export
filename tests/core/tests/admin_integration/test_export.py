@@ -879,3 +879,18 @@ class ExportTzAwareDateTest(AdminTestMixin, TestCase):
         }
         response = self.client.post(self.book_export_url, data)
         self.assertEqual(response.status_code, 200)
+
+    @patch("import_export.mixins.BaseExportMixin.choose_export_resource_class")
+    def test_datetime_export_empty_field(self, mock_choose_export_resource_class):
+        mock_choose_export_resource_class.return_value = self.BookResource_
+        date_added = None
+        Book.objects.create(id=101, name="Moonraker", added=date_added)
+
+        data = {
+            "format": "2",
+            "bookresource_id": True,
+            "bookresource_title": True,
+            "bookresource_added": True,
+        }
+        response = self.client.post(self.book_export_url, data)
+        self.assertEqual(response.status_code, 200)
