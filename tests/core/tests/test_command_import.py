@@ -1,6 +1,9 @@
 import tempfile
 from io import BytesIO, StringIO, TextIOWrapper
+from unittest import mock
 from unittest.mock import patch
+
+from django.core.management.base import CommandError
 
 from build.lib.import_export.resources import ModelResource
 from core.models import Book
@@ -39,7 +42,12 @@ class ImportCommandTest(TestCase):
             tmp_csv.write(CSV_CONTENT)
             tmp_csv.seek(0)
             call_command(
-                "import", "core.Book", tmp_csv.name, stdout=self.out, stderr=self.err
+                "import",
+                "core.Book",
+                tmp_csv.name,
+                stdout=self.out,
+                stderr=self.err,
+                interactive=False,
             )
 
         self.assertEqual(Book.objects.count(), 1)
@@ -50,7 +58,13 @@ class ImportCommandTest(TestCase):
         mock_stdin.seek(0)
 
         call_command(
-            "import", "core.Book", "-", stdout=self.out, stderr=self.err, format="CSV"
+            "import",
+            "core.Book",
+            "-",
+            stdout=self.out,
+            stderr=self.err,
+            format="CSV",
+            interactive=False,
         )
 
         self.assertEqual(Book.objects.count(), 1)
@@ -65,7 +79,13 @@ class ImportCommandTest(TestCase):
         mock_stdin.seek(0)
 
         call_command(
-            "import", "core.Book", "-", stdout=self.out, stderr=self.err, format="XLSX"
+            "import",
+            "core.Book",
+            "-",
+            stdout=self.out,
+            stderr=self.err,
+            format="XLSX",
+            interactive=False,
         )
 
     def test_import_command_dry_run(self):
@@ -79,6 +99,7 @@ class ImportCommandTest(TestCase):
                 stdout=self.out,
                 stderr=self.err,
                 dry_run=True,
+                interactive=False,
             )
 
         self.assertEqual(Book.objects.count(), 0)
@@ -94,6 +115,7 @@ class ImportCommandTest(TestCase):
                     tmp_csv.name,
                     stdout=self.out,
                     stderr=self.err,
+                    interactive=False,
                 )
 
         assert "Import errors!" in self.err.getvalue()
@@ -110,7 +132,25 @@ class ImportCommandTest(TestCase):
                     tmp_csv.name,
                     stdout=self.out,
                     stderr=self.err,
+                    interactive=False,
                 )
 
             assert "Import base errors" in self.err.getvalue()
             self.assertEqual(Book.objects.count(), 0)
+
+    def test_import_command_interactive(self):
+        with mock.patch("builtins.input", side_effect=lambda msg: "no"):
+            with tempfile.NamedTemporaryFile(mode="w+", suffix=".csv") as tmp_csv:
+                tmp_csv.write(CSV_CONTENT)
+                tmp_csv.seek(0)
+                with self.assertRaises(CommandError) as e:
+                    call_command(
+                        "import",
+                        "core.Book",
+                        tmp_csv.name,
+                        stdout=self.out,
+                        stderr=self.err,
+                    )
+                    assert e.exception.args[0] == "Import cancelled."
+
+        self.assertEqual(Book.objects.count(), 0)

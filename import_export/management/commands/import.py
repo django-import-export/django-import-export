@@ -1,6 +1,6 @@
 import sys
 
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 
 from import_export.command_utils import (
     get_default_format_names,
@@ -22,6 +22,13 @@ class Command(BaseCommand):
         parser.add_argument(
             "import_file_name",
             help="""The file to import from (use "-" for stdin).""",
+        )
+        parser.add_argument(
+            "--noinput",
+            "--no-input",
+            action="store_false",
+            dest="interactive",
+            help="Do NOT prompt the user for input of any kind.",
         )
         parser.add_argument(
             "--raise-errors",
@@ -48,12 +55,18 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
+        interactive = options["interactive"]
         dry_run = options.get("dry_run")
         raise_errors = options.get("raise_errors")
         file_name = options.get("import_file_name")
         model_or_resource_class = options.get("resource")
         format_name = options.get("format")
         encoding = options.get("encoding")
+
+        if interactive:
+            message = "Are you sure you want to import the data? [yes/no]: "
+            if input(message) != "yes":
+                raise CommandError("Import cancelled.")
 
         resource = get_resource_class(model_or_resource_class)()
         format_class = get_format_class(format_name, file_name, encoding)
