@@ -29,6 +29,7 @@ class Command(BaseCommand):
             help="Raise errors if encountered during execution.",
         )
         parser.add_argument(
+            "-n",
             "--dry-run",
             action="store_true",
             help="Perform a dry run without making any changes.",
@@ -72,7 +73,12 @@ class Command(BaseCommand):
         )
 
         if dry_run:
-            self.stderr.write(self.style.NOTICE("Dry run."))
+            self.stderr.write(
+                self.style.NOTICE(
+                    "You have activated the --dry-run option"
+                    " so no data will be modified."
+                )
+            )
 
         if result.has_errors():
             self.stderr.write(self.style.ERROR("Import errors!"))
