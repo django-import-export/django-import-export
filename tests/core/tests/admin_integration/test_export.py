@@ -894,3 +894,6 @@ class ExportTzAwareDateTest(AdminTestMixin, TestCase):
         }
         response = self.client.post(self.book_export_url, data)
         self.assertEqual(response.status_code, 200)
+        content = response.content
+        wb = load_workbook(filename=BytesIO(content))
+        self.assertIsNone(wb.active["B2"].value)
