@@ -2,6 +2,7 @@ from datetime import date, datetime
 from io import BytesIO
 from unittest import mock
 from unittest.mock import MagicMock, PropertyMock, patch
+from zoneinfo import ZoneInfo
 
 import chardet
 import tablib
@@ -819,3 +820,62 @@ class ExportBinaryFieldsTest(AdminTestMixin, TestCase):
         self.assertEqual(101, wb.active["A2"].value)
         self.assertEqual(1, wb.active["B2"].value)
         self.assertEqual(datetime(2000, 8, 2), wb.active["C2"].value)
+
+
+@override_settings(USE_TZ=True)
+class ExportTzAwareDateTest(AdminTestMixin, TestCase):
+    # issue 1995
+    # test that tz aware dates do not crash on export
+    class BookResource_(resources.ModelResource):
+
+        class Meta:
+            model = Book
+            fields = ("id", "name", "added")
+
+    @patch("import_export.mixins.BaseExportMixin.choose_export_resource_class")
+    def test_datetime_export_xlsx(self, mock_choose_export_resource_class):
+        mock_choose_export_resource_class.return_value = self.BookResource_
+        date_added = datetime(2024, 11, 8, 14, 40, tzinfo=ZoneInfo("UTC"))
+        Book.objects.create(id=101, name="Moonraker", added=date_added)
+
+        data = {
+            "format": "2",
+            "bookresource_id": True,
+            "bookresource_title": True,
+            "bookresource_added": True,
+        }
+        response = self.client.post(self.book_export_url, data)
+        self.assertEqual(response.status_code, 200)
+        content = response.content
+        wb = load_workbook(filename=BytesIO(content))
+        self.assertEqual(date_added.replace(tzinfo=None), wb.active["B2"].value)
+
+    @patch("import_export.mixins.BaseExportMixin.choose_export_resource_class")
+    def test_datetime_export_xls(self, mock_choose_export_resource_class):
+        mock_choose_export_resource_class.return_value = self.BookResource_
+        date_added = datetime(2024, 11, 8, 14, 40, tzinfo=ZoneInfo("UTC"))
+        Book.objects.create(id=101, name="Moonraker", added=date_added)
+
+        data = {
+            "format": "1",
+            "bookresource_id": True,
+            "bookresource_title": True,
+            "bookresource_added": True,
+        }
+        response = self.client.post(self.book_export_url, data)
+        self.assertEqual(response.status_code, 200)
+
+    @patch("import_export.mixins.BaseExportMixin.choose_export_resource_class")
+    def test_datetime_export_ods(self, mock_choose_export_resource_class):
+        mock_choose_export_resource_class.return_value = self.BookResource_
+        date_added = datetime(2024, 11, 8, 14, 40, tzinfo=ZoneInfo("UTC"))
+        Book.objects.create(id=101, name="Moonraker", added=date_added)
+
+        data = {
+            "format": "4",
+            "bookresource_id": True,
+            "bookresource_title": True,
+            "bookresource_added": True,
+        }
+        response = self.client.post(self.book_export_url, data)
+        self.assertEqual(response.status_code, 200)
