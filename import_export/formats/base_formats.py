@@ -231,7 +231,7 @@ class XLSX(TablibFormat):
     def _escape_illegal_chars(self, dataset):
         def _do_escape(cell):
             if type(cell) is str:
-                cell = ILLEGAL_CHARACTERS_RE.sub("�", cell)
+                cell = ILLEGAL_CHARACTERS_RE.sub("\N{REPLACEMENT CHARACTER}", cell)
             return cell
 
         for r in dataset:
