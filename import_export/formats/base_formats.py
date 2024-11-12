@@ -225,6 +225,7 @@ class XLSX(TablibFormat):
                 return super().export_data(dataset, **kwargs)
             except IllegalCharacterError as e:
                 logger.exception(e)
+                # not raising original error due to reflected xss risk
                 raise ValueError(_("export failed due to IllegalCharacterError"))
 
     def _escape_illegal_chars(self, dataset):
