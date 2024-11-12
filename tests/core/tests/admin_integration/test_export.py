@@ -944,4 +944,4 @@ class ExportInvalidCharTest(AdminTestMixin, TestCase):
         self.assertEqual(response.status_code, 200)
         content = response.content
         wb = load_workbook(filename=BytesIO(content))
-        self.assertEqual("invalid", wb.active["B2"].value)
+        self.assertEqual("invalid�", wb.active["B2"].value)
