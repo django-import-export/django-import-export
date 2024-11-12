@@ -841,7 +841,6 @@ class ExportTzAwareDateTest(AdminTestMixin, TestCase):
         data = {
             "format": "2",
             "bookresource_id": True,
-            "bookresource_name": True,
             "bookresource_added": True,
         }
         response = self.client.post(self.book_export_url, data)
