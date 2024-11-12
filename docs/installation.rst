@@ -192,6 +192,15 @@ requested from an :ref:`Admin UI action<export_via_admin_action>`, or from the '
 If set to ``True``, strings will be sanitized by removing any leading '=' character.  This is to prevent execution of
 Excel formulae.  By default this is ``False``.
 
+.. _import_export_escape_illegal_chars_on_export:
+
+``IMPORT_EXPORT_ESCAPE_ILLEGAL_CHARS_ON_EXPORT``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If set to ``True``, strings will be sanitized by removing any invalid Excel character before exporting to XLSX format.
+By default this is ``False``.
+See `IllegalCharacterError <https://openpyxl.readthedocs.io/en/latest/api/openpyxl.utils.exceptions.html>`_.
+
 .. _import_export_formats:
 
 ``IMPORT_EXPORT_FORMATS``
