@@ -216,14 +216,17 @@ class XLSX(TablibFormat):
         # this catch block must be removed when openpyxl updated
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", category=DeprecationWarning)
-            if (
-                getattr(settings, "IMPORT_EXPORT_ESCAPE_ILLEGAL_CHARS_ON_EXPORT", False)
-                is True
-            ):
-                self._escape_illegal_chars(dataset)
             try:
                 return super().export_data(dataset, **kwargs)
             except IllegalCharacterError as e:
+                if (
+                    getattr(
+                        settings, "IMPORT_EXPORT_ESCAPE_ILLEGAL_CHARS_ON_EXPORT", False
+                    )
+                    is True
+                ):
+                    self._escape_illegal_chars(dataset)
+                    return super().export_data(dataset, **kwargs)
                 logger.exception(e)
                 # not raising original error due to reflected xss risk
                 raise ValueError(_("export failed due to IllegalCharacterError"))
