@@ -5,7 +5,7 @@ from django.core.exceptions import ValidationError
 from django.test import SimpleTestCase
 from tablib import Dataset
 
-from import_export.results import Error, Result, RowResult, InvalidRow
+from import_export.results import Error, InvalidRow, Result, RowResult
 
 
 class ErrorTest(SimpleTestCase):
@@ -46,11 +46,13 @@ class ErrorTest(SimpleTestCase):
 class InvalidRowTest(SimpleTestCase):
     def test_repr(self):
         try:
-            raise ValidationError(message='invalid row')
+            raise ValidationError(message="invalid row")
         except ValidationError as exc:
             error = InvalidRow(validation_error=exc, number=1, values={})
 
-        self.assertEqual(repr(error), "<InvalidRow(row=1, error='invalid row', error_count=1)>")
+        self.assertEqual(
+            repr(error), "<InvalidRow(row=1, error='invalid row', error_count=1)>"
+        )
 
 
 class ResultTest(SimpleTestCase):
