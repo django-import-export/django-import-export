@@ -251,8 +251,9 @@ The import process distinguishes between:
 
 #. General exceptions which arise during processing.
 
-Errors are retained in each :class:`~import_export.results.RowResult` instance which is stored in the single
-:class:`~import_export.results.Result` instance which is returned from the import process.
+Errors are retained as :class:`~import_export.results.Error` instances in each :class:`~import_export.results.RowResult`
+instance, which is stored in the single :class:`~import_export.results.Result` instance which is returned from the
+import process.
 
 The :meth:`~import_export.resources.Resource.import_data` method takes optional parameters which can be used to
 customize the handling of errors.  Refer to the method documentation for specific details.
