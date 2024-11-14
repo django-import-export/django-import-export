@@ -389,6 +389,16 @@ method to provide extra validation, either at field or instance level::
 
   A screenshot showing a non field specific error.
 
+Customize error handling
+------------------------
+
+You are free to subclass or replace the classes defined in :mod:`~import_export.results`.  Override any or all of the
+following hooks to customize error handling:
+
+* :meth:`~import_export.resources.Resource.get_result_class`
+* :meth:`~import_export.resources.Resource.get_row_result_class`
+* :meth:`~import_export.resources.Resource.get_error_result_class`
+
 .. _import_model_relations:
 
 Importing model relations
