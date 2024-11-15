@@ -13,7 +13,16 @@ logger = logging.getLogger(__name__)
 
 
 class Error:
+    """
+    Base class representing an Error arising from error during data import.
+    """
+
     def __init__(self, error, row=None, number=None):
+        """
+        :param error: Instance of an Exception class.
+        :param row: The row as a dict of fields and values (optional).
+        :param number: The row number (optional).
+        """
         self.error = error
         self.row = row
         self.number = number

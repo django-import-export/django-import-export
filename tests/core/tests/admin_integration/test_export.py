@@ -841,7 +841,6 @@ class ExportTzAwareDateTest(AdminTestMixin, TestCase):
         data = {
             "format": "2",
             "bookresource_id": True,
-            "bookresource_title": True,
             "bookresource_added": True,
         }
         response = self.client.post(self.book_export_url, data)
@@ -862,7 +861,6 @@ class ExportTzAwareDateTest(AdminTestMixin, TestCase):
         data = {
             "format": "2",
             "bookresource_id": True,
-            "bookresource_title": True,
             "bookresource_added": True,
         }
         response = self.client.post(self.book_export_url, data)
@@ -880,7 +878,6 @@ class ExportTzAwareDateTest(AdminTestMixin, TestCase):
         data = {
             "format": "1",
             "bookresource_id": True,
-            "bookresource_title": True,
             "bookresource_added": True,
         }
         response = self.client.post(self.book_export_url, data)
@@ -895,7 +892,6 @@ class ExportTzAwareDateTest(AdminTestMixin, TestCase):
         data = {
             "format": "4",
             "bookresource_id": True,
-            "bookresource_title": True,
             "bookresource_added": True,
         }
         response = self.client.post(self.book_export_url, data)
@@ -910,7 +906,6 @@ class ExportTzAwareDateTest(AdminTestMixin, TestCase):
         data = {
             "format": "2",
             "bookresource_id": True,
-            "bookresource_title": True,
             "bookresource_added": True,
         }
         response = self.client.post(self.book_export_url, data)
@@ -918,3 +913,35 @@ class ExportTzAwareDateTest(AdminTestMixin, TestCase):
         content = response.content
         wb = load_workbook(filename=BytesIO(content))
         self.assertIsNone(wb.active["B2"].value)
+
+
+class ExportInvalidCharTest(AdminTestMixin, TestCase):
+    # issue 2000
+
+    def test_export_xlsx(self):
+        Book.objects.create(id=101, name="invalid" + chr(11))
+
+        data = {
+            "format": "2",
+            "bookresource_id": True,
+            "bookresource_name": True,
+        }
+        response = self.client.post(self.book_export_url, data)
+        self.assertIn(
+            "Export failed due to IllegalCharacterError", response.content.decode()
+        )
+
+    @override_settings(IMPORT_EXPORT_ESCAPE_ILLEGAL_CHARS_ON_EXPORT=True)
+    def test_export_xlsx_with_escape(self):
+        Book.objects.create(id=101, name="invalid" + chr(11))
+
+        data = {
+            "format": "2",
+            "bookresource_id": True,
+            "bookresource_name": True,
+        }
+        response = self.client.post(self.book_export_url, data)
+        self.assertEqual(response.status_code, 200)
+        content = response.content
+        wb = load_workbook(filename=BytesIO(content))
+        self.assertEqual("invalid�", wb.active["B2"].value)

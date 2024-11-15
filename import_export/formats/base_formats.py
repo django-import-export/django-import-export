@@ -1,8 +1,14 @@
+import logging
 import warnings
 
 import tablib
 from django.conf import settings
+from django.utils.translation import gettext_lazy as _
+from openpyxl.cell.cell import ILLEGAL_CHARACTERS_RE
+from openpyxl.utils.exceptions import IllegalCharacterError
 from tablib.formats import registry
+
+logger = logging.getLogger(__name__)
 
 
 class Format:
@@ -106,7 +112,7 @@ class TablibFormat(Format):
         def _do_escape(s):
             return s.replace("=", "", 1) if s.startswith("=") else s
 
-        for _ in dataset:
+        for r in dataset:
             row = dataset.lpop()
             row = [_do_escape(str(cell)) for cell in row]
             dataset.append(row)
@@ -210,7 +216,31 @@ class XLSX(TablibFormat):
         # this catch block must be removed when openpyxl updated
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", category=DeprecationWarning)
-            return super().export_data(dataset, **kwargs)
+            try:
+                return super().export_data(dataset, **kwargs)
+            except IllegalCharacterError as e:
+                if (
+                    getattr(
+                        settings, "IMPORT_EXPORT_ESCAPE_ILLEGAL_CHARS_ON_EXPORT", False
+                    )
+                    is True
+                ):
+                    self._escape_illegal_chars(dataset)
+                    return super().export_data(dataset, **kwargs)
+                logger.exception(e)
+                # not raising original error due to reflected xss risk
+                raise ValueError(_("export failed due to IllegalCharacterError"))
+
+    def _escape_illegal_chars(self, dataset):
+        def _do_escape(cell):
+            if type(cell) is str:
+                cell = ILLEGAL_CHARACTERS_RE.sub("\N{REPLACEMENT CHARACTER}", cell)
+            return cell
+
+        for r in dataset:
+            row = dataset.lpop()
+            row = [_do_escape(cell) for cell in row]
+            dataset.append(row)
 
 
 #: These are the default formats for import and export. Whether they can be

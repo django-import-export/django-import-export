@@ -264,3 +264,9 @@ How to configure logging
 ------------------------
 
 Refer to :ref:`logging configuration<logging>` for more information.
+
+Export to Excel gives ``IllegalCharacterError``
+-----------------------------------------------
+
+This occurs when your data contains a character which cannot be rendered in Excel.
+You can configure import-export to :ref:`sanitize these characters<import_export_escape_illegal_chars_on_export>`.
