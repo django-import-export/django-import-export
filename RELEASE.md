@@ -10,6 +10,17 @@ additional config to the CI process.
 
 Ensure that `CHANGELOG.rst` is up-to-date with the correct version number and release date.
 
+It's sensible to perform a clean installation of the package and ensure the server runs ok.
+This can avoid issues with broken imports which may not have been picked up by integration tests.
+
+```
+python -m venv venv
+pip install django-import-export
+tests/manage.py runserver
+```
+
+Now browse http://localhost:8000 and test that the site runs ok.
+
 ### Perform the release
 
 To create a new published release, follow the instructions [here](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository).

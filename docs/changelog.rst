@@ -8,7 +8,7 @@ Changelog
 4.3.1 (2024-11-19)
 ------------------
 
-- Fix imports for openpyxl (`2004 <https://github.com/django-import-export/django-import-export/issues/2004>`_)
+- Fix imports for openpyxl (`2005 <https://github.com/django-import-export/django-import-export/issues/2005>`_)
 
 4.3.0 (2024-11-19)
 ------------------
