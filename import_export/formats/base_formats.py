@@ -1,3 +1,7 @@
+# when adding imports, ensure that they are local to the
+# correct class for thefile format.
+# e.g. add openpyxl imports to the XLSXFormat class
+# See issue 2004
 import logging
 import warnings
 
@@ -210,11 +214,10 @@ class XLSX(TablibFormat):
         return dataset
 
     def export_data(self, dataset, **kwargs):
-        # #1698 temporary catch for deprecation warning in openpyxl
-        # this catch block must be removed when openpyxl updated
-
         from openpyxl.utils.exceptions import IllegalCharacterError
 
+        # #1698 temporary catch for deprecation warning in openpyxl
+        # this catch block must be removed when openpyxl updated
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", category=DeprecationWarning)
             try:
