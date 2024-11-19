@@ -5,7 +5,7 @@ from django.core.exceptions import ValidationError
 from django.test import SimpleTestCase
 from tablib import Dataset
 
-from import_export.results import Error, Result, RowResult
+from import_export.results import Error, InvalidRow, Result, RowResult
 
 
 class ErrorTest(SimpleTestCase):
@@ -40,6 +40,20 @@ class ErrorTest(SimpleTestCase):
         self.assertIn(
             "ZeroDivisionError: division by zero\n",
             error.traceback,
+        )
+
+
+class InvalidRowTest(SimpleTestCase):
+    def test_repr(self):
+        try:
+            raise ValidationError(message="invalid row")
+        except ValidationError as exc:
+            error = InvalidRow(validation_error=exc, number=1, values={})
+
+        self.assertEqual(
+            repr(error),
+            "<InvalidRow(row=1, error=ValidationError(['invalid row']),"
+            " error_count=1)>",
         )
 
 

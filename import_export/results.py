@@ -185,6 +185,13 @@ class InvalidRow:
             count += len(error_list)
         return count
 
+    def __repr__(self):
+        return (
+            f"<{type(self).__name__}(row={self.number}, "
+            f"error={self.error!r}, "
+            f"error_count={self.error_count})>"
+        )
+
 
 class ErrorRow:
     """A row that resulted in one or more errors being raised during import."""
