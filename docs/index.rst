@@ -42,6 +42,7 @@ exporting data with included admin integration.
    import_workflow
    export_workflow
    bulk_import
+   management_commands
    celery
    testing
    faq
