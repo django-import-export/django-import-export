@@ -5,10 +5,11 @@ Changelog
 
     If upgrading from v3, v4 introduces breaking changes.  Please refer to :doc:`release notes<release_notes>`.
 
-4.2.2 (2024-11-18)
+4.2.2 (unreleased)
 ------------------
 
 - Handle ``IllegalCharacterError`` in xlsx exports `(`2001 <https://github.com/django-import-export/django-import-export/issues/2001>`_)
+- Add ``__repr__`` method to InvalidRow for improved debugging `(`2003 <https://github.com/django-import-export/django-import-export/issues/2003>`_)
 
 4.2.1 (2024-11-11)
 ------------------
