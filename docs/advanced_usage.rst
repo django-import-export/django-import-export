@@ -251,8 +251,9 @@ The import process distinguishes between:
 
 #. General exceptions which arise during processing.
 
-Errors are retained in each :class:`~import_export.results.RowResult` instance which is stored in the single
-:class:`~import_export.results.Result` instance which is returned from the import process.
+Errors are retained as :class:`~import_export.results.Error` instances in each :class:`~import_export.results.RowResult`
+instance, which is stored in the single :class:`~import_export.results.Result` instance which is returned from the
+import process.
 
 The :meth:`~import_export.resources.Resource.import_data` method takes optional parameters which can be used to
 customize the handling of errors.  Refer to the method documentation for specific details.
@@ -387,6 +388,16 @@ method to provide extra validation, either at field or instance level::
 .. figure:: _static/images/non-field-specific-validation-error.png
 
   A screenshot showing a non field specific error.
+
+Customize error handling
+------------------------
+
+You are free to subclass or replace the classes defined in :mod:`~import_export.results`.  Override any or all of the
+following hooks to customize error handling:
+
+* :meth:`~import_export.resources.Resource.get_result_class`
+* :meth:`~import_export.resources.Resource.get_row_result_class`
+* :meth:`~import_export.resources.Resource.get_error_result_class`
 
 .. _import_model_relations:
 

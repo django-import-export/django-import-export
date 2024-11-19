@@ -773,7 +773,7 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
                 return self._do_file_export(
                     file_format, request, queryset, export_form=form
                 )
-            except FieldError as e:
+            except (ValueError, FieldError) as e:
                 messages.error(request, str(e))
 
         context = self.init_request_context_data(request, form)
