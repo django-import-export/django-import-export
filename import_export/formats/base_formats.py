@@ -4,8 +4,6 @@ import warnings
 import tablib
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
-from openpyxl.cell.cell import ILLEGAL_CHARACTERS_RE
-from openpyxl.utils.exceptions import IllegalCharacterError
 from tablib.formats import registry
 
 logger = logging.getLogger(__name__)
@@ -214,6 +212,9 @@ class XLSX(TablibFormat):
     def export_data(self, dataset, **kwargs):
         # #1698 temporary catch for deprecation warning in openpyxl
         # this catch block must be removed when openpyxl updated
+
+        from openpyxl.utils.exceptions import IllegalCharacterError
+
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", category=DeprecationWarning)
             try:
@@ -232,6 +233,8 @@ class XLSX(TablibFormat):
                 raise ValueError(_("export failed due to IllegalCharacterError"))
 
     def _escape_illegal_chars(self, dataset):
+        from openpyxl.cell.cell import ILLEGAL_CHARACTERS_RE
+
         def _do_escape(cell):
             if type(cell) is str:
                 cell = ILLEGAL_CHARACTERS_RE.sub("\N{REPLACEMENT CHARACTER}", cell)

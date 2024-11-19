@@ -369,7 +369,7 @@ You can optionally configure import-export to perform model instance validation 
 :attr:`~import_export.options.ResourceOptions.clean_model_instances` attribute.
 
 You can override the
-`full_clean() <https://docs.djangoproject.com/en/stable/ref/models/instances/#django.db.models.Model.full_clean>`_.
+`full_clean() <https://docs.djangoproject.com/en/stable/ref/models/instances/#django.db.models.Model.full_clean>`_
 method to provide extra validation, either at field or instance level::
 
     class Book(models.Model):
