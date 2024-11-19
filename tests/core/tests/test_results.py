@@ -52,7 +52,8 @@ class InvalidRowTest(SimpleTestCase):
 
         self.assertEqual(
             repr(error),
-            "<InvalidRow(row=1, error=ValidationError(['invalid row']), error_count=1)>",
+            "<InvalidRow(row=1, error=ValidationError(['invalid row']),"
+            " error_count=1)>",
         )
 
 
