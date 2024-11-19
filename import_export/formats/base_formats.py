@@ -1,5 +1,5 @@
 # when adding imports, ensure that they are local to the
-# correct class for thefile format.
+# correct class for the file format.
 # e.g. add openpyxl imports to the XLSXFormat class
 # See issue 2004
 import logging
