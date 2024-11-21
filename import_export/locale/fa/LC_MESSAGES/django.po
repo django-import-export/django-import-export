@@ -2,13 +2,14 @@
 # This file is distributed under the same license as the django-import-export package.
 #
 # Yazdan Ranjbar <Yazdan_ra@icloud.com>, 2021.
+# MohammadReza Sadegh Zadeh <org.m.sdz@gmail.com>, 2024.
 msgid ""
 msgstr ""
 "Project-Id-Version: 0.0.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2024-03-15 13:54+0000\n"
 "PO-Revision-Date: 2021-03-09 00:29+0030\n"
-"Last-Translator: Yazdan Ranjbar <Yazdan_ra@icloud.com>\n"
+"Last-Translator: MohammadReza Sadegh Zadeh <org.m.sdz@gmail.com>\n"
 "Language-Team: Persain/Farsi <kde-i18n-it@kde.org>\n"
 "Language: Farsi/Persian\n"
 "MIME-Version: 0.1\n"
@@ -20,20 +21,20 @@ msgstr ""
 #: admin.py:246 admin.py:588
 #, python-format
 msgid "%s through import_export"
-msgstr "%s یه وسیله ورودی-خروجی"
+msgstr "%s با استفاده از ورودی-خروجی"
 
 #: admin.py:254
 #, fuzzy
 #| msgid "Import finished, with {} new and {} updated {}."
 msgid "Import finished: {} new, {} updated, {} deleted and {} skipped {}."
-msgstr "بارگذاری تمام شد، با {} مورد جدید و {} مورد به روز شده."
+msgstr "بارگذاری تمام شد، با {} مورد جدید، {} مورد به روز شده، {} مورد حذف شده و {} مورد در شده."
 
 #: admin.py:423
 #, python-format
 msgid ""
 "%(exc_name)s encountered while trying to read file. Ensure you have chosen "
 "the correct format for the file."
-msgstr ""
+msgstr "در حال خواندن فایل، یک خطا رخ داده است. لطفا از فرمت مناسب برای فایل استفاده کنید. %(exc_name)s"
 
 #: admin.py:539 templates/admin/import_export/change_list_import_item.html:5
 #: templates/admin/import_export/import.html:19
@@ -53,7 +54,7 @@ msgstr "خروجی %(verbose_name_plural)s انتخاب شده"
 
 #: forms.py:15
 msgid "Resource"
-msgstr ""
+msgstr "منبع"
 
 #: forms.py:20
 msgid "Format"
@@ -61,35 +62,35 @@ msgstr "فرمت"
 
 #: forms.py:58
 msgid "File to import"
-msgstr "قایل برای بارگذاری"
+msgstr "فایل برای بارگذاری"
 
 #: forms.py:209
 msgid "Form is not validated, call `is_valid` first"
-msgstr ""
+msgstr "فرم معتبر نیست، ابتدا `is_valid` را فراخوانی کنید"
 
 #: forms.py:261
 #, python-format
 msgid "Select at least 1 field for \"%(resource_name)s\" to export"
-msgstr ""
+msgstr "حداقل یک فیلد را برای \"%(resource_name)s\" برای خروجی انتخاب کنید"
 
 #: resources.py:1137
 #, python-format
 msgid ""
 "The following fields are declared in 'import_id_fields' but are not present "
 "in the resource fields: %s"
-msgstr ""
+msgstr "فیلد‌های زیر در 'import_id_fields' اعلام شده اند، اما در فیلد‌های منبع وجود ندارند: %s"
 
 #: resources.py:1152
 #, python-format
 msgid ""
 "The following fields are declared in 'import_id_fields' but are not present "
 "in the file headers: %s"
-msgstr ""
+msgstr "فیلد‌های زیر در 'import_id_fields' اعلام شده اند، اما در فیلد‌های منبع وجود ندارند: %s"
 
 #: results.py:120
 #, python-format
 msgid "call to force_str() on instance failed: %s"
-msgstr ""
+msgstr "فراخوانی به `force_str()` بر روی مورد نمونه با خطا رخ داده است: %s"
 
 #: templates/admin/import_export/base.html:11
 msgid "Home"
@@ -106,14 +107,20 @@ msgid_plural ""
 "        Export %(len)s selected items.\n"
 "      "
 msgstr[0] ""
+"\n"
+"        خروجی %(len)s مورد انتخاب شده.\n"
+"        "
 msgstr[1] ""
+"\n"
+"        خروجی %(len)s مورد انتخاب شده.\n"
+"        "
 
 #: templates/admin/import_export/export.html:48
 #: templates/admin/import_export/resource_fields_list.html:5
 #, fuzzy
 #| msgid "This importer will import the following fields: "
 msgid "This exporter will export the following fields: "
-msgstr "این بارگذاری شامل این فیلد‌ها هست:"
+msgstr "این خروجی شامل این فیلد‌ها هست:"
 
 #: templates/admin/import_export/export.html:76
 #: templates/admin/import_export/import.html:69
@@ -124,9 +131,7 @@ msgstr "ارسال"
 msgid ""
 "Below is a preview of data to be imported. If you are satisfied with the "
 "results, click 'Confirm import'"
-msgstr ""
-"پایین یک پیش‌نمایش از دیتا‌هایی است که بارگذاری خواهند شد اگر این موارد درست "
-"هستروی 'تایید بارگذاری' گلیگ گنید"
+msgstr "پایین یک پیش‌نمایش از دیتا‌هایی است که بارگذاری خواهند شد اگر این موارد درست هستند، روی 'تایید بارگذاری' کلیک کنید"
 
 #: templates/admin/import_export/import.html:33
 msgid "Confirm import"
@@ -143,7 +148,7 @@ msgstr "شماره خط"
 
 #: templates/admin/import_export/import.html:113
 msgid "Some rows failed to validate"
-msgstr "برخی از سطر‌ها معتبر نبودند"
+msgstr "برخی سطر‌ها معتبر نبودند"
 
 #: templates/admin/import_export/import.html:115
 msgid ""
@@ -153,7 +158,7 @@ msgstr "لطفا این خطا را تصحیح کنید و سپس مجدد فا�
 
 #: templates/admin/import_export/import.html:120
 msgid "Row"
-msgstr "سظر"
+msgstr "سطر"
 
 #: templates/admin/import_export/import.html:147
 msgid "Non field specific"
@@ -161,7 +166,7 @@ msgstr "فیلد‌های غیر اختصاصی"
 
 #: templates/admin/import_export/import.html:170
 msgid "Preview"
-msgstr "نمایش"
+msgstr "پیش‌نمایش"
 
 #: templates/admin/import_export/import.html:185
 msgid "New"
@@ -169,7 +174,7 @@ msgstr "جدید"
 
 #: templates/admin/import_export/import.html:187
 msgid "Skipped"
-msgstr "در شد"
+msgstr "رد شده"
 
 #: templates/admin/import_export/import.html:189
 msgid "Delete"
@@ -185,19 +190,19 @@ msgstr "این بارگذاری شامل این فیلد‌ها هست:"
 
 #: widgets.py:250
 msgid "Value could not be parsed using defined date formats."
-msgstr ""
+msgstr "مقدار قابل تجزیه نبود با فرمت‌های تاریخ تعریف شده."
 
 #: widgets.py:300
 msgid "Value could not be parsed using defined datetime formats."
-msgstr ""
+msgstr "مقدار قابل تجزیه نبود با فرمت‌های تاریخ و زمان تعریف شده."
 
 #: widgets.py:346
 msgid "Value could not be parsed using defined time formats."
-msgstr ""
+msgstr "مقدار قابل تجزیه نبود با فرمت‌های زمان تعریف شده."
 
 #: widgets.py:374
 msgid "Value could not be parsed."
-msgstr ""
+msgstr "مقدار قابل تجزیه نبود."
 
-#~ msgid "You must select an export format."
-#~ msgstr "شما باید یک فرمت خروجی انتخاب کنید"
+msgid "You must select an export format."
+msgstr "شما باید یک فرمت خروجی انتخاب کنید"
