@@ -1,7 +1,7 @@
 import os.path
+from collections.abc import Iterable
 from copy import deepcopy
 from itertools import chain
-from typing import Iterable
 
 from django import forms
 from django.conf import settings
