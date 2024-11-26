@@ -99,6 +99,13 @@ class Field:
         """
         Returns the value of the instance's attribute.
         """
+
+        # The objects of a queryset can be dictionaries if the values method is used.
+        if isinstance(instance, dict):
+            if self.attribute not in instance:
+                return None
+            return instance[self.attribute]
+
         if self.attribute is None:
             return None
 
