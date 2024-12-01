@@ -3,14 +3,13 @@ from io import BytesIO, StringIO, TextIOWrapper
 from unittest import mock
 from unittest.mock import patch
 
-from build.lib.import_export.resources import ModelResource
 from core.models import Book
 from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.test import TestCase
 
 from import_export.formats.base_formats import XLSX
-from import_export.resources import modelresource_factory
+from import_export.resources import ModelResource, modelresource_factory
 
 CSV_CONTENT = """\
 id,name,author,author_email,imported,published,published_time,price,added,categories
