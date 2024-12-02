@@ -8,7 +8,7 @@ Changelog
 4.3.3 (2024-12-02)
 ------------------
 
-- Update all translations (`2008 <https://github.com/django-import-export/django-import-export/issues/2008>`_)
+- Update all translations (`2014 <https://github.com/django-import-export/django-import-export/issues/2014>`_)
 
 4.3.2 (2024-12-01)
 ------------------
