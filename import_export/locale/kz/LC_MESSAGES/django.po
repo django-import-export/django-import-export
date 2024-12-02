@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-03-15 13:54+0000\n"
+"POT-Creation-Date: 2024-12-02 12:47+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Muslim Beibytuly <muslimbeibytuly@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,39 +17,50 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: admin.py:246 admin.py:588
+#: admin.py:184 admin.py:548
+#: templates/admin/import_export/change_list_import_item.html:5
+#: templates/admin/import_export/import.html:19
+msgid "Import"
+msgstr "Импорт"
+
+#: admin.py:254 admin.py:600
 #, python-format
 msgid "%s through import_export"
 msgstr "%s арқылы import_export"
 
-#: admin.py:254
+#: admin.py:262
 #, fuzzy
 #| msgid "Import finished, with {} new and {} updated {}."
 msgid "Import finished: {} new, {} updated, {} deleted and {} skipped {}."
 msgstr "Импорт аяқталды, {} жаңа және {} жаңартылды {}."
 
-#: admin.py:423
+#: admin.py:431
 #, python-format
 msgid ""
 "%(exc_name)s encountered while trying to read file. Ensure you have chosen "
 "the correct format for the file."
 msgstr ""
 
-#: admin.py:539 templates/admin/import_export/change_list_import_item.html:5
-#: templates/admin/import_export/import.html:19
-msgid "Import"
-msgstr "Импорт"
+#: admin.py:504
+msgid ""
+"No valid data to import. Ensure your file has the correct headers or data "
+"for import."
+msgstr ""
 
-#: admin.py:785 templates/admin/import_export/change_form.html:8
+#: admin.py:819 templates/admin/import_export/change_form.html:8
 #: templates/admin/import_export/change_list_export_item.html:5
 #: templates/admin/import_export/export.html:12
 msgid "Export"
 msgstr "Экспорт"
 
-#: admin.py:911
+#: admin.py:952
 #, python-format
 msgid "Export selected %(verbose_name_plural)s"
 msgstr "Таңдалған %(verbose_name_plural)s экспорттаңыз"
+
+#: formats/base_formats.py:236
+msgid "export failed due to IllegalCharacterError"
+msgstr ""
 
 #: forms.py:15
 msgid "Resource"
@@ -59,34 +70,34 @@ msgstr ""
 msgid "Format"
 msgstr "Формат"
 
-#: forms.py:58
+#: forms.py:56
 msgid "File to import"
 msgstr "Импорттауға арналған файл"
 
-#: forms.py:209
+#: forms.py:216
 msgid "Form is not validated, call `is_valid` first"
 msgstr ""
 
-#: forms.py:261
+#: forms.py:268
 #, python-format
 msgid "Select at least 1 field for \"%(resource_name)s\" to export"
 msgstr ""
 
-#: resources.py:1137
+#: resources.py:1171
 #, python-format
 msgid ""
 "The following fields are declared in 'import_id_fields' but are not present "
 "in the resource fields: %s"
 msgstr ""
 
-#: resources.py:1152
+#: resources.py:1186
 #, python-format
 msgid ""
 "The following fields are declared in 'import_id_fields' but are not present "
 "in the file headers: %s"
 msgstr ""
 
-#: results.py:120
+#: results.py:150
 #, python-format
 msgid "call to force_str() on instance failed: %s"
 msgstr ""
@@ -95,7 +106,7 @@ msgstr ""
 msgid "Home"
 msgstr "Басты бет"
 
-#: templates/admin/import_export/export.html:21
+#: templates/admin/import_export/export.html:24
 #, python-format
 msgid ""
 "\n"
@@ -108,15 +119,15 @@ msgid_plural ""
 msgstr[0] ""
 msgstr[1] ""
 
-#: templates/admin/import_export/export.html:48
+#: templates/admin/import_export/export.html:51
 #: templates/admin/import_export/resource_fields_list.html:5
 #, fuzzy
 #| msgid "This importer will import the following fields: "
 msgid "This exporter will export the following fields: "
 msgstr "Бұл импорттаушы келесі өрістерді импорттайды: "
 
-#: templates/admin/import_export/export.html:76
-#: templates/admin/import_export/import.html:69
+#: templates/admin/import_export/export.html:85
+#: templates/admin/import_export/import.html:73
 msgid "Submit"
 msgstr "Жіберу"
 
@@ -132,20 +143,20 @@ msgstr ""
 msgid "Confirm import"
 msgstr "Импортты растау"
 
-#: templates/admin/import_export/import.html:80
-#: templates/admin/import_export/import.html:121
+#: templates/admin/import_export/import.html:84
+#: templates/admin/import_export/import.html:125
 msgid "Errors"
 msgstr "Қателер"
 
-#: templates/admin/import_export/import.html:94
+#: templates/admin/import_export/import.html:98
 msgid "Line number"
 msgstr "Жол нөмірі"
 
-#: templates/admin/import_export/import.html:113
+#: templates/admin/import_export/import.html:117
 msgid "Some rows failed to validate"
 msgstr "Кейбір жолдар тексерілмеді"
 
-#: templates/admin/import_export/import.html:115
+#: templates/admin/import_export/import.html:119
 msgid ""
 "Please correct these errors in your data where possible, then reupload it "
 "using the form above."
@@ -153,31 +164,31 @@ msgstr ""
 "Мүмкіндігінше деректеріңіздегі қателерді түзетіңіз, содан кейін жоғарыдағы "
 "пішінді қолданып қайта жүктеңіз."
 
-#: templates/admin/import_export/import.html:120
+#: templates/admin/import_export/import.html:124
 msgid "Row"
 msgstr "Қатар"
 
-#: templates/admin/import_export/import.html:147
+#: templates/admin/import_export/import.html:151
 msgid "Non field specific"
 msgstr "Өріске қатысты емес"
 
-#: templates/admin/import_export/import.html:170
+#: templates/admin/import_export/import.html:174
 msgid "Preview"
 msgstr "Алдын-ала қарау"
 
-#: templates/admin/import_export/import.html:185
+#: templates/admin/import_export/import.html:189
 msgid "New"
 msgstr "Жаңа"
 
-#: templates/admin/import_export/import.html:187
+#: templates/admin/import_export/import.html:191
 msgid "Skipped"
 msgstr "Өткізілді"
 
-#: templates/admin/import_export/import.html:189
+#: templates/admin/import_export/import.html:193
 msgid "Delete"
 msgstr "Жою"
 
-#: templates/admin/import_export/import.html:191
+#: templates/admin/import_export/import.html:195
 msgid "Update"
 msgstr "Жаңарту"
 
@@ -185,20 +196,12 @@ msgstr "Жаңарту"
 msgid "This importer will import the following fields: "
 msgstr "Бұл импорттаушы келесі өрістерді импорттайды: "
 
-#: widgets.py:250
-msgid "Value could not be parsed using defined date formats."
-msgstr ""
-
-#: widgets.py:300
-msgid "Value could not be parsed using defined datetime formats."
-msgstr ""
-
-#: widgets.py:346
-msgid "Value could not be parsed using defined time formats."
-msgstr ""
-
-#: widgets.py:374
+#: widgets.py:369
 msgid "Value could not be parsed."
+msgstr ""
+
+#: widgets.py:497
+msgid "use_natural_foreign_keys and key_is_id cannot both be True"
 msgstr ""
 
 #~ msgid "You must select an export format."

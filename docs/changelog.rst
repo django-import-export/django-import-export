@@ -5,6 +5,11 @@ Changelog
 
     If upgrading from v3, v4 introduces breaking changes.  Please refer to :doc:`release notes<release_notes>`.
 
+4.3.3 (2024-12-02)
+------------------
+
+- Update all translations (`2008 <https://github.com/django-import-export/django-import-export/issues/2008>`_)
+
 4.3.2 (2024-12-01)
 ------------------
 
