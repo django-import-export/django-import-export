@@ -12,6 +12,7 @@ clean-build: ## remove build artifacts
 	rm -fr dist/
 	rm -fr *.egg-info
 	rm -f import_export/_version.py
+	rm -fr .coverage*
 
 clean-pyc: ## remove Python file artifacts
 	find . -name '*.pyc' -exec rm -f {} +
