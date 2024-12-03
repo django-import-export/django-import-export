@@ -89,7 +89,8 @@ class ModelDeclarativeMetaclass(DeclarativeMetaclass):
                 ):
                     warnings.warn(
                         f"ignoring field '{field_name}' because not declared "
-                        "in 'fields' whitelist"
+                        "in 'fields' whitelist",
+                        stacklevel=2,
                     )
                     continue
                 declared_fields[field_name] = field
