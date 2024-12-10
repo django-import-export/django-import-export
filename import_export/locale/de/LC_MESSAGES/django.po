@@ -1,13 +1,11 @@
-# SOME DESCRIPTIVE TITLE.
-# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the PACKAGE package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+# David Glenck <github@ihdg.ch>, 2024.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-03-15 13:54+0000\n"
+"POT-Creation-Date: 2024-12-01 13:15+0100\n"
 "PO-Revision-Date: 2022-10-17 17:42+0200\n"
 "Last-Translator: Jannes Blobel <jannes.blobel@inlang.com>\n"
 "Language-Team: \n"
@@ -18,41 +16,54 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Poedit 3.1.1\n"
 
-#: admin.py:246 admin.py:588
+#: admin.py:184 admin.py:548
+#: templates/admin/import_export/change_list_import_item.html:5
+#: templates/admin/import_export/import.html:19
+msgid "Import"
+msgstr "Importieren"
+
+#: admin.py:254 admin.py:600
 #, python-format
 msgid "%s through import_export"
 msgstr "%s durch import_export"
 
-#: admin.py:254
-#, fuzzy
-#| msgid "Import finished, with {} new and {} updated {}."
+#: admin.py:262
 msgid "Import finished: {} new, {} updated, {} deleted and {} skipped {}."
-msgstr "Import fertiggestellt, mit {} neuen und {} aktualisierten {}."
+msgstr ""
+"Import fertiggestellt: {} neue, {} aktualisierte, {} gelöschte und {} "
+"übersprungene {}."
 
-#: admin.py:423
+#: admin.py:431
 #, python-format
 msgid ""
 "%(exc_name)s encountered while trying to read file. Ensure you have chosen "
 "the correct format for the file."
 msgstr ""
-"%(exc_name)s beim Versuch, die Datei zu lesen ist aufgetretten. Stellen Sie "
-"sicher, dass du  das richtige Format für deine Datei gewählt hast"
+"%(exc_name)s trat auf, beim Versuch, die Datei zu lesen. Stelle sicher, dass "
+"du das richtige Format für die Datei gewählt hast."
 
-#: admin.py:539 templates/admin/import_export/change_list_import_item.html:5
-#: templates/admin/import_export/import.html:19
-msgid "Import"
-msgstr "Importieren"
+#: admin.py:504
+msgid ""
+"No valid data to import. Ensure your file has the correct headers or data "
+"for import."
+msgstr ""
+"Keine gültigen Daten für den Import. Stelle sicher, dass deine Datei die "
+"korrektenKopfzeilen und Daten für den Import hat."
 
-#: admin.py:785 templates/admin/import_export/change_form.html:8
+#: admin.py:819 templates/admin/import_export/change_form.html:8
 #: templates/admin/import_export/change_list_export_item.html:5
 #: templates/admin/import_export/export.html:12
 msgid "Export"
 msgstr "Exportieren"
 
-#: admin.py:911
+#: admin.py:952
 #, python-format
 msgid "Export selected %(verbose_name_plural)s"
 msgstr "Ausgewählte %(verbose_name_plural)s exportieren"
+
+#: formats/base_formats.py:236
+msgid "export failed due to IllegalCharacterError"
+msgstr "Export schlug fehl wegen IllegalCharacterError"
 
 #: forms.py:15
 msgid "Resource"
@@ -62,43 +73,47 @@ msgstr "Ressource"
 msgid "Format"
 msgstr "Dateiformat"
 
-#: forms.py:58
+#: forms.py:56
 msgid "File to import"
 msgstr "Zu importierende Datei"
 
-#: forms.py:209
+#: forms.py:216
 msgid "Form is not validated, call `is_valid` first"
-msgstr ""
+msgstr "Formular ist nicht validiert, führe zuerst `is_valid` aus"
 
-#: forms.py:261
+#: forms.py:268
 #, python-format
 msgid "Select at least 1 field for \"%(resource_name)s\" to export"
-msgstr ""
+msgstr "Wähle mindestens 1 Feld für \"%(resource_name)s\" zum Exportieren aus"
 
-#: resources.py:1137
+#: resources.py:1171
 #, python-format
 msgid ""
 "The following fields are declared in 'import_id_fields' but are not present "
 "in the resource fields: %s"
 msgstr ""
+"Die folgenden Felder sind in 'import_id_fields' deklariert, sind aber keine "
+"Felder der Ressource: %s"
 
-#: resources.py:1152
+#: resources.py:1186
 #, python-format
 msgid ""
 "The following fields are declared in 'import_id_fields' but are not present "
 "in the file headers: %s"
 msgstr ""
+"Die folgenden Felder sind in 'import_id_fields' deklariert, aber nicht in "
+"der Kopfzeile der Datei vorhanden: %s"
 
-#: results.py:120
+#: results.py:150
 #, python-format
 msgid "call to force_str() on instance failed: %s"
-msgstr ""
+msgstr "Aufruf von force_str() in der Instanz schlug fehl: %s"
 
 #: templates/admin/import_export/base.html:11
 msgid "Home"
 msgstr "Start"
 
-#: templates/admin/import_export/export.html:21
+#: templates/admin/import_export/export.html:24
 #, python-format
 msgid ""
 "\n"
@@ -109,17 +124,21 @@ msgid_plural ""
 "        Export %(len)s selected items.\n"
 "      "
 msgstr[0] ""
+"\n"
+"        Exportiere %(len)s ausgewähltes Element.\n"
+"      "
 msgstr[1] ""
+"\n"
+"        Exportiere %(len)s ausgewählte Elemente.\n"
+"      "
 
-#: templates/admin/import_export/export.html:48
+#: templates/admin/import_export/export.html:51
 #: templates/admin/import_export/resource_fields_list.html:5
-#, fuzzy
-#| msgid "This importer will import the following fields: "
 msgid "This exporter will export the following fields: "
-msgstr "Es werden die folgenden Felder importiert: "
+msgstr "Es werden die folgenden Felder exportiert: "
 
-#: templates/admin/import_export/export.html:76
-#: templates/admin/import_export/import.html:69
+#: templates/admin/import_export/export.html:85
+#: templates/admin/import_export/import.html:73
 msgid "Submit"
 msgstr "Absenden"
 
@@ -135,20 +154,20 @@ msgstr ""
 msgid "Confirm import"
 msgstr "Import bestätigen"
 
-#: templates/admin/import_export/import.html:80
-#: templates/admin/import_export/import.html:121
+#: templates/admin/import_export/import.html:84
+#: templates/admin/import_export/import.html:125
 msgid "Errors"
 msgstr "Fehler"
 
-#: templates/admin/import_export/import.html:94
+#: templates/admin/import_export/import.html:98
 msgid "Line number"
 msgstr "Zeilennummer"
 
-#: templates/admin/import_export/import.html:113
+#: templates/admin/import_export/import.html:117
 msgid "Some rows failed to validate"
 msgstr "Die Validierung einiger Zeilen schlug fehl"
 
-#: templates/admin/import_export/import.html:115
+#: templates/admin/import_export/import.html:119
 msgid ""
 "Please correct these errors in your data where possible, then reupload it "
 "using the form above."
@@ -156,53 +175,42 @@ msgstr ""
 "Bitte korrigiere falls möglich diese Fehler in deiner Datei und lade sie "
 "anschließend erneut mit dem obigen Formular hoch."
 
-#: templates/admin/import_export/import.html:120
+#: templates/admin/import_export/import.html:124
 msgid "Row"
 msgstr "Zeile"
 
-#: templates/admin/import_export/import.html:147
+#: templates/admin/import_export/import.html:151
 msgid "Non field specific"
 msgstr "Nicht feldspezifisch"
 
-#: templates/admin/import_export/import.html:170
+#: templates/admin/import_export/import.html:174
 msgid "Preview"
 msgstr "Vorschau"
 
-#: templates/admin/import_export/import.html:185
+#: templates/admin/import_export/import.html:189
 msgid "New"
 msgstr "Neu"
 
-#: templates/admin/import_export/import.html:187
+#: templates/admin/import_export/import.html:191
 msgid "Skipped"
 msgstr "Übersprungen"
 
-#: templates/admin/import_export/import.html:189
+#: templates/admin/import_export/import.html:193
 msgid "Delete"
 msgstr "Löschen"
 
-#: templates/admin/import_export/import.html:191
+#: templates/admin/import_export/import.html:195
 msgid "Update"
-msgstr "Update"
+msgstr "Ändern"
 
 #: templates/admin/import_export/resource_fields_list.html:7
 msgid "This importer will import the following fields: "
 msgstr "Es werden die folgenden Felder importiert: "
 
-#: widgets.py:250
-msgid "Value could not be parsed using defined date formats."
-msgstr ""
-
-#: widgets.py:300
-msgid "Value could not be parsed using defined datetime formats."
-msgstr ""
-
-#: widgets.py:346
-msgid "Value could not be parsed using defined time formats."
-msgstr ""
-
-#: widgets.py:374
+#: widgets.py:369
 msgid "Value could not be parsed."
-msgstr ""
+msgstr "Wert konnte nicht eingelesen werden."
 
-#~ msgid "You must select an export format."
-#~ msgstr "Es muss ein Exportformat ausgewählt werden."
+#: widgets.py:497
+msgid "use_natural_foreign_keys and key_is_id cannot both be True"
+msgstr "use_natural_foreign_keys und key_is_id können nicht beide True sein"
