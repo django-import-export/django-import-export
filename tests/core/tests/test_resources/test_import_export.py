@@ -532,3 +532,31 @@ class DeclaredFieldWithNoAttributeTestCase(TestCase):
             "skipping field '<import_export.fields.Field: published>' "
             "- field attribute is not defined"
         )
+
+
+class QuerysetValuesOnExportTest(TestCase):
+    """
+    Issue 2020 - export should handle QuerySet.values()
+    """
+
+    class _EBookResource(ModelResource):
+
+        def get_queryset(self):
+            return EBook.objects.all().values("id", "name", "published")
+
+        class Meta:
+            model = EBook
+            fields = ("id", "name", "published")
+
+    def setUp(self):
+        super().setUp()
+        self.resource = QuerysetValuesOnExportTest._EBookResource()
+        EBook.objects.create(id=101, name="Moonraker", published=date(1955, 4, 5))
+
+    def test_export(self):
+        res = self.resource.export()
+        self.assertEqual(1, len(res.dict))
+        self.assertDictEqual(
+            {"id": "101", "name": "Moonraker", "published": "1955-04-05"},
+            res.dict.pop(),
+        )
