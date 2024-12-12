@@ -147,7 +147,7 @@ class BaseImportMixin(BaseImportExportMixin):
         Identify which class should be used for import
         :param form: The form object.
         :param request: The request object.
-        :returns: The export Resource class.
+        :returns: The import Resource class.
         """
         resource_index = self.get_resource_index(form)
         return self.get_import_resource_classes(request)[resource_index]
