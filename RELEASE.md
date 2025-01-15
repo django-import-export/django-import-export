@@ -8,7 +8,7 @@ additional config to the CI process.
 
 ### Pre-release
 
-Ensure that `CHANGELOG.rst` is up-to-date with the correct version number and release date.
+Ensure that `changelog.rst` is up-to-date with the correct version number and release date.
 
 It's sensible to perform a clean installation of the package and ensure the server runs ok.
 This can avoid issues with broken imports which may not have been picked up by integration tests.

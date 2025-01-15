@@ -5,7 +5,7 @@ Changelog
 
     If upgrading from v3, v4 introduces breaking changes.  Please refer to :doc:`release notes<release_notes>`.
 
-4.3.4 (unreleased)
+4.3.4 (2025-01-15)
 ------------------
 
 - Handle QuerySets called with ``values()`` on export (`2011 <https://github.com/django-import-export/django-import-export/issues/2011>`_)
