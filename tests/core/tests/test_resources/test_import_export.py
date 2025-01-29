@@ -560,3 +560,10 @@ class QuerysetValuesOnExportTest(TestCase):
             {"id": "101", "name": "Moonraker", "published": "1955-04-05"},
             res.dict.pop(),
         )
+
+    def test_get_value_returns_none_when_attribute_missing(self):
+        instance = {"some_other_key": "value"}
+        field = Field(attribute="missing_attribute")
+
+        result = field.get_value(instance)
+        self.assertIsNone(result)
