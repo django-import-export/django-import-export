@@ -440,7 +440,7 @@ table using the field value will return exactly one result.
 This is implemented as a ``Model.objects.get()`` query, so if the instance in not uniquely identifiable based on the
 given arg, then the import process will raise either ``DoesNotExist`` or ``MultipleObjectsReturned`` errors.
 
-See also :ref:`advanced_usage:Creating non existent relations`.
+See also :ref:`creating-non-existent-relations`.
 
 Refer to the :class:`~.ForeignKeyWidget` documentation for more detailed information.
 
@@ -476,6 +476,8 @@ declaration.
 
         class Meta:
             model = Book
+
+.. _creating-non-existent-relations:
 
 Creating non-existent relations
 -------------------------------
