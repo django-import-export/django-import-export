@@ -1,5 +1,6 @@
 import os
 import unittest
+import openpyxl
 from unittest import mock
 
 import tablib
@@ -7,6 +8,7 @@ from core.tests.utils import ignore_utcnow_deprecation_warning
 from django.test import TestCase
 from django.utils.encoding import force_str
 from tablib.core import UnsupportedFormat
+from io import BytesIO
 
 from import_export.formats import base_formats
 from import_export.widgets import NumberWidget
@@ -114,6 +116,32 @@ class XLSXTest(TestCase):
         mock_load_workbook.assert_called_with(
             unittest.mock.ANY, read_only=True, data_only=True
         )
+
+    def test_xlsx_create_dataset__empty_rows():
+        """Ensure that empty rows are not added to the dataset."""
+        rows_before = 3
+        empty_rows = 5
+        rows_after = 2
+    
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.append(['Header1', 'Header2', 'Header3'])
+    
+        for _ in range(rows_before):
+            ws.append(['Data1', 'Data2', 'Data3'])
+    
+        for _ in range(empty_rows):
+            ws.append([None, None, None])
+    
+        for _ in range(rows_after):
+            ws.append(['Data1', 'Data2', 'Data3'])
+    
+        xlsx_data = BytesIO()
+        wb.save(xlsx_data)
+        xlsx_data.seek(0)
+    
+        dataset = self.format.create_dataset(xlsx_data.getvalue())
+        assert len(dataset) == rows_before + rows_after
 
 
 class CSVTest(TestCase):
