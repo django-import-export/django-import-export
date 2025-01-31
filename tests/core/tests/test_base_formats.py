@@ -117,7 +117,7 @@ class XLSXTest(TestCase):
             unittest.mock.ANY, read_only=True, data_only=True
         )
 
-    def test_xlsx_create_dataset__empty_rows():
+    def test_xlsx_create_dataset__empty_rows(self):
         """Ensure that empty rows are not added to the dataset."""
         rows_before = 3
         empty_rows = 5
