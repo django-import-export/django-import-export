@@ -537,7 +537,7 @@ Then if the import was being called from another module, we would pass the ``pub
 
     >>> resource = BookResource(publisher_id=1)
 
-If you need to pass dynamic values to the Resource from an `Admin integration`_, refer to
+If you need to pass dynamic values to the Resource when importing via the Admin UI, refer to
 See :ref:`dynamically_set_resource_values`.
 
 Django Natural Keys
