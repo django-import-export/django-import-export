@@ -5,6 +5,12 @@ Changelog
 
     If upgrading from v3, v4 introduces breaking changes.  Please refer to :doc:`release notes<release_notes>`.
 
+4.3.5 (2025-02-01)
+------------------
+
+- Clarify documentation on creating non-existent relations (`2029 <https://github.com/django-import-export/django-import-export/issues/2029>`_)
+- Update Turkish translations (`2031 <https://github.com/django-import-export/django-import-export/issues/2031>`_)
+
 4.3.4 (2025-01-15)
 ------------------
 
