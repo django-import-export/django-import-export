@@ -184,11 +184,20 @@ How to create relation during import if it does not exist
 
 See :ref:`advanced_usage:Creating non existent relations`.
 
-How to handle large file uploads
----------------------------------
+How to handle large file imports
+--------------------------------
 
 If uploading large files, you may encounter time-outs.
 See :ref:`Using celery<celery>` and :ref:`bulk_import:Bulk imports`.
+
+Performance issues or unexpected behavior during import
+-------------------------------------------------------
+
+This could be due to hidden rows in Excel files.
+Hidden rows can be excluded using :ref:`import_export_import_ignore_blank_lines`.
+
+Refer to `this PR <https://github.com/django-import-export/django-import-export/pull/2028>`_ for more information.
+
 
 How to use field other than `id` in Foreign Key lookup
 ------------------------------------------------------
