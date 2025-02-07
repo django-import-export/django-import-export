@@ -208,9 +208,18 @@ class XLSX(TablibFormat):
         rows = sheet.rows
         dataset.headers = [cell.value for cell in next(rows)]
 
+        ignore_blanks = getattr(
+            settings, "IMPORT_EXPORT_IMPORT_IGNORE_BLANK_LINES", False
+        )
         for row in rows:
             row_values = [cell.value for cell in row]
-            dataset.append(row_values)
+
+            if ignore_blanks:
+                # do not add empty rows to dataset
+                if not all(value is None for value in row_values):
+                    dataset.append(row_values)
+            else:
+                dataset.append(row_values)
         return dataset
 
     def export_data(self, dataset, **kwargs):

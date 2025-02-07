@@ -1,10 +1,12 @@
 import os
 import unittest
+from io import BytesIO
 from unittest import mock
 
+import openpyxl
 import tablib
 from core.tests.utils import ignore_utcnow_deprecation_warning
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.utils.encoding import force_str
 from tablib.core import UnsupportedFormat
 
@@ -114,6 +116,62 @@ class XLSXTest(TestCase):
         mock_load_workbook.assert_called_with(
             unittest.mock.ANY, read_only=True, data_only=True
         )
+
+    @override_settings(IMPORT_EXPORT_IMPORT_IGNORE_BLANK_LINES=False)
+    def test_xlsx_create_dataset__empty_rows(self):
+        """Default situation without the flag: do not ignore the empty rows for
+        backwards compatibility.
+        """
+        rows_before = 3
+        empty_rows = 5
+        rows_after = 2
+
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.append(["Header1", "Header2", "Header3"])
+
+        for _ in range(rows_before):
+            ws.append(["Data1", "Data2", "Data3"])
+
+        for _ in range(empty_rows):
+            ws.append([None, None, None])
+
+        for _ in range(rows_after):
+            ws.append(["Data1", "Data2", "Data3"])
+
+        xlsx_data = BytesIO()
+        wb.save(xlsx_data)
+        xlsx_data.seek(0)
+
+        dataset = self.format.create_dataset(xlsx_data.getvalue())
+        assert len(dataset) == rows_before + empty_rows + rows_after  # With empty rows
+
+    @override_settings(IMPORT_EXPORT_IMPORT_IGNORE_BLANK_LINES=True)
+    def test_xlsx_create_dataset__ignore_empty_rows(self):
+        """Ensure that empty rows are not added to the dataset."""
+        rows_before = 3
+        empty_rows = 5
+        rows_after = 2
+
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.append(["Header1", "Header2", "Header3"])
+
+        for _ in range(rows_before):
+            ws.append(["Data1", "Data2", "Data3"])
+
+        for _ in range(empty_rows):
+            ws.append([None, None, None])
+
+        for _ in range(rows_after):
+            ws.append(["Data1", "Data2", "Data3"])
+
+        xlsx_data = BytesIO()
+        wb.save(xlsx_data)
+        xlsx_data.seek(0)
+
+        dataset = self.format.create_dataset(xlsx_data.getvalue())
+        assert len(dataset) == rows_before + rows_after  # Without empty rows
 
 
 class CSVTest(TestCase):

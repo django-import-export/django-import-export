@@ -254,6 +254,16 @@ The values must be those provided in ``import_export.formats.base_formats`` e.g
 
 This can be set for a specific model admin by declaring the ``export_formats`` attribute.
 
+.. _import_export_import_ignore_blank_lines:
+
+``IMPORT_EXPORT_IMPORT_IGNORE_BLANK_LINES``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If set to ``True``, rows without content will be ignored in XSLX imports.
+This prevents an old Excel 1.0 bug which causes openpyxl ``max_rows`` to be counting all
+logical empty rows. Some editors (like LibreOffice) might add :math:`2^{20}` empty rows to the
+file, which causes a significant slowdown. By default this is ``False``.
+
 .. _exampleapp:
 
 Example app
