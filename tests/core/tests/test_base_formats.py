@@ -6,7 +6,7 @@ from unittest import mock
 import openpyxl
 import tablib
 from core.tests.utils import ignore_utcnow_deprecation_warning
-from django.test import override_settings, TestCase
+from django.test import TestCase, override_settings
 from django.utils.encoding import force_str
 from tablib.core import UnsupportedFormat
 
@@ -119,7 +119,7 @@ class XLSXTest(TestCase):
 
     @override_settings(IMPORT_EXPORT_IMPORT_IGNORE_BLANK_LINES=False)
     def test_xlsx_create_dataset__empty_rows(self):
-        """Default situation without the flag: do not ignore the empty rows for 
+        """Default situation without the flag: do not ignore the empty rows for
         backwards compatibility.
         """
         rows_before = 3
