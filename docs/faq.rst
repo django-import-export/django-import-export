@@ -182,7 +182,7 @@ See `this issue <https://github.com/django-import-export/django-import-export/is
 How to create relation during import if it does not exist
 ---------------------------------------------------------
 
-See :ref:`advanced_usage:Creating non existent relations`.
+See :ref:`creating-non-existent-relations`.
 
 How to handle large file imports
 --------------------------------

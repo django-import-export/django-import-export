@@ -440,7 +440,7 @@ table using the field value will return exactly one result.
 This is implemented as a ``Model.objects.get()`` query, so if the instance in not uniquely identifiable based on the
 given arg, then the import process will raise either ``DoesNotExist`` or ``MultipleObjectsReturned`` errors.
 
-See also :ref:`advanced_usage:Creating non existent relations`.
+See also :ref:`creating-non-existent-relations`.
 
 Refer to the :class:`~.ForeignKeyWidget` documentation for more detailed information.
 
@@ -477,26 +477,38 @@ declaration.
         class Meta:
             model = Book
 
-Creating non existent relations
+.. _creating-non-existent-relations:
+
+Creating non-existent relations
 -------------------------------
 
 The examples above rely on the relation data being present prior to the import.  It is a common use-case to create the
-data if it does not already exist.  It is possible to achieve this as follows::
+data if it does not already exist.  A simple way to achieve this is to override the ``ForeignKeyWidget``
+:meth:`~import_export.widgets.ForeignKeyWidget.clean` method::
+
+    class AuthorForeignKeyWidget(ForeignKeyWidget):
+        def clean(self, value, row=None, **kwargs):
+            try:
+                val = super().clean(value)
+            except Author.DoesNotExist:
+                val = Author.objects.create(name=row['author'])
+            return val
+
+Now you will need to declare the widget in the Resource::
 
     class BookResource(resources.ModelResource):
 
-        def before_import_row(self, row, **kwargs):
-            author_name = row["author"]
-            Author.objects.get_or_create(name=author_name, defaults={"name": author_name})
+        author = fields.Field(
+            attribute="author",
+            column_name="author",
+            widget=AuthorForeignKeyWidget(Author, "name")
+        )
 
         class Meta:
             model = Book
 
-The code above can be adapted to handle m2m relationships.
-
-You can also achieve similar by subclassing the widget :meth:`~import_export.widgets.ForeignKeyWidget.clean` method to
-create the object if it does not already exist.  An example for :class:`~import_export.widgets.ManyToManyWidget` is
-`here <https://github.com/django-import-export/django-import-export/issues/318#issuecomment-861813245>`_.
+The code above can be adapted to handle m2m relationships, see
+`this thread <https://github.com/django-import-export/django-import-export/issues/318#issuecomment-861813245>`_.
 
 Customize relation lookup
 -------------------------
@@ -537,7 +549,7 @@ Then if the import was being called from another module, we would pass the ``pub
 
     >>> resource = BookResource(publisher_id=1)
 
-If you need to pass dynamic values to the Resource from an `Admin integration`_, refer to
+If you need to pass dynamic values to the Resource when importing via the Admin UI, refer to
 See :ref:`dynamically_set_resource_values`.
 
 Django Natural Keys
