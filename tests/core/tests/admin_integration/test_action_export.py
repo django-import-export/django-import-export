@@ -140,14 +140,10 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
             mock_queryset = mock.MagicMock(name="MockQuerySet")
             mock_queryset.filter.return_value = mock_queryset
             mock_queryset.order_by.return_value = mock_queryset
-            mock_queryset.values_list.return_value = [
-                str(self.cat1.id),
-                str(self.cat2.id),
-            ]
 
             mock_modeladmin_get_queryset.return_value = mock_queryset
 
-            self.client.post(self.category_export_url, data)
+            self._post_url_response(self.category_export_url, data)
 
             mock_modeladmin_get_queryset.assert_called()
             mock_get_data_for_export.assert_called()
@@ -156,17 +152,6 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
             mock_get_data_for_export.assert_called_with(
                 args[0], mock_queryset, **kwargs
             )
-
-    def test_export_action_calls_modeladmin_get_queryset(self):
-        # Issue #1864
-        # Test with specific export items
-
-        data = {
-            "format": "0",
-            "export_items": [str(self.cat1.id)],
-            **self.resource_fields_payload,
-        }
-        self._perform_export_action_calls_modeladmin_get_queryset_test(data)
 
     def test_export_action_calls_modeladmin_get_queryset_all_items(self):
         # Issue #1864
@@ -189,20 +174,6 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
             **self.resource_fields_payload,
         }
         self._perform_export_action_calls_modeladmin_get_queryset_test(data)
-
-    def test_export_admin_action_with_restricted_pks_deprecated(self):
-        data = {
-            "format": "0",
-            "export_items": [str(self.cat1.id)],
-            **self.resource_fields_payload,
-        }
-        with self.assertWarnsRegex(
-            DeprecationWarning,
-            r"The 'get_valid_export_item_pks\(\)' method in "
-            "core.admin.CategoryAdmin is deprecated and will be removed "
-            "in a future release",
-        ):
-            self._post_url_response(self.category_export_url, data)
 
     def test_get_export_data_raises_PermissionDenied_when_no_export_permission_assigned(
         self,
