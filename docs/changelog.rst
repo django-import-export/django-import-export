@@ -9,7 +9,7 @@ Changelog
 4.3.5 (unreleased)
 ------------------
 
-- Add flag to ignore empty rows in XLSX import (`2011 <https://github.com/django-import-export/django-import-export/issues/2028>`_)
+- Add flag to ignore empty rows in XLSX import (`2028 <https://github.com/django-import-export/django-import-export/issues/2028>`_)
 
 4.3.4 (2025-01-15)
 ------------------
