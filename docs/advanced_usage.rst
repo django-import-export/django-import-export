@@ -18,10 +18,12 @@ In a simple case, the name of the row headers will map exactly onto the names of
 process will handle this mapping.  In more complex cases, model attributes and row headers may differ, and we will need
 to declare explicitly declare this mapping. See :ref:`field_declaration` for more information.
 
-Declare import fields
----------------------
+.. _declare_fields:
 
-You can optionally use the ``fields`` declaration to affect which fields are handled during import.
+Declare fields
+--------------
+
+You can optionally use the ``fields`` declaration to affect which fields are handled during import / export.
 
 To affect which model fields will be included in a resource, use the ``fields`` option to whitelist fields::
 
@@ -42,19 +44,10 @@ Or the ``exclude`` option to blacklist fields::
 If both ``fields`` and ``exclude`` are declared, the ``fields`` declaration takes precedence, and ``exclude`` is
 ignored.
 
-In cases where a :ref:`custom column name<field_declaration>` is used, declare the name of the model attribute in the
-``fields`` list., not the column alias.
-
 .. _field_ordering:
 
 Field ordering
 --------------
-
-The precedence for the order of fields for import / export is defined as follows:
-
-  * ``import_order`` or ``export_order`` (if defined)
-  * ``fields`` (if defined)
-  * The order derived from the underlying model instance.
 
 When importing or exporting, the ordering defined by ``fields`` is used, however an explicit order for importing or
 exporting fields can be set using the either the ``import_order`` or ``export_order`` options::
@@ -67,6 +60,12 @@ exporting fields can be set using the either the ``import_order`` or ``export_or
             import_order = ('id', 'price',)
             export_order = ('id', 'price', 'author', 'name')
 
+The precedence for the order of fields for import / export is defined as follows:
+
+  * ``import_order`` or ``export_order`` (if defined)
+  * ``fields`` (if defined)
+  * The order derived from the underlying model instance.
+
 Where ``import_order`` or ``export_order`` contains a subset of ``fields`` then the ``import_order`` and
 ``export_order`` fields will be processed first.
 
@@ -77,8 +76,7 @@ ordering.
 Model relations
 ---------------
 
-When defining :class:`~import_export.resources.ModelResource` fields it is
-possible to follow model relationships::
+When defining :class:`~import_export.resources.ModelResource` fields it is possible to follow model relationships::
 
     class BookResource(resources.ModelResource):
 
@@ -89,8 +87,13 @@ possible to follow model relationships::
 This example declares that the ``Author.name`` value (which has a foreign key relation to ``Book``) will appear in the
 export.
 
-Note that declaring the relationship using this syntax sets ``field`` as readonly, meaning this field will be skipped
-when importing data. To understand how to import model relations, see :ref:`import_model_relations`.
+Declaring the relationship using this syntax means the following:
+
+  * The field will be skipped when importing data. To understand how to import model relations, see
+    :ref:`import_model_relations`.
+
+  * The default string value of the field will be exported. To have full control over the format of the export,
+    see :ref:`field_declaration`.
 
 .. _field_declaration:
 
@@ -104,54 +107,36 @@ column name (i.e. row header)::
     from import_export.fields import Field
 
     class BookResource(resources.ModelResource):
-        published = Field(attribute='published', column_name='published_date')
+        published_field = Field(attribute='published', column_name='published_date')
 
         class Meta:
             model = Book
 
-The ``attribute`` parameter is optional and if not supplied then the field will be skipped during import and export.
-It is possible to enable export for the field by declaring a :ref:`dehydrate<advanced_data_manipulation_on_export>`
-method.
+The ``attribute`` parameter is optional, and if omitted it means that:
+
+  1. The field will be ignored during import.
+
+  2. The field will be present during export, but will have an empty value unless a
+     :ref:`dehydrate<advanced_data_manipulation_on_export>` method is defined.
+
+If using the ``fields`` attribute to :ref:`declare fields<field_declaration>` then the declared resource attribute
+name must appear in the ``fields`` list::
+
+    class BookResource(ModelResource):
+        published_field = Field(attribute='published', column_name='published_date')
+
+        class Meta:
+            fields = ("published_field",)
+            model = Book
 
 .. seealso::
 
     :doc:`/api_fields`
         Available field types and options.
 
-Custom workflow based on import values
---------------------------------------
+    :ref:`field_widgets`
 
-You can extend the import process to add workflow based on changes to persisted model instances.
-
-For example, suppose you are importing a list of books and you require additional workflow on the date of publication.
-In this example, we assume there is an existing unpublished book instance which has a null 'published' field.
-
-There will be a one-off operation to take place on the date of publication, which will be identified by the presence of
-the 'published' field in the import file.
-
-To achieve this, we need to test the existing value taken from the persisted instance (i.e. prior to import
-changes) against the incoming value on the updated instance.
-Both ``instance`` and ``original`` are attributes of :class:`~import_export.results.RowResult`.
-
-You can override the :meth:`~import_export.resources.Resource.after_import_row` method to check if the
-value changes::
-
-  class BookResource(resources.ModelResource):
-
-    def after_import_row(self, row, row_result, **kwargs):
-        if getattr(row_result.original, "published") is None \
-            and getattr(row_result.instance, "published") is not None:
-            # import value is different from stored value.
-            # exec custom workflow...
-
-    class Meta:
-        model = Book
-        store_instance = True
-
-.. note::
-
-  * The ``original`` attribute will be null if :attr:`~import_export.options.ResourceOptions.skip_diff` is True.
-  * The ``instance`` attribute will be null if :attr:`~import_export.options.ResourceOptions.store_instance` is False.
+.. _field_widgets:
 
 Field widgets
 =============
@@ -197,8 +182,7 @@ Modify :meth:`.render` return type
 ----------------------------------
 
 By default, :meth:`.render` will return a string type for export.  There may be use cases where a native type is
-required from export (such as exporting to Excel).  If so, you can use the ``coerce_to_string`` parameter if the
-widget supports it.
+required from export.  If so, you can use the ``coerce_to_string`` parameter if the widget supports it.
 
 By default, ``coerce_to_string`` is ``True``, but if you set this to ``False``, then the native type will be returned
 during export::
@@ -209,14 +193,51 @@ during export::
         class Meta:
             model = Book
 
-If you need different export formats for different file types, then the only way to do this at present is to declare
-multiple Resource configurations.  For example, *ExcelBookResource*, *CsvBookResource*.  For each custom Resource,
-You would need to declare Widgets with the ``coerce_to_string`` value set as desired.
+If exporting via the Admin interface, the export logic will detect if exporting to either XLSX, XLS or ODS format,
+and will set native types for *Numeric*, *Boolean* and *Date* values.  This means that the ``coerce_to_string`` value
+will be ignored and the native types will be returned.  This is because in most use-cases the native type will be
+expected in the exported format.  If you need to modify this behavior and enforce string types in "binary" file formats
+then the only way to do this is to override the widget ``render()`` method.
 
 .. seealso::
 
     :doc:`/api_widgets`
         Available widget types and options.
+
+Custom workflow based on import values
+--------------------------------------
+
+You can extend the import process to add workflow based on changes to persisted model instances.
+
+For example, suppose you are importing a list of books and you require additional workflow on the date of publication.
+In this example, we assume there is an existing unpublished book instance which has a null 'published' field.
+
+There will be a one-off operation to take place on the date of publication, which will be identified by the presence of
+the 'published' field in the import file.
+
+To achieve this, we need to test the existing value taken from the persisted instance (i.e. prior to import
+changes) against the incoming value on the updated instance.
+Both ``instance`` and ``original`` are attributes of :class:`~import_export.results.RowResult`.
+
+You can override the :meth:`~import_export.resources.Resource.after_import_row` method to check if the
+value changes::
+
+  class BookResource(resources.ModelResource):
+
+    def after_import_row(self, row, row_result, **kwargs):
+        if getattr(row_result.original, "published") is None \
+            and getattr(row_result.instance, "published") is not None:
+            # import value is different from stored value.
+            # exec custom workflow...
+
+    class Meta:
+        model = Book
+        store_instance = True
+
+.. note::
+
+  * The ``original`` attribute will be null if :attr:`~import_export.options.ResourceOptions.skip_diff` is True.
+  * The ``instance`` attribute will be null if :attr:`~import_export.options.ResourceOptions.store_instance` is False.
 
 Validation during import
 ========================
@@ -230,8 +251,9 @@ The import process distinguishes between:
 
 #. General exceptions which arise during processing.
 
-Errors are retained in each :class:`~import_export.results.RowResult` instance which is stored in the single
-:class:`~import_export.results.Result` instance which is returned from the import process.
+Errors are retained as :class:`~import_export.results.Error` instances in each :class:`~import_export.results.RowResult`
+instance, which is stored in the single :class:`~import_export.results.Result` instance which is returned from the
+import process.
 
 The :meth:`~import_export.resources.Resource.import_data` method takes optional parameters which can be used to
 customize the handling of errors.  Refer to the method documentation for specific details.
@@ -309,6 +331,13 @@ To iterate over all generic errors produced from an import, pass ``False`` to ``
         for field, error in row.error.error_dict.items():
             print(f"{field}: {error} ({error.row})")
 
+
+.. note::
+
+  `full_clean() <https://docs.djangoproject.com/en/stable/ref/models/instances/#django.db.models.Model.full_clean>`_
+  is only called on the model instance if the Resource option
+  :attr:`~import_export.options.ResourceOptions.clean_model_instances` is enabled.
+
 Field level validation
 ----------------------
 
@@ -340,7 +369,7 @@ You can optionally configure import-export to perform model instance validation 
 :attr:`~import_export.options.ResourceOptions.clean_model_instances` attribute.
 
 You can override the
-`full_clean() <https://docs.djangoproject.com/en/stable/ref/models/instances/#django.db.models.Model.full_clean>`_.
+`full_clean() <https://docs.djangoproject.com/en/stable/ref/models/instances/#django.db.models.Model.full_clean>`_
 method to provide extra validation, either at field or instance level::
 
     class Book(models.Model):
@@ -359,6 +388,16 @@ method to provide extra validation, either at field or instance level::
 .. figure:: _static/images/non-field-specific-validation-error.png
 
   A screenshot showing a non field specific error.
+
+Customize error handling
+------------------------
+
+You are free to subclass or replace the classes defined in :mod:`~import_export.results`.  Override any or all of the
+following hooks to customize error handling:
+
+* :meth:`~import_export.resources.Resource.get_result_class`
+* :meth:`~import_export.resources.Resource.get_row_result_class`
+* :meth:`~import_export.resources.Resource.get_error_result_class`
 
 .. _import_model_relations:
 
@@ -381,7 +420,7 @@ csv file, then we can have a single field which references an author by name.
 
 We would have to declare our ``BookResource`` to use the author name as the foreign key reference::
 
-        from import_export import fields, resources
+        from import_export import fields
         from import_export.widgets import ForeignKeyWidget
 
         class BookResource(resources.ModelResource):
@@ -401,9 +440,17 @@ table using the field value will return exactly one result.
 This is implemented as a ``Model.objects.get()`` query, so if the instance in not uniquely identifiable based on the
 given arg, then the import process will raise either ``DoesNotExist`` or ``MultipleObjectsReturned`` errors.
 
-See also :ref:`advanced_usage:Creating non existent relations`.
+See also :ref:`creating-non-existent-relations`.
 
 Refer to the :class:`~.ForeignKeyWidget` documentation for more detailed information.
+
+.. note::
+
+    If you are exporting a field which uses ``ForeignKeyWidget`` then the default formatting for the field will be
+    applied.
+    If you need better control over the format of the exported value (for example, formatting a date), then use a
+    :ref:`dehydrate<advanced_data_manipulation_on_export>` method or create a subclass of ``ForeignKeyWidget``.
+    Override :meth:`~import_export.widgets.Widget.render` to create custom formatting of output.
 
 Many-to-many relations
 ----------------------
@@ -430,26 +477,38 @@ declaration.
         class Meta:
             model = Book
 
-Creating non existent relations
+.. _creating-non-existent-relations:
+
+Creating non-existent relations
 -------------------------------
 
 The examples above rely on the relation data being present prior to the import.  It is a common use-case to create the
-data if it does not already exist.  It is possible to achieve this as follows::
+data if it does not already exist.  A simple way to achieve this is to override the ``ForeignKeyWidget``
+:meth:`~import_export.widgets.ForeignKeyWidget.clean` method::
+
+    class AuthorForeignKeyWidget(ForeignKeyWidget):
+        def clean(self, value, row=None, **kwargs):
+            try:
+                val = super().clean(value)
+            except Author.DoesNotExist:
+                val = Author.objects.create(name=row['author'])
+            return val
+
+Now you will need to declare the widget in the Resource::
 
     class BookResource(resources.ModelResource):
 
-        def before_import_row(self, row, **kwargs):
-            author_name = row["author"]
-            Author.objects.get_or_create(name=author_name, defaults={"name": author_name})
+        author = fields.Field(
+            attribute="author",
+            column_name="author",
+            widget=AuthorForeignKeyWidget(Author, "name")
+        )
 
         class Meta:
             model = Book
 
-The code above can be adapted to handle m2m relationships.
-
-You can also achieve similar by subclassing the widget :meth:`~import_export.widgets.ForeignKeyWidget.clean` method to
-create the object if it does not already exist.  An example for :class:`~import_export.widgets.ManyToManyWidget` is
-`here <https://github.com/django-import-export/django-import-export/issues/318#issuecomment-861813245>`_.
+The code above can be adapted to handle m2m relationships, see
+`this thread <https://github.com/django-import-export/django-import-export/issues/318#issuecomment-861813245>`_.
 
 Customize relation lookup
 -------------------------
@@ -490,7 +549,7 @@ Then if the import was being called from another module, we would pass the ``pub
 
     >>> resource = BookResource(publisher_id=1)
 
-If you need to pass dynamic values to the Resource from an `Admin integration`_, refer to
+If you need to pass dynamic values to the Resource when importing via the Admin UI, refer to
 See :ref:`dynamically_set_resource_values`.
 
 Django Natural Keys
@@ -679,7 +738,6 @@ the data in the import row is the same as the persisted data or not.  You can co
 row if it is duplicate by using setting :attr:`~import_export.options.ResourceOptions.skip_unchanged`.
 
 If :attr:`~import_export.options.ResourceOptions.skip_unchanged` is enabled, then the import process will check each
-ns
 defined import field and perform a simple comparison with the existing instance, and if all comparisons are equal, then
 the row is skipped.  Skipped rows are recorded in the row :class:`~import_export.results.RowResult` object.
 
@@ -724,8 +782,8 @@ See :ref:`dynamically_set_resource_values`.
 
 .. _advanced_data_manipulation_on_export:
 
-Advanced data manipulation on export
-====================================
+Data manipulation on export
+===========================
 
 Not all data can be easily extracted from an object/model attribute.
 In order to turn complicated data model into a (generally simpler) processed
@@ -752,15 +810,89 @@ In this case, the export looks like this:
     full_title,id,name,author,author_email,imported,published,price,categories
     Some book by 1,2,Some book,1,,0,2012-12-05,8.85,1
 
-It is also possible to pass a method name in to the :meth:`~import_export.fields.Field` constructor.  If this method
-name is supplied, then that method
-will be called as the 'dehydrate' method.
+It is also possible to pass a method name or a callable to the :meth:`~import_export.fields.Field` constructor.
+If this method name or callable is supplied, then it will be called as the 'dehydrate' method. For example::
+
+    from import_export.fields import Field
+
+    # Using method name
+    class BookResource(resources.ModelResource):
+        full_title = Field(dehydrate_method='custom_dehydrate_method')
+
+        class Meta:
+            model = Book
+
+        def custom_dehydrate_method(self, book):
+            return f"{book.name} by {book.author.name}"
+
+    # Using a callable directly
+    def custom_dehydrate_callable(book):
+        return f"{book.name} by {book.author.name}"
+
+    class BookResource(resources.ModelResource):
+        full_title = Field(dehydrate_method=custom_dehydrate_callable)
+
+        class Meta:
+            model = Book
+
 
 Filtering querysets during export
 =================================
 
 You can use :meth:`~import_export.resources.Resource.filter_export` to filter querysets
 during export.  See also :ref:`customize_admin_export_forms`.
+
+Modify dataset after export
+===========================
+
+The :meth:`~import_export.resources.Resource.after_export` method allows you to modify the
+`tablib <https://tablib.readthedocs.io/en/stable/tutorial.html>`_ dataset before it is rendered in the export format.
+
+This can be useful for adding dynamic columns or applying custom logic to the final dataset.
+
+Import and export with different fields
+=======================================
+
+If you would like to import one set of fields, and then export a different set, then the recommended way to do this
+is to define two resources::
+
+    class BookImportResource(ModelResource):
+        class Meta:
+            model = Book
+            fields = ["id", "name"]
+
+
+    class BookExportResource(ModelResource):
+        class Meta:
+            model = Book
+            fields = ["id", "name", "published"]
+
+If you are using these resources in the Admin UI, declare them in your
+:ref:`admin class<import_export_skip_admin_confirm>`.
+
+Modify xlsx format
+==================
+
+It is possible to modify the output of any XLSX export.  The output bytes can be read and then modified using the
+`openpyxl <https://openpyxl.readthedocs.io/en/stable/>`_ library (which can be included as an import_export
+dependency).
+
+You can override :meth:`~import_export.admin.ExportMixin.get_export_data` as follows::
+
+    def get_export_data(self, file_format, request, queryset, **kwargs):
+        blob = super().get_export_data(file_format, request, queryset, **kwargs)
+        workbook_data = BytesIO(blob)
+        workbook_data.seek(0)
+        wb = openpyxl.load_workbook(workbook_data)
+        # modify workbook as required
+        output = BytesIO()
+        wb.save(output)
+        return output.getvalue()
+
+Custom export file name
+=======================
+
+Customize the export file name by overriding :meth:`~import_export.admin.ExportMixin.get_export_filename`.
 
 Signals
 =======
@@ -820,4 +952,7 @@ This issue may be more prevalent if using :doc:`bulk imports<bulk_import>`.  Thi
 memory for longer before being written in bulk, therefore there is potentially more risk of another process modifying
 an instance before it has been persisted.
 
-.. _import-process:
+Additional configuration
+========================
+
+Please refer to the :doc:`API documentation<api_resources>` for additional configuration options.

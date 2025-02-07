@@ -1,5 +1,4 @@
 import functools
-import inspect
 import logging
 from collections import OrderedDict
 from copy import deepcopy
@@ -146,6 +145,7 @@ class Resource(metaclass=DeclarativeMetaclass):
             DeprecationWarning,
             stacklevel=2,
         )
+        return list(self.fields.values())
 
     def get_field_name(self, field):
         """
@@ -155,7 +155,7 @@ class Resource(metaclass=DeclarativeMetaclass):
             if f == field:
                 return field_name
         raise AttributeError(
-            "Field %s does not exists in %s resource" % (field, self.__class__)
+            f"Field {field} does not exists in {self.__class__} resource"
         )
 
     def init_instance(self, row=None):
@@ -780,7 +780,7 @@ class Resource(metaclass=DeclarativeMetaclass):
             # There is no point logging a transaction error for each row
             # when only the original error is likely to be relevant
             if not isinstance(e, TransactionManagementError):
-                logger.debug(e, exc_info=e)
+                logger.debug(e, exc_info=True)
             row_result.errors.append(
                 self.get_error_result_class()(e, row=row, number=kwargs["row_number"])
             )
@@ -1022,7 +1022,7 @@ class Resource(metaclass=DeclarativeMetaclass):
         r"""
         Override to filter an export queryset.
 
-        :param queryset: The queryset for export (optional).
+        :param queryset: The queryset for export.
 
         :param \**kwargs:
             Metadata which may be associated with the export.
@@ -1031,36 +1031,37 @@ class Resource(metaclass=DeclarativeMetaclass):
         """
         return queryset
 
-    def export_field(self, field, instance):
+    def export_field(self, field, instance, **kwargs):
         field_name = self.get_field_name(field)
         dehydrate_method = field.get_dehydrate_method(field_name)
 
-        method = getattr(self, dehydrate_method, None)
+        if callable(dehydrate_method):
+            method = dehydrate_method
+        else:
+            method = getattr(self, dehydrate_method, None)
+
         if method is not None:
             return method(instance)
-        return field.export(instance)
+        return field.export(instance, **kwargs)
 
-    def get_export_fields(self):
+    def get_export_fields(self, selected_fields=None):
+        fields_ = selected_fields if selected_fields else self.fields
         export_fields = []
-        for field_name in self.get_export_order():
-            if field_name in self.fields:
-                export_fields.append(self.fields[field_name])
-                continue
-            # issue 1828
-            # allow for fields to be referenced by column_name in `fields` list
-            for field in self.fields.values():
-                if field.column_name == field_name:
+        export_order = self.get_export_order()
+        for field_name in export_order:
+            if field_name in fields_:
+                field = self._select_field(field_name)
+                if field is not None:
                     export_fields.append(field)
-                    continue
         return export_fields
 
-    def export_resource(self, instance, fields=None):
-        export_fields = self._get_enabled_export_fields(fields)
-        return [self.export_field(field, instance) for field in export_fields]
+    def export_resource(self, instance, selected_fields=None, **kwargs):
+        export_fields = self.get_export_fields(selected_fields)
+        return [self.export_field(field, instance, **kwargs) for field in export_fields]
 
-    def get_export_headers(self, fields=None):
-        export_fields = self._get_enabled_export_fields(fields)
-        return [force_str(field.column_name) for field in export_fields]
+    def get_export_headers(self, selected_fields=None):
+        export_fields = self.get_export_fields(selected_fields)
+        return [force_str(field.column_name) for field in export_fields if field]
 
     def get_user_visible_fields(self):
         return self.get_import_fields()
@@ -1096,16 +1097,28 @@ class Resource(metaclass=DeclarativeMetaclass):
             queryset = self.get_queryset()
         queryset = self.filter_export(queryset, **kwargs)
         export_fields = kwargs.get("export_fields", None)
-        headers = self.get_export_headers(fields=export_fields)
+        headers = self.get_export_headers(selected_fields=export_fields)
         dataset = tablib.Dataset(headers=headers)
 
         for obj in self.iter_queryset(queryset):
-            r = self.export_resource(obj, fields=export_fields)
+            r = self.export_resource(obj, selected_fields=export_fields, **kwargs)
             dataset.append(r)
 
         self.after_export(queryset, dataset, **kwargs)
 
         return dataset
+
+    def _select_field(self, target_field_name):
+        # select field from fields based on either declared name or column name
+        if target_field_name in self.fields:
+            return self.fields[target_field_name]
+
+        for field_name, field in self.fields.items():
+            if target_field_name == field.column_name:
+                return field
+        # it should have been possible to identify the declared field
+        # but warn if not
+        warn(f"cannot identify field for export with name '{target_field_name}'")
 
     def _get_ordered_field_names(self, order_field):
         """
@@ -1175,18 +1188,6 @@ class Resource(metaclass=DeclarativeMetaclass):
                     % ", ".join(missing_headers)
                 )
             )
-
-    def _get_enabled_export_fields(self, fields_):
-        export_fields = self.get_export_fields()
-
-        if isinstance(fields_, list) and fields_:
-            return [
-                field
-                for field in export_fields
-                if field.attribute in fields_ or field.column_name in fields_
-            ]
-
-        return export_fields
 
 
 class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
@@ -1272,7 +1273,7 @@ class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
             # The field class may be in a third party library as a subclass
             # of a standard field class.
             # iterate base classes to determine the correct widget class to use.
-            for base_class in inspect.getmro(f.__class__):
+            for base_class in f.__class__.__mro__:
                 if base_class.__name__ in cls.WIDGETS_MAP:
                     result = cls.WIDGETS_MAP[base_class.__name__]
                     if isinstance(result, str):
@@ -1383,9 +1384,9 @@ def modelresource_factory(model, resource_class=ModelResource):
     Factory for creating ``ModelResource`` class for given Django model.
     """
     attrs = {"model": model}
-    Meta = type(str("Meta"), (object,), attrs)
+    Meta = type("Meta", (object,), attrs)
 
-    class_name = model.__name__ + str("Resource")
+    class_name = model.__name__ + "Resource"
 
     class_attrs = {
         "Meta": Meta,

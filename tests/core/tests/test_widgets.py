@@ -26,7 +26,7 @@ class WidgetTest(TestCase):
         self.assertEqual("1", self.widget.render(1))
 
 
-class RowDeprecationTestMixin(object):
+class RowDeprecationTestMixin:
     def test_render_row_deprecation(self):
         with self.assertWarnsRegex(
             DeprecationWarning,
@@ -109,6 +109,12 @@ class FormatDatetimeTest(TestCase):
         )
 
 
+class CustomDate(date):
+    """test derived instance of date"""
+
+    pass
+
+
 class DateWidgetTest(TestCase, RowDeprecationTestMixin):
     def setUp(self):
         self.date = date(2012, 8, 13)
@@ -116,6 +122,10 @@ class DateWidgetTest(TestCase, RowDeprecationTestMixin):
 
     def test_render(self):
         self.assertEqual(self.widget.render(self.date), "13.08.2012")
+
+    def test_render_derived_date(self):
+        derived_date = CustomDate(2012, 8, 13)
+        self.assertEqual(self.widget.render(derived_date), "13.08.2012")
 
     def test_render_none(self):
         self.assertEqual(self.widget.render(None), "")
@@ -163,6 +173,12 @@ class DateWidgetTest(TestCase, RowDeprecationTestMixin):
         self.assertEqual(("%Y-%m-%d",), self.widget.formats)
 
 
+class CustomDateTime(datetime):
+    """test derived instance of datetime"""
+
+    pass
+
+
 class DateTimeWidgetTest(TestCase, RowDeprecationTestMixin):
     def setUp(self):
         self.datetime = datetime(2012, 8, 13, 18, 0, 0)
@@ -170,6 +186,10 @@ class DateTimeWidgetTest(TestCase, RowDeprecationTestMixin):
 
     def test_render(self):
         self.assertEqual(self.widget.render(self.datetime), "13.08.2012 18:00:00")
+
+    def test_render_derived_datetime(self):
+        derived_datetime = CustomDateTime(2012, 8, 13, 18, 0, 0)
+        self.assertEqual(self.widget.render(derived_datetime), "13.08.2012 18:00:00")
 
     def test_render_none(self):
         self.assertEqual(self.widget.render(None), "")
@@ -267,6 +287,12 @@ class DateTimeWidgetBefore1900Test(TestCase):
         self.assertEqual(self.datetime, self.widget.clean("13.08.1868"))
 
 
+class CustomTime(time):
+    """test derived instance of time"""
+
+    pass
+
+
 class TimeWidgetTest(TestCase, RowDeprecationTestMixin):
     def setUp(self):
         self.time = time(20, 15, 0)
@@ -274,6 +300,10 @@ class TimeWidgetTest(TestCase, RowDeprecationTestMixin):
 
     def test_render(self):
         self.assertEqual(self.widget.render(self.time), "20:15:00")
+
+    def test_render_derived_time(self):
+        derived_time = CustomTime(20, 15, 0)
+        self.assertEqual(self.widget.render(derived_time), "20:15:00")
 
     def test_render_none(self):
         self.assertEqual(self.widget.render(None), "")
@@ -390,6 +420,22 @@ class FloatWidgetTest(TestCase, RowDeprecationTestMixin):
     def test_clean(self):
         self.assertEqual(self.widget.clean(11.111), self.value)
 
+    @override_settings(USE_THOUSAND_SEPARATOR=True)
+    def test_clean_numeric_separators(self):
+        self.assertEqual(self.widget.clean("1,234.5"), 1234.5)
+
+    @override_settings(LANGUAGE_CODE="ar", USE_THOUSAND_SEPARATOR=True)
+    def test_clean_numeric_separators_arabic(self):
+        self.assertEqual(self.widget.clean("1.234,5"), 1234.5)
+
+    @override_settings(LANGUAGE_CODE="zh-hans", USE_THOUSAND_SEPARATOR=True)
+    def test_clean_numeric_separators_chinese_simplified(self):
+        self.assertEqual(self.widget.clean("1234.5"), 1234.5)
+
+    @override_settings(LANGUAGE_CODE="fr", USE_THOUSAND_SEPARATOR=True)
+    def test_clean_numeric_separators_french(self):
+        self.assertEqual(self.widget.clean("1\xa0234,5"), 1234.5)
+
     def test_render(self):
         self.assertEqual(self.widget.render(self.value), "11.111")
 
@@ -418,6 +464,22 @@ class DecimalWidgetTest(TestCase, RowDeprecationTestMixin):
     def test_clean(self):
         self.assertEqual(self.widget.clean("11.111"), self.value)
         self.assertEqual(self.widget.clean(11.111), self.value)
+
+    @override_settings(USE_THOUSAND_SEPARATOR=True)
+    def test_clean_numeric_separators(self):
+        self.assertEqual(self.widget.clean("1,234.5"), Decimal("1234.5"))
+
+    @override_settings(LANGUAGE_CODE="ar", USE_THOUSAND_SEPARATOR=True)
+    def test_clean_numeric_separators_arabic(self):
+        self.assertEqual(self.widget.clean("1.234,5"), Decimal("1234.5"))
+
+    @override_settings(LANGUAGE_CODE="zh-hans", USE_THOUSAND_SEPARATOR=True)
+    def test_clean_numeric_separators_chinese_simplified(self):
+        self.assertEqual(self.widget.clean("1234.5"), Decimal("1234.5"))
+
+    @override_settings(LANGUAGE_CODE="fr", USE_THOUSAND_SEPARATOR=True)
+    def test_clean_numeric_separators_french(self):
+        self.assertEqual(self.widget.clean("1\xa0234,5"), Decimal("1234.5"))
 
     def test_render_coerce_to_string_is_False(self):
         self.widget = widgets.DecimalWidget(coerce_to_string=False)
@@ -464,6 +526,22 @@ class IntegerWidgetTest(TestCase, RowDeprecationTestMixin):
         self.assertEqual(self.widget.clean(""), None)
         self.assertEqual(self.widget.clean(" "), None)
         self.assertEqual(self.widget.clean("\n\t\r"), None)
+
+    @override_settings(USE_THOUSAND_SEPARATOR=True)
+    def test_clean_numeric_separators(self):
+        self.assertEqual(self.widget.clean("1,234.5"), 1234)
+
+    @override_settings(LANGUAGE_CODE="ar", USE_THOUSAND_SEPARATOR=True)
+    def test_clean_numeric_separators_arabic(self):
+        self.assertEqual(self.widget.clean("1.234,5"), 1234)
+
+    @override_settings(LANGUAGE_CODE="zh-hans", USE_THOUSAND_SEPARATOR=True)
+    def test_clean_numeric_separators_chinese_simplified(self):
+        self.assertEqual(self.widget.clean("1234.5"), 1234)
+
+    @override_settings(LANGUAGE_CODE="fr", USE_THOUSAND_SEPARATOR=True)
+    def test_clean_numeric_separators_french(self):
+        self.assertEqual(self.widget.clean("1\xa0234,5"), 1234)
 
     def test_render_invalid_type(self):
         self.assertEqual(self.widget.render("a"), "")
@@ -533,7 +611,7 @@ class ForeignKeyWidgetTest(TestCase, RowDeprecationTestMixin):
         self.assertEqual(target_author, res)
 
     def test_render_handles_value_error(self):
-        class TestObj(object):
+        class TestObj:
             @property
             def attr(self):
                 raise ValueError("some error")
@@ -602,21 +680,21 @@ class ManyToManyWidget(TestCase, RowDeprecationTestMixin):
         self.cat2 = Category.objects.create(name="Cat 2")
 
     def test_clean(self):
-        value = "%s,%s" % (self.cat1.pk, self.cat2.pk)
+        value = f"{self.cat1.pk},{self.cat2.pk}"
         cleaned_data = self.widget.clean(value)
         self.assertEqual(len(cleaned_data), 2)
         self.assertIn(self.cat1, cleaned_data)
         self.assertIn(self.cat2, cleaned_data)
 
     def test_clean_field(self):
-        value = "%s,%s" % (self.cat1.name, self.cat2.name)
+        value = f"{self.cat1.name},{self.cat2.name}"
         cleaned_data = self.widget_name.clean(value)
         self.assertEqual(len(cleaned_data), 2)
         self.assertIn(self.cat1, cleaned_data)
         self.assertIn(self.cat2, cleaned_data)
 
     def test_clean_field_spaces(self):
-        value = "%s, %s" % (self.cat1.name, self.cat2.name)
+        value = f"{self.cat1.name}, {self.cat2.name}"
         cleaned_data = self.widget_name.clean(value)
         self.assertEqual(len(cleaned_data), 2)
         self.assertIn(self.cat1, cleaned_data)
@@ -648,11 +726,11 @@ class ManyToManyWidget(TestCase, RowDeprecationTestMixin):
     def test_render(self):
         self.assertEqual(
             self.widget.render(Category.objects.order_by("id")),
-            "%s,%s" % (self.cat1.pk, self.cat2.pk),
+            f"{self.cat1.pk},{self.cat2.pk}",
         )
         self.assertEqual(
             self.widget_name.render(Category.objects.order_by("id")),
-            "%s,%s" % (self.cat1.name, self.cat2.name),
+            f"{self.cat1.name},{self.cat2.name}",
         )
 
     def test_render_value_none_as_blank(self):

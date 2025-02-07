@@ -95,6 +95,7 @@ Here are some examples of how it has been used in the wild:
 * Manage user access to an application by importing externally version controlled auth user lists
 * Add `hooks <https://django-import-export.readthedocs.io/en/latest/advanced_usage.html#advanced-data-manipulation-on-export>`_ to anonymize data on export
 * `Modify import / export UI forms <https://django-import-export.readthedocs.io/en/latest/admin_integration.html#customize-admin-import-forms>`_ to add dynamic filtering on import / export.
+* Build a migration layer between platforms, for example take a `Wordpress <https://wordpress.org/>`_ export and import to `Wagtail <https://wagtail.org/>`_
 
 Getting started
 ===============
@@ -111,8 +112,9 @@ Help and support
 * `Getting help <https://django-import-export.readthedocs.io/en/latest/faq.html#what-s-the-best-way-to-communicate-a-problem-question-or-suggestion>`_
 * `Contributing <https://django-import-export.readthedocs.io/en/latest/faq.html#how-can-i-help>`_
 * Become a `sponsor <https://github.com/sponsors/django-import-export>`_
-* `Raise a security issue <https://github.com/django-import-export/django-import-export/blob/main/SECURITY.md>`_
 * Join our `discord <https://discord.gg/aCcec52kY4>`_
+* Tutorial videos on `YouTube <https://www.youtube.com/results?search_query=django-import-export>`_
+* `Raise a security issue <https://github.com/django-import-export/django-import-export/blob/main/SECURITY.md>`_
 
 Commercial support
 ==================

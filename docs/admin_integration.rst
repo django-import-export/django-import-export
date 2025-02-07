@@ -4,11 +4,12 @@
 Admin integration
 =================
 
-One of the main features of import-export is the support for integration with the
-`Django Admin site <https://docs.djangoproject.com/en/stable/ref/contrib/admin/>`_.
+One of the main features of import-export is the support for integration with the Django Admin site.
 This provides a convenient interface for importing and exporting Django objects.
+Refer to the `Django Admin documentation <https://docs.djangoproject.com/en/stable/ref/contrib/admin/>`_ for details
+of how to enable and configure the admin site.
 
-Please install and run the :ref:`example application<exampleapp>`  to become familiar with Admin integration.
+You can also install and run the :ref:`example application<exampleapp>`  to become familiar with Admin integration.
 
 Integrating import-export with your application requires extra configuration.
 
@@ -19,13 +20,14 @@ mixins (:class:`~import_export.admin.ImportMixin`,
 :class:`~import_export.admin.ImportExportMixin`)::
 
     # app/admin.py
+    from django.contrib import admin
     from .models import Book
     from import_export.admin import ImportExportModelAdmin
 
+    @admin.register(Book)
     class BookAdmin(ImportExportModelAdmin):
         resource_classes = [BookResource]
 
-    admin.site.register(Book, BookAdmin)
 
 Once this configuration is present (and server is restarted), 'import' and 'export' buttons will be presented to the
 user.
@@ -72,6 +74,9 @@ The two step process is:
 
    A screenshot of the 'confirm import' view.
 
+
+.. _import_confirmation:
+
 Import confirmation
 -------------------
 
@@ -99,12 +104,17 @@ Your choice of temporary storage will be influenced by the following factors:
 
 Temporary resources are removed when data is successfully imported after the confirmation step.
 
+**For sensitive data you will need to understand exactly how temporary files are being stored and to ensure
+that data is properly secured and managed.**
+
 .. warning::
 
     If users do not complete the confirmation step of the workflow,
     or if there are errors during import, then temporary resources may not be deleted.
     This will need to be understood and managed in production settings.
     For example, using a cache expiration policy or cron job to clear stale resources.
+
+.. _customizable_storage:
 
 Customizable storage
 ^^^^^^^^^^^^^^^^^^^^^
@@ -210,12 +220,15 @@ When 'Go' is clicked for the selected items, the user will be directed to the
 
 It is possible to disable this extra step by setting the :ref:`import_export_skip_admin_action_export_ui` or
 :ref:`import_export_skip_admin_export_ui` flags, or by setting
+:attr:`~import_export.admin.ExportMixin.skip_export_form_from_action` or
 :attr:`~import_export.admin.ExportMixin.skip_export_form`.
 
 .. note::
 
-    If deploying to a multi-tenant environment, you may need to use the to ensure that one set of users cannot export
-    data belonging to another set.  See :meth:`~import_export.admin.ExportMixin.get_valid_export_item_pks`.
+    If deploying to a multi-tenant environment, you may need to ensure that one set of users cannot export
+    data belonging to another set.  To do this, filter the range of exportable items to be limited to only
+    those items which users should be permitted to export.
+    See :meth:`~import_export.admin.ExportMixin.get_export_queryset`.
 
 .. _export_from_model_change_form:
 

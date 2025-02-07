@@ -7,20 +7,28 @@ from django.contrib.auth.models import User
 from import_export.formats.base_formats import DEFAULT_FORMATS
 
 
-class AdminTestMixin(object):
+class AdminTestMixin:
     category_change_url = "/admin/core/category/"
-    uuid_category_change_url = "/admin/core/uuidcategory/"
     category_export_url = "/admin/core/category/export/"
+    uuid_category_change_url = "/admin/core/uuidcategory/"
     uuid_category_export_url = "/admin/core/uuidcategory/export/"
     book_import_url = "/admin/core/book/import/"
     book_export_url = "/admin/core/book/export/"
     ebook_import_url = "/admin/core/ebook/import/"
     ebook_export_url = "/admin/core/ebook/export/"
+    core_book_url = "/admin/core/book/"
+    process_ebook_import_url = "/admin/core/ebook/process_import/"
     book_process_import_url = "/admin/core/book/process_import/"
+    ebook_process_import_url = "/admin/core/ebook/process_import/"
     legacybook_import_url = "/admin/core/legacybook/import/"
     legacybook_process_import_url = "/admin/core/legacybook/process_import/"
+    core_author_url = "/admin/core/author/"
     child_import_url = "/admin/core/child/import/"
+    change_list_url = "admin/import_export/change_list.html"
     child_process_import_url = "/admin/core/child/process_import/"
+    admin_import_template_url = "admin/import_export/import.html"
+    change_list_template_url = "admin/import_export/change_list_import_export.html"
+    import_export_import_template_url = "admin/import_export/import.html"
 
     def setUp(self):
         super().setUp()
@@ -104,6 +112,24 @@ class AdminTestMixin(object):
         self.assertEqual(response["Content-Type"], "text/csv")
         self.assertEqual(
             response["Content-Disposition"],
-            'attachment; filename="{}-{}.csv"'.format(file_prefix, date_str),
+            f'attachment; filename="{file_prefix}-{date_str}.csv"',
         )
         self.assertEqual(target_file_contents.encode(), response.content)
+
+    def _get_url_response(
+        self, url, expected_status_code=200, str_in_response=None, html=False
+    ):
+        response = self.client.get(url)
+        assert response.status_code == expected_status_code
+        if str_in_response is not None:
+            assert str_in_response in response.content.decode()
+        if html:
+            assert (
+                "text/html" in response.headers["Content-Type"]
+            ), "Response is not HTML"
+        return response
+
+    def _post_url_response(self, url, data, expected_status_code=200, follow=False):
+        response = self.client.post(url, data, follow=follow)
+        assert response.status_code == expected_status_code
+        return response

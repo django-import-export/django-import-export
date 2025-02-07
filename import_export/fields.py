@@ -31,8 +31,9 @@ class Field:
       This can be used if the widget returns null, but there is a default instance
       value which should not be overwritten.
 
-    :param dehydrate_method: Lets you choose your own method for dehydration rather
-        than using `dehydrate_{field_name}` syntax.
+    :param dehydrate_method: You can provide a `dehydrate_method` as a string to use
+        instead of the default `dehydrate_{field_name}` syntax, or you can provide
+        a callable that will be executed with the instance as its argument.
 
     :param m2m_add: changes save of this field to add the values, if they do not exist,
         to a ManyToMany field instead of setting all values.  Only useful if field is
@@ -67,10 +68,9 @@ class Field:
         """
         Displays the module, class and name of the field.
         """
-        path = "%s.%s" % (self.__class__.__module__, self.__class__.__name__)
-        column_name = getattr(self, "column_name", None)
-        if column_name is not None:
-            return "<%s: %s>" % (path, column_name)
+        path = f"{self.__class__.__module__}.{self.__class__.__name__}"
+        if self.column_name is not None:
+            return f"<{path}: {self.column_name}>"
         return "<%s>" % path
 
     def clean(self, row, **kwargs):
@@ -99,6 +99,13 @@ class Field:
         """
         Returns the value of the instance's attribute.
         """
+
+        # The objects of a queryset can be dictionaries if the values method is used.
+        if isinstance(instance, dict):
+            if self.attribute not in instance:
+                return None
+            return instance[self.attribute]
+
         if self.attribute is None:
             return None
 
@@ -140,13 +147,13 @@ class Field:
                     else:
                         getattr(instance, attrs[-1]).set(cleaned)
 
-    def export(self, instance):
+    def export(self, instance, **kwargs):
         """
         Returns value from the provided instance converted to export
         representation.
         """
         value = self.get_value(instance)
-        return self.widget.render(value)
+        return self.widget.render(value, **kwargs)
 
     def get_dehydrate_method(self, field_name=None):
         """

@@ -1,4 +1,5 @@
 import logging
+import warnings
 from collections import OrderedDict
 
 from django.apps import apps
@@ -86,6 +87,11 @@ class ModelDeclarativeMetaclass(DeclarativeMetaclass):
                     and field_name not in opts.fields
                     and column_name not in opts.fields
                 ):
+                    warnings.warn(
+                        f"ignoring field '{field_name}' because not declared "
+                        "in 'fields' whitelist",
+                        stacklevel=2,
+                    )
                     continue
                 declared_fields[field_name] = field
 

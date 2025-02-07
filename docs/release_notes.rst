@@ -6,7 +6,7 @@ v5.0 (Future release)
 ----
 
 Removed the deprecated :meth:`~import_export.admin.ExportMixin.get_valid_export_item_pks` method in favour
-of :meth:`~import_export.admin.ExportMixin.get_queryset`. Use the ModelAdmin's 
+of :meth:`~import_export.admin.ExportMixin.get_queryset`. Use the ModelAdmin's
 :meth:`~import_export.admin.ExportMixin.get_queryset` or :meth:`~import_export.admin.ExportMixin.get_export_queryset`
 instead.
 
@@ -15,16 +15,62 @@ See `PR 1890 <https://github.com/django-import-export/django-import-export/issue
 v4.2
 ----
 
-When exporting via :ref:`admin action<export_via_admin_action>`, the queryset is now filtered on
-:meth:`~import_export.admin.ExportMixin.get_queryset` instead of the Model's default queryset.
-This should have no impact on existing implementations.
+* When exporting via :ref:`admin action<export_via_admin_action>`, the queryset is now filtered on
+  :meth:`~import_export.admin.ExportMixin.get_queryset` instead of the Model's default queryset.
+  This should have no impact on existing implementations.
 
-This change also made :meth:`~import_export.admin.ExportMixin.get_valid_export_item_pks` obsolete, as the
-ModelAdmin's :meth:`~import_export.admin.ExportMixin.get_queryset` or 
-:meth:`~import_export.admin.ExportMixin.get_export_queryset` can be used instead. The
-:meth:`~import_export.admin.ExportMixin.get_valid_export_item_pks` method is now deprecated.
+  This change also made :meth:`~import_export.admin.ExportMixin.get_valid_export_item_pks` obsolete, as the
+  ModelAdmin's :meth:`~import_export.admin.ExportMixin.get_export_queryset`, or
+  ModelAdmin's get_queryset can be used instead.
+  The :meth:`~import_export.admin.ExportMixin.get_valid_export_item_pks` method is now deprecated.
 
-See `PR 1890 <https://github.com/django-import-export/django-import-export/issues/1890>`_.
+  See `PR 1890 <https://github.com/django-import-export/django-import-export/issues/1890>`_.
+
+* Removed internal method ``_get_enabled_export_fields()`` in favour of passing the selected fields list as a
+  new parameter to :meth:`~import_export.resources.Resource.export_resource` and
+  :meth:`~import_export.resources.Resource.get_export_headers`.
+
+* Hide the "Resource" form when it only has one option, to avoid potentially confusing text in the interface like
+  "Resource: BookResource". To undo this change, use a form subclass that changes the field’s widget to a
+  ``django.forms.Select``.  See `1908 <https://github.com/django-import-export/django-import-export/issues/1908>`_
+
+*  `tablib <https://github.com/jazzband/tablib>`_ has been upgraded from v3.5.0 to 3.6.1.
+   This upgrade removes tablib's dependency on `MarkupPy <https://github.com/jazzband/tablib/pull/554>`_ in favour
+   of ``ElementTree``.  If you export to HTML, then this change may affect your output format, particularly if you have
+   already escaped HTML characters in the text.
+
+   See `issue 1627 <https://github.com/django-import-export/django-import-export/issues/1627>`_.
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+
+* This release fixes a regression introduced in v4. From v4.2, numeric, boolean and date/time widgets are written as
+  native values to spreadsheet formats (ODS, XLS, XLSX).  This was the default behavior in v3.
+  See :ref:`documentation<modify_render_return_type>`.
+
+  This means that the ``coerce_to_string`` value which is passed to :class:`~import_export.widgets.Widget` is now
+  ignored if you are exporting to a spreadsheet format from the Admin interface.
+
+  If you have subclassed ``Widget``, ``Field`` or ``Resource``, then you may need to adjust your code to include
+  the ``**kwargs`` param as follows:
+
+.. list-table::
+   :header-rows: 1
+
+   * - Previous
+     - New
+
+   * - ``Widget.render(self, value, obj=None)``
+     - ``Widget.render(self, value, obj=None, **kwargs)``
+
+   * - ``Field.export(self, instance)``
+     - ``Field.export(self, instance, **kwargs)``
+
+   * - ``Resource.export_field(self, field, instance)``
+     - ``Resource.export_field(self, field, instance, **kwargs)``
+
+   * - ``Resource.export_resource(self, instance, selected_fields=None)``
+     - ``Resource.export_resource(self, instance, selected_fields=None, **kwargs)``
 
 v4.1
 ----

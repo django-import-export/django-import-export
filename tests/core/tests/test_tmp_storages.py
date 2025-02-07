@@ -115,7 +115,7 @@ id,name,author,author_email,imported,published,price,categories
             mock_open.assert_called_with("f", mode="rb")
 
 
-class CustomizedStorage(object):
+class CustomizedStorage:
     save_count = 0
     open_count = 0
     delete_count = 0

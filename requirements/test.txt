@@ -1,9 +1,0 @@
-psycopg2-binary==2.9.9
-mysqlclient==2.2.0
-chardet==5.2.0
-pytz==2023.3
-memory-profiler==0.61.0
-django-extensions==3.2.3
-coverage==7.3.2
-tablib[all]==3.5.0
-setuptools-scm==8.0.4

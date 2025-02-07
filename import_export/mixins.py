@@ -54,16 +54,20 @@ class BaseImportExportMixin:
                 "Only one of 'resource_class' and 'resource_classes' can be set"
             )
         if hasattr(self, "get_resource_class"):
+            cls = self.__class__
             warnings.warn(
                 "The 'get_resource_class()' method has been deprecated. "
-                "Please implement the new 'get_resource_classes()' method",
+                "Please implement the new 'get_resource_classes()' method in "
+                f"{cls.__module__}.{cls.__qualname__}",
                 DeprecationWarning,
             )
             return [self.get_resource_class()]
         if self.resource_class:
+            cls = self.__class__
             warnings.warn(
                 "The 'resource_class' field has been deprecated. "
-                "Please implement the new 'resource_classes' field",
+                "Please implement the new 'resource_classes' field in "
+                f"{cls.__module__}.{cls.__qualname__}",
                 DeprecationWarning,
             )
         if not self.resource_classes and not self.resource_class:
@@ -111,9 +115,11 @@ class BaseImportMixin(BaseImportExportMixin):
         Returns ResourceClass subscriptable (list, tuple, ...) to use for import.
         """
         if hasattr(self, "get_import_resource_class"):
+            cls = self.__class__
             warnings.warn(
                 "The 'get_import_resource_class()' method has been deprecated. "
-                "Please implement the new 'get_import_resource_classes()' method",
+                "Please implement the new 'get_import_resource_classes()' method in"
+                f"{cls.__module__}.{cls.__qualname__}",
                 DeprecationWarning,
             )
             return [self.get_import_resource_class()]
@@ -141,7 +147,7 @@ class BaseImportMixin(BaseImportExportMixin):
         Identify which class should be used for import
         :param form: The form object.
         :param request: The request object.
-        :returns: The export Resource class.
+        :returns: The import Resource class.
         """
         resource_index = self.get_resource_index(form)
         return self.get_import_resource_classes(request)[resource_index]
@@ -179,9 +185,11 @@ class BaseExportMixin(BaseImportExportMixin):
         :returns: The Resource classes.
         """
         if hasattr(self, "get_export_resource_class"):
+            cls = self.__class__
             warnings.warn(
                 "The 'get_export_resource_class()' method has been deprecated. "
-                "Please implement the new 'get_export_resource_classes()' method",
+                "Please implement the new 'get_export_resource_classes()' method "
+                f"in {cls.__module__}.{cls.__qualname__}",
                 DeprecationWarning,
             )
             return [self.get_export_resource_class()]
@@ -229,7 +237,7 @@ class BaseExportMixin(BaseImportExportMixin):
 
     def get_export_filename(self, file_format):
         date_str = now().strftime("%Y-%m-%d")
-        filename = "%s-%s.%s" % (
+        filename = "{}-{}.{}".format(
             self.model.__name__,
             date_str,
             file_format.get_extension(),
@@ -250,6 +258,7 @@ class BaseExportMixin(BaseImportExportMixin):
 
 
 class ExportViewMixin(BaseExportMixin):
+    # Deprecated, and will be removed in a future release (see #1666)
     form_class = SelectableFieldsExportForm
 
     def get_export_data(self, file_format, queryset, **kwargs):
@@ -272,13 +281,17 @@ class ExportViewMixin(BaseExportMixin):
 
 
 class ExportViewFormMixin(ExportViewMixin, FormView):
-    def form_valid(self, form):
+    # Deprecated, and will be removed in a future release (see #1666)
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
         warn(
             "ExportViewFormMixin is deprecated and will be removed "
-            "in a future release",
+            "in a future release.",
             DeprecationWarning,
             stacklevel=2,
         )
+
+    def form_valid(self, form):
         formats = self.get_export_formats()
         file_format = formats[int(form.cleaned_data["format"])]()
         if hasattr(self, "get_filterset"):
@@ -292,7 +305,7 @@ class ExportViewFormMixin(ExportViewMixin, FormView):
             response = HttpResponse(export_data, content_type=content_type)
         except TypeError:
             response = HttpResponse(export_data, mimetype=content_type)
-        response["Content-Disposition"] = 'attachment; filename="%s"' % (
+        response["Content-Disposition"] = 'attachment; filename="{}"'.format(
             self.get_export_filename(file_format),
         )
 

@@ -12,11 +12,13 @@ from .forms import CustomConfirmImportForm, CustomExportForm, CustomImportForm
 from .models import Author, Book, Category, Child, EBook, UUIDBook, UUIDCategory
 
 
+@admin.register(Child)
 class ChildAdmin(ImportMixin, admin.ModelAdmin):
     pass
 
 
 class BookResource(ModelResource):
+
     class Meta:
         model = Book
 
@@ -31,6 +33,7 @@ class BookNameResource(ModelResource):
         name = "Export/Import only book names"
 
 
+@admin.register(Book)
 class BookAdmin(ImportExportModelAdmin):
     list_display = ("name", "author", "added")
     list_filter = ["categories", "author"]
@@ -38,18 +41,23 @@ class BookAdmin(ImportExportModelAdmin):
     change_list_template = "core/admin/change_list.html"
 
 
+@admin.register(Category)
 class CategoryAdmin(ExportActionModelAdmin):
-    pass
+    def get_queryset(self, request):
+        return Category.objects.all()
 
 
+@admin.register(UUIDBook)
 class UUIDBookAdmin(ImportExportModelAdmin):
     pass
 
 
+@admin.register(UUIDCategory)
 class UUIDCategoryAdmin(ExportActionModelAdmin):
     pass
 
 
+@admin.register(Author)
 class AuthorAdmin(ImportMixin, admin.ModelAdmin):
     pass
 
@@ -62,6 +70,7 @@ class UUIDBookResource(ModelResource):
 class EBookResource(ModelResource):
     published = Field(attribute="published", column_name="published_date")
     author_email = Field(attribute="author_email", column_name="Email of the author")
+    auteur_name = Field(attribute="author__name", column_name="Author Name")
 
     def __init__(self, **kwargs):
         super().__init__()
@@ -72,9 +81,10 @@ class EBookResource(ModelResource):
 
     class Meta:
         model = EBook
-        fields = ("id", "author_email", "name", "published")
+        fields = ("id", "author_email", "name", "published", "auteur_name")
 
 
+@admin.register(EBook)
 class CustomBookAdmin(ExportActionModelAdmin, ImportExportModelAdmin):
     """Example usage of custom import / export forms"""
 
@@ -110,12 +120,3 @@ class CustomBookAdmin(ExportActionModelAdmin, ImportExportModelAdmin):
         if export_form:
             kwargs.update(author_id=export_form.cleaned_data["author"].id)
         return kwargs
-
-
-admin.site.register(Book, BookAdmin)
-admin.site.register(Category, CategoryAdmin)
-admin.site.register(Author, AuthorAdmin)
-admin.site.register(Child, ChildAdmin)
-admin.site.register(EBook, CustomBookAdmin)
-admin.site.register(UUIDCategory, UUIDCategoryAdmin)
-admin.site.register(UUIDBook, UUIDBookAdmin)

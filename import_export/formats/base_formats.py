@@ -1,8 +1,16 @@
+# when adding imports, ensure that they are local to the
+# correct class for the file format.
+# e.g. add openpyxl imports to the XLSXFormat class
+# See issue 2004
+import logging
 import warnings
 
 import tablib
 from django.conf import settings
+from django.utils.translation import gettext_lazy as _
 from tablib.formats import registry
+
+logger = logging.getLogger(__name__)
 
 
 class Format:
@@ -106,7 +114,7 @@ class TablibFormat(Format):
         def _do_escape(s):
             return s.replace("=", "", 1) if s.startswith("=") else s
 
-        for _ in dataset:
+        for r in dataset:
             row = dataset.lpop()
             row = [_do_escape(str(cell)) for cell in row]
             dataset.append(row)
@@ -200,17 +208,54 @@ class XLSX(TablibFormat):
         rows = sheet.rows
         dataset.headers = [cell.value for cell in next(rows)]
 
+        ignore_blanks = getattr(
+            settings, "IMPORT_EXPORT_IMPORT_IGNORE_BLANK_LINES", False
+        )
         for row in rows:
             row_values = [cell.value for cell in row]
-            dataset.append(row_values)
+
+            if ignore_blanks:
+                # do not add empty rows to dataset
+                if not all(value is None for value in row_values):
+                    dataset.append(row_values)
+            else:
+                dataset.append(row_values)
         return dataset
 
     def export_data(self, dataset, **kwargs):
+        from openpyxl.utils.exceptions import IllegalCharacterError
+
         # #1698 temporary catch for deprecation warning in openpyxl
         # this catch block must be removed when openpyxl updated
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", category=DeprecationWarning)
-            return super().export_data(dataset, **kwargs)
+            try:
+                return super().export_data(dataset, **kwargs)
+            except IllegalCharacterError as e:
+                if (
+                    getattr(
+                        settings, "IMPORT_EXPORT_ESCAPE_ILLEGAL_CHARS_ON_EXPORT", False
+                    )
+                    is True
+                ):
+                    self._escape_illegal_chars(dataset)
+                    return super().export_data(dataset, **kwargs)
+                logger.exception(e)
+                # not raising original error due to reflected xss risk
+                raise ValueError(_("export failed due to IllegalCharacterError"))
+
+    def _escape_illegal_chars(self, dataset):
+        from openpyxl.cell.cell import ILLEGAL_CHARACTERS_RE
+
+        def _do_escape(cell):
+            if type(cell) is str:
+                cell = ILLEGAL_CHARACTERS_RE.sub("\N{REPLACEMENT CHARACTER}", cell)
+            return cell
+
+        for r in dataset:
+            row = dataset.lpop()
+            row = [_do_escape(cell) for cell in row]
+            dataset.append(row)
 
 
 #: These are the default formats for import and export. Whether they can be
@@ -226,6 +271,18 @@ DEFAULT_FORMATS = [
         JSON,
         YAML,
         HTML,
+    )
+    if fmt.is_available()
+]
+
+#: These are the formats which support different data types (such as datetime
+#: and numbers) for which `coerce_to_string` is to be set false dynamically.
+BINARY_FORMATS = [
+    fmt
+    for fmt in (
+        XLS,
+        XLSX,
+        ODS,
     )
     if fmt.is_available()
 ]

@@ -12,6 +12,7 @@ clean-build: ## remove build artifacts
 	rm -fr dist/
 	rm -fr *.egg-info
 	rm -f import_export/_version.py
+	rm -fr .coverage.*
 
 clean-pyc: ## remove Python file artifacts
 	find . -name '*.pyc' -exec rm -f {} +
@@ -42,13 +43,13 @@ sdist: clean ## package
 	ls -l dist
 
 install-base-requirements: ## install package requirements
-	pip install -r requirements/base.txt
+	pip install .
 
 install-test-requirements: ## install requirements for testing
-	pip install -r requirements/test.txt
+	pip install .[tests]
 
 install-docs-requirements:  ## install requirements for docs
-	pip install -r requirements/docs.txt
+	pip install --editable .[docs]
 
 install-requirements: install-base-requirements install-test-requirements install-docs-requirements
 

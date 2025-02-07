@@ -3,25 +3,90 @@ Changelog
 
 .. warning::
 
-    Version 5 introduces breaking changes.  Please refer to :doc:`release notes<release_notes>`.
+    If upgrading from v3, v4 introduces breaking changes.  Please refer to :doc:`release notes<release_notes>`.
 
 5.0.0 (unreleased)
 ------------------
 
 - Removed the deprecated :meth:`~import_export.admin.ExportMixin.get_valid_export_item_pks` method in favour of :meth:`~import_export.admin.ExportMixin.get_queryset`
 
-4.2.0 (unreleased)
+4.3.6 (unreleased)
 ------------------
 
+- Add flag to ignore empty rows in XLSX import (`2028 <https://github.com/django-import-export/django-import-export/issues/2028>`_)
+
+4.3.5 (2025-02-01)
+------------------
+
+- Clarify documentation on creating non-existent relations (`2029 <https://github.com/django-import-export/django-import-export/issues/2029>`_)
+- Update Turkish translations (`2031 <https://github.com/django-import-export/django-import-export/issues/2031>`_)
+
+4.3.4 (2025-01-15)
+------------------
+
+- Handle QuerySets called with ``values()`` on export (`2011 <https://github.com/django-import-export/django-import-export/issues/2011>`_)
+
+4.3.3 (2024-12-02)
+------------------
+
+- Update all translations (`2014 <https://github.com/django-import-export/django-import-export/issues/2014>`_)
+
+4.3.2 (2024-12-01)
+------------------
+
+- Updated Farsi translation (`2008 <https://github.com/django-import-export/django-import-export/issues/2008>`_)
+- Updated German translation (`2012 <https://github.com/django-import-export/django-import-export/issues/2012>`_)
+
+4.3.1 (2024-11-19)
+------------------
+
+- Fix imports for openpyxl (`2005 <https://github.com/django-import-export/django-import-export/issues/2005>`_)
+
+4.3.0 (2024-11-19)
+------------------
+
+- Addition of import & export management commands (`1992 <https://github.com/django-import-export/django-import-export/issues/1992>`_)
+- Handle ``IllegalCharacterError`` in xlsx exports (`2001 <https://github.com/django-import-export/django-import-export/issues/2001>`_)
+- Add ``__repr__`` method to InvalidRow for improved debugging (`2003 <https://github.com/django-import-export/django-import-export/issues/2003>`_)
+
+4.2.1 (2024-11-11)
+------------------
+
+- Removed dependency files in favour of ``pyproject.toml`` (`1982 <https://github.com/django-import-export/django-import-export/issues/1982>`_)
+- Documentation updates (`1989 <https://github.com/django-import-export/django-import-export/issues/1989>`_)
+- Fix crash on export of tz-aware datetime to binary formats (`1995 <https://github.com/django-import-export/django-import-export/issues/1995>`_)
+
+4.2.0 (2024-10-23)
+------------------
+
+This release contains breaking changes.  Please refer to :doc:`release notes<release_notes>`.
+
+- Upgraded tablib version (`1627 <https://github.com/django-import-export/django-import-export/issues/1627>`_)
+- Document overriding formats (`1868 <https://github.com/django-import-export/django-import-export/issues/1868>`_)
 - Consistent queryset creation in ModelAdmin export mixin (`1890 <https://github.com/django-import-export/django-import-export/pull/1890>`_)
 - Deprecated :meth:`~import_export.admin.ExportMixin.get_valid_export_item_pks` in favour of :meth:`~import_export.admin.ExportMixin.get_queryset` (`1890 <https://github.com/django-import-export/django-import-export/pull/1890>`_)
+- Improve deprecation warning for ``ExportViewFormMixin`` to report at point of class definition (`1900 <https://github.com/django-import-export/django-import-export/pull/1900>`_)
+- Fix export for fields with custom declared name (`1903 <https://github.com/django-import-export/django-import-export/pull/1903>`_)
+- Hide the "Resource" form when it only has one option (`1908 <https://github.com/django-import-export/django-import-export/issues/1908>`_)
+- Update date, time and datetime widget render method to handle derived instance (`1918 <https://github.com/django-import-export/django-import-export/issues/1918>`_)
+- Add support for Django 5.1 (`1926 <https://github.com/django-import-export/django-import-export/issues/1926>`_)
+- Accept numbers using the numeric separators of the current language in number widgets (:meth:`~import_export.widgets.FloatWidget`, :meth:`~import_export.widgets.IntegerWidget`, :meth:`~import_export.widgets.DecimalWidget`) (`1927 <https://github.com/django-import-export/django-import-export/issues/1927>`_)
+- Added warning for declared fields excluded from fields whitelist (`1930 <https://github.com/django-import-export/django-import-export/issues/1930>`_)
+- Fix v3 regression: handle native types on export to spreadsheet (`1939 <https://github.com/django-import-export/django-import-export/issues/1939>`_)
+- Fix export button displayed on change screen when export permission not assigned (`1942 <https://github.com/django-import-export/django-import-export/issues/1942>`_)
+- Fix crash for Django 5.1 when rows are skipped (`1944 <https://github.com/django-import-export/django-import-export/issues/1944>`_)
+- Allow callable in dehydrate method (`1950 <https://github.com/django-import-export/django-import-export/issues/1950>`_)
+- Fix crash when Resource fields declared incorrectly (`1963 <https://github.com/django-import-export/django-import-export/issues/1963>`_)
+- Updated dependencies (`1979 <https://github.com/django-import-export/django-import-export/issues/1979>`_)
+
+4.1.1 (2024-07-08)
+------------------
+
+- Restore return value for deprecated method :meth:`~import_export.resources.Resource.get_fields` (`1897 <https://github.com/django-import-export/django-import-export/pull/1897>`_)
 
 4.1.0 (2024-06-25)
 ------------------
 
-- Improve tox setup (`1879 <https://github.com/django-import-export/django-import-export/pull/1879>`_)
-- Speed up tests 10x (`1880 <https://github.com/django-import-export/django-import-export/pull/1880>`_)
-- Use literals to create lists and dicts (`1881 <https://github.com/django-import-export/django-import-export/pull/1881>`_)
 - Improve Error class (`1882 <https://github.com/django-import-export/django-import-export/pull/1882>`_)
 - Fix response content assertions (`1883 <https://github.com/django-import-export/django-import-export/pull/1883>`_)
 - Admin UI: display checkboxes before labels in export form (`1884 <https://github.com/django-import-export/django-import-export/pull/1884>`_)

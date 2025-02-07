@@ -70,4 +70,19 @@ class DeprecatedMethodTest(TestCase):
             r"The 'get_fields\(\)' method is deprecated "
             "and will be removed in a future release",
         ):
-            resource.get_fields()
+            fields = resource.get_fields()
+
+        self.assertEqual(
+            {f.column_name for f in fields},
+            {
+                "added",
+                "author",
+                "author_email",
+                "categories",
+                "id",
+                "name",
+                "price",
+                "published_date",
+                "published_time",
+            },
+        )

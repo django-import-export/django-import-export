@@ -1,3 +1,4 @@
+import warnings
 from datetime import datetime
 from unittest import mock
 from unittest.mock import MagicMock, PropertyMock, patch
@@ -37,7 +38,7 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
         date_str = datetime.now().strftime("%Y-%m-%d")
         self.assertEqual(
             response["Content-Disposition"],
-            'attachment; filename="Category-{}.csv"'.format(date_str),
+            f'attachment; filename="Category-{date_str}.csv"',
         )
 
     @override_settings(IMPORT_EXPORT_SKIP_ADMIN_ACTION_EXPORT_UI=True)
@@ -46,7 +47,7 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
             "action": ["export_admin_action"],
             "_selected_action": [str(self.cat1.id)],
         }
-        response = self.client.post(self.category_change_url, data)
+        response = self._post_url_response(self.category_change_url, data)
         self._check_export_response(response)
 
     def test_export_displays_ui_select_page(self):
@@ -54,9 +55,7 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
             "action": ["export_admin_action"],
             "_selected_action": [str(self.cat1.id)],
         }
-        response = self.client.post(self.category_change_url, data)
-
-        self.assertEqual(response.status_code, 200)
+        response = self._post_url_response(self.category_change_url, data)
         self.assertIn("form", response.context)
         export_form = response.context["form"]
         data = export_form.initial
@@ -68,9 +67,7 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
             "action": ["export_admin_action"],
             "_selected_action": [str(self.cat1.id), str(self.cat2.id)],
         }
-        response = self.client.post(self.category_change_url, data)
-
-        self.assertEqual(response.status_code, 200)
+        response = self._post_url_response(self.category_change_url, data)
         self.assertIn("form", response.context)
         export_form = response.context["form"]
         data = export_form.initial
@@ -86,9 +83,7 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
             "action": ["export_admin_action"],
             "_selected_action": [str(cat.pk)],
         }
-        response = self.client.post(self.uuid_category_change_url, data)
-
-        self.assertEqual(response.status_code, 200)
+        response = self._post_url_response(self.uuid_category_change_url, data)
         self.assertIn("form", response.context)
         export_form = response.context["form"]
         data = export_form.initial
@@ -103,13 +98,14 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
             **self.resource_fields_payload,
         }
         date_str = datetime.now().strftime("%Y-%m-%d")
-        response = self.client.post(self.category_export_url, data)
-        self.assertEqual(response.status_code, 200)
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=DeprecationWarning)
+            response = self._post_url_response(self.category_export_url, data)
         self.assertTrue(response.has_header("Content-Disposition"))
         self.assertEqual(response["Content-Type"], "text/csv")
         self.assertEqual(
             response["Content-Disposition"],
-            'attachment; filename="Category-{}.csv"'.format(date_str),
+            f'attachment; filename="Category-{date_str}.csv"',
         )
         target_str = f"id,name\r\n{self.cat1.id},Cat 1\r\n"
         self.assertEqual(target_str.encode(), response.content)
@@ -133,11 +129,14 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
     def _perform_export_action_calls_modeladmin_get_queryset_test(self, data):
         # Issue #1864
         # ModelAdmin's get_queryset should be used in the ModelAdmin mixins
-        with mock.patch(
-            "core.admin.CategoryAdmin.get_queryset"
-        ) as mock_modeladmin_get_queryset, mock.patch(
-            "import_export.admin.ExportMixin.get_data_for_export"
-        ) as mock_get_data_for_export:
+        with (
+            mock.patch(
+                "core.admin.CategoryAdmin.get_queryset"
+            ) as mock_modeladmin_get_queryset,
+            mock.patch(
+                "import_export.admin.ExportMixin.get_data_for_export"
+            ) as mock_get_data_for_export,
+        ):
             mock_queryset = mock.MagicMock(name="MockQuerySet")
             mock_queryset.filter.return_value = mock_queryset
             mock_queryset.order_by.return_value = mock_queryset
@@ -191,6 +190,20 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
         }
         self._perform_export_action_calls_modeladmin_get_queryset_test(data)
 
+    def test_export_admin_action_with_restricted_pks_deprecated(self):
+        data = {
+            "format": "0",
+            "export_items": [str(self.cat1.id)],
+            **self.resource_fields_payload,
+        }
+        with self.assertWarnsRegex(
+            DeprecationWarning,
+            r"The 'get_valid_export_item_pks\(\)' method in "
+            "core.admin.CategoryAdmin is deprecated and will be removed "
+            "in a future release",
+        ):
+            self._post_url_response(self.category_export_url, data)
+
     def test_get_export_data_raises_PermissionDenied_when_no_export_permission_assigned(
         self,
     ):
@@ -226,9 +239,8 @@ class TestExportButtonOnChangeForm(AdminTestMixin, TestCase):
         )
 
     def test_export_button_on_change_form(self):
-        response = self.client.get(self.change_url)
-        self.assertIn(self.target_str, response.content.decode())
-        response = self.client.post(
+        self._get_url_response(self.change_url, str_in_response=self.target_str)
+        response = self._post_url_response(
             self.change_url, data={"_export-item": "Export", "name": self.cat1.name}
         )
         self.assertIn("Export 1 selected item", response.content.decode())
@@ -246,14 +258,14 @@ class TestExportButtonOnChangeForm(AdminTestMixin, TestCase):
         )
         response = self.client.get(self.change_url)
         self.assertIn(self.target_str, response.content.decode())
-        response = self.client.post(
+        response = self._post_url_response(
             self.change_url, data={"_export-item": "Export", "name": self.cat1.name}
         )
         self.assertIn("Export 1 selected item", response.content.decode())
 
     def test_save_button_on_change_form(self):
         # test default behavior is retained when saving an instance ChangeForm
-        response = self.client.post(
+        response = self._post_url_response(
             self.change_url, data={"_save": "Save", "name": self.cat1.name}, follow=True
         )
         target_str = f"The category.*{self.cat1.name}.*was changed successfully."
@@ -359,7 +371,7 @@ class TestSkipExportFormFromChangeForm(AdminTestMixin, TestCase):
     def test_export_button_on_change_form_skip_export_setting_enabled(self):
         # this property has no effect - IMPORT_EXPORT_SKIP_ADMIN_ACTION_EXPORT_UI
         # should be set instead
-        response = self.client.post(
+        response = self._post_url_response(
             self.change_url, data={"_export-item": "Export", "name": self.cat1.name}
         )
         target_re = r"This exporter will export the following fields:"
@@ -373,7 +385,7 @@ class TestSkipExportFormFromChangeForm(AdminTestMixin, TestCase):
             new_callable=PropertyMock,
             return_value=True,
         ):
-            response = self.client.post(
+            response = self._post_url_response(
                 self.change_url, data={"_export-item": "Export", "name": self.cat1.name}
             )
             target_re = r"This exporter will export the following fields:"

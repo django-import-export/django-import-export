@@ -18,6 +18,7 @@ from django.utils.module_loading import import_string
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_POST
 
+from .formats.base_formats import BINARY_FORMATS
 from .forms import ConfirmImportForm, ImportForm, SelectableFieldsExportForm
 from .mixins import BaseExportMixin, BaseImportMixin
 from .results import RowResult
@@ -59,9 +60,9 @@ class ImportExportMixinBase:
 
     def changelist_view(self, request, extra_context=None):
         extra_context = extra_context or {}
-        extra_context[
-            "ie_base_change_list_template"
-        ] = self.ie_base_change_list_template
+        extra_context["ie_base_change_list_template"] = (
+            self.ie_base_change_list_template
+        )
         return super().changelist_view(request, extra_context)
 
 
@@ -127,7 +128,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
 
         opts = self.opts
         codename = get_permission_codename(IMPORT_PERMISSION_CODE, opts)
-        return request.user.has_perm("%s.%s" % (opts.app_label, codename))
+        return request.user.has_perm(f"{opts.app_label}.{codename}")
 
     def get_urls(self):
         urls = super().get_urls()
@@ -176,6 +177,17 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
             tmp_storage.remove()
 
             return self.process_result(result, request)
+        else:
+            context = self.admin_site.each_context(request)
+            context.update(
+                {
+                    "title": _("Import"),
+                    "confirm_form": confirm_form,
+                    "opts": self.model._meta,
+                    "errors": confirm_form.errors,
+                }
+            )
+            return TemplateResponse(request, [self.import_template_name], context)
 
     def process_dataset(
         self,
@@ -221,14 +233,17 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
                 }
                 content_type_id = ContentType.objects.get_for_model(self.model).pk
                 for row in result:
-                    if (
-                        row.import_type != row.IMPORT_TYPE_ERROR
-                        and row.import_type != row.IMPORT_TYPE_SKIP
-                    ):
+                    if row.import_type in logentry_map.keys():
                         with warnings.catch_warnings():
-                            warnings.filterwarnings(
-                                "ignore", category=PendingDeprecationWarning
-                            )
+                            if django.VERSION >= (5,):
+                                from django.utils.deprecation import (
+                                    RemovedInDjango60Warning,
+                                )
+
+                                cat = RemovedInDjango60Warning
+                            else:
+                                cat = DeprecationWarning
+                            warnings.simplefilter("ignore", category=cat)
                             LogEntry.objects.log_action(
                                 user_id=request.user.pk,
                                 content_type_id=content_type_id,
@@ -403,7 +418,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
             read_mode=input_format.get_read_mode(),
             **self.get_tmp_storage_class_kwargs(),
         )
-        data = bytes()
+        data = b""
         for chunk in import_file.chunks():
             data += chunk
 
@@ -446,7 +461,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
                 # rollback_on_validation_errors is set to True so that we rollback on
                 # validation errors. If this is not done validation errors would be
                 # silently skipped.
-                data = bytes()
+                data = b""
                 for chunk in import_file.chunks():
                     data += chunk
                 try:
@@ -570,8 +585,11 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
             RowResult.IMPORT_TYPE_DELETE: DELETION,
         }
         for import_type, instances in rows.items():
-            action_flag = logentry_map[import_type]
-            self._create_log_entry(user_pk, rows[import_type], import_type, action_flag)
+            if import_type in logentry_map.keys():
+                action_flag = logentry_map[import_type]
+                self._create_log_entry(
+                    user_pk, rows[import_type], import_type, action_flag
+                )
 
     def _create_log_entry(self, user_pk, rows, import_type, action_flag):
         if len(rows) > 0:
@@ -626,11 +644,14 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
 
         opts = self.opts
         codename = get_permission_codename(EXPORT_PERMISSION_CODE, opts)
-        return request.user.has_perm("%s.%s" % (opts.app_label, codename))
+        return request.user.has_perm(f"{opts.app_label}.{codename}")
 
     def get_export_queryset(self, request):
         """
-        Returns export queryset.
+        Returns export queryset. The queryset is obtained by calling
+        ModelAdmin
+        `get_queryset()
+        <https://docs.djangoproject.com/en/dev/ref/contrib/admin/#django.contrib.admin.ModelAdmin.get_queryset>`_.
 
         Default implementation respects applied search and filters.
         """
@@ -687,9 +708,11 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
         if not self.has_export_permission(request):
             raise PermissionDenied
 
+        force_native_type = type(file_format) in BINARY_FORMATS
         data = self.get_data_for_export(
             request,
             queryset,
+            force_native_type=force_native_type,
             **kwargs,
         )
         export_data = file_format.export_data(data)
@@ -750,7 +773,7 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
                 return self._do_file_export(
                     file_format, request, queryset, export_form=form
                 )
-            except FieldError as e:
+            except (ValueError, FieldError) as e:
                 messages.error(request, str(e))
 
         context = self.init_request_context_data(request, form)
@@ -796,7 +819,7 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
         )
         content_type = file_format.get_content_type()
         response = HttpResponse(export_data, content_type=content_type)
-        response["Content-Disposition"] = 'attachment; filename="%s"' % (
+        response["Content-Disposition"] = 'attachment; filename="{}"'.format(
             self.get_export_filename(request, queryset, file_format),
         )
         post_export.send(sender=None, model=self.model)
@@ -837,7 +860,9 @@ class ExportActionMixin(ExportMixin):
 
     def change_view(self, request, object_id, form_url="", extra_context=None):
         extra_context = extra_context or {}
-        extra_context["show_change_form_export"] = self.show_change_form_export
+        extra_context["show_change_form_export"] = (
+            self.show_change_form_export and self.has_export_permission(request)
+        )
         return super().change_view(
             request,
             object_id,
@@ -895,13 +920,14 @@ class ExportActionMixin(ExportMixin):
         Adds the export action to the list of available actions.
         """
         actions = super().get_actions(request)
-        actions.update(
-            export_admin_action=(
-                type(self).export_admin_action,
-                "export_admin_action",
-                _("Export selected %(verbose_name_plural)s"),
+        if self.has_export_permission(request):
+            actions.update(
+                export_admin_action=(
+                    type(self).export_admin_action,
+                    "export_admin_action",
+                    _("Export selected %(verbose_name_plural)s"),
+                )
             )
-        )
         return actions
 
 

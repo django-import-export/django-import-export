@@ -165,7 +165,7 @@ Once you have cloned and checked out the repository, you can install a new devel
 
   python -m venv django-import-export-venv
   source django-import-export-venv/bin/activate
-  pip install -r requirements/base.txt -r requirements/test.txt
+  pip install .[tests]
 
 Run tests
 ^^^^^^^^^

@@ -192,6 +192,17 @@ requested from an :ref:`Admin UI action<export_via_admin_action>`, or from the '
 If set to ``True``, strings will be sanitized by removing any leading '=' character.  This is to prevent execution of
 Excel formulae.  By default this is ``False``.
 
+.. _import_export_escape_illegal_chars_on_export:
+
+``IMPORT_EXPORT_ESCAPE_ILLEGAL_CHARS_ON_EXPORT``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If an export to XLSX format generates
+`IllegalCharacterError <https://openpyxl.readthedocs.io/en/latest/api/openpyxl.utils.exceptions.html>`_, then
+if this flag is ``True`` strings will be sanitized by removing any invalid Excel characters,
+replacing them with the unicode replacement character.
+By default this is ``False``, meaning that ``IllegalCharacterError`` is caught and re-raised as ``ValueError``.
+
 .. _import_export_formats:
 
 ``IMPORT_EXPORT_FORMATS``
@@ -206,6 +217,8 @@ The values must be those provided in ``import_export.formats.base_formats`` e.g
     # settings.py
     from import_export.formats.base_formats import XLSX
     IMPORT_EXPORT_FORMATS = [XLSX]
+
+This can be set for a specific model admin by declaring the ``formats`` attribute.
 
 .. _import_formats:
 
@@ -222,6 +235,8 @@ The values must be those provided in ``import_export.formats.base_formats`` e.g
     from import_export.formats.base_formats import CSV, XLSX
     IMPORT_FORMATS = [CSV, XLSX]
 
+This can be set for a specific model admin by declaring the ``import_formats`` attribute.
+
 .. _export_formats:
 
 ``EXPORT_FORMATS``
@@ -236,6 +251,18 @@ The values must be those provided in ``import_export.formats.base_formats`` e.g
     # settings.py
     from import_export.formats.base_formats import XLSX
     EXPORT_FORMATS = [XLSX]
+
+This can be set for a specific model admin by declaring the ``export_formats`` attribute.
+
+.. _import_export_import_ignore_blank_lines:
+
+``IMPORT_EXPORT_IMPORT_IGNORE_BLANK_LINES``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If set to ``True``, rows without content will be ignored in XSLX imports.
+This prevents an old Excel 1.0 bug which causes openpyxl ``max_rows`` to be counting all
+logical empty rows. Some editors (like LibreOffice) might add :math:`2^{20}` empty rows to the
+file, which causes a significant slowdown. By default this is ``False``.
 
 .. _exampleapp:
 
@@ -268,6 +295,7 @@ You can adjust the log level to see output as required.
 This is an example configuration to be placed in your application settings::
 
     LOGGING = {
+        "version" 1,
         "handlers": {
             "console": {"level": "DEBUG", "class": "logging.StreamHandler"},
         },

@@ -19,18 +19,27 @@ class FormTest(TestCase):
             forms.ImportExportFormBase(["format1"], [])
 
     def test_formbase_init_one_resource(self):
-        resource_list = [resources.ModelResource]
-        form = forms.ImportExportFormBase([CSV], resource_list)
-        self.assertTrue("resource" in form.fields)
-        self.assertEqual("ModelResource", form.fields["resource"].value)
-        self.assertTrue(form.fields["resource"].widget.attrs["readonly"])
+        form = forms.ImportExportFormBase([CSV], [resources.ModelResource])
+        self.assertEqual(
+            form.fields["resource"].choices,
+            [(0, "ModelResource")],
+        )
+        self.assertEqual(form.initial["resource"], "0")
+        self.assertIsInstance(
+            form.fields["resource"].widget,
+            django.forms.HiddenInput,
+        )
 
     def test_formbase_init_two_resources(self):
-        resource_list = [resources.ModelResource, MyResource]
-        form = forms.ImportExportFormBase([CSV], resource_list)
+        form = forms.ImportExportFormBase([CSV], [resources.ModelResource, MyResource])
         self.assertEqual(
             form.fields["resource"].choices,
             [(0, "ModelResource"), (1, "My super resource")],
+        )
+        self.assertNotIn("resource", form.initial)
+        self.assertIsInstance(
+            form.fields["resource"].widget,
+            django.forms.Select,
         )
 
 

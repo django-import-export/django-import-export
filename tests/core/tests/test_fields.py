@@ -1,6 +1,9 @@
 from datetime import date
 from unittest import mock
 
+import tablib
+from core.models import Book
+from core.tests.resources import BookResource
 from django.test import TestCase
 
 from import_export import fields
@@ -110,6 +113,14 @@ class FieldTest(TestCase):
         method_name = field.get_dehydrate_method(resource_field_name)
         self.assertEqual(method_name, custom_dehydrate_method)
 
+    def test_get_dehydrate_method_with_callable(self):
+        field = fields.Field(
+            attribute="foo", column_name="bar", dehydrate_method=lambda x: x
+        )
+        resource_field_name = "field"
+        method = field.get_dehydrate_method(resource_field_name)
+        self.assertTrue(callable(method))
+
     def testget_dehydrate_method_without_params_raises_attribute_error(self):
         field = fields.Field(attribute="foo", column_name="bar")
 
@@ -160,3 +171,26 @@ class FieldTest(TestCase):
     def test_get_value_with_no_attribute(self):
         self.field.attribute = None
         self.assertIsNone(self.field.get_value(self.obj))
+
+    def test_import_null_django_CharField_saved_as_empty_string(self):
+        # issue 1485
+        resource = BookResource()
+        self.assertTrue(resource._meta.model.author_email.field.blank)
+        self.assertFalse(resource._meta.model.author_email.field.null)
+        headers = ["id", "author_email"]
+        row = [1, None]
+        dataset = tablib.Dataset(row, headers=headers)
+        resource.import_data(dataset, raise_errors=True)
+        book = Book.objects.get(id=1)
+        self.assertEqual("", book.author_email)
+
+    def test_import_empty_django_CharField_saved_as_empty_string(self):
+        resource = BookResource()
+        self.assertTrue(resource._meta.model.author_email.field.blank)
+        self.assertFalse(resource._meta.model.author_email.field.null)
+        headers = ["id", "author_email"]
+        row = [1, ""]
+        dataset = tablib.Dataset(row, headers=headers)
+        resource.import_data(dataset, raise_errors=True)
+        book = Book.objects.get(id=1)
+        self.assertEqual("", book.author_email)

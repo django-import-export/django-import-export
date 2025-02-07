@@ -26,10 +26,10 @@ class ErrorHandlingTest(TestCase):
     def test_ImproperlyConfigured_if_use_transactions_set_when_not_supported(
         self, mock_db_connections
     ):
-        class Features(object):
+        class Features:
             supports_transactions = False
 
-        class DummyConnection(object):
+        class DummyConnection:
             features = Features()
 
         dummy_connection = DummyConnection()
