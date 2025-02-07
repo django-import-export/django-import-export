@@ -211,8 +211,11 @@ class XLSX(TablibFormat):
         for row in rows:
             row_values = [cell.value for cell in row]
 
-            # do not add empty rows to dataset
-            if not all(value is None for value in row_values):
+            if getattr(settings, "IMPORT_EXPORT_IMPORT_IGNORE_BLANK_LINES", False):
+                # do not add empty rows to dataset
+                if not all(value is None for value in row_values):
+                    dataset.append(row_values)
+            else:
                 dataset.append(row_values)
         return dataset
 
