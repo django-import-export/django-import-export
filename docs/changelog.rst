@@ -9,6 +9,7 @@ Changelog
 ------------------
 
 - Add flag to ignore empty rows in XLSX import (`2028 <https://github.com/django-import-export/django-import-export/issues/2028>`_)
+- Add support for Django 5.2 (`2037 <https://github.com/django-import-export/django-import-export/pull/2037>`_)
 
 4.3.5 (2025-02-01)
 ------------------
