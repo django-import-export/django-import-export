@@ -5,6 +5,11 @@ Changelog
 
     If upgrading from v3, v4 introduces breaking changes.  Please refer to :doc:`release notes<release_notes>`.
 
+5.0.0 (unreleased)
+------------------
+
+- Removed the deprecated :meth:`~import_export.admin.ExportMixin.get_valid_export_item_pks` method in favour of :meth:`~import_export.admin.ExportMixin.get_queryset`
+
 4.3.6 (unreleased)
 ------------------
 
