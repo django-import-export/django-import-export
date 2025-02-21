@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-12-02 12:47+0000\n"
+"POT-Creation-Date: 2025-02-21 11:06+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -40,13 +40,17 @@ msgstr "{} yeni ve {} güncellenen {} ile içe aktarma bitti"
 msgid ""
 "%(exc_name)s encountered while trying to read file. Ensure you have chosen "
 "the correct format for the file."
-msgstr "%(exc_name)s dosyayı okumaya çalışırken karşılaşıldı. Dosya için doğru biçimi seçtiğinizden emin olun."
+msgstr ""
+"%(exc_name)s dosyayı okumaya çalışırken karşılaşıldı. Dosya için doğru "
+"biçimi seçtiğinizden emin olun."
 
 #: admin.py:504
 msgid ""
 "No valid data to import. Ensure your file has the correct headers or data "
 "for import."
-msgstr "Geçerli içe aktarılacak veri yok. Dosyanızın doğru başlıkları veya içe aktarım için verileri olduğundan emin olun."
+msgstr ""
+"Geçerli içe aktarılacak veri yok. Dosyanızın doğru başlıkları veya içe "
+"aktarım için verileri olduğundan emin olun."
 
 #: admin.py:819 templates/admin/import_export/change_form.html:8
 #: templates/admin/import_export/change_list_export_item.html:5
@@ -59,7 +63,7 @@ msgstr "Dışa aktar"
 msgid "Export selected %(verbose_name_plural)s"
 msgstr "Seçililenleri dışa aktar %(verbose_name_plural)s"
 
-#: formats/base_formats.py:236
+#: formats/base_formats.py:245
 msgid "export failed due to IllegalCharacterError"
 msgstr "dışa aktarma, IllegalCharacterError nedeniyle başarısız oldu"
 
@@ -89,14 +93,18 @@ msgstr "\"%(resource_name)s\" için en az 1 alan seçin"
 msgid ""
 "The following fields are declared in 'import_id_fields' but are not present "
 "in the resource fields: %s"
-msgstr "Aşağıdaki alanlar 'import_id_fields' içinde belirtilmiş ancak kaynak alanlarında bulunmamaktadır: %s"
+msgstr ""
+"Aşağıdaki alanlar 'import_id_fields' içinde belirtilmiş ancak kaynak "
+"alanlarında bulunmamaktadır: %s"
 
 #: resources.py:1186
 #, python-format
 msgid ""
 "The following fields are declared in 'import_id_fields' but are not present "
 "in the file headers: %s"
-msgstr "Aşağıdaki alanlar 'import_id_fields' içinde belirtilmiş ancak dosya başlıklarında bulunmamaktadır: %s"
+msgstr ""
+"Aşağıdaki alanlar 'import_id_fields' içinde belirtilmiş ancak dosya "
+"başlıklarında bulunmamaktadır: %s"
 
 #: results.py:150
 #, python-format
@@ -117,8 +125,12 @@ msgid_plural ""
 "\n"
 "        Export %(len)s selected items.\n"
 "      "
-msgstr[0] "\n Dışa aktar %(len)s seçilen öğe."
-msgstr[1] "\n Dışa aktar %(len)s seçilen öğeler."
+msgstr[0] ""
+"\n"
+" Dışa aktar %(len)s seçilen öğe."
+msgstr[1] ""
+"\n"
+" Dışa aktar %(len)s seçilen öğeler."
 
 #: templates/admin/import_export/export.html:51
 #: templates/admin/import_export/resource_fields_list.html:5

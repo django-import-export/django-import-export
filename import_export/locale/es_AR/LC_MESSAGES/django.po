@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-12-02 12:47+0000\n"
+"POT-Creation-Date: 2025-02-21 11:06+0000\n"
 "PO-Revision-Date: 2023-09-22 11:53-0300\n"
 "Last-Translator: Santiago Muñoz <smunoz@mythologylabs.com.uy>\n"
 "Language-Team: Spanish (Argentina)\n"
@@ -62,7 +62,7 @@ msgstr "Exportar"
 msgid "Export selected %(verbose_name_plural)s"
 msgstr "Exportar %(verbose_name_plural)s seleccionados"
 
-#: formats/base_formats.py:236
+#: formats/base_formats.py:245
 msgid "export failed due to IllegalCharacterError"
 msgstr ""
 
