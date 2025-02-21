@@ -30,10 +30,8 @@ msgid "%s through import_export"
 msgstr "%s 通过 django-import-export导入"
 
 #: admin.py:262
-#, fuzzy
-#| msgid "Import finished, with {} new and {} updated {}."
 msgid "Import finished: {} new, {} updated, {} deleted and {} skipped {}."
-msgstr "导入成功，新增{}条记录，更新{}条记录。"
+msgstr "导入成功，新增{}条记录，更新{}条记录，删除{}条记录，忽略{}条记录。"
 
 #: admin.py:431
 #, python-format
@@ -121,10 +119,8 @@ msgstr[0] ""
 
 #: templates/admin/import_export/export.html:51
 #: templates/admin/import_export/resource_fields_list.html:5
-#, fuzzy
-#| msgid "This importer will import the following fields: "
 msgid "This exporter will export the following fields: "
-msgstr "此次将导入以下字段："
+msgstr "此次将导出以下字段："
 
 #: templates/admin/import_export/export.html:85
 #: templates/admin/import_export/import.html:73
