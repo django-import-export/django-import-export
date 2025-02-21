@@ -5,10 +5,11 @@ Changelog
 
     If upgrading from v3, v4 introduces breaking changes.  Please refer to :doc:`release notes<release_notes>`.
 
-4.3.6 (unreleased)
+4.3.6 (2025-02-21)
 ------------------
 
 - Add flag to ignore empty rows in XLSX import (`2028 <https://github.com/django-import-export/django-import-export/issues/2028>`_)
+- Fix Chinese translation (`2040 <https://github.com/django-import-export/django-import-export/issues/2040>`_)
 
 4.3.5 (2025-02-01)
 ------------------
