@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-12-02 12:47+0000\n"
+"POT-Creation-Date: 2025-02-21 11:06+0000\n"
 "PO-Revision-Date: 2015-08-30 20:32+0100\n"
 "Last-Translator: Christian Galeffi <chri@gallochri.com>\n"
 "Language-Team: Italian <kde-i18n-it@kde.org>\n"
@@ -56,7 +56,7 @@ msgstr "Esportare"
 msgid "Export selected %(verbose_name_plural)s"
 msgstr "Esporta selezionati %(verbose_name_plural)s"
 
-#: formats/base_formats.py:236
+#: formats/base_formats.py:245
 msgid "export failed due to IllegalCharacterError"
 msgstr ""
 

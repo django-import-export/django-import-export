@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 0.0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-12-02 12:47+0000\n"
+"POT-Creation-Date: 2025-02-21 11:06+0000\n"
 "PO-Revision-Date: 2021-03-09 00:29+0030\n"
 "Last-Translator: MohammadReza Sadegh Zadeh <org.m.sdz@gmail.com>\n"
 "Language-Team: Persain/Farsi <kde-i18n-it@kde.org>\n"
@@ -63,7 +63,7 @@ msgstr "خروجی"
 msgid "Export selected %(verbose_name_plural)s"
 msgstr "خروجی %(verbose_name_plural)s انتخاب شده"
 
-#: formats/base_formats.py:236
+#: formats/base_formats.py:245
 msgid "export failed due to IllegalCharacterError"
 msgstr ""
 

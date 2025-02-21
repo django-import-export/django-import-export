@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-12-02 12:47+0000\n"
+"POT-Creation-Date: 2025-02-21 11:06+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: hao wang <173300430@qq.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -57,7 +57,7 @@ msgstr "导出"
 msgid "Export selected %(verbose_name_plural)s"
 msgstr "导出选中的 %(verbose_name_plural)s"
 
-#: formats/base_formats.py:236
+#: formats/base_formats.py:245
 msgid "export failed due to IllegalCharacterError"
 msgstr ""
 
