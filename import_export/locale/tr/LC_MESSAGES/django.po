@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-02-21 11:06+0000\n"
+"POT-Creation-Date: 2025-02-24 11:40-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,24 +18,23 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
-#: admin.py:184 admin.py:548
-#: templates/admin/import_export/change_list_import_item.html:5
-#: templates/admin/import_export/import.html:19
+#: admin.py templates/admin/import_export/change_list_import_item.html
+#: templates/admin/import_export/import.html
 msgid "Import"
 msgstr "İçe aktar"
 
-#: admin.py:254 admin.py:600
+#: admin.py
 #, python-format
 msgid "%s through import_export"
 msgstr "%s vasıtasıyla import_export"
 
-#: admin.py:262
+#: admin.py
 #, fuzzy
 #| msgid "Import finished, with {} new and {} updated {}."
 msgid "Import finished: {} new, {} updated, {} deleted and {} skipped {}."
 msgstr "{} yeni ve {} güncellenen {} ile içe aktarma bitti"
 
-#: admin.py:431
+#: admin.py
 #, python-format
 msgid ""
 "%(exc_name)s encountered while trying to read file. Ensure you have chosen "
@@ -44,7 +43,7 @@ msgstr ""
 "%(exc_name)s dosyayı okumaya çalışırken karşılaşıldı. Dosya için doğru "
 "biçimi seçtiğinizden emin olun."
 
-#: admin.py:504
+#: admin.py
 msgid ""
 "No valid data to import. Ensure your file has the correct headers or data "
 "for import."
@@ -52,43 +51,43 @@ msgstr ""
 "Geçerli içe aktarılacak veri yok. Dosyanızın doğru başlıkları veya içe "
 "aktarım için verileri olduğundan emin olun."
 
-#: admin.py:819 templates/admin/import_export/change_form.html:8
-#: templates/admin/import_export/change_list_export_item.html:5
-#: templates/admin/import_export/export.html:12
+#: admin.py templates/admin/import_export/change_form.html
+#: templates/admin/import_export/change_list_export_item.html
+#: templates/admin/import_export/export.html
 msgid "Export"
 msgstr "Dışa aktar"
 
-#: admin.py:952
+#: admin.py
 #, python-format
 msgid "Export selected %(verbose_name_plural)s"
 msgstr "Seçililenleri dışa aktar %(verbose_name_plural)s"
 
-#: formats/base_formats.py:245
+#: formats/base_formats.py
 msgid "export failed due to IllegalCharacterError"
 msgstr "dışa aktarma, IllegalCharacterError nedeniyle başarısız oldu"
 
-#: forms.py:15
+#: forms.py
 msgid "Resource"
 msgstr "Kaynak"
 
-#: forms.py:20
+#: forms.py
 msgid "Format"
 msgstr "Dosya biçimi"
 
-#: forms.py:56
+#: forms.py
 msgid "File to import"
 msgstr "İçe alınacak dosya"
 
-#: forms.py:216
+#: forms.py
 msgid "Form is not validated, call `is_valid` first"
 msgstr "Form doğrulanmadı, önce `is_valid` çağırın"
 
-#: forms.py:268
+#: forms.py
 #, python-format
 msgid "Select at least 1 field for \"%(resource_name)s\" to export"
 msgstr "\"%(resource_name)s\" için en az 1 alan seçin"
 
-#: resources.py:1171
+#: resources.py
 #, python-format
 msgid ""
 "The following fields are declared in 'import_id_fields' but are not present "
@@ -97,7 +96,7 @@ msgstr ""
 "Aşağıdaki alanlar 'import_id_fields' içinde belirtilmiş ancak kaynak "
 "alanlarında bulunmamaktadır: %s"
 
-#: resources.py:1186
+#: resources.py
 #, python-format
 msgid ""
 "The following fields are declared in 'import_id_fields' but are not present "
@@ -106,45 +105,35 @@ msgstr ""
 "Aşağıdaki alanlar 'import_id_fields' içinde belirtilmiş ancak dosya "
 "başlıklarında bulunmamaktadır: %s"
 
-#: results.py:150
+#: results.py
 #, python-format
 msgid "call to force_str() on instance failed: %s"
 msgstr "force_str() çağrısı örnekte başarısız oldu: %s"
 
-#: templates/admin/import_export/base.html:11
+#: templates/admin/import_export/base.html
 msgid "Home"
 msgstr "Ana sayfa"
 
-#: templates/admin/import_export/export.html:24
+#: templates/admin/import_export/export.html
 #, python-format
-msgid ""
-"\n"
-"        Export %(len)s selected item.\n"
-"        "
-msgid_plural ""
-"\n"
-"        Export %(len)s selected items.\n"
-"      "
-msgstr[0] ""
-"\n"
-" Dışa aktar %(len)s seçilen öğe."
-msgstr[1] ""
-"\n"
-" Dışa aktar %(len)s seçilen öğeler."
+msgid "Export %(len)s selected item."
+msgid_plural "Export %(len)s selected items."
+msgstr[0] "Dışa aktar %(len)s seçilen öğe."
+msgstr[1] "Dışa aktar %(len)s seçilen öğeler."
 
-#: templates/admin/import_export/export.html:51
-#: templates/admin/import_export/resource_fields_list.html:5
+#: templates/admin/import_export/export.html
+#: templates/admin/import_export/resource_fields_list.html
 #, fuzzy
 #| msgid "This importer will import the following fields: "
 msgid "This exporter will export the following fields: "
 msgstr "Bu içe aktarıcı aşağıdaki alanları içe aktaracaktır: "
 
-#: templates/admin/import_export/export.html:85
-#: templates/admin/import_export/import.html:73
+#: templates/admin/import_export/export.html
+#: templates/admin/import_export/import.html
 msgid "Submit"
 msgstr "Kaydet"
 
-#: templates/admin/import_export/import.html:30
+#: templates/admin/import_export/import.html
 msgid ""
 "Below is a preview of data to be imported. If you are satisfied with the "
 "results, click 'Confirm import'"
@@ -152,24 +141,23 @@ msgstr ""
 "Aşağıda içe aktarılacak verilerin önizlemesi verilmiştir. Sonuçlardan "
 "memnunsanız 'İçe aktarmayı onayla'yı tıklayın."
 
-#: templates/admin/import_export/import.html:33
+#: templates/admin/import_export/import.html
 msgid "Confirm import"
 msgstr "İçe aktarmayı onayla"
 
-#: templates/admin/import_export/import.html:84
-#: templates/admin/import_export/import.html:125
+#: templates/admin/import_export/import.html
 msgid "Errors"
 msgstr "Hatalar"
 
-#: templates/admin/import_export/import.html:98
+#: templates/admin/import_export/import.html
 msgid "Line number"
 msgstr "Satır numarası"
 
-#: templates/admin/import_export/import.html:117
+#: templates/admin/import_export/import.html
 msgid "Some rows failed to validate"
 msgstr "Bazı satırlar doğrulanamadı"
 
-#: templates/admin/import_export/import.html:119
+#: templates/admin/import_export/import.html
 msgid ""
 "Please correct these errors in your data where possible, then reupload it "
 "using the form above."
@@ -177,43 +165,43 @@ msgstr ""
 "Lütfen verilerinizdeki bu hataları olabildiğince düzeltin, sonra yukarıdaki "
 "formu kullanarak tekrar yükleyin."
 
-#: templates/admin/import_export/import.html:124
+#: templates/admin/import_export/import.html
 msgid "Row"
 msgstr "Satır"
 
-#: templates/admin/import_export/import.html:151
+#: templates/admin/import_export/import.html
 msgid "Non field specific"
 msgstr "Alan olmayana özgü"
 
-#: templates/admin/import_export/import.html:174
+#: templates/admin/import_export/import.html
 msgid "Preview"
 msgstr "Ön izleme"
 
-#: templates/admin/import_export/import.html:189
+#: templates/admin/import_export/import.html
 msgid "New"
 msgstr "Yeni"
 
-#: templates/admin/import_export/import.html:191
+#: templates/admin/import_export/import.html
 msgid "Skipped"
 msgstr "Atlandı"
 
-#: templates/admin/import_export/import.html:193
+#: templates/admin/import_export/import.html
 msgid "Delete"
 msgstr "Sil"
 
-#: templates/admin/import_export/import.html:195
+#: templates/admin/import_export/import.html
 msgid "Update"
 msgstr "Güncelle"
 
-#: templates/admin/import_export/resource_fields_list.html:7
+#: templates/admin/import_export/resource_fields_list.html
 msgid "This importer will import the following fields: "
 msgstr "Bu içe aktarıcı aşağıdaki alanları içe aktaracaktır: "
 
-#: widgets.py:369
+#: widgets.py
 msgid "Value could not be parsed."
 msgstr "Değer ayrıştırılamadı."
 
-#: widgets.py:497
+#: widgets.py
 msgid "use_natural_foreign_keys and key_is_id cannot both be True"
 msgstr "use_natural_foreign_keys ve key_is_id aynı anda True olamaz"
 
