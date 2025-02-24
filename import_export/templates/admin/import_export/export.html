@@ -21,7 +21,7 @@
     {# export request has originated from an Admin UI action #}
     {% if form.initial.export_items %}
       <p>
-      {% blocktranslate count len=form.initial.export_items|length %}
+      {% blocktranslate count len=form.initial.export_items|length trimmed %}
         Export {{ len }} selected item.
         {% plural %}
         Export {{ len }} selected items.
