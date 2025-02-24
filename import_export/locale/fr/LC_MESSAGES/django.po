@@ -64,7 +64,7 @@ msgstr "Exporter %(verbose_name_plural)s selectionné(e)s"
 
 #: formats/base_formats.py
 msgid "export failed due to IllegalCharacterError"
-msgstr "export échoué à cause de IllegalCharacterError"
+msgstr "exportation échouée à cause de IllegalCharacterError"
 
 #: forms.py
 msgid "Resource"
