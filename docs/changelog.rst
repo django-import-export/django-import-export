@@ -5,6 +5,11 @@ Changelog
 
     If upgrading from v3, v4 introduces breaking changes.  Please refer to :doc:`release notes<release_notes>`.
 
+unreleased
+----------
+
+- Update French translation (`2042 <https://github.com/django-import-export/django-import-export/pull/2042>`_)
+
 4.3.6 (2025-02-21)
 ------------------
 

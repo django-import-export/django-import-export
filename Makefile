@@ -31,7 +31,7 @@ testp: ## run tests in parallel with the default Python
 	$(RUN_TEST_COMMAND) --parallel
 
 messages: ## generate locale file translations
-	cd import_export && django-admin makemessages -a && django-admin compilemessages && cd ..
+	cd import_export && django-admin makemessages --add-location=file -a && django-admin compilemessages && cd ..
 
 coverage: ## generates codecov report
 	coverage run tests/manage.py test core

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-02-21 11:06+0000\n"
+"POT-Creation-Date: 2025-02-24 11:40-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,188 +18,191 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
-#: admin.py:184 admin.py:548
-#: templates/admin/import_export/change_list_import_item.html:5
-#: templates/admin/import_export/import.html:19
+#: admin.py templates/admin/import_export/change_list_import_item.html
+#: templates/admin/import_export/import.html
 msgid "Import"
 msgstr "Importer"
 
-#: admin.py:254 admin.py:600
+#: admin.py
 #, python-format
 msgid "%s through import_export"
-msgstr ""
+msgstr "%s via import_export"
 
-#: admin.py:262
+#: admin.py
 msgid "Import finished: {} new, {} updated, {} deleted and {} skipped {}."
 msgstr ""
+"Importation terminée: {} nouveaux, {} modifiés, {} supprimés et {} sautés "
+"pour les {}."
 
-#: admin.py:431
+#: admin.py
 #, python-format
 msgid ""
 "%(exc_name)s encountered while trying to read file. Ensure you have chosen "
 "the correct format for the file."
 msgstr ""
+"Erreur %(exc_name)s pendant la lecture du fichier. Assurez-vous d’avoir "
+"choisi le bon format pour le fichier."
 
-#: admin.py:504
+#: admin.py
 msgid ""
 "No valid data to import. Ensure your file has the correct headers or data "
 "for import."
 msgstr ""
+"Pas de données valides importables. Assurez-vous que le fichier contient des "
+"en-têtes ou données correctes pour l’importation."
 
-#: admin.py:819 templates/admin/import_export/change_form.html:8
-#: templates/admin/import_export/change_list_export_item.html:5
-#: templates/admin/import_export/export.html:12
+#: admin.py templates/admin/import_export/change_form.html
+#: templates/admin/import_export/change_list_export_item.html
+#: templates/admin/import_export/export.html
 msgid "Export"
 msgstr "Exporter"
 
-#: admin.py:952
+#: admin.py
 #, python-format
 msgid "Export selected %(verbose_name_plural)s"
-msgstr "Exporter %(verbose_name_plural)s selectionnés"
+msgstr "Exporter %(verbose_name_plural)s selectionné(e)s"
 
-#: formats/base_formats.py:245
+#: formats/base_formats.py
 msgid "export failed due to IllegalCharacterError"
-msgstr ""
+msgstr "exportation échouée à cause de IllegalCharacterError"
 
-#: forms.py:15
+#: forms.py
 msgid "Resource"
-msgstr ""
+msgstr "Ressource"
 
-#: forms.py:20
+#: forms.py
 msgid "Format"
 msgstr "Format"
 
-#: forms.py:56
+#: forms.py
 msgid "File to import"
 msgstr "Fichier à importer"
 
-#: forms.py:216
+#: forms.py
 msgid "Form is not validated, call `is_valid` first"
-msgstr ""
+msgstr "Le formulaire n’est pas validé, appeler d’abord `is_valid`"
 
-#: forms.py:268
+#: forms.py
 #, python-format
 msgid "Select at least 1 field for \"%(resource_name)s\" to export"
-msgstr ""
+msgstr "Sélectionner au moins 1 champ pour \"%(resource_name)s\" pour exporter"
 
-#: resources.py:1171
+#: resources.py
 #, python-format
 msgid ""
 "The following fields are declared in 'import_id_fields' but are not present "
 "in the resource fields: %s"
 msgstr ""
+"Les champs suivants sont déclarés dans 'import_id_fields' mais ne sont pas présents "
+"dans les champs de la ressource: %s"
 
-#: resources.py:1186
+#: resources.py
 #, python-format
 msgid ""
 "The following fields are declared in 'import_id_fields' but are not present "
 "in the file headers: %s"
 msgstr ""
+"Les champs suivants sont déclarés dans 'import_id_fields' mais ne sont pas présents "
+"dans les en-têtes du fichier: %s"
 
-#: results.py:150
+#: results.py
 #, python-format
 msgid "call to force_str() on instance failed: %s"
-msgstr ""
+msgstr "un appel à force_str() sur une instance a échoué: %s"
 
-#: templates/admin/import_export/base.html:11
+#: templates/admin/import_export/base.html
 msgid "Home"
 msgstr "Accueil"
 
-#: templates/admin/import_export/export.html:24
+#: templates/admin/import_export/export.html
 #, python-format
-msgid ""
-"\n"
-"        Export %(len)s selected item.\n"
-"        "
-msgid_plural ""
-"\n"
-"        Export %(len)s selected items.\n"
-"      "
-msgstr[0] ""
-msgstr[1] ""
+msgid "Export %(len)s selected item."
+msgid_plural "Export %(len)s selected items."
+msgstr[0] "Exporter %(len)s élément sélectionné."
+msgstr[1] "Exporter %(len)s éléments sélectionnés."
 
-#: templates/admin/import_export/export.html:51
-#: templates/admin/import_export/resource_fields_list.html:5
-#, fuzzy
-#| msgid "This importer will import the following fields: "
+#: templates/admin/import_export/export.html
+#: templates/admin/import_export/resource_fields_list.html
 msgid "This exporter will export the following fields: "
-msgstr "Cet importateur va importer les champs suivants: "
+msgstr "Cet exportateur va exporter les champs suivants: "
 
-#: templates/admin/import_export/export.html:85
-#: templates/admin/import_export/import.html:73
+#: templates/admin/import_export/export.html
+#: templates/admin/import_export/import.html
 msgid "Submit"
 msgstr "Soumettre"
 
-#: templates/admin/import_export/import.html:30
+#: templates/admin/import_export/import.html
 msgid ""
 "Below is a preview of data to be imported. If you are satisfied with the "
 "results, click 'Confirm import'"
 msgstr ""
-"Voici un aperçu des données à importer. Si vous êtes satisfait des "
-"résultats, cliquez sur 'Confirmer l'importation'"
+"Voici un aperçu des données à importer. Si vous êtes satisfait(e) des "
+"résultats, cliquez sur 'Confirmer l’importation'"
 
-#: templates/admin/import_export/import.html:33
+#: templates/admin/import_export/import.html
 msgid "Confirm import"
-msgstr "Confirmer l'importation"
+msgstr "Confirmer l’importation"
 
-#: templates/admin/import_export/import.html:84
-#: templates/admin/import_export/import.html:125
+#: templates/admin/import_export/import.html
 msgid "Errors"
 msgstr "Erreurs"
 
-#: templates/admin/import_export/import.html:98
+#: templates/admin/import_export/import.html
 msgid "Line number"
 msgstr "Numéro de ligne"
 
-#: templates/admin/import_export/import.html:117
+#: templates/admin/import_export/import.html
 msgid "Some rows failed to validate"
-msgstr ""
+msgstr "Certaines lignes ont échoué à la validation"
 
-#: templates/admin/import_export/import.html:119
+#: templates/admin/import_export/import.html
 msgid ""
 "Please correct these errors in your data where possible, then reupload it "
 "using the form above."
 msgstr ""
+"Veuillez corriger ces erreurs dans les données si possible, puis envoyer à "
+"nouveau en utilisant le formulaire ci-dessus."
 
-#: templates/admin/import_export/import.html:124
+#: templates/admin/import_export/import.html
 msgid "Row"
-msgstr ""
+msgstr "Ligne"
 
-#: templates/admin/import_export/import.html:151
+#: templates/admin/import_export/import.html
 msgid "Non field specific"
-msgstr ""
+msgstr "Non spécifique à un champ"
 
-#: templates/admin/import_export/import.html:174
+#: templates/admin/import_export/import.html
 msgid "Preview"
 msgstr "Aperçu"
 
-#: templates/admin/import_export/import.html:189
+#: templates/admin/import_export/import.html
 msgid "New"
 msgstr "Nouveau"
 
-#: templates/admin/import_export/import.html:191
+#: templates/admin/import_export/import.html
 msgid "Skipped"
 msgstr "Ignoré"
 
-#: templates/admin/import_export/import.html:193
+#: templates/admin/import_export/import.html
 msgid "Delete"
 msgstr "Supprimer"
 
-#: templates/admin/import_export/import.html:195
+#: templates/admin/import_export/import.html
 msgid "Update"
 msgstr "Mettre à jour"
 
-#: templates/admin/import_export/resource_fields_list.html:7
+#: templates/admin/import_export/resource_fields_list.html
 msgid "This importer will import the following fields: "
 msgstr "Cet importateur va importer les champs suivants: "
 
-#: widgets.py:369
+#: widgets.py
 msgid "Value could not be parsed."
-msgstr ""
+msgstr "La valeur n’a pas pu être interprétée."
 
-#: widgets.py:497
+#: widgets.py
 msgid "use_natural_foreign_keys and key_is_id cannot both be True"
 msgstr ""
+"use_natural_foreign_keys et key_is_id ne peuvent pas être True en même temps"
 
 #~ msgid "You must select an export format."
 #~ msgstr "Vous devez sélectionner un format d'exportation."
