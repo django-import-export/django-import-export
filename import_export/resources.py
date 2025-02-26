@@ -206,18 +206,15 @@ class Resource(metaclass=DeclarativeMetaclass):
         """
         Creates objects by calling ``bulk_create``.
         """
-        try:
-            if len(self.create_instances) > 0:
-                if not using_transactions and dry_run:
-                    pass
-                else:
-                    self._meta.model.objects.bulk_create(
-                        self.create_instances, batch_size=batch_size
-                    )
-        except Exception as e:
-            self.handle_import_error(result, e, raise_errors)
-        finally:
-            self.create_instances.clear()
+        if len(self.create_instances) > 0 and (using_transactions or not dry_run):
+            try:
+                self._meta.model.objects.bulk_create(
+                    self.create_instances, batch_size=batch_size
+                )
+            except Exception as e:
+                self.handle_import_error(result, e, raise_errors)
+            finally:
+                self.create_instances.clear()
 
     def bulk_update(
         self, using_transactions, dry_run, raise_errors, batch_size=None, result=None
@@ -225,37 +222,31 @@ class Resource(metaclass=DeclarativeMetaclass):
         """
         Updates objects by calling ``bulk_update``.
         """
-        try:
-            if len(self.update_instances) > 0:
-                if not using_transactions and dry_run:
-                    pass
-                else:
-                    self._meta.model.objects.bulk_update(
-                        self.update_instances,
-                        self.get_bulk_update_fields(),
-                        batch_size=batch_size,
-                    )
-        except Exception as e:
-            self.handle_import_error(result, e, raise_errors)
-        finally:
-            self.update_instances.clear()
+        if len(self.update_instances) > 0 and (using_transactions or not dry_run):
+            try:
+                self._meta.model.objects.bulk_update(
+                    self.update_instances,
+                    self.get_bulk_update_fields(),
+                    batch_size=batch_size,
+                )
+            except Exception as e:
+                self.handle_import_error(result, e, raise_errors)
+            finally:
+                self.update_instances.clear()
 
     def bulk_delete(self, using_transactions, dry_run, raise_errors, result=None):
         """
         Deletes objects by filtering on a list of instances to be deleted,
         then calling ``delete()`` on the entire queryset.
         """
-        try:
-            if len(self.delete_instances) > 0:
-                if not using_transactions and dry_run:
-                    pass
-                else:
-                    delete_ids = [o.pk for o in self.delete_instances]
-                    self._meta.model.objects.filter(pk__in=delete_ids).delete()
-        except Exception as e:
-            self.handle_import_error(result, e, raise_errors)
-        finally:
-            self.delete_instances.clear()
+        if len(self.delete_instances) > 0 and (using_transactions or not dry_run):
+            try:
+                delete_ids = [o.pk for o in self.delete_instances]
+                self._meta.model.objects.filter(pk__in=delete_ids).delete()
+            except Exception as e:
+                self.handle_import_error(result, e, raise_errors)
+            finally:
+                self.delete_instances.clear()
 
     def validate_instance(
         self, instance, import_validation_errors=None, validate_unique=True
