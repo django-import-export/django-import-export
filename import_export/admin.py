@@ -593,12 +593,19 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
 
     def _create_log_entry(self, user_pk, rows, import_type, action_flag):
         if len(rows) > 0:
+            kwargs = {}
+            if (
+                django.VERSION < (5, 1, 7)
+                or django.VERSION[:4] == (5, 2, 0, "alpha")
+                or django.VERSION[:5] == (5, 2, 0, "beta", 1)
+            ):
+                kwargs["single_object"] = len(rows) == 1
             LogEntry.objects.log_actions(
                 user_pk,
                 rows,
                 action_flag,
                 change_message=_("%s through import_export" % import_type),
-                single_object=len(rows) == 1,
+                **kwargs,
             )
 
 

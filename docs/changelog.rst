@@ -5,6 +5,11 @@ Changelog
 
     If upgrading from v3, v4 introduces breaking changes.  Please refer to :doc:`release notes<release_notes>`.
 
+4.3.8 (unreleased)
+------------------
+
+- Fix `TypeError` calling `log_actions()` on Django 5.1.7+ (`2045 <https://github.com/django-import-export/django-import-export/pull/2045>`_)
+
 4.3.7 (2025-02-25)
 ------------------
 
