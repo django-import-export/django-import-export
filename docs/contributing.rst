@@ -165,7 +165,7 @@ Once you have cloned and checked out the repository, you can install a new devel
 
   python -m venv django-import-export-venv
   source django-import-export-venv/bin/activate
-  pip install .[tests]
+  python -m pip install '.[tests]'
 
 Run tests
 ^^^^^^^^^
@@ -179,7 +179,7 @@ Build documentation
 
 To build a local version of the documentation::
 
-  pip install -r requirements/docs.txt
+  python -m pip install -r requirements/docs.txt
   make build-html-doc
 
 The documentation will be present in ``docs/_build/html/index.html``.
