@@ -21,7 +21,6 @@ class ModelResourceFieldDeclarations(TestCase):
             fields = ("id", "price")
 
     def setUp(self):
-
         self.book = Book.objects.create(name="Moonraker", price=".99")
         self.resource = ModelResourceFieldDeclarations.MyBookResource()
 
@@ -173,3 +172,75 @@ class ModelResourceDeclarationsNotInImportTest(TestCase):
         self.assertEqual("", self.book.author_email)
         data = self.resource.export()
         self.assertFalse("author_email" in data.dict[0])
+
+
+class ModelResourceUnusedFieldWarnings(TestCase):
+    """
+    Model Resources should warn on ignored declared fields, but only if
+    they are declared on the current class.
+
+    Ref: #2017
+    """
+
+    class _BaseBookResource(resources.ModelResource):
+        name = fields.Field(
+            attribute="name",
+        )
+        imported = fields.Field(
+            attribute="imported",
+        )
+        price = fields.Field(
+            attribute="price",
+        )
+
+        class Meta:
+            model = Book
+            fields = (
+                "name",
+                "imported",
+                "price",
+            )
+
+    def setUp(self):
+        # Enable warnings for this test
+        warnings.simplefilter("default")
+
+    def test_no_warnings_defined_fields(self):
+        """
+        A subclass that lists a subset of the parents defined fields
+        should receive no warnings.
+        """
+        with warnings.catch_warnings(record=True) as w:
+
+            class _Export1BookResource(self._BaseBookResource):
+                class Meta:
+                    fields = (
+                        "name",
+                        "imported",
+                    )
+
+            # expect no warnings
+            self.assertEqual(len(w), 0)
+
+    def test_declared_field_expect_warning(self):
+        """
+        A class that defines a field, but doesn't list it in fields
+        should receive a warning with the name of the field and the
+        class name
+        """
+        with warnings.catch_warnings(record=True) as w:
+
+            class _Export2BookResource(self._BaseBookResource):
+                published = fields.Field(attribute="published")
+                published_time = fields.Field(attribute="published_time")
+
+                class Meta:
+                    fields = ("author_email", "imported", "published_time")
+
+            self.assertEqual(len(w), 1)
+            self.assertIs(w[0].category, UserWarning)
+            self.assertIn(
+                "_Export2BookResource: ignoring field 'published' because not"
+                " declared in 'fields' whitelist",
+                str(w[0].message),
+            )
