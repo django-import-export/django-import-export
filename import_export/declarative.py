@@ -65,6 +65,8 @@ class DeclarativeMetaclass(type):
 
 class ModelDeclarativeMetaclass(DeclarativeMetaclass):
     def __new__(cls, name, bases, attrs):
+        # Save the names of fields declared on this class
+        class_fields = [name for (name, obj) in attrs.items() if isinstance(obj, Field)]
         new_class = super().__new__(cls, name, bases, attrs)
 
         opts = new_class._meta
@@ -87,11 +89,14 @@ class ModelDeclarativeMetaclass(DeclarativeMetaclass):
                     and field_name not in opts.fields
                     and column_name not in opts.fields
                 ):
-                    warnings.warn(
-                        f"ignoring field '{field_name}' because not declared "
-                        "in 'fields' whitelist",
-                        stacklevel=2,
-                    )
+                    # #2017 warn only if the unlisted field is
+                    # part of the current class
+                    if field_name in class_fields:
+                        warnings.warn(
+                            f"{name}: ignoring field '{field_name}' because "
+                            "not declared in 'fields' whitelist",
+                            stacklevel=2,
+                        )
                     continue
                 declared_fields[field_name] = field
 
