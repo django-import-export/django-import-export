@@ -758,7 +758,7 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
             form.fields["export_items"] = MultipleChoiceField(
                 widget=MultipleHiddenInput,
                 required=False,
-                choices=[(pk, pk) for pk in self.get_valid_export_item_pks(request)],
+                choices=[(pk, pk) for pk in queryset.filter(pk__in=request.POST.getlist('export_items', [])).values_list('pk', flat=True)],
             )
         if form.is_valid():
             file_format = formats[int(form.cleaned_data["format"])]()
