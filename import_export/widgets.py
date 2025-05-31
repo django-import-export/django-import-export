@@ -182,7 +182,6 @@ class CharWidget(Widget):
         return force_str(val)
 
     def render(self, value, obj=None, **kwargs):
-        # FIXME - how are nulls exported to XLSX
         self._obj_deprecation_warning(obj)
         if self.coerce_to_string:
             return "" if value is None else force_str(value)
