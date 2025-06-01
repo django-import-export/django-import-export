@@ -13,9 +13,6 @@
 {% endblock %}
 
 {% block content %}
-{% if form.errors %}
-  {{ form.errors }}
-{% endif %}
 <form action="{{ export_url }}" method="POST">
   {% csrf_token %}
     {# export request has originated from an Admin UI action #}
