@@ -26,6 +26,21 @@ function onResourceSelected(e) {
   hideUnselectedResourceFields(resourceIndex);
 }
 
+function onSelectToggleChange(e) {
+  const select = e.target;
+  const isChecked = select.checked;
+  
+  if (isChecked) {
+    document.querySelectorAll('.selectable-field-export-row input[type="checkbox"]').forEach((checkbox) => {
+        checkbox.checked = true;
+    });
+  } else {
+    document.querySelectorAll('.selectable-field-export-row input[type="checkbox"]').forEach((checkbox) => {
+        checkbox.checked = false;
+    });
+  }
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   const resourceSelector = document.querySelector("#id_resource");
 
