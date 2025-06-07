@@ -27,6 +27,9 @@ function onResourceSelected(e) {
 }
 
 function onSelectToggleChange(e) {
+  /*
+  * Handles a checkbox click event to select / deselect all field checkboxes.
+  */ 
   const select = e.target;
   const isChecked = select.checked;
   

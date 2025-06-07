@@ -51,9 +51,10 @@
           <p style="padding: 0;">{% translate "This exporter will export the following fields: " %}</p>
           {% if form.visible_fields|length >= 2 %}
             <div>
-              <!-- adding select-all-toggle field to the form -->
               <input type="checkbox" class="select-toggle" name="select-all-toggle" 
-                    onchange="onSelectToggleChange(event)" checked> <b>Select all fields toggle</b>
+                    onchange="onSelectToggleChange(event)" checked>
+              <label style="font-weight: bold;" for="select-all-toggle">{% translate "Select all" %}
+              </label>
             </div>
           {% endif %}
         {% endif %}
