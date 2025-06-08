@@ -75,7 +75,11 @@
   </fieldset>
 
   <div>
-    {{ form.non_field_errors }}
+    {% if form.errors %}
+      {{ form.errors }}
+    {% elif form.non_field_errors %}
+      {{ form.non_field_errors }}
+    {% endif %}
   </div>
 
   <div class="submit-row">
