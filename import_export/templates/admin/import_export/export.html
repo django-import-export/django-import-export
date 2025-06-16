@@ -25,6 +25,11 @@
       {% endblocktranslate %}
       </p>
     {% endif %}
+    {% if form.export_items.errors %}
+        <div class="error">
+            {{ form.export_items.errors }}
+        </div>
+    {% endif %}
 
   {# fields list is not required with selectable fields form #}
   {% if not form.is_selectable_fields_form %}
@@ -75,9 +80,7 @@
   </fieldset>
 
   <div>
-    {% if form.errors %}
-      {{ form.errors }}
-    {% elif form.non_field_errors %}
+    {% if form.non_field_errors %}
       {{ form.non_field_errors }}
     {% endif %}
   </div>
