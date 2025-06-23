@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: django-import-export\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: \n"
+"POT-Creation-Date: 2025-06-23 19:11+0100\n"
 "PO-Revision-Date: 2025-06-23 17:44+0300\n"
 "Last-Translator: \n"
 "Language-Team: Hebrew <he@li.org>\n"
@@ -34,14 +34,18 @@ msgstr "הייבוא הסתיים: נוספו {}, עודכנו {}, נמחקו {}
 #: admin.py
 #, python-format
 msgid ""
-"%(exc_name)s encountered while trying to read file. Ensure you have chosen the correct "
-"format for the file."
-msgstr "שגיאת %(exc_name)s אירעה בקריאת הקובץ. ודאו שבחרתם את פורמט הקובץ הנכון."
+"%(exc_name)s encountered while trying to read file. Ensure you have chosen "
+"the correct format for the file."
+msgstr ""
+"שגיאת %(exc_name)s אירעה בקריאת הקובץ. ודאו שבחרתם את פורמט הקובץ הנכון."
 
 #: admin.py
 msgid ""
-"No valid data to import. Ensure your file has the correct headers or data for import."
-msgstr "לא נמצא מידע תקין לייבוא. יש לוודא שהכותרות והנתונים בקובץ תקינים ומתאימים לייבוא."
+"No valid data to import. Ensure your file has the correct headers or data "
+"for import."
+msgstr ""
+"לא נמצא מידע תקין לייבוא. יש לוודא שהכותרות והנתונים בקובץ תקינים ומתאימים "
+"לייבוא."
 
 #: admin.py templates/admin/import_export/change_form.html
 #: templates/admin/import_export/change_list_export_item.html
@@ -82,16 +86,17 @@ msgstr "יש לבחור לפחות שדה אחד לייצוא עבור \"%(resou
 #: resources.py
 #, python-format
 msgid ""
-"The following fields are declared in 'import_id_fields' but are not present in the "
-"resource fields: %s"
+"The following fields are declared in 'import_id_fields' but are not present "
+"in the resource fields: %s"
 msgstr "השדות הבאים הוגדרו ב-'import_id_fields' אך אינם קיימים בשדות המשאב: %s"
 
 #: resources.py
 #, python-format
 msgid ""
-"The following fields are declared in 'import_id_fields' but are not present in the file "
-"headers: %s"
-msgstr "השדות הבאים הוגדרו ב-'import_id_fields' אך אינם קיימים בכותרות הקובץ: %s"
+"The following fields are declared in 'import_id_fields' but are not present "
+"in the file headers: %s"
+msgstr ""
+"השדות הבאים הוגדרו ב-'import_id_fields' אך אינם קיימים בכותרות הקובץ: %s"
 
 #: results.py
 #, python-format
@@ -114,15 +119,22 @@ msgstr[1] "ייצוא %(len)s פריטים שנבחרו"
 msgid "This exporter will export the following fields: "
 msgstr "הייצוא יכלול את השדות הבאים:"
 
-#: templates/admin/import_export/export.html templates/admin/import_export/import.html
+#: templates/admin/import_export/export.html
+msgid "Select all"
+msgstr ""
+
+#: templates/admin/import_export/export.html
+#: templates/admin/import_export/import.html
 msgid "Submit"
 msgstr "שליחה"
 
 #: templates/admin/import_export/import.html
 msgid ""
-"Below is a preview of data to be imported. If you are satisfied with the results, click "
-"'Confirm import'"
-msgstr "להלן תצוגה מקדימה של הנתונים לייבוא. אם התוצאות נראות תקינות, לחצו על 'אשר ייבוא'."
+"Below is a preview of data to be imported. If you are satisfied with the "
+"results, click 'Confirm import'"
+msgstr ""
+"להלן תצוגה מקדימה של הנתונים לייבוא. אם התוצאות נראות תקינות, לחצו על 'אשר "
+"ייבוא'."
 
 #: templates/admin/import_export/import.html
 msgid "Confirm import"
@@ -142,9 +154,11 @@ msgstr "אימות מספר שורות נכשל"
 
 #: templates/admin/import_export/import.html
 msgid ""
-"Please correct these errors in your data where possible, then reupload it using the form "
-"above."
-msgstr "יש לתקן את השגיאות בקובץ המקורי במידת האפשר, ולטעון אותו מחדש באמצעות הטופס למעלה."
+"Please correct these errors in your data where possible, then reupload it "
+"using the form above."
+msgstr ""
+"יש לתקן את השגיאות בקובץ המקורי במידת האפשר, ולטעון אותו מחדש באמצעות הטופס "
+"למעלה."
 
 #: templates/admin/import_export/import.html
 msgid "Row"
@@ -184,7 +198,8 @@ msgstr "לא ניתן היה לפענח את הערך."
 
 #: widgets.py
 msgid "use_natural_foreign_keys and key_is_id cannot both be True"
-msgstr "לא ניתן להפעיל את ההגדרות 'use_natural_foreign_keys' ו-'key_is_id' בו-זמנית."
+msgstr ""
+"לא ניתן להפעיל את ההגדרות 'use_natural_foreign_keys' ו-'key_is_id' בו-זמנית."
 
 #~ msgid "You must select an export format."
 #~ msgstr "עליך לבחור פורמט לייצוא."
