@@ -149,6 +149,50 @@ class ImportErrorHandlingTests(AdminTestMixin, TestCase):
             ).format(1, 0, 0, 0, EBook._meta.verbose_name_plural),
         )
 
+    def test_confirm_import_handles_non_field_error(self):
+        """Test if admin import handles errors gracefully when confirm_form is
+        has a non-field error. See #2070.
+        """
+        Author.objects.create(id=11, name="Test Author")
+
+        # GET the import form
+        response = self._get_url_response(
+            self.ebook_import_url, str_in_response='form action=""'
+        )
+        self.assertTemplateUsed(response, self.admin_import_template_url)
+        # POST the import form
+        input_format = "0"
+        filename = os.path.join(
+            os.path.dirname(__file__),
+            os.path.pardir,
+            os.path.pardir,
+            "exports",
+            "books.csv",
+        )
+        with open(filename, "rb") as fobj:
+            data = {"author": 11, "format": input_format, "import_file": fobj}
+            response = self._post_url_response(self.ebook_import_url, data)
+
+        self.assertIn("result", response.context)
+        self.assertFalse(response.context["result"].has_errors())
+        self.assertIn("confirm_form", response.context)
+        confirm_form = response.context["confirm_form"]
+        self.assertIsInstance(
+            confirm_form,
+            CustomBookAdmin(EBook, "ebook/import").get_confirm_form_class(None),
+        )
+
+        data = confirm_form.initial
+        self.assertEqual(data["original_file_name"], "books.csv")
+
+        with mock.patch("django.forms.Form.clean") as mock_clean:
+            mock_clean.side_effect = ValidationError("some non field error")
+            response = self._post_url_response(
+                self.ebook_process_import_url, data, follow=True
+            )
+            target_msg = "some non field error"
+            self.assertIn(target_msg, response.content.decode())
+
     def test_import_action_invalid_date(self):
         # test that a row with an invalid date redirects to errors page
         index = self._get_input_format_index("csv")

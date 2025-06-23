@@ -68,9 +68,7 @@
         </fieldset>
       {% endblock %}
 
-      {% if form.non_field_errors %}
-        {{ form.non_field_errors }}
-      {% endif %}
+      {{ form.non_field_errors }}
 
       {% block form_submit_button %}
         <div class="submit-row">
