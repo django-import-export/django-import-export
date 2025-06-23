@@ -5,11 +5,12 @@ Changelog
 
     If upgrading from v3, v4 introduces breaking changes.  Please refer to :doc:`release notes<release_notes>`.
 
-4.3.8 (unreleased)
+4.3.8 (2025-06-23)
 ------------------
 
-- ui: fix error display twice issue on export field select page  (`2066 <https://github.com/django-import-export/django-import-export/pull/2066>`_)
-- ui: add 'select all' fields toggle on export page (`2068 <https://github.com/django-import-export/django-import-export/pull/2068>`_)
+- UI: fix error display twice issue on export field select page  (`2066 <https://github.com/django-import-export/django-import-export/pull/2066>`_)
+- UI: add 'select all' fields toggle on export page (`2068 <https://github.com/django-import-export/django-import-export/pull/2068>`_)
+- Add Hebrew translation (`2071 <https://github.com/django-import-export/django-import-export/pull/2071>`_)
 
 4.3.7 (2025-02-25)
 ------------------
