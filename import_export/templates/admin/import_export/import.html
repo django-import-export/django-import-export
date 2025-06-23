@@ -68,6 +68,10 @@
         </fieldset>
       {% endblock %}
 
+      {% if form.non_field_errors %}
+        {{ form.non_field_errors }}
+      {% endif %}
+
       {% block form_submit_button %}
         <div class="submit-row">
           <input type="submit" class="default" value="{% translate "Submit" %}">

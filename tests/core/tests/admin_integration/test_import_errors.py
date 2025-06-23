@@ -7,6 +7,7 @@ from core.models import Author, Book, EBook
 from core.tests.admin_integration.mixins import AdminTestMixin
 from django.contrib.admin.sites import AdminSite
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 from django.test import RequestFactory
 from django.test.testcases import TestCase
 from django.test.utils import override_settings
@@ -45,6 +46,15 @@ class ImportErrorHandlingTests(AdminTestMixin, TestCase):
             "Ensure you have chosen the correct format for the file."
         )
         self.assertFormError(response.context["form"], "import_file", target_msg)
+
+    def test_import_action_handles_NonFieldError(self):
+        # issue 2070
+        with mock.patch("django.forms.Form.clean") as mock_clean:
+            mock_clean.side_effect = ValidationError("some non field error")
+            response = self._do_import_post(self.book_import_url, "books.csv")
+        self.assertEqual(response.status_code, 200)
+        target_msg = "some non field error"
+        self.assertIn(target_msg, response.content.decode())
 
     def test_import_action_handles_FieldError(self):
         # issue 1722
