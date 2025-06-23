@@ -16,7 +16,7 @@ services:
       - ./docker/db/init-postgres-db.sh/:/docker-entrypoint-initdb.d/init-postgres-db.sh
       - postgres-db-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "sh -c 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}'"]
+      test: ["CMD-SHELL", "pg_isready -U \"${IMPORT_EXPORT_POSTGRESQL_USER}\" -d \"import_export\""]
       interval: 10s
       timeout: 3s
       retries: 3
