@@ -8,6 +8,7 @@ Changelog
 4.3.8 (unreleased)
 ------------------
 
+- ui: fix error display twice issue on export field select page  (`2066 <https://github.com/django-import-export/django-import-export/pull/2066>`_)
 - ui: add 'select all' fields toggle on export page (`2068 <https://github.com/django-import-export/django-import-export/pull/2068>`_)
 
 4.3.7 (2025-02-25)
