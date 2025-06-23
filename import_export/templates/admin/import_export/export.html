@@ -13,9 +13,6 @@
 {% endblock %}
 
 {% block content %}
-{% if form.errors %}
-  {{ form.errors }}
-{% endif %}
 <form action="{{ export_url }}" method="POST">
   {% csrf_token %}
     {# export request has originated from an Admin UI action #}
@@ -27,6 +24,11 @@
         Export {{ len }} selected items.
       {% endblocktranslate %}
       </p>
+    {% endif %}
+    {% if form.export_items.errors %}
+        <div class="error">
+            {{ form.export_items.errors }}
+        </div>
     {% endif %}
 
   {# fields list is not required with selectable fields form #}
@@ -86,7 +88,9 @@
   </fieldset>
 
   <div>
-    {{ form.non_field_errors }}
+    {% if form.non_field_errors %}
+      {{ form.non_field_errors }}
+    {% endif %}
   </div>
 
   <div class="submit-row">
