@@ -10,6 +10,7 @@ Changelog
 
 - ui: fix error display twice issue on export field select page  (`2066 <https://github.com/django-import-export/django-import-export/pull/2066>`_)
 - ui: add 'select all' fields toggle on export page (`2068 <https://github.com/django-import-export/django-import-export/pull/2068>`_)
+- ui: fix display of non field errors on import (`2075 <https://github.com/django-import-export/django-import-export/pull/2075>`_)
 
 4.3.7 (2025-02-25)
 ------------------
