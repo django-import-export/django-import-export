@@ -189,14 +189,13 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
 
     def test_get_export_FormError_occurrence(self):
         # issue 2065
-        with mock.patch("import_export.resources.Resource.export") as mock_export:
-            data = {
-                "format": "0",
-                "resource": 1,
-                "booknameresource_id": False,
-                "booknameresource_name": False,
-            }
-            response = self._post_url_response(self.book_export_url, data)
+        data = {
+            "format": "0",
+            "resource": 1,
+            "booknameresource_id": False,
+            "booknameresource_name": False,
+        }
+        response = self._post_url_response(self.book_export_url, data)
         target_msg = "Select at least 1 field"
         # Validate the occurrence of the error message should be 1
         self.assertEqual(response.content.decode().count(target_msg), 1)
