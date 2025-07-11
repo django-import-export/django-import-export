@@ -293,7 +293,7 @@ Customize forms (for example see ``tests/core/forms.py``)::
 Customize ``ModelAdmin`` (for example see ``tests/core/admin.py``)::
 
     class CustomBookAdmin(ImportMixin, admin.ModelAdmin):
-        resource_classes = [BookResource]
+        resource_classes = [EBookResource]
         import_form_class = CustomImportForm
         confirm_form_class = CustomConfirmImportForm
 
@@ -320,7 +320,7 @@ Add the following to ``CustomBookAdmin`` class (in ``tests/core/admin.py``)::
             kwargs.update({"author": form.cleaned_data.get("author", None)})
         return kwargs
 
-Then add the following to ``CustomBookAdmin`` class (in ``tests/core/admin.py``)::
+Then add the following to ``EBookResource`` class (in ``tests/core/admin.py``)::
 
     def after_init_instance(self, instance, new, row, **kwargs):
         if "author" in kwargs:
