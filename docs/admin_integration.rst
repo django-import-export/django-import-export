@@ -320,7 +320,7 @@ Add the following to ``CustomBookAdmin`` class (in ``tests/core/admin.py``)::
             kwargs.update({"author": form.cleaned_data.get("author", None)})
         return kwargs
 
-Then add the following to ``CustomBookAdmin`` class (in ``tests/core/admin.py``)::
+Then add the following to ``BookResource`` class (in ``tests/core/admin.py``)::
 
     def after_init_instance(self, instance, new, row, **kwargs):
         if "author" in kwargs:
