@@ -1370,11 +1370,13 @@ class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
         return cls.__name__
 
 
-def modelresource_factory(model, resource_class=ModelResource):
+def modelresource_factory(model, resource_class=ModelResource, meta_options=None):
     """
     Factory for creating ``ModelResource`` class for given Django model.
     """
-    attrs = {"model": model}
+    if meta_options is None:
+        meta_options = {}
+    attrs = {**meta_options, "model": model}
     Meta = type("Meta", (object,), attrs)
 
     class_name = model.__name__ + "Resource"
