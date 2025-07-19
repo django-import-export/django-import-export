@@ -424,9 +424,11 @@ class Resource(metaclass=DeclarativeMetaclass):
 
     def get_import_fields(self):
         import_fields = []
+        missing = object()
         for field_name in self.get_import_order():
-            if field_name in self.fields:
-                import_fields.append(self.fields[field_name])
+            field = self.fields.get(field_name)
+            if field is not missing:
+                import_fields.append(field)
                 continue
             # issue 1815
             # allow for fields to be referenced by column_name in `fields` list
@@ -1101,8 +1103,10 @@ class Resource(metaclass=DeclarativeMetaclass):
 
     def _select_field(self, target_field_name):
         # select field from fields based on either declared name or column name
-        if target_field_name in self.fields:
-            return self.fields[target_field_name]
+        missing = object()
+        field = self.fields.get(target_field_name, missing)
+        if field is not missing:
+            return field
 
         for field_name, field in self.fields.items():
             if target_field_name == field.column_name:
