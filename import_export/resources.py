@@ -1259,7 +1259,7 @@ class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
         if callable(getattr(f, "get_internal_type", None)):
             internal_type = f.get_internal_type()
 
-        widget_result = cls.WIDGETS_MAP(internal_type)
+        widget_result = cls.WIDGETS_MAP.get(internal_type)
         if widget_result is not None:
             result = widget_result
             if isinstance(result, str):
