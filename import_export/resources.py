@@ -426,7 +426,7 @@ class Resource(metaclass=DeclarativeMetaclass):
         import_fields = []
         missing = object()
         for field_name in self.get_import_order():
-            field = self.fields.get(field_name)
+            field = self.fields.get(field_name, missing)
             if field is not missing:
                 import_fields.append(field)
                 continue
