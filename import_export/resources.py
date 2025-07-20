@@ -1393,46 +1393,6 @@ def modelresource_factory(
     :param dehydrate_methods: Dictionary mapping field names
                               to dehydrate method (Callable)
 
-    ** Basic Usage: **
-
-    .. code-block:: python
-
-        # Simple resource creation
-        BookResource = modelresource_factory(model=Book)
-
-        # With meta options
-        BookResource = modelresource_factory(
-            model=Book,
-            meta_options={'fields': ('id', 'name'), 'use_bulk': True}
-        )
-
-    ** Usage:**
-
-    .. code-block:: python
-
-        from import_export.fields import Field
-        from import_export.widgets import CharWidget
-
-        # Complex example with multiple features
-        UserResource = modelresource_factory(
-            model=User,
-            meta_options={
-                'fields': ('id', 'username', 'email', 'full_name'),
-                'exclude': ('password',),
-                'widgets': {'email': {'coerce_to_string': True}}
-            },
-            custom_fields={
-                'full_name': Field(
-                    attribute='get_full_name',
-                    column_name='Full Name',
-                    readonly=True
-                )
-            },
-            dehydrate_methods={
-                'full_name': lambda obj: f"{obj.first_name} {obj.last_name}".title()
-            }
-        )
-
     :returns: ModelResource class
     """
 
