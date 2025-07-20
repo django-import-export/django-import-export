@@ -92,7 +92,8 @@ Let's import some data!
 In the fourth line we use :func:`~import_export.resources.modelresource_factory`
 to create a default :class:`~import_export.resources.ModelResource`.
 The ``ModelResource`` class created this way is equal to the one shown in the
-example in section :ref:`base-modelresource`.
+example in section :ref:`base-modelresource`. For more advanced usage of this function,
+see :ref:`advanced_usage:Using modelresource_factory`.
 
 In fifth line a :class:`~tablib.Dataset` with columns ``id`` and ``name``, and
 one book entry, are created. A field (or combination of fields) which uniquely identifies an instance always needs to
