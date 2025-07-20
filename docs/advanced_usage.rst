@@ -239,6 +239,8 @@ value changes::
   * The ``original`` attribute will be null if :attr:`~import_export.options.ResourceOptions.skip_diff` is True.
   * The ``instance`` attribute will be null if :attr:`~import_export.options.ResourceOptions.store_instance` is False.
 
+.. _using_modelresource_factory:
+
 Using modelresource_factory
 ==========================
 
@@ -257,7 +259,7 @@ Create a simple resource for export::
     ...     model=Book,
     ...     meta_options={'fields': ('id', 'name', 'author')}
     ... )
-    >>> 
+    >>>
     >>> # Export data
     >>> dataset = BookResource().export()
     >>> print(dataset.csv)
@@ -276,7 +278,7 @@ Import data with custom configuration::
     ...         'import_id_fields': ('name',)
     ...     }
     ... )
-    >>> 
+    >>>
     >>> # Import data
     >>> dataset = tablib.Dataset(['New Book', 'author@example.com'], headers=['name', 'author_email'])
     >>> result = ImportResource().import_data(dataset)
@@ -300,7 +302,7 @@ You can add custom fields and dehydrate methods::
     ...         'custom_title': lambda obj: f"{obj.name} by {obj.author.name if obj.author else 'Unknown'}"
     ...     }
     ... )
-    >>> 
+    >>>
     >>> dataset = BookResource().export()
     >>> print(dataset.csv)
     id,name,custom_title
