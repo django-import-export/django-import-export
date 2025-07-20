@@ -107,7 +107,7 @@ class ModelDeclarativeMetaclass(DeclarativeMetaclass):
                 if opts.exclude and f.name in opts.exclude:
                     continue
 
-                if f.name in set(declared_fields.keys()):
+                if f.name in declared_fields:
                     # If model field is declared in `ModelResource`,
                     # remove it from `declared_fields`
                     # to keep exact order of model fields
