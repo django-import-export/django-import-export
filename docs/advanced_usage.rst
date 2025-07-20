@@ -239,6 +239,75 @@ value changes::
   * The ``original`` attribute will be null if :attr:`~import_export.options.ResourceOptions.skip_diff` is True.
   * The ``instance`` attribute will be null if :attr:`~import_export.options.ResourceOptions.store_instance` is False.
 
+.. _using_modelresource_factory:
+
+Using modelresource_factory
+==========================
+
+The :func:`~import_export.resources.modelresource_factory` function dynamically creates
+``ModelResource`` classes for you. This is useful for creating resources without writing
+custom classes.
+
+Basic usage
+-----------
+
+Create a simple resource for export::
+
+    >>> from import_export import resources
+    >>> from core.models import Book
+    >>> BookResource = resources.modelresource_factory(
+    ...     model=Book,
+    ...     meta_options={'fields': ('id', 'name', 'author')}
+    ... )
+    >>>
+    >>> # Export data
+    >>> dataset = BookResource().export()
+    >>> print(dataset.csv)
+    id,name,author
+    1,Some book,1
+
+Import data with custom configuration::
+
+    >>> from import_export import resources
+    >>> from core.models import Book
+    >>> # Create a resource for import with specific fields
+    >>> ImportResource = resources.modelresource_factory(
+    ...     model=Book,
+    ...     meta_options={
+    ...         'fields': ('name', 'author_email'),
+    ...         'import_id_fields': ('name',)
+    ...     }
+    ... )
+    >>>
+    >>> # Import data
+    >>> dataset = tablib.Dataset(['New Book', 'author@example.com'], headers=['name', 'author_email'])
+    >>> result = ImportResource().import_data(dataset)
+    >>> print(result.has_errors())
+    False
+
+Adding custom fields
+-------------------
+
+You can add custom fields and dehydrate methods::
+
+    >>> from import_export import resources, fields
+    >>> from core.models import Book
+    >>> BookResource = resources.modelresource_factory(
+    ...     model=Book,
+    ...     meta_options={'fields': ('id', 'name', 'custom_title')},
+    ...     custom_fields={
+    ...         'custom_title': fields.Field(column_name='Custom Title', readonly=True)
+    ...     },
+    ...     dehydrate_methods={
+    ...         'custom_title': lambda obj: f"{obj.name} by {obj.author.name if obj.author else 'Unknown'}"
+    ...     }
+    ... )
+    >>>
+    >>> dataset = BookResource().export()
+    >>> print(dataset.csv)
+    id,name,custom_title
+    1,Some book,Some book by Author Name
+
 Validation during import
 ========================
 
