@@ -1370,20 +1370,112 @@ class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
         return cls.__name__
 
 
-def modelresource_factory(model, resource_class=ModelResource, meta_options=None):
+def modelresource_factory(
+    model,
+    resource_class=ModelResource,
+    meta_options=None,
+    custom_fields=None,
+    dehydrate_methods=None,
+):
     """
     Factory for creating ``ModelResource`` class for given Django model.
+    This factory function creates a ``ModelResource`` class dynamically, with support
+    for custom fields, methods.
+
+    :param model: Django model class
+
+    :param resource_class: Base resource class (default: ModelResource)
+
+    :param meta_options: Meta options dictionary
+
+    :param custom_fields: Dictionary mapping field names to Field object
+
+    :param dehydrate_methods: Dictionary mapping field names
+                              to dehydrate method (Callable)
+
+    ** Basic Usage: **
+
+    .. code-block:: python
+
+        # Simple resource creation
+        BookResource = modelresource_factory(model=Book)
+
+        # With meta options
+        BookResource = modelresource_factory(
+            model=Book,
+            meta_options={'fields': ('id', 'name'), 'use_bulk': True}
+        )
+
+    ** Usage:**
+
+    .. code-block:: python
+
+        from import_export.fields import Field
+        from import_export.widgets import CharWidget
+
+        # Complex example with multiple features
+        UserResource = modelresource_factory(
+            model=User,
+            meta_options={
+                'fields': ('id', 'username', 'email', 'full_name'),
+                'exclude': ('password',),
+                'widgets': {'email': {'coerce_to_string': True}}
+            },
+            custom_fields={
+                'full_name': Field(
+                    attribute='get_full_name',
+                    column_name='Full Name',
+                    readonly=True
+                )
+            },
+            dehydrate_methods={
+                'full_name': lambda obj: f"{obj.first_name} {obj.last_name}".title()
+            }
+        )
+
+    :returns: ModelResource class
     """
+
+    def _create_dehydrate_func_wrapper(func):
+        def wrapper(self, obj):
+            return func(obj)
+
+        return wrapper
+
     if meta_options is None:
         meta_options = {}
-    attrs = {**meta_options, "model": model}
-    Meta = type("Meta", (object,), attrs)
 
-    class_name = model.__name__ + "Resource"
+    if custom_fields is None:
+        custom_fields = {}
 
-    class_attrs = {
+    if dehydrate_methods is None:
+        dehydrate_methods = {}
+
+    for field_name, field in custom_fields.items():
+        if not isinstance(field, Field):
+            raise ValueError(
+                f"custom_fields['{field_name}'] must be a Field instance, "
+                f"got {type(field).__name__}"
+            )
+
+    meta_class_attrs = {**meta_options, "model": model}
+    Meta = type("Meta", (object,), meta_class_attrs)
+
+    resource_class_name = model.__name__ + "Resource"
+    resource_class_attrs = {
         "Meta": Meta,
     }
+    resource_class_attrs.update(custom_fields)
+
+    for field_name, method in dehydrate_methods.items():
+        if not callable(method):
+            raise ValueError(
+                f"dehydrate_methods['{field_name}'] must be callable, "
+                f"got {type(method).__name__}"
+            )
+
+        method_name = f"dehydrate_{field_name}"
+        resource_class_attrs[method_name] = _create_dehydrate_func_wrapper(method)
 
     metaclass = ModelDeclarativeMetaclass
-    return metaclass(class_name, (resource_class,), class_attrs)
+    return metaclass(resource_class_name, (resource_class,), resource_class_attrs)
