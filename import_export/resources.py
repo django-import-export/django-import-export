@@ -1259,8 +1259,9 @@ class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
         if callable(getattr(f, "get_internal_type", None)):
             internal_type = f.get_internal_type()
 
-        if internal_type in cls.WIDGETS_MAP:
-            result = cls.WIDGETS_MAP[internal_type]
+        widget_result = cls.WIDGETS_MAP(internal_type)
+        if widget_result is not None:
+            result = widget_result
             if isinstance(result, str):
                 result = getattr(cls, result)(f)
         else:
@@ -1269,8 +1270,9 @@ class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
             # of a standard field class.
             # iterate base classes to determine the correct widget class to use.
             for base_class in f.__class__.__mro__:
-                if base_class.__name__ in cls.WIDGETS_MAP:
-                    result = cls.WIDGETS_MAP[base_class.__name__]
+                widget_result = cls.WIDGETS_MAP.get(base_class.__name__)
+                if widget_result is not None:
+                    result = widget_result
                     if isinstance(result, str):
                         result = getattr(cls, result)(f)
                     break
