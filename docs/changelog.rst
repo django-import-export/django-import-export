@@ -5,7 +5,7 @@ Changelog
 
     If upgrading from v3, v4 introduces breaking changes.  Please refer to :doc:`release notes<release_notes>`.
 
-4.3.9 (unreleased)
+4.3.9 (2025-07-21)
 ------------------
 
 - Allow specifying meta options in the :ref:`model_resourcefactory<using_modelresource_factory>` (`2078 <https://github.com/django-import-export/django-import-export/pull/2078>`_)
