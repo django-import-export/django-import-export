@@ -10,6 +10,7 @@ Changelog
 
 - Allow specifying meta options in the :ref:`model_resourcefactory<using_modelresource_factory>` (`2078 <https://github.com/django-import-export/django-import-export/pull/2078>`_)
 - Allow custom fields and methods in :ref:`model_resourcefactory<using_modelresource_factory>` (`2081 <https://github.com/django-import-export/django-import-export/pull/2081>`_)
+- FAQ update to describe how to customize Excel exports (`2088 <https://github.com/django-import-export/django-import-export/pull/2088>`_)
 
 4.3.8 (2025-06-23)
 ------------------
