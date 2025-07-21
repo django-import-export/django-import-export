@@ -174,7 +174,7 @@ See the following responses on StackOverflow:
   * https://stackoverflow.com/questions/74802453/export-only-the-data-registered-by-the-user-django-import-export
 
 How to customize Excel export data
-----------------------------
+----------------------------------
 
 If you want more control over how export data is formatted when exporting to Excel you can write a custom format.
 See the example `here <https://github.com/django-import-export/django-import-export/issues/2085#issuecomment-3096872093>`_.
