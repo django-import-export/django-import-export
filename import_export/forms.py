@@ -92,9 +92,7 @@ class ConfirmImportForm(forms.Form):
 
 
 class ExportForm(ImportExportFormBase):
-    export_items = forms.MultipleChoiceField(
-        widget=forms.MultipleHiddenInput(), required=False
-    )
+    export_items = forms.CharField(widget=forms.HiddenInput(), required=False)
 
 
 class SelectableFieldsExportForm(ExportForm):
