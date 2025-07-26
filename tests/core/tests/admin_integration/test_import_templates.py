@@ -1,5 +1,6 @@
 import os
 from unittest.mock import patch
+from urllib.parse import urlencode
 
 from core.admin import CustomBookAdmin, ImportMixin
 from core.models import Author, EBook
@@ -132,3 +133,59 @@ class ImportTemplateTests(AdminTestMixin, TestCase):
                 "Import finished: {} new, {} updated, {} deleted and {} skipped {}."
             ).format(1, 0, 0, 0, EBook._meta.verbose_name_plural),
         )
+
+    def test_import_form_action_conditional_query_string(self):
+        """
+        Test that the form action is clean
+        (no trailing '?') when no GET params
+        are present.
+        """
+
+        # 1. Test no GET parameters → form action has no trailing '?'
+        response_no_get = self._get_url_response(self.book_import_url)
+        html_no_get = response_no_get.content.decode()
+
+        expected_action_no_get = (
+            '<form action="" method="post" enctype="multipart/form-data">'
+        )
+        self.assertIn(expected_action_no_get, html_no_get)
+        self.assertIn(expected_action_no_get, html_no_get)
+        self.assertNotIn(f"{self.book_import_url}?", html_no_get)
+
+    def test_import_confirm_form_action_conditional_querystring(self):
+        """
+        The confirm import form should include a query string
+        in its action ONLY when GET params are present, i.e. action="?foo=bar" etc.
+        """
+        Author.objects.create(id=1, name="Test Author")
+
+        # Prepare GET params
+        params = {"test": "1"}
+        paramstr = urlencode(params)
+        import_url = f"{self.ebook_import_url}?{paramstr}"
+
+        # Simulate POST to the import form to trigger the confirmation step
+        input_format = "0"
+        filename = os.path.join(
+            os.path.dirname(__file__),
+            os.path.pardir,
+            os.path.pardir,
+            "exports",
+            "books.csv",
+        )
+        with open(filename, "rb") as fobj:
+            data = {"author": 1, "format": input_format, "import_file": fobj}
+            # POST to the import form with GET parameters
+            response = self._post_url_response(import_url, data)
+
+        # confirm_form should be in context—so confirm import block is used
+        html = response.content.decode()
+
+        # check that confirm_form is present
+        self.assertIn('name="confirm"', html)
+        self.assertIn("Confirm import", html)
+
+        expected = (
+            f'<form action="{self.process_ebook_import_url}?test=1" method="POST">'
+        )
+        self.assertIn(expected, html)
