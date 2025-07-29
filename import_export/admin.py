@@ -9,7 +9,7 @@ from django.contrib.admin.models import ADDITION, CHANGE, DELETION, LogEntry
 from django.contrib.auth import get_permission_codename
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import FieldError, PermissionDenied
-from django.forms import MultipleChoiceField, MultipleHiddenInput
+from django.forms import CharField, HiddenInput
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.template.response import TemplateResponse
@@ -26,6 +26,7 @@ from .mixins import BaseExportMixin, BaseImportMixin
 from .results import RowResult
 from .signals import post_export, post_import
 from .tmp_storages import TempFolderStorage
+from .validators import ExportItemsValidator
 
 logger = logging.getLogger(__name__)
 
@@ -758,10 +759,11 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
         if request.POST and f"{FORM_FIELD_PREFIX}export_items" in request.POST:
             # this field is instantiated if the export is POSTed from the
             # 'action' drop down
-            form.fields["export_items"] = MultipleChoiceField(
-                widget=MultipleHiddenInput,
+            form.fields["export_items"] = CharField(
+                widget=HiddenInput,
                 required=False,
-                choices=[(pk, pk) for pk in queryset.values_list("pk", flat=True)],
+                initial=",".join(map(str, queryset.values_list("pk", flat=True))),
+                validators=[ExportItemsValidator(self, request)],
             )
         if form.is_valid():
             file_format = formats[int(form.cleaned_data["format"])]()
@@ -770,7 +772,12 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
                 # this request has arisen from an Admin UI action
                 # export item pks are stored in form data
                 # so generate the queryset from the stored pks
-                queryset = queryset.filter(pk__in=form.cleaned_data["export_items"])
+                if export_items_str := form.cleaned_data.get("export_items"):
+                    export_ids = [
+                        str(item).strip()
+                        for item in export_items_str.strip("[]").split(",")
+                    ]
+                    queryset = queryset.filter(pk__in=export_ids)
 
             try:
                 return self._do_file_export(
@@ -893,14 +900,15 @@ class ExportActionMixin(ExportMixin):
         form_type = self.get_export_form_class()
         formats = self.get_export_formats()
         export_items = list(queryset.values_list("pk", flat=True))
+        export_items_str = ",".join([str(pk) for pk in export_items])
         form = form_type(
             formats=formats,
             resources=self.get_export_resource_classes(request),
-            initial={"export_items": export_items},
+            initial={"export_items": export_items_str},
         )
         # selected items are to be stored as a hidden input on the form
-        form.fields["export_items"] = MultipleChoiceField(
-            widget=MultipleHiddenInput, required=False, choices=export_items
+        form.fields["export_items"] = CharField(
+            widget=HiddenInput, required=False, initial=export_items_str
         )
         context = self.init_request_context_data(request, form)
 
@@ -921,6 +929,7 @@ class ExportActionMixin(ExportMixin):
             export_url += "?" + urlencode(request.GET)
 
         context["export_url"] = export_url
+        context["export_items_length"] = len(export_items)
 
         return render(request, "admin/import_export/export.html", context=context)
 
