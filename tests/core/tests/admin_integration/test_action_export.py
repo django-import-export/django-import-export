@@ -59,7 +59,9 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertIn("form", response.context)
         export_form = response.context["form"]
         data = export_form.initial
-        self.assertEqual([self.cat1.id], data["export_items"])
+        export_items_str = data["export_items"]
+        export_items = [int(item) for item in export_items_str.split(",")]
+        self.assertEqual([self.cat1.id], export_items)
         self.assertIn("Export 1 selected item.", response.content.decode())
 
     def test_export_displays_ui_select_page_multiple_items(self):
@@ -71,9 +73,9 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertIn("form", response.context)
         export_form = response.context["form"]
         data = export_form.initial
-        self.assertEqual(
-            sorted([self.cat1.id, self.cat2.id]), sorted(data["export_items"])
-        )
+        export_items_str = data["export_items"]
+        export_items = [int(item) for item in export_items_str.split(",")]
+        self.assertEqual(sorted([self.cat1.id, self.cat2.id]), sorted(export_items))
         self.assertIn("Export 2 selected items.", response.content.decode())
 
     def test_action_export_model_with_custom_PK(self):
@@ -87,7 +89,9 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertIn("form", response.context)
         export_form = response.context["form"]
         data = export_form.initial
-        self.assertEqual([cat.pk], data["export_items"])
+        export_items_str = data["export_items"]
+        export_items = [str(item) for item in export_items_str.split(",")]
+        self.assertEqual([str(cat.pk)], export_items)
         self.assertIn("Export 1 selected item.", response.content.decode())
 
     def test_export_post(self):
@@ -129,7 +133,7 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
     def test_export_admin_action_with_restricted_pks(self):
         data = {
             "format": "0",
-            "export_items": [str(self.cat1.id)],
+            "export_items": str(self.cat1.id),
             **self.resource_fields_payload,
         }
         # mock returning a set of pks which is not in the submitted range
@@ -147,7 +151,7 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
     def test_export_admin_action_with_restricted_pks_deprecated(self):
         data = {
             "format": "0",
-            "export_items": [str(self.cat1.id)],
+            "export_items": str(self.cat1.id),
             **self.resource_fields_payload,
         }
         with self.assertWarnsRegex(
