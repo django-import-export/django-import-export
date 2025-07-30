@@ -497,7 +497,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
                 except Exception as e:
                     self.add_data_read_fail_error_to_form(import_form, e)
                 else:
-                    if len(dataset) == 0:
+                    if not dataset:
                         import_form.add_error(
                             "import_file",
                             _(
