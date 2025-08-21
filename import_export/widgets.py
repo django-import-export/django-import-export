@@ -1,3 +1,4 @@
+import decimal
 import json
 import logging
 import numbers
@@ -140,17 +141,6 @@ class FloatWidget(NumberWidget):
         return float(sanitize_separators(value))
 
 
-class IntegerWidget(NumberWidget):
-    """
-    Widget for converting integer fields.
-    """
-
-    def clean(self, value, row=None, **kwargs):
-        if self.is_empty(value):
-            return None
-        return int(Decimal(sanitize_separators(value)))
-
-
 class DecimalWidget(NumberWidget):
     """
     Widget for converting decimal fields.
@@ -159,7 +149,18 @@ class DecimalWidget(NumberWidget):
     def clean(self, value, row=None, **kwargs):
         if self.is_empty(value):
             return None
-        return Decimal(force_str(sanitize_separators(value)))
+        try:
+            return Decimal(force_str(sanitize_separators(value)))
+        except decimal.InvalidOperation:
+            raise ValueError(_("Value could not be parsed."))
+
+class IntegerWidget(DecimalWidget):
+    """
+    Widget for converting integer fields.
+    """
+
+    def clean(self, value, row=None, **kwargs):
+        return int(super().clean(value, row=row, **kwargs))
 
 
 class CharWidget(Widget):
