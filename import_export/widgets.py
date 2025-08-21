@@ -154,6 +154,7 @@ class DecimalWidget(NumberWidget):
         except decimal.InvalidOperation:
             raise ValueError(_("Value could not be parsed."))
 
+
 class IntegerWidget(DecimalWidget):
     """
     Widget for converting integer fields.
