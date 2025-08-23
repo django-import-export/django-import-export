@@ -149,10 +149,7 @@ class DecimalWidget(NumberWidget):
     def clean(self, value, row=None, **kwargs):
         if self.is_empty(value):
             return None
-        try:
-            return Decimal(force_str(sanitize_separators(value)))
-        except decimal.InvalidOperation:
-            raise ValueError(_("Value could not be parsed."))
+        return Decimal(force_str(sanitize_separators(value)))
 
 
 class IntegerWidget(DecimalWidget):
