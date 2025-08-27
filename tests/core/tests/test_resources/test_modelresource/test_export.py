@@ -3,6 +3,8 @@ from datetime import date
 import tablib
 from core.admin import BookResource
 from core.models import Author, Book, EBook
+from django.db.models import CharField, Value
+from django.db.models.functions import Cast, JSONObject, TruncDate
 from django.test import TestCase
 
 from import_export.fields import Field
@@ -117,3 +119,62 @@ class ExportFunctionalityTest(TestCase):
         self.book.save()
         dataset = resource.export()
         self.assertEqual("Ian Fleming", dataset.dict[0]["Author Name"])
+
+    def test_export_declared_field_value_and_dict_key(self):
+        # Test when attribute value is a dict and
+        # you want to access to return an specific key value
+
+        class EBookResource(ModelResource):
+            author_name = Field(
+                attribute="author_json__name", column_name="Author Name"
+            )
+            author_birthdate = Field(
+                attribute="author_json__birthdate", column_name="Author Birthdate"
+            )
+            custom_attribute = Field(
+                attribute="author_json__none_attribute_value__non_existentattribute",
+                column_name="Custom Attribute",
+            )
+
+            class Meta:
+                model = EBook
+                fields = ("id", "author_name", "author_birthdate", "custom_attribute")
+
+        self.book.author = Author.objects.get(pk=5)
+        self.book.save()
+        resource = EBookResource()
+        author_json_value = {
+            "name": "Ian Fleming",
+            "birthdate": "1908-05-28",
+            "none_attribute_value": None,
+        }
+        queryset = EBook.objects.annotate(
+            author_json=JSONObject(
+                name=("author__name"),
+                birthdate=Cast(TruncDate("author__birthday"), output_field=CharField()),
+                none_attribute_value=Value(None),  # it will treat this as a JSON null
+            )
+        )
+        self.assertDictEqual(queryset.first().author_json, author_json_value)
+        dataset = resource.export(queryset=queryset)
+        self.assertEqual(dataset.dict[0]["Author Name"], "Ian Fleming")
+        self.assertEqual(dataset.dict[0]["Author Birthdate"], "1908-05-28")
+        self.assertEqual(dataset.dict[0]["Custom Attribute"], "")
+
+        queryset = queryset.values("author_json")
+        self.assertDictEqual(queryset.first(), {"author_json": author_json_value})
+        dataset = resource.export(queryset=queryset)
+        self.assertEqual(dataset.dict[0]["Author Name"], "Ian Fleming")
+        self.assertEqual(dataset.dict[0]["Author Birthdate"], "1908-05-28")
+        self.assertEqual(dataset.dict[0]["Custom Attribute"], "")
+
+        author_json_value["birthdate"] = None
+        author_json_value.pop("none_attribute_value")
+        queryset = EBook.objects.annotate(
+            author_json=JSONObject(name="author__name", birthdate=Value(None))
+        )
+        self.assertDictEqual(queryset.first().author_json, author_json_value)
+        dataset = resource.export(queryset=queryset)
+        self.assertEqual(dataset.dict[0]["Author Name"], "Ian Fleming")
+        self.assertEqual(dataset.dict[0]["Author Birthdate"], "")
+        self.assertEqual(dataset.dict[0]["Custom Attribute"], "")
