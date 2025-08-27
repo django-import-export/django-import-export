@@ -184,6 +184,11 @@ A boolean value which will skip the :ref:`export form<admin_ui_exporting>` in th
 requested from an :ref:`Admin UI action<export_via_admin_action>`, or from the 'Export' button on the
 :ref:`change form <export_from_model_change_form>`.
 
+See also :ref:`IMPORT_EXPORT_SKIP_ADMIN_EXPORT_UI`.
+
+This flag can be enabled for the model admin using the
+:attr:`~import_export.mixins.BaseExportMixin.skip_export_form_from_action` flag.
+
 .. _import_export_escape_formulae_on_export:
 
 ``IMPORT_EXPORT_ESCAPE_FORMULAE_ON_EXPORT``
