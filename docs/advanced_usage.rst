@@ -853,7 +853,8 @@ See :ref:`dynamically_set_resource_values`.
 
 Data manipulation on export
 ===========================
-
+Accessing fields within ``JSONField`` or ``JSONObject``
+-------------------------------------------------------
 In the same way that it is possible to refer to the relationships of the model by defining a field with double underscore ``__``
 syntax, values within ``JSONObject``/ ``JSONField`` can also be accessed but in this case it is necessary to specify it in ``attribute``::
 
@@ -885,10 +886,12 @@ In this case, the export looks like this:
     Some Author,1970-01-01
 
 .. note::
-    Remember that the types that are annotated/stored within these fields are primitive JSON 
+    Remember that the types that are annotated/stored within these fields are primitive JSON
     data types (strings, numbers, boolean, null) and also composite JSON data types (array and object).
     That is why, in the example, the birthday field within the author_json dictionary is displayed as a string.
 
+Using dehydrate methods
+-----------------------
 Not all data can be easily extracted from an object/model attribute.
 In order to turn complicated data model into a (generally simpler) processed
 data structure on export, ``dehydrate_<fieldname>`` method should be defined::
