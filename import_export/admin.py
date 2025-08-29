@@ -235,14 +235,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
                 for row in result:
                     if row.import_type in logentry_map:
                         with warnings.catch_warnings():
-                            if django.VERSION >= (5,):
-                                from django.utils.deprecation import (
-                                    RemovedInDjango60Warning,
-                                )
-
-                                cat = RemovedInDjango60Warning
-                            else:
-                                cat = DeprecationWarning
+                            cat = DeprecationWarning
                             warnings.simplefilter("ignore", category=cat)
                             LogEntry.objects.log_action(
                                 user_id=request.user.pk,
