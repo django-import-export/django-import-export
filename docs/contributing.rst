@@ -188,7 +188,10 @@ Translation
 ^^^^^^^^^^^
 
 When generating or updating translation files with makemessages, use the ``make messages`` command.
-This command adds the ``--add-location=file`` arg to include only the source file path, not line numbers.
+This command adds the
+`--add-location=file <https://docs.djangoproject.com/en/dev/ref/django-admin/#cmdoption-makemessages-add-location>`_
+arg to include only the source file path, not line numbers.
+
 This keeps .po files cleaner and avoids unnecessary version control churn when line numbers shift due to
 unrelated code changes.
 
