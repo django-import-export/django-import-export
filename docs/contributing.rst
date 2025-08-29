@@ -183,3 +183,16 @@ To build a local version of the documentation::
   make build-html-doc
 
 The documentation will be present in ``docs/_build/html/index.html``.
+
+Translation
+^^^^^^^^^^^
+
+When generating or updating translation files with makemessages, use the `make messages <https://github.com/django-import-export/django-import-export/blob/c84e661ca4f26787f86de56f4ed546315913faab/Makefile#L33>`_
+command. This command adds the
+`--add-location=file <https://docs.djangoproject.com/en/dev/ref/django-admin/#cmdoption-makemessages-add-location>`_
+arg to include only the source file path, not line numbers.
+
+This keeps .po files cleaner and avoids unnecessary version control churn when line numbers shift due to
+unrelated code changes.
+
+Translators can still trace strings back to their source using the file references.
