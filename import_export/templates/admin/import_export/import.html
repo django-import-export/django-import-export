@@ -23,7 +23,7 @@
 
   {% if confirm_form %}
     {% block confirm_import_form %}
-    <form action="{% url opts|admin_urlname:"process_import" %}" method="POST">
+    <form action="{% url opts|admin_urlname:"process_import" %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}" method="POST">
       {% csrf_token %}
       {{ confirm_form.as_p }}
       <p>
