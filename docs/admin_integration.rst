@@ -233,10 +233,10 @@ It is possible to disable this extra step by setting the :ref:`import_export_ski
 Exporting large datasets
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-If exporting via the 'action' menu, you may Django's `SuspiciousOperation <https://docs.djangoproject.com/en/5.2/ref/exceptions/#suspiciousoperation>`_ exception for 'TooManyFieldsSent'.  This is a protection against DOS attacks.
+If exporting via the 'action' menu, you may Django's `SuspiciousOperation <https://docs.djangoproject.com/en/dev/ref/exceptions/#suspiciousoperation>`_ exception for 'TooManyFieldsSent'.  This is a protection against DOS attacks.
 
 If you need to be able to export larger datasets you can use the
-`DATA_UPLOAD_MAX_NUMBER_FIELDS <https://docs.djangoproject.com/en/5.2/ref/settings/#data-upload-max-number-fields>`_
+`DATA_UPLOAD_MAX_NUMBER_FIELDS <https://docs.djangoproject.com/en/dev/ref/settings/#data-upload-max-number-fields>`_
 setting to tune or disable this check.
 
 .. _export_from_model_change_form:
