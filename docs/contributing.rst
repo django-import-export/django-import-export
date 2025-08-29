@@ -187,8 +187,8 @@ The documentation will be present in ``docs/_build/html/index.html``.
 Translation
 ^^^^^^^^^^^
 
-When generating or updating translation files with makemessages, use the ``make messages`` command.
-This command adds the
+When generating or updating translation files with makemessages, use the `make messages <https://github.com/django-import-export/django-import-export/blob/c84e661ca4f26787f86de56f4ed546315913faab/Makefile#L33>`_
+command. This command adds the
 `--add-location=file <https://docs.djangoproject.com/en/dev/ref/django-admin/#cmdoption-makemessages-add-location>`_
 arg to include only the source file path, not line numbers.
 
