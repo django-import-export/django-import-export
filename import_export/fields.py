@@ -137,11 +137,10 @@ class Field:
             if cleaned is not None or self.saves_null_values:
                 if not is_m2m:
                     setattr(instance, attrs[-1], cleaned)
+                elif self.m2m_add:
+                    getattr(instance, attrs[-1]).add(*cleaned)
                 else:
-                    if self.m2m_add:
-                        getattr(instance, attrs[-1]).add(*cleaned)
-                    else:
-                        getattr(instance, attrs[-1]).set(cleaned)
+                    getattr(instance, attrs[-1]).set(cleaned)
 
     def export(self, instance, **kwargs):
         """

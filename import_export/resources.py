@@ -300,12 +300,11 @@ class Resource(metaclass=DeclarativeMetaclass):
                 self.create_instances.append(instance)
             else:
                 self.update_instances.append(instance)
+        elif not self._is_using_transactions(kwargs) and self._is_dry_run(kwargs):
+            # we don't have transactions and we want to do a dry_run
+            pass
         else:
-            if not self._is_using_transactions(kwargs) and self._is_dry_run(kwargs):
-                # we don't have transactions and we want to do a dry_run
-                pass
-            else:
-                self.do_instance_save(instance, is_create)
+            self.do_instance_save(instance, is_create)
         self.after_save_instance(instance, row, **kwargs)
 
     def do_instance_save(self, instance, is_create):
@@ -361,12 +360,11 @@ class Resource(metaclass=DeclarativeMetaclass):
         self.before_delete_instance(instance, row, **kwargs)
         if self._meta.use_bulk:
             self.delete_instances.append(instance)
+        elif not self._is_using_transactions(kwargs) and self._is_dry_run(kwargs):
+            # we don't have transactions and we want to do a dry_run
+            pass
         else:
-            if not self._is_using_transactions(kwargs) and self._is_dry_run(kwargs):
-                # we don't have transactions and we want to do a dry_run
-                pass
-            else:
-                instance.delete()
+            instance.delete()
         self.after_delete_instance(instance, row, **kwargs)
 
     def before_delete_instance(self, instance, row, **kwargs):
@@ -581,8 +579,7 @@ class Resource(metaclass=DeclarativeMetaclass):
                     v.pk for v in original_values
                 ):
                     return False
-            else:
-                if field.get_value(instance) != field.get_value(original):
+            elif field.get_value(instance) != field.get_value(original):
                     return False
         return True
 
