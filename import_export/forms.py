@@ -254,7 +254,7 @@ class SelectableFieldsExportForm(ExportForm):
         return [
             field
             for field, value in self.cleaned_data.items()
-            if field in resource_fields and value is True
+            if value is True and field in resource_fields
         ]
 
     def _validate_any_field_selected(self, resource) -> None:

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-02-24 11:40-0500\n"
+"POT-Creation-Date: 2025-06-23 19:11+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -93,8 +93,8 @@ msgid ""
 "The following fields are declared in 'import_id_fields' but are not present "
 "in the resource fields: %s"
 msgstr ""
-"Les champs suivants sont déclarés dans 'import_id_fields' mais ne sont pas présents "
-"dans les champs de la ressource: %s"
+"Les champs suivants sont déclarés dans 'import_id_fields' mais ne sont pas "
+"présents dans les champs de la ressource: %s"
 
 #: resources.py
 #, python-format
@@ -102,8 +102,8 @@ msgid ""
 "The following fields are declared in 'import_id_fields' but are not present "
 "in the file headers: %s"
 msgstr ""
-"Les champs suivants sont déclarés dans 'import_id_fields' mais ne sont pas présents "
-"dans les en-têtes du fichier: %s"
+"Les champs suivants sont déclarés dans 'import_id_fields' mais ne sont pas "
+"présents dans les en-têtes du fichier: %s"
 
 #: results.py
 #, python-format
@@ -125,6 +125,10 @@ msgstr[1] "Exporter %(len)s éléments sélectionnés."
 #: templates/admin/import_export/resource_fields_list.html
 msgid "This exporter will export the following fields: "
 msgstr "Cet exportateur va exporter les champs suivants: "
+
+#: templates/admin/import_export/export.html
+msgid "Select all"
+msgstr ""
 
 #: templates/admin/import_export/export.html
 #: templates/admin/import_export/import.html

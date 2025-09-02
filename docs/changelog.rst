@@ -5,6 +5,21 @@ Changelog
 
     If upgrading from v3, v4 introduces breaking changes.  Please refer to :doc:`release notes<release_notes>`.
 
+4.3.9 (2025-07-21)
+------------------
+
+- Allow specifying meta options in the :ref:`model_resourcefactory<using_modelresource_factory>` (`2078 <https://github.com/django-import-export/django-import-export/pull/2078>`_)
+- Allow custom fields and methods in :ref:`model_resourcefactory<using_modelresource_factory>` (`2081 <https://github.com/django-import-export/django-import-export/pull/2081>`_)
+- FAQ update to describe how to customize Excel exports (`2088 <https://github.com/django-import-export/django-import-export/pull/2088>`_)
+
+4.3.8 (2025-06-23)
+------------------
+
+- ui: fix error display twice issue on export field select page  (`2066 <https://github.com/django-import-export/django-import-export/pull/2066>`_)
+- ui: add 'select all' fields toggle on export page (`2068 <https://github.com/django-import-export/django-import-export/pull/2068>`_)
+- Add Hebrew translation (`2071 <https://github.com/django-import-export/django-import-export/pull/2071>`_)
+- ui: fix display of non field errors on import (`2075 <https://github.com/django-import-export/django-import-export/pull/2075>`_)
+
 4.3.7 (2025-02-25)
 ------------------
 

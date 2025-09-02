@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-02-24 11:40-0500\n"
+"POT-Creation-Date: 2025-06-23 19:11+0100\n"
 "PO-Revision-Date: 2017-05-02 19:17+0200\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -120,6 +120,10 @@ msgstr[2] ""
 #| msgid "This importer will import the following fields: "
 msgid "This exporter will export the following fields: "
 msgstr "Budou importována následující pole: "
+
+#: templates/admin/import_export/export.html
+msgid "Select all"
+msgstr ""
 
 #: templates/admin/import_export/export.html
 #: templates/admin/import_export/import.html

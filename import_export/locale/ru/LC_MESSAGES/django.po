@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-02-24 11:40-0500\n"
+"POT-Creation-Date: 2025-06-23 19:11+0100\n"
 "PO-Revision-Date: 2024-04-26 20:55+0700\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -125,6 +125,10 @@ msgstr[2] "Экспортировать %(len)s выбранных элемен�
 #: templates/admin/import_export/resource_fields_list.html
 msgid "This exporter will export the following fields: "
 msgstr "Будут экспортированы следующие поля: "
+
+#: templates/admin/import_export/export.html
+msgid "Select all"
+msgstr ""
 
 #: templates/admin/import_export/export.html
 #: templates/admin/import_export/import.html

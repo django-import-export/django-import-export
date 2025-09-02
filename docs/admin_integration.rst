@@ -230,6 +230,17 @@ It is possible to disable this extra step by setting the :ref:`import_export_ski
     those items which users should be permitted to export.
     See :meth:`~import_export.admin.ExportMixin.get_export_queryset`.
 
+Exporting large datasets
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+If exporting large datasets via the :ref:`action<export_via_admin_action>` menu, you may see Django's
+`SuspiciousOperation <https://docs.djangoproject.com/en/dev/ref/exceptions/#suspiciousoperation>`_ exception for
+'TooManyFieldsSent'.  This is a built-in Django protection against Denial of Service attacks.
+
+If you need to be able to export larger datasets via the action menu you can use the
+`DATA_UPLOAD_MAX_NUMBER_FIELDS <https://docs.djangoproject.com/en/dev/ref/settings/#data-upload-max-number-fields>`_
+setting to increase or disable this check.
+
 .. _export_from_model_change_form:
 
 Export from model instance change form
@@ -293,7 +304,7 @@ Customize forms (for example see ``tests/core/forms.py``)::
 Customize ``ModelAdmin`` (for example see ``tests/core/admin.py``)::
 
     class CustomBookAdmin(ImportMixin, admin.ModelAdmin):
-        resource_classes = [BookResource]
+        resource_classes = [EBookResource]
         import_form_class = CustomImportForm
         confirm_form_class = CustomConfirmImportForm
 
@@ -320,7 +331,7 @@ Add the following to ``CustomBookAdmin`` class (in ``tests/core/admin.py``)::
             kwargs.update({"author": form.cleaned_data.get("author", None)})
         return kwargs
 
-Then add the following to ``CustomBookAdmin`` class (in ``tests/core/admin.py``)::
+Then add the following to ``EBookResource`` class (in ``tests/core/admin.py``)::
 
     def after_init_instance(self, instance, new, row, **kwargs):
         if "author" in kwargs:

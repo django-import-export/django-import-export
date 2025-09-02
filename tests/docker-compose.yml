@@ -8,7 +8,7 @@ services:
       IMPORT_EXPORT_POSTGRESQL_USER: ${IMPORT_EXPORT_POSTGRESQL_USER}
       IMPORT_EXPORT_POSTGRESQL_PASSWORD: ${IMPORT_EXPORT_POSTGRESQL_PASSWORD}
       POSTGRES_PASSWORD: ${IMPORT_EXPORT_POSTGRESQL_PASSWORD}
-    image: postgres:13
+    image: postgres:14
     restart: "no"
     ports:
       - "${IMPORT_EXPORT_POSTGRESQL_PORT:-5432}:5432"
@@ -16,7 +16,7 @@ services:
       - ./docker/db/init-postgres-db.sh/:/docker-entrypoint-initdb.d/init-postgres-db.sh
       - postgres-db-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "sh -c 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}'"]
+      test: ["CMD-SHELL", "pg_isready -U \"${IMPORT_EXPORT_POSTGRESQL_USER}\" -d \"import_export\""]
       interval: 10s
       timeout: 3s
       retries: 3

@@ -13,9 +13,6 @@
 {% endblock %}
 
 {% block content %}
-{% if form.errors %}
-  {{ form.errors }}
-{% endif %}
 <form action="{{ export_url }}" method="POST">
   {% csrf_token %}
     {# export request has originated from an Admin UI action #}
@@ -27,6 +24,11 @@
         Export {{ len }} selected items.
       {% endblocktranslate %}
       </p>
+    {% endif %}
+    {% if form.export_items.errors %}
+        <div class="error">
+            {{ form.export_items.errors }}
+        </div>
     {% endif %}
 
   {# fields list is not required with selectable fields form #}
@@ -49,9 +51,17 @@
       >
         {% if field.field.initial_field %}
           <p style="padding: 0;">{% translate "This exporter will export the following fields: " %}</p>
+          {% if form.visible_fields|length >= 2 %}
+            <div>
+              <input type="checkbox" class="select-toggle" name="select-all-toggle" 
+                    onchange="onSelectToggleChange(event)" checked>
+              <label style="font-weight: bold;" for="select-all-toggle">{% translate "Select all" %}
+              </label>
+            </div>
+          {% endif %}
         {% endif %}
         {{ field.errors }}
-
+        
         {% if not field.field.is_selectable_field %}
           {{ field.label_tag }}
         {% endif %}
@@ -78,7 +88,9 @@
   </fieldset>
 
   <div>
-    {{ form.non_field_errors }}
+    {% if form.non_field_errors %}
+      {{ form.non_field_errors }}
+    {% endif %}
   </div>
 
   <div class="submit-row">

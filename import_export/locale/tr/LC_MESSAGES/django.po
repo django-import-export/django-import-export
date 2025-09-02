@@ -1,16 +1,16 @@
 # SOME DESCRIPTIVE TITLE.
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the PACKAGE package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+# Cihad GÜNDOĞDU <cihadgundogdu@gmail.com>, 2025.
 #
 #, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-02-24 11:40-0500\n"
+"POT-Creation-Date: 2025-08-30 17:56+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Last-Translator: Cihad GÜNDOĞDU <cihadgundogdu@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
 "MIME-Version: 1.0\n"
@@ -29,8 +29,6 @@ msgid "%s through import_export"
 msgstr "%s vasıtasıyla import_export"
 
 #: admin.py
-#, fuzzy
-#| msgid "Import finished, with {} new and {} updated {}."
 msgid "Import finished: {} new, {} updated, {} deleted and {} skipped {}."
 msgstr "{} yeni ve {} güncellenen {} ile içe aktarma bitti"
 
@@ -123,10 +121,12 @@ msgstr[1] "Dışa aktar %(len)s seçilen öğeler."
 
 #: templates/admin/import_export/export.html
 #: templates/admin/import_export/resource_fields_list.html
-#, fuzzy
-#| msgid "This importer will import the following fields: "
 msgid "This exporter will export the following fields: "
 msgstr "Bu içe aktarıcı aşağıdaki alanları içe aktaracaktır: "
+
+#: templates/admin/import_export/export.html
+msgid "Select all"
+msgstr "Tümünü seç"
 
 #: templates/admin/import_export/export.html
 #: templates/admin/import_export/import.html

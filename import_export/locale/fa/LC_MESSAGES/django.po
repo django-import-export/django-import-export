@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 0.0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-02-24 11:40-0500\n"
+"POT-Creation-Date: 2025-06-23 19:11+0100\n"
 "PO-Revision-Date: 2021-03-09 00:29+0030\n"
 "Last-Translator: MohammadReza Sadegh Zadeh <org.m.sdz@gmail.com>\n"
 "Language-Team: Persain/Farsi <kde-i18n-it@kde.org>\n"
@@ -127,6 +127,10 @@ msgstr[1] "خروجی %(len)s مورد انتخاب شده."
 #| msgid "This importer will import the following fields: "
 msgid "This exporter will export the following fields: "
 msgstr "این خروجی شامل این فیلد‌ها هست:"
+
+#: templates/admin/import_export/export.html
+msgid "Select all"
+msgstr ""
 
 #: templates/admin/import_export/export.html
 #: templates/admin/import_export/import.html

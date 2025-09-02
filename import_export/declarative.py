@@ -66,7 +66,7 @@ class DeclarativeMetaclass(type):
 class ModelDeclarativeMetaclass(DeclarativeMetaclass):
     def __new__(cls, name, bases, attrs):
         # Save the names of fields declared on this class
-        class_fields = [name for (name, obj) in attrs.items() if isinstance(obj, Field)]
+        class_fields = {name for name, obj in attrs.items() if isinstance(obj, Field)}
         new_class = super().__new__(cls, name, bases, attrs)
 
         opts = new_class._meta
@@ -107,7 +107,7 @@ class ModelDeclarativeMetaclass(DeclarativeMetaclass):
                 if opts.exclude and f.name in opts.exclude:
                     continue
 
-                if f.name in set(declared_fields.keys()):
+                if f.name in declared_fields:
                     # If model field is declared in `ModelResource`,
                     # remove it from `declared_fields`
                     # to keep exact order of model fields
