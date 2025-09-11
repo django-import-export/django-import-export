@@ -97,6 +97,7 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
             "export_items": [str(self.cat1.id)],
             **self.resource_fields_payload,
         }
+        self._prepend_form_prefix(data)
         date_str = datetime.now().strftime("%Y-%m-%d")
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", category=DeprecationWarning)
@@ -132,6 +133,7 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
             "export_items": [str(self.cat1.id)],
             **self.resource_fields_payload,
         }
+        self._prepend_form_prefix(data)
         # mock returning a set of pks which is not in the submitted range
         with mock.patch(
             "import_export.admin.ExportMixin.get_valid_export_item_pks"
@@ -150,6 +152,7 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
             "export_items": [str(self.cat1.id)],
             **self.resource_fields_payload,
         }
+        self._prepend_form_prefix(data)
         with self.assertWarnsRegex(
             DeprecationWarning,
             r"The 'get_valid_export_item_pks\(\)' method in "
@@ -194,6 +197,7 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
             "export_items": [str(self.cat1.id)],
             **self.resource_fields_payload,
         }
+        self._prepend_form_prefix(data)
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", category=DeprecationWarning)
             self._perform_export_action_calls_modeladmin_get_queryset_test(data)
@@ -206,6 +210,7 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
             "format": "0",
             **self.resource_fields_payload,
         }
+        self._prepend_form_prefix(data)
         self._perform_export_action_calls_modeladmin_get_queryset_test(data)
 
     @override_settings(IMPORT_EXPORT_SKIP_ADMIN_EXPORT_UI=True)

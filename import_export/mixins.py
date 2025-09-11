@@ -95,9 +95,9 @@ class BaseImportExportMixin:
         :returns: The index of the resource as an int.
         """
         resource_index = 0
-        if form and "resource" in form.cleaned_data:
+        if form and "die-resource" in form.data:
             try:
-                resource_index = int(form.cleaned_data["resource"])
+                resource_index = int(form.data["die-resource"])
             except ValueError:
                 pass
         return resource_index

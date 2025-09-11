@@ -8,6 +8,7 @@ from import_export.formats.base_formats import DEFAULT_FORMATS
 
 
 class AdminTestMixin:
+    author_export_url = "/admin/core/author/export/"
     category_change_url = "/admin/core/category/"
     category_export_url = "/admin/core/category/export/"
     uuid_category_change_url = "/admin/core/uuidcategory/"
@@ -61,14 +62,14 @@ class AdminTestMixin:
                 data = {}
             data.update(
                 {
-                    "format": str(input_format),
+                    "die-format": str(input_format),
                     "import_file": f,
                 }
             )
             if encoding:
                 BookAdmin.from_encoding = encoding
             if resource:
-                data.update({"resource": resource})
+                data.update({"die-resource": resource})
             response = self.client.post(url, data, follow=follow)
         return response
 
@@ -133,3 +134,13 @@ class AdminTestMixin:
         response = self.client.post(url, data, follow=follow)
         assert response.status_code == expected_status_code
         return response
+
+    def _prepend_form_prefix(self, data):
+        """
+        Add the form prefix to form data in tests.
+        """
+        prefix = "die-"
+        keys_to_update = list(data.keys())
+        for key in keys_to_update:
+            if key in ["format", "resource", "export_items"]:
+                data[prefix + key] = data.pop(key)

@@ -46,6 +46,7 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertEqual(2, len(form.fields["resource"].choices))
 
         data = {"format": "0", **self.bookresource_export_fields_payload}
+        self._prepend_form_prefix(data)
         date_str = datetime.now().strftime("%Y-%m-%d")
         # Should not contain COUNT queries from ModelAdmin.get_results()
         with self.assertNumQueries(5):
@@ -183,6 +184,7 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
                 "booknameresource_id": True,
                 "booknameresource_name": True,
             }
+            self._prepend_form_prefix(data)
             response = self._post_url_response(self.book_export_url, data)
         target_msg = "Some unknown error"
         self.assertIn(target_msg, response.content.decode())
@@ -195,6 +197,7 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
             "booknameresource_id": False,
             "booknameresource_name": False,
         }
+        self._prepend_form_prefix(data)
         response = self._post_url_response(self.book_export_url, data)
         target_msg = "Select at least 1 field"
         # Validate the occurrence of the error message should be 1
@@ -212,6 +215,7 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
             "booknameresource_id": True,
             "booknameresource_name": True,
         }
+        self._prepend_form_prefix(data)
         date_str = datetime.now().strftime("%Y-%m-%d")
         response = self._post_url_response(self.book_export_url, data)
         self.assertTrue(response.has_header("Content-Disposition"))
@@ -267,6 +271,7 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
 
         xlsx_index = self._get_input_format_index("xlsx")
         data = {"format": str(xlsx_index), **self.bookresource_export_fields_payload}
+        self._prepend_form_prefix(data)
         response = self._post_url_response(self.book_export_url, data)
         self.assertTrue(response.has_header("Content-Disposition"))
         self.assertEqual(
@@ -283,6 +288,7 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
 
         xlsx_index = self._get_input_format_index("xlsx")
         data = {"format": str(xlsx_index), **self.bookresource_export_fields_payload}
+        self._prepend_form_prefix(data)
         response = self._post_url_response(self.book_export_url, data)
         content = response.content
         wb = load_workbook(filename=BytesIO(content))
@@ -300,6 +306,7 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
             "bookresource_id": True,
             "bookresource_name": True,
         }
+        self._prepend_form_prefix(data)
         response = self._post_url_response(self.book_export_url, data)
         self.assertIn(
             f"{b1.id},SUM(1+1)\r\n".encode(),
@@ -317,6 +324,7 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
             "bookresource_id": True,
             "bookresource_name": True,
         }
+        self._prepend_form_prefix(data)
         response = self._post_url_response(self.book_export_url, data)
         self.assertIn(
             f"{b1.id},=SUM(1+1)\r\n".encode(),
@@ -364,6 +372,7 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
             "ebookresource_name": True,
             "ebookresource_published": True,
         }
+        self._prepend_form_prefix(data)
         date_str = datetime.now().strftime("%Y-%m-%d")
         response = self._post_url_response(self.ebook_export_url, data)
         self.assertTrue(response.has_header("Content-Disposition"))
@@ -392,6 +401,7 @@ class FilteredExportAdminIntegrationTest(AdminTestMixin, TestCase):
             "ebookresource_name": True,
             "ebookresource_published": True,
         }
+        self._prepend_form_prefix(data)
         date_str = datetime.now().strftime("%Y-%m-%d")
         response = self._post_url_response(self.ebook_export_url, data)
         self.assertTrue(response.has_header("Content-Disposition"))
@@ -409,7 +419,7 @@ class FilteredExportAdminIntegrationTest(AdminTestMixin, TestCase):
 
 class TestExportEncoding(TestCase):
     mock_request = MagicMock(spec=HttpRequest)
-    mock_request.POST = {"format": 0, "bookresource_id": True}
+    mock_request.POST = {"die-format": 0, "bookresource_id": True}
 
     class TestMixin(ExportMixin):
         model = Book
@@ -540,6 +550,7 @@ class CustomColumnNameExportTest(AdminTestMixin, TestCase):
             "ebookresource_name": True,
             "ebookresource_published_date": True,
         }
+        self._prepend_form_prefix(data)
         date_str = datetime.now().strftime("%Y-%m-%d")
         response = self._post_url_response(self.ebook_export_url, data)
         self.assertTrue(response.has_header("Content-Disposition"))
@@ -566,6 +577,7 @@ class CustomColumnNameExportTest(AdminTestMixin, TestCase):
             "ebookresource_published_date": True,
             "ebookresource_auteur_name": True,
         }
+        self._prepend_form_prefix(data)
         response = self._post_url_response(self.ebook_export_url, data)
         s = (
             "id,Email of the author,name,published_date,Author Name\r\n"
@@ -604,6 +616,7 @@ class DeclaredFieldWithAttributeExportTest(AdminTestMixin, TestCase):
             "resource": "0",
             "bookresource_name": True,
         }
+        self._prepend_form_prefix(data)
         response = self._post_url_response(self.book_export_url, data)
         s = "Author Name\r\nIan Fleming\r\n"
         self.assertEqual(s, response.content.decode())
@@ -640,6 +653,7 @@ class DeclaredFieldWithAttributeAndFieldsExportTest(AdminTestMixin, TestCase):
             "resource": "0",
             "bookresource_name": True,
         }
+        self._prepend_form_prefix(data)
         response = self._post_url_response(self.book_export_url, data)
         s = "Author Name\r\nIan Fleming\r\n"
         self.assertEqual(s, response.content.decode())
@@ -669,6 +683,7 @@ class DeclaredFieldWithNoAttributeExportTest(AdminTestMixin, TestCase):
     ):
         mock_choose_export_resource_class.return_value = self._BookResource
         data = {"format": "0", "resource": "0", "bookresource_author_email": True}
+        self._prepend_form_prefix(data)
         response = self._post_url_response(self.book_export_url, data)
         s = 'Author Email\r\n""\r\n'
         self.assertEqual(s, response.content.decode())
@@ -702,6 +717,7 @@ class DeclaredFieldWithIncorrectNameInFieldsExportTest(AdminTestMixin, TestCase)
             "ebookresource_a": True,
             "author": self.author.id,
         }
+        self._prepend_form_prefix(data)
         with self.assertWarns(UserWarning) as w:
             response = self._post_url_response(self.ebook_export_url, data)
             self.assertEqual(
@@ -709,6 +725,30 @@ class DeclaredFieldWithIncorrectNameInFieldsExportTest(AdminTestMixin, TestCase)
                 str(w.warnings[-1].message),
             )
         s = f"id\r\n{self.book.id}\r\n"
+        self.assertEqual(s, response.content.decode())
+
+
+class ResourceFieldExportTest(AdminTestMixin, TestCase):
+    """
+    If the model has a field called 'resource', ensure that export works ok.
+    issue #2106
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.author = Author.objects.create(id=11, name="Ian Fleming")
+
+    def test_export_with_resource_field(self):
+        data = {
+            "format": "0",
+            "resource": "0",
+            "authorresource_id": True,
+            "authorresource_name": True,
+            "authorresource_resource": True,
+        }
+        self._prepend_form_prefix(data)
+        response = self._post_url_response(self.author_export_url, data)
+        s = f"id,name,resource\r\n{self.author.id},Ian Fleming,\r\n"
         self.assertEqual(s, response.content.decode())
 
 
@@ -731,6 +771,7 @@ class FilteredExportTest(AdminTestMixin, TestCase):
             "ebookresource_id": True,
             "ebookresource_name": True,
         }
+        self._prepend_form_prefix(data)
         response = self._post_url_response(self.ebook_export_url, data)
         s = "id,name\r\n" f"{b1.id},Moonraker\r\n"
         self.assertEqual(s.encode(), response.content)
@@ -803,6 +844,7 @@ class ExportBinaryFieldsTest(AdminTestMixin, TestCase):
             "bookresource_imported": True,
             "bookresource_published": True,
         }
+        self._prepend_form_prefix(data)
         response = self.client.post(self.book_export_url, data)
         self.assertEqual(response.status_code, 200)
         content = response.content
@@ -826,6 +868,7 @@ class ExportBinaryFieldsTest(AdminTestMixin, TestCase):
             "bookresource_imported": True,
             "bookresource_published": True,
         }
+        self._prepend_form_prefix(data)
         response = self.client.post(self.book_export_url, data)
         self.assertEqual(response.status_code, 200)
         content = response.content
@@ -856,6 +899,7 @@ class ExportTzAwareDateTest(AdminTestMixin, TestCase):
             "bookresource_id": True,
             "bookresource_added": True,
         }
+        self._prepend_form_prefix(data)
         response = self.client.post(self.book_export_url, data)
         self.assertEqual(response.status_code, 200)
         content = response.content
@@ -876,6 +920,7 @@ class ExportTzAwareDateTest(AdminTestMixin, TestCase):
             "bookresource_id": True,
             "bookresource_added": True,
         }
+        self._prepend_form_prefix(data)
         response = self.client.post(self.book_export_url, data)
         self.assertEqual(response.status_code, 200)
         content = response.content
@@ -921,6 +966,7 @@ class ExportTzAwareDateTest(AdminTestMixin, TestCase):
             "bookresource_id": True,
             "bookresource_added": True,
         }
+        self._prepend_form_prefix(data)
         response = self.client.post(self.book_export_url, data)
         self.assertEqual(response.status_code, 200)
         content = response.content
@@ -939,6 +985,7 @@ class ExportInvalidCharTest(AdminTestMixin, TestCase):
             "bookresource_id": True,
             "bookresource_name": True,
         }
+        self._prepend_form_prefix(data)
         response = self.client.post(self.book_export_url, data)
         self.assertIn(
             "Export failed due to IllegalCharacterError", response.content.decode()
@@ -953,6 +1000,7 @@ class ExportInvalidCharTest(AdminTestMixin, TestCase):
             "bookresource_id": True,
             "bookresource_name": True,
         }
+        self._prepend_form_prefix(data)
         response = self.client.post(self.book_export_url, data)
         self.assertEqual(response.status_code, 200)
         content = response.content

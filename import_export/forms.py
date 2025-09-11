@@ -9,8 +9,17 @@ from django.utils.translation import gettext_lazy as _
 
 from .resources import ModelResource
 
+FORM_PREFIX = "die"
+
+FIELD_NAME_MAPPING = {
+    "format": "die-format",
+    "resource": "die-resource",
+    "export_items": "die-export_items",
+}
+
 
 class ImportExportFormBase(forms.Form):
+    # prefix = FORM_PREFIX
     resource = forms.ChoiceField(
         label=_("Resource"),
         choices=(),
@@ -25,6 +34,11 @@ class ImportExportFormBase(forms.Form):
         super().__init__(**kwargs)
         self._init_resources(resources)
         self._init_formats(formats)
+
+    def add_prefix(self, field_name):
+        # look up field name; return original if not found
+        field_name = FIELD_NAME_MAPPING.get(field_name, field_name)
+        return super().add_prefix(field_name)
 
     def _init_resources(self, resources):
         if not resources:
@@ -89,6 +103,11 @@ class ConfirmImportForm(forms.Form):
         data = self.cleaned_data["import_file_name"]
         data = os.path.basename(data)
         return data
+
+    def add_prefix(self, field_name):
+        # look up field name; return original if not found
+        field_name = FIELD_NAME_MAPPING.get(field_name, field_name)
+        return super().add_prefix(field_name)
 
 
 class ExportForm(ImportExportFormBase):
@@ -218,9 +237,9 @@ class SelectableFieldsExportForm(ExportForm):
 
         # Return selected resource by index
         resource_index = 0
-        if "resource" in self.cleaned_data:
+        if "die-resource" in self.data:
             try:
-                resource_index = int(self.cleaned_data["resource"])
+                resource_index = int(self.data["die-resource"])
             except ValueError:
                 pass
         return self.resources[resource_index]

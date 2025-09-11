@@ -746,7 +746,7 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
             self.get_export_resource_classes(request),
             data=request.POST or None,
         )
-        if request.POST and "export_items" in request.POST:
+        if request.POST and "die-export_items" in request.POST:
             # this field is instantiated if the export is POSTed from the
             # 'action' drop down
             form.fields["export_items"] = MultipleChoiceField(
