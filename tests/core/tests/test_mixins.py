@@ -283,7 +283,7 @@ class MixinModelAdminTest(AdminTestMixin, TestCase):
             admin.choose_export_resource_class(form, self.request), resources.Resource
         )
 
-        form.data = {"resource": 1}
+        form.data = {"die-resource": 1}
         self._prepend_form_prefix(form.data)
         self.assertEqual(
             admin.choose_export_resource_class(form, self.request), FooResource
@@ -302,7 +302,7 @@ class MixinModelAdminTest(AdminTestMixin, TestCase):
             resources.Resource,
         )
 
-        form.data = {"resource": 1}
+        form.data = {"die-resource": 1}
         self._prepend_form_prefix(form.data)
         self.assertEqual(admin.choose_import_resource_class(form, request), FooResource)
 
