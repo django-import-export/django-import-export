@@ -26,7 +26,6 @@ class Author(models.Model):
 
     name = models.CharField(max_length=100)
     birthday = models.DateTimeField(default=timezone.now)
-    resource = models.SmallIntegerField(null=True, blank=True)
 
     def natural_key(self):
         """

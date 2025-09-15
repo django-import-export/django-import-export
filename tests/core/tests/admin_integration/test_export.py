@@ -748,7 +748,7 @@ class ResourceFieldExportTest(AdminTestMixin, TestCase):
         }
         self._prepend_form_prefix(data)
         response = self._post_url_response(self.author_export_url, data)
-        s = f"id,name,resource\r\n{self.author.id},Ian Fleming,\r\n"
+        s = f"id,name\r\n{self.author.id},Ian Fleming\r\n"
         self.assertEqual(s, response.content.decode())
 
 
