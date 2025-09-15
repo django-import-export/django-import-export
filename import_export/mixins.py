@@ -7,6 +7,7 @@ from django.http import HttpResponse
 from django.utils.timezone import now
 from django.views.generic.edit import FormView
 
+from . import constants
 from .formats import base_formats
 from .forms import SelectableFieldsExportForm
 from .resources import modelresource_factory
@@ -95,9 +96,10 @@ class BaseImportExportMixin:
         :returns: The index of the resource as an int.
         """
         resource_index = 0
-        if form and "die-resource" in form.data:
+        prefix = constants.FORM_FIELD_PREFIX
+        if form and f"{prefix}-resource" in form.data:
             try:
-                resource_index = int(form.data["die-resource"])
+                resource_index = int(form.data[f"{prefix}-resource"])
             except ValueError:
                 pass
         return resource_index

@@ -7,19 +7,19 @@ from django import forms
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 
+from . import constants
+from .constants import FORM_FIELD_PREFIX
 from .resources import ModelResource
 
-FORM_PREFIX = "die"
-
+# prefix a constant to form field names so that there are
+# no name clashes with model field names
 FIELD_NAME_MAPPING = {
-    "format": "die-format",
-    "resource": "die-resource",
-    "export_items": "die-export_items",
+    key: f"{constants.FORM_FIELD_PREFIX}-{key}"
+    for key in ["format", "resource", "export_items"]
 }
 
 
 class ImportExportFormBase(forms.Form):
-    # prefix = FORM_PREFIX
     resource = forms.ChoiceField(
         label=_("Resource"),
         choices=(),
@@ -237,9 +237,9 @@ class SelectableFieldsExportForm(ExportForm):
 
         # Return selected resource by index
         resource_index = 0
-        if "die-resource" in self.data:
+        if f"{FORM_FIELD_PREFIX}-resource" in self.data:
             try:
-                resource_index = int(self.data["die-resource"])
+                resource_index = int(self.data[f"{FORM_FIELD_PREFIX}-resource"])
             except ValueError:
                 pass
         return self.resources[resource_index]
