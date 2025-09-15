@@ -419,7 +419,7 @@ class FilteredExportAdminIntegrationTest(AdminTestMixin, TestCase):
 
 class TestExportEncoding(TestCase):
     mock_request = MagicMock(spec=HttpRequest)
-    mock_request.POST = {"die-format": 0, "bookresource_id": True}
+    mock_request.POST = {"django-import-export-format": 0, "bookresource_id": True}
 
     class TestMixin(ExportMixin):
         model = Book
