@@ -27,6 +27,9 @@ class Author(models.Model):
     name = models.CharField(max_length=100)
     birthday = models.DateTimeField(default=timezone.now)
 
+    # issue 2106 - set up a name clash with admin integration form field names
+    resource = models.SmallIntegerField(null=True, blank=True)
+
     def natural_key(self):
         """
         Django pattern function for serializing a model by its natural key
