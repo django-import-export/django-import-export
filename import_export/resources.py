@@ -580,7 +580,7 @@ class Resource(metaclass=DeclarativeMetaclass):
                 ):
                     return False
             elif field.get_value(instance) != field.get_value(original):
-                    return False
+                return False
         return True
 
     def get_diff_headers(self):
