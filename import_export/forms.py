@@ -30,10 +30,12 @@ class FieldNamePrefixMixin:
 
 
 class ImportExportFormBase(FieldNamePrefixMixin, forms.Form):
+    # id attr is explicitly declared because js logic uses the id
     resource = forms.ChoiceField(
         label=_("Resource"),
         choices=(),
         required=False,
+        widget=forms.Select(attrs={"id": "id_resource"}),
     )
     format = forms.ChoiceField(
         label=_("Format"),
