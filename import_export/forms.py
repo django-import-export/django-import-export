@@ -11,15 +11,25 @@ from . import constants
 from .constants import FORM_FIELD_PREFIX
 from .resources import ModelResource
 
-# prefix a constant to form field names so that there are
-# no name clashes with model field names
-FIELD_NAME_MAPPING = {
-    key: f"{constants.FORM_FIELD_PREFIX}-{key}"
-    for key in ["format", "resource", "export_items"]
-}
+
+class FieldNamePrefixMixin:
+    """
+    Handles adding a constant to form field names so that there are
+    no name clashes with model field names.
+    """
+
+    field_name_mapping = {
+        key: f"{constants.FORM_FIELD_PREFIX}-{key}"
+        for key in ["format", "resource", "export_items"]
+    }
+
+    def add_prefix(self, field_name):
+        # look up field name; return original if not found
+        field_name = self.field_name_mapping.get(field_name, field_name)
+        return super().add_prefix(field_name)
 
 
-class ImportExportFormBase(forms.Form):
+class ImportExportFormBase(FieldNamePrefixMixin, forms.Form):
     resource = forms.ChoiceField(
         label=_("Resource"),
         choices=(),
@@ -34,11 +44,6 @@ class ImportExportFormBase(forms.Form):
         super().__init__(**kwargs)
         self._init_resources(resources)
         self._init_formats(formats)
-
-    def add_prefix(self, field_name):
-        # look up field name; return original if not found
-        field_name = FIELD_NAME_MAPPING.get(field_name, field_name)
-        return super().add_prefix(field_name)
 
     def _init_resources(self, resources):
         if not resources:
@@ -93,7 +98,7 @@ class ImportForm(ImportExportFormBase):
         )
 
 
-class ConfirmImportForm(forms.Form):
+class ConfirmImportForm(FieldNamePrefixMixin, forms.Form):
     import_file_name = forms.CharField(widget=forms.HiddenInput())
     original_file_name = forms.CharField(widget=forms.HiddenInput())
     format = forms.CharField(widget=forms.HiddenInput())
@@ -103,11 +108,6 @@ class ConfirmImportForm(forms.Form):
         data = self.cleaned_data["import_file_name"]
         data = os.path.basename(data)
         return data
-
-    def add_prefix(self, field_name):
-        # look up field name; return original if not found
-        field_name = FIELD_NAME_MAPPING.get(field_name, field_name)
-        return super().add_prefix(field_name)
 
 
 class ExportForm(ImportExportFormBase):
