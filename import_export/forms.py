@@ -19,7 +19,7 @@ class FieldNamePrefixMixin:
     """
 
     field_name_mapping = {
-        key: f"{constants.FORM_FIELD_PREFIX}-{key}"
+        key: f"{constants.FORM_FIELD_PREFIX}{key}"
         for key in ["format", "resource", "export_items"]
     }
 
@@ -237,9 +237,9 @@ class SelectableFieldsExportForm(ExportForm):
 
         # Return selected resource by index
         resource_index = 0
-        if f"{FORM_FIELD_PREFIX}-resource" in self.data:
+        if f"{FORM_FIELD_PREFIX}resource" in self.data:
             try:
-                resource_index = int(self.data[f"{FORM_FIELD_PREFIX}-resource"])
+                resource_index = int(self.data[f"{FORM_FIELD_PREFIX}resource"])
             except ValueError:
                 pass
         return self.resources[resource_index]

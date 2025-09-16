@@ -97,9 +97,9 @@ class BaseImportExportMixin:
         """
         resource_index = 0
         prefix = constants.FORM_FIELD_PREFIX
-        if form and f"{prefix}-resource" in form.data:
+        if form and f"{prefix}resource" in form.data:
             try:
-                resource_index = int(form.data[f"{prefix}-resource"])
+                resource_index = int(form.data[f"{prefix}resource"])
             except ValueError:
                 pass
         return resource_index

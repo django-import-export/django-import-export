@@ -50,7 +50,6 @@ class AdminTestMixin:
         follow=False,
         data=None,
     ):
-        input_format = input_format
         filename = os.path.join(
             os.path.dirname(__file__),
             os.path.pardir,
@@ -63,14 +62,14 @@ class AdminTestMixin:
                 data = {}
             data.update(
                 {
-                    f"{FORM_FIELD_PREFIX}-format": str(input_format),
+                    f"{FORM_FIELD_PREFIX}format": str(input_format),
                     "import_file": f,
                 }
             )
             if encoding:
                 BookAdmin.from_encoding = encoding
             if resource:
-                data.update({f"{FORM_FIELD_PREFIX}-resource": resource})
+                data.update({f"{FORM_FIELD_PREFIX}resource": resource})
             response = self.client.post(url, data, follow=follow)
         return response
 

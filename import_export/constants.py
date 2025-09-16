@@ -2,4 +2,4 @@
 Internal project constants.
 """
 
-FORM_FIELD_PREFIX = "django-import-export"
+FORM_FIELD_PREFIX = "django-import-export-"
