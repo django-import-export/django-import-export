@@ -5,6 +5,10 @@ Changelog
 
     If upgrading from v3, v4 introduces breaking changes.  Please refer to :doc:`release notes<release_notes>`.
 
+4.3.10 (unreleased)
+
+- Added support for django 6.0a (`2112 <https://github.com/django-import-export/django-import-export/pull/2112>`_)
+
 4.3.9 (2025-07-21)
 ------------------
 
