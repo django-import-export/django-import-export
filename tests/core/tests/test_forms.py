@@ -1,5 +1,6 @@
 import django.forms
 from core.models import Author
+from core.tests.admin_integration.mixins import AdminTestMixin
 from django.test import TestCase
 
 from import_export import forms, resources
@@ -96,7 +97,7 @@ class ImportFormMediaTest(TestCase):
         )
 
 
-class SelectableFieldsExportFormTest(TestCase):
+class SelectableFieldsExportFormTest(AdminTestMixin, TestCase):
     @classmethod
     def setUpTestData(cls) -> None:
         cls.resources = (BookResource, BookResourceWithStoreInstance)
@@ -130,7 +131,7 @@ class SelectableFieldsExportFormTest(TestCase):
 
     def test_remove_unselected_resource_fields_on_validation(self):
         data = {"resource": "0", "format": "0"}
-
+        self._prepend_form_prefix(data)
         # Add all field values to form data for validation
         for resource in self.resources:
             for field in resource().get_export_order():
@@ -163,7 +164,7 @@ class SelectableFieldsExportFormTest(TestCase):
         """
 
         data = {"resource": "0", "format": "0"}
-
+        self._prepend_form_prefix(data)
         # Add all field values to form data for validation
         for resource in self.resources:
             for field in resource().get_export_order():
@@ -203,8 +204,9 @@ class SelectableFieldsExportFormTest(TestCase):
             form._get_field_label(resource, "published"), "Published (published_date)"
         )
 
-    def test_get_selected_resrource_fields(self) -> None:
+    def test_get_selected_rerource_fields(self) -> None:
         data = {"resource": "0", "format": "0"}
+        self._prepend_form_prefix(data)
         form = forms.SelectableFieldsExportForm(
             formats=(CSV,), resources=self.resources, data=data
         )

@@ -5,6 +5,11 @@ Changelog
 
     If upgrading from v3, v4 introduces breaking changes.  Please refer to :doc:`release notes<release_notes>`.
 
+5.0.0 (unreleased)
+------------------
+
+Fix Admin UI form field name collision for exports (`2108 <https://github.com/django-import-export/django-import-export/pull/2108>`_)
+
 4.3.9 (2025-07-21)
 ------------------
 

@@ -40,7 +40,7 @@ class ImportExportPermissionTest(AdminTestMixin, TestCase):
                 "format": input_format,
                 "import_file": f,
             }
-
+            self._prepend_form_prefix(data)
             response = self.client.post(self.book_import_url, data)
             self.assertEqual(response.status_code, 403)
 
@@ -64,12 +64,13 @@ class ImportExportPermissionTest(AdminTestMixin, TestCase):
                 "format": input_format,
                 "import_file": f,
             }
-
+            self._prepend_form_prefix(data)
             response = self.client.post(self.book_import_url, data)
             self.assertEqual(response.status_code, 200)
             confirm_form = response.context["confirm_form"]
 
             data = confirm_form.initial
+            self._prepend_form_prefix(data)
             response = self.client.post(self.book_process_import_url, data)
             self.assertEqual(response.status_code, 302)
 

@@ -21,6 +21,7 @@ class ImportAdminSecurityTests(AdminTestMixin, TestCase):
             "import_file_name": import_file_name,
             "original_file_name": "books.csv",
         }
+        self._prepend_form_prefix(data)
         with self.assertRaises(FileNotFoundError):
             self._post_url_response(self.book_process_import_url, data)
 

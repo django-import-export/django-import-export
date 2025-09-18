@@ -101,6 +101,7 @@ class CompleteImportEncodingTest(AdminTestMixin, TestCase):
         )
         confirm_form = response.context["confirm_form"]
         data = confirm_form.initial
+        self._prepend_form_prefix(data)
         response = self._post_url_response(
             self.book_process_import_url, data, follow=True
         )

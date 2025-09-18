@@ -42,6 +42,7 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertEqual(response.status_code, 200)
         confirm_form = response.context["confirm_form"]
         data = confirm_form.initial
+        self._prepend_form_prefix(data)
         self._post_url_response(self.book_process_import_url, data, follow=True)
 
         # check the LogEntry was created as expected
@@ -152,6 +153,7 @@ class ImportFileHandlingTests(AdminTestMixin, TestCase):
         confirm_form = response.context["confirm_form"]
 
         data = confirm_form.initial
+        self._prepend_form_prefix(data)
         self.assertEqual(data["original_file_name"], "books.csv")
         response = self._post_url_response(
             self.book_process_import_url, data, follow=True
@@ -177,6 +179,7 @@ class ImportFileHandlingTests(AdminTestMixin, TestCase):
         confirm_form = response.context["confirm_form"]
 
         data = confirm_form.initial
+        self._prepend_form_prefix(data)
         self.assertEqual(data["original_file_name"], "books-mac.csv")
         response = self._post_url_response(
             self.book_process_import_url, data, follow=True
@@ -206,6 +209,7 @@ class ImportFileHandlingTests(AdminTestMixin, TestCase):
         confirm_form = response.context["confirm_form"]
 
         data = confirm_form.initial
+        self._prepend_form_prefix(data)
         self.assertEqual(data["original_file_name"], "books.csv")
         response = self._post_url_response(
             self.book_process_import_url, data, follow=True
@@ -227,6 +231,7 @@ class ImportLogEntryTest(AdminTestMixin, TestCase):
         self.assertEqual(response.status_code, 200)
         confirm_form = response.context["confirm_form"]
         data = confirm_form.initial
+        self._prepend_form_prefix(data)
         self._post_url_response(self.book_process_import_url, data, follow=True)
         book = LogEntry.objects.latest("id")
         self.assertEqual(book.object_repr, "Some book")
@@ -238,6 +243,7 @@ class ImportLogEntryTest(AdminTestMixin, TestCase):
         self.assertEqual(response.status_code, 200)
         confirm_form = response.context["confirm_form"]
         data = confirm_form.initial
+        self._prepend_form_prefix(data)
         self._post_url_response(self.child_process_import_url, data, follow=True)
         child = LogEntry.objects.latest("id")
         self.assertEqual(child.object_repr, "Some - child of Some Parent")

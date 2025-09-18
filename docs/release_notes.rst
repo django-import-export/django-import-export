@@ -2,6 +2,20 @@
 Release Notes
 =============
 
+v5.0
+----
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+
+* This release fixes an issue with form field name clashes (see `2108
+  <https://github.com/django-import-export/django-import-export/pull/2108>`_).
+
+  If you have any customizations which rely on form field names then you may need to make some adjustments as
+  a result of this change.
+
+  The ``resource``, ``format`` and ``export_items`` field names are now prepended with ``django-import-export-``.
+
 v4.2
 ----
 
