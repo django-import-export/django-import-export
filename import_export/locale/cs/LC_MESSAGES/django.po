@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-06-23 19:11+0100\n"
-"PO-Revision-Date: 2017-05-02 19:17+0200\n"
+"POT-Creation-Date: 2025-09-19 09:06+0200\n"
+"PO-Revision-Date: 2025-09-17 11:44+0200\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: cs\n"
@@ -29,10 +29,9 @@ msgid "%s through import_export"
 msgstr "%s skrz import_export"
 
 #: admin.py
-#, fuzzy
-#| msgid "Import finished, with {} new and {} updated {}."
 msgid "Import finished: {} new, {} updated, {} deleted and {} skipped {}."
-msgstr "Import dokončen, {} nové a {} aktualizované {}."
+msgstr ""
+"Import dokončen, {} nové, {} aktualizované, {} smazané a {} přeskočené {}."
 
 #: admin.py
 #, python-format
@@ -40,12 +39,16 @@ msgid ""
 "%(exc_name)s encountered while trying to read file. Ensure you have chosen "
 "the correct format for the file."
 msgstr ""
+"Při načítání souboru se vyskytla chyba %(exc_name)s. Ujistěte se, že jste "
+"zvolili správný formát souboru."
 
 #: admin.py
 msgid ""
 "No valid data to import. Ensure your file has the correct headers or data "
 "for import."
 msgstr ""
+"Žádná data pro import. Ujistěte se, že soubor má správné hlavičky a data pro "
+"import."
 
 #: admin.py templates/admin/import_export/change_form.html
 #: templates/admin/import_export/change_list_export_item.html
@@ -60,11 +63,11 @@ msgstr "Vybrán export %(verbose_name_plural)s"
 
 #: formats/base_formats.py
 msgid "export failed due to IllegalCharacterError"
-msgstr ""
+msgstr "export selhal z důvodu výskytu neplatného znaku"
 
 #: forms.py
 msgid "Resource"
-msgstr ""
+msgstr "Zdroj"
 
 #: forms.py
 msgid "Format"
@@ -76,31 +79,31 @@ msgstr "Soubor k importu"
 
 #: forms.py
 msgid "Form is not validated, call `is_valid` first"
-msgstr ""
+msgstr "Formulář nebyl validován, nejdříve zavolejte `is_valid`"
 
 #: forms.py
 #, python-format
 msgid "Select at least 1 field for \"%(resource_name)s\" to export"
-msgstr ""
+msgstr "Zvolte alespoň 1 pole k exportu pro \"%(resource_name)s\""
 
 #: resources.py
 #, python-format
 msgid ""
 "The following fields are declared in 'import_id_fields' but are not present "
 "in the resource fields: %s"
-msgstr ""
+msgstr "Následující pole chybí v definovaných polích resource objektu: %s"
 
 #: resources.py
 #, python-format
 msgid ""
 "The following fields are declared in 'import_id_fields' but are not present "
 "in the file headers: %s"
-msgstr ""
+msgstr "Následující pole chybí v hlavičce zpracovávaného souboru: %s"
 
 #: results.py
 #, python-format
 msgid "call to force_str() on instance failed: %s"
-msgstr ""
+msgstr "konverze na text selhala: %s"
 
 #: templates/admin/import_export/base.html
 msgid "Home"
@@ -110,20 +113,18 @@ msgstr "Domů"
 #, python-format
 msgid "Export %(len)s selected item."
 msgid_plural "Export %(len)s selected items."
-msgstr[0] ""
-msgstr[1] ""
-msgstr[2] ""
+msgstr[0] "Exportovat %(len)s vybranou položku."
+msgstr[1] "Exportovat %(len)s vybrané položky."
+msgstr[2] "Exportovat %(len)s vybraných položek."
 
 #: templates/admin/import_export/export.html
 #: templates/admin/import_export/resource_fields_list.html
-#, fuzzy
-#| msgid "This importer will import the following fields: "
 msgid "This exporter will export the following fields: "
-msgstr "Budou importována následující pole: "
+msgstr "Budou exportována následující pole: "
 
 #: templates/admin/import_export/export.html
 msgid "Select all"
-msgstr ""
+msgstr "Vybrat vše"
 
 #: templates/admin/import_export/export.html
 #: templates/admin/import_export/import.html
@@ -152,21 +153,23 @@ msgstr "Číslo řádku"
 
 #: templates/admin/import_export/import.html
 msgid "Some rows failed to validate"
-msgstr ""
+msgstr "Některé řádky nejsou platné"
 
 #: templates/admin/import_export/import.html
 msgid ""
 "Please correct these errors in your data where possible, then reupload it "
 "using the form above."
 msgstr ""
+"Opravte následující chyby ve vašich datech, pak znovu nahrajte soubor do "
+"formuláře."
 
 #: templates/admin/import_export/import.html
 msgid "Row"
-msgstr ""
+msgstr "Řádek"
 
 #: templates/admin/import_export/import.html
 msgid "Non field specific"
-msgstr ""
+msgstr "Obecné chyby řadku"
 
 #: templates/admin/import_export/import.html
 msgid "Preview"
@@ -194,11 +197,8 @@ msgstr "Budou importována následující pole: "
 
 #: widgets.py
 msgid "Value could not be parsed."
-msgstr ""
+msgstr "Hodnotu nelze načíst"
 
 #: widgets.py
 msgid "use_natural_foreign_keys and key_is_id cannot both be True"
-msgstr ""
-
-#~ msgid "You must select an export format."
-#~ msgstr "Musíte vybrat formát pro export."
+msgstr "use_natural_foreign_keys a key_is_id nemůžou být oba True"
