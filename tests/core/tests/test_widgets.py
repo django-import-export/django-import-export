@@ -672,6 +672,117 @@ class ForeignKeyWidgetTest(TestCase, RowDeprecationTestMixin):
         )
 
 
+class ForeignKeyWidgetExportTest(TestCase):
+    """
+    Tests for issue #2107: ForeignKey widget field configuration ignored during export
+    """
+
+    def setUp(self):
+        self.author = Author.objects.create(name="Test Author")
+        self.book = Book.objects.create(name="Test Book", author=self.author)
+
+    def test_foreign_key_widget_field_export_issue_2107(self):
+        """
+        Test that demonstrates the bug where ForeignKeyWidget field configuration
+        is ignored during export. The widget should export the author name instead
+        of the ID, but currently exports the ID.
+        """
+        from import_export import resources
+
+        class BookResourceWithAuthorNameWidget(resources.ModelResource):
+            class Meta:
+                model = Book
+                fields = ("name", "author")
+                widgets = {
+                    "author": {"field": "name"},
+                }
+
+        resource = BookResourceWithAuthorNameWidget()
+        dataset = resource.export(queryset=Book.objects.filter(id=self.book.id))
+
+        # This assertion currently FAILS because of the bug
+        # The widget configuration is ignored and we get the ID instead of name
+        exported_author_value = dataset.dict[0]["author"]
+
+        # What we expect (author name): "Test Author"
+        # What we actually get (author id): the primary key value
+        self.assertEqual(
+            exported_author_value,
+            "Test Author",
+            f"Expected author name 'Test Author' but got '{exported_author_value}'. "
+            f"This demonstrates issue #2107 where ForeignKeyWidget field configuration "
+            f"is ignored during export.",
+        )
+
+
+class ForeignKeyWidgetImportTest(TestCase):
+    """
+    Tests for issue #2107: Verify ForeignKey widget field configuration works for import
+    This proves that import functionality works correctly in v4, demonstrating that
+    the export issue is a regression.
+    """
+
+    def setUp(self):
+        self.author = Author.objects.create(name="Test Author")
+        self.book = Book.objects.create(name="Test Book", author=self.author)
+
+    def test_foreign_key_widget_field_import_issue_2107(self):
+        """
+        Test that proves ForeignKeyWidget field configuration works for import.
+        This test imports data with author names (not IDs) and verifies that the widget
+        correctly resolves the names to Author objects during import.
+        This demonstrates that import works in v4, proving export is a regression.
+        """
+        import tablib
+
+        from import_export import resources
+
+        # Create additional test authors for import
+        author2 = Author.objects.create(name="Second Author")
+        author3 = Author.objects.create(name="Third Author")
+
+        class BookResourceWithAuthorNameWidget(resources.ModelResource):
+            class Meta:
+                model = Book
+                fields = ("id", "name", "author")
+                widgets = {
+                    "author": {"field": "name"},
+                }
+
+        # Create dataset with author names instead of IDs
+        dataset = tablib.Dataset(headers=["name", "author"])
+        dataset.append(["Book One", "Test Author"])  # Uses existing author from setUp
+        dataset.append(["Book Two", "Second Author"])
+        dataset.append(["Book Three", "Third Author"])
+
+        resource = BookResourceWithAuthorNameWidget()
+
+        # Count books before import
+        initial_book_count = Book.objects.count()
+
+        # Import the data
+        result = resource.import_data(dataset, raise_errors=True)
+
+        # Verify import was successful
+        self.assertFalse(result.has_errors())
+        self.assertEqual(len(result.rows), 3)
+
+        # Verify new books were created
+        self.assertEqual(Book.objects.count(), initial_book_count + 3)
+
+        # Verify books have correct author relationships
+        book_one = Book.objects.get(name="Book One")
+        self.assertEqual(book_one.author, self.author)  # Test Author from setUp
+
+        book_two = Book.objects.get(name="Book Two")
+        self.assertEqual(book_two.author, author2)
+
+        book_three = Book.objects.get(name="Book Three")
+        self.assertEqual(book_three.author, author3)
+
+        print("DEBUG: Import test passed - ForeignKeyWidget resolved names to objects")
+
+
 class ManyToManyWidget(TestCase, RowDeprecationTestMixin):
     def setUp(self):
         self.widget = widgets.ManyToManyWidget(Category)
