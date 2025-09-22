@@ -135,6 +135,16 @@ class FloatWidget(NumberWidget):
     """
 
     def clean(self, value, row=None, **kwargs):
+        """
+        Converts the input value to a Python float.
+
+        :param value: The value to be converted to float. Can be a string or numeric
+            type.
+        :param row: The current row being processed.
+        :param **kwargs: Optional keyword arguments.
+        :returns: A Python float instance, or None if value is empty.
+        :raises ValueError: If the value cannot be converted to float.
+        """
         if self.is_empty(value):
             return None
         return float(sanitize_separators(value))
@@ -146,6 +156,19 @@ class IntegerWidget(NumberWidget):
     """
 
     def clean(self, value, row=None, **kwargs):
+        """
+        Converts the input value to a Python integer.
+
+        Uses Decimal for precise conversion to handle locale-specific number formatting.
+
+        :param value: The value to be converted to integer. Can be a string or
+            numeric type.
+        :param row: The current row being processed.
+        :param **kwargs: Optional keyword arguments.
+        :returns: A Python int instance, or None if value is empty.
+        :raises ValueError: If the value cannot be converted to integer.
+        :raises InvalidOperation: If Decimal conversion fails.
+        """
         if self.is_empty(value):
             return None
         return int(Decimal(sanitize_separators(value)))
@@ -157,6 +180,16 @@ class DecimalWidget(NumberWidget):
     """
 
     def clean(self, value, row=None, **kwargs):
+        """
+        Converts the input value to a Python Decimal for precise numeric operations.
+
+        :param value: The value to be converted to Decimal. Can be a string or
+            numeric type.
+        :param row: The current row being processed.
+        :param **kwargs: Optional keyword arguments.
+        :returns: A Python Decimal instance, or None if value is empty.
+        :raises InvalidOperation: If the value cannot be converted to Decimal.
+        """
         if self.is_empty(value):
             return None
         return Decimal(force_str(sanitize_separators(value)))
@@ -176,6 +209,17 @@ class CharWidget(Widget):
         super().__init__(coerce_to_string)
 
     def clean(self, value, row=None, **kwargs):
+        """
+        Converts the input value to a string, handling None values based on
+        allow_blank setting.
+
+        :param value: The value to be converted to string.
+        :param row: The current row being processed.
+        :param **kwargs: Optional keyword arguments.
+        :returns: A string representation of the value. Returns empty string if
+            value is None
+            and ``allow_blank`` is True, otherwise returns None.
+        """
         val = super().clean(value, row, **kwargs)
         if val is None:
             return "" if self.allow_blank is True else None
@@ -227,6 +271,19 @@ class BooleanWidget(Widget):
         super().__init__(coerce_to_string)
 
     def clean(self, value, row=None, **kwargs):
+        """
+        Converts the input value to a Python boolean or None.
+
+        Recognizes common string representations of boolean values:
+        - True values: '1', 1, True, 'true', 'TRUE', 'True'
+        - False values: '0', 0, False, 'false', 'FALSE', 'False'
+        - Null values: '', None, 'null', 'NULL', 'none', 'NONE', 'None'
+
+        :param value: The value to be converted to boolean.
+        :param row: The current row being processed.
+        :param **kwargs: Optional keyword arguments.
+        :returns: True, False, or None depending on the input value.
+        """
         if value in self.NULL_VALUES:
             return None
         return True if value in self.TRUE_VALUES else False
@@ -262,8 +319,18 @@ class DateWidget(_ParseDateTimeMixin, Widget):
 
     def clean(self, value, row=None, **kwargs):
         """
-        :returns: A python date instance.
-        :raises: ValueError if the value cannot be parsed using defined formats.
+        Converts a date string to a Python date instance using configured formats.
+
+        Attempts to parse the value using formats specified during widget
+        initialization.
+        If no format was provided, uses ``settings.DATE_INPUT_FORMATS`` or "%Y-%m-%d".
+
+        :param value: A date string to be parsed, or an existing date instance.
+        :param row: The current row being processed.
+        :param **kwargs: Optional keyword arguments.
+        :returns: A Python date instance, or None if value is empty.
+        :raises ValueError: If the value cannot be parsed using any of the
+            defined formats.
         """
         return self._parse_value(value, date)
 
@@ -391,8 +458,16 @@ class SimpleArrayWidget(Widget):
 
     def clean(self, value, row=None, **kwargs):
         """
-        :returns: A python array derived from ``value`` split by ``separator``.
-        If value is None, return an empty array.
+        Converts a separated string into a Python array.
+
+        Splits the input string by the configured separator. Empty strings result
+        in empty arrays rather than arrays containing empty strings.
+
+        :param value: A string containing values separated by the configured separator.
+        :param row: The current row being processed.
+        :param **kwargs: Optional keyword arguments.
+        :returns: A Python list derived from splitting the value by separator.
+            Returns an empty list if value is None or empty.
         """
         return value.split(self.separator) if value else []
 
@@ -422,6 +497,18 @@ class JSONWidget(Widget):
     """
 
     def clean(self, value, row=None, **kwargs):
+        """
+        Parses the input value as JSON and returns the corresponding Python object.
+
+        Attempts to parse as valid JSON first, then falls back to single-quote format
+        by converting single quotes to double quotes before parsing.
+
+        :param value: A JSON string to be parsed.
+        :param row: The current row being processed.
+        :param **kwargs: Optional keyword arguments.
+        :returns: The parsed Python object (dict, list, etc.) or None if value is empty.
+        :raises JSONDecodeError: If the value cannot be parsed as JSON.
+        """
         val = super().clean(value)
         if val:
             try:
@@ -619,6 +706,20 @@ class ManyToManyWidget(Widget):
         super().__init__(**kwargs)
 
     def clean(self, value, row=None, **kwargs):
+        """
+        Converts a separated string of values into a QuerySet for ManyToMany
+        relationships.
+
+        Splits the input by the configured separator and looks up model instances
+        using the specified field. Filters out empty values after splitting.
+
+        :param value: String of separated values, or a single numeric value.
+        :param row: The current row being processed.
+        :param **kwargs: Optional keyword arguments.
+        :returns: A QuerySet containing the related model instances, or an empty
+            QuerySet
+            if no value provided.
+        """
         if not value:
             return self.model.objects.none()
         if isinstance(value, (float, int)):
