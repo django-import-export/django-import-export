@@ -5,6 +5,11 @@ Changelog
 
     If upgrading from v3, v4 introduces breaking changes.  Please refer to :doc:`release notes<release_notes>`.
 
+4.3.10 (unreleased)
+------------------
+
+- improved documentation for ``clean()`` methods ()
+
 4.3.9 (2025-07-21)
 ------------------
 

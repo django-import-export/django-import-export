@@ -431,39 +431,6 @@ Field level errors will be presented in the :ref:`Admin UI<admin-integration>`, 
 
   A screenshot showing a field specific error.
 
-.. _custom_boolean_handling:
-
-Custom Boolean value handling
-------------------------------
-
-While the ``BooleanWidget`` is set up to accept common variations of
-"True" and "False" (and "None"), you may need to handle less common values
-or custom boolean representations.
-
-The easiest way to transform custom boolean values is to override the
-:meth:`~import_export.resources.Resource.before_import_row` method in your Resource class::
-
-    from import_export import fields, resources, widgets
-
-    class BookResource(resources.ModelResource):
-        warn = fields.Field(widget=widgets.BooleanWidget())
-
-        def before_import_row(self, row, **kwargs):
-            if "warn" in row.keys():
-                # Transform custom values to standard boolean representations
-                if row["warn"] in ["warn", "WARN", "warning"]:
-                    row["warn"] = True
-                elif row["warn"] in ["safe", "SAFE", "ok"]:
-                    row["warn"] = False
-
-            return super().before_import_row(row, **kwargs)
-
-        class Meta:
-            model = Book
-
-This approach allows you to handle domain-specific boolean values while keeping
-the import logic centralized and maintainable.
-
 Instance level validation
 -------------------------
 
@@ -881,6 +848,52 @@ You can define your resource to take the associated instance as a param, and the
             model = Book
 
 See :ref:`dynamically_set_resource_values`.
+
+.. _data_manipulation_on_import:
+
+Data manipulation on import
+===========================
+
+Import data often requires transformation or cleaning before it can be properly saved to your Django models.
+Import-export provides several hooks to manipulate data during the import process:
+
+* :meth:`~import_export.resources.Resource.before_import` - Called before processing the entire dataset, allowing you
+  to modify headers or perform dataset-level transformations.
+* :meth:`~import_export.resources.Resource.before_import_row` - Called before processing each individual row, allowing
+  you to transform or clean row data.
+
+.. _custom_boolean_handling:
+
+Custom Boolean value handling
+-----------------------------
+
+While the ``BooleanWidget`` is set up to accept common variations of
+"True" and "False" (and "None"), you may need to handle less common values
+or custom boolean representations.
+
+The easiest way to transform custom boolean values is to override the
+:meth:`~import_export.resources.Resource.before_import_row` method in your Resource class::
+
+    from import_export import fields, resources, widgets
+
+    class BookResource(resources.ModelResource):
+        warn = fields.Field(widget=widgets.BooleanWidget())
+
+        def before_import_row(self, row, **kwargs):
+            if "warn" in row.keys():
+                # Transform custom values to standard boolean representations
+                if row["warn"] in ["warn", "WARN", "warning"]:
+                    row["warn"] = True
+                elif row["warn"] in ["safe", "SAFE", "ok"]:
+                    row["warn"] = False
+
+            return super().before_import_row(row, **kwargs)
+
+        class Meta:
+            model = Book
+
+This approach allows you to handle domain-specific boolean values while keeping
+the import logic centralized and maintainable.
 
 .. _advanced_data_manipulation_on_export:
 
