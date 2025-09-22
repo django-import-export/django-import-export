@@ -1315,12 +1315,14 @@ class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
         column_name = field_name
         # To solve #974, #2107
         # Check if there's a custom widget configuration for this field
-        has_custom_widget = cls._meta.widgets and field_name in cls._meta.widgets
+        has_custom_widget_declaration = (
+            cls._meta.widgets and field_name in cls._meta.widgets
+        )
         if (
             isinstance(django_field, ForeignKey)
             and "__" not in column_name
             and not cls._meta.use_natural_foreign_keys
-            and not has_custom_widget
+            and not has_custom_widget_declaration
         ):
             attribute += "_id"
             widget_kwargs["key_is_id"] = True

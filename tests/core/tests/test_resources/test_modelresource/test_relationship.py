@@ -124,3 +124,91 @@ class RelationshipFieldTest(TestCase):
         self.book.published = date(2012, 8, 13)
         result = resource.fields["published"].export(self.book)
         self.assertEqual(result, "13.08.2012")
+
+
+class ForeignKeyWidgetImportExportTest(TestCase):
+    """
+    Tests for issue #2107: ForeignKey widget field configuration must not be
+    ignored during export.
+    """
+
+    def setUp(self):
+        self.author = Author.objects.create(name="Test Author")
+        self.book = Book.objects.create(name="Test Book", author=self.author)
+
+    def test_foreign_key_widget_field_import(self):
+        """
+        Test that proves ForeignKeyWidget field configuration works for import.
+        This test imports data with author names (not IDs) and verifies that the widget
+        correctly resolves the names to Author objects during import.
+        This demonstrates that import works in v4, proving export is a regression.
+        """
+        # Create additional test authors for import
+        author2 = Author.objects.create(name="Second Author")
+        author3 = Author.objects.create(name="Third Author")
+
+        class BookResourceWithAuthorNameWidget(resources.ModelResource):
+            class Meta:
+                model = Book
+                fields = ("id", "name", "author")
+                widgets = {
+                    "author": {"field": "name"},
+                }
+
+        # Create dataset with author names instead of IDs
+        dataset = tablib.Dataset(headers=["name", "author"])
+        dataset.append(["Book One", "Test Author"])  # Uses existing author from setUp
+        dataset.append(["Book Two", "Second Author"])
+        dataset.append(["Book Three", "Third Author"])
+
+        resource = BookResourceWithAuthorNameWidget()
+
+        # Count books before import
+        initial_book_count = Book.objects.count()
+
+        # Import the data
+        result = resource.import_data(dataset, raise_errors=True)
+
+        # Verify import was successful
+        self.assertFalse(result.has_errors())
+        self.assertEqual(len(result.rows), 3)
+
+        # Verify new books were created
+        self.assertEqual(Book.objects.count(), initial_book_count + 3)
+
+        # Verify books have correct author relationships
+        book_one = Book.objects.get(name="Book One")
+        self.assertEqual(book_one.author, self.author)  # Test Author from setUp
+
+        book_two = Book.objects.get(name="Book Two")
+        self.assertEqual(book_two.author, author2)
+
+        book_three = Book.objects.get(name="Book Three")
+        self.assertEqual(book_three.author, author3)
+
+    def test_foreign_key_widget_field_export(self):
+        """
+        Test that demonstrates the bug where ForeignKeyWidget field configuration
+        is ignored during export. The widget should export the author name instead
+        of the ID, but currently exports the ID.
+        """
+
+        class BookResourceWithAuthorNameWidget(resources.ModelResource):
+            class Meta:
+                model = Book
+                fields = ("name", "author")
+                widgets = {
+                    "author": {"field": "name"},
+                }
+
+        resource = BookResourceWithAuthorNameWidget()
+        dataset = resource.export(queryset=Book.objects.filter(id=self.book.id))
+
+        # Get the exported value for comparison
+        exported_author_value = dataset.dict[0]["author"]
+
+        self.assertEqual(
+            exported_author_value,
+            "Test Author",
+            f"Expected author name 'Test Author' but got '{exported_author_value}'",
+        )
