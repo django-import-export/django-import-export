@@ -390,6 +390,10 @@ class SimpleArrayWidget(Widget):
         super().__init__(coerce_to_string=coerce_to_string)
 
     def clean(self, value, row=None, **kwargs):
+        """
+        :returns: A python array derived from ``value`` split by ``separator``.
+        If value is None, return an empty array.
+        """
         return value.split(self.separator) if value else []
 
     def render(self, value, obj=None, **kwargs):
