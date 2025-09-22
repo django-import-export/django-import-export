@@ -128,8 +128,9 @@ class RelationshipFieldTest(TestCase):
 
 class ForeignKeyWidgetImportExportTest(TestCase):
     """
-    Tests for issue #2107: ForeignKey widget field configuration must not be
-    ignored during export.
+    Issue #2107:
+    ForeignKey widget field configuration must not be
+    ignored during import & export.
     """
 
     def setUp(self):
