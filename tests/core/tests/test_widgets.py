@@ -700,18 +700,13 @@ class ForeignKeyWidgetExportTest(TestCase):
         resource = BookResourceWithAuthorNameWidget()
         dataset = resource.export(queryset=Book.objects.filter(id=self.book.id))
 
-        # This assertion currently FAILS because of the bug
-        # The widget configuration is ignored and we get the ID instead of name
+        # Get the exported value for comparison
         exported_author_value = dataset.dict[0]["author"]
 
-        # What we expect (author name): "Test Author"
-        # What we actually get (author id): the primary key value
         self.assertEqual(
             exported_author_value,
             "Test Author",
-            f"Expected author name 'Test Author' but got '{exported_author_value}'. "
-            f"This demonstrates issue #2107 where ForeignKeyWidget field configuration "
-            f"is ignored during export.",
+            f"Expected author name 'Test Author' but got '{exported_author_value}'",
         )
 
 
@@ -779,8 +774,6 @@ class ForeignKeyWidgetImportTest(TestCase):
 
         book_three = Book.objects.get(name="Book Three")
         self.assertEqual(book_three.author, author3)
-
-        print("DEBUG: Import test passed - ForeignKeyWidget resolved names to objects")
 
 
 class ManyToManyWidget(TestCase, RowDeprecationTestMixin):
