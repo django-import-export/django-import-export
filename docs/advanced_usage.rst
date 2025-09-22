@@ -431,6 +431,39 @@ Field level errors will be presented in the :ref:`Admin UI<admin-integration>`, 
 
   A screenshot showing a field specific error.
 
+.. _custom_boolean_handling:
+
+Custom Boolean value handling
+------------------------------
+
+While the ``BooleanWidget`` is set up to accept common variations of
+"True" and "False" (and "None"), you may need to handle less common values
+or custom boolean representations.
+
+The easiest way to transform custom boolean values is to override the
+:meth:`~import_export.resources.Resource.before_import_row` method in your Resource class::
+
+    from import_export import fields, resources, widgets
+
+    class BookResource(resources.ModelResource):
+        warn = fields.Field(widget=widgets.BooleanWidget())
+
+        def before_import_row(self, row, **kwargs):
+            if "warn" in row.keys():
+                # Transform custom values to standard boolean representations
+                if row["warn"] in ["warn", "WARN", "warning"]:
+                    row["warn"] = True
+                elif row["warn"] in ["safe", "SAFE", "ok"]:
+                    row["warn"] = False
+
+            return super().before_import_row(row, **kwargs)
+
+        class Meta:
+            model = Book
+
+This approach allows you to handle domain-specific boolean values while keeping
+the import logic centralized and maintainable.
+
 Instance level validation
 -------------------------
 

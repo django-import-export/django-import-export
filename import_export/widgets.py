@@ -242,24 +242,8 @@ class BooleanWidget(Widget):
     That said, whether the database/Django will actually accept NULL values
     will depend on if you have set ``null=True`` on that Django field.
 
-    While the BooleanWidget is set up to accept as input common variations of
-    "True" and "False" (and "None"), you may need to munge less common values
-    to ``True``/``False``/``None``. Probably the easiest way to do this is to
-    override the :func:`~import_export.resources.Resource.before_import_row`
-    function of your Resource class. A short example::
-
-        from import_export import fields, resources, widgets
-
-        class BooleanExample(resources.ModelResource):
-            warn = fields.Field(widget=widgets.BooleanWidget())
-
-            def before_import_row(self, row, **kwargs):
-                if "warn" in row.keys():
-                    # munge "warn" to "True"
-                    if row["warn"] in ["warn", "WARN"]:
-                        row["warn"] = True
-
-                return super().before_import_row(row, **kwargs)
+    Recognizes standard boolean representations. For custom boolean values,
+    see :ref:`custom_boolean_handling` in the advanced usage documentation.
     """
 
     TRUE_VALUES = ["1", 1, True, "true", "TRUE", "True"]
