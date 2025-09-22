@@ -1,5 +1,4 @@
 import logging
-import sys
 import traceback
 from collections import OrderedDict
 
@@ -38,12 +37,7 @@ class Error:
 
     @cached_property
     def traceback(self):
-        if sys.version_info >= (3, 10):
-            lines = traceback.format_exception(self.error)
-        else:
-            lines = traceback.format_exception(
-                None, self.error, self.error.__traceback__
-            )
+        lines = traceback.format_exception(self.error)
         return "".join(lines)
 
 
