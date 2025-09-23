@@ -71,11 +71,11 @@ jobs:
     - name: Combine test coverage
       run: coverage combine
     - name: Upload coverage data to coveralls.io
-      run: coveralls --service=github
+      run: coveralls debug --service=github
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         COVERALLS_FLAG_NAME: ${{ matrix.python-version }}
-        COVERALLS_PARALLEL: false
+        COVERALLS_PARALLEL: true
 
   coveralls:
     name: Indicate completion to coveralls.io
@@ -86,6 +86,6 @@ jobs:
       - name: Finished
         run: |
           pip3 install --upgrade coveralls
-          coveralls --service=github --finish
+          coveralls debug --service=github --finish
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
