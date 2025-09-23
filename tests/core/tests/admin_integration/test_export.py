@@ -958,3 +958,91 @@ class ExportInvalidCharTest(AdminTestMixin, TestCase):
         content = response.content
         wb = load_workbook(filename=BytesIO(content))
         self.assertEqual("invalid�", wb.active["B2"].value)
+
+
+class GetExportFieldsTest(AdminTestMixin, TestCase):
+    """
+    Test case for issue #2094: Export fields should use get_export_fields()
+    instead of get_import_fields() when showing fields in export form
+    """
+
+    def setUp(self):
+        super().setUp()
+        from core.models import Book
+
+        from import_export.fields import Field
+        from import_export.resources import ModelResource
+
+        # Create a custom resource with different import and export fields
+        class TestBookResource(ModelResource):
+            # Only these fields should appear in import
+            name = Field(attribute="name", column_name="book_name")
+            price = Field(attribute="price", column_name="book_price")
+
+            # Only these fields should appear in export
+            export_name = Field(attribute="name", column_name="exported_name")
+            export_author_email = Field(
+                attribute="author_email", column_name="exported_author_email"
+            )
+
+            class Meta:
+                model = Book
+
+            def get_import_fields(self):
+                """Return only import-specific fields"""
+                return [self.fields["name"], self.fields["price"]]
+
+            def get_export_fields(self, selected_fields=None):
+                """Return only export-specific fields"""
+                return [self.fields["export_name"], self.fields["export_author_email"]]
+
+        self.book_resource = TestBookResource()
+
+    @patch("core.admin.BookAdmin.get_export_resource_classes")
+    def test_export_fields_shown_in_export_form_issue_2094(
+        self, mock_get_export_resource_classes
+    ):
+        """Test that export form shows export fields, not import fields"""
+        # Mock the admin to use our custom resource class (defined in setUp)
+        mock_get_export_resource_classes.return_value = [type(self.book_resource)]
+
+        # GET the export page to see the form
+        response = self._get_url_response(self.book_export_url)
+        self.assertEqual(response.status_code, 200)
+
+        # Check the context to see which fields are being displayed
+        fields_list = response.context.get("fields_list", [])
+
+        # The bug is in the admin's init_request_context_data method
+        # which uses get_user_visible_fields() that returns get_import_fields()
+        # instead of get_export_fields() for export operations
+
+        # This test will FAIL until the bug is fixed - demonstrating the issue
+        self.assertTrue(fields_list, "fields_list should not be empty")
+
+        resource_name, field_names = fields_list[0]
+
+        # BUG: Export form currently shows import fields instead of export fields
+        # These assertions will fail with current implementation, proving the bug exists
+        expected_export_fields = ["exported_name", "exported_author_email"]
+        unexpected_import_fields = ["book_name", "book_price"]
+
+        # This assertion will fail because export forms incorrectly show import fields
+        for expected_field in expected_export_fields:
+            self.assertIn(
+                expected_field,
+                field_names,
+                f"EXPORT field '{expected_field}' should be shown in export form but is missing. "
+                f"This indicates bug #2094 where export shows import fields instead of export fields. "
+                f"Actual fields shown: {field_names}",
+            )
+
+        # Import fields should NOT appear in export form
+        for unexpected_field in unexpected_import_fields:
+            self.assertNotIn(
+                unexpected_field,
+                field_names,
+                f"IMPORT field '{unexpected_field}' should NOT be shown in export form. "
+                f"This indicates bug #2094 where export shows import fields instead of export fields. "
+                f"Actual fields shown: {field_names}",
+            )

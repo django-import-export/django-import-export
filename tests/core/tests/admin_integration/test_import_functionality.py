@@ -574,3 +574,82 @@ class DeclaredImportOrderTest(AdminTestMixin, TestCase):
             r"[\\n\s]+"
         )
         self.assertRegex(response.content.decode(), target_re)
+
+
+class GetImportFieldsTest(AdminTestMixin, TestCase):
+    """
+    Test case for issue #2094: Import fields should use get_import_fields()
+    This tests the expected behavior (which should work correctly)
+    """
+
+    def setUp(self):
+        super().setUp()
+        from core.models import Book
+
+        from import_export.fields import Field
+        from import_export.resources import ModelResource
+
+        # Create a custom resource with different import and export fields
+        class TestBookResource(ModelResource):
+            # Only these fields should appear in import
+            name = Field(attribute="name", column_name="book_name")
+            price = Field(attribute="price", column_name="book_price")
+
+            # Only these fields should appear in export
+            export_name = Field(attribute="name", column_name="exported_name")
+            export_author_email = Field(
+                attribute="author_email", column_name="exported_author_email"
+            )
+
+            class Meta:
+                model = Book
+
+            def get_import_fields(self):
+                """Return only import-specific fields"""
+                return [self.fields["name"], self.fields["price"]]
+
+            def get_export_fields(self, selected_fields=None):
+                """Return only export-specific fields"""
+                return [self.fields["export_name"], self.fields["export_author_email"]]
+
+        self.book_resource = TestBookResource()
+
+    @patch("core.admin.BookAdmin.get_import_resource_classes")
+    def test_import_fields_shown_in_import_form_issue_2094(
+        self, mock_get_import_resource_classes
+    ):
+        """Test that import form shows import fields (this should work correctly)"""
+        # Mock the admin to use our custom resource class (defined in setUp)
+        mock_get_import_resource_classes.return_value = [type(self.book_resource)]
+
+        # GET the import page to see the form
+        response = self._get_url_response(self.book_import_url)
+        self.assertEqual(response.status_code, 200)
+
+        # Check the context to see which fields are being displayed
+        fields_list = response.context.get("fields_list", [])
+
+        # For import, the fields_list should correctly show import fields
+        # This part of the code should work correctly since get_user_visible_fields()
+        # returns get_import_fields() which is what we want for import operations
+
+        if fields_list:
+            resource_name, field_names = fields_list[0]
+
+            # Verify import fields are shown correctly
+            expected_import_fields = ["book_name", "book_price"]
+            unexpected_export_fields = ["exported_name", "exported_author_email"]
+
+            for expected_field in expected_import_fields:
+                self.assertIn(
+                    expected_field,
+                    field_names,
+                    f"Import field '{expected_field}' should be in import fields_list",
+                )
+
+            for unexpected_field in unexpected_export_fields:
+                self.assertNotIn(
+                    unexpected_field,
+                    field_names,
+                    f"Export field '{unexpected_field}' should NOT be in import fields_list",
+                )
