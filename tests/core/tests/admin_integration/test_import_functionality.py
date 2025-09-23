@@ -630,9 +630,6 @@ class GetImportFieldsTest(AdminTestMixin, TestCase):
         fields_list = response.context.get("fields_list", [])
 
         # For import, the fields_list should correctly show import fields
-        # This part of the code should work correctly since get_user_visible_fields()
-        # returns get_import_fields() which is what we want for import operations
-
         if fields_list:
             resource_name, field_names = fields_list[0]
 
@@ -651,5 +648,6 @@ class GetImportFieldsTest(AdminTestMixin, TestCase):
                 self.assertNotIn(
                     unexpected_field,
                     field_names,
-                    f"Export field '{unexpected_field}' should NOT be in import fields_list",
+                    f"Export field '{unexpected_field}' should NOT be in "
+                    f"import fields_list",
                 )

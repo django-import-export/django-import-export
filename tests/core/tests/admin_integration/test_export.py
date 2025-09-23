@@ -1012,29 +1012,17 @@ class GetExportFieldsTest(AdminTestMixin, TestCase):
 
         # Check the context to see which fields are being displayed
         fields_list = response.context.get("fields_list", [])
-
-        # The bug is in the admin's init_request_context_data method
-        # which uses get_user_visible_fields() that returns get_import_fields()
-        # instead of get_export_fields() for export operations
-
-        # This test will FAIL until the bug is fixed - demonstrating the issue
         self.assertTrue(fields_list, "fields_list should not be empty")
 
         resource_name, field_names = fields_list[0]
 
-        # BUG: Export form currently shows import fields instead of export fields
-        # These assertions will fail with current implementation, proving the bug exists
         expected_export_fields = ["exported_name", "exported_author_email"]
         unexpected_import_fields = ["book_name", "book_price"]
 
-        # This assertion will fail because export forms incorrectly show import fields
         for expected_field in expected_export_fields:
             self.assertIn(
                 expected_field,
                 field_names,
-                f"EXPORT field '{expected_field}' should be shown in export form but is missing. "
-                f"This indicates bug #2094 where export shows import fields instead of export fields. "
-                f"Actual fields shown: {field_names}",
             )
 
         # Import fields should NOT appear in export form
@@ -1042,7 +1030,7 @@ class GetExportFieldsTest(AdminTestMixin, TestCase):
             self.assertNotIn(
                 unexpected_field,
                 field_names,
-                f"IMPORT field '{unexpected_field}' should NOT be shown in export form. "
-                f"This indicates bug #2094 where export shows import fields instead of export fields. "
+                f"IMPORT field '{unexpected_field}' should NOT be shown in "
+                f"export form."
                 f"Actual fields shown: {field_names}",
             )

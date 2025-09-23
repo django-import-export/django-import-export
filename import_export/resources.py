@@ -1057,16 +1057,17 @@ class Resource(metaclass=DeclarativeMetaclass):
         """
         Get fields visible to users in admin interface.
 
-        .. deprecated:: 4.4
-            Use ``get_user_visible_import_fields()`` or ``get_user_visible_export_fields()``
-            instead for explicit context-aware field selection. This method will be
-            removed in version 6.0.
+        .. deprecated:: 5
+            Use ``get_user_visible_import_fields()`` or
+            ``get_user_visible_export_fields()`` instead for explicit
+            context-aware field selection. This method will be removed in version 6.0.
         """
         import warnings
 
         warnings.warn(
-            "get_user_visible_fields() is deprecated and will be removed in version 6.0. "
-            "Use get_user_visible_import_fields() or get_user_visible_export_fields() instead.",
+            "get_user_visible_fields() is deprecated and will be removed in "
+            "version 6.0. Use get_user_visible_import_fields() or "
+            "get_user_visible_export_fields() instead.",
             DeprecationWarning,
             stacklevel=2,
         )
