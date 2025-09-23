@@ -1034,3 +1034,54 @@ class GetExportFieldsTest(AdminTestMixin, TestCase):
                 f"export form."
                 f"Actual fields shown: {field_names}",
             )
+
+    @patch("core.admin.BookAdmin.get_export_resource_classes")
+    def test_selectable_fields_export_form_respects_get_export_fields_issue_2094(
+        self, mock_get_export_resource_classes
+    ):
+        """Test SelectableFieldsExportForm only shows fields from get_export_fields()"""
+        from import_export.formats.base_formats import CSV
+        from import_export.forms import SelectableFieldsExportForm
+
+        # Mock the admin to use our custom resource class (defined in setUp)
+        mock_get_export_resource_classes.return_value = [type(self.book_resource)]
+
+        # Create the SelectableFieldsExportForm directly
+        form = SelectableFieldsExportForm(
+            formats=(CSV,), resources=[type(self.book_resource)]
+        )
+
+        # Get the field names that are actually shown in the form
+        form_field_names = []
+        for field_name, field in form.fields.items():
+            if hasattr(field, "is_selectable_field") and field.is_selectable_field:
+                # Extract the actual field name from the form field name
+                # Form field names are like "TestBookResource_export_name"
+                actual_field_name = field_name.split("_", 1)[1]
+                form_field_names.append(actual_field_name)
+
+        # Fields that should be shown (from get_export_fields)
+        expected_export_fields = ["export_name", "export_author_email"]
+
+        # Fields that should NOT be shown (from get_import_fields or other fields)
+        unexpected_fields = ["name", "price"]  # These are the import-only fields
+
+        # Assert that export fields are shown
+        for expected_field in expected_export_fields:
+            self.assertIn(
+                expected_field,
+                form_field_names,
+                f"Export field '{expected_field}' should be shown in "
+                "SelectableFieldsExportForm. "
+                f"Actual fields: {form_field_names}",
+            )
+
+        # Assert that import-only fields are NOT shown
+        for unexpected_field in unexpected_fields:
+            self.assertNotIn(
+                unexpected_field,
+                form_field_names,
+                f"Import field '{unexpected_field}' should NOT be shown in "
+                "SelectableFieldsExportForm. "
+                f"Actual fields: {form_field_names}",
+            )
