@@ -57,7 +57,7 @@ jobs:
     - name: Install Dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install tox coverage coveralls
+        pip install tox coverage "coveralls==4.0.1"
     - name: Run tox targets for ${{ matrix.python-version }} (sqlite)
       run: tox run -f py$(echo ${{ matrix.python-version }} | tr -d .)
     - name: Run tox targets for ${{ matrix.python-version }} (postgres)
@@ -71,7 +71,7 @@ jobs:
     - name: Combine test coverage
       run: coverage combine
     - name: Upload coverage data to coveralls.io
-      run: coveralls debug --service=github
+      run: coveralls --service=github
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         COVERALLS_FLAG_NAME: ${{ matrix.python-version }}
@@ -85,7 +85,7 @@ jobs:
     steps:
       - name: Finished
         run: |
-          pip3 install --upgrade coveralls
-          coveralls debug --service=github --finish
+          pip3 install "coveralls==4.0.1"
+          coveralls --service=github --finish
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
