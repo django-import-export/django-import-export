@@ -75,6 +75,7 @@ jobs:
         parallel: true
         flag-name: py${{ matrix.python-version }}-sqlite
         file: .coverage.sqlite
+        coverage-reporter-version: v0.6.15
     - name: Run tox targets for ${{ matrix.python-version }} (postgres)
       run: |
         tox run -f py$(echo ${{ matrix.python-version }} | tr -d .)
@@ -95,6 +96,7 @@ jobs:
         parallel: true
         flag-name: py${{ matrix.python-version }}-postgres
         file: .coverage.postgres
+        coverage-reporter-version: v0.6.15
     - name: Run tox targets for ${{ matrix.python-version }} (mysql)
       run: |
         tox run -f py$(echo ${{ matrix.python-version }} | tr -d .)
@@ -115,6 +117,7 @@ jobs:
         parallel: true
         flag-name: py${{ matrix.python-version }}-mysql
         file: .coverage.mysql
+        coverage-reporter-version: v0.6.15
 
   coveralls:
     name: Indicate completion to coveralls.io
@@ -125,6 +128,7 @@ jobs:
         uses: coverallsapp/github-action@v2
         with:
           parallel-finished: true
+          coverage-reporter-version: v0.6.15
           carryforward: >-
             py3.9-sqlite,py3.9-postgres,py3.9-mysql,
             py3.10-sqlite,py3.10-postgres,py3.10-mysql,
