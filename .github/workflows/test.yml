@@ -60,12 +60,12 @@ jobs:
     - name: Run tox targets for ${{ matrix.python-version }} (sqlite)
       run: |
         tox run -f py$(echo ${{ matrix.python-version }} | tr -d .)
-        coverage_file=$(find .tox -name '.coverage' | head -1)
-        if [ -f "$coverage_file" ]; then
-          cp "$coverage_file" .coverage.sqlite
+        if [ -f ".coverage" ]; then
+          cp .coverage .coverage.sqlite
           echo "Coverage file copied to .coverage.sqlite"
         else
-          echo "No coverage file found in .tox directory"
+          echo "No .coverage file found in current directory"
+          ls -la .coverage* || echo "No coverage files found"
           exit 1
         fi
     - name: Upload coverage data to coveralls.io (sqlite)
@@ -77,12 +77,12 @@ jobs:
     - name: Run tox targets for ${{ matrix.python-version }} (postgres)
       run: |
         tox run -f py$(echo ${{ matrix.python-version }} | tr -d .)
-        coverage_file=$(find .tox -name '.coverage' | head -1)
-        if [ -f "$coverage_file" ]; then
-          cp "$coverage_file" .coverage.postgres
+        if [ -f ".coverage" ]; then
+          cp .coverage .coverage.postgres
           echo "Coverage file copied to .coverage.postgres"
         else
-          echo "No coverage file found in .tox directory"
+          echo "No .coverage file found in current directory"
+          ls -la .coverage* || echo "No coverage files found"
           exit 1
         fi
       env:
@@ -96,12 +96,12 @@ jobs:
     - name: Run tox targets for ${{ matrix.python-version }} (mysql)
       run: |
         tox run -f py$(echo ${{ matrix.python-version }} | tr -d .)
-        coverage_file=$(find .tox -name '.coverage' | head -1)
-        if [ -f "$coverage_file" ]; then
-          cp "$coverage_file" .coverage.mysql
+        if [ -f ".coverage" ]; then
+          cp .coverage .coverage.mysql
           echo "Coverage file copied to .coverage.mysql"
         else
-          echo "No coverage file found in .tox directory"
+          echo "No .coverage file found in current directory"
+          ls -la .coverage* || echo "No coverage files found"
           exit 1
         fi
       env:
