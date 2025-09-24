@@ -60,7 +60,7 @@ jobs:
     - name: Run tox targets for ${{ matrix.python-version }} (sqlite)
       run: |
         tox run -f py$(echo ${{ matrix.python-version }} | tr -d .)
-        mv .coverage .coverage.sqlite
+        find .tox -name '.coverage' -exec cp {} .coverage.sqlite \;
     - name: Upload coverage data to coveralls.io (sqlite)
       uses: coverallsapp/github-action@v2
       with:
@@ -70,7 +70,7 @@ jobs:
     - name: Run tox targets for ${{ matrix.python-version }} (postgres)
       run: |
         tox run -f py$(echo ${{ matrix.python-version }} | tr -d .)
-        mv .coverage .coverage.postgres
+        find .tox -name '.coverage' -exec cp {} .coverage.postgres \;
       env:
         IMPORT_EXPORT_TEST_TYPE: postgres
     - name: Upload coverage data to coveralls.io (postgres)
@@ -82,7 +82,7 @@ jobs:
     - name: Run tox targets for ${{ matrix.python-version }} (mysql)
       run: |
         tox run -f py$(echo ${{ matrix.python-version }} | tr -d .)
-        mv .coverage .coverage.mysql
+        find .tox -name '.coverage' -exec cp {} .coverage.mysql \;
       env:
         IMPORT_EXPORT_TEST_TYPE: mysql-innodb
     - name: Upload coverage data to coveralls.io (mysql)
@@ -101,4 +101,8 @@ jobs:
         uses: coverallsapp/github-action@v2
         with:
           parallel-finished: true
-          carryforward: "py3.9-sqlite,py3.9-postgres,py3.9-mysql,py3.10-sqlite,py3.10-postgres,py3.10-mysql,py3.11-sqlite,py3.11-postgres,py3.11-mysql,py3.12-sqlite,py3.12-postgres,py3.12-mysql"
+          carryforward: >-
+            py3.9-sqlite,py3.9-postgres,py3.9-mysql,
+            py3.10-sqlite,py3.10-postgres,py3.10-mysql,
+            py3.11-sqlite,py3.11-postgres,py3.11-mysql,
+            py3.12-sqlite,py3.12-postgres,py3.12-mysql
