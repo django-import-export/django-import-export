@@ -66,6 +66,8 @@ jobs:
           cp "$coverage_file" .coverage.sqlite
           coverage xml --data-file=.coverage.sqlite -o coverage.sqlite.xml
           echo "Coverage file $coverage_file copied to .coverage.sqlite and XML generated"
+          echo "=== Coverage XML Preview ==="
+          head -20 coverage.sqlite.xml
         else
           echo "No coverage data file found"
           ls -la .coverage* || echo "No coverage files found"
