@@ -70,13 +70,11 @@ jobs:
           exit 1
         fi
     - name: Upload coverage data to coveralls.io (sqlite)
-      uses: coverallsapp/github-action@v2
+      uses: coverallsapp/github-action@v2.3.4
       with:
         parallel: true
         flag-name: py${{ matrix.python-version }}-sqlite
         file: .coverage.sqlite
-      env:
-        COVERAGE_REPORTER_VERSION: v0.6.15
     - name: Run tox targets for ${{ matrix.python-version }} (postgres)
       run: |
         tox run -f py$(echo ${{ matrix.python-version }} | tr -d .)
@@ -92,13 +90,11 @@ jobs:
       env:
         IMPORT_EXPORT_TEST_TYPE: postgres
     - name: Upload coverage data to coveralls.io (postgres)
-      uses: coverallsapp/github-action@v2
+      uses: coverallsapp/github-action@v2.3.4
       with:
         parallel: true
         flag-name: py${{ matrix.python-version }}-postgres
         file: .coverage.postgres
-      env:
-        COVERAGE_REPORTER_VERSION: v0.6.15
     - name: Run tox targets for ${{ matrix.python-version }} (mysql)
       run: |
         tox run -f py$(echo ${{ matrix.python-version }} | tr -d .)
@@ -114,13 +110,11 @@ jobs:
       env:
         IMPORT_EXPORT_TEST_TYPE: mysql-innodb
     - name: Upload coverage data to coveralls.io (mysql)
-      uses: coverallsapp/github-action@v2
+      uses: coverallsapp/github-action@v2.3.4
       with:
         parallel: true
         flag-name: py${{ matrix.python-version }}-mysql
         file: .coverage.mysql
-      env:
-        COVERAGE_REPORTER_VERSION: v0.6.15
 
   coveralls:
     name: Indicate completion to coveralls.io
@@ -128,7 +122,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Finished
-        uses: coverallsapp/github-action@v2
+        uses: coverallsapp/github-action@v2.3.4
         with:
           parallel-finished: true
           carryforward: >-
@@ -136,5 +130,3 @@ jobs:
             py3.10-sqlite,py3.10-postgres,py3.10-mysql,
             py3.11-sqlite,py3.11-postgres,py3.11-mysql,
             py3.12-sqlite,py3.12-postgres,py3.12-mysql
-        env:
-          COVERAGE_REPORTER_VERSION: v0.6.15
