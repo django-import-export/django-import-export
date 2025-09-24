@@ -56,35 +56,49 @@ jobs:
     - name: Install Dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install tox coverage "coveralls==4.0.1"
+        pip install tox coverage
     - name: Run tox targets for ${{ matrix.python-version }} (sqlite)
-      run: tox run -f py$(echo ${{ matrix.python-version }} | tr -d .)
+      run: |
+        tox run -f py$(echo ${{ matrix.python-version }} | tr -d .)
+        mv .coverage .coverage.sqlite
+    - name: Upload coverage data to coveralls.io (sqlite)
+      uses: coverallsapp/github-action@v2
+      with:
+        parallel: true
+        flag-name: py${{ matrix.python-version }}-sqlite
+        file: .coverage.sqlite
     - name: Run tox targets for ${{ matrix.python-version }} (postgres)
-      run: tox run -f py$(echo ${{ matrix.python-version }} | tr -d .)
+      run: |
+        tox run -f py$(echo ${{ matrix.python-version }} | tr -d .)
+        mv .coverage .coverage.postgres
       env:
         IMPORT_EXPORT_TEST_TYPE: postgres
+    - name: Upload coverage data to coveralls.io (postgres)
+      uses: coverallsapp/github-action@v2
+      with:
+        parallel: true
+        flag-name: py${{ matrix.python-version }}-postgres
+        file: .coverage.postgres
     - name: Run tox targets for ${{ matrix.python-version }} (mysql)
-      run: tox run -f py$(echo ${{ matrix.python-version }} | tr -d .)
+      run: |
+        tox run -f py$(echo ${{ matrix.python-version }} | tr -d .)
+        mv .coverage .coverage.mysql
       env:
         IMPORT_EXPORT_TEST_TYPE: mysql-innodb
-    - name: Combine test coverage
-      run: coverage combine
-    - name: Upload coverage data to coveralls.io
-      run: coveralls --service=github
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        COVERALLS_FLAG_NAME: ${{ matrix.python-version }}
-        COVERALLS_PARALLEL: true
+    - name: Upload coverage data to coveralls.io (mysql)
+      uses: coverallsapp/github-action@v2
+      with:
+        parallel: true
+        flag-name: py${{ matrix.python-version }}-mysql
+        file: .coverage.mysql
 
   coveralls:
     name: Indicate completion to coveralls.io
     needs: test
     runs-on: ubuntu-latest
-    container: python:3-slim
     steps:
       - name: Finished
-        run: |
-          pip3 install "coveralls==4.0.1"
-          coveralls --service=github --finish
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: coverallsapp/github-action@v2
+        with:
+          parallel-finished: true
+          carryforward: "py3.9-sqlite,py3.9-postgres,py3.9-mysql,py3.10-sqlite,py3.10-postgres,py3.10-mysql,py3.11-sqlite,py3.11-postgres,py3.11-mysql,py3.12-sqlite,py3.12-postgres,py3.12-mysql"
