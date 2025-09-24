@@ -25,6 +25,7 @@ jobs:
           - '3.10'
           - '3.11'
           - '3.12'
+          - '3.13'
     services:
       postgres:
         image: postgres
@@ -132,3 +133,4 @@ jobs:
             py3.10-sqlite,py3.10-postgres,py3.10-mysql,
             py3.11-sqlite,py3.11-postgres,py3.11-mysql,
             py3.12-sqlite,py3.12-postgres,py3.12-mysql
+            py3.13-sqlite,py3.13-postgres,py3.13-mysql
