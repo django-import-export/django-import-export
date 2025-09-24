@@ -206,18 +206,15 @@ class Resource(metaclass=DeclarativeMetaclass):
         """
         Creates objects by calling ``bulk_create``.
         """
-        try:
-            if len(self.create_instances) > 0:
-                if not using_transactions and dry_run:
-                    pass
-                else:
-                    self._meta.model.objects.bulk_create(
-                        self.create_instances, batch_size=batch_size
-                    )
-        except Exception as e:
-            self.handle_import_error(result, e, raise_errors)
-        finally:
-            self.create_instances.clear()
+        if len(self.create_instances) > 0 and (using_transactions or not dry_run):
+            try:
+                self._meta.model.objects.bulk_create(
+                    self.create_instances, batch_size=batch_size
+                )
+            except Exception as e:
+                self.handle_import_error(result, e, raise_errors)
+            finally:
+                self.create_instances.clear()
 
     def bulk_update(
         self, using_transactions, dry_run, raise_errors, batch_size=None, result=None
@@ -225,37 +222,31 @@ class Resource(metaclass=DeclarativeMetaclass):
         """
         Updates objects by calling ``bulk_update``.
         """
-        try:
-            if len(self.update_instances) > 0:
-                if not using_transactions and dry_run:
-                    pass
-                else:
-                    self._meta.model.objects.bulk_update(
-                        self.update_instances,
-                        self.get_bulk_update_fields(),
-                        batch_size=batch_size,
-                    )
-        except Exception as e:
-            self.handle_import_error(result, e, raise_errors)
-        finally:
-            self.update_instances.clear()
+        if len(self.update_instances) > 0 and (using_transactions or not dry_run):
+            try:
+                self._meta.model.objects.bulk_update(
+                    self.update_instances,
+                    self.get_bulk_update_fields(),
+                    batch_size=batch_size,
+                )
+            except Exception as e:
+                self.handle_import_error(result, e, raise_errors)
+            finally:
+                self.update_instances.clear()
 
     def bulk_delete(self, using_transactions, dry_run, raise_errors, result=None):
         """
         Deletes objects by filtering on a list of instances to be deleted,
         then calling ``delete()`` on the entire queryset.
         """
-        try:
-            if len(self.delete_instances) > 0:
-                if not using_transactions and dry_run:
-                    pass
-                else:
-                    delete_ids = [o.pk for o in self.delete_instances]
-                    self._meta.model.objects.filter(pk__in=delete_ids).delete()
-        except Exception as e:
-            self.handle_import_error(result, e, raise_errors)
-        finally:
-            self.delete_instances.clear()
+        if len(self.delete_instances) > 0 and (using_transactions or not dry_run):
+            try:
+                delete_ids = [o.pk for o in self.delete_instances]
+                self._meta.model.objects.filter(pk__in=delete_ids).delete()
+            except Exception as e:
+                self.handle_import_error(result, e, raise_errors)
+            finally:
+                self.delete_instances.clear()
 
     def validate_instance(
         self, instance, import_validation_errors=None, validate_unique=True
@@ -309,12 +300,11 @@ class Resource(metaclass=DeclarativeMetaclass):
                 self.create_instances.append(instance)
             else:
                 self.update_instances.append(instance)
+        elif not self._is_using_transactions(kwargs) and self._is_dry_run(kwargs):
+            # we don't have transactions and we want to do a dry_run
+            pass
         else:
-            if not self._is_using_transactions(kwargs) and self._is_dry_run(kwargs):
-                # we don't have transactions and we want to do a dry_run
-                pass
-            else:
-                self.do_instance_save(instance, is_create)
+            self.do_instance_save(instance, is_create)
         self.after_save_instance(instance, row, **kwargs)
 
     def do_instance_save(self, instance, is_create):
@@ -370,12 +360,11 @@ class Resource(metaclass=DeclarativeMetaclass):
         self.before_delete_instance(instance, row, **kwargs)
         if self._meta.use_bulk:
             self.delete_instances.append(instance)
+        elif not self._is_using_transactions(kwargs) and self._is_dry_run(kwargs):
+            # we don't have transactions and we want to do a dry_run
+            pass
         else:
-            if not self._is_using_transactions(kwargs) and self._is_dry_run(kwargs):
-                # we don't have transactions and we want to do a dry_run
-                pass
-            else:
-                instance.delete()
+            instance.delete()
         self.after_delete_instance(instance, row, **kwargs)
 
     def before_delete_instance(self, instance, row, **kwargs):
@@ -433,9 +422,11 @@ class Resource(metaclass=DeclarativeMetaclass):
 
     def get_import_fields(self):
         import_fields = []
+        missing = object()
         for field_name in self.get_import_order():
-            if field_name in self.fields:
-                import_fields.append(self.fields[field_name])
+            field = self.fields.get(field_name, missing)
+            if field is not missing:
+                import_fields.append(field)
                 continue
             # issue 1815
             # allow for fields to be referenced by column_name in `fields` list
@@ -588,9 +579,8 @@ class Resource(metaclass=DeclarativeMetaclass):
                     v.pk for v in original_values
                 ):
                     return False
-            else:
-                if field.get_value(instance) != field.get_value(original):
-                    return False
+            elif field.get_value(instance) != field.get_value(original):
+                return False
         return True
 
     def get_diff_headers(self):
@@ -1110,8 +1100,10 @@ class Resource(metaclass=DeclarativeMetaclass):
 
     def _select_field(self, target_field_name):
         # select field from fields based on either declared name or column name
-        if target_field_name in self.fields:
-            return self.fields[target_field_name]
+        missing = object()
+        field = self.fields.get(target_field_name, missing)
+        if field is not missing:
+            return field
 
         for field_name, field in self.fields.items():
             if target_field_name == field.column_name:
@@ -1264,8 +1256,9 @@ class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
         if callable(getattr(f, "get_internal_type", None)):
             internal_type = f.get_internal_type()
 
-        if internal_type in cls.WIDGETS_MAP:
-            result = cls.WIDGETS_MAP[internal_type]
+        widget_result = cls.WIDGETS_MAP.get(internal_type)
+        if widget_result is not None:
+            result = widget_result
             if isinstance(result, str):
                 result = getattr(cls, result)(f)
         else:
@@ -1274,8 +1267,9 @@ class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
             # of a standard field class.
             # iterate base classes to determine the correct widget class to use.
             for base_class in f.__class__.__mro__:
-                if base_class.__name__ in cls.WIDGETS_MAP:
-                    result = cls.WIDGETS_MAP[base_class.__name__]
+                widget_result = cls.WIDGETS_MAP.get(base_class.__name__)
+                if widget_result is not None:
+                    result = widget_result
                     if isinstance(result, str):
                         result = getattr(cls, result)(f)
                     break
@@ -1379,18 +1373,72 @@ class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
         return cls.__name__
 
 
-def modelresource_factory(model, resource_class=ModelResource):
+def modelresource_factory(
+    model,
+    resource_class=ModelResource,
+    meta_options=None,
+    custom_fields=None,
+    dehydrate_methods=None,
+):
     """
     Factory for creating ``ModelResource`` class for given Django model.
+    This factory function creates a ``ModelResource`` class dynamically, with support
+    for custom fields, methods.
+
+    :param model: Django model class
+
+    :param resource_class: Base resource class (default: ModelResource)
+
+    :param meta_options: Meta options dictionary
+
+    :param custom_fields: Dictionary mapping field names to Field object
+
+    :param dehydrate_methods: Dictionary mapping field names
+                              to dehydrate method (Callable)
+
+    :returns: ModelResource class
     """
-    attrs = {"model": model}
-    Meta = type("Meta", (object,), attrs)
 
-    class_name = model.__name__ + "Resource"
+    def _create_dehydrate_func_wrapper(func):
+        def wrapper(self, obj):
+            return func(obj)
 
-    class_attrs = {
+        return wrapper
+
+    if meta_options is None:
+        meta_options = {}
+
+    if custom_fields is None:
+        custom_fields = {}
+
+    if dehydrate_methods is None:
+        dehydrate_methods = {}
+
+    for field_name, field in custom_fields.items():
+        if not isinstance(field, Field):
+            raise ValueError(
+                f"custom_fields['{field_name}'] must be a Field instance, "
+                f"got {type(field).__name__}"
+            )
+
+    meta_class_attrs = {**meta_options, "model": model}
+    Meta = type("Meta", (object,), meta_class_attrs)
+
+    resource_class_name = model.__name__ + "Resource"
+    resource_class_attrs = {
         "Meta": Meta,
     }
+    resource_class_attrs.update(custom_fields)
+
+    for field_name, method in dehydrate_methods.items():
+        if not callable(method):
+            raise ValueError(
+                f"dehydrate_methods['{field_name}'] must be callable, "
+                f"got {type(method).__name__}"
+            )
+
+        method_name = f"dehydrate_{field_name}"
+        resource_class_attrs[method_name] = _create_dehydrate_func_wrapper(method)
 
     metaclass = ModelDeclarativeMetaclass
-    return metaclass(class_name, (resource_class,), class_attrs)
+    return metaclass(resource_class_name, (resource_class,), resource_class_attrs)

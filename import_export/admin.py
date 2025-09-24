@@ -233,16 +233,9 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
                 }
                 content_type_id = ContentType.objects.get_for_model(self.model).pk
                 for row in result:
-                    if row.import_type in logentry_map.keys():
+                    if row.import_type in logentry_map:
                         with warnings.catch_warnings():
-                            if django.VERSION >= (5,):
-                                from django.utils.deprecation import (
-                                    RemovedInDjango60Warning,
-                                )
-
-                                cat = RemovedInDjango60Warning
-                            else:
-                                cat = DeprecationWarning
+                            cat = DeprecationWarning
                             warnings.simplefilter("ignore", category=cat)
                             LogEntry.objects.log_action(
                                 user_id=request.user.pk,
@@ -497,7 +490,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
                 except Exception as e:
                     self.add_data_read_fail_error_to_form(import_form, e)
                 else:
-                    if len(dataset) == 0:
+                    if not dataset:
                         import_form.add_error(
                             "import_file",
                             _(
@@ -584,9 +577,10 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
             RowResult.IMPORT_TYPE_UPDATE: CHANGE,
             RowResult.IMPORT_TYPE_DELETE: DELETION,
         }
+        missing = object()
         for import_type, instances in rows.items():
-            if import_type in logentry_map.keys():
-                action_flag = logentry_map[import_type]
+            action_flag = logentry_map.get(import_type, missing)
+            if action_flag is not missing:
                 self._create_log_entry(
                     user_pk, rows[import_type], import_type, action_flag
                 )

@@ -239,6 +239,75 @@ value changes::
   * The ``original`` attribute will be null if :attr:`~import_export.options.ResourceOptions.skip_diff` is True.
   * The ``instance`` attribute will be null if :attr:`~import_export.options.ResourceOptions.store_instance` is False.
 
+.. _using_modelresource_factory:
+
+Using modelresource_factory
+==========================
+
+The :func:`~import_export.resources.modelresource_factory` function dynamically creates
+``ModelResource`` classes for you. This is useful for creating resources without writing
+custom classes.
+
+Basic usage
+-----------
+
+Create a simple resource for export::
+
+    >>> from import_export import resources
+    >>> from core.models import Book
+    >>> BookResource = resources.modelresource_factory(
+    ...     model=Book,
+    ...     meta_options={'fields': ('id', 'name', 'author')}
+    ... )
+    >>>
+    >>> # Export data
+    >>> dataset = BookResource().export()
+    >>> print(dataset.csv)
+    id,name,author
+    1,Some book,1
+
+Import data with custom configuration::
+
+    >>> from import_export import resources
+    >>> from core.models import Book
+    >>> # Create a resource for import with specific fields
+    >>> ImportResource = resources.modelresource_factory(
+    ...     model=Book,
+    ...     meta_options={
+    ...         'fields': ('name', 'author_email'),
+    ...         'import_id_fields': ('name',)
+    ...     }
+    ... )
+    >>>
+    >>> # Import data
+    >>> dataset = tablib.Dataset(['New Book', 'author@example.com'], headers=['name', 'author_email'])
+    >>> result = ImportResource().import_data(dataset)
+    >>> print(result.has_errors())
+    False
+
+Adding custom fields
+-------------------
+
+You can add custom fields and dehydrate methods::
+
+    >>> from import_export import resources, fields
+    >>> from core.models import Book
+    >>> BookResource = resources.modelresource_factory(
+    ...     model=Book,
+    ...     meta_options={'fields': ('id', 'name', 'custom_title')},
+    ...     custom_fields={
+    ...         'custom_title': fields.Field(column_name='Custom Title', readonly=True)
+    ...     },
+    ...     dehydrate_methods={
+    ...         'custom_title': lambda obj: f"{obj.name} by {obj.author.name if obj.author else 'Unknown'}"
+    ...     }
+    ... )
+    >>>
+    >>> dataset = BookResource().export()
+    >>> print(dataset.csv)
+    id,name,custom_title
+    1,Some book,Some book by Author Name
+
 Validation during import
 ========================
 
@@ -784,7 +853,45 @@ See :ref:`dynamically_set_resource_values`.
 
 Data manipulation on export
 ===========================
+Accessing fields within ``JSONField`` or ``JSONObject``
+-------------------------------------------------------
+In the same way that it is possible to refer to the relationships of the model by defining a field with double underscore ``__``
+syntax, values within ``JSONObject``/ ``JSONField`` can also be accessed but in this case it is necessary to specify it in ``attribute``::
 
+    from import_export.fields import Field
+
+    class BookResource(resources.ModelResource):
+        author_name = Field(attribute="author_json__name")
+        author_birthday = Field(attribute="author_json__birthday")
+
+        class Meta:
+            model = Book
+            fields = ("author_name", "author_birthday",)
+
+In this case, the export looks like this:
+
+    >>> from app.admin import BookResource
+    >>> from app.models import Book as B
+    >>> queryset = EBook.objects.annotate(
+            author_json=JSONObject(
+                name=("author__name"),
+                birthday=("author__birthday"),
+            )
+        )
+    >>> queryset.first().author_json
+    {'name': 'Some Author', 'birthday': '1970-01-01'}
+    >>> dataset = BookResource().export(queryset=queryset)
+    >>> dataset.csv
+    author_name,author_birthday
+    Some Author,1970-01-01
+
+.. note::
+    Remember that the types that are annotated/stored within these fields are primitive JSON
+    data types (strings, numbers, boolean, null) and also composite JSON data types (array and object).
+    That is why, in the example, the birthday field within the author_json dictionary is displayed as a string.
+
+Using dehydrate methods
+-----------------------
 Not all data can be easily extracted from an object/model attribute.
 In order to turn complicated data model into a (generally simpler) processed
 data structure on export, ``dehydrate_<fieldname>`` method should be defined::

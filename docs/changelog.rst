@@ -5,15 +5,38 @@ Changelog
 
     If upgrading from v3, v4 introduces breaking changes.  Please refer to :doc:`release notes<release_notes>`.
 
+
 5.0.0 (unreleased)
 ------------------
 
 - Removed the deprecated :meth:`~import_export.admin.ExportMixin.get_valid_export_item_pks` method in favour of :meth:`~import_export.admin.ExportMixin.get_queryset`
 
-4.3.6 (unreleased)
+4.3.9 (2025-07-21)
+------------------
+
+- Allow specifying meta options in the :ref:`model_resourcefactory<using_modelresource_factory>` (`2078 <https://github.com/django-import-export/django-import-export/pull/2078>`_)
+- Allow custom fields and methods in :ref:`model_resourcefactory<using_modelresource_factory>` (`2081 <https://github.com/django-import-export/django-import-export/pull/2081>`_)
+- FAQ update to describe how to customize Excel exports (`2088 <https://github.com/django-import-export/django-import-export/pull/2088>`_)
+
+4.3.8 (2025-06-23)
+------------------
+
+- ui: fix error display twice issue on export field select page  (`2066 <https://github.com/django-import-export/django-import-export/pull/2066>`_)
+- ui: add 'select all' fields toggle on export page (`2068 <https://github.com/django-import-export/django-import-export/pull/2068>`_)
+- Add Hebrew translation (`2071 <https://github.com/django-import-export/django-import-export/pull/2071>`_)
+- ui: fix display of non field errors on import (`2075 <https://github.com/django-import-export/django-import-export/pull/2075>`_)
+
+4.3.7 (2025-02-25)
+------------------
+
+- Update French translation (`2042 <https://github.com/django-import-export/django-import-export/pull/2042>`_)
+
+4.3.6 (2025-02-21)
 ------------------
 
 - Add flag to ignore empty rows in XLSX import (`2028 <https://github.com/django-import-export/django-import-export/issues/2028>`_)
+- Add support for Django 5.2 (`2037 <https://github.com/django-import-export/django-import-export/pull/2037>`_)
+- Fix Chinese translation (`2040 <https://github.com/django-import-export/django-import-export/issues/2040>`_)
 
 4.3.5 (2025-02-01)
 ------------------

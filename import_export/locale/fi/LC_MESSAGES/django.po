@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-12-02 12:47+0000\n"
+"POT-Creation-Date: 2025-06-23 19:11+0100\n"
 "PO-Revision-Date: 2023-05-10 15:23+0300\n"
 "Last-Translator: Lauri Virtanen <lauri.virtanen@iki.fi>\n"
 "Language-Team: \n"
@@ -12,24 +12,23 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: admin.py:184 admin.py:548
-#: templates/admin/import_export/change_list_import_item.html:5
-#: templates/admin/import_export/import.html:19
+#: admin.py templates/admin/import_export/change_list_import_item.html
+#: templates/admin/import_export/import.html
 msgid "Import"
 msgstr "Tuo"
 
-#: admin.py:254 admin.py:600
+#: admin.py
 #, python-format
 msgid "%s through import_export"
 msgstr "%s käyttäen import_export"
 
-#: admin.py:262
+#: admin.py
 #, fuzzy
 #| msgid "Import finished, with {} new and {} updated {}."
 msgid "Import finished: {} new, {} updated, {} deleted and {} skipped {}."
 msgstr "Tuonti valmis. Lisätty {} ja päivitetty {} kohteita {}."
 
-#: admin.py:431
+#: admin.py
 #, python-format
 msgid ""
 "%(exc_name)s encountered while trying to read file. Ensure you have chosen "
@@ -38,95 +37,93 @@ msgstr ""
 "Kohdattiin %(exc_name)s tiedostoa lukiessa. Varmista, että olet valinnut "
 "oikean tiedostotyypin."
 
-#: admin.py:504
+#: admin.py
 msgid ""
 "No valid data to import. Ensure your file has the correct headers or data "
 "for import."
 msgstr ""
 
-#: admin.py:819 templates/admin/import_export/change_form.html:8
-#: templates/admin/import_export/change_list_export_item.html:5
-#: templates/admin/import_export/export.html:12
+#: admin.py templates/admin/import_export/change_form.html
+#: templates/admin/import_export/change_list_export_item.html
+#: templates/admin/import_export/export.html
 msgid "Export"
 msgstr "Vie"
 
-#: admin.py:952
+#: admin.py
 #, python-format
 msgid "Export selected %(verbose_name_plural)s"
 msgstr "Vie valitut %(verbose_name_plural)s"
 
-#: formats/base_formats.py:236
+#: formats/base_formats.py
 msgid "export failed due to IllegalCharacterError"
 msgstr ""
 
-#: forms.py:15
+#: forms.py
 msgid "Resource"
 msgstr "Resurssi"
 
-#: forms.py:20
+#: forms.py
 msgid "Format"
 msgstr "Tiedostotyyppi"
 
-#: forms.py:56
+#: forms.py
 msgid "File to import"
 msgstr "Tuotava tiedosto"
 
-#: forms.py:216
+#: forms.py
 msgid "Form is not validated, call `is_valid` first"
 msgstr ""
 
-#: forms.py:268
+#: forms.py
 #, python-format
 msgid "Select at least 1 field for \"%(resource_name)s\" to export"
 msgstr ""
 
-#: resources.py:1171
+#: resources.py
 #, python-format
 msgid ""
 "The following fields are declared in 'import_id_fields' but are not present "
 "in the resource fields: %s"
 msgstr ""
 
-#: resources.py:1186
+#: resources.py
 #, python-format
 msgid ""
 "The following fields are declared in 'import_id_fields' but are not present "
 "in the file headers: %s"
 msgstr ""
 
-#: results.py:150
+#: results.py
 #, python-format
 msgid "call to force_str() on instance failed: %s"
 msgstr ""
 
-#: templates/admin/import_export/base.html:11
+#: templates/admin/import_export/base.html
 msgid "Home"
 msgstr "Etusivu"
 
-#: templates/admin/import_export/export.html:24
+#: templates/admin/import_export/export.html
 #, python-format
-msgid ""
-"\n"
-"        Export %(len)s selected item.\n"
-"        "
-msgid_plural ""
-"\n"
-"        Export %(len)s selected items.\n"
-"      "
+msgid "Export %(len)s selected item."
+msgid_plural "Export %(len)s selected items."
 msgstr[0] ""
 msgstr[1] ""
 
-#: templates/admin/import_export/export.html:51
-#: templates/admin/import_export/resource_fields_list.html:5
+#: templates/admin/import_export/export.html
+#: templates/admin/import_export/resource_fields_list.html
 msgid "This exporter will export the following fields: "
 msgstr "Tämä vienti vie seuraavat kentät: "
 
-#: templates/admin/import_export/export.html:85
-#: templates/admin/import_export/import.html:73
+#: templates/admin/import_export/export.html
+msgid "Select all"
+msgstr ""
+
+#: templates/admin/import_export/export.html
+#: templates/admin/import_export/import.html
 msgid "Submit"
 msgstr "Lähetä"
 
-#: templates/admin/import_export/import.html:30
+#: templates/admin/import_export/import.html
 msgid ""
 "Below is a preview of data to be imported. If you are satisfied with the "
 "results, click 'Confirm import'"
@@ -134,24 +131,23 @@ msgstr ""
 "Alla on esikatselu tuotavista tiedoista. Jos olet tyytyväinen, paina "
 "'Vahvista tuonti'."
 
-#: templates/admin/import_export/import.html:33
+#: templates/admin/import_export/import.html
 msgid "Confirm import"
 msgstr "Vahvista tuonti"
 
-#: templates/admin/import_export/import.html:84
-#: templates/admin/import_export/import.html:125
+#: templates/admin/import_export/import.html
 msgid "Errors"
 msgstr "Virheet"
 
-#: templates/admin/import_export/import.html:98
+#: templates/admin/import_export/import.html
 msgid "Line number"
 msgstr "Rivinumero"
 
-#: templates/admin/import_export/import.html:117
+#: templates/admin/import_export/import.html
 msgid "Some rows failed to validate"
 msgstr "Joitakin rivejä ei voitu vahvistaa"
 
-#: templates/admin/import_export/import.html:119
+#: templates/admin/import_export/import.html
 msgid ""
 "Please correct these errors in your data where possible, then reupload it "
 "using the form above."
@@ -159,43 +155,43 @@ msgstr ""
 "Korjaa nämä virheet tiedoissasi ja lähetä uudelleen käyttäen yllä olevaa "
 "lomaketta."
 
-#: templates/admin/import_export/import.html:124
+#: templates/admin/import_export/import.html
 msgid "Row"
 msgstr "Rivi"
 
-#: templates/admin/import_export/import.html:151
+#: templates/admin/import_export/import.html
 msgid "Non field specific"
 msgstr "Ei liity mihinkään kenttään"
 
-#: templates/admin/import_export/import.html:174
+#: templates/admin/import_export/import.html
 msgid "Preview"
 msgstr "Esikatselu"
 
-#: templates/admin/import_export/import.html:189
+#: templates/admin/import_export/import.html
 msgid "New"
 msgstr "Uusi"
 
-#: templates/admin/import_export/import.html:191
+#: templates/admin/import_export/import.html
 msgid "Skipped"
 msgstr "Ohitettu"
 
-#: templates/admin/import_export/import.html:193
+#: templates/admin/import_export/import.html
 msgid "Delete"
 msgstr "Poisto"
 
-#: templates/admin/import_export/import.html:195
+#: templates/admin/import_export/import.html
 msgid "Update"
 msgstr "Päivitys"
 
-#: templates/admin/import_export/resource_fields_list.html:7
+#: templates/admin/import_export/resource_fields_list.html
 msgid "This importer will import the following fields: "
 msgstr "Tämä tuonti tuo seuraavat kentät: "
 
-#: widgets.py:369
+#: widgets.py
 msgid "Value could not be parsed."
 msgstr ""
 
-#: widgets.py:497
+#: widgets.py
 msgid "use_natural_foreign_keys and key_is_id cannot both be True"
 msgstr ""
 

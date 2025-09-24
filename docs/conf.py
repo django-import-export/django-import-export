@@ -1,5 +1,6 @@
 import os
 import sys
+from datetime import datetime
 from importlib.metadata import version
 
 import django
@@ -39,7 +40,8 @@ master_doc = "index"
 
 # General information about the project.
 project = "django-import-export"
-copyright = "2012–2024, Bojan Mihelac and others."
+current_year = str(datetime.now().year)
+copyright = f"2012–{current_year}, Bojan Mihelac and others."
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the

@@ -316,7 +316,7 @@ This section describes methods in which the parameters have changed.
        * ``using_transactions`` param now in ``kwargs``
 
    * - ``save_instance(self, instance, is_create, using_transactions=True, dry_run=False)``
-     - ``save_instance(self, instance, is_create, row, ***kwargs)``
+     - ``save_instance(self, instance, is_create, row, **kwargs)``
      - * ``dry_run`` param now in ``kwargs``
        * ``using_transactions`` param now in ``kwargs``
        * ``row`` added as mandatory arg

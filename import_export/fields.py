@@ -99,13 +99,6 @@ class Field:
         """
         Returns the value of the instance's attribute.
         """
-
-        # The objects of a queryset can be dictionaries if the values method is used.
-        if isinstance(instance, dict):
-            if self.attribute not in instance:
-                return None
-            return instance[self.attribute]
-
         if self.attribute is None:
             return None
 
@@ -114,8 +107,11 @@ class Field:
 
         for attr in attrs:
             try:
-                value = getattr(value, attr, None)
-            except (ValueError, ObjectDoesNotExist):
+                if isinstance(value, dict):
+                    value = value[attr]
+                else:
+                    value = getattr(value, attr, None)
+            except (ValueError, ObjectDoesNotExist, KeyError):
                 # needs to have a primary key value before a many-to-many
                 # relationship can be used.
                 return None
@@ -141,11 +137,10 @@ class Field:
             if cleaned is not None or self.saves_null_values:
                 if not is_m2m:
                     setattr(instance, attrs[-1], cleaned)
+                elif self.m2m_add:
+                    getattr(instance, attrs[-1]).add(*cleaned)
                 else:
-                    if self.m2m_add:
-                        getattr(instance, attrs[-1]).add(*cleaned)
-                    else:
-                        getattr(instance, attrs[-1]).set(cleaned)
+                    getattr(instance, attrs[-1]).set(cleaned)
 
     def export(self, instance, **kwargs):
         """

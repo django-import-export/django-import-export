@@ -156,10 +156,24 @@ Foreign key is null when importing
 
 It is possible to reference model relations by defining a field with the double underscore syntax. For example::
 
-  fields = ("author__name")
+  class BookResource(ModelResource):
+
+      class Meta:
+          model = Book
+          fields = ("author__name",)
 
 This means that during export, the relation will be followed and the referenced field will be added correctly to the
 export.
+
+It works the same way when using ``attribute`` in ``Field``. For example::
+
+  class BookResource(ModelResource):
+
+      author_name = Field(attribute="author__name")
+
+      class Meta:
+          model = Book
+          fields = ("author_name",)
 
 This does not work during import because the reference may not be enough to identify the correct relation instance.
 :class:`~import_export.widgets.ForeignKeyWidget` should be used during import.  See the documentation explaining
@@ -172,6 +186,14 @@ See the following responses on StackOverflow:
 
   * https://stackoverflow.com/a/55046474/39296
   * https://stackoverflow.com/questions/74802453/export-only-the-data-registered-by-the-user-django-import-export
+
+How to customize Excel export data
+----------------------------------
+
+If you want more control over how export data is formatted when exporting to Excel you can write a custom format which
+uses the `openpyxl API <https://openpyxl.readthedocs.io/en/stable/>`_.
+See the example `here <https://github.com/django-import-export/django-import-export/issues/2085#issuecomment-3096872093>`_.
+
 
 How to set export file encoding
 -------------------------------

@@ -7,6 +7,7 @@ from core.models import Author, Book, EBook
 from core.tests.admin_integration.mixins import AdminTestMixin
 from django.contrib.admin.sites import AdminSite
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 from django.test import RequestFactory
 from django.test.testcases import TestCase
 from django.test.utils import override_settings
@@ -45,6 +46,15 @@ class ImportErrorHandlingTests(AdminTestMixin, TestCase):
             "Ensure you have chosen the correct format for the file."
         )
         self.assertFormError(response.context["form"], "import_file", target_msg)
+
+    def test_import_action_handles_NonFieldError(self):
+        # issue 2070
+        with mock.patch("django.forms.Form.clean") as mock_clean:
+            mock_clean.side_effect = ValidationError("some non field error")
+            response = self._do_import_post(self.book_import_url, "books.csv")
+        self.assertEqual(response.status_code, 200)
+        target_msg = "some non field error"
+        self.assertIn(target_msg, response.content.decode())
 
     def test_import_action_handles_FieldError(self):
         # issue 1722
@@ -138,6 +148,50 @@ class ImportErrorHandlingTests(AdminTestMixin, TestCase):
                 "Import finished: {} new, {} updated, {} deleted and {} skipped {}."
             ).format(1, 0, 0, 0, EBook._meta.verbose_name_plural),
         )
+
+    def test_confirm_import_handles_non_field_error(self):
+        """Test if admin import handles errors gracefully when confirm_form is
+        has a non-field error. See #2070.
+        """
+        Author.objects.create(id=11, name="Test Author")
+
+        # GET the import form
+        response = self._get_url_response(
+            self.ebook_import_url, str_in_response='form action=""'
+        )
+        self.assertTemplateUsed(response, self.admin_import_template_url)
+        # POST the import form
+        input_format = "0"
+        filename = os.path.join(
+            os.path.dirname(__file__),
+            os.path.pardir,
+            os.path.pardir,
+            "exports",
+            "books.csv",
+        )
+        with open(filename, "rb") as fobj:
+            data = {"author": 11, "format": input_format, "import_file": fobj}
+            response = self._post_url_response(self.ebook_import_url, data)
+
+        self.assertIn("result", response.context)
+        self.assertFalse(response.context["result"].has_errors())
+        self.assertIn("confirm_form", response.context)
+        confirm_form = response.context["confirm_form"]
+        self.assertIsInstance(
+            confirm_form,
+            CustomBookAdmin(EBook, "ebook/import").get_confirm_form_class(None),
+        )
+
+        data = confirm_form.initial
+        self.assertEqual(data["original_file_name"], "books.csv")
+
+        with mock.patch("django.forms.Form.clean") as mock_clean:
+            mock_clean.side_effect = ValidationError("some non field error")
+            response = self._post_url_response(
+                self.ebook_process_import_url, data, follow=True
+            )
+            target_msg = "some non field error"
+            self.assertIn(target_msg, response.content.decode())
 
     def test_import_action_invalid_date(self):
         # test that a row with an invalid date redirects to errors page
