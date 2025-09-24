@@ -60,7 +60,14 @@ jobs:
     - name: Run tox targets for ${{ matrix.python-version }} (sqlite)
       run: |
         tox run -f py$(echo ${{ matrix.python-version }} | tr -d .)
-        find .tox -name '.coverage' -exec cp {} .coverage.sqlite \;
+        coverage_file=$(find .tox -name '.coverage' | head -1)
+        if [ -f "$coverage_file" ]; then
+          cp "$coverage_file" .coverage.sqlite
+          echo "Coverage file copied to .coverage.sqlite"
+        else
+          echo "No coverage file found in .tox directory"
+          exit 1
+        fi
     - name: Upload coverage data to coveralls.io (sqlite)
       uses: coverallsapp/github-action@v2
       with:
@@ -70,7 +77,14 @@ jobs:
     - name: Run tox targets for ${{ matrix.python-version }} (postgres)
       run: |
         tox run -f py$(echo ${{ matrix.python-version }} | tr -d .)
-        find .tox -name '.coverage' -exec cp {} .coverage.postgres \;
+        coverage_file=$(find .tox -name '.coverage' | head -1)
+        if [ -f "$coverage_file" ]; then
+          cp "$coverage_file" .coverage.postgres
+          echo "Coverage file copied to .coverage.postgres"
+        else
+          echo "No coverage file found in .tox directory"
+          exit 1
+        fi
       env:
         IMPORT_EXPORT_TEST_TYPE: postgres
     - name: Upload coverage data to coveralls.io (postgres)
@@ -82,7 +96,14 @@ jobs:
     - name: Run tox targets for ${{ matrix.python-version }} (mysql)
       run: |
         tox run -f py$(echo ${{ matrix.python-version }} | tr -d .)
-        find .tox -name '.coverage' -exec cp {} .coverage.mysql \;
+        coverage_file=$(find .tox -name '.coverage' | head -1)
+        if [ -f "$coverage_file" ]; then
+          cp "$coverage_file" .coverage.mysql
+          echo "Coverage file copied to .coverage.mysql"
+        else
+          echo "No coverage file found in .tox directory"
+          exit 1
+        fi
       env:
         IMPORT_EXPORT_TEST_TYPE: mysql-innodb
     - name: Upload coverage data to coveralls.io (mysql)
