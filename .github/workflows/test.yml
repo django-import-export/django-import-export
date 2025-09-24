@@ -70,11 +70,11 @@ jobs:
           exit 1
         fi
     - name: Upload coverage data to coveralls.io (sqlite)
-      uses: coverallsapp/github-action@v2.3.3
+      uses: coverallsapp/github-action@v1.2.5
       with:
         parallel: true
         flag-name: py${{ matrix.python-version }}-sqlite
-        file: .coverage.sqlite
+        path-to-lcov: .coverage.sqlite
     - name: Run tox targets for ${{ matrix.python-version }} (postgres)
       run: |
         tox run -f py$(echo ${{ matrix.python-version }} | tr -d .)
@@ -90,11 +90,11 @@ jobs:
       env:
         IMPORT_EXPORT_TEST_TYPE: postgres
     - name: Upload coverage data to coveralls.io (postgres)
-      uses: coverallsapp/github-action@v2.3.3
+      uses: coverallsapp/github-action@v1.2.5
       with:
         parallel: true
         flag-name: py${{ matrix.python-version }}-postgres
-        file: .coverage.postgres
+        path-to-lcov: .coverage.postgres
     - name: Run tox targets for ${{ matrix.python-version }} (mysql)
       run: |
         tox run -f py$(echo ${{ matrix.python-version }} | tr -d .)
@@ -110,11 +110,11 @@ jobs:
       env:
         IMPORT_EXPORT_TEST_TYPE: mysql-innodb
     - name: Upload coverage data to coveralls.io (mysql)
-      uses: coverallsapp/github-action@v2.3.3
+      uses: coverallsapp/github-action@v1.2.5
       with:
         parallel: true
         flag-name: py${{ matrix.python-version }}-mysql
-        file: .coverage.mysql
+        path-to-lcov: .coverage.mysql
 
   coveralls:
     name: Indicate completion to coveralls.io
@@ -122,7 +122,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Finished
-        uses: coverallsapp/github-action@v2.3.3
+        uses: coverallsapp/github-action@v1.2.5
         with:
           parallel-finished: true
           carryforward: >-
