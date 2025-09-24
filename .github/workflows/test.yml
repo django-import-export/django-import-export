@@ -60,11 +60,12 @@ jobs:
     - name: Run tox targets for ${{ matrix.python-version }} (sqlite)
       run: |
         tox run -f py$(echo ${{ matrix.python-version }} | tr -d .)
-        if [ -f ".coverage" ]; then
-          cp .coverage .coverage.sqlite
-          echo "Coverage file copied to .coverage.sqlite"
+        coverage_file=$(ls .coverage.* 2>/dev/null | grep -v '.coveragerc' | head -1)
+        if [ -n "$coverage_file" ] && [ -f "$coverage_file" ]; then
+          cp "$coverage_file" .coverage.sqlite
+          echo "Coverage file $coverage_file copied to .coverage.sqlite"
         else
-          echo "No .coverage file found in current directory"
+          echo "No coverage data file found"
           ls -la .coverage* || echo "No coverage files found"
           exit 1
         fi
@@ -77,11 +78,12 @@ jobs:
     - name: Run tox targets for ${{ matrix.python-version }} (postgres)
       run: |
         tox run -f py$(echo ${{ matrix.python-version }} | tr -d .)
-        if [ -f ".coverage" ]; then
-          cp .coverage .coverage.postgres
-          echo "Coverage file copied to .coverage.postgres"
+        coverage_file=$(ls .coverage.* 2>/dev/null | grep -v '.coveragerc' | head -1)
+        if [ -n "$coverage_file" ] && [ -f "$coverage_file" ]; then
+          cp "$coverage_file" .coverage.postgres
+          echo "Coverage file $coverage_file copied to .coverage.postgres"
         else
-          echo "No .coverage file found in current directory"
+          echo "No coverage data file found"
           ls -la .coverage* || echo "No coverage files found"
           exit 1
         fi
@@ -96,11 +98,12 @@ jobs:
     - name: Run tox targets for ${{ matrix.python-version }} (mysql)
       run: |
         tox run -f py$(echo ${{ matrix.python-version }} | tr -d .)
-        if [ -f ".coverage" ]; then
-          cp .coverage .coverage.mysql
-          echo "Coverage file copied to .coverage.mysql"
+        coverage_file=$(ls .coverage.* 2>/dev/null | grep -v '.coveragerc' | head -1)
+        if [ -n "$coverage_file" ] && [ -f "$coverage_file" ]; then
+          cp "$coverage_file" .coverage.mysql
+          echo "Coverage file $coverage_file copied to .coverage.mysql"
         else
-          echo "No .coverage file found in current directory"
+          echo "No coverage data file found"
           ls -la .coverage* || echo "No coverage files found"
           exit 1
         fi
