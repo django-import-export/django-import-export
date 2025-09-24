@@ -8,7 +8,7 @@ Changelog
 4.3.10 (unreleased)
 ------------------
 
-- improved documentation for ``clean()`` methods ()
+- improved documentation for ``clean()`` methods (`2115 <https://github.com/django-import-export/django-import-export/pull/2115>`_)
 
 4.3.9 (2025-07-21)
 ------------------
