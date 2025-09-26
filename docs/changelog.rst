@@ -5,11 +5,17 @@ Changelog
 
     If upgrading from v3, v4 introduces breaking changes.  Please refer to :doc:`release notes<release_notes>`.
 
-4.3.10 (unreleased)
-------------------
+4.3.10 (2025-09-26)
+-------------------
 
-- Improved documentation for ``clean()`` methods (`2115 <https://github.com/django-import-export/django-import-export/pull/2115>`_)
+- Improved field value extraction for dict-based querysets (`2098 <https://github.com/django-import-export/django-import-export/pull/2098>`_)
+- Performance improvements for membership checks (`2090 <https://github.com/django-import-export/django-import-export/pull/2090>`_)
 - Fix ForeignKeyWidget export issue (`2117 <https://github.com/django-import-export/django-import-export/pull/2117>`_)
+- Improved documentation for ``clean()`` methods (`2115 <https://github.com/django-import-export/django-import-export/pull/2115>`_)
+- Documentation updates: JSONField export with attribute syntax (`2100 <https://github.com/django-import-export/django-import-export/pull/2100>`_)
+- Documentation updates: handling TooManyFieldsSent (`2103 <https://github.com/django-import-export/django-import-export/pull/2103>`_)
+- Updated Turkish translation (`2101 <https://github.com/django-import-export/django-import-export/pull/2101>`_)
+- Updated Czech translation (`2111 <https://github.com/django-import-export/django-import-export/pull/2111>`_)
 
 4.3.9 (2025-07-21)
 ------------------
