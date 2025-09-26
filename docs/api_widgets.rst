@@ -32,6 +32,9 @@ Widgets
 .. autoclass:: import_export.widgets.DurationWidget
    :members:
 
+.. autoclass:: import_export.widgets.SimpleArrayWidget
+   :members:
+
 .. autoclass:: import_export.widgets.JSONWidget
    :members:
 
