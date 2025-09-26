@@ -8,7 +8,8 @@ Changelog
 4.3.10 (unreleased)
 ------------------
 
-- improved documentation for ``clean()`` methods (`2115 <https://github.com/django-import-export/django-import-export/pull/2115>`_)
+- Improved documentation for ``clean()`` methods (`2115 <https://github.com/django-import-export/django-import-export/pull/2115>`_)
+- Fix ForeignKeyWidget export issue (`2117 <https://github.com/django-import-export/django-import-export/pull/2117>`_)
 
 4.3.9 (2025-07-21)
 ------------------
