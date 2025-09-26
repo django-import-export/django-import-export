@@ -64,10 +64,7 @@ jobs:
         coverage_file=$(ls .coverage.* 2>/dev/null | grep -v '.coveragerc' | head -1)
         if [ -n "$coverage_file" ] && [ -f "$coverage_file" ]; then
           cp "$coverage_file" .coverage.sqlite
-          coverage xml --data-file=.coverage.sqlite -o coverage.sqlite.xml
-          echo "Coverage file $coverage_file copied to .coverage.sqlite and XML generated"
-          echo "=== Coverage XML Preview ==="
-          head -200 coverage.sqlite.xml
+          echo "Coverage file $coverage_file copied to .coverage.sqlite"
         else
           echo "No coverage data file found"
           ls -la .coverage* || echo "No coverage files found"
@@ -78,16 +75,14 @@ jobs:
       with:
         parallel: true
         flag-name: py${{ matrix.python-version }}-sqlite
-        file: coverage.sqlite.xml
-        format: cobertura
+        file: .coverage.sqlite
     - name: Run tox targets for ${{ matrix.python-version }} (postgres)
       run: |
         tox run -f py$(echo ${{ matrix.python-version }} | tr -d .)
         coverage_file=$(ls .coverage.* 2>/dev/null | grep -v '.coveragerc' | head -1)
         if [ -n "$coverage_file" ] && [ -f "$coverage_file" ]; then
           cp "$coverage_file" .coverage.postgres
-          coverage xml --data-file=.coverage.postgres -o coverage.postgres.xml
-          echo "Coverage file $coverage_file copied to .coverage.postgres and XML generated"
+          echo "Coverage file $coverage_file copied to .coverage.postgres"
         else
           echo "No coverage data file found"
           ls -la .coverage* || echo "No coverage files found"
@@ -100,16 +95,14 @@ jobs:
       with:
         parallel: true
         flag-name: py${{ matrix.python-version }}-postgres
-        file: coverage.postgres.xml
-        format: cobertura
+        file: .coverage.postgres
     - name: Run tox targets for ${{ matrix.python-version }} (mysql)
       run: |
         tox run -f py$(echo ${{ matrix.python-version }} | tr -d .)
         coverage_file=$(ls .coverage.* 2>/dev/null | grep -v '.coveragerc' | head -1)
         if [ -n "$coverage_file" ] && [ -f "$coverage_file" ]; then
           cp "$coverage_file" .coverage.mysql
-          coverage xml --data-file=.coverage.mysql -o coverage.mysql.xml
-          echo "Coverage file $coverage_file copied to .coverage.mysql and XML generated"
+          echo "Coverage file $coverage_file copied to .coverage.mysql"
         else
           echo "No coverage data file found"
           ls -la .coverage* || echo "No coverage files found"
@@ -122,8 +115,8 @@ jobs:
       with:
         parallel: true
         flag-name: py${{ matrix.python-version }}-mysql
-        file: coverage.mysql.xml
-        format: cobertura
+        file: .coverage.mysql
+
   coveralls:
     name: Indicate completion to coveralls.io
     needs: test
@@ -137,5 +130,4 @@ jobs:
             py3.9-sqlite,py3.9-postgres,py3.9-mysql,
             py3.10-sqlite,py3.10-postgres,py3.10-mysql,
             py3.11-sqlite,py3.11-postgres,py3.11-mysql,
-            py3.12-sqlite,py3.12-postgres,py3.12-mysql,
-            py3.13-sqlite,py3.13-postgres,py3.13-mysql
+            py3.12-sqlite,py3.12-postgres,py3.12-mysql
