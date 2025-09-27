@@ -140,8 +140,30 @@ class SelectableFieldsExportForm(ExportForm):
         return title
 
     def _create_boolean_fields(self, resource: ModelResource, index: int) -> None:
-        # Initiate resource to get ordered export fields
-        fields = resource().get_export_order()
+        # Initiate resource to get export fields (respects overridden get_export_fields)
+        resource_instance = resource()
+
+        # Check if get_export_fields() has been overridden
+        # (not using default implementation) by comparing the class hierarchy
+        export_fields_method = resource_instance.__class__.get_export_fields
+        from import_export.resources import Resource
+
+        is_overridden = export_fields_method != Resource.get_export_fields
+
+        if is_overridden:
+            # Use get_export_fields() when it's been overridden
+            export_fields = resource_instance.get_export_fields()
+            # Find the field names (keys) that correspond to these Field objects
+            fields = []
+            for export_field in export_fields:
+                for field_name, field_obj in resource_instance.fields.items():
+                    if field_obj is export_field:
+                        fields.append(field_name)
+                        break
+        else:
+            # Fall back to get_export_order() for backward compatibility
+            # when get_export_fields() is not overridden
+            fields = resource_instance.get_export_order()
         boolean_fields = []  # will be used for ordering the fields
         is_initial_field = False
 

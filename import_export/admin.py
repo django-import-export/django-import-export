@@ -545,7 +545,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         context["fields_list"] = [
             (
                 resource.get_display_name(),
-                [f.column_name for f in resource.get_user_visible_fields()],
+                [f.column_name for f in resource.get_user_visible_import_fields()],
             )
             for resource in resources
         ]
@@ -820,7 +820,7 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
                     field.column_name
                     for field in res(
                         **self.get_export_resource_kwargs(request)
-                    ).get_user_visible_fields()
+                    ).get_user_visible_export_fields()
                 ],
             )
             for res in self.get_export_resource_classes(request)
