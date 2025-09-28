@@ -18,6 +18,7 @@ from django.utils.module_loading import import_string
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_POST
 
+from .constants import FORM_FIELD_PREFIX
 from .formats.base_formats import BINARY_FORMATS
 from .forms import ConfirmImportForm, ImportForm, SelectableFieldsExportForm
 from .mixins import BaseExportMixin, BaseImportMixin
@@ -746,7 +747,7 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
             self.get_export_resource_classes(request),
             data=request.POST or None,
         )
-        if request.POST and "export_items" in request.POST:
+        if request.POST and f"{FORM_FIELD_PREFIX}export_items" in request.POST:
             # this field is instantiated if the export is POSTed from the
             # 'action' drop down
             form.fields["export_items"] = MultipleChoiceField(

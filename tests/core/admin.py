@@ -58,7 +58,7 @@ class UUIDCategoryAdmin(ExportActionModelAdmin):
 
 
 @admin.register(Author)
-class AuthorAdmin(ImportMixin, admin.ModelAdmin):
+class AuthorAdmin(ImportExportModelAdmin, ExportActionModelAdmin, admin.ModelAdmin):
     pass
 
 

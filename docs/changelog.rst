@@ -11,6 +11,11 @@ Changelog
 - Fixed issue where export forms were incorrectly showing import fields instead of export fields (`2118 <https://github.com/django-import-export/django-import-export/pull/2118>`_)
 - Add support for Django 6.0, remove support for Python 3.9 (`2120 <https://github.com/django-import-export/django-import-export/pull/2120>`_)
 
+5.0.0 (unreleased)
+------------------
+
+Fix Admin UI form field name collision for exports (`2108 <https://github.com/django-import-export/django-import-export/pull/2108>`_)
+
 4.3.10 (2025-09-26)
 -------------------
 

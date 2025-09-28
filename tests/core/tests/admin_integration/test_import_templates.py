@@ -111,6 +111,7 @@ class ImportTemplateTests(AdminTestMixin, TestCase):
         )
         with open(filename, "rb") as fobj:
             data = {"author": 11, "format": input_format, "import_file": fobj}
+            self._prepend_form_prefix(data)
             response = self._post_url_response(self.ebook_import_url, data)
         self.assertIn("result", response.context)
         self.assertFalse(response.context["result"].has_errors())
@@ -122,6 +123,7 @@ class ImportTemplateTests(AdminTestMixin, TestCase):
         )
 
         data = confirm_form.initial
+        self._prepend_form_prefix(data)
         self.assertEqual(data["original_file_name"], "books.csv")
         response = self._post_url_response(
             self.process_ebook_import_url, data, follow=True

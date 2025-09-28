@@ -7,14 +7,35 @@ from django import forms
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 
+from . import constants
+from .constants import FORM_FIELD_PREFIX
 from .resources import ModelResource
 
 
-class ImportExportFormBase(forms.Form):
+class FieldNamePrefixMixin:
+    """
+    Handles adding a constant to form field names so that there are
+    no name clashes with model field names.
+    """
+
+    field_name_mapping = {
+        key: f"{constants.FORM_FIELD_PREFIX}{key}"
+        for key in ["format", "resource", "export_items"]
+    }
+
+    def add_prefix(self, field_name):
+        # look up field name; return original if not found
+        field_name = self.field_name_mapping.get(field_name, field_name)
+        return super().add_prefix(field_name)
+
+
+class ImportExportFormBase(FieldNamePrefixMixin, forms.Form):
+    # id attr is explicitly declared because js logic uses the id
     resource = forms.ChoiceField(
         label=_("Resource"),
         choices=(),
         required=False,
+        widget=forms.Select(attrs={"id": "id_resource"}),
     )
     format = forms.ChoiceField(
         label=_("Format"),
@@ -79,7 +100,7 @@ class ImportForm(ImportExportFormBase):
         )
 
 
-class ConfirmImportForm(forms.Form):
+class ConfirmImportForm(FieldNamePrefixMixin, forms.Form):
     import_file_name = forms.CharField(widget=forms.HiddenInput())
     original_file_name = forms.CharField(widget=forms.HiddenInput())
     format = forms.CharField(widget=forms.HiddenInput())
@@ -240,9 +261,9 @@ class SelectableFieldsExportForm(ExportForm):
 
         # Return selected resource by index
         resource_index = 0
-        if "resource" in self.cleaned_data:
+        if f"{FORM_FIELD_PREFIX}resource" in self.data:
             try:
-                resource_index = int(self.cleaned_data["resource"])
+                resource_index = int(self.data[f"{FORM_FIELD_PREFIX}resource"])
             except ValueError:
                 pass
         return self.resources[resource_index]
