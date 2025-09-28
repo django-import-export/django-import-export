@@ -35,6 +35,10 @@ Changelog
 - Updated Turkish translation (`2101 <https://github.com/django-import-export/django-import-export/pull/2101>`_)
 - Updated Czech translation (`2111 <https://github.com/django-import-export/django-import-export/pull/2111>`_)
 
+4.3.10 (unreleased)
+
+- Added support for django 6.0a (`2112 <https://github.com/django-import-export/django-import-export/pull/2112>`_)
+
 4.3.9 (2025-07-21)
 ------------------
 
