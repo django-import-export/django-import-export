@@ -15,6 +15,13 @@ Breaking changes
   a result of this change.
 
   The ``resource``, ``format`` and ``export_items`` field names are now prepended with ``django-import-export-``.
+  
+* Removed the deprecated :meth:`~import_export.admin.ExportMixin.get_valid_export_item_pks` method in favour
+  of :meth:`~import_export.admin.ExportMixin.get_queryset`. Use the ModelAdmin's
+  :meth:`~import_export.admin.ExportMixin.get_queryset` or :meth:`~import_export.admin.ExportMixin.get_export_queryset`
+  instead.
+
+  See `PR 1890 <https://github.com/django-import-export/django-import-export/issues/1890>`_.
 
 * Fixed issue where export forms were incorrectly showing import fields instead of export fields.
   This was resolved by introducing context-specific methods for field retrieval.
