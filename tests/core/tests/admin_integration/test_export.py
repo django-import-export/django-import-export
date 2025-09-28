@@ -958,3 +958,130 @@ class ExportInvalidCharTest(AdminTestMixin, TestCase):
         content = response.content
         wb = load_workbook(filename=BytesIO(content))
         self.assertEqual("invalid�", wb.active["B2"].value)
+
+
+class GetExportFieldsTest(AdminTestMixin, TestCase):
+    """
+    Test case for issue #2094: Export fields should use get_export_fields()
+    instead of get_import_fields() when showing fields in export form
+    """
+
+    def setUp(self):
+        super().setUp()
+        from core.models import Book
+
+        from import_export.fields import Field
+        from import_export.resources import ModelResource
+
+        # Create a custom resource with different import and export fields
+        class TestBookResource(ModelResource):
+            # Only these fields should appear in import
+            name = Field(attribute="name", column_name="book_name")
+            price = Field(attribute="price", column_name="book_price")
+
+            # Only these fields should appear in export
+            export_name = Field(attribute="name", column_name="exported_name")
+            export_author_email = Field(
+                attribute="author_email", column_name="exported_author_email"
+            )
+
+            class Meta:
+                model = Book
+
+            def get_import_fields(self):
+                """Return only import-specific fields"""
+                return [self.fields["name"], self.fields["price"]]
+
+            def get_export_fields(self, selected_fields=None):
+                """Return only export-specific fields"""
+                return [self.fields["export_name"], self.fields["export_author_email"]]
+
+        self.book_resource = TestBookResource()
+
+    @patch("core.admin.BookAdmin.get_export_resource_classes")
+    def test_export_fields_shown_in_export_form_issue_2094(
+        self, mock_get_export_resource_classes
+    ):
+        """Test that export form shows export fields, not import fields"""
+        # Mock the admin to use our custom resource class (defined in setUp)
+        mock_get_export_resource_classes.return_value = [type(self.book_resource)]
+
+        # GET the export page to see the form
+        response = self._get_url_response(self.book_export_url)
+        self.assertEqual(response.status_code, 200)
+
+        # Check the context to see which fields are being displayed
+        fields_list = response.context.get("fields_list", [])
+        self.assertTrue(fields_list, "fields_list should not be empty")
+
+        resource_name, field_names = fields_list[0]
+
+        expected_export_fields = ["exported_name", "exported_author_email"]
+        unexpected_import_fields = ["book_name", "book_price"]
+
+        for expected_field in expected_export_fields:
+            self.assertIn(
+                expected_field,
+                field_names,
+            )
+
+        # Import fields should NOT appear in export form
+        for unexpected_field in unexpected_import_fields:
+            self.assertNotIn(
+                unexpected_field,
+                field_names,
+                f"IMPORT field '{unexpected_field}' should NOT be shown in "
+                f"export form."
+                f"Actual fields shown: {field_names}",
+            )
+
+    @patch("core.admin.BookAdmin.get_export_resource_classes")
+    def test_selectable_fields_export_form_respects_get_export_fields_issue_2094(
+        self, mock_get_export_resource_classes
+    ):
+        """Test SelectableFieldsExportForm only shows fields from get_export_fields()"""
+        from import_export.formats.base_formats import CSV
+        from import_export.forms import SelectableFieldsExportForm
+
+        # Mock the admin to use our custom resource class (defined in setUp)
+        mock_get_export_resource_classes.return_value = [type(self.book_resource)]
+
+        # Create the SelectableFieldsExportForm directly
+        form = SelectableFieldsExportForm(
+            formats=(CSV,), resources=[type(self.book_resource)]
+        )
+
+        # Get the field names that are actually shown in the form
+        form_field_names = []
+        for field_name, field in form.fields.items():
+            if hasattr(field, "is_selectable_field") and field.is_selectable_field:
+                # Extract the actual field name from the form field name
+                # Form field names are like "TestBookResource_export_name"
+                actual_field_name = field_name.split("_", 1)[1]
+                form_field_names.append(actual_field_name)
+
+        # Fields that should be shown (from get_export_fields)
+        expected_export_fields = ["export_name", "export_author_email"]
+
+        # Fields that should NOT be shown (from get_import_fields or other fields)
+        unexpected_fields = ["name", "price"]  # These are the import-only fields
+
+        # Assert that export fields are shown
+        for expected_field in expected_export_fields:
+            self.assertIn(
+                expected_field,
+                form_field_names,
+                f"Export field '{expected_field}' should be shown in "
+                "SelectableFieldsExportForm. "
+                f"Actual fields: {form_field_names}",
+            )
+
+        # Assert that import-only fields are NOT shown
+        for unexpected_field in unexpected_fields:
+            self.assertNotIn(
+                unexpected_field,
+                form_field_names,
+                f"Import field '{unexpected_field}' should NOT be shown in "
+                "SelectableFieldsExportForm. "
+                f"Actual fields: {form_field_names}",
+            )
