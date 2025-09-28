@@ -230,6 +230,17 @@ It is possible to disable this extra step by setting the :ref:`import_export_ski
     those items which users should be permitted to export.
     See :meth:`~import_export.admin.ExportMixin.get_export_queryset`.
 
+Exporting large datasets
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+If exporting large datasets via the :ref:`action<export_via_admin_action>` menu, you may see Django's
+`SuspiciousOperation <https://docs.djangoproject.com/en/dev/ref/exceptions/#suspiciousoperation>`_ exception for
+'TooManyFieldsSent'.  This is a built-in Django protection against Denial of Service attacks.
+
+If you need to be able to export larger datasets via the action menu you can use the
+`DATA_UPLOAD_MAX_NUMBER_FIELDS <https://docs.djangoproject.com/en/dev/ref/settings/#data-upload-max-number-fields>`_
+setting to increase or disable this check.
+
 .. _export_from_model_change_form:
 
 Export from model instance change form

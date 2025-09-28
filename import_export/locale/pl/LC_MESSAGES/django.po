@@ -187,7 +187,7 @@ msgstr "Usuń"
 
 #: templates/admin/import_export/import.html
 msgid "Update"
-msgstr "Zaktualizowany"
+msgstr "Zaktualizuj"
 
 #: templates/admin/import_export/resource_fields_list.html
 msgid "This importer will import the following fields: "
