@@ -16,6 +16,20 @@ Breaking changes
 
   The ``resource``, ``format`` and ``export_items`` field names are now prepended with ``django-import-export-``.
 
+* Fixed issue where export forms were incorrectly showing import fields instead of export fields.
+  This was resolved by introducing context-specific methods for field retrieval.
+  See :ref:`deprecations <deprecations_v5>` and `PR 2118 <https://github.com/django-import-export/django-import-export/pull/2118>`_.
+
+.. _deprecations_v5:
+
+Deprecations
+^^^^^^^^^^^^
+
+* The :meth:`~import_export.resources.Resource.get_user_visible_fields` method is now deprecated and will be removed in version 6.0.
+  Use :meth:`~import_export.resources.Resource.get_user_visible_import_fields` for import contexts and
+  :meth:`~import_export.resources.Resource.get_user_visible_export_fields` for export contexts instead.
+  This change ensures that import and export operations show their respective field sets correctly in admin forms.
+
 v4.2
 ----
 
