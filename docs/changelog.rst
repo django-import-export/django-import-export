@@ -3,7 +3,12 @@ Changelog
 
 .. warning::
 
-    If upgrading from v3, v4 introduces breaking changes.  Please refer to :doc:`release notes<release_notes>`.
+    v5 introduces breaking changes and deprecations.  Please refer to :doc:`release notes<release_notes>`.
+
+5.0.0 (unreleased)
+------------------
+
+- Fixed issue where export forms were incorrectly showing import fields instead of export fields (`2118 <https://github.com/django-import-export/django-import-export/pull/2118>`_)
 
 4.3.9 (2025-07-21)
 ------------------
