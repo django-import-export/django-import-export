@@ -1054,7 +1054,32 @@ class Resource(metaclass=DeclarativeMetaclass):
         return [force_str(field.column_name) for field in export_fields if field]
 
     def get_user_visible_fields(self):
+        """
+        Get fields visible to users in admin interface.
+
+        .. deprecated:: 5
+            Use ``get_user_visible_import_fields()`` or
+            ``get_user_visible_export_fields()`` instead for explicit
+            context-aware field selection. This method will be removed in version 6.0.
+        """
+        import warnings
+
+        warnings.warn(
+            "get_user_visible_fields() is deprecated and will be removed in "
+            "version 6.0. Use get_user_visible_import_fields() or "
+            "get_user_visible_export_fields() instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         return self.get_import_fields()
+
+    def get_user_visible_import_fields(self):
+        """Get fields visible to users in import interface"""
+        return self.get_import_fields()
+
+    def get_user_visible_export_fields(self):
+        """Get fields visible to users in export interface"""
+        return self.get_export_fields()
 
     def iter_queryset(self, queryset):
         if not isinstance(queryset, QuerySet):
