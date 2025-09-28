@@ -46,6 +46,7 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertEqual(2, len(form.fields["resource"].choices))
 
         data = {"format": "0", **self.bookresource_export_fields_payload}
+        self._prepend_form_prefix(data)
         date_str = datetime.now().strftime("%Y-%m-%d")
         # Should not contain COUNT queries from ModelAdmin.get_results()
         with self.assertNumQueries(5):
@@ -183,6 +184,7 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
                 "booknameresource_id": True,
                 "booknameresource_name": True,
             }
+            self._prepend_form_prefix(data)
             response = self._post_url_response(self.book_export_url, data)
         target_msg = "Some unknown error"
         self.assertIn(target_msg, response.content.decode())
@@ -195,6 +197,7 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
             "booknameresource_id": False,
             "booknameresource_name": False,
         }
+        self._prepend_form_prefix(data)
         response = self._post_url_response(self.book_export_url, data)
         target_msg = "Select at least 1 field"
         # Validate the occurrence of the error message should be 1
@@ -212,6 +215,7 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
             "booknameresource_id": True,
             "booknameresource_name": True,
         }
+        self._prepend_form_prefix(data)
         date_str = datetime.now().strftime("%Y-%m-%d")
         response = self._post_url_response(self.book_export_url, data)
         self.assertTrue(response.has_header("Content-Disposition"))
@@ -267,6 +271,7 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
 
         xlsx_index = self._get_input_format_index("xlsx")
         data = {"format": str(xlsx_index), **self.bookresource_export_fields_payload}
+        self._prepend_form_prefix(data)
         response = self._post_url_response(self.book_export_url, data)
         self.assertTrue(response.has_header("Content-Disposition"))
         self.assertEqual(
@@ -283,6 +288,7 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
 
         xlsx_index = self._get_input_format_index("xlsx")
         data = {"format": str(xlsx_index), **self.bookresource_export_fields_payload}
+        self._prepend_form_prefix(data)
         response = self._post_url_response(self.book_export_url, data)
         content = response.content
         wb = load_workbook(filename=BytesIO(content))
@@ -300,6 +306,7 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
             "bookresource_id": True,
             "bookresource_name": True,
         }
+        self._prepend_form_prefix(data)
         response = self._post_url_response(self.book_export_url, data)
         self.assertIn(
             f"{b1.id},SUM(1+1)\r\n".encode(),
@@ -317,6 +324,7 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
             "bookresource_id": True,
             "bookresource_name": True,
         }
+        self._prepend_form_prefix(data)
         response = self._post_url_response(self.book_export_url, data)
         self.assertIn(
             f"{b1.id},=SUM(1+1)\r\n".encode(),
@@ -364,6 +372,7 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
             "ebookresource_name": True,
             "ebookresource_published": True,
         }
+        self._prepend_form_prefix(data)
         date_str = datetime.now().strftime("%Y-%m-%d")
         response = self._post_url_response(self.ebook_export_url, data)
         self.assertTrue(response.has_header("Content-Disposition"))
@@ -392,6 +401,7 @@ class FilteredExportAdminIntegrationTest(AdminTestMixin, TestCase):
             "ebookresource_name": True,
             "ebookresource_published": True,
         }
+        self._prepend_form_prefix(data)
         date_str = datetime.now().strftime("%Y-%m-%d")
         response = self._post_url_response(self.ebook_export_url, data)
         self.assertTrue(response.has_header("Content-Disposition"))
@@ -409,7 +419,7 @@ class FilteredExportAdminIntegrationTest(AdminTestMixin, TestCase):
 
 class TestExportEncoding(TestCase):
     mock_request = MagicMock(spec=HttpRequest)
-    mock_request.POST = {"format": 0, "bookresource_id": True}
+    mock_request.POST = {"django-import-export-format": 0, "bookresource_id": True}
 
     class TestMixin(ExportMixin):
         model = Book
@@ -540,6 +550,7 @@ class CustomColumnNameExportTest(AdminTestMixin, TestCase):
             "ebookresource_name": True,
             "ebookresource_published_date": True,
         }
+        self._prepend_form_prefix(data)
         date_str = datetime.now().strftime("%Y-%m-%d")
         response = self._post_url_response(self.ebook_export_url, data)
         self.assertTrue(response.has_header("Content-Disposition"))
@@ -566,6 +577,7 @@ class CustomColumnNameExportTest(AdminTestMixin, TestCase):
             "ebookresource_published_date": True,
             "ebookresource_auteur_name": True,
         }
+        self._prepend_form_prefix(data)
         response = self._post_url_response(self.ebook_export_url, data)
         s = (
             "id,Email of the author,name,published_date,Author Name\r\n"
@@ -604,6 +616,7 @@ class DeclaredFieldWithAttributeExportTest(AdminTestMixin, TestCase):
             "resource": "0",
             "bookresource_name": True,
         }
+        self._prepend_form_prefix(data)
         response = self._post_url_response(self.book_export_url, data)
         s = "Author Name\r\nIan Fleming\r\n"
         self.assertEqual(s, response.content.decode())
@@ -640,6 +653,7 @@ class DeclaredFieldWithAttributeAndFieldsExportTest(AdminTestMixin, TestCase):
             "resource": "0",
             "bookresource_name": True,
         }
+        self._prepend_form_prefix(data)
         response = self._post_url_response(self.book_export_url, data)
         s = "Author Name\r\nIan Fleming\r\n"
         self.assertEqual(s, response.content.decode())
@@ -669,6 +683,7 @@ class DeclaredFieldWithNoAttributeExportTest(AdminTestMixin, TestCase):
     ):
         mock_choose_export_resource_class.return_value = self._BookResource
         data = {"format": "0", "resource": "0", "bookresource_author_email": True}
+        self._prepend_form_prefix(data)
         response = self._post_url_response(self.book_export_url, data)
         s = 'Author Email\r\n""\r\n'
         self.assertEqual(s, response.content.decode())
@@ -702,6 +717,7 @@ class DeclaredFieldWithIncorrectNameInFieldsExportTest(AdminTestMixin, TestCase)
             "ebookresource_a": True,
             "author": self.author.id,
         }
+        self._prepend_form_prefix(data)
         with self.assertWarns(UserWarning) as w:
             response = self._post_url_response(self.ebook_export_url, data)
             self.assertEqual(
@@ -709,6 +725,30 @@ class DeclaredFieldWithIncorrectNameInFieldsExportTest(AdminTestMixin, TestCase)
                 str(w.warnings[-1].message),
             )
         s = f"id\r\n{self.book.id}\r\n"
+        self.assertEqual(s, response.content.decode())
+
+
+class ResourceFieldExportTest(AdminTestMixin, TestCase):
+    """
+    If the model has a field called 'resource', ensure that export works ok.
+    issue #2106
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.author = Author.objects.create(id=11, name="Ian Fleming")
+
+    def test_export_with_resource_field(self):
+        data = {
+            "format": "0",
+            "resource": "0",
+            "authorresource_id": True,
+            "authorresource_name": True,
+            "authorresource_resource": True,
+        }
+        self._prepend_form_prefix(data)
+        response = self._post_url_response(self.author_export_url, data)
+        s = f"id,name,resource\r\n{self.author.id},Ian Fleming,\r\n"
         self.assertEqual(s, response.content.decode())
 
 
@@ -731,6 +771,7 @@ class FilteredExportTest(AdminTestMixin, TestCase):
             "ebookresource_id": True,
             "ebookresource_name": True,
         }
+        self._prepend_form_prefix(data)
         response = self._post_url_response(self.ebook_export_url, data)
         s = "id,name\r\n" f"{b1.id},Moonraker\r\n"
         self.assertEqual(s.encode(), response.content)
@@ -803,6 +844,7 @@ class ExportBinaryFieldsTest(AdminTestMixin, TestCase):
             "bookresource_imported": True,
             "bookresource_published": True,
         }
+        self._prepend_form_prefix(data)
         response = self.client.post(self.book_export_url, data)
         self.assertEqual(response.status_code, 200)
         content = response.content
@@ -826,6 +868,7 @@ class ExportBinaryFieldsTest(AdminTestMixin, TestCase):
             "bookresource_imported": True,
             "bookresource_published": True,
         }
+        self._prepend_form_prefix(data)
         response = self.client.post(self.book_export_url, data)
         self.assertEqual(response.status_code, 200)
         content = response.content
@@ -856,6 +899,7 @@ class ExportTzAwareDateTest(AdminTestMixin, TestCase):
             "bookresource_id": True,
             "bookresource_added": True,
         }
+        self._prepend_form_prefix(data)
         response = self.client.post(self.book_export_url, data)
         self.assertEqual(response.status_code, 200)
         content = response.content
@@ -876,6 +920,7 @@ class ExportTzAwareDateTest(AdminTestMixin, TestCase):
             "bookresource_id": True,
             "bookresource_added": True,
         }
+        self._prepend_form_prefix(data)
         response = self.client.post(self.book_export_url, data)
         self.assertEqual(response.status_code, 200)
         content = response.content
@@ -921,6 +966,7 @@ class ExportTzAwareDateTest(AdminTestMixin, TestCase):
             "bookresource_id": True,
             "bookresource_added": True,
         }
+        self._prepend_form_prefix(data)
         response = self.client.post(self.book_export_url, data)
         self.assertEqual(response.status_code, 200)
         content = response.content
@@ -939,6 +985,7 @@ class ExportInvalidCharTest(AdminTestMixin, TestCase):
             "bookresource_id": True,
             "bookresource_name": True,
         }
+        self._prepend_form_prefix(data)
         response = self.client.post(self.book_export_url, data)
         self.assertIn(
             "Export failed due to IllegalCharacterError", response.content.decode()
@@ -953,8 +1000,136 @@ class ExportInvalidCharTest(AdminTestMixin, TestCase):
             "bookresource_id": True,
             "bookresource_name": True,
         }
+        self._prepend_form_prefix(data)
         response = self.client.post(self.book_export_url, data)
         self.assertEqual(response.status_code, 200)
         content = response.content
         wb = load_workbook(filename=BytesIO(content))
         self.assertEqual("invalid�", wb.active["B2"].value)
+
+
+class GetExportFieldsTest(AdminTestMixin, TestCase):
+    """
+    Test case for issue #2094: Export fields should use get_export_fields()
+    instead of get_import_fields() when showing fields in export form
+    """
+
+    def setUp(self):
+        super().setUp()
+        from core.models import Book
+
+        from import_export.fields import Field
+        from import_export.resources import ModelResource
+
+        # Create a custom resource with different import and export fields
+        class TestBookResource(ModelResource):
+            # Only these fields should appear in import
+            name = Field(attribute="name", column_name="book_name")
+            price = Field(attribute="price", column_name="book_price")
+
+            # Only these fields should appear in export
+            export_name = Field(attribute="name", column_name="exported_name")
+            export_author_email = Field(
+                attribute="author_email", column_name="exported_author_email"
+            )
+
+            class Meta:
+                model = Book
+
+            def get_import_fields(self):
+                """Return only import-specific fields"""
+                return [self.fields["name"], self.fields["price"]]
+
+            def get_export_fields(self, selected_fields=None):
+                """Return only export-specific fields"""
+                return [self.fields["export_name"], self.fields["export_author_email"]]
+
+        self.book_resource = TestBookResource()
+
+    @patch("core.admin.BookAdmin.get_export_resource_classes")
+    def test_export_fields_shown_in_export_form_issue_2094(
+        self, mock_get_export_resource_classes
+    ):
+        """Test that export form shows export fields, not import fields"""
+        # Mock the admin to use our custom resource class (defined in setUp)
+        mock_get_export_resource_classes.return_value = [type(self.book_resource)]
+
+        # GET the export page to see the form
+        response = self._get_url_response(self.book_export_url)
+        self.assertEqual(response.status_code, 200)
+
+        # Check the context to see which fields are being displayed
+        fields_list = response.context.get("fields_list", [])
+        self.assertTrue(fields_list, "fields_list should not be empty")
+
+        resource_name, field_names = fields_list[0]
+
+        expected_export_fields = ["exported_name", "exported_author_email"]
+        unexpected_import_fields = ["book_name", "book_price"]
+
+        for expected_field in expected_export_fields:
+            self.assertIn(
+                expected_field,
+                field_names,
+            )
+
+        # Import fields should NOT appear in export form
+        for unexpected_field in unexpected_import_fields:
+            self.assertNotIn(
+                unexpected_field,
+                field_names,
+                f"IMPORT field '{unexpected_field}' should NOT be shown in "
+                f"export form."
+                f"Actual fields shown: {field_names}",
+            )
+
+    @patch("core.admin.BookAdmin.get_export_resource_classes")
+    def test_selectable_fields_export_form_respects_get_export_fields_issue_2094(
+        self, mock_get_export_resource_classes
+    ):
+        """Test SelectableFieldsExportForm only shows fields from get_export_fields()"""
+        from import_export.formats.base_formats import CSV
+        from import_export.forms import SelectableFieldsExportForm
+
+        # Mock the admin to use our custom resource class (defined in setUp)
+        mock_get_export_resource_classes.return_value = [type(self.book_resource)]
+
+        # Create the SelectableFieldsExportForm directly
+        form = SelectableFieldsExportForm(
+            formats=(CSV,), resources=[type(self.book_resource)]
+        )
+
+        # Get the field names that are actually shown in the form
+        form_field_names = []
+        for field_name, field in form.fields.items():
+            if hasattr(field, "is_selectable_field") and field.is_selectable_field:
+                # Extract the actual field name from the form field name
+                # Form field names are like "TestBookResource_export_name"
+                actual_field_name = field_name.split("_", 1)[1]
+                form_field_names.append(actual_field_name)
+
+        # Fields that should be shown (from get_export_fields)
+        expected_export_fields = ["export_name", "export_author_email"]
+
+        # Fields that should NOT be shown (from get_import_fields or other fields)
+        unexpected_fields = ["name", "price"]  # These are the import-only fields
+
+        # Assert that export fields are shown
+        for expected_field in expected_export_fields:
+            self.assertIn(
+                expected_field,
+                form_field_names,
+                f"Export field '{expected_field}' should be shown in "
+                "SelectableFieldsExportForm. "
+                f"Actual fields: {form_field_names}",
+            )
+
+        # Assert that import-only fields are NOT shown
+        for unexpected_field in unexpected_fields:
+            self.assertNotIn(
+                unexpected_field,
+                form_field_names,
+                f"Import field '{unexpected_field}' should NOT be shown in "
+                "SelectableFieldsExportForm. "
+                f"Actual fields: {form_field_names}",
+            )

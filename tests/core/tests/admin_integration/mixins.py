@@ -4,10 +4,12 @@ from datetime import datetime
 from core.admin import BookAdmin
 from django.contrib.auth.models import User
 
+from import_export.constants import FORM_FIELD_PREFIX
 from import_export.formats.base_formats import DEFAULT_FORMATS
 
 
 class AdminTestMixin:
+    author_export_url = "/admin/core/author/export/"
     category_change_url = "/admin/core/category/"
     category_export_url = "/admin/core/category/export/"
     uuid_category_change_url = "/admin/core/uuidcategory/"
@@ -48,7 +50,6 @@ class AdminTestMixin:
         follow=False,
         data=None,
     ):
-        input_format = input_format
         filename = os.path.join(
             os.path.dirname(__file__),
             os.path.pardir,
@@ -61,14 +62,14 @@ class AdminTestMixin:
                 data = {}
             data.update(
                 {
-                    "format": str(input_format),
+                    f"{FORM_FIELD_PREFIX}format": str(input_format),
                     "import_file": f,
                 }
             )
             if encoding:
                 BookAdmin.from_encoding = encoding
             if resource:
-                data.update({"resource": resource})
+                data.update({f"{FORM_FIELD_PREFIX}resource": resource})
             response = self.client.post(url, data, follow=follow)
         return response
 
@@ -133,3 +134,13 @@ class AdminTestMixin:
         response = self.client.post(url, data, follow=follow)
         assert response.status_code == expected_status_code
         return response
+
+    def _prepend_form_prefix(self, data):
+        """
+        Add the form prefix to form data in tests.
+        """
+        prefix = "django-import-export-"
+        keys_to_update = list(data.keys())
+        for key in keys_to_update:
+            if key in ["format", "resource", "export_items"]:
+                data[prefix + key] = data.pop(key)

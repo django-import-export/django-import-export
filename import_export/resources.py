@@ -300,12 +300,11 @@ class Resource(metaclass=DeclarativeMetaclass):
                 self.create_instances.append(instance)
             else:
                 self.update_instances.append(instance)
+        elif not self._is_using_transactions(kwargs) and self._is_dry_run(kwargs):
+            # we don't have transactions and we want to do a dry_run
+            pass
         else:
-            if not self._is_using_transactions(kwargs) and self._is_dry_run(kwargs):
-                # we don't have transactions and we want to do a dry_run
-                pass
-            else:
-                self.do_instance_save(instance, is_create)
+            self.do_instance_save(instance, is_create)
         self.after_save_instance(instance, row, **kwargs)
 
     def do_instance_save(self, instance, is_create):
@@ -361,12 +360,11 @@ class Resource(metaclass=DeclarativeMetaclass):
         self.before_delete_instance(instance, row, **kwargs)
         if self._meta.use_bulk:
             self.delete_instances.append(instance)
+        elif not self._is_using_transactions(kwargs) and self._is_dry_run(kwargs):
+            # we don't have transactions and we want to do a dry_run
+            pass
         else:
-            if not self._is_using_transactions(kwargs) and self._is_dry_run(kwargs):
-                # we don't have transactions and we want to do a dry_run
-                pass
-            else:
-                instance.delete()
+            instance.delete()
         self.after_delete_instance(instance, row, **kwargs)
 
     def before_delete_instance(self, instance, row, **kwargs):
@@ -581,9 +579,8 @@ class Resource(metaclass=DeclarativeMetaclass):
                     v.pk for v in original_values
                 ):
                     return False
-            else:
-                if field.get_value(instance) != field.get_value(original):
-                    return False
+            elif field.get_value(instance) != field.get_value(original):
+                return False
         return True
 
     def get_diff_headers(self):
@@ -1057,7 +1054,32 @@ class Resource(metaclass=DeclarativeMetaclass):
         return [force_str(field.column_name) for field in export_fields if field]
 
     def get_user_visible_fields(self):
+        """
+        Get fields visible to users in admin interface.
+
+        .. deprecated:: 5
+            Use ``get_user_visible_import_fields()`` or
+            ``get_user_visible_export_fields()`` instead for explicit
+            context-aware field selection. This method will be removed in version 6.0.
+        """
+        import warnings
+
+        warnings.warn(
+            "get_user_visible_fields() is deprecated and will be removed in "
+            "version 6.0. Use get_user_visible_import_fields() or "
+            "get_user_visible_export_fields() instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         return self.get_import_fields()
+
+    def get_user_visible_import_fields(self):
+        """Get fields visible to users in import interface"""
+        return self.get_import_fields()
+
+    def get_user_visible_export_fields(self):
+        """Get fields visible to users in export interface"""
+        return self.get_export_fields()
 
     def iter_queryset(self, queryset):
         if not isinstance(queryset, QuerySet):
@@ -1316,11 +1338,16 @@ class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
 
         attribute = field_name
         column_name = field_name
-        # To solve #974
+        # To solve #974, #2107
+        # Check if there's a custom widget configuration for this field
+        has_custom_widget_declaration = (
+            cls._meta.widgets and field_name in cls._meta.widgets
+        )
         if (
             isinstance(django_field, ForeignKey)
             and "__" not in column_name
             and not cls._meta.use_natural_foreign_keys
+            and not has_custom_widget_declaration
         ):
             attribute += "_id"
             widget_kwargs["key_is_id"] = True

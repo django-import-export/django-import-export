@@ -2,6 +2,41 @@
 Release Notes
 =============
 
+v5.0
+----
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+
+* This release fixes an issue with form field name clashes (see `2108
+  <https://github.com/django-import-export/django-import-export/pull/2108>`_).
+
+  If you have any customizations which rely on form field names then you may need to make some adjustments as
+  a result of this change.
+
+  The ``resource``, ``format`` and ``export_items`` field names are now prepended with ``django-import-export-``.
+  
+* Removed the deprecated :meth:`~import_export.admin.ExportMixin.get_valid_export_item_pks` method in favour
+  of :meth:`~import_export.admin.ExportMixin.get_queryset`. Use the ModelAdmin's
+  :meth:`~import_export.admin.ExportMixin.get_queryset` or :meth:`~import_export.admin.ExportMixin.get_export_queryset`
+  instead.
+
+  See `PR 1890 <https://github.com/django-import-export/django-import-export/issues/1890>`_.
+
+* Fixed issue where export forms were incorrectly showing import fields instead of export fields.
+  This was resolved by introducing context-specific methods for field retrieval.
+  See :ref:`deprecations <deprecations_v5>` and `PR 2118 <https://github.com/django-import-export/django-import-export/pull/2118>`_.
+
+.. _deprecations_v5:
+
+Deprecations
+^^^^^^^^^^^^
+
+* The :meth:`~import_export.resources.Resource.get_user_visible_fields` method is now deprecated and will be removed in version 6.0.
+  Use :meth:`~import_export.resources.Resource.get_user_visible_import_fields` for import contexts and
+  :meth:`~import_export.resources.Resource.get_user_visible_export_fields` for export contexts instead.
+  This change ensures that import and export operations show their respective field sets correctly in admin forms.
+
 v4.2
 ----
 

@@ -18,6 +18,7 @@ from django.utils.module_loading import import_string
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_POST
 
+from .constants import FORM_FIELD_PREFIX
 from .formats.base_formats import BINARY_FORMATS
 from .forms import ConfirmImportForm, ImportForm, SelectableFieldsExportForm
 from .mixins import BaseExportMixin, BaseImportMixin
@@ -490,7 +491,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
                 except Exception as e:
                     self.add_data_read_fail_error_to_form(import_form, e)
                 else:
-                    if len(dataset) == 0:
+                    if not dataset:
                         import_form.add_error(
                             "import_file",
                             _(
@@ -545,7 +546,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         context["fields_list"] = [
             (
                 resource.get_display_name(),
-                [f.column_name for f in resource.get_user_visible_fields()],
+                [f.column_name for f in resource.get_user_visible_import_fields()],
             )
             for resource in resources
         ]
@@ -746,18 +747,13 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
             self.get_export_resource_classes(request),
             data=request.POST or None,
         )
-        if request.POST and "export_items" in request.POST:
+        if request.POST and f"{FORM_FIELD_PREFIX}export_items" in request.POST:
             # this field is instantiated if the export is POSTed from the
             # 'action' drop down
             form.fields["export_items"] = MultipleChoiceField(
                 widget=MultipleHiddenInput,
                 required=False,
-                choices=[
-                    (pk, pk)
-                    for pk in queryset.filter(
-                        pk__in=request.POST.getlist("export_items", [])
-                    ).values_list("pk", flat=True)
-                ],
+                choices=[(pk, pk) for pk in queryset.values_list("pk", flat=True)],
             )
         if form.is_valid():
             file_format = formats[int(form.cleaned_data["format"])]()
@@ -778,30 +774,6 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
         context = self.init_request_context_data(request, form)
         request.current_app = self.admin_site.name
         return TemplateResponse(request, [self.export_template_name], context=context)
-
-    def get_valid_export_item_pks(self, request):
-        """
-        DEPRECATED: This method is deprecated and will be removed in the future.
-        Overwrite get_queryset() or get_export_queryset() instead.
-
-        Returns a list of valid pks for export.
-        This is used to validate which objects can be exported when exports are
-        triggered from the Admin UI 'action' dropdown.
-        This can be overridden to filter returned pks for performance and/or security
-        reasons.
-
-        :param request: The request object.
-        :returns: a list of valid pks (by default is all pks in table).
-        """
-        cls = self.__class__
-        warnings.warn(
-            "The 'get_valid_export_item_pks()' method in "
-            f"{cls.__module__}.{cls.__qualname__} "
-            "is deprecated and will "
-            "be removed in a future release",
-            DeprecationWarning,
-        )
-        return self.model.objects.all().values_list("pk", flat=True)
 
     def changelist_view(self, request, extra_context=None):
         if extra_context is None:
@@ -825,7 +797,7 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
                     field.column_name
                     for field in res(
                         **self.get_export_resource_kwargs(request)
-                    ).get_user_visible_fields()
+                    ).get_user_visible_export_fields()
                 ],
             )
             for res in self.get_export_resource_classes(request)

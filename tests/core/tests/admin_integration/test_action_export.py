@@ -97,6 +97,7 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
             "export_items": [str(self.cat1.id)],
             **self.resource_fields_payload,
         }
+        self._prepend_form_prefix(data)
         date_str = datetime.now().strftime("%Y-%m-%d")
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", category=DeprecationWarning)
@@ -132,31 +133,20 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
             "export_items": [str(self.cat1.id)],
             **self.resource_fields_payload,
         }
-        # mock returning a set of pks which is not in the submitted range
-        with mock.patch(
-            "import_export.admin.ExportMixin.get_valid_export_item_pks"
-        ) as mock_valid_pks:
-            mock_valid_pks.return_value = [999]
+        self._prepend_form_prefix(data)
+        # mock queryset to return a different set of pks than what's submitted
+        with mock.patch("core.admin.CategoryAdmin.get_queryset") as mock_get_queryset:
+            mock_queryset = mock.MagicMock()
+            mock_queryset.values_list.return_value = [
+                999
+            ]  # Different pk than submitted
+            mock_get_queryset.return_value = mock_queryset
             response = self._post_url_response(self.category_export_url, data)
             self.assertIn(
                 "Select a valid choice. "
                 f"{self.cat1.id} is not one of the available choices.",
                 response.content.decode(),
             )
-
-    def test_export_admin_action_with_restricted_pks_deprecated(self):
-        data = {
-            "format": "0",
-            "export_items": [str(self.cat1.id)],
-            **self.resource_fields_payload,
-        }
-        with self.assertWarnsRegex(
-            DeprecationWarning,
-            r"The 'get_valid_export_item_pks\(\)' method in "
-            "core.admin.CategoryAdmin is deprecated and will be removed "
-            "in a future release",
-        ):
-            self._post_url_response(self.category_export_url, data)
 
     def _perform_export_action_calls_modeladmin_get_queryset_test(self, data):
         # Issue #1864
@@ -172,6 +162,8 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
             mock_queryset = mock.MagicMock(name="MockQuerySet")
             mock_queryset.filter.return_value = mock_queryset
             mock_queryset.order_by.return_value = mock_queryset
+            # Mock values_list for the new queryset.values_list("pk", flat=True) call
+            mock_queryset.values_list.return_value = [self.cat1.id]
 
             mock_modeladmin_get_queryset.return_value = mock_queryset
 
@@ -194,6 +186,7 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
             "export_items": [str(self.cat1.id)],
             **self.resource_fields_payload,
         }
+        self._prepend_form_prefix(data)
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", category=DeprecationWarning)
             self._perform_export_action_calls_modeladmin_get_queryset_test(data)
@@ -206,6 +199,7 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
             "format": "0",
             **self.resource_fields_payload,
         }
+        self._prepend_form_prefix(data)
         self._perform_export_action_calls_modeladmin_get_queryset_test(data)
 
     @override_settings(IMPORT_EXPORT_SKIP_ADMIN_EXPORT_UI=True)
