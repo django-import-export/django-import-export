@@ -3,6 +3,7 @@ from unittest import mock
 from unittest.mock import MagicMock
 
 from core.models import Book, Category
+from core.tests.admin_integration.mixins import AdminTestMixin
 from django.http import HttpRequest
 from django.test.testcases import TestCase
 from django.urls import reverse
@@ -11,7 +12,7 @@ from import_export import admin, formats, forms, mixins, resources
 from import_export.resources import modelresource_factory
 
 
-class ExportViewMixinTest(TestCase):
+class ExportViewMixinTest(AdminTestMixin, TestCase):
     class TestExportForm(forms.ExportForm):
         cleaned_data = {}
 
@@ -33,6 +34,7 @@ class ExportViewMixinTest(TestCase):
 
     def test_post(self):
         data = {"format": "0", "categoryresource_id": True}
+        self._prepend_form_prefix(data)
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", category=DeprecationWarning)
             response = self.client.post(self.url, data)
@@ -137,7 +139,7 @@ class FooResource(resources.Resource):
     pass
 
 
-class MixinModelAdminTest(TestCase):
+class MixinModelAdminTest(AdminTestMixin, TestCase):
     """
     Tests for regression where methods in ModelAdmin with
     BaseImportMixin / BaseExportMixin do not get called.
@@ -270,7 +272,7 @@ class MixinModelAdminTest(TestCase):
         ):
             admin.get_export_resource_classes(self.request)
 
-    class BaseModelExportChooseTest(mixins.BaseExportMixin):
+    class BaseModelExportChooseTest(AdminTestMixin, mixins.BaseExportMixin):
         resource_classes = [resources.Resource, FooResource]
 
     @mock.patch("import_export.admin.SelectableFieldsExportForm")
@@ -281,7 +283,8 @@ class MixinModelAdminTest(TestCase):
             admin.choose_export_resource_class(form, self.request), resources.Resource
         )
 
-        form.cleaned_data = {"resource": 1}
+        form.data = {"django-import-export-resource": 1}
+        self._prepend_form_prefix(form.data)
         self.assertEqual(
             admin.choose_export_resource_class(form, self.request), FooResource
         )
@@ -299,7 +302,8 @@ class MixinModelAdminTest(TestCase):
             resources.Resource,
         )
 
-        form.cleaned_data = {"resource": 1}
+        form.data = {"django-import-export-resource": 1}
+        self._prepend_form_prefix(form.data)
         self.assertEqual(admin.choose_import_resource_class(form, request), FooResource)
 
     class BaseModelResourceClassOldTest(mixins.BaseImportMixin, mixins.BaseExportMixin):

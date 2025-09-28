@@ -1,3 +1,4 @@
+import warnings
 from collections import OrderedDict
 from unittest import mock
 from unittest.mock import patch
@@ -110,3 +111,26 @@ class ResourceTestCase(TestCase):
         full_clean_mock.assert_called_once_with(
             exclude=target.keys(), validate_unique=True
         )
+
+    def test_get_user_visible_fields_deprecation_warning(self):
+        """Test that get_user_visible_fields() issues a deprecation warning"""
+        with warnings.catch_warnings(record=True) as warning_list:
+            warnings.simplefilter("always")  # Ensure warnings are captured
+
+            # Call the deprecated method
+            fields = self.my_resource.get_user_visible_fields()
+
+            # Verify the warning was issued
+            self.assertEqual(len(warning_list), 1)
+            warning = warning_list[0]
+            self.assertTrue(issubclass(warning.category, DeprecationWarning))
+            self.assertIn(
+                "get_user_visible_fields() is deprecated", str(warning.message)
+            )
+            self.assertIn("version 6.0", str(warning.message))
+            self.assertIn("get_user_visible_import_fields", str(warning.message))
+            self.assertIn("get_user_visible_export_fields", str(warning.message))
+
+            # Verify the method still returns the correct fields (import fields)
+            import_fields = self.my_resource.get_import_fields()
+            self.assertEqual(fields, import_fields)

@@ -111,6 +111,7 @@ class ImportErrorHandlingTests(AdminTestMixin, TestCase):
         )
         with open(filename, "rb") as fobj:
             data = {"author": 11, "format": input_format, "import_file": fobj}
+            self._prepend_form_prefix(data)
             response = self._post_url_response(self.ebook_import_url, data)
 
         self.assertIn("result", response.context)
@@ -123,6 +124,7 @@ class ImportErrorHandlingTests(AdminTestMixin, TestCase):
         )
 
         data = confirm_form.initial
+        self._prepend_form_prefix(data)
         self.assertEqual(data["original_file_name"], "books.csv")
 
         # manipulate data to make the payload invalid
@@ -171,6 +173,7 @@ class ImportErrorHandlingTests(AdminTestMixin, TestCase):
         )
         with open(filename, "rb") as fobj:
             data = {"author": 11, "format": input_format, "import_file": fobj}
+            self._prepend_form_prefix(data)
             response = self._post_url_response(self.ebook_import_url, data)
 
         self.assertIn("result", response.context)
@@ -241,6 +244,7 @@ class TestImportErrorMessageFormat(AdminTestMixin, TestCase):
         self.csvdata = "id,name,author\r\n" "1,Ulysses,666\r\n"
         self.filedata = StringIO(self.csvdata)
         self.data = {"format": "0", "import_file": self.filedata}
+        self._prepend_form_prefix(self.data)
         self.model_admin = BookAdmin(Book, AdminSite())
 
         factory = RequestFactory()
