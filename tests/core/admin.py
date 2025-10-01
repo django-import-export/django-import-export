@@ -33,10 +33,39 @@ class BookNameResource(ModelResource):
         name = "Export/Import only book names"
 
 
+class AuthorBirthdayListFilter(admin.SimpleListFilter):
+    """Example filter which can be used in the Admin UI to filter books by
+    author birthday."""
+
+    title = "author's birthday"
+    parameter_name = "birthday"
+
+    def lookups(self, request, model_admin):
+        return (
+            ("before", "before 1900"),
+            ("after", "after 1900"),
+        )
+
+    def choices(self, cl):
+        for lookup, title in self.lookup_choices:
+            yield {
+                "selected": self.value() == lookup,
+                "query_string": cl.get_query_string({self.parameter_name: lookup}, []),
+                "display": title,
+            }
+
+    def queryset(self, request, queryset):
+        if self.value() == "before":
+            return queryset.filter(author__birthday__year__lt=1900)
+        if self.value() == "after":
+            return queryset.filter(author__birthday__year__gte=1900)
+        return queryset
+
+
 @admin.register(Book)
-class BookAdmin(ImportExportModelAdmin):
+class BookAdmin(ExportActionModelAdmin, ImportExportModelAdmin):
     list_display = ("name", "author", "added")
-    list_filter = ["categories", "author"]
+    list_filter = [AuthorBirthdayListFilter, "categories", "author"]
     resource_classes = [BookResource, BookNameResource]
     change_list_template = "core/admin/change_list.html"
 
