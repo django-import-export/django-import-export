@@ -34,6 +34,9 @@ class BookNameResource(ModelResource):
 
 
 class AuthorBirthdayListFilter(admin.SimpleListFilter):
+    """Example filter which can be used in the Admin UI to filter books by
+    author birthday."""
+
     title = "author's birthday"
     parameter_name = "birthday"
 
