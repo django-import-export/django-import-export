@@ -46,6 +46,19 @@ so if another branch is used, then the documentation will be incomplete.
 
 The `release` github workflow will run and publish the release binaries to both test.pypi.org and pypi.org.
 
+#### Release from a different branch
+
+Ensure that feature branches are merged and that the changelog is up-to-date as required.
+
+To release from a feature branch (e.g. 'rel/4-x'):
+
+1. Ensure that the branch is up-to-date locally (`git pull upstream rel/4-x`)
+2. Tag the branch as required (`git tag -a 2.29.2 -m "v4.3.11"`)
+3. Push tags (`git push --tags upstream`)
+
+Now release as above but use the appropriate git tag.
+Remember to merge the release branch into the `main` branch.
+
 ### Check readthedocs
 
 [readthedocs](https://readthedocs.org/projects/django-import-export/) integration is used to publish documentation.

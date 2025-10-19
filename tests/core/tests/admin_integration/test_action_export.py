@@ -1,10 +1,10 @@
 import warnings
-from datetime import datetime
+from datetime import date, datetime
 from unittest import mock
 from unittest.mock import MagicMock, PropertyMock, patch
 
 from core.admin import CategoryAdmin
-from core.models import Book, Category, UUIDCategory
+from core.models import Author, Book, Category, UUIDCategory
 from core.tests.admin_integration.mixins import AdminTestMixin
 from django.contrib import admin
 from django.contrib.admin import AdminSite
@@ -228,6 +228,134 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
         m = TestMixin()
         with self.assertRaises(PermissionDenied):
             m.get_export_data("0", request, Book.objects.none())
+
+
+class TestExportFilterPreservation(AdminTestMixin, TestCase):
+    """
+    Test cases for issue #2097: Admin filters are lost during export actions.
+
+    Tests that admin changelist filters are properly preserved when exporting
+    selected items through the export action using the AuthorBirthdayListFilter.
+    """
+
+    def setUp(self):
+        super().setUp()
+
+        # Create authors from different eras to test the AuthorBirthdayListFilter
+        self.old_author1 = Author.objects.create(
+            name="Old Author 1", birthday=date(1850, 1, 1)
+        )
+        self.old_author2 = Author.objects.create(
+            name="Old Author 2", birthday=date(1880, 6, 15)
+        )
+        self.new_author1 = Author.objects.create(
+            name="New Author 1", birthday=date(1950, 3, 10)
+        )
+        self.new_author2 = Author.objects.create(
+            name="New Author 2", birthday=date(1970, 12, 25)
+        )
+
+        # Create books with authors from different eras
+        self.old_book1 = Book.objects.create(name="Old Book 1", author=self.old_author1)
+        self.old_book2 = Book.objects.create(name="Old Book 2", author=self.old_author2)
+        self.new_book1 = Book.objects.create(name="New Book 1", author=self.new_author1)
+        self.new_book2 = Book.objects.create(name="New Book 2", author=self.new_author2)
+
+        # fields payload for `BookResource` - for `SelectableFieldsExportForm`
+        self.resource_fields_payload = {
+            "bookresource_id": True,
+            "bookresource_name": True,
+            "bookresource_author": True,
+        }
+
+    def test_export_action_preserves_admin_filters(self):
+        """
+        Test that admin filters are preserved when exporting selected items.
+        This reproduces issue #2097 where applied filters are lost during export.
+
+        Uses the AuthorBirthdayListFilter to test filter preservation with books.
+        The issue occurs when:
+        1. User applies filters in admin changelist (authors born before 1900)
+        2. User selects items from filtered results
+        3. User chooses "Export selected items" action
+        4. The export URL loses the filter context, causing unfiltered export
+        """
+        # Step 1: Simulate POST action with AuthorBirthdayListFilter applied
+        data = {
+            "action": ["export_admin_action"],
+            "_selected_action": [
+                str(self.old_book1.id),
+                str(self.old_book2.id),
+            ],
+        }
+
+        # Add filter parameters to simulate applied admin filters
+        filter_params = "?birthday=before"
+        url_with_filters = self.core_book_url + filter_params
+
+        # Make the request with filters applied
+        response = self._post_url_response(url_with_filters, data)
+
+        # Should get an export form
+        self.assertIn("form", response.context)
+
+        # Check that export_url preserves the filter parameters
+        export_url = response.context.get("export_url", "")
+        self.assertIn(
+            "birthday=before",
+            export_url,
+            f"Export URL should preserve AuthorBirthdayListFilter parameters. "
+            f"Got URL: '{export_url}'. Filter preservation is working!",
+        )
+
+    def test_export_action_filter_preservation_end_to_end(self):
+        """
+        Test the complete filter preservation workflow from action to final export.
+        This test follows the complete flow: action -> form -> export with filters.
+        """
+        # Step 1: First trigger the export action with filters
+        action_data = {
+            "action": ["export_admin_action"],
+            "_selected_action": [
+                str(self.old_book1.id),
+                str(self.old_book2.id),
+            ],
+        }
+
+        # POST to changelist with filter to get export form
+        filter_params = "?birthday=before"
+        url_with_filters = self.core_book_url + filter_params
+        action_response = self._post_url_response(url_with_filters, action_data)
+
+        # Should get an export form with preserved filter URL
+        self.assertIn("form", action_response.context)
+        export_url = action_response.context.get("export_url", "")
+        self.assertIn("birthday=before", export_url)
+
+        # Step 2: Now submit the export form to the preserved URL
+        export_data = {
+            "format": "0",
+            "export_items": [str(self.old_book1.id), str(self.old_book2.id)],
+            **self.resource_fields_payload,
+        }
+
+        # POST to the export URL that should have preserved filters
+        final_response = self._post_url_response(export_url, export_data)
+
+        # Should get CSV export that respects the filter context
+        self.assertEqual(final_response["Content-Type"], "text/csv")
+        content = final_response.content.decode()
+
+        # Verify the export contains the expected filtered data
+        lines = content.strip().split("\n")
+        if len(lines) > 1:
+            data_lines = lines[1:]  # Remove header
+            # Should only contain the 2 selected books
+            self.assertEqual(
+                len(data_lines),
+                2,
+                f"Filter preservation working! Expected 2 books, got {len(data_lines)}",
+            )
 
 
 class TestExportButtonOnChangeForm(AdminTestMixin, TestCase):

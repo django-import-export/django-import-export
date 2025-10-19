@@ -1,5 +1,6 @@
 import logging
 import warnings
+from urllib.parse import urlencode
 
 import django
 from django.conf import settings
@@ -906,6 +907,12 @@ class ExportActionMixin(ExportMixin):
                 self.model._meta.model_name,
             )
         )
+
+        # Preserve admin changelist filters by including request GET parameters
+        # This fixes issue #2097 where applied filters are lost during export
+        if request.GET:
+            export_url += "?" + urlencode(request.GET)
+
         context["export_url"] = export_url
 
         return render(request, "admin/import_export/export.html", context=context)
