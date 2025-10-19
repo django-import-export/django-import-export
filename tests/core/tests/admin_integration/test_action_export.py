@@ -340,7 +340,14 @@ class TestExportFilterPreservation(AdminTestMixin, TestCase):
         }
 
         # POST to the export URL that should have preserved filters
-        final_response = self._post_url_response(export_url, export_data)
+        # Suppress the deprecation warning for get_valid_export_item_pks
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "ignore",
+                message=r"The 'get_valid_export_item_pks\(\)' method",
+                category=DeprecationWarning,
+            )
+            final_response = self._post_url_response(export_url, export_data)
 
         # Should get CSV export that respects the filter context
         self.assertEqual(final_response["Content-Type"], "text/csv")

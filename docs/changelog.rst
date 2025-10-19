@@ -14,12 +14,12 @@ Changelog
 - Added support for django 6.0a (`2112 <https://github.com/django-import-export/django-import-export/pull/2112>`_)
 - Removed the deprecated :meth:`~import_export.admin.ExportMixin.get_valid_export_item_pks` method in favour of :meth:`~import_export.admin.ExportMixin.get_queryset` (`1898 <https://github.com/django-import-export/django-import-export/pull/1898>`_)
 
-4.3.12 (2025-10-18)
+4.3.12 (2025-10-19)
 -------------------
 
 - Minor documentation fix
 
-4.3.11 (2025-10-18)
+4.3.11 (2025-10-19)
 -------------------
 
 - Fix for export not retaining URI query params (`2097 <https://github.com/django-import-export/django-import-export/pull/2097>`_)
