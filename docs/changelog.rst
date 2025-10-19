@@ -5,12 +5,12 @@ Changelog
 
     If upgrading from v3, v4 introduces breaking changes.  Please refer to :doc:`release notes<release_notes>`.
 
-4.3.12 (2025-10-18)
+4.3.12 (2025-10-19)
 -------------------
 
 - Minor documentation fix
 
-4.3.11 (2025-10-18)
+4.3.11 (2025-10-19)
 -------------------
 
 - Fix for export not retaining URI query params (`2097 <https://github.com/django-import-export/django-import-export/pull/2097>`_)
