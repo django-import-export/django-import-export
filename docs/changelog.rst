@@ -5,6 +5,11 @@ Changelog
 
     If upgrading from v3, v4 introduces breaking changes.  Please refer to :doc:`release notes<release_notes>`.
 
+4.3.12 (2025-10-18)
+-------------------
+
+- Minor documentation fix
+
 4.3.11 (2025-10-18)
 -------------------
 
