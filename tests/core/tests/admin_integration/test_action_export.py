@@ -338,6 +338,7 @@ class TestExportFilterPreservation(AdminTestMixin, TestCase):
             "export_items": [str(self.old_book1.id), str(self.old_book2.id)],
             **self.resource_fields_payload,
         }
+        self._prepend_form_prefix(export_data)
 
         # POST to the export URL that should have preserved filters
         # Suppress the deprecation warning for get_valid_export_item_pks
