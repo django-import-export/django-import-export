@@ -5,6 +5,11 @@ Changelog
 
     If upgrading from v3, v4 introduces breaking changes.  Please refer to :doc:`release notes<release_notes>`.
 
+4.3.13 (2025-10-31)
+-------------------
+
+- Fix: file_name is None in before_import_row when ``skip_import_confirm=True`` (`2129 <https://github.com/django-import-export/django-import-export/pull/2129>`_)
+
 4.3.12 (2025-10-19)
 -------------------
 

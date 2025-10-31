@@ -15,6 +15,21 @@ from import_export.formats import base_formats
 from import_export.resources import ModelResource
 
 
+class BookResourceWithFileNameTracking(ModelResource):
+    """Resource for tracking file_name in before_import_row"""
+
+    def __init__(self, **kwargs):
+        self.file_names = []
+        super().__init__(**kwargs)
+
+    def before_import_row(self, row, **kwargs):
+        file_name = kwargs.get("file_name")
+        self.file_names.append(file_name)
+
+    class Meta:
+        model = Book
+
+
 class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
 
     @patch(
@@ -31,6 +46,63 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
                 "Import finished: {} new, {} updated, {} deleted and {} skipped {}."
             ).format(1, 0, 0, 0, Book._meta.verbose_name_plural),
         )
+
+    @patch(
+        "core.admin.BookAdmin.skip_import_confirm",
+        new_callable=PropertyMock,
+        return_value=True,
+    )
+    def test_file_name_passed_to_before_import_row_with_skip_confirm(
+        self, mock_skip_import_confirm
+    ):
+        """
+        Test that file_name is passed to before_import_row
+        when skip_import_confirm=True.
+
+        This is a regression test for an issue where file_name was None in
+        before_import_row when skip_import_confirm was True, but was correctly
+        set when skip_import_confirm was False.
+        """
+        from core.admin import BookResource
+
+        # Track calls to before_import_row
+        file_names_captured = []
+
+        original_before_import_row = BookResource.before_import_row
+
+        def track_before_import_row(resource_self, row, **kwargs):
+            file_names_captured.append(kwargs.get("file_name"))
+            return original_before_import_row(resource_self, row, **kwargs)
+
+        with patch.object(
+            BookResource,
+            "before_import_row",
+            track_before_import_row,
+        ):
+            response = self._do_import_post(
+                self.book_import_url, "books.csv", follow=True
+            )
+            self.assertEqual(response.status_code, 200)
+            self.assertContains(
+                response,
+                _(
+                    "Import finished: {} new, {} updated, {} deleted and {} skipped {}."
+                ).format(1, 0, 0, 0, Book._meta.verbose_name_plural),
+            )
+
+            # Verify that file_name was passed to before_import_row
+            self.assertTrue(
+                len(file_names_captured) > 0,
+                "before_import_row should have been called",
+            )
+            # Check that file_name is not None
+            for file_name in file_names_captured:
+                self.assertIsNotNone(
+                    file_name,
+                    "file_name should not be None in before_import_row when "
+                    "skip_import_confirm=True",
+                )
+                self.assertEqual(file_name, "books.csv")
 
     def test_delete_from_admin(self):
         # test delete from admin site (see #432)
