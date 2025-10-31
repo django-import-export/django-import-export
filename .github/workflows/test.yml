@@ -2,12 +2,9 @@ name: test
 
 on:
   push:
-    branches:
-    - main
+    branches: [main]
   pull_request:
-    branches:
-    - main
-    - rel/4-x
+    branches: [main, rel/4-x]
 
 jobs:
   test:
@@ -21,70 +18,82 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        python-version:
-          - '3.10'
-          - '3.11'
-          - '3.12'
-          - '3.13'
+        toxenv: [py312-django51, py312-django52, py312-django60, py312-djangomain]
+        include:
+          - toxenv: py312-djangomain
+            mysql_image: mysql:8.4
+            python-version: "3.12"
+          - toxenv: py312-django60
+            mysql_image: mysql:8.0
+            python-version: "3.12"
+          - toxenv: py312-django52
+            mysql_image: mysql:8.0
+            python-version: "3.12"
+          - toxenv: py312-django51
+            mysql_image: mysql:8.0
+            python-version: "3.12"
+
     services:
       postgres:
-        image: postgres
+        image: postgres:16
         env:
           POSTGRES_USER: ${{ env.IMPORT_EXPORT_POSTGRESQL_USER }}
           POSTGRES_PASSWORD: ${{ env.IMPORT_EXPORT_POSTGRESQL_PASSWORD }}
           POSTGRES_DB: ${{ env.DB_NAME }}
-        ports:
-          - 5432:5432
+        ports: ["5432:5432"]
         options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-      mysql:
-        image: mysql:8.4
-        env:
-          MYSQL_ALLOW_EMPTY_PASSWORD: yes
-          MYSQL_DATABASE: test
-        options: >-
-          --health-cmd="mysqladmin ping -h 127.0.0.1 --silent"
-          --health-interval=5s --health-timeout=2s --health-retries=20
-        ports: [ "3306:3306" ]
-    steps:
-    - name: Set up MySQL
-      run: >
-        sudo /etc/init.d/mysql start
+          --health-cmd=pg_isready
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
 
-        mysql -e 'CREATE DATABASE ${{ env.DB_NAME }};'
-        -u${{ env.IMPORT_EXPORT_MYSQL_USER }}
-        -p${{ env.IMPORT_EXPORT_MYSQL_PASSWORD }}
-    - name: Check out repository code
-      uses: actions/checkout@v4
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Install Dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install tox coverage coveralls
-    - name: Run tox targets for ${{ matrix.python-version }} (sqlite)
-      run: tox run -f py$(echo ${{ matrix.python-version }} | tr -d .)
-    - name: Run tox targets for ${{ matrix.python-version }} (postgres)
-      run: tox run -f py$(echo ${{ matrix.python-version }} | tr -d .)
-      env:
-        IMPORT_EXPORT_TEST_TYPE: postgres
-    - name: Run tox targets for ${{ matrix.python-version }} (mysql)
-      run: tox run -f py$(echo ${{ matrix.python-version }} | tr -d .)
-      env:
-        IMPORT_EXPORT_TEST_TYPE: mysql-innodb
-    - name: Combine test coverage
-      run: coverage combine
-    - name: Upload coverage data to coveralls.io
-      run: coveralls --service=github
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        COVERALLS_FLAG_NAME: ${{ matrix.python-version }}
-        COVERALLS_PARALLEL: true
+      mysql:
+        image: ${{ matrix.mysql_image }}
+        env:
+          MYSQL_ROOT_PASSWORD: ${{ env.IMPORT_EXPORT_MYSQL_PASSWORD }}
+          MYSQL_DATABASE: ${{ env.DB_NAME }}
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -p${MYSQL_ROOT_PASSWORD} --silent"
+          --health-interval=5s --health-timeout=2s --health-retries=20
+        ports: ["3306:3306"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install tox coverage coveralls
+
+      - name: Run ${{ matrix.toxenv }} (sqlite)
+        run: tox -e ${{ matrix.toxenv }}
+        env:
+          IMPORT_EXPORT_TEST_TYPE: sqlite
+
+      - name: Run ${{ matrix.toxenv }} (postgres)
+        run: tox -e ${{ matrix.toxenv }}
+        env:
+          IMPORT_EXPORT_TEST_TYPE: postgres
+
+      - name: Run ${{ matrix.toxenv }} (mysql)
+        run: tox -e ${{ matrix.toxenv }}
+        env:
+          IMPORT_EXPORT_TEST_TYPE: mysql-innodb
+
+      - name: Combine test coverage
+        run: coverage combine
+
+      - name: Upload coverage to coveralls.io
+        run: coveralls --service=github
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COVERALLS_FLAG_NAME: ${{ matrix.toxenv }}
+          COVERALLS_PARALLEL: true
 
   coveralls:
     name: Indicate completion to coveralls.io
