@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/adamchainz/django-upgrade
-    rev: 1.29.0
+    rev: 1.29.1
     hooks:
     - id: django-upgrade
       args: [--target-version, "4.2"]

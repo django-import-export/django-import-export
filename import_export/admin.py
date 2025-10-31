@@ -198,6 +198,12 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         request,
         **kwargs,
     ):
+        # Get file_name from kwargs if provided, otherwise from form's cleaned_data
+        # Must be extracted before passing kwargs to get_import_data_kwargs
+        file_name = kwargs.pop("file_name", None)
+        if file_name is None:
+            file_name = form.cleaned_data.get("original_file_name")
+
         res_kwargs = self.get_import_resource_kwargs(request, form=form, **kwargs)
         resource = self.choose_import_resource_class(form, request)(**res_kwargs)
         imp_kwargs = self.get_import_data_kwargs(request=request, form=form, **kwargs)
@@ -206,7 +212,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         return resource.import_data(
             dataset,
             dry_run=False,
-            file_name=form.cleaned_data.get("original_file_name"),
+            file_name=file_name,
             user=request.user,
             **imp_kwargs,
         )
@@ -470,6 +476,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
                         request,
                         raise_errors=False,
                         rollback_on_validation_errors=True,
+                        file_name=import_file.name,
                         **kwargs,
                     )
                     if not result.has_errors() and not result.has_validation_errors():
