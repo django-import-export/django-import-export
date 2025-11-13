@@ -5,6 +5,11 @@ Changelog
 
     If upgrading from v3, v4 introduces breaking changes.  Please refer to :doc:`release notes<release_notes>`.
 
+4.3.14 (2025-11-13)
+-------------------
+
+- Add Ukrainian translation (`2132 <https://github.com/django-import-export/django-import-export/pull/2132>`_)
+
 4.3.13 (2025-10-31)
 -------------------
 
