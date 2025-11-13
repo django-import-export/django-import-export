@@ -178,7 +178,7 @@ class BulkCreateTest(BulkTest):
         mock_bulk_create.assert_not_called()
 
     @mock.patch("core.models.Book.objects.bulk_create")
-    def test_bulk_create_negative_batch_size_value(self, mock_bulk_create):
+    def test_bulk_create_negative_batch_size_value_negative(self, mock_bulk_create):
         class _BookResource(resources.ModelResource):
             class Meta:
                 model = Book
@@ -186,7 +186,24 @@ class BulkCreateTest(BulkTest):
                 batch_size = -1
 
         resource = _BookResource()
-        with self.assertRaises(ValueError):
+        with self.assertRaisesMessage(
+            ValueError, "Batch size must be a positive integer"
+        ):
+            resource.import_data(self.dataset)
+        mock_bulk_create.assert_not_called()
+
+    @mock.patch("core.models.Book.objects.bulk_create")
+    def test_bulk_create_negative_batch_size_value_0(self, mock_bulk_create):
+        class _BookResource(resources.ModelResource):
+            class Meta:
+                model = Book
+                use_bulk = True
+                batch_size = 0
+
+        resource = _BookResource()
+        with self.assertRaisesMessage(
+            ValueError, "Batch size must be a positive integer"
+        ):
             resource.import_data(self.dataset)
         mock_bulk_create.assert_not_called()
 
