@@ -14,6 +14,16 @@ Changelog
 - Added support for django 6.0a (`2112 <https://github.com/django-import-export/django-import-export/pull/2112>`_)
 - Removed the deprecated :meth:`~import_export.admin.ExportMixin.get_valid_export_item_pks` method in favour of :meth:`~import_export.admin.ExportMixin.get_queryset` (`1898 <https://github.com/django-import-export/django-import-export/pull/1898>`_)
 
+4.3.14 (2025-11-13)
+-------------------
+
+- Add Ukrainian translation (`2132 <https://github.com/django-import-export/django-import-export/pull/2132>`_)
+
+4.3.13 (2025-10-31)
+-------------------
+
+- Fix: file_name is None in before_import_row when ``skip_import_confirm=True`` (`2129 <https://github.com/django-import-export/django-import-export/pull/2129>`_)
+
 4.3.12 (2025-10-19)
 -------------------
 
