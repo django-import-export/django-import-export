@@ -832,7 +832,7 @@ class Resource(metaclass=DeclarativeMetaclass):
         using_transactions = (use_transactions or dry_run) and supports_transactions
 
         if self._meta.batch_size is not None and (
-            not isinstance(self._meta.batch_size, int) or self._meta.batch_size < 0
+            not isinstance(self._meta.batch_size, int) or self._meta.batch_size < 1
         ):
             raise ValueError("Batch size must be a positive integer")
 
