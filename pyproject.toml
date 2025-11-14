@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "django-import-export"
 authors = [
-    {name = "Bojan Mihelač", email = "djangoimportexport@gmail.com"},
+    {name = "Bojan Mihelač", email = "bojan@informatikamihelac.com"},
 ]
 maintainers = [
     {name = "Matthew Hegarty", email = "djangoimportexport@gmail.com"},
