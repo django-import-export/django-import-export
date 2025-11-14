@@ -71,7 +71,7 @@ tests = [
 [project.urls]
 Documentation = "https://django-import-export.readthedocs.io/en/stable/"
 Repository = "https://github.com/django-import-export/django-import-export"
-Changelog = "https://github.com/django-import-export/django-import-export/blob/main/docs/changelog.rst"
+Changelog = "https://django-import-export.readthedocs.io/en/stable/changelog.html"
 
 [tool.setuptools]
 platforms = ["OS Independent"]
