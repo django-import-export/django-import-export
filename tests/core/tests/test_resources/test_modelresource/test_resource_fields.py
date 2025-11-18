@@ -2,8 +2,11 @@ import warnings
 
 import tablib
 from core.models import Book
+from django.db.models.functions import JSONObject
 from django.test import TestCase
 
+import import_export
+import import_export.exceptions
 from import_export import fields, resources
 
 # ignore warnings which result from invalid field declaration (#1930)
@@ -244,3 +247,55 @@ class ModelResourceUnusedFieldWarnings(TestCase):
                 " declared in 'fields' whitelist",
                 str(w[0].message),
             )
+
+
+class ModelResourceDeclarationFieldWithDictKey(TestCase):
+
+    class BookResource(resources.ModelResource):
+        author_name = fields.Field(
+            attribute="author_json__name", column_name="author_name", readonly=True
+        )
+
+        class Meta:
+            model = Book
+            fields = ("id", "author_name")
+
+        def get_queryset(self):
+            return (
+                super()
+                .get_queryset()
+                .annotate(author_json=JSONObject(name=("author__name")))
+            )
+
+    def setUp(self):
+        self.book = Book.objects.create(name="Moonraker", price=".99")
+        self.resource = ModelResourceDeclarationFieldWithDictKey.BookResource()
+
+    def test_declared_field_not_readonly_and_raises_error(self):
+        """
+        Test that when the fields with dict keys are declared and is not declared
+        as readonly,it can`t be imported and raises an error.
+        """
+        self.resource.fields["author_name"].readonly = False
+        rows = [
+            (self.book.id, "New Author"),
+        ]
+        dataset = tablib.Dataset(*rows, headers=["id", "author_name"])
+        with self.assertRaises(import_export.exceptions.ImportError) as context:
+            self.resource.import_data(dataset, raise_errors=True)
+        assert "1: 'dict' object has no attribute 'name' and no __dict__ for "
+        "setting new attributes (OrderedDict({'id': 1, "
+        "'author_name': 'New Author'}))" == str(context.exception)
+
+    def test_declared_field_readonly_and_imported(self):
+        """
+        Test that when the fields with dict keys are declared as readonly,
+        it can be imported without raising an error.
+        For this resources this not will have any effect, but at least
+        it will not raise an error.
+        """
+        rows = [
+            (self.book.id, "New Author"),
+        ]
+        dataset = tablib.Dataset(*rows, headers=["id", "author_name"])
+        self.resource.import_data(dataset, raise_errors=True)
