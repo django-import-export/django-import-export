@@ -43,7 +43,7 @@ For more information, please read the Django documentation on
 ForeignKeyWidget performance considerations
 ===========================================
 
-When using :class:`~import_export.widgets.ForeignKeyWidget` , the related object is looked up using ``QuerySet.get()``
+When using :class:`~import_export.widgets.ForeignKeyWidget`, the related object is looked up using ``QuerySet.get()``
 during import. This lookup occurs once per imported row.  For large imports, this can result in a significant number of
 database queries and impact performance.
 
