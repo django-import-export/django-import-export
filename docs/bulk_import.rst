@@ -31,10 +31,6 @@ Caveats
 * In bulk mode, exceptions are not linked to a row.  Any exceptions raised by bulk operations are logged and returned
   as critical (non-validation) errors (and re-raised if ``raise_errors`` is true).
 
-* If you use :class:`~import_export.widgets.ForeignKeyWidget` then this should not affect performance during lookups,
-  because the ``QuerySet`` cache should be used.  Some more information
-  `here <https://stackoverflow.com/a/78309357/39296>`_.
-
 * If there is the potential for concurrent writes to a table during a bulk operation, then you need to consider the
   potential impact of this.  Refer to :ref:`concurrent-writes` for more information.
 
@@ -42,7 +38,25 @@ For more information, please read the Django documentation on
 `bulk_create() <https://docs.djangoproject.com/en/stable/ref/models/querysets/#bulk-create>`_ and
 `bulk_update() <https://docs.djangoproject.com/en/stable/ref/models/querysets/#bulk-update>`_.
 
-.. _performance_tuning
+.. _foreign_key_widget_performance:
+
+ForeignKeyWidget performance considerations
+===========================================
+
+When using ForeignKeyWidget, the related object is looked up using QuerySet.get() during import. This lookup occurs
+once per imported row.  For large imports, this can result in a significant number of database queries and impact
+performance.
+
+You can subclass ForeignKeyWidget and override get_queryset() to limit the pool of candidate objects.
+However, overriding get_queryset() alone does not necessarily eliminate per-row database queries,
+because ForeignKeyWidget.clean() calls .get() for each row
+
+If import performance is critical, consider implementing a custom widget that caches related objects by lookup value
+(for example, building a mapping of ``{lookup_value: related_instance}`` once and reusing it during the import),
+instead of calling .get() repeatedly..
+
+.. _performance_tuning:
+
 Performance tuning
 ==================
 
