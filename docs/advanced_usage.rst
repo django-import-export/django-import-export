@@ -512,6 +512,7 @@ given arg, then the import process will raise either ``DoesNotExist`` or ``Multi
 See also :ref:`creating-non-existent-relations`.
 
 Refer to the :class:`~.ForeignKeyWidget` documentation for more detailed information.
+If importing large datasets, see the notes in :ref:`foreign_key_widget_performance`.
 
 .. note::
 
