@@ -43,17 +43,17 @@ For more information, please read the Django documentation on
 ForeignKeyWidget performance considerations
 ===========================================
 
-When using ForeignKeyWidget, the related object is looked up using QuerySet.get() during import. This lookup occurs
-once per imported row.  For large imports, this can result in a significant number of database queries and impact
-performance.
+When using :class:`~import_export.widgets.ForeignKeyWidget` , the related object is looked up using ``QuerySet.get()``
+during import. This lookup occurs once per imported row.  For large imports, this can result in a significant number of
+database queries and impact performance.
 
-You can subclass ForeignKeyWidget and override get_queryset() to limit the pool of candidate objects.
-However, overriding get_queryset() alone does not necessarily eliminate per-row database queries,
-because ForeignKeyWidget.clean() calls .get() for each row
+You can subclass ``ForeignKeyWidget`` and override ``get_queryset()`` to limit the pool of candidate objects.
+However, overriding ``get_queryset()`` alone does not necessarily eliminate per-row database queries, because
+``ForeignKeyWidget.clean()`` calls ``.get()`` for each row.
 
 If import performance is critical, consider implementing a custom widget that caches related objects by lookup value
 (for example, building a mapping of ``{lookup_value: related_instance}`` once and reusing it during the import),
-instead of calling .get() repeatedly..
+instead of calling ``.get()`` repeatedly.
 
 .. _performance_tuning:
 
