@@ -339,7 +339,7 @@ class TestExportFilterPreservation(AdminTestMixin, TestCase):
         # Step 2: Now submit the export form to the preserved URL
         export_data = {
             "format": "0",
-            "export_items": [str(self.old_book1.id), str(self.old_book2.id)],
+            "export_items": f"[{str(self.old_book1.id)},{str(self.old_book2.id)}]",
             **self.resource_fields_payload,
         }
         self._prepend_form_prefix(export_data)
