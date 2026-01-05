@@ -7,8 +7,9 @@ from unittest.mock import patch
 import django
 from core.models import Author, Book, Category
 from core.tests.utils import ignore_utcnow_deprecation_warning
+from django.db import connection
 from django.test import TestCase
-from django.test.utils import override_settings
+from django.test.utils import CaptureQueriesContext, override_settings
 from django.utils import timezone
 
 from import_export import widgets
@@ -664,6 +665,168 @@ class ForeignKeyWidgetTest(TestCase, RowDeprecationTestMixin):
     def test_natural_foreign_key_with_key_is_id(self):
         with self.assertRaises(WidgetError) as e:
             widgets.ForeignKeyWidget(
+                Author, use_natural_foreign_keys=True, key_is_id=True
+            )
+        self.assertEqual(
+            "use_natural_foreign_keys and key_is_id " "cannot both be True",
+            str(e.exception),
+        )
+
+
+class CachedForeignKeyWidgetTest(TestCase, RowDeprecationTestMixin):
+    def setUp(self):
+        self.widget = widgets.CachedForeignKeyWidget(Author)
+        self.natural_key_author_widget = widgets.CachedForeignKeyWidget(
+            Author, use_natural_foreign_keys=True
+        )
+        self.natural_key_book_widget = widgets.CachedForeignKeyWidget(
+            Book, use_natural_foreign_keys=True
+        )
+        self.author = Author.objects.create(name="Foo")
+        self.book = Book.objects.create(name="Bar", author=self.author)
+
+    def tearDown(self):
+        if hasattr(self.widget, "_cached_qs"):
+            del self.widget._cached_qs
+        if hasattr(self.natural_key_author_widget, "_cached_qs"):
+            del self.natural_key_author_widget._cached_qs
+        if hasattr(self.natural_key_book_widget, "_cached_qs"):
+            del self.natural_key_book_widget._cached_qs
+
+    def test_clean(self):
+        self.assertEqual(self.widget.clean(self.author.id), self.author)
+
+    def test_clean_empty(self):
+        self.assertEqual(self.widget.clean(""), None)
+
+    def test_render(self):
+        self.assertEqual(self.widget.render(self.author), self.author.pk)
+
+    def test_render_empty(self):
+        self.assertEqual(self.widget.render(None), "")
+
+    def test_cache_hit(self):
+        author2 = Author.objects.create(name="Baz")
+        with CaptureQueriesContext(connection) as ctx:
+            self.assertEqual(self.widget.clean(self.author.id), self.author)  # query
+            self.assertEqual(self.widget.clean(author2.id), author2)  # cache hit
+            self.assertEqual(len(ctx.captured_queries), 1)
+
+        with CaptureQueriesContext(connection) as ctx:
+            self.assertEqual(
+                self.widget.clean(self.author.id), self.author
+            )  # cache hit
+            self.assertEqual(self.widget.clean(author2.id), author2)  # cache hit
+            self.assertEqual(len(ctx.captured_queries), 0)
+
+    def test_clean_multi_column(self):
+        class BirthdayWidget(widgets.CachedForeignKeyWidget):
+            def get_queryset(self, value, row, *args, **kwargs):
+                return self.model.objects.filter(birthday=row["birthday"])
+
+        author2 = Author.objects.create(name="Foo")
+        author2.birthday = "2016-01-01"
+        author2.save()
+        birthday_widget = BirthdayWidget(Author, "name")
+        row_dict = {"name": "Foo", "birthday": author2.birthday}
+        self.assertEqual(birthday_widget.clean("Foo", row=row_dict), author2)
+
+    def test_invalid_get_queryset(self):
+        class BirthdayWidget(widgets.CachedForeignKeyWidget):
+            def get_queryset(self, value, row):
+                return self.model.objects.filter(birthday=row["birthday"])
+
+        birthday_widget = BirthdayWidget(Author, "name")
+        row_dict = {"name": "Foo", "age": 38}
+        with self.assertRaises(TypeError):
+            birthday_widget.clean("Foo", row=row_dict, row_number=1)
+
+    def test_lookup_multiple_columns(self):
+        # issue 1516 - override the values used to lookup an entry
+        class BookWidget(widgets.CachedForeignKeyWidget):
+            def get_lookup_kwargs(self, value, row, *args, **kwargs):
+                return {"name": row["name"], "author_email": row["authoremail"]}
+
+        target_book = Book.objects.create(
+            name="Baz", author=self.author, author_email="baz@email.com"
+        )
+        row_dict = {"name": "Baz", "authoremail": "baz@email.com"}
+        book_widget = BookWidget(Book, "name")
+        # prove that the overridden kwargs identify a row
+        res = book_widget.clean("non-existent name", row=row_dict)
+        self.assertEqual(target_book, res)
+
+    def test_render_handles_value_error(self):
+        class TestObj:
+            @property
+            def attr(self):
+                raise ValueError("some error")
+
+        t = TestObj()
+        self.widget = widgets.CachedForeignKeyWidget(mock.Mock(), "attr")
+        self.assertIsNone(self.widget.render(t))
+
+    def test_multiple_objects_error(self):
+        Author.objects.create(name=self.author.name)  # an author with duplicated name
+        widget = widgets.CachedForeignKeyWidget(Author, "name")
+
+        with self.assertRaises(Author.MultipleObjectsReturned) as e:
+            widget.clean(self.author.name)
+
+        self.assertEqual(
+            str(e.exception), "get() returned more than one Author -- it returned 2!"
+        )
+
+    def test_object_does_not_exist_error(self):
+        with self.assertRaises(Author.DoesNotExist) as e:
+            self.widget.clean("non-existent-id")
+
+        self.assertEqual(str(e.exception), "Author matching query does not exist.")
+
+    def test_author_natural_key_clean(self):
+        """
+        Ensure that we can import an author by its natural key. Note that
+        this will always need to be an iterable.
+        Generally this will be rendered as a list.
+        """
+        self.assertEqual(
+            self.natural_key_author_widget.clean(json.dumps(self.author.natural_key())),
+            self.author,
+        )
+
+    def test_author_natural_key_render(self):
+        """
+        Ensure we can render an author by its natural key. Natural keys will always be
+        tuples.
+        """
+        self.assertEqual(
+            self.natural_key_author_widget.render(self.author),
+            json.dumps(self.author.natural_key()),
+        )
+
+    def test_book_natural_key_clean(self):
+        """
+        Use the book case to validate a composite natural key of book name and author
+        can be cleaned.
+        """
+        self.assertEqual(
+            self.natural_key_book_widget.clean(json.dumps(self.book.natural_key())),
+            self.book,
+        )
+
+    def test_book_natural_key_render(self):
+        """
+        Use the book case to validate a composite natural key of book name and author
+        can be rendered
+        """
+        self.assertEqual(
+            self.natural_key_book_widget.render(self.book),
+            json.dumps(self.book.natural_key()),
+        )
+
+    def test_natural_foreign_key_with_key_is_id(self):
+        with self.assertRaises(WidgetError) as e:
+            widgets.CachedForeignKeyWidget(
                 Author, use_natural_foreign_keys=True, key_is_id=True
             )
         self.assertEqual(

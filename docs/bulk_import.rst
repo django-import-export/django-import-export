@@ -51,9 +51,8 @@ You can subclass ``ForeignKeyWidget`` and override ``get_queryset()`` to limit t
 However, overriding ``get_queryset()`` alone does not necessarily eliminate per-row database queries, because
 ``ForeignKeyWidget.clean()`` calls ``.get()`` for each row.
 
-If import performance is critical, consider implementing a custom widget that caches related objects by lookup value
-(for example, building a mapping of ``{lookup_value: related_instance}`` once and reusing it during the import),
-instead of calling ``.get()`` repeatedly.
+If import performance is critical, consider using :class:`~import_export.widgets.CachedForeignKeyWidget` instead.
+This widget caches all related objects in memory before the import begins, eliminating per-row database queries.
 
 .. _performance_tuning:
 
@@ -69,6 +68,9 @@ Consider the following if you need to improve the performance of imports.
 
 * If your import is updating or creating instances, and you have a set of existing instances which can be stored in
   memory, use :class:`~import_export.instance_loaders.CachedInstanceLoader`
+
+* If your import has relations on per-row basis, consider using
+  :class:`~import_export.widgets.CachedForeignKeyWidget` for ForeignKey fields.
 
 * By default, import rows are compared with the persisted representation, and the difference is stored against each row
   result.  If you don't need this diff, then disable it with ``skip_diff = True``.
