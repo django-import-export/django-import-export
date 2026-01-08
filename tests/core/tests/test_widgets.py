@@ -758,8 +758,12 @@ class JSONWidgetTest(TestCase, RowDeprecationTestMixin):
 
     def test_render_none(self):
         self.assertEqual(self.widget.render(None), None)
-        self.assertEqual(self.widget.render({}), None)
         self.assertEqual(self.widget.render({"value": None}), '{"value": null}')
+
+    def test_render_falsy_except_none(self):
+        for falsy in [0, "", False, [], {}]:
+            rendered = self.widget.render(falsy)
+            self.assertEqual(falsy, json.loads(rendered))
 
 
 class SimpleArrayWidgetTest(TestCase, RowDeprecationTestMixin):

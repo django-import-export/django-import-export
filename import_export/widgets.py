@@ -506,9 +506,9 @@ class JSONWidget(Widget):
           ``coerce_to_string`` has no effect on the return value.
         """
         self._obj_deprecation_warning(obj)
-        if value:
-            return json.dumps(value)
-        return None
+        if value is None:
+            return None
+        return json.dumps(value)
 
 
 class ForeignKeyWidget(Widget):
