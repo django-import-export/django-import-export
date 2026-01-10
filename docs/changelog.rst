@@ -5,7 +5,7 @@ Changelog
 
     If upgrading from v3, v4 introduces breaking changes.  Please refer to :doc:`release notes<release_notes>`.
 
-4.4.0 (unreleased)
+4.4.0 (2026-01-10)
 -------------------
 
 - Added CachedForeignKeyWidget (`2142 <https://github.com/django-import-export/django-import-export/pull/2142>`_)
