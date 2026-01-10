@@ -31,10 +31,6 @@ Caveats
 * In bulk mode, exceptions are not linked to a row.  Any exceptions raised by bulk operations are logged and returned
   as critical (non-validation) errors (and re-raised if ``raise_errors`` is true).
 
-* If you use :class:`~import_export.widgets.ForeignKeyWidget` then this should not affect performance during lookups,
-  because the ``QuerySet`` cache should be used.  Some more information
-  `here <https://stackoverflow.com/a/78309357/39296>`_.
-
 * If there is the potential for concurrent writes to a table during a bulk operation, then you need to consider the
   potential impact of this.  Refer to :ref:`concurrent-writes` for more information.
 
@@ -42,7 +38,24 @@ For more information, please read the Django documentation on
 `bulk_create() <https://docs.djangoproject.com/en/stable/ref/models/querysets/#bulk-create>`_ and
 `bulk_update() <https://docs.djangoproject.com/en/stable/ref/models/querysets/#bulk-update>`_.
 
-.. _performance_tuning
+.. _foreign_key_widget_performance:
+
+ForeignKeyWidget performance considerations
+===========================================
+
+When using :class:`~import_export.widgets.ForeignKeyWidget`, the related object is looked up using ``QuerySet.get()``
+during import. This lookup occurs once per imported row.  For large imports, this can result in a significant number of
+database queries and impact performance.
+
+You can subclass ``ForeignKeyWidget`` and override ``get_queryset()`` to limit the pool of candidate objects.
+However, overriding ``get_queryset()`` alone does not necessarily eliminate per-row database queries, because
+``ForeignKeyWidget.clean()`` calls ``.get()`` for each row.
+
+If import performance is critical, consider using :class:`~import_export.widgets.CachedForeignKeyWidget` instead.
+This widget caches all related objects in memory before the import begins, eliminating per-row database queries.
+
+.. _performance_tuning:
+
 Performance tuning
 ==================
 
@@ -55,6 +68,9 @@ Consider the following if you need to improve the performance of imports.
 
 * If your import is updating or creating instances, and you have a set of existing instances which can be stored in
   memory, use :class:`~import_export.instance_loaders.CachedInstanceLoader`
+
+* If your import has relations on per-row basis, consider using
+  :class:`~import_export.widgets.CachedForeignKeyWidget` for ForeignKey fields.
 
 * By default, import rows are compared with the persisted representation, and the difference is stored against each row
   result.  If you don't need this diff, then disable it with ``skip_diff = True``.

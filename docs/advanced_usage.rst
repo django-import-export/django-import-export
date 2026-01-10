@@ -512,6 +512,8 @@ given arg, then the import process will raise either ``DoesNotExist`` or ``Multi
 See also :ref:`creating-non-existent-relations`.
 
 Refer to the :class:`~.ForeignKeyWidget` documentation for more detailed information.
+If importing large datasets, see the notes in :ref:`foreign_key_widget_performance`
+and consider using :class:`~.CachedForeignKeyWidget`
 
 .. note::
 
@@ -902,13 +904,14 @@ Data manipulation on export
 Accessing fields within ``JSONField`` or ``JSONObject``
 -------------------------------------------------------
 In the same way that it is possible to refer to the relationships of the model by defining a field with double underscore ``__``
-syntax, values within ``JSONObject``/ ``JSONField`` can also be accessed but in this case it is necessary to specify it in ``attribute``::
+syntax, values within ``JSONObject``/ ``JSONField`` can also be accessed but in this case it is necessary to specify it in ``attribute``.
+If you will use the resource for import as well, you must mark the field as readonly. If you only want the field for export, marking it as readonly is not necessary::
 
     from import_export.fields import Field
 
     class BookResource(resources.ModelResource):
-        author_name = Field(attribute="author_json__name")
-        author_birthday = Field(attribute="author_json__birthday")
+        author_name = Field(attribute="author_json__name", readonly=True)
+        author_birthday = Field(attribute="author_json__birthday", readonly=True)
 
         class Meta:
             model = Book
@@ -935,6 +938,7 @@ In this case, the export looks like this:
     Remember that the types that are annotated/stored within these fields are primitive JSON
     data types (strings, numbers, boolean, null) and also composite JSON data types (array and object).
     That is why, in the example, the birthday field within the author_json dictionary is displayed as a string.
+    It is recommended that you always declare these fields as readonly even if you only want to use them for export.
 
 Using dehydrate methods
 -----------------------
