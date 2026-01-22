@@ -33,7 +33,7 @@ class RowDeprecationTestMixin:
             r"^The 'obj' parameter is deprecated and "
             "will be removed in a future release$",
         ):
-            self.widget.render(Book.objects.none(), obj={"a": 1})
+            self.widget.render(None, obj={"a": 1})
 
 
 class CharWidgetTest(TestCase, RowDeprecationTestMixin):
