@@ -16,6 +16,7 @@ from django.utils.formats import number_format, sanitize_separators
 from django.utils.translation import gettext_lazy as _
 
 from import_export.exceptions import WidgetError
+from import_export.utils import get_lookup_value
 
 logger = logging.getLogger(__name__)
 
@@ -703,7 +704,10 @@ class _CachedQuerySetWrapper:
         self._instances = defaultdict(list)
         for instance in queryset:
             key = key_cls(
-                **{field: getattr(instance, field) for field in key_cls._fields}
+                **{
+                    field: get_lookup_value(instance, field)
+                    for field in key_cls._fields
+                }
             )
             self._instances[key].append(instance)
 
