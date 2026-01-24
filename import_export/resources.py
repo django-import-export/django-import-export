@@ -198,7 +198,13 @@ class Resource(metaclass=DeclarativeMetaclass):
         ``import_id_fields`` are removed because `id` fields cannot be supplied to
         bulk_update().
         """
-        return [f for f in self.fields if f not in self._meta.import_id_fields]
+        return [
+            field.attribute
+            for field_name, field in self.fields.items()
+            if field_name not in self.get_import_id_fields()
+            and not field.readonly
+            and "__" not in field.attribute  # exclude related fields
+        ]
 
     def bulk_create(
         self, using_transactions, dry_run, raise_errors, batch_size=None, result=None

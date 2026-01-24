@@ -325,6 +325,7 @@ class BulkUpdateTest(BulkTest):
         self.resource = self._BookResource()
 
     def test_bulk_update(self):
+        self.assertEqual(["name"], self.resource.get_bulk_update_fields())
         result = self.resource.import_data(self.dataset)
         [self.assertEqual("UPDATED", b.name) for b in Book.objects.all()]
         self.assertEqual(10, result.total_rows)
@@ -339,6 +340,20 @@ class BulkUpdateTest(BulkTest):
                 batch_size = 4
 
         resource = _BookResource()
+        self.assertEqual(
+            [
+                "name",
+                "author_id",
+                "author_email",
+                "imported",
+                "published",
+                "published_time",
+                "price",
+                "added",
+                "categories",
+            ],
+            resource.get_bulk_update_fields(),
+        )
         result = resource.import_data(self.dataset)
         self.assertEqual(3, mock_bulk_update.call_count)
         self.assertEqual(10, result.total_rows)
@@ -452,6 +467,60 @@ class BulkUpdateTest(BulkTest):
         with self.assertRaises(exceptions.ImportError) as raised_exc:
             resource.import_data(self.dataset, raise_errors=True)
             self.assertEqual(e, raised_exc)
+
+    def test_bulk_update_with_different_name_than_attribute(self):
+        class _BookResource(resources.ModelResource):
+            name_field = fields.Field(attribute="name", column_name="name")
+
+            class Meta:
+                model = Book
+                use_bulk = True
+                fields = ("id", "name_field")
+                import_id_fields = ("id",)
+
+        resource = _BookResource()
+        self.assertEqual(["name"], resource.get_bulk_update_fields())
+        result = resource.import_data(self.dataset)
+        self.assertEqual(10, result.total_rows)
+        self.assertEqual(10, result.totals["update"])
+        self.assertEqual(10, Book.objects.filter(name="UPDATED").count())
+
+    def test_bulk_update_with_readonly_field(self):
+        class _BookResource(resources.ModelResource):
+            name = fields.Field(attribute="name", column_name="name", readonly=True)
+
+            class Meta:
+                model = Book
+                use_bulk = True
+                fields = ("id", "name")
+                import_id_fields = ("id",)
+                skip_unchanged = True
+
+        resource = _BookResource()
+        self.assertEqual([], resource.get_bulk_update_fields())
+        result = resource.import_data(self.dataset)
+        self.assertEqual(10, result.total_rows)
+        self.assertEqual(0, result.totals["update"])
+        self.assertEqual(10, Book.objects.filter(name="book_name").count())
+
+    def test_bulk_update_with_related_field(self):
+        class _BookResource(resources.ModelResource):
+            author__name = fields.Field(
+                attribute="author__name", column_name="author_name"
+            )
+
+            class Meta:
+                model = Book
+                use_bulk = True
+                fields = ("id", "author__name")
+                import_id_fields = ("id",)
+                skip_unchanged = True
+
+        resource = _BookResource()
+        self.assertEqual([], resource.get_bulk_update_fields())
+        result = resource.import_data(self.dataset)
+        self.assertEqual(10, result.total_rows)
+        self.assertEqual(0, result.totals["update"])
 
 
 class BulkUUIDBookUpdateTest(BulkTest):
