@@ -14,6 +14,11 @@ Changelog
 - Removed the deprecated :meth:`~import_export.admin.ExportMixin.get_valid_export_item_pks` method in favour of :meth:`~import_export.admin.ExportMixin.get_queryset` (`1898 <https://github.com/django-import-export/django-import-export/pull/1898>`_)
 - Refactor bulk updates to use attribute not field (`2145 <https://github.com/django-import-export/django-import-export/issues/2145>`_)
 
+4.4.0 (2026-01-10)
+-------------------
+
+- Added CachedForeignKeyWidget (`2142 <https://github.com/django-import-export/django-import-export/pull/2142>`_)
+
 4.3.14 (2025-11-13)
 -------------------
 
