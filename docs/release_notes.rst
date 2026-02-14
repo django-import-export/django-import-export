@@ -15,7 +15,7 @@ Breaking changes
   a result of this change.
 
   The ``resource``, ``format`` and ``export_items`` field names are now prepended with ``django-import-export-``.
-  
+
 * Removed the deprecated :meth:`~import_export.admin.ExportMixin.get_valid_export_item_pks` method in favour
   of :meth:`~import_export.admin.ExportMixin.get_queryset`. Use the ModelAdmin's
   :meth:`~import_export.admin.ExportMixin.get_queryset` or :meth:`~import_export.admin.ExportMixin.get_export_queryset`
@@ -26,6 +26,11 @@ Breaking changes
 * Fixed issue where export forms were incorrectly showing import fields instead of export fields.
   This was resolved by introducing context-specific methods for field retrieval.
   See :ref:`deprecations <deprecations_v5>` and `PR 2118 <https://github.com/django-import-export/django-import-export/pull/2118>`_.
+
+* `PR 2145 <https://github.com/django-import-export/django-import-export/issues/2145>`_ enhanced the fields included in bulk updates.
+  Read-only fields, fields in other tables (reference by '__') are not included in bulk update.
+  This PR also fixed an issue where field name is used instead of attribute name, which is incorrect.
+  If you have enabled ``use_bulk`` for imports then please test and ensure rows are still updated as expected.
 
 .. _deprecations_v5:
 
