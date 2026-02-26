@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "django-import-export-continis"
-version = "4.3.14"
+version = "4.3.15"
 description = "Continis Fork: Django application and library for importing and exporting data with included admin integration."
 authors = ["Bojan Mihelac <bojan@informatikamihelac.com>"]
 license = "BSD-3-Clause"
@@ -25,7 +25,7 @@ xls = ["tablib"]
 xlsx = ["tablib"]
 yaml = ["tablib"]
 
-[tool.poetry.source]
+[[tool.poetry.source]]
 name = "pypiserver"
 url = "https://pypi.continis.ch/simple/"
 priority = "supplemental"
