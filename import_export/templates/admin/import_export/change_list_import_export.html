@@ -2,6 +2,7 @@
 
 {% block object-tools-items %}
   {% include "admin/import_export/change_list_import_item.html" %}
-  {% include "admin/import_export/change_list_export_item.html" %}
+    {# (Continis): Removed, so export button does not appear in the top right #}
+    {# {% include "admin/import_export/change_list_export_item.html" %} #}
   {{ block.super }}
 {% endblock %}
