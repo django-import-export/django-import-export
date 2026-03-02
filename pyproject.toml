@@ -14,16 +14,7 @@ packages = [{ include = "import_export" }]
 python = ">=3.10"
 Django = ">=4.2"
 diff-match-patch = "20241021"
-tablib = { version = ">=3.7.0", optional = true }
-
-[tool.poetry.extras]
-all = ["tablib"]
-cli = ["tablib"]
-ods = ["tablib"]
-pandas = ["tablib"]
-xls = ["tablib"]
-xlsx = ["tablib"]
-yaml = ["tablib"]
+tablib = ">=3.7.0"
 
 [[tool.poetry.source]]
 name = "pypiserver"
