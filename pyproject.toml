@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "django-import-export-continis"
-version = "4.3.15"
+version = "4.3.16"
 description = "Continis Fork: Django application and library for importing and exporting data with included admin integration."
 authors = ["Bojan Mihelac <bojan@informatikamihelac.com>"]
 license = "BSD-3-Clause"
