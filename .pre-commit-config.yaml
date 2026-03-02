@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/adamchainz/django-upgrade
-    rev: 1.29.1
+    rev: 1.30.0
     hooks:
     - id: django-upgrade
       args: [--target-version, "4.2"]
@@ -14,7 +14,7 @@ repos:
     hooks:
     - id: black
   - repo: https://github.com/PyCQA/isort
-    rev: 7.0.0
+    rev: 8.0.1
     hooks:
       - id: isort
   - repo: https://github.com/PyCQA/flake8
