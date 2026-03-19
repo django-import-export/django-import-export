@@ -3,6 +3,8 @@ import sys
 
 import django
 
+from import_export.formats.base_formats import XLSX
+
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -113,3 +115,5 @@ else:
 PASSWORD_HASHERS = [
     "django.contrib.auth.hashers.MD5PasswordHasher",
 ]
+
+IMPORT_EXPORT_FORMATS = [XLSX]
