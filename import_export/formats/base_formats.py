@@ -4,6 +4,7 @@
 # See issue 2004
 import logging
 import warnings
+from functools import lru_cache
 
 import tablib
 from django.conf import settings
@@ -258,31 +259,57 @@ class XLSX(TablibFormat):
             dataset.append(row)
 
 
-#: These are the default formats for import and export. Whether they can be
-#: used or not is depending on their implementation in the tablib library.
-DEFAULT_FORMATS = [
-    fmt
-    for fmt in (
-        CSV,
-        XLS,
-        XLSX,
-        TSV,
-        ODS,
-        JSON,
-        YAML,
-        HTML,
-    )
-    if fmt.is_available()
-]
+_ALL_FORMATS = (CSV, XLS, XLSX, TSV, ODS, JSON, YAML, HTML)
+_BINARY_FORMAT_TYPES = (XLS, XLSX, ODS)
 
-#: These are the formats which support different data types (such as datetime
-#: and numbers) for which `coerce_to_string` is to be set false dynamically.
-BINARY_FORMATS = [
-    fmt
-    for fmt in (
-        XLS,
-        XLSX,
-        ODS,
-    )
-    if fmt.is_available()
-]
+
+@lru_cache(maxsize=None)
+def get_default_formats():
+    """Return the list of available formats, respecting IMPORT_EXPORT_FORMATS setting.
+
+    Results are cached for the lifetime of the process.
+    """
+    configured = getattr(settings, "IMPORT_EXPORT_FORMATS", None)
+    if configured is not None:
+        return list(configured)
+    return [fmt for fmt in _ALL_FORMATS if fmt.is_available()]
+
+
+@lru_cache(maxsize=None)
+def get_binary_formats():
+    """Return the list of binary formats from the default formats.
+
+    Results are cached for the lifetime of the process.
+    """
+    default = get_default_formats()
+    return [fmt for fmt in _BINARY_FORMAT_TYPES if fmt in default]
+
+
+class _LazyFormatList:
+    """Backward-compatible lazy wrapper that calls a function on access."""
+
+    def __init__(self, func):
+        self._func = func
+
+    def __iter__(self):
+        return iter(self._func())
+
+    def __len__(self):
+        return len(self._func())
+
+    def __getitem__(self, index):
+        return self._func()[index]
+
+    def __contains__(self, item):
+        return item in self._func()
+
+    def __repr__(self):
+        return repr(self._func())
+
+    def __eq__(self, other):
+        return self._func() == other
+
+
+# Backward-compatible aliases (deprecated, will be removed in a future version)
+DEFAULT_FORMATS = _LazyFormatList(get_default_formats)
+BINARY_FORMATS = _LazyFormatList(get_binary_formats)
