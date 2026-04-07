@@ -1,17 +1,12 @@
 import logging
-import warnings
-from warnings import warn
 
 from django.conf import settings
-from django.http import HttpResponse
 from django.utils.timezone import now
-from django.views.generic.edit import FormView
 
 from . import constants
 from .formats import base_formats
 from .forms import SelectableFieldsExportForm
 from .resources import modelresource_factory
-from .signals import post_export
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +17,6 @@ class BaseImportExportMixin:
     interface.
     """
 
-    resource_class = None
     resource_classes = []
 
     @property
@@ -50,32 +44,9 @@ class BaseImportExportMixin:
         :param request: The request object.
         :returns: The Resource classes.
         """
-        if self.resource_classes and self.resource_class:
-            raise Exception(
-                "Only one of 'resource_class' and 'resource_classes' can be set"
-            )
-        if hasattr(self, "get_resource_class"):
-            cls = self.__class__
-            warnings.warn(
-                "The 'get_resource_class()' method has been deprecated. "
-                "Please implement the new 'get_resource_classes()' method in "
-                f"{cls.__module__}.{cls.__qualname__}",
-                DeprecationWarning,
-            )
-            return [self.get_resource_class()]
-        if self.resource_class:
-            cls = self.__class__
-            warnings.warn(
-                "The 'resource_class' field has been deprecated. "
-                "Please implement the new 'resource_classes' field in "
-                f"{cls.__module__}.{cls.__qualname__}",
-                DeprecationWarning,
-            )
-        if not self.resource_classes and not self.resource_class:
+        if not self.resource_classes:
             return [modelresource_factory(self.model)]
-        if self.resource_classes:
-            return self.resource_classes
-        return [self.resource_class]
+        return self.resource_classes
 
     def get_resource_kwargs(self, request, *args, **kwargs):
         """
@@ -116,15 +87,6 @@ class BaseImportMixin(BaseImportExportMixin):
         :param request: The request object.
         Returns ResourceClass subscriptable (list, tuple, ...) to use for import.
         """
-        if hasattr(self, "get_import_resource_class"):
-            cls = self.__class__
-            warnings.warn(
-                "The 'get_import_resource_class()' method has been deprecated. "
-                "Please implement the new 'get_import_resource_classes()' method in"
-                f"{cls.__module__}.{cls.__qualname__}",
-                DeprecationWarning,
-            )
-            return [self.get_import_resource_class()]
         resource_classes = self.get_resource_classes(request)
         self.check_resource_classes(resource_classes)
         return resource_classes
@@ -186,15 +148,6 @@ class BaseExportMixin(BaseImportExportMixin):
         :param request: The request object.
         :returns: The Resource classes.
         """
-        if hasattr(self, "get_export_resource_class"):
-            cls = self.__class__
-            warnings.warn(
-                "The 'get_export_resource_class()' method has been deprecated. "
-                "Please implement the new 'get_export_resource_classes()' method "
-                f"in {cls.__module__}.{cls.__qualname__}",
-                DeprecationWarning,
-            )
-            return [self.get_export_resource_class()]
         resource_classes = self.get_resource_classes(request)
         self.check_resource_classes(resource_classes)
         return resource_classes
@@ -257,59 +210,3 @@ class BaseExportMixin(BaseImportExportMixin):
             getattr(settings, "IMPORT_EXPORT_SKIP_ADMIN_ACTION_EXPORT_UI", False)
             or self.skip_export_form_from_action is True
         )
-
-
-class ExportViewMixin(BaseExportMixin):
-    # Deprecated, and will be removed in a future release (see #1666)
-    form_class = SelectableFieldsExportForm
-
-    def get_export_data(self, file_format, queryset, **kwargs):
-        """
-        Returns file_format representation for given queryset.
-        """
-        data = self.get_data_for_export(self.request, queryset, **kwargs)
-        export_data = file_format.export_data(data)
-        return export_data
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        return context
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs["formats"] = self.get_export_formats()
-        kwargs["resources"] = self.get_export_resource_classes(self.request)
-        return kwargs
-
-
-class ExportViewFormMixin(ExportViewMixin, FormView):
-    # Deprecated, and will be removed in a future release (see #1666)
-    def __init_subclass__(cls, **kwargs):
-        super().__init_subclass__(**kwargs)
-        warn(
-            "ExportViewFormMixin is deprecated and will be removed "
-            "in a future release.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-
-    def form_valid(self, form):
-        formats = self.get_export_formats()
-        file_format = formats[int(form.cleaned_data["format"])]()
-        if hasattr(self, "get_filterset"):
-            queryset = self.get_filterset(self.get_filterset_class()).qs
-        else:
-            queryset = self.get_queryset()
-        export_data = self.get_export_data(file_format, queryset)
-        content_type = file_format.get_content_type()
-        # Django 1.7 uses the content_type kwarg instead of mimetype
-        try:
-            response = HttpResponse(export_data, content_type=content_type)
-        except TypeError:
-            response = HttpResponse(export_data, mimetype=content_type)
-        response["Content-Disposition"] = 'attachment; filename="{}"'.format(
-            self.get_export_filename(file_format),
-        )
-
-        post_export.send(sender=None, model=self.model)
-        return response
