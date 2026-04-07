@@ -21,7 +21,7 @@ Breaking changes
   See :ref:`deprecations <deprecations_v5>` and `PR 2118 <https://github.com/django-import-export/django-import-export/pull/2118>`_.
 
 * `PR 2145 <https://github.com/django-import-export/django-import-export/issues/2145>`_ enhanced the fields included in bulk updates.
-  Read-only fields, fields in other tables (reference by '__') are not included in bulk update.
+  Read-only fields and related fields (those with ``__`` in the attribute) are excluded from bulk update.
   This PR also fixed an issue where field name is used instead of attribute name, which is incorrect.
   If you have enabled ``use_bulk`` for imports then please test and ensure rows are still updated as expected.
 
