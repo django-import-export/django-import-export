@@ -685,6 +685,18 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
         changelist_kwargs["search_help_text"] = self.search_help_text
 
         class ExportChangeList(ChangeList):
+            def get_filters_params(self, params=None):
+                """Strip params not intended as queryset filters.
+
+                ``_changelist_filters`` is added by Django to change-view URLs
+                when the user navigated there from a filtered changelist.  It is
+                not a model field lookup and must be ignored, otherwise
+                ``ChangeList`` raises ``IncorrectLookupParameters``.
+                """
+                result = super().get_filters_params(params)
+                result.pop("_changelist_filters", None)
+                return result
+
             def get_results(self, request):
                 """
                 Overrides ChangeList.get_results() to bypass default operations like
