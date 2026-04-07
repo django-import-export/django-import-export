@@ -165,6 +165,22 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
 
         self.assertEqual(queryset.count(), Book.objects.count())
 
+    def test_get_export_queryset_with_changelist_filters_param(self):
+        """Test that _changelist_filters query param does not cause
+        IncorrectLookupParameters when exporting from a change view
+        reached via a filtered changelist."""
+        model_admin = BookAdmin(Book, AdminSite())
+
+        factory = RequestFactory()
+        request = factory.get(
+            self.book_export_url,
+            {"_changelist_filters": "author__id__exact=1"},
+        )
+        request.user = User.objects.create_user("admin1")
+
+        queryset = model_admin.get_export_queryset(request)
+        self.assertEqual(queryset.count(), Book.objects.count())
+
     def test_get_export_form_single_resource(self):
         response = self._get_url_response(self.category_export_url)
         content = response.content.decode()
