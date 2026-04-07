@@ -27,6 +27,40 @@ Breaking changes
   This was resolved by introducing context-specific methods for field retrieval.
   See :ref:`deprecations <deprecations_v5>` and `PR 2118 <https://github.com/django-import-export/django-import-export/pull/2118>`_.
 
+Removed deprecations
+""""""""""""""""""""
+
+The following items, deprecated since v4.0, have been removed:
+
+* The ``Resource.import_obj()`` method has been removed.
+  Use :meth:`~import_export.resources.Resource.import_instance` instead.
+
+* The ``Resource.after_import_instance()`` method has been removed.
+  Use :meth:`~import_export.resources.Resource.after_init_instance` instead.
+
+* The ``Resource.get_fields()`` method (deprecated since v4.1) has been removed.
+  This method is no longer called internally.
+
+* The ``obj`` parameter of :meth:`~import_export.widgets.Widget.render` has been removed.
+  The ``render()`` method signature is now ``render(self, value, **kwargs)``.
+
+* The ``resource_class`` attribute on admin mixins has been removed.
+  Use ``resource_classes`` (a list) instead.
+
+* The ``get_resource_class()`` method on admin mixins has been removed.
+  Use ``get_resource_classes()`` instead.
+
+* The ``get_import_resource_class()`` method has been removed.
+  Use ``get_import_resource_classes()`` instead.
+
+* The ``get_export_resource_class()`` method has been removed.
+  Use ``get_export_resource_classes()`` instead.
+
+* The ``ExportViewMixin`` and ``ExportViewFormMixin`` classes have been removed.
+
+Other breaking changes
+""""""""""""""""""""""
+
 * `PR 2145 <https://github.com/django-import-export/django-import-export/issues/2145>`_ enhanced the fields included in bulk updates.
   Read-only fields, fields in other tables (reference by '__') are not included in bulk update.
   This PR also fixed an issue where field name is used instead of attribute name, which is incorrect.
@@ -37,7 +71,7 @@ Breaking changes
 Deprecations
 ^^^^^^^^^^^^
 
-* The :meth:`~import_export.resources.Resource.get_user_visible_fields` method is now deprecated and will be removed in version 6.0.
+* The :meth:`~import_export.resources.Resource.get_user_visible_fields` method is deprecated and will be removed in version 6.0.
   Use :meth:`~import_export.resources.Resource.get_user_visible_import_fields` for import contexts and
   :meth:`~import_export.resources.Resource.get_user_visible_export_fields` for export contexts instead.
   This change ensures that import and export operations show their respective field sets correctly in admin forms.
