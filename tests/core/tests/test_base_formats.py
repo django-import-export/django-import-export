@@ -296,6 +296,9 @@ class YAMLFormatTest(TestCase):
 
 
 class GetDefaultFormatsTest(TestCase):
+    def setUp(self):
+        base_formats.get_default_formats.cache_clear()
+
     def tearDown(self):
         base_formats.get_default_formats.cache_clear()
 
@@ -319,6 +322,10 @@ class GetDefaultFormatsTest(TestCase):
 
 
 class GetBinaryFormatsTest(TestCase):
+    def setUp(self):
+        base_formats.get_binary_formats.cache_clear()
+        base_formats.get_default_formats.cache_clear()
+
     def tearDown(self):
         base_formats.get_binary_formats.cache_clear()
         base_formats.get_default_formats.cache_clear()
