@@ -1,12 +1,10 @@
 import logging
 from urllib.parse import urlencode
 
-import django
 from django.conf import settings
 from django.contrib import admin, messages
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION, LogEntry
 from django.contrib.auth import get_permission_codename
-from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import FieldError, PermissionDenied
 from django.forms import MultipleChoiceField, MultipleHiddenInput
 from django.http import HttpResponse, HttpResponseRedirect
@@ -229,28 +227,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
 
     def generate_log_entries(self, result, request):
         if not self.get_skip_admin_log():
-            # Add imported objects to LogEntry
-            if django.VERSION >= (5, 1):
-                self._log_actions(result, request)
-            else:
-                logentry_map = {
-                    RowResult.IMPORT_TYPE_NEW: ADDITION,
-                    RowResult.IMPORT_TYPE_UPDATE: CHANGE,
-                    RowResult.IMPORT_TYPE_DELETE: DELETION,
-                }
-                content_type_id = ContentType.objects.get_for_model(self.model).pk
-                for row in result:
-                    if row.import_type in logentry_map:
-                        LogEntry.objects.log_action(
-                            user_id=request.user.pk,
-                            content_type_id=content_type_id,
-                            object_id=row.object_id,
-                            object_repr=row.object_repr,
-                            action_flag=logentry_map[row.import_type],
-                            change_message=_(
-                                "%s through import_export" % row.import_type
-                            ),
-                        )
+            self._log_actions(result, request)
 
     def add_success_message(self, result, request):
         opts = self.model._meta

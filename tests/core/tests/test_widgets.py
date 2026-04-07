@@ -3,8 +3,8 @@ from datetime import date, datetime, time, timedelta
 from decimal import Decimal
 from unittest import mock
 from unittest.mock import patch
+from zoneinfo import ZoneInfo
 
-import django
 import tablib
 from core.models import Author, Book, Category
 from core.tests.utils import ignore_utcnow_deprecation_warning
@@ -219,15 +219,8 @@ class DateTimeWidgetTest(TestCase):
     @ignore_utcnow_deprecation_warning
     @override_settings(USE_TZ=True, TIME_ZONE="Europe/Ljubljana")
     def test_clean_returns_tz_aware_datetime_when_naive_datetime_passed(self):
-        import pytz
-
         # issue 1165
-        if django.VERSION >= (5, 0):
-            from zoneinfo import ZoneInfo
-
-            tz = ZoneInfo("Europe/Ljubljana")
-        else:
-            tz = pytz.timezone("Europe/Ljubljana")
+        tz = ZoneInfo("Europe/Ljubljana")
         target_dt = timezone.make_aware(self.datetime, tz)
         self.assertEqual(target_dt, self.widget.clean(self.datetime))
 
