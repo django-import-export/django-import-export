@@ -486,9 +486,9 @@ class JSONWidget(Widget):
         :return: A JSON formatted string derived from ``value``.
           ``coerce_to_string`` has no effect on the return value.
         """
-        if value:
-            return json.dumps(value)
-        return None
+        if value is None:
+            return None
+        return json.dumps(value)
 
 
 class ForeignKeyWidget(Widget):
