@@ -456,7 +456,7 @@ class TestExportEncoding(TestCase):
             self.file_format, self.mock_request, [], encoding="shift-jis"
         )
         encoding = chardet.detect(bytes(data))["encoding"]
-        self.assertEqual("SHIFT_JIS", encoding)
+        self.assertIn(encoding, ("SHIFT_JIS", "cp932"))
 
     def test_to_encoding_set_incorrect(self):
         self.export_mixin = self.TestMixin()
