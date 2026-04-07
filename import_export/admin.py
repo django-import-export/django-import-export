@@ -1,5 +1,4 @@
 import logging
-import warnings
 from urllib.parse import urlencode
 
 import django
@@ -242,19 +241,16 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
                 content_type_id = ContentType.objects.get_for_model(self.model).pk
                 for row in result:
                     if row.import_type in logentry_map:
-                        with warnings.catch_warnings():
-                            cat = DeprecationWarning
-                            warnings.simplefilter("ignore", category=cat)
-                            LogEntry.objects.log_action(
-                                user_id=request.user.pk,
-                                content_type_id=content_type_id,
-                                object_id=row.object_id,
-                                object_repr=row.object_repr,
-                                action_flag=logentry_map[row.import_type],
-                                change_message=_(
-                                    "%s through import_export" % row.import_type
-                                ),
-                            )
+                        LogEntry.objects.log_action(
+                            user_id=request.user.pk,
+                            content_type_id=content_type_id,
+                            object_id=row.object_id,
+                            object_repr=row.object_repr,
+                            action_flag=logentry_map[row.import_type],
+                            change_message=_(
+                                "%s through import_export" % row.import_type
+                            ),
+                        )
 
     def add_success_message(self, result, request):
         opts = self.model._meta
