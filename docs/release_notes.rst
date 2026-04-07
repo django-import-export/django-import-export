@@ -16,13 +16,6 @@ Breaking changes
 
   The ``resource``, ``format`` and ``export_items`` field names are now prepended with ``django-import-export-``.
 
-* Removed the deprecated :meth:`~import_export.admin.ExportMixin.get_valid_export_item_pks` method in favour
-  of :meth:`~import_export.admin.ExportMixin.get_queryset`. Use the ModelAdmin's
-  :meth:`~import_export.admin.ExportMixin.get_queryset` or :meth:`~import_export.admin.ExportMixin.get_export_queryset`
-  instead.
-
-  See `PR 1890 <https://github.com/django-import-export/django-import-export/issues/1890>`_.
-
 * Fixed issue where export forms were incorrectly showing import fields instead of export fields.
   This was resolved by introducing context-specific methods for field retrieval.
   See :ref:`deprecations <deprecations_v5>` and `PR 2118 <https://github.com/django-import-export/django-import-export/pull/2118>`_.
@@ -31,6 +24,11 @@ Removed deprecations
 """"""""""""""""""""
 
 The following items, deprecated since v4.0, have been removed:
+
+* The ``get_valid_export_item_pks()`` method has been removed.
+  Use the ModelAdmin's ``get_queryset()`` or
+  :meth:`~import_export.admin.ExportMixin.get_export_queryset` instead.
+  See `PR 1890 <https://github.com/django-import-export/django-import-export/issues/1890>`_.
 
 * The ``Resource.import_obj()`` method has been removed.
   Use :meth:`~import_export.resources.Resource.import_instance` instead.
@@ -80,13 +78,13 @@ v4.2
 ----
 
 * When exporting via :ref:`admin action<export_via_admin_action>`, the queryset is now filtered on
-  :meth:`~import_export.admin.ExportMixin.get_queryset` instead of the Model's default queryset.
+  ``get_queryset()`` instead of the Model's default queryset.
   This should have no impact on existing implementations.
 
-  This change also made :meth:`~import_export.admin.ExportMixin.get_valid_export_item_pks` obsolete, as the
+  This change also made ``get_valid_export_item_pks()`` obsolete, as the
   ModelAdmin's :meth:`~import_export.admin.ExportMixin.get_export_queryset`, or
-  ModelAdmin's get_queryset can be used instead.
-  The :meth:`~import_export.admin.ExportMixin.get_valid_export_item_pks` method is now deprecated.
+  ModelAdmin's ``get_queryset()`` can be used instead.
+  The ``get_valid_export_item_pks()`` method is now deprecated.
 
   See `PR 1890 <https://github.com/django-import-export/django-import-export/issues/1890>`_.
 
