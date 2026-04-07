@@ -283,33 +283,3 @@ def get_binary_formats():
     """
     default = get_default_formats()
     return [fmt for fmt in _BINARY_FORMAT_TYPES if fmt in default]
-
-
-class _LazyFormatList:
-    """Backward-compatible lazy wrapper that calls a function on access."""
-
-    def __init__(self, func):
-        self._func = func
-
-    def __iter__(self):
-        return iter(self._func())
-
-    def __len__(self):
-        return len(self._func())
-
-    def __getitem__(self, index):
-        return self._func()[index]
-
-    def __contains__(self, item):
-        return item in self._func()
-
-    def __repr__(self):
-        return repr(self._func())
-
-    def __eq__(self, other):
-        return self._func() == other
-
-
-# Backward-compatible aliases (deprecated, will be removed in a future version)
-DEFAULT_FORMATS = _LazyFormatList(get_default_formats)
-BINARY_FORMATS = _LazyFormatList(get_binary_formats)
