@@ -28,17 +28,7 @@ class WidgetTest(TestCase):
         self.assertEqual("1", self.widget.render(1))
 
 
-class RowDeprecationTestMixin:
-    def test_render_row_deprecation(self):
-        with self.assertWarnsRegex(
-            DeprecationWarning,
-            r"^The 'obj' parameter is deprecated and "
-            "will be removed in a future release$",
-        ):
-            self.widget.render(Book.objects.none(), obj={"a": 1})
-
-
-class CharWidgetTest(TestCase, RowDeprecationTestMixin):
+class CharWidgetTest(TestCase):
     def setUp(self):
         self.widget = widgets.CharWidget()
 
@@ -61,7 +51,7 @@ class CharWidgetTest(TestCase, RowDeprecationTestMixin):
         self.assertEqual("", self.widget.clean(None))
 
 
-class BooleanWidgetTest(TestCase, RowDeprecationTestMixin):
+class BooleanWidgetTest(TestCase):
     def setUp(self):
         self.widget = widgets.BooleanWidget()
 
@@ -117,7 +107,7 @@ class CustomDate(date):
     pass
 
 
-class DateWidgetTest(TestCase, RowDeprecationTestMixin):
+class DateWidgetTest(TestCase):
     def setUp(self):
         self.date = date(2012, 8, 13)
         self.widget = widgets.DateWidget("%d.%m.%Y")
@@ -181,7 +171,7 @@ class CustomDateTime(datetime):
     pass
 
 
-class DateTimeWidgetTest(TestCase, RowDeprecationTestMixin):
+class DateTimeWidgetTest(TestCase):
     def setUp(self):
         self.datetime = datetime(2012, 8, 13, 18, 0, 0)
         self.widget = widgets.DateTimeWidget("%d.%m.%Y %H:%M:%S")
@@ -295,7 +285,7 @@ class CustomTime(time):
     pass
 
 
-class TimeWidgetTest(TestCase, RowDeprecationTestMixin):
+class TimeWidgetTest(TestCase):
     def setUp(self):
         self.time = time(20, 15, 0)
         self.widget = widgets.TimeWidget("%H:%M:%S")
@@ -340,7 +330,7 @@ class TimeWidgetTest(TestCase, RowDeprecationTestMixin):
         self.assertEqual(self.time, self.widget.clean(self.time))
 
 
-class DurationWidgetTest(TestCase, RowDeprecationTestMixin):
+class DurationWidgetTest(TestCase):
     def setUp(self):
         self.duration = timedelta(hours=1, minutes=57, seconds=0)
         self.widget = widgets.DurationWidget()
@@ -378,7 +368,7 @@ class DurationWidgetTest(TestCase, RowDeprecationTestMixin):
         mock_logger.debug.assert_called_with("err")
 
 
-class NumberWidgetTest(TestCase, RowDeprecationTestMixin):
+class NumberWidgetTest(TestCase):
     def setUp(self):
         self.value = 11.111
         self.widget = widgets.NumberWidget()
@@ -413,7 +403,7 @@ class NumberWidgetTest(TestCase, RowDeprecationTestMixin):
         self.assertEqual("", self.widget_coerce_to_string.render(None))
 
 
-class FloatWidgetTest(TestCase, RowDeprecationTestMixin):
+class FloatWidgetTest(TestCase):
     def setUp(self):
         self.value = 11.111
         self.widget = widgets.FloatWidget()
@@ -458,7 +448,7 @@ class FloatWidgetTest(TestCase, RowDeprecationTestMixin):
         self.assertEqual(self.widget_coerce_to_string.render(self.value), "11,111")
 
 
-class DecimalWidgetTest(TestCase, RowDeprecationTestMixin):
+class DecimalWidgetTest(TestCase):
     def setUp(self):
         self.value = Decimal("11.111")
         self.widget = widgets.DecimalWidget()
@@ -507,7 +497,7 @@ class DecimalWidgetTest(TestCase, RowDeprecationTestMixin):
         self.assertEqual(self.widget.render(self.value), "11,111")
 
 
-class IntegerWidgetTest(TestCase, RowDeprecationTestMixin):
+class IntegerWidgetTest(TestCase):
     def setUp(self):
         self.value = 0
         self.widget = widgets.IntegerWidget()
@@ -553,7 +543,7 @@ class IntegerWidgetTest(TestCase, RowDeprecationTestMixin):
         self.assertEqual(self.widget_coerce_to_string.render(self.value), "0")
 
 
-class ForeignKeyWidgetTest(TestCase, RowDeprecationTestMixin):
+class ForeignKeyWidgetTest(TestCase):
     def setUp(self):
         self.widget = widgets.ForeignKeyWidget(Author)
         self.natural_key_author_widget = widgets.ForeignKeyWidget(
@@ -674,7 +664,7 @@ class ForeignKeyWidgetTest(TestCase, RowDeprecationTestMixin):
         )
 
 
-class CachedForeignKeyWidgetTest(TestCase, RowDeprecationTestMixin):
+class CachedForeignKeyWidgetTest(TestCase):
     def setUp(self):
         self.widget = widgets.CachedForeignKeyWidget(Author)
         self.natural_key_author_widget = widgets.CachedForeignKeyWidget(
@@ -859,7 +849,7 @@ class CachedForeignKeyWidgetTest(TestCase, RowDeprecationTestMixin):
         )
 
 
-class ManyToManyWidget(TestCase, RowDeprecationTestMixin):
+class ManyToManyWidget(TestCase):
     def setUp(self):
         self.widget = widgets.ManyToManyWidget(Category)
         self.widget_name = widgets.ManyToManyWidget(Category, field="name")
@@ -924,7 +914,7 @@ class ManyToManyWidget(TestCase, RowDeprecationTestMixin):
         self.assertEqual("", self.widget.render(None))
 
 
-class JSONWidgetTest(TestCase, RowDeprecationTestMixin):
+class JSONWidgetTest(TestCase):
     def setUp(self):
         self.value = {"value": 23}
         self.widget = widgets.JSONWidget()
@@ -949,7 +939,7 @@ class JSONWidgetTest(TestCase, RowDeprecationTestMixin):
         self.assertEqual(self.widget.render({"value": None}), '{"value": null}')
 
 
-class SimpleArrayWidgetTest(TestCase, RowDeprecationTestMixin):
+class SimpleArrayWidgetTest(TestCase):
     def setUp(self):
         self.value = {"value": 23}
         self.widget = widgets.SimpleArrayWidget()
