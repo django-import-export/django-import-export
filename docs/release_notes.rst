@@ -20,6 +20,11 @@ Breaking changes
   This was resolved by introducing context-specific methods for field retrieval.
   See :ref:`deprecations <deprecations_v5>` and `PR 2118 <https://github.com/django-import-export/django-import-export/pull/2118>`_.
 
+* `PR 2145 <https://github.com/django-import-export/django-import-export/issues/2145>`_ enhanced the fields included in bulk updates.
+  Read-only fields, fields in other tables (reference by '__') are not included in bulk update.
+  This PR also fixed an issue where field name is used instead of attribute name, which is incorrect.
+  If you have enabled ``use_bulk`` for imports then please test and ensure rows are still updated as expected.
+
 Removed deprecations
 """"""""""""""""""""
 
@@ -55,14 +60,6 @@ The following items, deprecated since v4.0, have been removed:
   Use ``get_export_resource_classes()`` instead.
 
 * The ``ExportViewMixin`` and ``ExportViewFormMixin`` classes have been removed.
-
-Other breaking changes
-""""""""""""""""""""""
-
-* `PR 2145 <https://github.com/django-import-export/django-import-export/issues/2145>`_ enhanced the fields included in bulk updates.
-  Read-only fields, fields in other tables (reference by '__') are not included in bulk update.
-  This PR also fixed an issue where field name is used instead of attribute name, which is incorrect.
-  If you have enabled ``use_bulk`` for imports then please test and ensure rows are still updated as expected.
 
 .. _deprecations_v5:
 
