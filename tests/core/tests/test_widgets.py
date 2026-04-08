@@ -7,7 +7,6 @@ from zoneinfo import ZoneInfo
 
 import tablib
 from core.models import Author, Book, Category
-from core.tests.utils import ignore_utcnow_deprecation_warning
 from django.db import connection
 from django.test import TestCase
 from django.test.utils import CaptureQueriesContext, override_settings
@@ -207,7 +206,6 @@ class DateTimeWidgetTest(TestCase):
             "time data '2021-05-01' does not match format 'x'"
         )
 
-    @ignore_utcnow_deprecation_warning
     @override_settings(USE_TZ=True, TIME_ZONE="Europe/Ljubljana")
     def test_use_tz(self):
         import pytz
@@ -216,7 +214,6 @@ class DateTimeWidgetTest(TestCase):
         self.assertEqual(self.widget.render(utc_dt), "13.08.2012 20:00:00")
         self.assertEqual(self.widget.clean("13.08.2012 20:00:00"), utc_dt)
 
-    @ignore_utcnow_deprecation_warning
     @override_settings(USE_TZ=True, TIME_ZONE="Europe/Ljubljana")
     def test_clean_returns_tz_aware_datetime_when_naive_datetime_passed(self):
         # issue 1165
@@ -224,7 +221,6 @@ class DateTimeWidgetTest(TestCase):
         target_dt = timezone.make_aware(self.datetime, tz)
         self.assertEqual(target_dt, self.widget.clean(self.datetime))
 
-    @ignore_utcnow_deprecation_warning
     @override_settings(USE_TZ=True, TIME_ZONE="Europe/Ljubljana")
     def test_clean_handles_tz_aware_datetime(self):
         import pytz

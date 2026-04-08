@@ -5,7 +5,6 @@ from unittest import mock
 
 import openpyxl
 import tablib
-from core.tests.utils import ignore_utcnow_deprecation_warning
 from django.test import TestCase, override_settings
 from django.utils.encoding import force_str
 from tablib.core import UnsupportedFormat
@@ -98,7 +97,6 @@ class XLSXTest(TestCase):
     def test_binary_format(self):
         self.assertTrue(self.format.is_binary())
 
-    @ignore_utcnow_deprecation_warning
     def test_import(self):
         with open(self.filename, self.format.get_read_mode()) as in_stream:
             dataset = self.format.create_dataset(in_stream.read())
