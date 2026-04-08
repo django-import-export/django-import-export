@@ -20,7 +20,7 @@ from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_POST
 
 from .constants import FORM_FIELD_PREFIX
-from .formats.base_formats import BINARY_FORMATS
+from .formats.base_formats import get_binary_formats
 from .forms import ConfirmImportForm, ImportForm, SelectableFieldsExportForm
 from .mixins import BaseExportMixin, BaseImportMixin
 from .results import RowResult
@@ -685,6 +685,18 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
         changelist_kwargs["search_help_text"] = self.search_help_text
 
         class ExportChangeList(ChangeList):
+            def get_filters_params(self, params=None):
+                """Strip params not intended as queryset filters.
+
+                ``_changelist_filters`` is added by Django to change-view URLs
+                when the user navigated there from a filtered changelist.  It is
+                not a model field lookup and must be ignored, otherwise
+                ``ChangeList`` raises ``IncorrectLookupParameters``.
+                """
+                result = super().get_filters_params(params)
+                result.pop("_changelist_filters", None)
+                return result
+
             def get_results(self, request):
                 """
                 Overrides ChangeList.get_results() to bypass default operations like
@@ -711,7 +723,7 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
         if not self.has_export_permission(request):
             raise PermissionDenied
 
-        force_native_type = type(file_format) in BINARY_FORMATS
+        force_native_type = type(file_format) in get_binary_formats()
         data = self.get_data_for_export(
             request,
             queryset,

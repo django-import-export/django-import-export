@@ -39,6 +39,22 @@ Breaking changes
   for these values, you may need to update it.
   See `PR 2143 <https://github.com/django-import-export/django-import-export/pull/2143>`_ and
   `issue 2153 <https://github.com/django-import-export/django-import-export/issues/2153>`_.
+  
+* The ``DEFAULT_FORMATS`` and ``BINARY_FORMATS`` module-level constants in ``import_export.formats.base_formats``
+  have been replaced with ``get_default_formats()`` and ``get_binary_formats()`` functions
+  (`#2149 <https://github.com/django-import-export/django-import-export/issues/2149>`_).
+
+  This avoids expensive third-party library imports (openpyxl, xlrd, etc.) at Django startup when formats are
+  disabled via the ``IMPORT_EXPORT_FORMATS`` setting.
+
+  **Migration**: replace::
+
+    from import_export.formats.base_formats import DEFAULT_FORMATS
+
+  with::
+
+    from import_export.formats.base_formats import get_default_formats
+    formats = get_default_formats()
 
 .. _deprecations_v5:
 

@@ -3,7 +3,7 @@ from django.core.management.base import CommandError
 from django.http.response import mimetypes
 from django.utils.module_loading import import_string
 
-from import_export.formats.base_formats import DEFAULT_FORMATS
+from import_export.formats.base_formats import get_default_formats
 from import_export.resources import modelresource_factory
 
 
@@ -30,7 +30,8 @@ def get_resource_class(model_or_resource_class):
     )
 
 
-MIME_TYPE_FORMAT_MAPPING = {format.CONTENT_TYPE: format for format in DEFAULT_FORMATS}
+def get_mime_type_format_mapping():
+    return {format.CONTENT_TYPE: format for format in get_default_formats()}
 
 
 def get_format_class(format_name, file_name, encoding=None):
@@ -67,7 +68,7 @@ def get_format_class(format_name, file_name, encoding=None):
             )
 
         try:
-            format_class = MIME_TYPE_FORMAT_MAPPING[mimetype]
+            format_class = get_mime_type_format_mapping()[mimetype]
             return format_class(encoding=encoding or file_encoding)
         except KeyError:
             raise CommandError(
@@ -77,4 +78,4 @@ def get_format_class(format_name, file_name, encoding=None):
 
 
 def get_default_format_names():
-    return ", ".join([f.__name__ for f in DEFAULT_FORMATS])
+    return ", ".join([f.__name__ for f in get_default_formats()])
