@@ -32,6 +32,14 @@ Breaking changes
   This PR also fixed an issue where field name is used instead of attribute name, which is incorrect.
   If you have enabled ``use_bulk`` for imports then please test and ensure rows are still updated as expected.
 
+* :class:`~import_export.widgets.JSONWidget` previously used truthy checks on values in both ``clean()`` and
+  ``render()``, which meant that valid falsy JSON values such as ``0``, ``False``, ``[]`` and ``{}`` were silently
+  treated as ``None``.  This has been fixed so that these values are now correctly parsed and rendered.
+  If you have any import or export logic which depends on the previous (incorrect) behaviour of returning ``None``
+  for these values, you may need to update it.
+  See `PR 2143 <https://github.com/django-import-export/django-import-export/pull/2143>`_ and
+  `issue 2153 <https://github.com/django-import-export/django-import-export/issues/2153>`_.
+  
 * The ``DEFAULT_FORMATS`` and ``BINARY_FORMATS`` module-level constants in ``import_export.formats.base_formats``
   have been replaced with ``get_default_formats()`` and ``get_binary_formats()`` functions
   (`#2149 <https://github.com/django-import-export/django-import-export/issues/2149>`_).
