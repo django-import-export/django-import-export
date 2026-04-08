@@ -54,7 +54,9 @@ class ImportExportFormBase(FieldNamePrefixMixin, forms.Form):
             (i, resource.get_display_name()) for i, resource in enumerate(resources)
         ]
         if len(resources) == 1:
-            self.fields["resource"].widget = forms.HiddenInput()
+            self.fields["resource"].widget = forms.HiddenInput(
+                attrs={"id": "id_resource"}
+            )
             self.initial["resource"] = "0"
 
     def _init_formats(self, formats):
