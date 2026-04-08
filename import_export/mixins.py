@@ -27,7 +27,7 @@ class BaseImportExportMixin:
 
     @property
     def formats(self):
-        return getattr(settings, "IMPORT_EXPORT_FORMATS", base_formats.DEFAULT_FORMATS)
+        return base_formats.get_default_formats()
 
     @property
     def export_formats(self):

@@ -22,7 +22,7 @@ class ExportViewMixinTest(AdminTestMixin, TestCase):
         self.cat2 = Category.objects.create(name="Cat 2")
         self.resource = modelresource_factory(Category)
         self.form = ExportViewMixinTest.TestExportForm(
-            formats=formats.base_formats.DEFAULT_FORMATS,
+            formats=formats.base_formats.get_default_formats(),
             resources=[self.resource],
         )
         self.form.cleaned_data["format"] = "0"

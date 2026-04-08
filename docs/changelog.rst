@@ -13,6 +13,7 @@ Changelog
 - Fix Admin UI form field name collision for exports (`2108 <https://github.com/django-import-export/django-import-export/pull/2108>`_)
 - Removed the deprecated :meth:`~import_export.admin.ExportMixin.get_valid_export_item_pks` method in favour of :meth:`~import_export.admin.ExportMixin.get_queryset` (`1898 <https://github.com/django-import-export/django-import-export/pull/1898>`_)
 - Refactor bulk updates to use attribute not field (`2145 <https://github.com/django-import-export/django-import-export/issues/2145>`_)
+- Replace ``DEFAULT_FORMATS`` and ``BINARY_FORMATS`` constants with ``get_default_formats()`` and ``get_binary_formats()`` functions to avoid expensive library imports at Django startup (`2149 <https://github.com/django-import-export/django-import-export/issues/2149>`_)
 
 4.4.0 (2026-01-10)
 -------------------
