@@ -1,8 +1,6 @@
 import os
 import sys
 
-import django
-
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -105,10 +103,7 @@ LOGGING = {
 
 USE_TZ = False
 
-if django.VERSION >= (5, 0):
-    FORM_RENDERER = "django.forms.renderers.DjangoTemplates"
-else:
-    FORM_RENDERER = "django.forms.renderers.DjangoDivFormRenderer"
+FORM_RENDERER = "django.forms.renderers.DjangoTemplates"
 
 PASSWORD_HASHERS = [
     "django.contrib.auth.hashers.MD5PasswordHasher",
