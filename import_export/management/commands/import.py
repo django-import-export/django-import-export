@@ -45,7 +45,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "--format",
             help=f"""The data format. If not provided, it will be guessed from the
-            mimetype. You can use a format from DEFAULT_FORMATS ({default_format_names})
+            mimetype. You can use an available format ({default_format_names})
             or specify a custom format class using a dotted path
             (e.g., XLSX or mymodule.CustomCSV).""",
         )

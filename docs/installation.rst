@@ -214,7 +214,7 @@ By default this is ``False``, meaning that ``IllegalCharacterError`` is caught a
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 A list that defines which file formats will be allowed during imports and exports. Defaults
-to ``import_export.formats.base_formats.DEFAULT_FORMATS``.
+to the formats returned by ``import_export.formats.base_formats.get_default_formats()``.
 The values must be those provided in ``import_export.formats.base_formats`` e.g
 
 .. code-block:: python

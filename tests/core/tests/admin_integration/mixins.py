@@ -5,7 +5,7 @@ from core.admin import BookAdmin
 from django.contrib.auth.models import User
 
 from import_export.constants import FORM_FIELD_PREFIX
-from import_export.formats.base_formats import DEFAULT_FORMATS
+from import_export.formats.base_formats import get_default_formats
 
 
 class AdminTestMixin:
@@ -93,14 +93,14 @@ class AdminTestMixin:
             self.assertContains(response, str_in_response)
 
     def _get_input_format_index(self, format):
-        for i, f in enumerate(DEFAULT_FORMATS):
+        for i, f in enumerate(get_default_formats()):
             if f().get_title() == format:
                 xlsx_index = i
                 break
         else:
             raise Exception(
-                "Unable to find %s format. DEFAULT_FORMATS: %r"
-                % (format, DEFAULT_FORMATS)
+                "Unable to find %s format. get_default_formats(): %r"
+                % (format, get_default_formats())
             )
         return xlsx_index
 

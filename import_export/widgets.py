@@ -475,7 +475,7 @@ class JSONWidget(Widget):
         :raises JSONDecodeError: If the value cannot be parsed as JSON.
         """
         val = super().clean(value)
-        if val:
+        if val is not None and val != "":
             try:
                 return json.loads(val)
             except json.decoder.JSONDecodeError:

@@ -930,6 +930,16 @@ class JSONWidgetTest(TestCase):
         self.assertEqual(self.widget.render(None), None)
         self.assertEqual(self.widget.render({"value": None}), '{"value": null}')
 
+    def test_clean_falsy_json_strings(self):
+        self.assertEqual(self.widget.clean("0"), 0)
+        self.assertEqual(self.widget.clean("false"), False)
+        self.assertEqual(self.widget.clean("[]"), [])
+        self.assertEqual(self.widget.clean("{}"), {})
+        self.assertEqual(self.widget.clean('""'), "")
+
+    def test_clean_empty_string(self):
+        self.assertIsNone(self.widget.clean(""))
+
     def test_render_falsy_except_none(self):
         for falsy in [0, "", False, [], {}]:
             rendered = self.widget.render(falsy)
