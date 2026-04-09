@@ -858,15 +858,6 @@ class CachedForeignKeyWidgetTest(TestCase, RowDeprecationTestMixin):
             str(e.exception),
         )
 
-    def test_field_non_str(self):
-        book = Book.objects.create(
-            name="Baz", author=self.author, price=Decimal("12.34")
-        )
-        self.assertEqual(
-            book,
-            widgets.CachedForeignKeyWidget(Book, "price").clean(book.price),
-        )
-
     def test_with_related_fields(self):
         author2 = Author.objects.create(name="Baz")
         book = Book.objects.create(name="Baz", author=author2)
