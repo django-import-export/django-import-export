@@ -9,6 +9,7 @@ from warnings import warn
 import django
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import F
 from django.utils import timezone
 from django.utils.dateparse import parse_duration
 from django.utils.encoding import force_str, smart_str
@@ -16,7 +17,6 @@ from django.utils.formats import number_format, sanitize_separators
 from django.utils.translation import gettext_lazy as _
 
 from import_export.exceptions import WidgetError
-from import_export.utils import get_lookup_value
 
 logger = logging.getLogger(__name__)
 
@@ -704,10 +704,7 @@ class _CachedQuerySetWrapper:
         self._instances = defaultdict(list)
         for instance in queryset:
             key = key_cls(
-                **{
-                    field: get_lookup_value(instance, field)
-                    for field in key_cls._fields
-                }
+                **{field: getattr(instance, field) for field in key_cls._fields}
             )
             self._instances[key].append(instance)
 
@@ -802,6 +799,20 @@ class CachedForeignKeyWidget(ForeignKeyWidget):
     :param use_natural_foreign_keys: Use natural key functions to identify
         related object, default to False
     """
+
+    def contains_relations(self):
+        return "__" in self.field
+
+    def get_queryset(self, value, row, *args, **kwargs):
+        queryset = super().get_queryset(value, row, *args, **kwargs)
+        if self.contains_relations():
+            queryset = queryset.annotate(related_field=F(self.field))
+        return queryset
+
+    def get_lookup_kwargs(self, value, row, **kwargs):
+        if self.contains_relations():
+            return {"related_field": value}
+        return super().get_lookup_kwargs(value, row, **kwargs)
 
     def get_instance_by_lookup_fields(self, value, row, **kwargs):
         if not hasattr(self, "_cached_qs"):

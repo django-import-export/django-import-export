@@ -1,6 +1,6 @@
+from django.core.exceptions import ObjectDoesNotExist
 from django.db.models.fields import NOT_PROVIDED
-
-from import_export.utils import get_lookup_value
+from django.db.models.manager import Manager
 
 from . import widgets
 from .exceptions import FieldError
@@ -99,7 +99,30 @@ class Field:
         """
         Returns the value of the instance's attribute.
         """
-        return get_lookup_value(instance, self.attribute)
+        if self.attribute is None:
+            return None
+
+        attrs = self.attribute.split("__")
+        value = instance
+
+        for attr in attrs:
+            try:
+                if isinstance(value, dict):
+                    value = value[attr]
+                else:
+                    value = getattr(value, attr, None)
+            except (ValueError, ObjectDoesNotExist, KeyError):
+                # needs to have a primary key value before a many-to-many
+                # relationship can be used.
+                return None
+            if value is None:
+                return None
+
+        # RelatedManager and ManyRelatedManager classes are callable in
+        # Django >= 1.7 but we don't want to call them
+        if callable(value) and not isinstance(value, Manager):
+            value = value()
+        return value
 
     def save(self, instance, row, is_m2m=False, **kwargs):
         """
