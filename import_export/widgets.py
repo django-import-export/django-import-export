@@ -806,12 +806,14 @@ class CachedForeignKeyWidget(ForeignKeyWidget):
     def get_queryset(self, value, row, *args, **kwargs):
         queryset = super().get_queryset(value, row, *args, **kwargs)
         if self._contains_relations():
-            queryset = queryset.annotate(related_field=F(self.field))
+            queryset = queryset.annotate(
+                _django_import_export_cached_lookup=F(self.field)
+            )
         return queryset
 
     def get_lookup_kwargs(self, value, row, **kwargs):
         if self._contains_relations():
-            return {"related_field": value}
+            return {"_django_import_export_cached_lookup": value}
         return super().get_lookup_kwargs(value, row, **kwargs)
 
     def get_instance_by_lookup_fields(self, value, row, **kwargs):
