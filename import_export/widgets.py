@@ -4,7 +4,6 @@ import numbers
 from collections import defaultdict, namedtuple
 from datetime import date, datetime, time, timedelta
 from decimal import Decimal
-from warnings import warn
 
 import django
 from django.conf import settings
@@ -85,27 +84,16 @@ class Widget:
         """
         return value
 
-    def render(self, value, obj=None, **kwargs):
+    def render(self, value, **kwargs):
         """
         Returns an export representation of a python value.
 
         :param value: The python value to be rendered.
-        :param obj: The model instance from which the value is taken.
-          This parameter is deprecated and will be removed in a future release.
 
         :return: By default, this value will be a string, with ``None`` values returned
           as empty strings.
         """
         return force_str(value) if value is not None else ""
-
-    def _obj_deprecation_warning(self, obj):
-        if obj is not None:
-            warn(
-                "The 'obj' parameter is deprecated and will be removed "
-                "in a future release",
-                DeprecationWarning,
-                stacklevel=2,
-            )
 
 
 class NumberWidget(Widget):
@@ -119,8 +107,7 @@ class NumberWidget(Widget):
         # 0 is not empty
         return value is None or value == ""
 
-    def render(self, value, obj=None, **kwargs):
-        self._obj_deprecation_warning(obj)
+    def render(self, value, **kwargs):
         if self.coerce_to_string and not kwargs.get("force_native_type"):
             return (
                 ""
@@ -226,8 +213,7 @@ class CharWidget(Widget):
             return "" if self.allow_blank is True else None
         return force_str(val)
 
-    def render(self, value, obj=None, **kwargs):
-        self._obj_deprecation_warning(obj)
+    def render(self, value, **kwargs):
         if self.coerce_to_string:
             return "" if value is None else force_str(value)
         return value
@@ -273,7 +259,7 @@ class BooleanWidget(Widget):
             return None
         return True if value in self.TRUE_VALUES else False
 
-    def render(self, value, obj=None, **kwargs):
+    def render(self, value, **kwargs):
         """
         :return: ``True`` is represented as ``1``, ``False`` as ``0``, and
           ``None``/NULL as an empty string.
@@ -281,7 +267,6 @@ class BooleanWidget(Widget):
           If ``coerce_to_string`` is ``False``, the python Boolean type is
           returned (may be ``None``).
         """
-        self._obj_deprecation_warning(obj)
         if self.coerce_to_string and not kwargs.get("force_native_type"):
             if value in self.NULL_VALUES or not type(value) is bool:
                 return ""
@@ -319,8 +304,7 @@ class DateWidget(_ParseDateTimeMixin, Widget):
         """
         return self._parse_value(value, date)
 
-    def render(self, value, obj=None, **kwargs):
-        self._obj_deprecation_warning(obj)
+    def render(self, value, **kwargs):
         if self.coerce_to_string is False or kwargs.get("force_native_type"):
             return value
         if not value or not isinstance(value, date):
@@ -356,8 +340,7 @@ class DateTimeWidget(_ParseDateTimeMixin, Widget):
             return timezone.make_aware(dt)
         return dt
 
-    def render(self, value, obj=None, **kwargs):
-        self._obj_deprecation_warning(obj)
+    def render(self, value, **kwargs):
         if not value or not isinstance(value, datetime):
             return ""
         if settings.USE_TZ:
@@ -391,8 +374,7 @@ class TimeWidget(_ParseDateTimeMixin, Widget):
         """
         return self._parse_value(value, time)
 
-    def render(self, value, obj=None, **kwargs):
-        self._obj_deprecation_warning(obj)
+    def render(self, value, **kwargs):
         if self.coerce_to_string is False or kwargs.get("force_native_type"):
             return value
         if not value or not isinstance(value, time):
@@ -419,8 +401,7 @@ class DurationWidget(Widget):
             logger.debug(str(e))
             raise ValueError(_("Value could not be parsed."))
 
-    def render(self, value, obj=None, **kwargs):
-        self._obj_deprecation_warning(obj)
+    def render(self, value, **kwargs):
         if self.coerce_to_string is False or kwargs.get("force_native_type"):
             return value
         if value is None or not type(value) is timedelta:
@@ -456,14 +437,13 @@ class SimpleArrayWidget(Widget):
         """
         return value.split(self.separator) if value else []
 
-    def render(self, value, obj=None, **kwargs):
+    def render(self, value, **kwargs):
         """
         :return: A string with values separated by ``separator``.
           If ``coerce_to_string`` is ``False``, the native array will be returned.
           If ``value`` is None, None will be returned if ``coerce_to_string``
             is ``False``, otherwise an empty string will be returned.
         """
-        self._obj_deprecation_warning(obj)
         if value is None:
             return "" if self.coerce_to_string is True else None
         if not self.coerce_to_string:
@@ -501,12 +481,11 @@ class JSONWidget(Widget):
             except json.decoder.JSONDecodeError:
                 return json.loads(val.replace("'", '"'))
 
-    def render(self, value, obj=None, **kwargs):
+    def render(self, value, **kwargs):
         """
         :return: A JSON formatted string derived from ``value``.
           ``coerce_to_string`` has no effect on the return value.
         """
-        self._obj_deprecation_warning(obj)
         if value is None:
             return None
         return json.dumps(value)
@@ -644,13 +623,12 @@ class ForeignKeyWidget(Widget):
         """
         return {self.field: value}
 
-    def render(self, value, obj=None, **kwargs):
+    def render(self, value, **kwargs):
         """
         :return: A string representation of the related value.
           If ``use_natural_foreign_keys``, the value's natural key is returned.
           ``coerce_to_string`` has no effect on the return value.
         """
-        self._obj_deprecation_warning(obj)
 
         if self.key_is_id:
             return value or ""
@@ -852,13 +830,12 @@ class ManyToManyWidget(Widget):
             ids = filter(None, [i.strip() for i in ids])
         return self.model.objects.filter(**{"%s__in" % self.field: ids})
 
-    def render(self, value, obj=None, **kwargs):
+    def render(self, value, **kwargs):
         """
         :return: A string with values separated by ``separator``.
           ``None`` values are returned as empty strings.
           ``coerce_to_string`` has no effect on the return value.
         """
-        self._obj_deprecation_warning(obj)
         if value is not None:
             ids = [smart_str(getattr(obj, self.field)) for obj in value.all()]
             return self.separator.join(ids)

@@ -9,7 +9,6 @@ import tablib
 from core.admin import BookAdmin, BookResource, EBookResource
 from core.models import Author, Book, EBook, UUIDCategory
 from core.tests.admin_integration.mixins import AdminTestMixin
-from core.tests.utils import ignore_utcnow_deprecation_warning
 from django import forms
 from django.contrib.admin.sites import AdminSite
 from django.contrib.admin.views.main import ChangeList
@@ -295,7 +294,6 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         )
 
-    @ignore_utcnow_deprecation_warning
     @override_settings(IMPORT_EXPORT_ESCAPE_FORMULAE_ON_EXPORT=True)
     def test_export_escape_formulae(self):
         Book.objects.create(id=1, name="=SUM(1+1)")
@@ -484,7 +482,6 @@ class TestExportEncoding(TestCase):
                 encoding="bad-encoding",
             )
 
-    @ignore_utcnow_deprecation_warning
     def test_to_encoding_not_set_for_binary_file(self):
         self.export_mixin = self.TestMixin(test_str="teststr")
         self.file_format = formats.base_formats.XLSX()

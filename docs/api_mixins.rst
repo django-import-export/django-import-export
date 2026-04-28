@@ -21,15 +21,3 @@ BaseExportMixin
 
 .. autoclass:: import_export.mixins.BaseExportMixin
    :members:
-
-ExportViewMixin
----------------
-
-.. autoclass:: import_export.mixins.ExportViewMixin
-   :members:
-
-ExportViewFormMixin
--------------------
-
-.. autoclass:: import_export.mixins.ExportViewFormMixin
-   :members:

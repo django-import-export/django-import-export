@@ -3,7 +3,6 @@
 # e.g. add openpyxl imports to the XLSXFormat class
 # See issue 2004
 import logging
-import warnings
 from functools import lru_cache
 
 import tablib
@@ -226,24 +225,18 @@ class XLSX(TablibFormat):
     def export_data(self, dataset, **kwargs):
         from openpyxl.utils.exceptions import IllegalCharacterError
 
-        # #1698 temporary catch for deprecation warning in openpyxl
-        # this catch block must be removed when openpyxl updated
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", category=DeprecationWarning)
-            try:
+        try:
+            return super().export_data(dataset, **kwargs)
+        except IllegalCharacterError as e:
+            if (
+                getattr(settings, "IMPORT_EXPORT_ESCAPE_ILLEGAL_CHARS_ON_EXPORT", False)
+                is True
+            ):
+                self._escape_illegal_chars(dataset)
                 return super().export_data(dataset, **kwargs)
-            except IllegalCharacterError as e:
-                if (
-                    getattr(
-                        settings, "IMPORT_EXPORT_ESCAPE_ILLEGAL_CHARS_ON_EXPORT", False
-                    )
-                    is True
-                ):
-                    self._escape_illegal_chars(dataset)
-                    return super().export_data(dataset, **kwargs)
-                logger.exception(e)
-                # not raising original error due to reflected xss risk
-                raise ValueError(_("export failed due to IllegalCharacterError"))
+            logger.exception(e)
+            # not raising original error due to reflected xss risk
+            raise ValueError(_("export failed due to IllegalCharacterError"))
 
     def _escape_illegal_chars(self, dataset):
         from openpyxl.cell.cell import ILLEGAL_CHARACTERS_RE
