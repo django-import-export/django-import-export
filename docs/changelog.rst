@@ -8,6 +8,7 @@ Changelog
 5.0.0 (unreleased)
 ------------------
 
+- Paginate the admin import preview to limit the number of dry-run rows rendered for large imports, controlled by the new ``IMPORT_EXPORT_PREVIEW_PAGE_SIZE`` setting (default ``100``) (`2148 <https://github.com/django-import-export/django-import-export/issues/2148>`_)
 - Fixed issue where export forms were incorrectly showing import fields instead of export fields (`2118 <https://github.com/django-import-export/django-import-export/pull/2118>`_)
 - Add support for Django 6.0, remove support for Python 3.9 (`2112 <https://github.com/django-import-export/django-import-export/pull/2112>`_)
 - Fix Admin UI form field name collision for exports (`2108 <https://github.com/django-import-export/django-import-export/pull/2108>`_)
