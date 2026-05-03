@@ -92,7 +92,12 @@
         </li>
         {% endfor %}
         {% block import_error_list %}
-        {% for line, errors in result.row_errors %}
+        {% if preview_total_row_errors > preview_page_size %}
+          <li class="paginator">
+            {% blocktranslate with shown=preview_page_size total=preview_total_row_errors %}Showing first {{ shown }} of {{ total }} rows. All rows will be processed when you confirm the import.{% endblocktranslate %}
+          </li>
+        {% endif %}
+        {% for line, errors in preview_row_errors %}
           {% for error in errors %}
             {% block import_error_list_item %}
             <li class="import-error-li">
@@ -120,6 +125,12 @@
 
       <p>{% translate "Please correct these errors in your data where possible, then reupload it using the form above." %}</p>
 
+      {% if preview_total_invalid_rows > preview_page_size %}
+        <p class="paginator">
+          {% blocktranslate with shown=preview_page_size total=preview_total_invalid_rows %}Showing first {{ shown }} of {{ total }} rows. All rows will be processed when you confirm the import.{% endblocktranslate %}
+        </p>
+      {% endif %}
+
       <table class="import-preview">
         <thead>
           <tr>
@@ -131,7 +142,7 @@
           </tr>
         </thead>
         <tbody>
-        {% for row in result.invalid_rows %}
+        {% for row in preview_invalid_rows %}
           <tr>
             <td>{{ row.number }} </td>
             <td class="errors">
@@ -175,6 +186,12 @@
       {% block preview %}
       <h2>{% translate "Preview" %}</h2>
 
+      {% if preview_total_valid_rows > preview_page_size %}
+        <p class="paginator">
+          {% blocktranslate with shown=preview_page_size total=preview_total_valid_rows %}Showing first {{ shown }} of {{ total }} rows. All rows will be processed when you confirm the import.{% endblocktranslate %}
+        </p>
+      {% endif %}
+
       <table class="import-preview">
         <thead>
           <tr>
@@ -184,7 +201,7 @@
             {% endfor %}
           </tr>
         </thead>
-        {% for row in result.valid_rows %}
+        {% for row in preview_valid_rows %}
           <tr class="{{ row.import_type }}">
             <td class="import-type">
               {% if row.import_type == 'new' %}

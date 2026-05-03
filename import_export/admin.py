@@ -518,6 +518,9 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
                 resource_class(**res_kwargs) for resource_class in resource_classes
             ]
 
+        if "result" in context:
+            self._add_preview_pagination_context(context)
+
         context.update(self.admin_site.each_context(request))
 
         context["title"] = _("Import")
@@ -535,6 +538,23 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
 
         request.current_app = self.admin_site.name
         return TemplateResponse(request, [self.import_template_name], context)
+
+    def _add_preview_pagination_context(self, context):
+        # Limit how many dry-run rows are rendered in the import preview
+        # tables, so large imports do not generate megabytes of HTML.
+        # The full Result is left untouched: confirm/process still uses
+        # every row from the original tmp_storage file.
+        page_size = getattr(settings, "IMPORT_EXPORT_PREVIEW_PAGE_SIZE", 100)
+        result = context["result"]
+        valid_rows = result.valid_rows()
+        row_errors = result.row_errors()
+        context["preview_page_size"] = page_size
+        context["preview_valid_rows"] = valid_rows[:page_size]
+        context["preview_total_valid_rows"] = len(valid_rows)
+        context["preview_invalid_rows"] = result.invalid_rows[:page_size]
+        context["preview_total_invalid_rows"] = len(result.invalid_rows)
+        context["preview_row_errors"] = row_errors[:page_size]
+        context["preview_total_row_errors"] = len(row_errors)
 
     def changelist_view(self, request, extra_context=None):
         if extra_context is None:

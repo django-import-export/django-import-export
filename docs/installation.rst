@@ -139,6 +139,21 @@ decreasing it, or speed up exports by increasing it.
 Can be overridden on a ``Resource`` class by setting the ``chunk_size`` class
 attribute.
 
+.. _import_export_preview_page_size:
+
+``IMPORT_EXPORT_PREVIEW_PAGE_SIZE``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+An integer that limits how many rows are rendered in the admin import
+preview tables (the dry-run preview, the validation-error preview, and the
+critical-error preview). Defaults to ``100``.
+
+The setting only affects what is rendered on the confirmation screen; the
+dry-run still processes the entire file, and the confirm step still imports
+every row from the original upload. When the upload contains more rows than
+the configured page size, a notice is shown above the table indicating how
+many rows are hidden.
+
 .. _import_export_skip_admin_confirm:
 
 ``IMPORT_EXPORT_SKIP_ADMIN_CONFIRM``
