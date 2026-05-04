@@ -9,6 +9,7 @@ from warnings import warn
 import django
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import F
 from django.utils import timezone
 from django.utils.dateparse import parse_duration
 from django.utils.encoding import force_str, smart_str
@@ -798,6 +799,22 @@ class CachedForeignKeyWidget(ForeignKeyWidget):
     :param use_natural_foreign_keys: Use natural key functions to identify
         related object, default to False
     """
+
+    def _contains_relations(self):
+        return "__" in self.field
+
+    def get_queryset(self, value, row, *args, **kwargs):
+        queryset = super().get_queryset(value, row, *args, **kwargs)
+        if self._contains_relations():
+            queryset = queryset.annotate(
+                django_import_export_cached_lookup=F(self.field)
+            )
+        return queryset
+
+    def get_lookup_kwargs(self, value, row, **kwargs):
+        if self._contains_relations():
+            return {"django_import_export_cached_lookup": value}
+        return super().get_lookup_kwargs(value, row, **kwargs)
 
     def get_instance_by_lookup_fields(self, value, row, **kwargs):
         if not hasattr(self, "_cached_qs"):
