@@ -676,6 +676,10 @@ class CachedForeignKeyWidgetTest(TestCase):
     def test_clean(self):
         self.assertEqual(self.widget.clean(self.author.id), self.author)
 
+    def test_clean_with_string_pk(self):
+        """Ensure lookup works when value is a string (as from CSV import)."""
+        self.assertEqual(self.widget.clean(str(self.author.id)), self.author)
+
     def test_clean_empty(self):
         self.assertEqual(self.widget.clean(""), None)
 

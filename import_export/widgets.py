@@ -681,7 +681,7 @@ class _CachedQuerySetWrapper:
         self._instances = defaultdict(list)
         for instance in queryset:
             key = key_cls(
-                **{field: getattr(instance, field) for field in key_cls._fields}
+                **{field: str(getattr(instance, field)) for field in key_cls._fields}
             )
             self._instances[key].append(instance)
 
@@ -691,7 +691,7 @@ class _CachedQuerySetWrapper:
         Key = namedtuple("Key", list(lookup_fields.keys()))
 
         instances = self._get_instances(self.queryset, Key)
-        key = Key(**lookup_fields)
+        key = Key(**{k: str(v) for k, v in lookup_fields.items()})
         result = instances.get(key, [])
 
         if len(result) == 1:
