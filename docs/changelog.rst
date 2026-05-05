@@ -15,6 +15,14 @@ Changelog
 - Refactor bulk updates to use attribute not field (`2145 <https://github.com/django-import-export/django-import-export/issues/2145>`_)
 - Replace ``DEFAULT_FORMATS`` and ``BINARY_FORMATS`` constants with ``get_default_formats()`` and ``get_binary_formats()`` functions to avoid expensive library imports at Django startup (`2149 <https://github.com/django-import-export/django-import-export/issues/2149>`_)
 
+4.4.1 (2026-05-05)
+-------------------
+
+- Refactor lookup value retrieval in Field and CachedForeignKeyWidget (`2146 <https://github.com/django-import-export/django-import-export/pull/2146>`_)
+- Fix IncorrectLookupParameters when exporting from filtered change view (`2154 <https://github.com/django-import-export/django-import-export/pull/2154>`_)
+- Fix console error 'resource select input not found' on export (`2158 <https://github.com/django-import-export/django-import-export/pull/2158>`_)
+- Fix CachedForeignKeyWidget type mismatch on non-string lookup fields (`2159 <https://github.com/django-import-export/django-import-export/pull/2159>`_)
+
 4.4.0 (2026-01-10)
 -------------------
 
