@@ -144,15 +144,16 @@ attribute.
 ``IMPORT_EXPORT_PREVIEW_PAGE_SIZE``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-An integer that limits how many rows are rendered in the admin import
-preview tables (the dry-run preview, the validation-error preview, and the
-critical-error preview). Defaults to ``100``.
+An integer that sets the page size of the admin import preview tables (the
+dry-run preview, the validation-error preview, and the critical-error
+preview). Defaults to ``100``.
 
 The setting only affects what is rendered on the confirmation screen; the
 dry-run still processes the entire file, and the confirm step still imports
 every row from the original upload. When the upload contains more rows than
-the configured page size, a notice is shown above the table indicating how
-many rows are hidden.
+the configured page size, a Django paginator nav (``Previous`` / ``Page X of
+Y`` / ``Next``) is rendered above the table so admins can page through every
+row before confirming the import.
 
 .. _import_export_skip_admin_confirm:
 
