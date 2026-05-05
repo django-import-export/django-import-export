@@ -9,6 +9,8 @@ Changelog
 -------------------
 
 - Refactor lookup value retrieval in Field and CachedForeignKeyWidget (`2146 <https://github.com/django-import-export/django-import-export/pull/2146>`_)
+- Fix IncorrectLookupParameters when exporting from filtered change view (`2154 <https://github.com/django-import-export/django-import-export/pull/2154>`_)
+- Fix console error 'resource select input not found' on export (`2158 <https://github.com/django-import-export/django-import-export/pull/2158>`_)
 - Fix CachedForeignKeyWidget type mismatch on non-string lookup fields (`2159 <https://github.com/django-import-export/django-import-export/pull/2159>`_)
 
 4.4.0 (2026-01-10)
