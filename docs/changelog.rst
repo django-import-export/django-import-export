@@ -5,6 +5,12 @@ Changelog
 
     If upgrading from v3, v4 introduces breaking changes.  Please refer to :doc:`release notes<release_notes>`.
 
+4.4.1 (2026-05-05)
+-------------------
+
+- Refactor lookup value retrieval in Field and CachedForeignKeyWidget (`2146 <https://github.com/django-import-export/django-import-export/pull/2146>`_)
+- Fix CachedForeignKeyWidget type mismatch on non-string lookup fields (`2159 <https://github.com/django-import-export/django-import-export/pull/2159>`_)
+
 4.4.0 (2026-01-10)
 -------------------
 
