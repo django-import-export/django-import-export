@@ -752,6 +752,14 @@ class CachedForeignKeyWidget(ForeignKeyWidget):
                     else:
                         return {self.field: value, 'inactive': True}
 
+    - It does not support complex lookups like ``__gt`` or ``__lt`` in the
+    ``get_lookup_kwargs()``.
+      For example, the following code won't work::
+
+            class BookForeignKeyWidget(CachedForeignKeyWidget):
+                def get_lookup_kwargs(self, value, row, **kwargs):
+                    return {f'{self.field}__gt': value}
+
     :param model: The Model the ForeignKey refers to (required).
     :param field: A field on the related model used for looking up a particular
         object.
