@@ -752,24 +752,13 @@ class CachedForeignKeyWidget(ForeignKeyWidget):
                     else:
                         return {self.field: value, 'inactive': True}
 
-    - It performs lookup on Python side, so the filtering logic
-      with non-text data types may not work::
-
-            class MultiColumnForeignKeyWidget(CachedForeignKeyWidget):
-                def get_lookup_kwargs(self, value, row, **kwargs):
-                    # row['birthday'] is a string like '01-01-2000'.
-                    #
-                    # It won't match the instance because the birthday values
-                    # in the cached instances are datetime objects, not strings.
-                    return {self.field: value, 'birthday': row['birthday']}
-
-    - It does not support complex lookups like ``__gt``, ``__lt``,
-      or filtering over relationships in the ``get_lookup_kwargs()``.
+    - It does not support complex lookups like ``__gt`` or ``__lt`` in the
+    ``get_lookup_kwargs()``.
       For example, the following code won't work::
 
             class BookForeignKeyWidget(CachedForeignKeyWidget):
                 def get_lookup_kwargs(self, value, row, **kwargs):
-                    return {f'{self.field}__author': value}
+                    return {f'{self.field}__gt': value}
 
     :param model: The Model the ForeignKey refers to (required).
     :param field: A field on the related model used for looking up a particular
