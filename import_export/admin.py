@@ -888,6 +888,10 @@ class ExportActionMixin(ExportMixin):
             )
         return super().response_change(request, obj)
 
+    def get_export_form_kwargs(self, request, **kwargs):
+        """Override add/update form kwargs if needed."""
+        return kwargs
+
     def export_admin_action(self, request, queryset):
         """
         Action runs on POST from instance action menu (if enabled).
@@ -898,13 +902,16 @@ class ExportActionMixin(ExportMixin):
             return self._do_file_export(file_format, request, queryset)
 
         form_type = self.get_export_form_class()
-        formats = self.get_export_formats()
         export_items = list(queryset.values_list("pk", flat=True))
         export_items_str = ",".join([str(pk) for pk in export_items])
-        form = form_type(
-            formats=formats,
+        form_kwargs = self.get_export_form_kwargs(
+            request,
+            formats=self.get_export_formats(),
             resources=self.get_export_resource_classes(request),
+        )
+        form = form_type(
             initial={"export_items": export_items_str},
+            **form_kwargs,
         )
         # selected items are to be stored as a hidden input on the form
         form.fields["export_items"] = CharField(
