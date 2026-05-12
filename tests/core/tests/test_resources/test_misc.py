@@ -49,3 +49,17 @@ class ResourcesHelperFunctionsTest(TestCase):
 
         for model, expected_result in cases.items():
             self.assertEqual(resources.has_natural_foreign_key(model), expected_result)
+
+
+class ResourceSubscriptTest(TestCase):
+    def test_resource_is_subscriptable(self):
+        alias = resources.ModelResource[Book]
+        self.assertEqual(alias.__origin__, resources.ModelResource)
+        self.assertEqual(alias.__args__, (Book,))
+
+    def test_subclass_can_subscript_resource_base(self):
+        class BookResource(resources.ModelResource[Book]):
+            class Meta:
+                model = Book
+
+        self.assertTrue(issubclass(BookResource, resources.ModelResource))
