@@ -1,5 +1,6 @@
 import functools
 import logging
+import types
 from collections import OrderedDict
 from copy import deepcopy
 from html import escape
@@ -72,6 +73,10 @@ class Resource(metaclass=DeclarativeMetaclass):
     Resource defines how objects are mapped to their import and export
     representations and handle importing and exporting data.
     """
+
+    # Allow ``Resource[Model]`` subscription so resources can be parameterised
+    # with the model they operate on (used for typing).
+    __class_getitem__ = classmethod(types.GenericAlias)
 
     def __init__(self, **kwargs):
         """
