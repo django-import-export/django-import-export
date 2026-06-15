@@ -69,3 +69,35 @@ class CachedInstanceLoaderWithAbsentImportIdFieldTest(TestCase):
     def test_get_instance(self):
         obj = self.instance_loader.get_instance(self.dataset.dict[0])
         self.assertEqual(obj, None)
+
+
+class CachedInstanceLoaderDuplicateImportIdTest(TestCase):
+    """When the import id matches more than one row, ``CachedInstanceLoader``
+    must raise ``MultipleObjectsReturned`` instead of silently returning one of
+    them, consistent with ``ModelInstanceLoader`` (#2162).
+    """
+
+    def setUp(self):
+        self.resource = resources.modelresource_factory(Book)()
+        self.resource._meta.import_id_fields = ["name"]
+        self.dataset = tablib.Dataset(headers=["id", "name", "author_email"])
+        # Two existing rows share the same import id ("name").
+        Book.objects.create(name="Dup")
+        Book.objects.create(name="Dup")
+        self.dataset.append(["", "Dup", "test@example.com"])
+
+    def test_cached_loader_raises_for_duplicate_import_id(self):
+        instance_loader = instance_loaders.CachedInstanceLoader(
+            self.resource, self.dataset
+        )
+        with self.assertRaises(Book.MultipleObjectsReturned):
+            instance_loader.get_instance(self.dataset.dict[0])
+
+    def test_model_loader_raises_for_duplicate_import_id(self):
+        # Documents the behavior that CachedInstanceLoader is made consistent
+        # with: the uncached loader already raises here.
+        instance_loader = instance_loaders.ModelInstanceLoader(
+            self.resource, self.dataset
+        )
+        with self.assertRaises(Book.MultipleObjectsReturned):
+            instance_loader.get_instance(self.dataset.dict[0])
