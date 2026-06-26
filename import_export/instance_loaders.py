@@ -73,8 +73,8 @@ class CachedInstanceLoader(ModelInstanceLoader):
             if key in self._duplicate_ids:
                 model = self.resource._meta.model
                 raise model.MultipleObjectsReturned(
-                    "get() returned more than one %s -- the import id "
-                    "matches multiple objects." % model.__name__
+                    "CachedInstanceLoader found multiple %s objects for import id "
+                    "%s=%r." % (model.__name__, self.pk_field.attribute, key)
                 )
             return self.all_instances.get(key)
         return None

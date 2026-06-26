@@ -90,8 +90,20 @@ class CachedInstanceLoaderDuplicateImportIdTest(TestCase):
         instance_loader = instance_loaders.CachedInstanceLoader(
             self.resource, self.dataset
         )
-        with self.assertRaises(Book.MultipleObjectsReturned):
+        with self.assertRaisesMessage(
+            Book.MultipleObjectsReturned,
+            "CachedInstanceLoader found multiple Book objects for import id "
+            "name='Dup'.",
+        ):
             instance_loader.get_instance(self.dataset.dict[0])
+
+    def test_cached_loader_returns_unique_import_id_match(self):
+        book = Book.objects.create(name="Unique")
+        dataset = tablib.Dataset(headers=["id", "name", "author_email"])
+        dataset.append(["", "Unique", "test@example.com"])
+        instance_loader = instance_loaders.CachedInstanceLoader(self.resource, dataset)
+
+        self.assertEqual(instance_loader.get_instance(dataset.dict[0]), book)
 
     def test_model_loader_raises_for_duplicate_import_id(self):
         # Documents the behavior that CachedInstanceLoader is made consistent
