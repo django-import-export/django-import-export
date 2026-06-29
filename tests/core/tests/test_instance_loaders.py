@@ -93,9 +93,13 @@ class CachedInstanceLoaderDuplicateImportIdTest(TestCase):
         with self.assertRaisesMessage(
             Book.MultipleObjectsReturned,
             "CachedInstanceLoader found multiple Book objects for import id "
-            "name='Dup'.",
-        ):
+            "field 'name'.",
+        ) as cm:
             instance_loader.get_instance(self.dataset.dict[0])
+        # The user-supplied import id value must not leak into the message: it
+        # could otherwise end up in logs that render it unescaped. Only the
+        # configured field name (not the row value) is reported.
+        self.assertNotIn("Dup", str(cm.exception))
 
     def test_cached_loader_returns_unique_import_id_match(self):
         book = Book.objects.create(name="Unique")

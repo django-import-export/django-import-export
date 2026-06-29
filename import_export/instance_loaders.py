@@ -74,7 +74,7 @@ class CachedInstanceLoader(ModelInstanceLoader):
                 model = self.resource._meta.model
                 raise model.MultipleObjectsReturned(
                     "CachedInstanceLoader found multiple %s objects for import id "
-                    "%s=%r." % (model.__name__, self.pk_field.attribute, key)
+                    "field %r." % (model.__name__, self.pk_field.attribute)
                 )
             return self.all_instances.get(key)
         return None
