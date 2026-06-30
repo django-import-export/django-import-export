@@ -92,7 +92,18 @@
         </li>
         {% endfor %}
         {% block import_error_list %}
-        {% for line, errors in result.row_errors %}
+        {% if preview_errors_page.paginator.num_pages > 1 %}
+          <li class="paginator">
+            {% if preview_errors_page.has_previous %}
+              <a href="?{{ preview_query_base }}&errors_page={{ preview_errors_page.previous_page_number }}">{% translate "Previous" %}</a>
+            {% endif %}
+            {% blocktranslate with current=preview_errors_page.number total=preview_errors_page.paginator.num_pages count=preview_errors_page.paginator.count %}Page {{ current }} of {{ total }} ({{ count }} rows){% endblocktranslate %}
+            {% if preview_errors_page.has_next %}
+              <a href="?{{ preview_query_base }}&errors_page={{ preview_errors_page.next_page_number }}">{% translate "Next" %}</a>
+            {% endif %}
+          </li>
+        {% endif %}
+        {% for line, errors in preview_errors_page %}
           {% for error in errors %}
             {% block import_error_list_item %}
             <li class="import-error-li">
@@ -120,6 +131,18 @@
 
       <p>{% translate "Please correct these errors in your data where possible, then reupload it using the form above." %}</p>
 
+      {% if preview_invalid_page.paginator.num_pages > 1 %}
+        <p class="paginator">
+          {% if preview_invalid_page.has_previous %}
+            <a href="?{{ preview_query_base }}&invalid_page={{ preview_invalid_page.previous_page_number }}">{% translate "Previous" %}</a>
+          {% endif %}
+          {% blocktranslate with current=preview_invalid_page.number total=preview_invalid_page.paginator.num_pages count=preview_invalid_page.paginator.count %}Page {{ current }} of {{ total }} ({{ count }} rows){% endblocktranslate %}
+          {% if preview_invalid_page.has_next %}
+            <a href="?{{ preview_query_base }}&invalid_page={{ preview_invalid_page.next_page_number }}">{% translate "Next" %}</a>
+          {% endif %}
+        </p>
+      {% endif %}
+
       <table class="import-preview">
         <thead>
           <tr>
@@ -131,7 +154,7 @@
           </tr>
         </thead>
         <tbody>
-        {% for row in result.invalid_rows %}
+        {% for row in preview_invalid_page %}
           <tr>
             <td>{{ row.number }} </td>
             <td class="errors">
@@ -175,6 +198,18 @@
       {% block preview %}
       <h2>{% translate "Preview" %}</h2>
 
+      {% if preview_valid_page.paginator.num_pages > 1 %}
+        <p class="paginator">
+          {% if preview_valid_page.has_previous %}
+            <a href="?{{ preview_query_base }}&valid_page={{ preview_valid_page.previous_page_number }}">{% translate "Previous" %}</a>
+          {% endif %}
+          {% blocktranslate with current=preview_valid_page.number total=preview_valid_page.paginator.num_pages count=preview_valid_page.paginator.count %}Page {{ current }} of {{ total }} ({{ count }} rows){% endblocktranslate %}
+          {% if preview_valid_page.has_next %}
+            <a href="?{{ preview_query_base }}&valid_page={{ preview_valid_page.next_page_number }}">{% translate "Next" %}</a>
+          {% endif %}
+        </p>
+      {% endif %}
+
       <table class="import-preview">
         <thead>
           <tr>
@@ -184,7 +219,7 @@
             {% endfor %}
           </tr>
         </thead>
-        {% for row in result.valid_rows %}
+        {% for row in preview_valid_page %}
           <tr class="{{ row.import_type }}">
             <td class="import-type">
               {% if row.import_type == 'new' %}

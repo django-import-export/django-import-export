@@ -1,4 +1,5 @@
 import logging
+import os
 from urllib.parse import urlencode
 
 from django.conf import settings
@@ -6,6 +7,7 @@ from django.contrib import admin, messages
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION, LogEntry
 from django.contrib.auth import get_permission_codename
 from django.core.exceptions import FieldError, PermissionDenied
+from django.core.paginator import Paginator
 from django.forms import MultipleChoiceField, MultipleHiddenInput
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
@@ -504,11 +506,23 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
                         **imp_kwargs,
                     )
                     context["result"] = result
+                    context["preview_query_base"] = urlencode(
+                        {
+                            "import_file_name": tmp_storage.name,
+                            "original_file_name": import_file.name,
+                            "format": import_form.cleaned_data["format"],
+                            "resource": import_form.cleaned_data.get("resource", ""),
+                        }
+                    )
 
                     if not result.has_errors() and not result.has_validation_errors():
                         context["confirm_form"] = self.create_confirm_form(
                             request, import_form=import_form
                         )
+        elif self._is_preview_pagination_request(request):
+            resources = self._handle_preview_pagination_get(
+                request, context, import_formats, kwargs
+            )
         else:
             res_kwargs = self.get_import_resource_kwargs(
                 request=request, form=import_form, **kwargs
@@ -517,6 +531,9 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
             resources = [
                 resource_class(**res_kwargs) for resource_class in resource_classes
             ]
+
+        if "result" in context:
+            self._add_preview_pagination_context(request, context)
 
         context.update(self.admin_site.each_context(request))
 
@@ -535,6 +552,114 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
 
         request.current_app = self.admin_site.name
         return TemplateResponse(request, [self.import_template_name], context)
+
+    def _add_preview_pagination_context(self, request, context):
+        # Paginate the dry-run preview so large imports do not render every
+        # row at once, while still letting admins navigate every page. The
+        # full Result is left untouched: confirm/process still imports every
+        # row from the original tmp_storage file.
+        page_size = getattr(settings, "IMPORT_EXPORT_PREVIEW_PAGE_SIZE", 100)
+        result = context["result"]
+
+        valid_paginator = Paginator(result.valid_rows(), page_size)
+        invalid_paginator = Paginator(result.invalid_rows, page_size)
+        errors_paginator = Paginator(result.row_errors(), page_size)
+
+        context["preview_page_size"] = page_size
+        context["preview_valid_page"] = valid_paginator.get_page(
+            request.GET.get("valid_page")
+        )
+        context["preview_invalid_page"] = invalid_paginator.get_page(
+            request.GET.get("invalid_page")
+        )
+        context["preview_errors_page"] = errors_paginator.get_page(
+            request.GET.get("errors_page")
+        )
+
+    def _is_preview_pagination_request(self, request):
+        if request.method != "GET":
+            return False
+        page_params = ("valid_page", "invalid_page", "errors_page")
+        if not any(p in request.GET for p in page_params):
+            return False
+        return "import_file_name" in request.GET and "format" in request.GET
+
+    def _handle_preview_pagination_get(self, request, context, import_formats, kwargs):
+        # Re-derive the dry-run Result from the tmp_storage file written
+        # during the original upload, so that GET-based page navigation
+        # can render any preview page without re-uploading the file.
+        try:
+            format_idx = int(request.GET["format"])
+        except (KeyError, ValueError):
+            return []
+
+        try:
+            input_format = import_formats[format_idx]()
+        except IndexError:
+            return []
+
+        if not input_format.is_binary():
+            input_format.encoding = self.from_encoding
+        encoding = None if input_format.is_binary() else self.from_encoding
+
+        tmp_storage_cls = self.get_tmp_storage_class()
+        tmp_storage = tmp_storage_cls(
+            name=os.path.basename(request.GET["import_file_name"]),
+            encoding=encoding,
+            read_mode=input_format.get_read_mode(),
+            **self.get_tmp_storage_class_kwargs(),
+        )
+        try:
+            data = tmp_storage.read()
+            dataset = input_format.create_dataset(data)
+        except Exception:
+            return []
+
+        res_kwargs = self.get_import_resource_kwargs(request, **kwargs)
+        resource_classes = self.get_import_resource_classes(request)
+        resource_idx_str = request.GET.get("resource", "") or ""
+        try:
+            resource_idx = int(resource_idx_str) if resource_idx_str else 0
+        except ValueError:
+            resource_idx = 0
+        try:
+            resource = resource_classes[resource_idx](**res_kwargs)
+        except IndexError:
+            return []
+
+        imp_kwargs = self.get_import_data_kwargs(request=request, **kwargs)
+        original_file_name = request.GET.get("original_file_name", "")
+
+        result = resource.import_data(
+            dataset,
+            dry_run=True,
+            raise_errors=False,
+            file_name=original_file_name,
+            user=request.user,
+            **imp_kwargs,
+        )
+        context["result"] = result
+        context["preview_query_base"] = urlencode(
+            {
+                "import_file_name": tmp_storage.name,
+                "original_file_name": original_file_name,
+                "format": format_idx,
+                "resource": resource_idx_str,
+            }
+        )
+
+        if not result.has_errors() and not result.has_validation_errors():
+            confirm_form_class = self.get_confirm_form_class(request)
+            context["confirm_form"] = confirm_form_class(
+                initial={
+                    "import_file_name": tmp_storage.name,
+                    "original_file_name": original_file_name,
+                    "format": format_idx,
+                    "resource": resource_idx_str,
+                }
+            )
+
+        return [resource]
 
     def changelist_view(self, request, extra_context=None):
         if extra_context is None:
