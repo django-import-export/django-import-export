@@ -1,4 +1,5 @@
 from decimal import Decimal
+from types import SimpleNamespace
 from unittest import mock
 
 import tablib
@@ -6,7 +7,7 @@ from core.models import Book
 from core.tests.resources import BookResource, BookResourceWithStoreInstance
 from django.test import TestCase, skipUnlessDBFeature
 
-from import_export import results
+from import_export import fields, resources, results, widgets
 from import_export.resources import Diff
 
 
@@ -30,6 +31,18 @@ class DataImportTests(TestCase):
             "other </ins><span>book</span>",
         )
         self.assertFalse(html[headers.index("author_email")])
+
+    def test_get_diff_json_key_order(self):
+        class JSONResource(resources.Resource):
+            data = fields.Field(attribute="data", widget=widgets.JSONWidget())
+
+        resource = JSONResource()
+        diff = Diff(resource, SimpleNamespace(data={"a": 1, "b": 2}), False)
+        diff.compare_with(resource, SimpleNamespace(data={"b": 2, "a": 1}))
+        html = diff.as_html()[0]
+
+        self.assertNotIn("<ins", html)
+        self.assertNotIn("<del", html)
 
     def test_import_data_update(self):
         result = self.resource.import_data(self.dataset, raise_errors=True)

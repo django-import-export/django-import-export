@@ -489,7 +489,7 @@ class JSONWidget(Widget):
         """
         if value is None:
             return None
-        return json.dumps(value)
+        return json.dumps(value, sort_keys=True)
 
 
 class ForeignKeyWidget(Widget):
