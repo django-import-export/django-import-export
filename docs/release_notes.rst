@@ -49,6 +49,11 @@ Breaking changes
     from import_export.formats.base_formats import get_default_formats
     formats = get_default_formats()
 
+* ``CachedInstanceLoader`` now raises ``MultipleObjectsReturned`` when the configured import id matches more than
+  one existing object, matching ``ModelInstanceLoader`` instead of silently returning one of the matches.
+  Ensure that custom ``import_id_fields`` values uniquely identify one row.
+  See `PR 2169 <https://github.com/django-import-export/django-import-export/pull/2169>`_.
+
 Removed deprecations
 """"""""""""""""""""
 
