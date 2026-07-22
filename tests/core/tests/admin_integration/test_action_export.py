@@ -9,7 +9,7 @@ from core.tests.admin_integration.mixins import AdminTestMixin
 from django.contrib import admin
 from django.contrib.admin import AdminSite
 from django.contrib.auth.models import User
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import FieldError, PermissionDenied
 from django.http import HttpRequest
 from django.test import RequestFactory
 from django.test.testcases import TestCase
@@ -49,6 +49,21 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
         }
         response = self._post_url_response(self.category_change_url, data)
         self._check_export_response(response)
+
+    @override_settings(IMPORT_EXPORT_SKIP_ADMIN_ACTION_EXPORT_UI=True)
+    def test_export_skips_export_ui_page_FieldError(self):
+        # issue 1723 - an export error on the skip-form action path must be
+        # shown to the user instead of rendering the server error page
+        with mock.patch("import_export.resources.Resource.export") as mock_export:
+            mock_export.side_effect = FieldError("some unknown error")
+            data = {
+                "action": ["export_admin_action"],
+                "_selected_action": [str(self.cat1.id)],
+            }
+            response = self._post_url_response(
+                self.category_change_url, data, follow=True
+            )
+        self.assertIn("Some unknown error", response.content.decode())
 
     def test_export_displays_ui_select_page(self):
         data = {

@@ -873,7 +873,13 @@ class ExportActionMixin(ExportMixin):
         formats = self.get_export_formats()
         if self.is_skip_export_form_from_action_enabled():
             file_format = formats[0]()
-            return self._do_file_export(file_format, request, queryset)
+            try:
+                return self._do_file_export(file_format, request, queryset)
+            except (ValueError, FieldError) as e:
+                # mirror the export form flow (issue #1723): surface the error
+                # to the user instead of rendering the server error page
+                messages.error(request, str(e))
+                return None
 
         form_type = self.get_export_form_class()
         formats = self.get_export_formats()
