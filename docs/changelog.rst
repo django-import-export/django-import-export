@@ -16,6 +16,7 @@ Changelog
 - Refactor bulk updates to use attribute not field (`2145 <https://github.com/django-import-export/django-import-export/issues/2145>`_)
 - Replace ``DEFAULT_FORMATS`` and ``BINARY_FORMATS`` constants with ``get_default_formats()`` and ``get_binary_formats()`` functions to avoid expensive library imports at Django startup (`2149 <https://github.com/django-import-export/django-import-export/issues/2149>`_)
 - Allow ``Resource`` subclasses to be subscripted, e.g. ``ModelResource[MyModel]`` (`2069 <https://github.com/django-import-export/django-import-export/issues/2069>`_)
+- Fixed ``.ods`` import failing with ``UnicodeDecodeError`` because ODS was classified as a text format and read in text mode instead of binary (`2176 <https://github.com/django-import-export/django-import-export/pull/2176>`_)
 
 4.4.1 (2026-05-05)
 -------------------
