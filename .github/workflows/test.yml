@@ -24,7 +24,7 @@ jobs:
             mysql_image: mysql:8.4
             python-version: "3.12"
           - toxenv: py312-django61
-            mysql_image: mysql:8.0
+            mysql_image: mysql:8.4
             python-version: "3.12"
           - toxenv: py312-django60
             mysql_image: mysql:8.0
