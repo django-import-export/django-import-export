@@ -236,6 +236,32 @@ class DateTimeWidgetTest(TestCase):
     def test_clean_returns_datetime_when_datetime_passed(self):
         self.assertEqual(self.datetime, self.widget.clean(self.datetime))
 
+    def test_is_equal_ignores_microsecond_difference(self):
+        """
+        Regression test for
+        https://github.com/django-import-export/django-import-export/issues/2018
+
+        The default text format has no sub-second precision, and even
+        native (e.g. xlsx) export/import round-trips can lose
+        microsecond precision. is_equal() should treat two datetimes
+        differing only in microseconds as equal, so re-importing
+        unmodified, previously-exported data is correctly detected as
+        unchanged.
+        """
+        dt1 = datetime(2024, 11, 19, 12, 54, 31, 838000)
+        dt2 = datetime(2024, 11, 19, 12, 54, 31, 837623)
+        self.assertTrue(self.widget.is_equal(dt1, dt2))
+
+    def test_is_equal_detects_second_level_difference(self):
+        dt1 = datetime(2024, 11, 19, 12, 54, 31)
+        dt2 = datetime(2024, 11, 19, 12, 54, 36)
+        self.assertFalse(self.widget.is_equal(dt1, dt2))
+
+    def test_is_equal_handles_none(self):
+        self.assertTrue(self.widget.is_equal(None, None))
+        self.assertFalse(self.widget.is_equal(self.datetime, None))
+        self.assertFalse(self.widget.is_equal(None, self.datetime))
+
     def test_render_datetime_safe(self):
         """datetime_safe is supposed to be used to support dates older than 1000"""
         self.datetime = datetime(10, 8, 2)
@@ -298,6 +324,14 @@ class TimeWidgetTest(TestCase):
 
     def test_clean(self):
         self.assertEqual(self.widget.clean("20:15:00"), self.time)
+
+    def test_is_equal_ignores_microsecond_difference(self):
+        t1 = time(20, 15, 0, 838000)
+        t2 = time(20, 15, 0, 837623)
+        self.assertTrue(self.widget.is_equal(t1, t2))
+
+    def test_is_equal_detects_second_level_difference(self):
+        self.assertFalse(self.widget.is_equal(time(20, 15, 0), time(20, 15, 5)))
 
     @override_settings(TIME_INPUT_FORMATS=None)
     def test_default_format(self):

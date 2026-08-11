@@ -8,6 +8,7 @@ Changelog
 5.0.0 (unreleased)
 ------------------
 
+- Fixed ``skip_row()`` incorrectly treating unmodified, previously-exported ``DateTimeField``/``TimeField`` values as changed due to sub-second precision loss inherent to export round-trips (`2018 <https://github.com/django-import-export/django-import-export/issues/2018>`_)
 - Fixed ``CachedInstanceLoader`` to raise ``MultipleObjectsReturned`` for a duplicated import id instead of silently returning one match, consistent with ``ModelInstanceLoader`` (`2169 <https://github.com/django-import-export/django-import-export/pull/2169>`_)
 - Fixed issue where export forms were incorrectly showing import fields instead of export fields (`2118 <https://github.com/django-import-export/django-import-export/pull/2118>`_)
 - Add support for Django 6.0, remove support for Python 3.9 (`2112 <https://github.com/django-import-export/django-import-export/pull/2112>`_)

@@ -96,6 +96,26 @@ class Widget:
         """
         return force_str(value) if value is not None else ""
 
+    def is_equal(self, instance_value, original_value):
+        """
+        Compare a freshly-parsed import value against the previously
+        persisted value, for the purposes of
+        :meth:`~import_export.resources.Resource.skip_row`.
+
+        By default this is a plain equality check. Widgets whose
+        :meth:`render` loses precision on round-trip (for example,
+        ``DateTimeWidget``'s default text format has no sub-second
+        precision) should override this to compare values at the
+        same precision that would actually survive an export, so
+        that re-importing unmodified, previously-exported data is
+        correctly detected as unchanged.
+
+        :param instance_value: The value parsed from the imported row.
+        :param original_value: The value from the previously persisted
+            instance.
+        """
+        return instance_value == original_value
+
 
 class NumberWidget(Widget):
     """
@@ -354,6 +374,20 @@ class DateTimeWidget(_ParseDateTimeMixin, Widget):
 
         return format_datetime(value, self.formats[0])
 
+    def is_equal(self, instance_value, original_value):
+        # The default text format ("%Y-%m-%d %H:%M:%S") has no
+        # sub-second precision, and even native (xlsx) export/import
+        # round-trips can lose microsecond precision depending on the
+        # spreadsheet format's own numeric storage. Compare at
+        # whole-second precision so re-importing unmodified data
+        # (which necessarily lost sub-second precision on export) is
+        # correctly detected as unchanged. See GH #2018.
+        if isinstance(instance_value, datetime):
+            instance_value = instance_value.replace(microsecond=0)
+        if isinstance(original_value, datetime):
+            original_value = original_value.replace(microsecond=0)
+        return instance_value == original_value
+
 
 class TimeWidget(_ParseDateTimeMixin, Widget):
     """
@@ -381,6 +415,15 @@ class TimeWidget(_ParseDateTimeMixin, Widget):
         if not value or not isinstance(value, time):
             return ""
         return value.strftime(self.formats[0])
+
+    def is_equal(self, instance_value, original_value):
+        # Same rationale as DateTimeWidget.is_equal: the default text
+        # format ("%H:%M:%S") has no sub-second precision.
+        if isinstance(instance_value, time):
+            instance_value = instance_value.replace(microsecond=0)
+        if isinstance(original_value, time):
+            original_value = original_value.replace(microsecond=0)
+        return instance_value == original_value
 
 
 class DurationWidget(Widget):
