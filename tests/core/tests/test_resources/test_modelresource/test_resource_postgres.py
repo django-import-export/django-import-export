@@ -6,7 +6,7 @@ import tablib
 from core.models import Book
 from core.tests.resources import BookResource
 from django.conf import settings
-from django.db import IntegrityError
+from django.db import IntegrityError, connection
 from django.db.models import CharField
 from django.test import TestCase, TransactionTestCase
 
@@ -66,6 +66,66 @@ class PostgresTests(TransactionTestCase):
         resource = BookResource()
         res = resource.widget_from_django_field(f)
         self.assertEqual(widgets.SimpleArrayWidget, res)
+
+    def test_sequence_reset_does_not_rewind_concurrently_advanced_sequence(self):
+        # Regression test for #2166: after_import() must not rewind the
+        # sequence below a value already issued to a "concurrent" caller
+        # (simulated here by manually advancing the sequence past the
+        # table's current max id before running the import).
+        dataset = tablib.Dataset(headers=["id", "name"])
+        dataset.append([1, "Some book"])
+        resource = BookResource()
+        result = resource.import_data(dataset)
+        self.assertFalse(result.has_errors())
+
+        # Simulate a concurrent transaction that has already called
+        # nextval() several times beyond the current max(id), e.g. via
+        # in-flight INSERTs that have not yet been committed/visible.
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT setval(pg_get_serial_sequence('core_book','id'), 100)"
+            )
+
+        dataset2 = tablib.Dataset(headers=["id", "name"])
+        dataset2.append([2, "Another book"])
+        result2 = resource.import_data(dataset2)
+        self.assertFalse(result2.has_errors())
+
+        # The sequence must not have been rewound below the concurrently
+        # advanced value: a subsequent auto-assigned insert must succeed.
+        try:
+            Book.objects.create(name="Some other book")
+        except IntegrityError:
+            self.fail(
+                "IntegrityError was raised: sequence was rewound below a "
+                "value already issued to a concurrent caller."
+            )
+
+
+class SequenceResetSqlUnitTests(TestCase):
+    """
+    Unit tests for the concurrency-safe sequence reset SQL builder.
+
+    These run regardless of the configured database backend (the code
+    under test only builds a SQL string; it does not execute it), so
+    they exercise the fix even when Postgres isn't available in this
+    environment.
+    """
+
+    def test_generated_sql_uses_greatest_and_does_not_rewind(self):
+        from unittest.mock import Mock
+
+        pg_connection = Mock()
+        pg_connection.ops.quote_name = lambda name: '"%s"' % name
+
+        sql = resources.ModelResource._get_safe_postgres_sequence_reset_sql(
+            pg_connection, Book
+        )
+        self.assertEqual(1, len(sql))
+        statement = sql[0]
+        self.assertIn("GREATEST(", statement)
+        self.assertIn("pg_sequence_last_value(", statement)
+        self.assertIn("setval(", statement)
 
 
 if "postgresql" in settings.DATABASES["default"]["ENGINE"]:

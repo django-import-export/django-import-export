@@ -1363,9 +1363,25 @@ class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
         ):
             db_connection = self.get_db_connection_name()
             connection = connections[db_connection]
-            sequence_sql = connection.ops.sequence_reset_sql(
-                no_style(), [self._meta.model]
-            )
+            if connection.vendor == "postgresql":
+                # PostgreSQL sequences are not transactional, so it is safe
+                # (and necessary) to use GREATEST() to ensure that the
+                # sequence is only ever advanced, never rewound below a
+                # value already handed out to a concurrently-running
+                # import_data() call on another connection (see #2166).
+                #
+                # NOTE: for other database backends, sequence_reset_sql()
+                # is unconditional and *not* concurrency-safe: a
+                # concurrent import of the same model may still rewind
+                # the sequence and cause duplicate-key errors on those
+                # backends.
+                sequence_sql = self._get_safe_postgres_sequence_reset_sql(
+                    connection, self._meta.model
+                )
+            else:
+                sequence_sql = connection.ops.sequence_reset_sql(
+                    no_style(), [self._meta.model]
+                )
             if sequence_sql:
                 cursor = connection.cursor()
                 try:
@@ -1373,6 +1389,45 @@ class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
                         cursor.execute(line)
                 finally:
                     cursor.close()
+
+    @staticmethod
+    def _get_safe_postgres_sequence_reset_sql(connection, model):
+        """
+        Build a concurrency-safe sequence reset statement for PostgreSQL.
+
+        Equivalent to ``connection.ops.sequence_reset_sql()``, except the
+        new sequence value is the GREATEST of the computed max primary key
+        and the sequence's current value, so a concurrent import that has
+        already advanced the sequence (e.g. via an in-flight, uncommitted
+        INSERT) is never rewound.
+        """
+        from django.db import models as django_models
+
+        qn = connection.ops.quote_name
+        output = []
+        for f in model._meta.local_fields:
+            if isinstance(f, django_models.AutoField):
+                table = qn(model._meta.db_table)
+                column = qn(f.column)
+                output.append(
+                    "SELECT setval("
+                    "pg_get_serial_sequence('%(table)s','%(column_name)s'), "
+                    "GREATEST("
+                    "coalesce(max(%(column)s), 1), "
+                    "coalesce(pg_sequence_last_value("
+                    "pg_get_serial_sequence('%(table)s','%(column_name)s')"
+                    "), 1)"
+                    "), "
+                    "max(%(column)s) IS NOT null) FROM %(table)s;"
+                    % {
+                        "table": table,
+                        "column": column,
+                        "column_name": f.column,
+                    }
+                )
+                # Only one AutoField is allowed per model.
+                break
+        return output
 
     @classmethod
     def get_display_name(cls):
