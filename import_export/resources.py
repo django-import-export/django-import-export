@@ -1370,9 +1370,16 @@ class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
         This can cause issues with concurrent imports.
         Therefore, the reset is skipped when all created rows had their pk assigned
         by the database: the sequence cannot be behind in that case, and resetting it
-         is unsafe under concurrent imports of the same model because it can rewind
-         the shared sequence below values already issued to another in-flight import
+        is unsafe under concurrent imports of the same model because it can rewind
+        the shared sequence below values already issued to another in-flight import
         (See #2166).
+
+        History: the reset was added (#398) to fix #59, where importing a CSV
+        with explicit pk values on PostgreSQL left the sequence behind
+        ``max(pk)``, so subsequent inserts failed with duplicate key errors.
+        The logic was adapted from Django's ``loaddata``, which handles the
+        same problem for fixtures, and was later moved into this then-new
+        ``after_import()`` hook so that subclasses could override it.
         """
         # Adapted from django's loaddata
         dry_run = self._is_dry_run(kwargs)
