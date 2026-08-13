@@ -44,6 +44,27 @@ class DataImportTests(TestCase):
         self.assertNotIn("<ins", html)
         self.assertNotIn("<del", html)
 
+    def test_import_data_skips_unchanged_json_with_different_key_order(self):
+        class JSONResource(resources.ModelResource):
+            data = fields.Field(attribute="data", widget=widgets.JSONWidget())
+
+            class Meta:
+                model = Book
+                fields = ("id", "data")
+                skip_unchanged = True
+
+            def after_init_instance(self, instance, new, row, **kwargs):
+                instance.data = {"a": 1, "b": 2}
+
+        dataset = tablib.Dataset(headers=["id", "data"])
+        dataset.append([self.book.pk, '{"b": 2, "a": 1}'])
+
+        result = JSONResource().import_data(dataset, raise_errors=True)
+
+        self.assertEqual(results.RowResult.IMPORT_TYPE_SKIP, result.rows[0].import_type)
+        self.assertNotIn("<ins", result.rows[0].diff[1])
+        self.assertNotIn("<del", result.rows[0].diff[1])
+
     def test_import_data_update(self):
         result = self.resource.import_data(self.dataset, raise_errors=True)
 
