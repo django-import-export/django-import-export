@@ -69,3 +69,51 @@ class CachedInstanceLoaderWithAbsentImportIdFieldTest(TestCase):
     def test_get_instance(self):
         obj = self.instance_loader.get_instance(self.dataset.dict[0])
         self.assertEqual(obj, None)
+
+
+class CachedInstanceLoaderDuplicateImportIdTest(TestCase):
+    """When the import id matches more than one row, ``CachedInstanceLoader``
+    must raise ``MultipleObjectsReturned`` instead of silently returning one of
+    them, consistent with ``ModelInstanceLoader`` (#2162).
+    """
+
+    def setUp(self):
+        self.resource = resources.modelresource_factory(Book)()
+        self.resource._meta.import_id_fields = ["name"]
+        self.dataset = tablib.Dataset(headers=["id", "name", "author_email"])
+        # Two existing rows share the same import id ("name").
+        Book.objects.create(name="Dup")
+        Book.objects.create(name="Dup")
+        self.dataset.append(["", "Dup", "test@example.com"])
+
+    def test_cached_loader_raises_for_duplicate_import_id(self):
+        instance_loader = instance_loaders.CachedInstanceLoader(
+            self.resource, self.dataset
+        )
+        with self.assertRaisesMessage(
+            Book.MultipleObjectsReturned,
+            "CachedInstanceLoader found multiple Book objects for import id "
+            "field 'name'.",
+        ) as cm:
+            instance_loader.get_instance(self.dataset.dict[0])
+        # The user-supplied import id value must not leak into the message: it
+        # could otherwise end up in logs that render it unescaped. Only the
+        # configured field name (not the row value) is reported.
+        self.assertNotIn("Dup", str(cm.exception))
+
+    def test_cached_loader_returns_unique_import_id_match(self):
+        book = Book.objects.create(name="Unique")
+        dataset = tablib.Dataset(headers=["id", "name", "author_email"])
+        dataset.append(["", "Unique", "test@example.com"])
+        instance_loader = instance_loaders.CachedInstanceLoader(self.resource, dataset)
+
+        self.assertEqual(instance_loader.get_instance(dataset.dict[0]), book)
+
+    def test_model_loader_raises_for_duplicate_import_id(self):
+        # Documents the behavior that CachedInstanceLoader is made consistent
+        # with: the uncached loader already raises here.
+        instance_loader = instance_loaders.ModelInstanceLoader(
+            self.resource, self.dataset
+        )
+        with self.assertRaises(Book.MultipleObjectsReturned):
+            instance_loader.get_instance(self.dataset.dict[0])
