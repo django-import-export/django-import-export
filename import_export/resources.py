@@ -96,6 +96,10 @@ class Resource(metaclass=DeclarativeMetaclass):
         self.update_instances = []
         self.delete_instances = []
 
+        # whether any created row supplied an explicit pk value
+        # (see ModelResource.after_import())
+        self._pk_supplied_on_create = False
+
     @classmethod
     def get_result_class(self):
         """
@@ -297,6 +301,10 @@ class Resource(metaclass=DeclarativeMetaclass):
             See :meth:`import_row
         """
         self.before_save_instance(instance, row, **kwargs)
+        if is_create and instance.pk is not None:
+            # the pk came from the imported data, not the database
+            # (checked before save because bulk_create can populate pks)
+            self._pk_supplied_on_create = True
         if self._meta.use_bulk:
             if is_create:
                 self.create_instances.append(instance)
@@ -844,6 +852,8 @@ class Resource(metaclass=DeclarativeMetaclass):
         result.diff_headers = self.get_diff_headers()
         result.total_rows = len(dataset)
         db_connection = self.get_db_connection_name()
+        # a resource can be reused for multiple imports
+        self._pk_supplied_on_create = False
 
         try:
             with atomic_if_using_transaction(using_transactions, using=db_connection):
@@ -1354,12 +1364,20 @@ class ModelResource(Resource, metaclass=ModelDeclarativeMetaclass):
 
     def after_import(self, dataset, result, **kwargs):
         """
-        Reset the SQL sequences after new objects are imported
+        Reset the SQL sequences after new objects are imported with explicit
+        pk values (which can leave the sequence behind ``max(pk)``, as in
+        Django's ``loaddata``).  The reset is skipped when all created rows had
+        their pk assigned by the database: the sequence cannot be behind in
+        that case, and resetting it is unsafe under concurrent imports of the
+        same model because it can rewind the shared sequence below values
+        already issued to another in-flight import (#2166).
         """
         # Adapted from django's loaddata
         dry_run = self._is_dry_run(kwargs)
-        if not dry_run and any(
-            r.import_type == RowResult.IMPORT_TYPE_NEW for r in result.rows
+        if (
+            not dry_run
+            and self._pk_supplied_on_create
+            and any(r.import_type == RowResult.IMPORT_TYPE_NEW for r in result.rows)
         ):
             db_connection = self.get_db_connection_name()
             connection = connections[db_connection]

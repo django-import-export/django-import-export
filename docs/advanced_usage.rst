@@ -1109,6 +1109,23 @@ This issue may be more prevalent if using :doc:`bulk imports<bulk_import>`.  Thi
 memory for longer before being written in bulk, therefore there is potentially more risk of another process modifying
 an instance before it has been persisted.
 
+Sequence resets
+---------------
+
+After an import which created new objects, :meth:`~import_export.resources.ModelResource.after_import` resets the
+model's pk sequence, but only if the imported data supplied explicit pk values for created rows.  This supports
+fixture-style imports (as in Django's ``loaddata``), where inserting rows with explicit pks can leave the sequence
+behind the maximum pk, causing subsequent inserts to fail.
+
+If all created rows had their pk assigned by the database, no reset is performed.  This is because the sequence cannot
+be behind in that case, and because the reset itself is not safe under concurrency: on databases such as PostgreSQL it
+rewinds the shared sequence to the importing process's view of the maximum pk, which can re-issue pk values already
+handed to a concurrent import of the same model, causing duplicate key errors in that import.
+
+If an import mixes rows with and without explicit pk values, the reset still runs, and the above race remains possible
+if such imports run concurrently with other writes to the same model.  Avoid supplying pk values in imported data
+unless imports are known not to overlap.
+
 Additional configuration
 ========================
 
