@@ -54,6 +54,19 @@ Breaking changes
   Ensure that custom ``import_id_fields`` values uniquely identify one row.
   See `PR 2169 <https://github.com/django-import-export/django-import-export/pull/2169>`_.
 
+* The pk sequence reset in :meth:`~import_export.resources.ModelResource.after_import` now only runs when the
+  imported data supplied explicit pk values for created rows, because resetting an already-correct sequence is
+  unsafe under concurrent imports of the same model
+  (see `issue 2166 <https://github.com/django-import-export/django-import-export/issues/2166>`_).
+  Fixture-style imports which supply pks are unaffected.
+
+  If a sequence was left behind by something other than the import (e.g. an earlier fixture load), imports will no
+  longer incidentally repair it — use Django's ``sqlsequencereset`` management command to fix it directly.
+  Note that the tracking of supplied pks happens in :meth:`~import_export.resources.Resource.save_instance`, so
+  custom overrides which do not call ``super()`` will always skip the reset.
+
+* ``ODS`` is now correctly classified as a binary format, extending ``TablibFormat`` instead of ``TextFormat``.  ``is_binary()`` now returns ``True`` and files are read in binary mode, fixing a ``UnicodeDecodeError`` on import of ``.ods`` files.  If you have a custom workaround for this (e.g. an ``ODS`` subclass forcing binary reads), it can be removed.  Any code which relied on ``ODS`` being a text format should be updated.  See `PR 2176 <https://github.com/django-import-export/django-import-export/pull/2176>`_.
+
 Removed deprecations
 """"""""""""""""""""
 

@@ -9,6 +9,8 @@ Changelog
 ------------------
 
 - Fixed ``skip_row()`` incorrectly treating unmodified, previously-exported ``DateTimeField``/``TimeField`` values as changed due to sub-second precision loss inherent to export round-trips (`2018 <https://github.com/django-import-export/django-import-export/issues/2018>`_)
+- Fixed pk sequence reset in :meth:`~import_export.resources.ModelResource.after_import` (`2166 <https://github.com/django-import-export/django-import-export/issues/2166>`_)
+
 - Fixed ``CachedInstanceLoader`` to raise ``MultipleObjectsReturned`` for a duplicated import id instead of silently returning one match, consistent with ``ModelInstanceLoader`` (`2169 <https://github.com/django-import-export/django-import-export/pull/2169>`_)
 - Fixed issue where export forms were incorrectly showing import fields instead of export fields (`2118 <https://github.com/django-import-export/django-import-export/pull/2118>`_)
 - Add support for Django 6.0, remove support for Python 3.9 (`2112 <https://github.com/django-import-export/django-import-export/pull/2112>`_)
@@ -17,6 +19,7 @@ Changelog
 - Refactor bulk updates to use attribute not field (`2145 <https://github.com/django-import-export/django-import-export/issues/2145>`_)
 - Replace ``DEFAULT_FORMATS`` and ``BINARY_FORMATS`` constants with ``get_default_formats()`` and ``get_binary_formats()`` functions to avoid expensive library imports at Django startup (`2149 <https://github.com/django-import-export/django-import-export/issues/2149>`_)
 - Allow ``Resource`` subclasses to be subscripted, e.g. ``ModelResource[MyModel]`` (`2069 <https://github.com/django-import-export/django-import-export/issues/2069>`_)
+- Fixed ``.ods`` import failing with ``UnicodeDecodeError`` because ODS was classified as a text format and read in text mode instead of binary (`2176 <https://github.com/django-import-export/django-import-export/pull/2176>`_)
 
 4.4.1 (2026-05-05)
 -------------------

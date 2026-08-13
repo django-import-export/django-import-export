@@ -1,4 +1,5 @@
 import os
+import tempfile
 import unittest
 from io import BytesIO
 from unittest import mock
@@ -170,6 +171,37 @@ class XLSXTest(TestCase):
 
         dataset = self.format.create_dataset(xlsx_data.getvalue())
         assert len(dataset) == rows_before + rows_after  # Without empty rows
+
+
+class ODSTest(TestCase):
+    def setUp(self):
+        self.format = base_formats.ODS()
+
+    def test_binary_format(self):
+        self.assertTrue(self.format.is_binary())
+
+    def test_import(self):
+        # .ods is a binary (zip-based) format, so it must be read using the
+        # format's own (binary) read mode. Reading it in text mode -- as
+        # happened when ODS was misclassified as a text format -- corrupts the
+        # bytes and raises UnicodeDecodeError.
+        dataset = tablib.Dataset(headers=["id", "name"])
+        dataset.append((1, "Some book"))
+        payload = self.format.export_data(dataset)
+
+        with tempfile.NamedTemporaryFile(delete=False) as f:
+            f.write(payload)
+            path = f.name
+        try:
+            with open(path, self.format.get_read_mode()) as in_stream:
+                result = self.format.create_dataset(in_stream.read())
+        finally:
+            os.remove(path)
+
+        self.assertEqual(1, len(result))
+        row = result.dict.pop()
+        self.assertEqual(1, row["id"])
+        self.assertEqual("Some book", row["name"])
 
 
 class CSVTest(TestCase):

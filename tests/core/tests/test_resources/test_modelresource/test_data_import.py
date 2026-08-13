@@ -4,6 +4,7 @@ from unittest import mock
 import tablib
 from core.models import Book
 from core.tests.resources import BookResource, BookResourceWithStoreInstance
+from django.db import connections
 from django.test import TestCase, skipUnlessDBFeature
 
 from import_export import results
@@ -137,3 +138,93 @@ class DataImportTests(TestCase):
         self.assertFalse(result.has_errors())
         self.assertEqual(1, Book.objects.count())
         self.assertTrue(self.resource.is_create)
+
+
+class SequenceResetTests(TestCase):
+    """
+    ``ModelResource.after_import()`` resets the model's pk sequence to support
+    fixture-style imports which supply explicit pk values.  When imported rows
+    do not supply pk values the reset serves no purpose and, on PostgreSQL, can
+    rewind the shared sequence under concurrent imports, causing
+    ``IntegrityError`` on inserts in a concurrent import of the same model
+    (#2166).  The reset must therefore only run when a created row supplied an
+    explicit pk.
+    """
+
+    def setUp(self):
+        self.resource = BookResource()
+        connection_name = self.resource.get_db_connection_name()
+        self.connection = connections[connection_name]
+
+    def import_with_mocked_reset(self, dataset, resource=None, **kwargs):
+        resource = resource or self.resource
+        with mock.patch.object(
+            self.connection.ops, "sequence_reset_sql", return_value=[]
+        ) as mock_reset:
+            result = resource.import_data(dataset, raise_errors=True, **kwargs)
+        return result, mock_reset
+
+    def test_no_reset_when_created_rows_supply_no_pk(self):
+        dataset = tablib.Dataset(headers=["id", "name"])
+        dataset.append(["", "Some book"])
+
+        result, mock_reset = self.import_with_mocked_reset(dataset)
+
+        self.assertEqual(results.RowResult.IMPORT_TYPE_NEW, result.rows[0].import_type)
+        mock_reset.assert_not_called()
+
+    def test_reset_when_created_rows_supply_pk(self):
+        # fixture-style import: the data supplies explicit pk values
+        dataset = tablib.Dataset(headers=["id", "name"])
+        dataset.append([101, "Some book"])
+
+        result, mock_reset = self.import_with_mocked_reset(dataset)
+
+        self.assertEqual(results.RowResult.IMPORT_TYPE_NEW, result.rows[0].import_type)
+        mock_reset.assert_called_once()
+
+    def test_no_reset_when_created_rows_supply_no_pk_use_bulk(self):
+        class BulkBookResource(BookResource):
+            class Meta:
+                model = Book
+                use_bulk = True
+
+        dataset = tablib.Dataset(headers=["id", "name"])
+        dataset.append(["", "Some book"])
+
+        result, mock_reset = self.import_with_mocked_reset(
+            dataset, resource=BulkBookResource()
+        )
+
+        self.assertEqual(results.RowResult.IMPORT_TYPE_NEW, result.rows[0].import_type)
+        self.assertEqual(1, Book.objects.count())
+        mock_reset.assert_not_called()
+
+    def test_reset_when_created_rows_supply_pk_use_bulk(self):
+        class BulkBookResource(BookResource):
+            class Meta:
+                model = Book
+                use_bulk = True
+
+        dataset = tablib.Dataset(headers=["id", "name"])
+        dataset.append([101, "Some book"])
+
+        result, mock_reset = self.import_with_mocked_reset(
+            dataset, resource=BulkBookResource()
+        )
+
+        self.assertEqual(results.RowResult.IMPORT_TYPE_NEW, result.rows[0].import_type)
+        self.assertEqual(1, Book.objects.count())
+        mock_reset.assert_called_once()
+
+    def test_reused_resource_does_not_reset_on_later_import_without_pk(self):
+        # the flag tracking supplied pks must be re-initialized per import run
+        dataset_with_pk = tablib.Dataset(headers=["id", "name"])
+        dataset_with_pk.append([101, "Some book"])
+        _, mock_reset = self.import_with_mocked_reset(dataset_with_pk)
+        mock_reset.assert_called_once()
+
+        dataset_without_pk = tablib.Dataset(headers=["id", "name"])
+        dataset_without_pk.append(["", "Some other book"])
+        _, mock_reset = self.import_with_mocked_reset(dataset_without_pk)
+        mock_reset.assert_not_called()
