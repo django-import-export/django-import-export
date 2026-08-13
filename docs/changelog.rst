@@ -8,7 +8,7 @@ Changelog
 5.0.0 (unreleased)
 ------------------
 
-- Fixed pk sequence reset in :meth:`~import_export.resources.ModelResource.after_import` rewinding the sequence below values already issued to a concurrent import of the same model, causing ``IntegrityError`` (duplicate pk) in the concurrent import.  The reset now only runs when imported rows supplied explicit pk values (the ``loaddata``-style scenario it exists for); fixture-style imports are unaffected (`2166 <https://github.com/django-import-export/django-import-export/issues/2166>`_)
+- Fixed pk sequence reset in :meth:`~import_export.resources.ModelResource.after_import` (`2166 <https://github.com/django-import-export/django-import-export/issues/2166>`_)
 - Fixed ``CachedInstanceLoader`` to raise ``MultipleObjectsReturned`` for a duplicated import id instead of silently returning one match, consistent with ``ModelInstanceLoader`` (`2169 <https://github.com/django-import-export/django-import-export/pull/2169>`_)
 - Fixed issue where export forms were incorrectly showing import fields instead of export fields (`2118 <https://github.com/django-import-export/django-import-export/pull/2118>`_)
 - Add support for Django 6.0, remove support for Python 3.9 (`2112 <https://github.com/django-import-export/django-import-export/pull/2112>`_)
