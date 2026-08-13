@@ -65,6 +65,8 @@ Breaking changes
   Note that the tracking of supplied pks happens in :meth:`~import_export.resources.Resource.save_instance`, so
   custom overrides which do not call ``super()`` will always skip the reset.
 
+* ``ODS`` is now correctly classified as a binary format, extending ``TablibFormat`` instead of ``TextFormat``.  ``is_binary()`` now returns ``True`` and files are read in binary mode, fixing a ``UnicodeDecodeError`` on import of ``.ods`` files.  If you have a custom workaround for this (e.g. an ``ODS`` subclass forcing binary reads), it can be removed.  Any code which relied on ``ODS`` being a text format should be updated.  See `PR 2176 <https://github.com/django-import-export/django-import-export/pull/2176>`_.
+
 Removed deprecations
 """"""""""""""""""""
 
