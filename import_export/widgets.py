@@ -484,10 +484,11 @@ class JSONWidget(Widget):
 
     def render(self, value, **kwargs):
         """
+        Set the ``sort_json_keys`` keyword argument to ``True`` to sort the
+        keys in JSON objects.
+
         :return: A JSON formatted string derived from ``value``.
           ``coerce_to_string`` has no effect on the return value.
-          Set the ``sort_json_keys`` keyword argument to ``True`` to sort the
-          keys in JSON objects.
         """
         if value is None:
             return None
