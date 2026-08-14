@@ -12,6 +12,7 @@ Changelog
 - Fixed ``CachedInstanceLoader`` to raise ``MultipleObjectsReturned`` for a duplicated import id instead of silently returning one match, consistent with ``ModelInstanceLoader`` (`2169 <https://github.com/django-import-export/django-import-export/pull/2169>`_)
 - Fixed issue where export forms were incorrectly showing import fields instead of export fields (`2118 <https://github.com/django-import-export/django-import-export/pull/2118>`_)
 - Add support for Django 6.0, remove support for Python 3.9 (`2112 <https://github.com/django-import-export/django-import-export/pull/2112>`_)
+- Fixed JSON object key order causing false changes in the import preview (`2173 <https://github.com/django-import-export/django-import-export/pull/2173>`_)
 - Fix Admin UI form field name collision for exports (`2108 <https://github.com/django-import-export/django-import-export/pull/2108>`_)
 - Removed the deprecated :meth:`~import_export.admin.ExportMixin.get_valid_export_item_pks` method in favour of :meth:`~import_export.admin.ExportMixin.get_queryset` (`1898 <https://github.com/django-import-export/django-import-export/pull/1898>`_)
 - Refactor bulk updates to use attribute not field (`2145 <https://github.com/django-import-export/django-import-export/issues/2145>`_)
