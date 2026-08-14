@@ -733,12 +733,11 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
         formats = self.get_export_formats()
         queryset = self.get_export_queryset(request)
         if self.is_skip_export_form_enabled():
-            try:
-                return self._do_file_export(formats[0](), request, queryset)
-            except (ValueError, FieldError) as e:
-                # mirror the export form flow (issue #1723): surface the error
-                # to the user instead of rendering the server error page
-                messages.error(request, str(e))
+            response = self._do_file_export(formats[0](), request, queryset)
+            if response is not None:
+                return response
+            # on export error, fall through to render the export form
+            # with the error message
 
         form = form_type(
             formats,
@@ -762,12 +761,11 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
                 # so generate the queryset from the stored pks
                 queryset = queryset.filter(pk__in=form.cleaned_data["export_items"])
 
-            try:
-                return self._do_file_export(
-                    file_format, request, queryset, export_form=form
-                )
-            except (ValueError, FieldError) as e:
-                messages.error(request, str(e))
+            response = self._do_file_export(
+                file_format, request, queryset, export_form=form
+            )
+            if response is not None:
+                return response
 
         context = self.init_request_context_data(request, form)
         request.current_app = self.admin_site.name
@@ -803,13 +801,23 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
         return context
 
     def _do_file_export(self, file_format, request, queryset, export_form=None):
-        export_data = self.get_export_data(
-            file_format,
-            request,
-            queryset,
-            encoding=self.to_encoding,
-            export_form=export_form,
-        )
+        """
+        Export the queryset to file and return the file response.
+        Returns ``None`` if the export failed with a ``ValueError`` or
+        ``FieldError`` (issue #1723) - the error is added to ``messages``
+        and the caller decides which page to render.
+        """
+        try:
+            export_data = self.get_export_data(
+                file_format,
+                request,
+                queryset,
+                encoding=self.to_encoding,
+                export_form=export_form,
+            )
+        except (ValueError, FieldError) as e:
+            messages.error(request, str(e))
+            return None
         content_type = file_format.get_content_type()
         response = HttpResponse(export_data, content_type=content_type)
         response["Content-Disposition"] = 'attachment; filename="{}"'.format(
@@ -878,13 +886,12 @@ class ExportActionMixin(ExportMixin):
         formats = self.get_export_formats()
         if self.is_skip_export_form_from_action_enabled():
             file_format = formats[0]()
-            try:
-                return self._do_file_export(file_format, request, queryset)
-            except (ValueError, FieldError) as e:
-                # mirror the export form flow (issue #1723): surface the error
-                # to the user instead of rendering the server error page
-                messages.error(request, str(e))
-                return None
+            response = self._do_file_export(file_format, request, queryset)
+            if response is not None:
+                return response
+            # on export error, redirect back to the originating page
+            # (changelist or change form)
+            return HttpResponseRedirect(request.get_full_path())
 
         form_type = self.get_export_form_class()
         formats = self.get_export_formats()

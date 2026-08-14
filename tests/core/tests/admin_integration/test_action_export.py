@@ -406,6 +406,20 @@ class TestExportButtonOnChangeForm(AdminTestMixin, TestCase):
         )
         self.assertIn("Export 1 selected item", response.content.decode())
 
+    @override_settings(IMPORT_EXPORT_SKIP_ADMIN_ACTION_EXPORT_UI=True)
+    def test_export_button_on_change_form_skip_form_FieldError(self):
+        # issue 1723 - an export error on the change form export must redirect
+        # back to the change form with the error shown, not raise a server error
+        with mock.patch("import_export.resources.Resource.export") as mock_export:
+            mock_export.side_effect = FieldError("some unknown error")
+            response = self._post_url_response(
+                self.change_url,
+                data={"_export-item": "Export", "name": self.cat1.name},
+                follow=True,
+            )
+        self.assertEqual([(self.change_url, 302)], response.redirect_chain)
+        self.assertIn("Some unknown error", response.content.decode())
+
     def test_export_button_on_change_form_for_custom_pk(self):
         self.cat1 = UUIDCategory.objects.create(name="Cat 1")
         self.change_url = reverse(
