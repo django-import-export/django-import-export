@@ -206,11 +206,13 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
 
     @override_settings(IMPORT_EXPORT_SKIP_ADMIN_EXPORT_UI=True)
     def test_export_skips_export_form_FieldError(self):
-        # issue 1723 - an export error on the skip export UI path must be
-        # shown to the user instead of rendering the server error page
+        # issue 1723 - an export error on the skip export UI path must redirect
+        # to the changelist with the error shown, not render the server error
+        # page or the skipped export form
         with mock.patch("import_export.resources.Resource.export") as mock_export:
             mock_export.side_effect = FieldError("some unknown error")
-            response = self._get_url_response(self.book_export_url)
+            response = self.client.get(self.book_export_url, follow=True)
+        self.assertEqual([("/admin/core/book/", 302)], response.redirect_chain)
         self.assertIn("Some unknown error", response.content.decode())
 
     def test_get_export_FormError_occurrence(self):

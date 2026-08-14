@@ -736,8 +736,17 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
             response = self._do_file_export(formats[0](), request, queryset)
             if response is not None:
                 return response
-            # on export error, fall through to render the export form
-            # with the error message
+            # on export error, redirect back to the changelist with the
+            # error message rather than rendering the skipped export form
+            changelist_url = reverse(
+                "%s:%s_%s_changelist"
+                % (
+                    self.admin_site.name,
+                    self.model._meta.app_label,
+                    self.model._meta.model_name,
+                )
+            )
+            return HttpResponseRedirect(changelist_url)
 
         form = form_type(
             formats,
