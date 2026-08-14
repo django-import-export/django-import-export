@@ -732,7 +732,10 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
         form_type = self.get_export_form_class()
         formats = self.get_export_formats()
         queryset = self.get_export_queryset(request)
-        if self.is_skip_export_form_enabled():
+        # only skip the form for a direct export (e.g. the changelist 'Export'
+        # button) - a POST carries data from the export form rendered by the
+        # action flow, and must be processed as a form submission
+        if self.is_skip_export_form_enabled() and not request.POST:
             response = self._do_file_export(formats[0](), request, queryset)
             if response is not None:
                 return response

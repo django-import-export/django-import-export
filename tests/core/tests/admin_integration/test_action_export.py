@@ -221,12 +221,15 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
     def test_export_action_calls_modeladmin_get_queryset_skip_export_ui(self):
         # Issue #1864
         # Test with specific export items and skip UI
+        # a POST from the action export form is processed as a form submission
+        # even when the skip export UI setting is enabled (issue #1723)
 
         data = {
             "format": "0",
             "export_items": [str(self.cat1.id)],
             **self.resource_fields_payload,
         }
+        self._prepend_form_prefix(data)
         self._perform_export_action_calls_modeladmin_get_queryset_test(data)
 
     def test_get_export_data_raises_PermissionDenied_when_no_export_permission_assigned(
