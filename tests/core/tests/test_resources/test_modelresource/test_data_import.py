@@ -1,4 +1,5 @@
 from decimal import Decimal
+from types import SimpleNamespace
 from unittest import mock
 
 import tablib
@@ -7,7 +8,7 @@ from core.tests.resources import BookResource, BookResourceWithStoreInstance
 from django.db import connections
 from django.test import TestCase, skipUnlessDBFeature
 
-from import_export import results
+from import_export import fields, resources, results, widgets
 from import_export.resources import Diff
 
 
@@ -31,6 +32,39 @@ class DataImportTests(TestCase):
             "other </ins><span>book</span>",
         )
         self.assertFalse(html[headers.index("author_email")])
+
+    def test_get_diff_json_key_order(self):
+        class JSONResource(resources.Resource):
+            data = fields.Field(attribute="data", widget=widgets.JSONWidget())
+
+        resource = JSONResource()
+        diff = Diff(resource, SimpleNamespace(data={"a": 1, "b": 2}), False)
+        diff.compare_with(resource, SimpleNamespace(data={"b": 2, "a": 1}))
+        html = diff.as_html()[0]
+
+        self.assertNotIn("<ins", html)
+        self.assertNotIn("<del", html)
+
+    def test_import_data_skips_unchanged_json_with_different_key_order(self):
+        class JSONResource(resources.ModelResource):
+            data = fields.Field(attribute="data", widget=widgets.JSONWidget())
+
+            class Meta:
+                model = Book
+                fields = ("id", "data")
+                skip_unchanged = True
+
+            def after_init_instance(self, instance, new, row, **kwargs):
+                instance.data = {"a": 1, "b": 2}
+
+        dataset = tablib.Dataset(headers=["id", "data"])
+        dataset.append([self.book.pk, '{"b": 2, "a": 1}'])
+
+        result = JSONResource().import_data(dataset, raise_errors=True)
+
+        self.assertEqual(results.RowResult.IMPORT_TYPE_SKIP, result.rows[0].import_type)
+        self.assertNotIn("<ins", result.rows[0].diff[1])
+        self.assertNotIn("<del", result.rows[0].diff[1])
 
     def test_import_data_update(self):
         result = self.resource.import_data(self.dataset, raise_errors=True)
