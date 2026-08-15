@@ -65,7 +65,10 @@ class Diff:
 
     @classmethod
     def _read_field_values(cls, resource, instance):
-        return [f.export(instance) for f in resource.get_import_fields()]
+        return [
+            f.export(instance, sort_json_keys=True)
+            for f in resource.get_import_fields()
+        ]
 
 
 class Resource(metaclass=DeclarativeMetaclass):

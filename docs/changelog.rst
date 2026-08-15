@@ -13,6 +13,7 @@ Changelog
 - Fix server error when an export raised via the "skip form" admin export page or action fails with a ``ValueError`` or ``FieldError``; the error is now shown to the user, matching the export form flow (`1723 <https://github.com/django-import-export/django-import-export/issues/1723>`_)
 - Fixed issue where export forms were incorrectly showing import fields instead of export fields (`2118 <https://github.com/django-import-export/django-import-export/pull/2118>`_)
 - Add support for Django 6.0, remove support for Python 3.9 (`2112 <https://github.com/django-import-export/django-import-export/pull/2112>`_)
+- Fixed JSON object key order causing false changes in the import preview (`2173 <https://github.com/django-import-export/django-import-export/pull/2173>`_)
 - Fix Admin UI form field name collision for exports (`2108 <https://github.com/django-import-export/django-import-export/pull/2108>`_)
 - Removed the deprecated :meth:`~import_export.admin.ExportMixin.get_valid_export_item_pks` method in favour of :meth:`~import_export.admin.ExportMixin.get_queryset` (`1898 <https://github.com/django-import-export/django-import-export/pull/1898>`_)
 - Refactor bulk updates to use attribute not field (`2145 <https://github.com/django-import-export/django-import-export/issues/2145>`_)
