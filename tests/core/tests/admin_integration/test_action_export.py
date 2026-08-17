@@ -9,7 +9,7 @@ from core.tests.admin_integration.mixins import AdminTestMixin
 from django.contrib import admin
 from django.contrib.admin import AdminSite
 from django.contrib.auth.models import User
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import FieldError, PermissionDenied
 from django.http import HttpRequest
 from django.test import RequestFactory
 from django.test.testcases import TestCase
@@ -49,6 +49,21 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
         }
         response = self._post_url_response(self.category_change_url, data)
         self._check_export_response(response)
+
+    @override_settings(IMPORT_EXPORT_SKIP_ADMIN_ACTION_EXPORT_UI=True)
+    def test_export_skips_export_ui_page_FieldError(self):
+        # issue 1723 - an export error on the skip-form action path must be
+        # shown to the user instead of rendering the server error page
+        with mock.patch("import_export.resources.Resource.export") as mock_export:
+            mock_export.side_effect = FieldError("some unknown error")
+            data = {
+                "action": ["export_admin_action"],
+                "_selected_action": [str(self.cat1.id)],
+            }
+            response = self._post_url_response(
+                self.category_change_url, data, follow=True
+            )
+        self.assertIn("Some unknown error", response.content.decode())
 
     def test_export_displays_ui_select_page(self):
         data = {
@@ -206,12 +221,15 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
     def test_export_action_calls_modeladmin_get_queryset_skip_export_ui(self):
         # Issue #1864
         # Test with specific export items and skip UI
+        # a POST from the action export form is processed as a form submission
+        # even when the skip export UI setting is enabled (issue #1723)
 
         data = {
             "format": "0",
             "export_items": [str(self.cat1.id)],
             **self.resource_fields_payload,
         }
+        self._prepend_form_prefix(data)
         self._perform_export_action_calls_modeladmin_get_queryset_test(data)
 
     def test_get_export_data_raises_PermissionDenied_when_no_export_permission_assigned(
@@ -390,6 +408,20 @@ class TestExportButtonOnChangeForm(AdminTestMixin, TestCase):
             self.change_url, data={"_export-item": "Export", "name": self.cat1.name}
         )
         self.assertIn("Export 1 selected item", response.content.decode())
+
+    @override_settings(IMPORT_EXPORT_SKIP_ADMIN_ACTION_EXPORT_UI=True)
+    def test_export_button_on_change_form_skip_form_FieldError(self):
+        # issue 1723 - an export error on the change form export must redirect
+        # back to the change form with the error shown, not raise a server error
+        with mock.patch("import_export.resources.Resource.export") as mock_export:
+            mock_export.side_effect = FieldError("some unknown error")
+            response = self._post_url_response(
+                self.change_url,
+                data={"_export-item": "Export", "name": self.cat1.name},
+                follow=True,
+            )
+        self.assertEqual([(self.change_url, 302)], response.redirect_chain)
+        self.assertIn("Some unknown error", response.content.decode())
 
     def test_export_button_on_change_form_for_custom_pk(self):
         self.cat1 = UUIDCategory.objects.create(name="Cat 1")
