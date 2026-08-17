@@ -527,12 +527,15 @@ class JSONWidget(Widget):
 
     def render(self, value, **kwargs):
         """
+        Set the ``sort_json_keys`` keyword argument to ``True`` to sort the
+        keys in JSON objects.
+
         :return: A JSON formatted string derived from ``value``.
           ``coerce_to_string`` has no effect on the return value.
         """
         if value is None:
             return None
-        return json.dumps(value)
+        return json.dumps(value, sort_keys=kwargs.get("sort_json_keys", False))
 
 
 class ForeignKeyWidget(Widget):

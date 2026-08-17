@@ -164,7 +164,9 @@ flag.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 A boolean value which will skip the :ref:`export form<admin_ui_exporting>` in the Admin UI, when the export is
-initiated from the :ref:`change list page<admin_ui_exporting>`.
+initiated from the :ref:`change list page<admin_ui_exporting>`, from an
+:ref:`Admin UI action<export_via_admin_action>`, or from the 'Export' button on the
+:ref:`change form <export_from_model_change_form>`.
 The file will be exported in a single step.
 
 If enabled:

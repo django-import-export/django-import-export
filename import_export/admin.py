@@ -732,8 +732,24 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
         form_type = self.get_export_form_class()
         formats = self.get_export_formats()
         queryset = self.get_export_queryset(request)
-        if self.is_skip_export_form_enabled():
-            return self._do_file_export(formats[0](), request, queryset)
+        # only skip the form for a direct export (e.g. the changelist 'Export'
+        # button) - a POST carries data from the export form rendered by the
+        # action flow, and must be processed as a form submission
+        if self.is_skip_export_form_enabled() and not request.POST:
+            response = self._do_file_export(formats[0](), request, queryset)
+            if response is not None:
+                return response
+            # on export error, redirect back to the changelist with the
+            # error message rather than rendering the skipped export form
+            changelist_url = reverse(
+                "%s:%s_%s_changelist"
+                % (
+                    self.admin_site.name,
+                    self.model._meta.app_label,
+                    self.model._meta.model_name,
+                )
+            )
+            return HttpResponseRedirect(changelist_url)
 
         form = form_type(
             formats,
@@ -757,12 +773,11 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
                 # so generate the queryset from the stored pks
                 queryset = queryset.filter(pk__in=form.cleaned_data["export_items"])
 
-            try:
-                return self._do_file_export(
-                    file_format, request, queryset, export_form=form
-                )
-            except (ValueError, FieldError) as e:
-                messages.error(request, str(e))
+            response = self._do_file_export(
+                file_format, request, queryset, export_form=form
+            )
+            if response is not None:
+                return response
 
         context = self.init_request_context_data(request, form)
         request.current_app = self.admin_site.name
@@ -798,13 +813,23 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
         return context
 
     def _do_file_export(self, file_format, request, queryset, export_form=None):
-        export_data = self.get_export_data(
-            file_format,
-            request,
-            queryset,
-            encoding=self.to_encoding,
-            export_form=export_form,
-        )
+        """
+        Export the queryset to file and return the file response.
+        Returns ``None`` if the export failed with a ``ValueError`` or
+        ``FieldError`` (issue #1723) - the error is added to ``messages``
+        and the caller decides which page to render.
+        """
+        try:
+            export_data = self.get_export_data(
+                file_format,
+                request,
+                queryset,
+                encoding=self.to_encoding,
+                export_form=export_form,
+            )
+        except (ValueError, FieldError) as e:
+            messages.error(request, str(e))
+            return None
         content_type = file_format.get_content_type()
         response = HttpResponse(export_data, content_type=content_type)
         response["Content-Disposition"] = 'attachment; filename="{}"'.format(
@@ -871,9 +896,20 @@ class ExportActionMixin(ExportMixin):
         Action runs on POST from instance action menu (if enabled).
         """
         formats = self.get_export_formats()
-        if self.is_skip_export_form_from_action_enabled():
+        # Honor both skip flags so IMPORT_EXPORT_SKIP_ADMIN_EXPORT_UI /
+        # skip_export_form also skip the action and change-form confirm UI,
+        # matching the documented behaviour.
+        if (
+            self.is_skip_export_form_from_action_enabled()
+            or self.is_skip_export_form_enabled()
+        ):
             file_format = formats[0]()
-            return self._do_file_export(file_format, request, queryset)
+            response = self._do_file_export(file_format, request, queryset)
+            if response is not None:
+                return response
+            # on export error, redirect back to the originating page
+            # (changelist or change form)
+            return HttpResponseRedirect(request.get_full_path())
 
         form_type = self.get_export_form_class()
         formats = self.get_export_formats()
