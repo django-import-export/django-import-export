@@ -502,6 +502,18 @@ class TestSkipExportFormFromAction(AdminTestMixin, TestCase):
         target_file_contents = "id,name\r\n" f"{self.cat1.id},Cat 1\r\n"
         self.assertEqual(target_file_contents.encode(), response.content)
 
+    def test_skip_export_form_enabled(self):
+        self.model_admin.skip_export_form = True
+        response = self.model_admin.export_admin_action(self.request, self.queryset)
+        target_file_contents = "id,name\r\n" f"{self.cat1.id},Cat 1\r\n"
+        self.assertEqual(target_file_contents.encode(), response.content)
+
+    @override_settings(IMPORT_EXPORT_SKIP_ADMIN_EXPORT_UI=True)
+    def test_skip_export_form_setting_enabled(self):
+        response = self.model_admin.export_admin_action(self.request, self.queryset)
+        target_file_contents = "id,name\r\n" f"{self.cat1.id},Cat 1\r\n"
+        self.assertEqual(target_file_contents.encode(), response.content)
+
 
 class TestSkipExportFormFromChangeForm(AdminTestMixin, TestCase):
     """
@@ -547,17 +559,13 @@ class TestSkipExportFormFromChangeForm(AdminTestMixin, TestCase):
 
     @override_settings(IMPORT_EXPORT_SKIP_ADMIN_EXPORT_UI=True)
     def test_export_button_on_change_form_skip_export_setting_enabled(self):
-        # this property has no effect - IMPORT_EXPORT_SKIP_ADMIN_ACTION_EXPORT_UI
-        # should be set instead
         response = self._post_url_response(
             self.change_url, data={"_export-item": "Export", "name": self.cat1.name}
         )
-        target_re = r"This exporter will export the following fields:"
-        self.assertRegex(response.content.decode(), target_re)
+        target_file_contents = "id,name\r\n" f"{self.cat1.id},Cat 1\r\n"
+        self.assertEqual(target_file_contents.encode(), response.content)
 
     def test_export_button_on_change_form_skip_export_form_enabled(self):
-        # this property has no effect - skip_export_form_from_action
-        # should be set instead
         with patch(
             "core.admin.CategoryAdmin.skip_export_form",
             new_callable=PropertyMock,
@@ -566,5 +574,5 @@ class TestSkipExportFormFromChangeForm(AdminTestMixin, TestCase):
             response = self._post_url_response(
                 self.change_url, data={"_export-item": "Export", "name": self.cat1.name}
             )
-            target_re = r"This exporter will export the following fields:"
-            self.assertRegex(response.content.decode(), target_re)
+            target_file_contents = "id,name\r\n" f"{self.cat1.id},Cat 1\r\n"
+            self.assertEqual(target_file_contents.encode(), response.content)

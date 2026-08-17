@@ -896,7 +896,13 @@ class ExportActionMixin(ExportMixin):
         Action runs on POST from instance action menu (if enabled).
         """
         formats = self.get_export_formats()
-        if self.is_skip_export_form_from_action_enabled():
+        # Honor both skip flags so IMPORT_EXPORT_SKIP_ADMIN_EXPORT_UI /
+        # skip_export_form also skip the action and change-form confirm UI,
+        # matching the documented behaviour.
+        if (
+            self.is_skip_export_form_from_action_enabled()
+            or self.is_skip_export_form_enabled()
+        ):
             file_format = formats[0]()
             response = self._do_file_export(file_format, request, queryset)
             if response is not None:
