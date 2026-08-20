@@ -580,7 +580,9 @@ class Resource(metaclass=DeclarativeMetaclass):
                     v.pk for v in original_values
                 ):
                     return False
-            elif field.get_value(instance) != field.get_value(original):
+            elif not field.widget.is_equal(
+                field.get_value(instance), field.get_value(original)
+            ):
                 return False
         return True
 

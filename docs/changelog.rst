@@ -8,8 +8,10 @@ Changelog
 5.0.0 (unreleased)
 ------------------
 
+- Fixed ``skip_row()`` incorrectly treating unmodified, previously-exported ``DateTimeField``/``TimeField`` values as changed due to sub-second precision loss inherent to export round-trips (`2018 <https://github.com/django-import-export/django-import-export/issues/2018>`_)
 - Honor ``IMPORT_EXPORT_SKIP_ADMIN_EXPORT_UI`` / ``skip_export_form`` when exporting from the Admin action menu or change-form Export button (`2180 <https://github.com/django-import-export/django-import-export/issues/2180>`_)
 - Fixed pk sequence reset in :meth:`~import_export.resources.ModelResource.after_import` (`2166 <https://github.com/django-import-export/django-import-export/issues/2166>`_)
+
 - Fixed ``CachedInstanceLoader`` to raise ``MultipleObjectsReturned`` for a duplicated import id instead of silently returning one match, consistent with ``ModelInstanceLoader`` (`2169 <https://github.com/django-import-export/django-import-export/pull/2169>`_)
 - Fix server error when an export raised via the "skip form" admin export page or action fails with a ``ValueError`` or ``FieldError``; the error is now shown to the user, matching the export form flow (`2175 <https://github.com/django-import-export/django-import-export/issues/2175>`_)
 - Fixed issue where export forms were incorrectly showing import fields instead of export fields (`2118 <https://github.com/django-import-export/django-import-export/pull/2118>`_)
