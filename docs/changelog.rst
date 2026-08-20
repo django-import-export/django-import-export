@@ -8,6 +8,7 @@ Changelog
 5.0.0 (unreleased)
 ------------------
 
+- Added :meth:`~import_export.widgets.ManyToManyWidget.get_queryset` to customize the related objects available during import (`2172 <https://github.com/django-import-export/django-import-export/pull/2172>`_)
 - Fixed issue where export forms were incorrectly showing import fields instead of export fields (`2118 <https://github.com/django-import-export/django-import-export/pull/2118>`_)
 - Add support for Django 6.0, remove support for Python 3.9 (`2112 <https://github.com/django-import-export/django-import-export/pull/2112>`_)
 - Fix Admin UI form field name collision for exports (`2108 <https://github.com/django-import-export/django-import-export/pull/2108>`_)

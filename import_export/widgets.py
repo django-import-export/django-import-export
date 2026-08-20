@@ -823,6 +823,7 @@ class ManyToManyWidget(Widget):
         :param row: The dataset's current row.
         :param \\*args: Optional args.
         :param \\**kwargs: Optional kwargs.
+        :return: A QuerySet containing all objects for this model.
         """
         return self.model.objects.all()
 
