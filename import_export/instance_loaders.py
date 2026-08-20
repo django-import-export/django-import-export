@@ -53,15 +53,28 @@ class CachedInstanceLoader(ModelInstanceLoader):
         # If the pk field is missing, all instances in dataset are new
         # and cache is empty.
         self.all_instances = {}
+        # Import ids that match more than one instance. These are tracked so
+        # that get_instance() can raise MultipleObjectsReturned instead of
+        # silently returning one of them, consistent with ModelInstanceLoader.
+        self._duplicate_ids = set()
         if self.dataset.dict and self.pk_field.column_name in self.dataset.dict[0]:
             ids = [self.pk_field.clean(row) for row in self.dataset.dict]
             qs = self.get_queryset().filter(**{"%s__in" % self.pk_field.attribute: ids})
 
-            self.all_instances = {
-                self.pk_field.get_value(instance): instance for instance in qs
-            }
+            for instance in qs:
+                key = self.pk_field.get_value(instance)
+                if key in self.all_instances:
+                    self._duplicate_ids.add(key)
+                self.all_instances[key] = instance
 
     def get_instance(self, row):
         if self.all_instances:
-            return self.all_instances.get(self.pk_field.clean(row))
+            key = self.pk_field.clean(row)
+            if key in self._duplicate_ids:
+                model = self.resource._meta.model
+                raise model.MultipleObjectsReturned(
+                    "CachedInstanceLoader found multiple %s objects for import id "
+                    "field %r." % (model.__name__, self.pk_field.attribute)
+                )
+            return self.all_instances.get(key)
         return None

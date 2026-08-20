@@ -154,7 +154,7 @@ class TSV(TextFormat):
     CONTENT_TYPE = "text/tab-separated-values"
 
 
-class ODS(TextFormat):
+class ODS(TablibFormat):
     TABLIB_MODULE = "tablib.formats._ods"
     CONTENT_TYPE = "application/vnd.oasis.opendocument.spreadsheet"
 

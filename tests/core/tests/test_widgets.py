@@ -945,6 +945,14 @@ class JSONWidgetTest(TestCase):
     def test_render(self):
         self.assertEqual(self.widget.render(self.value), '{"value": 23}')
 
+    def test_render_sort_json_keys(self):
+        value = {"b": 2, "a": 1}
+
+        self.assertEqual(self.widget.render(value), '{"b": 2, "a": 1}')
+        self.assertEqual(
+            self.widget.render(value, sort_json_keys=True), '{"a": 1, "b": 2}'
+        )
+
     def test_clean_single_quoted_string(self):
         self.assertEqual(self.widget.clean("{'value': 23}"), self.value)
         self.assertEqual(self.widget.clean("{'value': null}"), {"value": None})
