@@ -430,9 +430,14 @@ class BulkCreateUpdateConflictsIntegrationTest(TestCase):
         self.assertEqual("updated", self.book.name)
 
     def test_conflicting_row_errors_without_update_conflicts(self):
-        result = self._ConflictingBookResource().import_data(self.dataset)
+        # raise_errors, so that the failed insert unwinds through the atomic
+        # block rather than being collected on the result. A backend which
+        # aborts the transaction on error, such as Postgres, rejects every
+        # statement until the block is left, including the release of the
+        # savepoint the block ends with.
+        with self.assertRaises(exceptions.ImportError):
+            self._ConflictingBookResource().import_data(self.dataset, raise_errors=True)
 
-        self.assertTrue(result.has_errors())
         self.book.refresh_from_db()
         self.assertEqual("original", self.book.name)
 
