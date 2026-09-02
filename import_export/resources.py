@@ -170,7 +170,7 @@ class Resource(metaclass=DeclarativeMetaclass):
 
     def get_instance(self, instance_loader, row):
         """
-        Calls the :doc:`InstanceLoader <api_instance_loaders>`.
+        Calls the :ref:`InstanceLoader <instance-loaders>`.
         """
         import_id_fields = [self.fields[f] for f in self.get_import_id_fields()]
         for field in import_id_fields:
@@ -664,8 +664,9 @@ class Resource(metaclass=DeclarativeMetaclass):
 
     def import_row(self, row, instance_loader, **kwargs):
         r"""
-        Imports data from ``tablib.Dataset``. Refer to :doc:`import_workflow`
-        for a more complete description of the whole import process.
+        Imports data from ``tablib.Dataset``. Refer to the
+        :ref:`import workflow <import-workflow>` for a more complete
+        description of the whole import process.
 
         :param row: A ``dict`` of the 'row' to import.
           A row is a dict of data fields so can be a csv line, a JSON object,
@@ -777,8 +778,9 @@ class Resource(metaclass=DeclarativeMetaclass):
         **kwargs,
     ):
         r"""
-        Imports data from ``tablib.Dataset``. Refer to :doc:`import_workflow`
-        for a more complete description of the whole import process.
+        Imports data from ``tablib.Dataset``. Refer to the
+        :ref:`import workflow <import-workflow>` for a more complete
+        description of the whole import process.
 
         :param dataset: A ``tablib.Dataset``.
 

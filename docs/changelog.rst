@@ -22,6 +22,7 @@ Changelog
 - Replace ``DEFAULT_FORMATS`` and ``BINARY_FORMATS`` constants with ``get_default_formats()`` and ``get_binary_formats()`` functions to avoid expensive library imports at Django startup (`2149 <https://github.com/django-import-export/django-import-export/issues/2149>`_)
 - Allow ``Resource`` subclasses to be subscripted, e.g. ``ModelResource[MyModel]`` (`2069 <https://github.com/django-import-export/django-import-export/issues/2069>`_)
 - Fixed ``.ods`` import failing with ``UnicodeDecodeError`` because ODS was classified as a text format and read in text mode instead of binary (`2176 <https://github.com/django-import-export/django-import-export/pull/2176>`_)
+- Fixed ``Resource`` docstrings emitting ``unknown document`` warnings in downstream projects that pull the docs in via ``autodoc`` + ``intersphinx``, by referencing the target pages with ``:ref:`` and an explicit label instead of ``:doc:`` (`1750 <https://github.com/django-import-export/django-import-export/issues/1750>`_)
 
 4.4.1 (2026-05-05)
 -------------------
