@@ -57,7 +57,7 @@ Features
 
 * Import / export via `Admin UI Integration <https://django-import-export.readthedocs.io/en/latest/admin_integration.html>`_ or `programmatically <https://django-import-export.readthedocs.io/en/latest/getting_started.html#importing-data>`_
 * Import to and from a variety of file formats (csv, json, xlsx, pandas, HTML, YAML... and anything else that `tablib <https://github.com/jazzband/tablib>`_ supports)
-* `Preview <https://django-import-export.readthedocs.io/en/latest/screenshots.html/>`_ data before importing in Admin UI
+* `Preview <https://django-import-export.readthedocs.io/en/latest/screenshots.html>`_ data before importing in Admin UI
 * Support for `bulk import <https://django-import-export.readthedocs.io/en/latest/bulk_import.html>`_
 * Handles `CRUD (and 'skip') operations during import <https://django-import-export.readthedocs.io/en/latest/advanced_usage.html#create-or-update-model-instances>`_
 * Flexible handling of `foreign key <https://django-import-export.readthedocs.io/en/latest/advanced_usage.html#importing-model-relations>`_ relationships
@@ -66,8 +66,8 @@ Features
 * Define custom `transformations <https://django-import-export.readthedocs.io/en/latest/advanced_usage.html#advanced-data-manipulation-on-export>`_ for exported data
 * Import / export the same model instance as `different views <https://django-import-export.readthedocs.io/en/latest/advanced_usage.html#customize-resource-options>`_
 * Export using `natural keys <https://django-import-export.readthedocs.io/en/latest/advanced_usage.html#django-natural-keys>`__ for portability between environments
-* `Select items for export <https://django-import-export.readthedocs.io/en/latest/screenshots.html/>`_ via the Admin UI object list
-* `Select fields for export <https://django-import-export.readthedocs.io/en/latest/screenshots.html/>`_ via the export form
+* `Select items for export <https://django-import-export.readthedocs.io/en/latest/screenshots.html>`_ via the Admin UI object list
+* `Select fields for export <https://django-import-export.readthedocs.io/en/latest/screenshots.html>`_ via the export form
 * `Export single object instances <https://django-import-export.readthedocs.io/en/latest/admin_integration.html#export-from-model-instance-change-form>`_
 * Use `django permissions <https://django-import-export.readthedocs.io/en/latest/installation.html#import-export-import-permission-code>`_ to control import / export authorization
 * Internationalization support
