@@ -1,3 +1,4 @@
+from contextlib import contextmanager
 from unittest import mock, skipUnless
 
 import tablib
@@ -315,6 +316,16 @@ class BulkCreateTest(BulkTest):
 class BulkCreateUpdateConflictsTest(BulkTest):
     """``update_conflicts`` makes a bulk import an upsert (issue #2049)."""
 
+    @contextmanager
+    def _conflict_target_support(self, resource, supported):
+        # whether a conflict target is sent is a property of the backend, so the
+        # tests which assert on it pin the feature rather than read it
+        connection = connections[resource.get_db_connection_name()]
+        with mock.patch.object(
+            connection.features, "supports_update_conflicts_with_target", supported
+        ):
+            yield
+
     @mock.patch("core.models.Book.objects.bulk_create")
     def test_update_conflicts_passed_to_bulk_create(self, mock_bulk_create):
         class _BookResource(resources.ModelResource):
@@ -324,7 +335,8 @@ class BulkCreateUpdateConflictsTest(BulkTest):
                 update_conflicts = True
 
         resource = _BookResource()
-        resource.import_data(self.dataset)
+        with self._conflict_target_support(resource, True):
+            resource.import_data(self.dataset)
         mock_bulk_create.assert_called_with(
             mock.ANY,
             batch_size=None,
@@ -350,7 +362,9 @@ class BulkCreateUpdateConflictsTest(BulkTest):
                 update_fields = ["name"]
                 unique_fields = ["name"]
 
-        _BookResource().import_data(self.dataset)
+        resource = _BookResource()
+        with self._conflict_target_support(resource, True):
+            resource.import_data(self.dataset)
         mock_bulk_create.assert_called_with(
             mock.ANY,
             batch_size=None,
@@ -372,10 +386,7 @@ class BulkCreateUpdateConflictsTest(BulkTest):
                 update_conflicts = True
 
         resource = _BookResource()
-        connection = connections[resource.get_db_connection_name()]
-        with mock.patch.object(
-            connection.features, "supports_update_conflicts_with_target", False
-        ):
+        with self._conflict_target_support(resource, False):
             resource.import_data(self.dataset)
         mock_bulk_create.assert_called_with(
             mock.ANY,
