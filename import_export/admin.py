@@ -5,7 +5,10 @@ from django.conf import settings
 from django.contrib import admin, messages
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION, LogEntry
 from django.contrib.auth import get_permission_codename
-from django.core.exceptions import FieldError, PermissionDenied
+from django.core.exceptions import FieldError, PermissionDenied, ValidationError
+from django.core.validators import ProhibitNullCharactersValidator
+from django.db import connections
+from django.db.models import IntegerField
 from django.forms import MultipleChoiceField, MultipleHiddenInput
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
@@ -762,7 +765,9 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
             form.fields["export_items"] = MultipleChoiceField(
                 widget=MultipleHiddenInput,
                 required=False,
-                choices=[(pk, pk) for pk in queryset.values_list("pk", flat=True)],
+                choices=[
+                    (pk, pk) for pk in self._bounded_export_pks(request, queryset)
+                ],
             )
         if form.is_valid():
             file_format = formats[int(form.cleaned_data["format"])]()
@@ -782,6 +787,42 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
         context = self.init_request_context_data(request, form)
         request.current_app = self.admin_site.name
         return TemplateResponse(request, [self.export_template_name], context=context)
+
+    def _bounded_export_pks(self, request, queryset):
+        """
+        Returns the pks of ``queryset`` which were POSTed as ``export_items``,
+        so that the field choices are bounded by the selection instead of
+        listing every pk of the queryset (issue #2189).
+
+        Posted values which cannot be converted to the pk type, contain null
+        characters, or (for integer pk fields) fall outside the integer range
+        of the database are discarded before querying, so that the form
+        rejects them as invalid choices instead of raising a database error.
+        """
+        posted_pks = request.POST.getlist(f"{FORM_FIELD_PREFIX}export_items")
+        pk_field = queryset.model._meta.pk
+        min_value, max_value = None, None
+        if isinstance(pk_field, IntegerField):
+            # Django guards the exact / gt / gte / lt / lte lookups against
+            # integer overflow, but not `__in`, so an out-of-range value
+            # would raise (e.g. OverflowError on SQLite)
+            min_value, max_value = connections[queryset.db].ops.integer_field_range(
+                pk_field.get_internal_type()
+            )
+        validate_no_null_characters = ProhibitNullCharactersValidator()
+        valid_pks = []
+        for posted_pk in posted_pks:
+            try:
+                validate_no_null_characters(posted_pk)
+                pk = pk_field.to_python(posted_pk)
+            except (ValidationError, ValueError):
+                continue
+            if min_value is not None and pk < min_value:
+                continue
+            if max_value is not None and pk > max_value:
+                continue
+            valid_pks.append(pk)
+        return queryset.filter(pk__in=valid_pks).values_list("pk", flat=True)
 
     def changelist_view(self, request, extra_context=None):
         if extra_context is None:
