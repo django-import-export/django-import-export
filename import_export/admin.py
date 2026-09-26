@@ -8,7 +8,7 @@ from django.contrib.auth import get_permission_codename
 from django.core.exceptions import FieldError, PermissionDenied, ValidationError
 from django.core.validators import ProhibitNullCharactersValidator
 from django.db import connections
-from django.db.models import IntegerField
+from django.db.models import ForeignObject, IntegerField
 from django.forms import MultipleChoiceField, MultipleHiddenInput
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
@@ -802,12 +802,17 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
         posted_pks = request.POST.getlist(f"{FORM_FIELD_PREFIX}export_items")
         pk_field = queryset.model._meta.pk
         min_value, max_value = None, None
-        if isinstance(pk_field, IntegerField):
+        # with multi-table inheritance the pk is a OneToOneField to the parent,
+        # so check the range against the concrete field it points to
+        range_field = pk_field
+        while isinstance(range_field, ForeignObject):
+            range_field = range_field.target_field
+        if isinstance(range_field, IntegerField):
             # Django guards the exact / gt / gte / lt / lte lookups against
             # integer overflow, but not `__in`, so an out-of-range value
             # would raise (e.g. OverflowError on SQLite)
             min_value, max_value = connections[queryset.db].ops.integer_field_range(
-                pk_field.get_internal_type()
+                range_field.get_internal_type()
             )
         validate_no_null_characters = ProhibitNullCharactersValidator()
         valid_pks = []
