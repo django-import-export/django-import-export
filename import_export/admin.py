@@ -790,27 +790,15 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
 
     def _bounded_export_pks(self, request, queryset):
         """
-        Returns the pks of ``queryset`` which were POSTed as ``export_items``,
-        so that the field choices are bounded by the selection instead of
-        listing every pk of the queryset (issue #2189).
-
-        Posted values which cannot be converted to the pk type, contain null
-        characters, or (for integer pk fields) fall outside the integer range
-        of the database are discarded before querying, so that the form
-        rejects them as invalid choices instead of raising a database error.
+        Return the posted ``export_items`` pks found in ``queryset`` (issue #2189).
         """
         posted_pks = request.POST.getlist(f"{FORM_FIELD_PREFIX}export_items")
         pk_field = queryset.model._meta.pk
         min_value, max_value = None, None
-        # with multi-table inheritance the pk is a OneToOneField to the parent,
-        # so check the range against the concrete field it points to
         range_field = pk_field
         while isinstance(range_field, ForeignObject):
             range_field = range_field.target_field
         if isinstance(range_field, IntegerField):
-            # Django guards the exact / gt / gte / lt / lte lookups against
-            # integer overflow, but not `__in`, so an out-of-range value
-            # would raise (e.g. OverflowError on SQLite)
             min_value, max_value = connections[queryset.db].ops.integer_field_range(
                 range_field.get_internal_type()
             )

@@ -159,7 +159,6 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
             **self.resource_fields_payload,
         }
         self._prepend_form_prefix(data)
-        # restrict the queryset so that it excludes the submitted pk
         with mock.patch("core.admin.CategoryAdmin.get_queryset") as mock_get_queryset:
             mock_get_queryset.return_value = Category.objects.exclude(pk=self.cat1.pk)
             response = self._post_url_response(self.category_export_url, data)
@@ -170,9 +169,7 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
             )
 
     def test_export_items_choices_are_limited_to_posted_pks(self):
-        # issue 2189 - the choices must not enumerate every pk in the table
-        # omitting 'format' makes the form invalid, so the export page is
-        # rendered again with the bound 'export_items' field
+        # issue 2189
         data = {
             "export_items": [str(self.cat1.id)],
             **self.resource_fields_payload,
@@ -185,7 +182,7 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertEqual([(self.cat1.id, self.cat1.id)], export_items.choices)
 
     def test_export_items_rejects_malformed_pk(self):
-        # issue 2189 - a tampered pk must be a form error, not a server error
+        # issue 2189
         for malformed_pk in [
             "abc",
             "²",
@@ -207,8 +204,7 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
                 )
 
     def test_export_items_rejects_malformed_pk_among_valid_pks(self):
-        # issue 2189 - a tampered pk must not be dropped silently, exporting
-        # the remaining selection
+        # issue 2189
         data = {
             "format": "0",
             "export_items": [str(self.cat1.id), "abc"],
@@ -223,7 +219,7 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
         )
 
     def test_export_post_model_with_custom_PK(self):
-        # issue 2189 - pks are not always integers
+        # issue 2189
         cat = UUIDCategory.objects.create(name="UUIDCategory 1")
         UUIDCategory.objects.create(name="UUIDCategory 2")
         data = {
@@ -238,7 +234,7 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertEqual(target_str.encode(), response.content)
 
     def test_export_items_rejects_malformed_uuid_pk(self):
-        # issue 2189 - pks are not always integers
+        # issue 2189
         data = {
             "format": "0",
             "export_items": ["abc"],
@@ -252,8 +248,7 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
         )
 
     def test_export_items_rejects_pk_with_null_character(self):
-        # issue 2189 - PostgreSQL raises DataError when a text pk containing a
-        # null character reaches the query, so it must be a form error instead
+        # issue 2189
         data = {
             "format": "0",
             "export_items": ["a\x00"],
@@ -272,9 +267,7 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
         "Only SQLite stores a value longer than max_length",
     )
     def test_export_items_accepts_pk_longer_than_max_length(self):
-        # issue 2189 - a row whose pk exceeds max_length exists on SQLite, so
-        # it must remain exportable: only what the database cannot process is
-        # discarded, not what the field validators would reject
+        # issue 2189
         author = NamedAuthor.objects.create(name="a" * 300)
         data = {
             "format": "0",
@@ -372,8 +365,7 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
 
 
 class ExportActionInheritedPkTest(TransactionTestCase):
-    # issue 2189 - with multi-table inheritance the pk is a OneToOneField, so
-    # the integer range must be checked against the parent's concrete pk field
+    # issue 2189
 
     @isolate_apps("core")
     def test_export_items_rejects_out_of_range_inherited_pk(self):
@@ -489,8 +481,7 @@ class TestExportFilterPreservation(AdminTestMixin, TestCase):
         )
 
     def test_export_items_rejects_pk_outside_filtered_changelist(self):
-        # issue 2189 - bounding the choices to the posted pks must still
-        # reject a pk that the changelist filters exclude
+        # issue 2189
         data = {
             "format": "0",
             "export_items": [str(self.new_book1.id)],
