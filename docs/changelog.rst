@@ -8,6 +8,7 @@ Changelog
 5.0.0 (unreleased)
 ------------------
 
+- Fixed Admin action exports loading every primary key in the table to validate the selected items, which caused slow exports and high memory usage on large tables (`2189 <https://github.com/django-import-export/django-import-export/issues/2189>`_)
 - Added :meth:`~import_export.widgets.ManyToManyWidget.get_queryset` to customize the related objects available during import (`2172 <https://github.com/django-import-export/django-import-export/pull/2172>`_)
 - Honor ``IMPORT_EXPORT_SKIP_ADMIN_EXPORT_UI`` / ``skip_export_form`` when exporting from the Admin action menu or change-form Export button (`2180 <https://github.com/django-import-export/django-import-export/issues/2180>`_)
 - Fixed pk sequence reset in :meth:`~import_export.resources.ModelResource.after_import` (`2166 <https://github.com/django-import-export/django-import-export/issues/2166>`_)
