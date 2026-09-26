@@ -11,13 +11,15 @@ from django.contrib import admin
 from django.contrib.admin import AdminSite
 from django.contrib.auth.models import User
 from django.core.exceptions import FieldError, PermissionDenied
+from django.db import connection, models
 from django.http import HttpRequest
-from django.test import RequestFactory
+from django.test import RequestFactory, TransactionTestCase
 from django.test.testcases import TestCase
-from django.test.utils import override_settings
+from django.test.utils import isolate_apps, override_settings
 from django.urls import reverse
 
-from import_export.admin import ExportMixin
+from import_export.admin import ExportActionModelAdmin, ExportMixin
+from import_export.constants import FORM_FIELD_PREFIX
 
 
 class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
@@ -367,6 +369,45 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
         m = TestMixin()
         with self.assertRaises(PermissionDenied):
             m.get_export_data("0", request, Book.objects.none())
+
+
+class ExportActionInheritedPkTest(TransactionTestCase):
+    # issue 2189 - with multi-table inheritance the pk is a OneToOneField, so
+    # the integer range must be checked against the parent's concrete pk field
+
+    @isolate_apps("core")
+    def test_export_items_rejects_out_of_range_inherited_pk(self):
+        class RangeParent(models.Model):
+            class Meta:
+                app_label = "core"
+                db_table = "core_rangeparent_2189"
+
+        class RangeChild(RangeParent):
+            class Meta:
+                app_label = "core"
+                db_table = "core_rangechild_2189"
+
+        with connection.schema_editor() as editor:
+            editor.create_model(RangeParent)
+            editor.create_model(RangeChild)
+        try:
+            child = RangeChild.objects.create()
+            request = RequestFactory().post(
+                "/",
+                {
+                    f"{FORM_FIELD_PREFIX}export_items": [
+                        "99999999999999999999",
+                        str(child.pk),
+                    ]
+                },
+            )
+            model_admin = ExportActionModelAdmin(RangeChild, AdminSite())
+            pks = model_admin._bounded_export_pks(request, RangeChild.objects.all())
+            self.assertEqual([child.pk], list(pks))
+        finally:
+            with connection.schema_editor() as editor:
+                editor.delete_model(RangeChild)
+                editor.delete_model(RangeParent)
 
 
 class TestExportFilterPreservation(AdminTestMixin, TestCase):
