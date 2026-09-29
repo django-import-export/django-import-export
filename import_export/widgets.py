@@ -234,8 +234,8 @@ class BooleanWidget(Widget):
     see :ref:`custom_boolean_handling` in the advanced usage documentation.
     """
 
-    TRUE_VALUES = ["1", 1, True, "true", "TRUE", "True"]
-    FALSE_VALUES = ["0", 0, False, "false", "FALSE", "False"]
+    TRUE_VALUES = ["1", 1, True, "true", "TRUE", "True", "Yes", "YES", "yes"]
+    FALSE_VALUES = ["0", 0, False, "false", "FALSE", "False", "No", "NO", "no"]
     NULL_VALUES = ["", None, "null", "NULL", "none", "NONE", "None"]
 
     def __init__(self, coerce_to_string=True):
@@ -247,8 +247,8 @@ class BooleanWidget(Widget):
         Converts the input value to a Python boolean or None.
 
         Recognizes common string representations of boolean values:
-        - True values: '1', 1, True, 'true', 'TRUE', 'True'
-        - False values: '0', 0, False, 'false', 'FALSE', 'False'
+        - True values: '1', 1, True, 'true', 'TRUE', 'True', 'Yes', 'YES', 'yes'
+        - False values: '0', 0, False, 'false', 'FALSE', 'False', 'No', 'NO', 'no'
         - Null values: '', None, 'null', 'NULL', 'none', 'NONE', 'None'
 
         :param value: The value to be converted to boolean.

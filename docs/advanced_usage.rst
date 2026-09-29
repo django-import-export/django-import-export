@@ -870,8 +870,9 @@ Custom Boolean value handling
 -----------------------------
 
 While the ``BooleanWidget`` is set up to accept common variations of
-"True" and "False" (and "None"), you may need to handle less common values
-or custom boolean representations.
+"True" and "False" (and "None"), it also accepts "Yes", "YES", "yes" as
+true and "No", "NO", "no" as false. You may need to handle less common
+values or custom boolean representations.
 
 The easiest way to transform custom boolean values is to override the
 :meth:`~import_export.resources.Resource.before_import_row` method in your Resource class::

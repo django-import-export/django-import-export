@@ -8,6 +8,7 @@ Changelog
 5.0.0 (unreleased)
 ------------------
 
+- Add support for ``Yes/YES/yes`` and ``No/NO/no`` in ``BooleanWidget`` (`2168 <https://github.com/django-import-export/django-import-export/issues/2168>`_)
 - Added :meth:`~import_export.widgets.ManyToManyWidget.get_queryset` to customize the related objects available during import (`2172 <https://github.com/django-import-export/django-import-export/pull/2172>`_)
 - Honor ``IMPORT_EXPORT_SKIP_ADMIN_EXPORT_UI`` / ``skip_export_form`` when exporting from the Admin action menu or change-form Export button (`2180 <https://github.com/django-import-export/django-import-export/issues/2180>`_)
 - Fixed pk sequence reset in :meth:`~import_export.resources.ModelResource.after_import` (`2166 <https://github.com/django-import-export/django-import-export/issues/2166>`_)

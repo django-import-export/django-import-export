@@ -74,6 +74,18 @@ class BooleanWidgetTest(TestCase):
         self.assertEqual(self.widget.clean("NULL"), None)
         self.assertEqual(self.widget.clean("null"), None)
 
+    def test_clean_yes_no(self):
+        for value, expected in (
+            ("Yes", True),
+            ("YES", True),
+            ("yes", True),
+            ("No", False),
+            ("NO", False),
+            ("no", False),
+        ):
+            with self.subTest(value=value):
+                self.assertIs(self.widget.clean(value), expected)
+
     def test_render(self):
         self.assertEqual(self.widget.render(True), "1")
         self.assertEqual(self.widget.render(False), "0")
