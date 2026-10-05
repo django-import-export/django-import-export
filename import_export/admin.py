@@ -5,7 +5,10 @@ from django.conf import settings
 from django.contrib import admin, messages
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION, LogEntry
 from django.contrib.auth import get_permission_codename
-from django.core.exceptions import FieldError, PermissionDenied
+from django.core.exceptions import FieldError, PermissionDenied, ValidationError
+from django.core.validators import ProhibitNullCharactersValidator
+from django.db import connections
+from django.db.models import ForeignObject, IntegerField
 from django.forms import MultipleChoiceField, MultipleHiddenInput
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
@@ -762,7 +765,9 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
             form.fields["export_items"] = MultipleChoiceField(
                 widget=MultipleHiddenInput,
                 required=False,
-                choices=[(pk, pk) for pk in queryset.values_list("pk", flat=True)],
+                choices=[
+                    (pk, pk) for pk in self._bounded_export_pks(request, queryset)
+                ],
             )
         if form.is_valid():
             file_format = formats[int(form.cleaned_data["format"])]()
@@ -782,6 +787,35 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
         context = self.init_request_context_data(request, form)
         request.current_app = self.admin_site.name
         return TemplateResponse(request, [self.export_template_name], context=context)
+
+    def _bounded_export_pks(self, request, queryset):
+        """
+        Return the posted ``export_items`` pks found in ``queryset`` (issue #2189).
+        """
+        posted_pks = request.POST.getlist(f"{FORM_FIELD_PREFIX}export_items")
+        pk_field = queryset.model._meta.pk
+        min_value, max_value = None, None
+        range_field = pk_field
+        while isinstance(range_field, ForeignObject):
+            range_field = range_field.target_field
+        if isinstance(range_field, IntegerField):
+            min_value, max_value = connections[queryset.db].ops.integer_field_range(
+                range_field.get_internal_type()
+            )
+        validate_no_null_characters = ProhibitNullCharactersValidator()
+        valid_pks = []
+        for posted_pk in posted_pks:
+            try:
+                validate_no_null_characters(posted_pk)
+                pk = pk_field.to_python(posted_pk)
+            except (ValidationError, ValueError):
+                continue
+            if min_value is not None and pk < min_value:
+                continue
+            if max_value is not None and pk > max_value:
+                continue
+            valid_pks.append(pk)
+        return queryset.filter(pk__in=valid_pks).values_list("pk", flat=True)
 
     def changelist_view(self, request, extra_context=None):
         if extra_context is None:

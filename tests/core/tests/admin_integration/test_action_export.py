@@ -1,22 +1,25 @@
 import warnings
 from datetime import date, datetime
-from unittest import mock
+from unittest import mock, skipUnless
 from unittest.mock import MagicMock, PropertyMock, patch
 
 from core.admin import CategoryAdmin
-from core.models import Author, Book, Category, UUIDCategory
+from core.models import Author, Book, Category, NamedAuthor, UUIDCategory
 from core.tests.admin_integration.mixins import AdminTestMixin
+from django.conf import settings
 from django.contrib import admin
 from django.contrib.admin import AdminSite
 from django.contrib.auth.models import User
 from django.core.exceptions import FieldError, PermissionDenied
+from django.db import connection, models
 from django.http import HttpRequest
-from django.test import RequestFactory
+from django.test import RequestFactory, TransactionTestCase
 from django.test.testcases import TestCase
-from django.test.utils import override_settings
+from django.test.utils import isolate_apps, override_settings
 from django.urls import reverse
 
-from import_export.admin import ExportMixin
+from import_export.admin import ExportActionModelAdmin, ExportMixin
+from import_export.constants import FORM_FIELD_PREFIX
 
 
 class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
@@ -29,6 +32,13 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
         self.resource_fields_payload = {
             "categoryresource_id": True,
             "categoryresource_name": True,
+        }
+        self.uuid_resource_fields_payload = {
+            "uuidcategoryresource_catid": True,
+            "uuidcategoryresource_name": True,
+        }
+        self.named_author_resource_fields_payload = {
+            "namedauthorresource_name": True,
         }
 
     def _check_export_response(self, response):
@@ -149,19 +159,125 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
             **self.resource_fields_payload,
         }
         self._prepend_form_prefix(data)
-        # mock queryset to return a different set of pks than what's submitted
         with mock.patch("core.admin.CategoryAdmin.get_queryset") as mock_get_queryset:
-            mock_queryset = mock.MagicMock()
-            mock_queryset.values_list.return_value = [
-                999
-            ]  # Different pk than submitted
-            mock_get_queryset.return_value = mock_queryset
+            mock_get_queryset.return_value = Category.objects.exclude(pk=self.cat1.pk)
             response = self._post_url_response(self.category_export_url, data)
             self.assertIn(
                 "Select a valid choice. "
                 f"{self.cat1.id} is not one of the available choices.",
                 response.content.decode(),
             )
+
+    def test_export_items_choices_are_limited_to_posted_pks(self):
+        # issue 2189
+        data = {
+            "export_items": [str(self.cat1.id)],
+            **self.resource_fields_payload,
+        }
+        self._prepend_form_prefix(data)
+        response = self._post_url_response(self.category_export_url, data)
+        export_form = response.context["form"]
+        self.assertEqual({"format"}, set(export_form.errors))
+        export_items = export_form.fields["export_items"]
+        self.assertEqual([(self.cat1.id, self.cat1.id)], export_items.choices)
+
+    def test_export_items_rejects_malformed_pk(self):
+        # issue 2189
+        for malformed_pk in [
+            "abc",
+            "²",
+            "99999999999999999999",
+            "-99999999999999999999",
+        ]:
+            with self.subTest(malformed_pk=malformed_pk):
+                data = {
+                    "format": "0",
+                    "export_items": [malformed_pk],
+                    **self.resource_fields_payload,
+                }
+                self._prepend_form_prefix(data)
+                response = self._post_url_response(self.category_export_url, data)
+                self.assertIn(
+                    "Select a valid choice. "
+                    f"{malformed_pk} is not one of the available choices.",
+                    response.content.decode(),
+                )
+
+    def test_export_items_rejects_malformed_pk_among_valid_pks(self):
+        # issue 2189
+        data = {
+            "format": "0",
+            "export_items": [str(self.cat1.id), "abc"],
+            **self.resource_fields_payload,
+        }
+        self._prepend_form_prefix(data)
+        response = self._post_url_response(self.category_export_url, data)
+        self.assertFalse(response.has_header("Content-Disposition"))
+        self.assertIn(
+            "Select a valid choice. abc is not one of the available choices.",
+            response.content.decode(),
+        )
+
+    def test_export_post_model_with_custom_PK(self):
+        # issue 2189
+        cat = UUIDCategory.objects.create(name="UUIDCategory 1")
+        UUIDCategory.objects.create(name="UUIDCategory 2")
+        data = {
+            "format": "0",
+            "export_items": [str(cat.pk)],
+            **self.uuid_resource_fields_payload,
+        }
+        self._prepend_form_prefix(data)
+        response = self._post_url_response(self.uuid_category_export_url, data)
+        self.assertEqual(response["Content-Type"], "text/csv")
+        target_str = f"catid,name\r\n{cat.pk},UUIDCategory 1\r\n"
+        self.assertEqual(target_str.encode(), response.content)
+
+    def test_export_items_rejects_malformed_uuid_pk(self):
+        # issue 2189
+        data = {
+            "format": "0",
+            "export_items": ["abc"],
+            **self.uuid_resource_fields_payload,
+        }
+        self._prepend_form_prefix(data)
+        response = self._post_url_response(self.uuid_category_export_url, data)
+        self.assertIn(
+            "Select a valid choice. abc is not one of the available choices.",
+            response.content.decode(),
+        )
+
+    def test_export_items_rejects_pk_with_null_character(self):
+        # issue 2189
+        data = {
+            "format": "0",
+            "export_items": ["a\x00"],
+            **self.named_author_resource_fields_payload,
+        }
+        self._prepend_form_prefix(data)
+        response = self._post_url_response(self.named_author_export_url, data)
+        self.assertFalse(response.has_header("Content-Disposition"))
+        self.assertIn(
+            "Select a valid choice. a\x00 is not one of the available choices.",
+            response.content.decode(),
+        )
+
+    @skipUnless(
+        "sqlite" in settings.DATABASES["default"]["ENGINE"],
+        "Only SQLite stores a value longer than max_length",
+    )
+    def test_export_items_accepts_pk_longer_than_max_length(self):
+        # issue 2189
+        author = NamedAuthor.objects.create(name="a" * 300)
+        data = {
+            "format": "0",
+            "export_items": [author.pk],
+            **self.named_author_resource_fields_payload,
+        }
+        self._prepend_form_prefix(data)
+        response = self._post_url_response(self.named_author_export_url, data)
+        self.assertEqual(response["Content-Type"], "text/csv")
+        self.assertEqual(f"name\r\n{author.pk}\r\n".encode(), response.content)
 
     def _perform_export_action_calls_modeladmin_get_queryset_test(self, data):
         # Issue #1864
@@ -248,6 +364,44 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
             m.get_export_data("0", request, Book.objects.none())
 
 
+class ExportActionInheritedPkTest(TransactionTestCase):
+    # issue 2189
+
+    @isolate_apps("core")
+    def test_export_items_rejects_out_of_range_inherited_pk(self):
+        class RangeParent(models.Model):
+            class Meta:
+                app_label = "core"
+                db_table = "core_rangeparent_2189"
+
+        class RangeChild(RangeParent):
+            class Meta:
+                app_label = "core"
+                db_table = "core_rangechild_2189"
+
+        with connection.schema_editor() as editor:
+            editor.create_model(RangeParent)
+            editor.create_model(RangeChild)
+        try:
+            child = RangeChild.objects.create()
+            request = RequestFactory().post(
+                "/",
+                {
+                    f"{FORM_FIELD_PREFIX}export_items": [
+                        "99999999999999999999",
+                        str(child.pk),
+                    ]
+                },
+            )
+            model_admin = ExportActionModelAdmin(RangeChild, AdminSite())
+            pks = model_admin._bounded_export_pks(request, RangeChild.objects.all())
+            self.assertEqual([child.pk], list(pks))
+        finally:
+            with connection.schema_editor() as editor:
+                editor.delete_model(RangeChild)
+                editor.delete_model(RangeParent)
+
+
 class TestExportFilterPreservation(AdminTestMixin, TestCase):
     """
     Test cases for issue #2097: Admin filters are lost during export actions.
@@ -324,6 +478,23 @@ class TestExportFilterPreservation(AdminTestMixin, TestCase):
             export_url,
             f"Export URL should preserve AuthorBirthdayListFilter parameters. "
             f"Got URL: '{export_url}'. Filter preservation is working!",
+        )
+
+    def test_export_items_rejects_pk_outside_filtered_changelist(self):
+        # issue 2189
+        data = {
+            "format": "0",
+            "export_items": [str(self.new_book1.id)],
+            **self.resource_fields_payload,
+        }
+        self._prepend_form_prefix(data)
+        response = self._post_url_response(
+            self.book_export_url + "?birthday=before", data
+        )
+        self.assertIn(
+            "Select a valid choice. "
+            f"{self.new_book1.id} is not one of the available choices.",
+            response.content.decode(),
         )
 
     def test_export_action_filter_preservation_end_to_end(self):
