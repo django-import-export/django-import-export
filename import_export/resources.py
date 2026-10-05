@@ -209,6 +209,48 @@ class Resource(metaclass=DeclarativeMetaclass):
             and "__" not in field.attribute  # exclude related fields
         ]
 
+    def get_bulk_create_update_fields(self):
+        """
+        Returns the fields to be updated when ``update_conflicts`` is enabled.
+        Defaults to
+        :meth:`~import_export.resources.ModelResource.get_bulk_update_fields`
+        because the ``import_id_fields`` identify the conflicting row and cannot
+        themselves be updated.
+        """
+        if self._meta.update_fields is not None:
+            return list(self._meta.update_fields)
+        return self.get_bulk_update_fields()
+
+    def get_bulk_create_unique_fields(self):
+        """
+        Returns the fields which trigger the upsert when ``update_conflicts`` is
+        enabled.  Defaults to the ``import_id_fields``, which are the fields which
+        identify a row on import.
+        """
+        if self._meta.unique_fields is not None:
+            return list(self._meta.unique_fields)
+        return [
+            self.fields[field_name].attribute
+            for field_name in self.get_import_id_fields()
+            if field_name in self.fields
+        ]
+
+    def get_bulk_create_kwargs(self, batch_size=None):
+        """
+        Returns the keyword arguments passed to ``bulk_create()``.
+        """
+        kwargs = {"batch_size": batch_size}
+        if not self._meta.update_conflicts:
+            return kwargs
+        kwargs["update_conflicts"] = True
+        kwargs["update_fields"] = self.get_bulk_create_update_fields()
+        connection = connections[self.get_db_connection_name()]
+        if connection.features.supports_update_conflicts_with_target:
+            # MySQL and MariaDB update every unique constraint and reject a
+            # conflict target, so only send one when the backend accepts it.
+            kwargs["unique_fields"] = self.get_bulk_create_unique_fields()
+        return kwargs
+
     def bulk_create(
         self, using_transactions, dry_run, raise_errors, batch_size=None, result=None
     ):
@@ -218,7 +260,8 @@ class Resource(metaclass=DeclarativeMetaclass):
         if len(self.create_instances) > 0 and (using_transactions or not dry_run):
             try:
                 self._meta.model.objects.bulk_create(
-                    self.create_instances, batch_size=batch_size
+                    self.create_instances,
+                    **self.get_bulk_create_kwargs(batch_size=batch_size),
                 )
             except Exception as e:
                 self.handle_import_error(result, e, raise_errors)
@@ -826,6 +869,9 @@ class Resource(metaclass=DeclarativeMetaclass):
             not isinstance(self._meta.batch_size, int) or self._meta.batch_size < 1
         ):
             raise ValueError("Batch size must be a positive integer")
+
+        if self._meta.update_conflicts and not self._meta.use_bulk:
+            raise ValueError("update_conflicts requires use_bulk to be enabled")
 
         with atomic_if_using_transaction(using_transactions, using=db_connection):
             result = self.import_data_inner(

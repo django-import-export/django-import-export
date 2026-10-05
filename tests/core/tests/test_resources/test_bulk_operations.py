@@ -1,8 +1,10 @@
-from unittest import mock
+from contextlib import contextmanager
+from unittest import mock, skipUnless
 
 import tablib
 from core.models import Book, UUIDBook
 from django.core.exceptions import ValidationError
+from django.db import DEFAULT_DB_ALIAS, connections
 from django.test import TestCase
 
 from import_export import exceptions, fields, resources, widgets
@@ -309,6 +311,146 @@ class BulkCreateTest(BulkTest):
         self.assertIn(
             False, [x[0][0] for x in mock_atomic_if_using_transaction.call_args_list]
         )
+
+
+class BulkCreateUpdateConflictsTest(BulkTest):
+    """``update_conflicts`` makes a bulk import an upsert (issue #2049)."""
+
+    @contextmanager
+    def _conflict_target_support(self, resource, supported):
+        # whether a conflict target is sent is a property of the backend, so the
+        # tests which assert on it pin the feature rather than read it
+        connection = connections[resource.get_db_connection_name()]
+        with mock.patch.object(
+            connection.features, "supports_update_conflicts_with_target", supported
+        ):
+            yield
+
+    @mock.patch("core.models.Book.objects.bulk_create")
+    def test_update_conflicts_passed_to_bulk_create(self, mock_bulk_create):
+        class _BookResource(resources.ModelResource):
+            class Meta:
+                model = Book
+                use_bulk = True
+                update_conflicts = True
+
+        resource = _BookResource()
+        with self._conflict_target_support(resource, True):
+            resource.import_data(self.dataset)
+        mock_bulk_create.assert_called_with(
+            mock.ANY,
+            batch_size=None,
+            update_conflicts=True,
+            # defaults: every writable field except the import_id_fields, which
+            # identify the conflicting row and so are the conflict target
+            update_fields=resource.get_bulk_update_fields(),
+            unique_fields=["id"],
+        )
+
+    @mock.patch("core.models.Book.objects.bulk_create")
+    def test_update_conflicts_not_passed_when_disabled(self, mock_bulk_create):
+        self.resource.import_data(self.dataset)
+        mock_bulk_create.assert_called_with(mock.ANY, batch_size=None)
+
+    @mock.patch("core.models.Book.objects.bulk_create")
+    def test_update_fields_and_unique_fields_can_be_declared(self, mock_bulk_create):
+        class _BookResource(resources.ModelResource):
+            class Meta:
+                model = Book
+                use_bulk = True
+                update_conflicts = True
+                update_fields = ["name"]
+                unique_fields = ["name"]
+
+        resource = _BookResource()
+        with self._conflict_target_support(resource, True):
+            resource.import_data(self.dataset)
+        mock_bulk_create.assert_called_with(
+            mock.ANY,
+            batch_size=None,
+            update_conflicts=True,
+            update_fields=["name"],
+            unique_fields=["name"],
+        )
+
+    @mock.patch("core.models.Book.objects.bulk_create")
+    def test_unique_fields_omitted_when_backend_has_no_conflict_target(
+        self, mock_bulk_create
+    ):
+        # MySQL and MariaDB update every unique constraint and reject a
+        # conflict target, so no unique_fields must be sent there.
+        class _BookResource(resources.ModelResource):
+            class Meta:
+                model = Book
+                use_bulk = True
+                update_conflicts = True
+
+        resource = _BookResource()
+        with self._conflict_target_support(resource, False):
+            resource.import_data(self.dataset)
+        mock_bulk_create.assert_called_with(
+            mock.ANY,
+            batch_size=None,
+            update_conflicts=True,
+            update_fields=resource.get_bulk_update_fields(),
+        )
+
+    def test_update_conflicts_requires_use_bulk(self):
+        class _BookResource(resources.ModelResource):
+            class Meta:
+                model = Book
+                update_conflicts = True
+
+        with self.assertRaisesRegex(ValueError, "update_conflicts requires use_bulk"):
+            _BookResource().import_data(self.dataset, raise_errors=True)
+
+
+@skipUnless(
+    connections[DEFAULT_DB_ALIAS].features.supports_update_conflicts,
+    "backend does not support updating conflicts",
+)
+class BulkCreateUpdateConflictsIntegrationTest(TestCase):
+    """The upsert against a real database, rather than a mocked bulk_create.
+
+    ``force_init_instance`` skips the existence check, so every row is created
+    and a row whose id is already present conflicts on insert.
+    """
+
+    class _BookResource(resources.ModelResource):
+        class Meta:
+            model = Book
+            fields = ("id", "name")
+            use_bulk = True
+            force_init_instance = True
+            update_conflicts = True
+
+    class _ConflictingBookResource(_BookResource):
+        class Meta:
+            update_conflicts = False
+
+    def setUp(self):
+        self.book = Book.objects.create(name="original")
+        self.dataset = tablib.Dataset((self.book.pk, "updated"), headers=["id", "name"])
+
+    def test_conflicting_row_is_updated(self):
+        result = self._BookResource().import_data(self.dataset, raise_errors=True)
+
+        self.assertFalse(result.has_errors())
+        self.assertEqual(1, Book.objects.count())
+        self.book.refresh_from_db()
+        self.assertEqual("updated", self.book.name)
+
+    def test_conflicting_row_errors_without_update_conflicts(self):
+        # raise_errors, so that the failed insert unwinds through the atomic
+        # block rather than being collected on the result. A backend which
+        # aborts the transaction on error, such as Postgres, rejects every
+        # statement until the block is left, including the release of the
+        # savepoint the block ends with.
+        with self.assertRaises(exceptions.ImportError):
+            self._ConflictingBookResource().import_data(self.dataset, raise_errors=True)
+
+        self.book.refresh_from_db()
+        self.assertEqual("original", self.book.name)
 
 
 class BulkUpdateTest(BulkTest):
