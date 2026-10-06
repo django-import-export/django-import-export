@@ -98,6 +98,26 @@ The following items, deprecated since v4.0, have been removed:
 * The ``get_import_resource_class()`` method has been removed.
   Use ``get_import_resource_classes()`` instead.
 
+* The Admin import confirmation screen now paginates the preview instead of rendering every row of the
+  upload (`PR 2161 <https://github.com/django-import-export/django-import-export/pull/2161>`_).
+
+  Uploads of more than 100 rows now show the first 100 with ``Previous`` / ``Next`` navigation above the
+  table.  This affects the dry-run preview, the validation-error preview and the critical-error preview.
+  The import engine is unchanged: the dry-run still processes the whole file and confirming still imports
+  every row.
+
+  Page navigation is a ``GET`` request which re-runs the dry-run against the temporary file, so for very
+  large uploads page changes may be noticeably slower than a single render.  Override
+  :meth:`~import_export.admin.ImportMixin.get_preview_result_for_pagination` to cache the result.
+
+  **Migration**: to restore the v4 behaviour of rendering every row on one page, set::
+
+    IMPORT_EXPORT_PREVIEW_PAGE_SIZE = None
+
+  The page size can also be set per ``ModelAdmin`` with the ``import_preview_page_size`` attribute, or
+  computed by overriding :meth:`~import_export.admin.ImportMixin.get_import_preview_page_size`.
+  See :ref:`import_export_preview_page_size`.
+
 * The ``get_export_resource_class()`` method has been removed.
   Use ``get_export_resource_classes()`` instead.
 

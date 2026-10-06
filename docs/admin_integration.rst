@@ -104,6 +104,15 @@ Your choice of temporary storage will be influenced by the following factors:
 
 Temporary resources are removed when data is successfully imported after the confirmation step.
 
+The confirmation screen paginates the preview so that large uploads do not render every row at once
+(see :ref:`import_export_preview_page_size`).  Page navigation is a ``GET`` request which carries only
+the temporary storage name; the original filename, the selected format and the selected resource are
+held in the user's session for the duration of the confirmation step, and are cleared along with the
+temporary file once the import is confirmed.  Set ``import_preview_page_size`` on your ``ModelAdmin``
+(or override :meth:`~import_export.admin.ImportMixin.get_import_preview_page_size`) to change the page
+size for a single model.  If the session entry or the temporary file has gone, page navigation returns
+to the upload form with a warning rather than failing silently.
+
 **For sensitive data you will need to understand exactly how temporary files are being stored and to ensure
 that data is properly secured and managed.**
 
