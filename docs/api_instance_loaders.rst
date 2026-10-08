@@ -1,3 +1,5 @@
+.. _instance-loaders:
+
 ================
 Instance loaders
 ================

@@ -1,3 +1,5 @@
+.. _import-workflow:
+
 ====================
 Import workflow
 ====================
