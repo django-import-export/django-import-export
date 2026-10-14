@@ -24,7 +24,8 @@ Breaking changes
         def create_dataset(self, in_stream, **kwargs):
             return super().create_dataset(in_stream, delimiter=";", **kwargs)
 
-  See `issue 2006 <https://github.com/django-import-export/django-import-export/issues/2006>`_.
+  See `issue 2006 <https://github.com/django-import-export/django-import-export/issues/2006>`_. and
+  `PR 2197 <https://github.com/django-import-export/django-import-export/issues/2197>`_.
 
 * This release fixes an issue with form field name clashes (see `2108
   <https://github.com/django-import-export/django-import-export/pull/2108>`_).

@@ -21,10 +21,8 @@ class Format:
         """
         Create dataset from the given input.
 
-        The Admin integration always passes the raw uploaded data as ``bytes``,
-        irrespective of the temporary storage in use or whether the import
-        confirmation step is skipped.  Text formats are responsible for
-        decoding the data using their configured ``encoding``.
+        ``in_stream`` is the raw file content, normally ``bytes``.  Text
+        formats are responsible for decoding it using their ``encoding``.
         """
         raise NotImplementedError()
 
