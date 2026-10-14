@@ -330,6 +330,7 @@ class ImportLogEntryTest(AdminTestMixin, TestCase):
         self.assertEqual(response.status_code, 200)
         confirm_form = response.context["confirm_form"]
         data = confirm_form.initial
+        self._prepend_form_prefix(data)
         self._post_url_response(self.book_process_import_url, data, follow=True)
         self.assertEqual(0, LogEntry.objects.count())
 
@@ -340,6 +341,7 @@ class ImportLogEntryTest(AdminTestMixin, TestCase):
         self.assertEqual(response.status_code, 200)
         confirm_form = response.context["confirm_form"]
         data = confirm_form.initial
+        self._prepend_form_prefix(data)
         with mock.patch("core.admin.BookResource.skip_row") as mock_skip:
             mock_skip.side_effect = ValueError("some unknown error")
             self._post_url_response(self.book_process_import_url, data, follow=True)
@@ -352,6 +354,7 @@ class ImportLogEntryTest(AdminTestMixin, TestCase):
         self.assertEqual(response.status_code, 200)
         confirm_form = response.context["confirm_form"]
         data = confirm_form.initial
+        self._prepend_form_prefix(data)
         with mock.patch("core.admin.BookResource.skip_row") as mock_skip:
             mock_skip.side_effect = ValidationError("some unknown error")
             self._post_url_response(self.book_process_import_url, data, follow=True)
@@ -364,6 +367,7 @@ class ImportLogEntryTest(AdminTestMixin, TestCase):
         self.assertEqual(response.status_code, 200)
         confirm_form = response.context["confirm_form"]
         data = confirm_form.initial
+        self._prepend_form_prefix(data)
         self._post_url_response(self.book_process_import_url, data, follow=True)
         self.assertEqual(0, LogEntry.objects.count())
 
@@ -373,6 +377,7 @@ class ImportLogEntryTest(AdminTestMixin, TestCase):
         self.assertEqual(response.status_code, 200)
         confirm_form = response.context["confirm_form"]
         data = confirm_form.initial
+        self._prepend_form_prefix(data)
         with mock.patch(
             "import_export.admin.ImportMixin.skip_admin_log",
             new_callable=PropertyMock,
