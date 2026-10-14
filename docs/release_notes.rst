@@ -8,6 +8,24 @@ v5.0
 Breaking changes
 ^^^^^^^^^^^^^^^^
 
+* Temporary storages (:class:`~import_export.tmp_storages.BaseStorage` and its subclasses) now deal in ``bytes``
+  only: ``save()`` receives the raw uploaded data and ``read()`` returns it unchanged.  The ``read_mode`` and
+  ``encoding`` constructor arguments have been removed.  If you have a custom storage class which relied on
+  these arguments, remove them and return ``bytes`` from ``read()``.
+
+  As a result, ``create_dataset()`` on a :class:`~import_export.formats.base_formats.Format` now always receives
+  ``bytes`` from the Admin import.  Previously it received ``str`` or ``bytes`` depending on the storage class
+  and on whether the import confirmation step was skipped.
+  :class:`~import_export.formats.base_formats.TextFormat` decodes the data using its ``encoding``.  If you
+  subclass ``TextFormat`` and override ``create_dataset()``, call ``super()`` so the data is decoded, and pass
+  any tablib options through as keyword arguments, for example::
+
+    class SemicolonCSV(CSV):
+        def create_dataset(self, in_stream, **kwargs):
+            return super().create_dataset(in_stream, delimiter=";", **kwargs)
+
+  See `issue 2006 <https://github.com/django-import-export/django-import-export/issues/2006>`_.
+
 * This release fixes an issue with form field name clashes (see `2108
   <https://github.com/django-import-export/django-import-export/pull/2108>`_).
 

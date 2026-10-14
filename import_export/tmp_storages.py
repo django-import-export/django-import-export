@@ -7,10 +7,16 @@ from django.core.files.base import ContentFile
 
 
 class BaseStorage:
+    """
+    Base class for temporary storage of uploaded import files.
+
+    Storages deal in ``bytes`` only: :meth:`save` receives the raw uploaded
+    data and :meth:`read` returns it unchanged.  Decoding text formats is the
+    responsibility of the :class:`~import_export.formats.base_formats.Format`.
+    """
+
     def __init__(self, **kwargs):
         self.name = kwargs.get("name", None)
-        self.read_mode = kwargs.get("read_mode", "r")
-        self.encoding = kwargs.get("encoding", None)
 
     def save(self, data):
         raise NotImplementedError
@@ -24,11 +30,11 @@ class BaseStorage:
 
 class TempFolderStorage(BaseStorage):
     def save(self, data):
-        with self._open(mode="w") as file:
+        with self._open(mode="wb") as file:
             file.write(data)
 
     def read(self):
-        with self._open(mode=self.read_mode) as file:
+        with self._open(mode="rb") as file:
             return file.read()
 
     def remove(self):
@@ -37,9 +43,9 @@ class TempFolderStorage(BaseStorage):
     def get_full_path(self):
         return os.path.join(tempfile.gettempdir(), self.name)
 
-    def _open(self, mode="r"):
+    def _open(self, mode="rb"):
         if self.name:
-            return open(self.get_full_path(), mode, encoding=self.encoding)
+            return open(self.get_full_path(), mode)
         else:
             tmp_file = tempfile.NamedTemporaryFile(delete=False)
             self.name = tmp_file.name
@@ -74,10 +80,6 @@ class MediaStorage(BaseStorage):
         self._configure_storage()
         self.MEDIA_FOLDER = kwargs.get("MEDIA_FOLDER", "django-import-export")
 
-        # issue 1589 - Ensure that for MediaStorage, we read in binary mode
-        kwargs.update({"read_mode": "rb"})
-        super().__init__(**kwargs)
-
     def _configure_storage(self):
         from django.core.files.storage import StorageHandler
 
@@ -92,7 +94,7 @@ class MediaStorage(BaseStorage):
         self._storage.save(self.get_full_path(), ContentFile(data))
 
     def read(self):
-        with self._storage.open(self.get_full_path(), mode=self.read_mode) as f:
+        with self._storage.open(self.get_full_path(), mode="rb") as f:
             return f.read()
 
     def remove(self):

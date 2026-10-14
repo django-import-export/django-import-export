@@ -19,7 +19,12 @@ class Format:
 
     def create_dataset(self, in_stream):
         """
-        Create dataset from given string.
+        Create dataset from the given input.
+
+        The Admin integration always passes the raw uploaded data as ``bytes``,
+        irrespective of the temporary storage in use or whether the import
+        confirmation step is skipped.  Text formats are responsible for
+        decoding the data using their configured ``encoding``.
         """
         raise NotImplementedError()
 
@@ -122,6 +127,14 @@ class TablibFormat(Format):
 
 class TextFormat(TablibFormat):
     def create_dataset(self, in_stream, **kwargs):
+        """
+        Create dataset from the given input.
+
+        ``in_stream`` is decoded using ``self.encoding`` if it is ``bytes``.
+        Subclasses which override this method should call ``super()`` so that
+        the decoding is applied, passing any tablib keyword arguments through,
+        e.g. ``super().create_dataset(in_stream, delimiter=";", **kwargs)``.
+        """
         if isinstance(in_stream, bytes) and self.encoding:
             in_stream = in_stream.decode(self.encoding)
         return super().create_dataset(in_stream, **kwargs)

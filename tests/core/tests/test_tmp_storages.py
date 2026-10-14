@@ -56,18 +56,26 @@ id,name,author,author_email,imported,published,price,categories
         name = tmp_storage.name
 
         tmp_storage = TempFolderStorage(name=name)
-        self.assertEqual(self.test_string.decode(), tmp_storage.read())
+        self.assertEqual(self.test_string, tmp_storage.read())
 
         self.assertTrue(os.path.isfile(tmp_storage.get_full_path()))
         tmp_storage.remove()
         self.assertFalse(os.path.isfile(tmp_storage.get_full_path()))
 
-    def test_temp_folder_storage_read_with_encoding(self):
-        tmp_storage = TestTempFolderStorage(encoding="utf-8")
+    def test_temp_folder_storage_reads_binary(self):
+        tmp_storage = TestTempFolderStorage()
         tmp_storage.name = "f"
-        with patch("builtins.open", mock_open(read_data="data")) as mock_file:
-            tmp_storage.read()
-            mock_file.assert_called_with("/tmp/f", "r", encoding="utf-8")
+        with patch("builtins.open", mock_open(read_data=b"data")) as mock_file:
+            self.assertEqual(b"data", tmp_storage.read())
+            mock_file.assert_called_with("/tmp/f", "rb")
+
+    def test_temp_folder_storage_writes_binary(self):
+        tmp_storage = TestTempFolderStorage()
+        tmp_storage.name = "f"
+        with patch("builtins.open", mock_open()) as mock_file:
+            tmp_storage.save(b"data")
+            mock_file.assert_called_with("/tmp/f", "wb")
+            mock_file().write.assert_called_with(b"data")
 
     def test_cache_storage(self):
         tmp_storage = CacheStorage()
@@ -107,7 +115,7 @@ id,name,author,author_email,imported,published,price,categories
         tmp_storage.remove()
         self.assertFalse(default_storage.exists(tmp_storage.get_full_path()))
 
-    def test_media_storage_read_with_encoding(self):
+    def test_media_storage_reads_binary(self):
         tmp_storage = TestMediaStorage()
         tmp_storage.name = "f"
         with patch.object(FileSystemStorage, "open") as mock_open:

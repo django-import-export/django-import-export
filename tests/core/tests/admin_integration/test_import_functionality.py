@@ -734,3 +734,73 @@ class GetImportFieldsTest(AdminTestMixin, TestCase):
                     f"Export field '{unexpected_field}' should NOT be in "
                     f"import fields_list",
                 )
+
+
+class CustomDelimiterCSVFormat(base_formats.TextFormat):
+    """
+    A ``TextFormat`` subclass which customises how tablib parses the input,
+    as a user would do to import a csv with a non-default delimiter (#2006).
+    Records the type of ``in_stream`` it was given.
+    """
+
+    TABLIB_MODULE = "tablib.formats._csv"
+    CONTENT_TYPE = "text/csv"
+    received_types = []
+
+    def create_dataset(self, in_stream, **kwargs):
+        type(self).received_types.append(type(in_stream))
+        return super().create_dataset(in_stream, delimiter=",", **kwargs)
+
+
+class TextFormatSubclassImportTest(AdminTestMixin, TestCase):
+    """
+    Regression tests for #2006.
+
+    ``create_dataset()`` must receive the uploaded data as ``bytes`` regardless
+    of whether the confirmation step is skipped or which temporary storage is
+    in use, so that ``TextFormat`` subclasses see one consistent input type.
+    """
+
+    fixtures = ["author"]
+    success_msg = _(
+        "Import finished: {} new, {} updated, {} deleted and {} skipped {}."
+    ).format(1, 0, 0, 0, Book._meta.verbose_name_plural)
+
+    def setUp(self):
+        super().setUp()
+        CustomDelimiterCSVFormat.received_types.clear()
+        p = patch.object(
+            BookAdmin, "get_import_formats", return_value=[CustomDelimiterCSVFormat]
+        )
+        p.start()
+        self.addCleanup(p.stop)
+
+    def _assert_received_bytes(self, response):
+        self.assertEqual(response.status_code, 200)
+        if "form" in response.context:
+            self.assertNotIn("import_file", response.context["form"].errors)
+        self.assertEqual([bytes], CustomDelimiterCSVFormat.received_types)
+
+    @patch(
+        "core.admin.BookAdmin.skip_import_confirm",
+        new_callable=PropertyMock,
+        return_value=True,
+    )
+    def test_import_with_skip_confirm(self, mock_skip_import_confirm):
+        response = self._do_import_post(self.book_import_url, "books.csv", follow=True)
+        self._assert_received_bytes(response)
+        self.assertContains(response, self.success_msg)
+        self.assertEqual(1, Book.objects.count())
+
+    @override_settings(
+        IMPORT_EXPORT_TMP_STORAGE_CLASS="import_export.tmp_storages.MediaStorage"
+    )
+    def test_import_with_media_storage(self):
+        response = self._do_import_post(self.book_import_url, "books.csv")
+        self._assert_received_bytes(response)
+        self.assertIn("confirm_form", response.context)
+
+    def test_import_with_temp_folder_storage(self):
+        response = self._do_import_post(self.book_import_url, "books.csv")
+        self._assert_received_bytes(response)
+        self.assertIn("confirm_form", response.context)

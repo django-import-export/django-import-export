@@ -8,6 +8,7 @@ Changelog
 5.0.0 (unreleased)
 ------------------
 
+- Fixed inconsistent input type passed to ``Format.create_dataset()``: text formats now always receive ``bytes`` from the Admin import, irrespective of the temporary storage in use or whether the import confirmation step is skipped. Temporary storages now read and write ``bytes`` only, and the ``read_mode`` and ``encoding`` arguments have been removed from :class:`~import_export.tmp_storages.BaseStorage` (`2006 <https://github.com/django-import-export/django-import-export/issues/2006>`_)
 - Fixed ``skip_row()`` incorrectly treating unmodified, previously-exported ``DateTimeField``/``TimeField`` values as changed due to sub-second precision loss inherent to export round-trips (`2018 <https://github.com/django-import-export/django-import-export/issues/2018>`_)
 - Added :meth:`~import_export.widgets.Widget.is_equal` hook so that widgets control how :meth:`~import_export.resources.Resource.skip_row` compares imported values against persisted values. The date / time widgets and ``ManyToManyWidget`` override it (`2174 <https://github.com/django-import-export/django-import-export/pull/2174>`_)
 - Added :meth:`~import_export.widgets.ManyToManyWidget.get_queryset` to customize the related objects available during import (`2172 <https://github.com/django-import-export/django-import-export/pull/2172>`_)

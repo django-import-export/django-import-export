@@ -160,12 +160,9 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
             input_format = import_formats[int(confirm_form.cleaned_data["format"])](
                 encoding=self.from_encoding
             )
-            encoding = None if input_format.is_binary() else self.from_encoding
             tmp_storage_cls = self.get_tmp_storage_class()
             tmp_storage = tmp_storage_cls(
                 name=confirm_form.cleaned_data["import_file_name"],
-                encoding=encoding,
-                read_mode=input_format.get_read_mode(),
                 **self.get_tmp_storage_class_kwargs(),
             )
 
@@ -382,16 +379,8 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         return kwargs
 
     def write_to_tmp_storage(self, import_file, input_format):
-        encoding = None
-        if not input_format.is_binary():
-            encoding = self.from_encoding
-
         tmp_storage_cls = self.get_tmp_storage_class()
-        tmp_storage = tmp_storage_cls(
-            encoding=encoding,
-            read_mode=input_format.get_read_mode(),
-            **self.get_tmp_storage_class_kwargs(),
-        )
+        tmp_storage = tmp_storage_cls(**self.get_tmp_storage_class_kwargs())
         data = b""
         for chunk in import_file.chunks():
             data += chunk
@@ -465,7 +454,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
                 import_file.tmp_storage_name = tmp_storage.name
 
                 try:
-                    # then read the file, using the proper format-specific mode
+                    # then read the raw bytes back; the format handles decoding
                     # warning, big files may exceed memory
                     data = tmp_storage.read()
                     dataset = input_format.create_dataset(data)
