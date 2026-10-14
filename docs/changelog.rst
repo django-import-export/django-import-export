@@ -8,6 +8,7 @@ Changelog
 5.0.0 (unreleased)
 ------------------
 
+- Clarified in the docs that additional import form fields must also be declared on the confirm form (`2007 <https://github.com/django-import-export/django-import-export/issues/2007>`_)
 - Fixed ``skip_row()`` incorrectly treating unmodified, previously-exported ``DateTimeField``/``TimeField`` values as changed due to sub-second precision loss inherent to export round-trips (`2018 <https://github.com/django-import-export/django-import-export/issues/2018>`_)
 - Added :meth:`~import_export.widgets.Widget.is_equal` hook so that widgets control how :meth:`~import_export.resources.Resource.skip_row` compares imported values against persisted values. The date / time widgets and ``ManyToManyWidget`` override it (`2174 <https://github.com/django-import-export/django-import-export/pull/2174>`_)
 - Added :meth:`~import_export.widgets.ManyToManyWidget.get_queryset` to customize the related objects available during import (`2172 <https://github.com/django-import-export/django-import-export/pull/2172>`_)
