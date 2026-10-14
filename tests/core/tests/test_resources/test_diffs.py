@@ -121,10 +121,9 @@ class SkipHtmlDiffTest(TestCase):
 
 class SkipRowDateTimePrecisionTest(TestCase):
     """
-    Regression test for
-    https://github.com/django-import-export/django-import-export/issues/2018
+    Regression test for #2018
 
-    Re-importing unmodified, previously-persisted data whose
+    Re-importing unmodified, previously-persisted data whoseg
     DateTimeField/TimeField differs only by sub-second precision (as
     is expected after any export/import round-trip, since the default
     text formats have no sub-second precision) must be detected as
