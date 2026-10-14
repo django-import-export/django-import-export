@@ -809,8 +809,32 @@ the data in the import row is the same as the persisted data or not.  You can co
 row if it is duplicate by using setting :attr:`~import_export.options.ResourceOptions.skip_unchanged`.
 
 If :attr:`~import_export.options.ResourceOptions.skip_unchanged` is enabled, then the import process will check each
-defined import field and perform a simple comparison with the existing instance, and if all comparisons are equal, then
-the row is skipped.  Skipped rows are recorded in the row :class:`~import_export.results.RowResult` object.
+defined import field and compare the imported value with the value on the existing instance, and if all comparisons are
+equal, then the row is skipped.  Skipped rows are recorded in the row :class:`~import_export.results.RowResult` object.
+
+The comparison for each field is delegated to the field's widget via
+:meth:`~import_export.widgets.Widget.is_equal`.  By default this is a plain equality check, but some widgets override it
+where an export / import round-trip cannot preserve the persisted value exactly.  For example,
+:class:`~import_export.widgets.DateTimeWidget` and :class:`~import_export.widgets.TimeWidget` ignore sub-second
+differences, because the default export formats have no sub-second precision, and
+:class:`~import_export.widgets.ManyToManyWidget` compares related objects regardless of order.
+
+If you need to change how a single field is compared, override :meth:`~import_export.widgets.Widget.is_equal` on a
+custom widget rather than reimplementing :meth:`~.skip_row`.  For example, to treat a text field as unchanged if it
+differs only in surrounding whitespace::
+
+    class StrippedCharWidget(widgets.CharWidget):
+
+        def is_equal(self, instance_value, original_value):
+            return (instance_value or "").strip() == (original_value or "").strip()
+
+
+    class BookResource(resources.ModelResource):
+        name = fields.Field(attribute="name", column_name="name", widget=StrippedCharWidget())
+
+        class Meta:
+            model = Book
+            skip_unchanged = True
 
 You can override the :meth:`~.skip_row` method to have full control over the skip row implementation.
 
