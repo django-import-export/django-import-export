@@ -79,8 +79,8 @@ Breaking changes
   :class:`~import_export.widgets.DateTimeWidget` and :class:`~import_export.widgets.TimeWidget` now treat values which
   fall within the same whole second as unchanged, so that re-importing previously exported data is correctly skipped
   (see `issue 2018 <https://github.com/django-import-export/django-import-export/issues/2018>`_).
-  If you use a custom datetime or time format which includes sub-second precision (``%f``) and rely on sub-second
-  differences being detected as changes, override ``is_equal()`` on your widget to restore exact comparison.
+  If the widget is configured with a format which includes sub-second precision (``%f``), sub-second differences
+  continue to be detected as changes.
 
   :class:`~import_export.widgets.ManyToManyWidget` now implements the related-object comparison which was previously
   inline in ``skip_row()``.  Behaviour is unchanged, but if you have overridden ``skip_row()`` you may be able to

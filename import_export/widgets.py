@@ -77,7 +77,10 @@ class _ParseDateTimeMixin:
            (``"%Y-%m-%d %H:%M:%S"`` and ``"%H:%M:%S"``) have no sub-second
            precision, so re-importing unmodified, previously-exported data
            yields a value which differs from the persisted one only by its
-           microseconds.  See #2018.
+           microseconds.  See #2018.  This rule is not applied if the
+           widget's export format (the first of its formats) includes
+           sub-second precision (``%f``), since the export then preserves
+           microseconds and a sub-second difference is a genuine change.
         2. they differ by less than :attr:`rounding_tolerance`.  A numeric
            (xlsx) round-trip can round a value *up* across a second boundary
            (for example ``12:54:31.999900`` becoming ``12:54:32.000000``),
@@ -106,9 +109,9 @@ class _ParseDateTimeMixin:
         else:
             return instance_value == original_value
 
-        if instance_value.replace(microsecond=0) == original_value.replace(
+        if not self._has_subsecond_format() and instance_value.replace(
             microsecond=0
-        ):
+        ) == original_value.replace(microsecond=0):
             return True
         try:
             delta = abs(
@@ -120,6 +123,11 @@ class _ParseDateTimeMixin:
         if value_type is time:
             delta = min(delta, timedelta(days=1) - delta)
         return delta < self.rounding_tolerance
+
+    def _has_subsecond_format(self):
+        # only the first format is used by render(), so only it determines
+        # whether an export preserves sub-second precision
+        return "%f" in self.formats[0]
 
     @staticmethod
     def _as_datetime(value):

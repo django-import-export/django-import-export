@@ -293,6 +293,27 @@ class DateTimeWidgetTest(TestCase):
         self.assertFalse(self.widget.is_equal(edited, persisted))
         self.assertFalse(self.widget.is_equal(persisted, edited))
 
+    def test_is_equal_subsecond_format_detects_microsecond_difference(self):
+        """
+        If the format preserves microseconds then a sub-second difference
+        survives the export round-trip and is a genuine change.
+        """
+        widget = widgets.DateTimeWidget(format="%Y-%m-%d %H:%M:%S.%f")
+        dt1 = datetime(2024, 11, 19, 12, 54, 31, 100000)
+        dt2 = datetime(2024, 11, 19, 12, 54, 31, 900000)
+        self.assertFalse(widget.is_equal(dt1, dt2))
+        self.assertTrue(widget.is_equal(dt1, dt1))
+
+    def test_is_equal_subsecond_format_ignores_rounding(self):
+        """
+        Even with a sub-second format, a numeric (xlsx) round-trip can round
+        the value by a fraction of a millisecond.
+        """
+        widget = widgets.DateTimeWidget(format="%Y-%m-%d %H:%M:%S.%f")
+        dt1 = datetime(2024, 11, 19, 12, 54, 31, 837623)
+        dt2 = datetime(2024, 11, 19, 12, 54, 31, 838000)
+        self.assertTrue(widget.is_equal(dt1, dt2))
+
     def test_is_equal_aware_vs_naive(self):
         naive = datetime(2024, 11, 19, 12, 54, 31)
         aware = timezone.make_aware(naive, timezone=timezone.get_default_timezone())
@@ -388,6 +409,15 @@ class TimeWidgetTest(TestCase):
         persisted = time(20, 15, 0, 500000)
         edited = time(20, 15, 1)
         self.assertFalse(self.widget.is_equal(edited, persisted))
+
+    def test_is_equal_subsecond_format_detects_microsecond_difference(self):
+        widget = widgets.TimeWidget(format="%H:%M:%S.%f")
+        self.assertFalse(
+            widget.is_equal(time(20, 15, 0, 100000), time(20, 15, 0, 900000))
+        )
+        self.assertTrue(
+            widget.is_equal(time(20, 15, 0, 837623), time(20, 15, 0, 838000))
+        )
 
     def test_is_equal_ignores_rounding_across_midnight(self):
         t1 = time(23, 59, 59, 999900)
