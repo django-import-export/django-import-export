@@ -1,10 +1,12 @@
+import datetime
 from unittest import mock
 
 import tablib
 from core.models import Book
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
 from import_export import resources
+from import_export.formats import base_formats
 
 
 @mock.patch("import_export.resources.Diff", spec=True)
@@ -116,3 +118,94 @@ class SkipHtmlDiffTest(TestCase):
         with mock.patch("import_export.resources.Diff.as_html") as mock_as_html:
             resource.import_data(self.dataset, dry_run=True)
             mock_as_html.assert_not_called()
+
+
+class SkipRowDateTimePrecisionTest(TestCase):
+    """
+    Regression test for #2018.
+
+    Re-importing unmodified, previously-persisted data whose
+    DateTimeField/TimeField differs only by sub-second precision (as
+    is expected after any export/import round-trip, since the default
+    text formats have no sub-second precision) must be detected as
+    unchanged by skip_row when skip_unchanged is enabled.
+    """
+
+    def setUp(self):
+        class BookResource(resources.ModelResource):
+            class Meta:
+                model = Book
+                skip_unchanged = True
+                report_skipped = True
+
+        self.resource = BookResource()
+        self.book = Book.objects.create(
+            name="Test Book",
+            added=datetime.datetime(2024, 11, 19, 12, 54, 31, 838000),
+        )
+
+    def test_microsecond_only_difference_is_skipped(self):
+        dataset = self.resource.export()
+        # the default text format drops the microseconds on export
+        self.assertEqual("2024-11-19 12:54:31", dataset.dict[0]["added"])
+
+        result = self.resource.import_data(dataset, dry_run=True)
+        self.assertEqual(1, result.totals["skip"])
+        self.assertEqual(0, result.totals["update"])
+
+    def test_xlsx_round_trip_rounding_across_second_boundary_is_skipped(self):
+        """
+        A native xlsx export preserves microseconds, but the spreadsheet's
+        numeric storage rounds to the nearest millisecond, which can carry a
+        value across a second boundary.
+        """
+        book = Book.objects.create(
+            name="Boundary Book",
+            added=datetime.datetime(2024, 11, 19, 12, 54, 31, 999900),
+        )
+        xlsx = base_formats.XLSX()
+        dataset = self.resource.export(
+            queryset=Book.objects.filter(pk=book.pk), force_native_type=True
+        )
+        dataset = xlsx.create_dataset(xlsx.export_data(dataset))
+        self.assertEqual(
+            datetime.datetime(2024, 11, 19, 12, 54, 32), dataset.dict[0]["added"]
+        )
+
+        result = self.resource.import_data(dataset, dry_run=True)
+        self.assertEqual(1, result.totals["skip"])
+        self.assertEqual(0, result.totals["update"])
+
+    def test_genuine_second_level_difference_is_not_skipped(self):
+        dataset = self.resource.export()
+        row = dataset.dict[0]
+        row["added"] = "2024-11-19 12:54:41"  # genuinely 10 seconds later
+        dataset = tablib.Dataset(headers=dataset.headers)
+        dataset.append([row[h] for h in dataset.headers])
+
+        result = self.resource.import_data(dataset, dry_run=True)
+        self.assertEqual(0, result.totals["skip"])
+        self.assertEqual(1, result.totals["update"])
+
+    @override_settings(USE_TZ=True, TIME_ZONE="Europe/Ljubljana")
+    def test_cross_timezone_round_trip_is_skipped(self):
+        """
+        The reporter of #2018 saw values in different timezones
+        (``12:54:31.838000+01:00`` vs ``11:54:31.837623+00:00``) and suspected
+        a timezone mismatch. Aware datetimes compare by instant, so a value
+        persisted in UTC and exported / re-imported in a different local
+        timezone must still be detected as unchanged.
+        """
+        book = Book.objects.create(
+            name="Aware Book",
+            added=datetime.datetime(
+                2024, 11, 19, 11, 54, 31, 837623, tzinfo=datetime.timezone.utc
+            ),
+        )
+        dataset = self.resource.export(queryset=Book.objects.filter(pk=book.pk))
+        # exported in local time (UTC+1) with no sub-second precision
+        self.assertEqual("2024-11-19 12:54:31", dataset.dict[0]["added"])
+
+        result = self.resource.import_data(dataset, dry_run=True)
+        self.assertEqual(1, result.totals["skip"])
+        self.assertEqual(0, result.totals["update"])

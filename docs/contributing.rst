@@ -240,7 +240,7 @@ Build documentation
 
 To build a local version of the documentation::
 
-  python -m pip install -r requirements/docs.txt
+  python -m pip install '.[docs]'
   make build-html-doc
 
 The documentation will be present in ``docs/_build/html/index.html``.

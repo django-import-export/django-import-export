@@ -67,6 +67,27 @@ Breaking changes
 
 * ``ODS`` is now correctly classified as a binary format, extending ``TablibFormat`` instead of ``TextFormat``.  ``is_binary()`` now returns ``True`` and files are read in binary mode, fixing a ``UnicodeDecodeError`` on import of ``.ods`` files.  If you have a custom workaround for this (e.g. an ``ODS`` subclass forcing binary reads), it can be removed.  Any code which relied on ``ODS`` being a text format should be updated.  See `PR 2176 <https://github.com/django-import-export/django-import-export/pull/2176>`_.
 
+* The comparison used by :meth:`~import_export.resources.Resource.skip_row` when
+  :attr:`~import_export.options.ResourceOptions.skip_unchanged` is enabled is now delegated to each field's widget
+  via a new :meth:`~import_export.widgets.Widget.is_equal` hook (`PR 2174
+  <https://github.com/django-import-export/django-import-export/pull/2174>`_).
+
+  ``skip_row()`` calls ``is_equal()`` on every import field's widget.  Custom widgets which subclass
+  :class:`~import_export.widgets.Widget` inherit a plain equality check; a custom widget which does not subclass
+  ``Widget`` must now implement ``is_equal()``.
+
+  :class:`~import_export.widgets.DateTimeWidget`, :class:`~import_export.widgets.TimeWidget` and
+  :class:`~import_export.widgets.DateWidget` now treat an imported value as unchanged if it matches either the
+  persisted value or what that value becomes after an export / import round-trip through the widget's format, so that
+  re-importing previously exported data is correctly skipped
+  (see `issue 2018 <https://github.com/django-import-export/django-import-export/issues/2018>`_).
+  A ``rounding_tolerance`` of one millisecond absorbs spreadsheet rounding; differences of one millisecond or more
+  which the widget's format or a native export preserves continue to be detected as changes.
+
+  :class:`~import_export.widgets.ManyToManyWidget` now implements the related-object comparison which was previously
+  inline in ``skip_row()``.  Behaviour is unchanged, but if you have overridden ``skip_row()`` you may be able to
+  simplify it by calling ``field.widget.is_equal()`` instead.
+
 Removed deprecations
 """"""""""""""""""""
 

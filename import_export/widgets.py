@@ -60,6 +60,90 @@ class _ParseDateTimeMixin:
                 logger.debug(str(e))
         raise ValueError("Value could not be parsed using defined formats.")
 
+    #: The largest difference absorbed when a numeric (e.g. xlsx) round-trip
+    #: rounds a value.  Spreadsheet storage is accurate to well under a
+    #: millisecond, so any larger difference is a genuine change.  Set to
+    #: ``timedelta(0)`` to require an exact match.
+    rounding_tolerance = timedelta(milliseconds=1)
+
+    def is_equal(self, instance_value, original_value, **kwargs):
+        """
+        Compare two ``datetime`` or ``time`` values, treating the imported
+        value as unchanged if it could be an unmodified export of the
+        persisted value.
+
+        The imported value is considered unchanged if it is within
+        :attr:`rounding_tolerance` of either:
+
+        1. the persisted value itself.  This is what a native (xlsx) export
+           produces, allowing for the spreadsheet's own numeric rounding,
+           which can carry a value across a second boundary (for example
+           ``12:54:31.999900`` becoming ``12:54:32.000000``).
+        2. the persisted value after a round-trip through this widget's
+           :meth:`render` and :meth:`clean`.  This is what a text export
+           produces, at whatever precision the widget's format preserves.
+           The default formats (``"%Y-%m-%d %H:%M:%S"`` and ``"%H:%M:%S"``)
+           drop sub-second precision, so re-importing unmodified,
+           previously-exported data yields a value which differs from the
+           persisted one only by its microseconds.  See #2018.
+
+        A genuine edit satisfies neither, so for example ``12:54:31.500000``
+        persisted and ``12:54:32`` imported is correctly detected as a change,
+        as is a sub-second edit when the format or export preserves
+        microseconds.  The one ambiguity is a value within
+        :attr:`rounding_tolerance` below a second boundary which is edited to
+        that boundary: it is indistinguishable from spreadsheet rounding and
+        is treated as unchanged.
+
+        Values are compared as instants, so timezone-aware values in different
+        zones compare correctly, including during a daylight-saving fold.  A
+        timezone-aware value is never equal to a naive one.  Values which are
+        not both ``datetime`` or both ``time`` instances (for example ``None``
+        or ``date`` values) are compared with plain equality.
+
+        :param instance_value: The value on the instance after the row has
+            been applied.
+        :param original_value: The value from the previously persisted
+            instance.
+        :returns: ``True`` if the values are equal under the rules above.
+        """
+        for value_type in (datetime, time):
+            if isinstance(instance_value, value_type) and isinstance(
+                original_value, value_type
+            ):
+                break
+        else:
+            return instance_value == original_value
+
+        if (instance_value.utcoffset() is None) != (original_value.utcoffset() is None):
+            # a timezone-aware value is never equal to a naive one
+            return False
+        if self._within_tolerance(instance_value, original_value):
+            return True
+        try:
+            round_tripped = self.clean(self.render(original_value))
+        except ValueError:
+            # the persisted value cannot be rendered or re-parsed with this
+            # widget's configuration, so no text round-trip can match it
+            return False
+        return isinstance(round_tripped, value_type) and self._within_tolerance(
+            instance_value, round_tripped
+        )
+
+    def _within_tolerance(self, value, other):
+        delta = abs(self._as_datetime(value) - self._as_datetime(other))
+        return delta <= self.rounding_tolerance
+
+    @staticmethod
+    def _as_datetime(value):
+        """
+        Convert a ``time`` to a ``datetime`` on an arbitrary fixed date so that
+        two values can be subtracted. Other values are returned unchanged.
+        """
+        if isinstance(value, time):
+            return datetime.combine(date(2000, 1, 1), value)
+        return value
+
 
 class Widget:
     """
@@ -95,6 +179,32 @@ class Widget:
           as empty strings.
         """
         return force_str(value) if value is not None else ""
+
+    def is_equal(self, instance_value, original_value, **kwargs):
+        r"""
+        Compare the value on an instance being imported against the previously
+        persisted value, for the purposes of
+        :meth:`~import_export.resources.Resource.skip_row`.
+
+        By default this is a plain equality check. Widgets whose
+        :meth:`render` loses precision on round-trip (for example,
+        ``DateTimeWidget``'s default text format has no sub-second
+        precision) should override this to compare values at the
+        same precision that would actually survive an export, so
+        that re-importing unmodified, previously-exported data is
+        correctly detected as unchanged.
+
+        :param instance_value: The value on the instance after the row has
+            been applied.  For most fields this is the cleaned value from the
+            import row, but for a readonly field, a column absent from the
+            import file, or an empty cell where ``saves_null_values`` is
+            ``False``, it is the persisted value itself.
+        :param original_value: The value from the previously persisted
+            instance.
+        :param \**kwargs: Optional keyword arguments.  ``row`` is the import
+            row as a ``dict``.
+        """
+        return instance_value == original_value
 
 
 class NumberWidget(Widget):
@@ -865,3 +975,20 @@ class ManyToManyWidget(Widget):
             ids = [smart_str(getattr(obj, self.field)) for obj in value.all()]
             return self.separator.join(ids)
         return ""
+
+    def is_equal(self, instance_value, original_value, **kwargs):
+        r"""
+        Compare two collections of related objects, ignoring order.
+
+        :param instance_value: An iterable of related model instances parsed
+            from the imported row (see :meth:`clean`).
+        :param original_value: An iterable of the related model instances
+            currently persisted for the original instance.
+        :param \**kwargs: Optional keyword arguments.  ``row`` is the import
+            row as a ``dict``.
+        :returns: ``True`` if both collections contain the same objects, as
+            determined by primary key.
+        """
+        return sorted(v.pk for v in instance_value) == sorted(
+            v.pk for v in original_value
+        )
