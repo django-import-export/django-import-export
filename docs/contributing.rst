@@ -129,6 +129,67 @@ into django-import-export proper, which may take substantial time for the all-vo
 
 .. _`AUTHORS`: https://github.com/django-import-export/django-import-export/blob/main/AUTHORS
 
+.. _llm_contributions:
+
+LLM-Assisted Contributions
+--------------------------
+
+You are welcome to use LLM coding assistants and agents to help with contributions. They are a tool like any other,
+and the guidelines above apply to their output exactly as they apply to code you write by hand. We do ask that you
+follow the additional guidance below.
+
+Responsibility
+^^^^^^^^^^^^^^
+
+* You, not the LLM, are responsible for what you submit.
+
+* Do not submit code you have not read and understood. Be ready to explain and discuss any line of the diff.
+
+* Make sure the change really works. A passing test suite is necessary but not sufficient: the suite cannot cover
+  every combination of resource options, field types, widgets, admin integrations and databases that users run in
+  production.
+
+* Prefer small, focused changes. Agents tend to bundle a lint fix, a refactor and a feature into one pull request.
+  Split them, so each can be reviewed and reverted on its own.
+
+Disclosure
+^^^^^^^^^^
+
+* If an LLM wrote a substantial part of the change, say so in the pull request description. This is not a mark
+  against the contribution. It tells reviewers where to look, since generated changes tend to be correct on the
+  paths the tests exercise and wrong at the edges they do not.
+
+* If the description claims that existing behaviour is unchanged, state which configurations you verified this
+  against yourself (for example: which ``Resource`` options, ``skip_unchanged`` / ``use_bulk`` / ``use_transactions``
+  settings, custom widgets, or admin workflows). "All tests pass" does not answer this question.
+
+Communication
+^^^^^^^^^^^^^
+
+* Please do not use an LLM to speak for you in issues, pull requests or discussions, beyond translation or grammar
+  help. Write your own pull request description, changelog entry and replies to review comments. Human-to-human
+  communication is how a volunteer project works, and a description you had to write yourself is the best check that
+  you understand the change.
+
+* Do not replace or remove the pull request template.
+
+Autonomous submissions
+^^^^^^^^^^^^^^^^^^^^^^
+
+* Agents that write code and open pull requests without a human reviewing the result first are not permitted.
+
+* Pull requests that are mostly generated with little human input, or whose author cannot discuss the change, will be
+  closed. In persistent cases they will be treated as spam.
+
+New contributors
+^^^^^^^^^^^^^^^^
+
+* Issues labelled `good first issue`_ are set aside for people learning the codebase. Having an LLM produce a
+  complete solution to one does not help anyone learn. Please leave them for that purpose, and pick a different
+  issue if you are working mainly with an agent.
+
+.. _`good first issue`: https://github.com/django-import-export/django-import-export/labels/good%20first%20issue
+
 Development
 -----------
 

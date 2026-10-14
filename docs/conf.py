@@ -9,7 +9,8 @@ import django
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 sys.path.append(os.path.abspath("."))
-sys.path.append(os.path.abspath(".."))
+# Insert at the front so autodoc imports the working tree, not an installed copy
+sys.path.insert(0, os.path.abspath(".."))
 sys.path.append(os.path.abspath("../tests"))
 os.environ["DJANGO_SETTINGS_MODULE"] = "settings"
 
