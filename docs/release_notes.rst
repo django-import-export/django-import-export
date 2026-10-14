@@ -18,6 +18,8 @@ Breaking changes
   and on whether the import confirmation step was skipped.
   :class:`~import_export.formats.base_formats.TextFormat` decodes the data using its ``encoding``, falling back
   to ``utf-8`` when ``from_encoding`` is ``None`` (previously the system locale encoding was used in this case).
+  If you rely on ``from_encoding = None`` and import files which are not UTF-8 encoded, set ``from_encoding``
+  explicitly to the encoding of your files (for example ``"cp1252"``).
   If you subclass ``TextFormat`` and override ``create_dataset()``, call ``super()`` so the data is decoded, and pass
   any tablib options through as keyword arguments, for example::
 
