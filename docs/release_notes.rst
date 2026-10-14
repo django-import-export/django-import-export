@@ -28,8 +28,8 @@ Breaking changes
   Additionally, if you have custom code which overrides storage handling in ``admin.py``, then review the PR to
   check whether your implementation might be affected.
 
-  See `issue 2006 <https://github.com/django-import-export/django-import-export/issues/2006>`_. and
-  `PR 2197 <https://github.com/django-import-export/django-import-export/issues/2197>`_.
+  See `issue 2006 <https://github.com/django-import-export/django-import-export/issues/2006>`_ and
+  `PR 2197 <https://github.com/django-import-export/django-import-export/pull/2197>`_.
 
 * This release fixes an issue with form field name clashes (see `2108
   <https://github.com/django-import-export/django-import-export/pull/2108>`_).
