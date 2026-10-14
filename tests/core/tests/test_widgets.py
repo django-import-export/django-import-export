@@ -133,6 +133,16 @@ class DateWidgetTest(TestCase):
         self.date = date(10, 8, 2)
         self.assertEqual(self.widget.render(self.date), "02.08.0010")
 
+    def test_is_equal(self):
+        """
+        DateWidget inherits is_equal() from _ParseDateTimeMixin.
+        date values have no sub-second component, so they are compared as-is.
+        """
+        self.assertTrue(self.widget.is_equal(self.date, date(2012, 8, 13)))
+        self.assertFalse(self.widget.is_equal(self.date, date(2012, 8, 14)))
+        self.assertTrue(self.widget.is_equal(None, None))
+        self.assertFalse(self.widget.is_equal(self.date, None))
+
     def test_clean(self):
         self.assertEqual(self.widget.clean("13.08.2012"), self.date)
 
