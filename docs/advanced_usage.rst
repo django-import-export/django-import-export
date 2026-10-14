@@ -814,9 +814,13 @@ equal, then the row is skipped.  Skipped rows are recorded in the row :class:`~i
 
 The comparison for each field is delegated to the field's widget via
 :meth:`~import_export.widgets.Widget.is_equal`.  By default this is a plain equality check, but some widgets override it
-where an export / import round-trip cannot preserve the persisted value exactly.  For example,
-:class:`~import_export.widgets.DateTimeWidget` and :class:`~import_export.widgets.TimeWidget` treat values which fall
-within the same whole second as unchanged, because the default export formats have no sub-second precision, and
+where an export / import round-trip cannot preserve the persisted value exactly.  The date and time widgets
+(:class:`~import_export.widgets.DateWidget`, :class:`~import_export.widgets.TimeWidget` and
+:class:`~import_export.widgets.DateTimeWidget`) treat an imported value as unchanged if it matches either the persisted
+value or what that value becomes after an export / import round-trip through the widget's own format, allowing for a
+small ``rounding_tolerance`` to absorb spreadsheet rounding.  For example, the default datetime format has no sub-second
+precision, so re-importing an unmodified export is detected as unchanged even though the persisted value has
+microseconds, while a genuine edit of one second or more is still detected.
 :class:`~import_export.widgets.ManyToManyWidget` compares related objects regardless of order.
 
 If you need to change how a single field is compared, override :meth:`~import_export.widgets.Widget.is_equal` on a

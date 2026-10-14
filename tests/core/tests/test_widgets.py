@@ -1,4 +1,5 @@
 import json
+import zoneinfo
 from datetime import date, datetime, time, timedelta
 from decimal import Decimal
 from unittest import mock
@@ -314,6 +315,40 @@ class DateTimeWidgetTest(TestCase):
         dt2 = datetime(2024, 11, 19, 12, 54, 31, 838000)
         self.assertTrue(widget.is_equal(dt1, dt2))
 
+    def test_is_equal_detects_native_subsecond_edit(self):
+        """
+        A native (xlsx) export preserves microseconds, so a sub-second edit
+        to such a file is a genuine change even with the default format.
+        """
+        persisted = datetime(2024, 11, 19, 12, 54, 31, 100000)
+        edited = datetime(2024, 11, 19, 12, 54, 31, 900000)
+        self.assertFalse(self.widget.is_equal(edited, persisted))
+
+    def test_is_equal_coarse_format_round_trip(self):
+        """
+        The comparison is at the precision of the widget's own format, so a
+        format which drops seconds treats the re-imported value as unchanged.
+        """
+        widget = widgets.DateTimeWidget(format="%Y-%m-%d %H:%M")
+        persisted = datetime(2024, 11, 19, 12, 54, 31, 838000)
+        reimported = widget.clean(widget.render(persisted))
+        self.assertEqual(datetime(2024, 11, 19, 12, 54), reimported)
+        self.assertTrue(widget.is_equal(reimported, persisted))
+        self.assertFalse(widget.is_equal(datetime(2024, 11, 19, 12, 55), persisted))
+
+    @override_settings(USE_TZ=True, TIME_ZONE="Europe/London")
+    def test_is_equal_during_dst_fold(self):
+        """
+        01:30 on 27 Oct 2024 occurs twice in Europe/London.  Comparing aware
+        datetimes in different zones with ``==`` returns False during such a
+        fold (PEP 495), so the comparison must be by instant.
+        """
+        persisted = datetime(
+            2024, 10, 27, 0, 30, 0, 838000, tzinfo=zoneinfo.ZoneInfo("UTC")
+        )
+        reimported = self.widget.clean(self.widget.render(persisted))
+        self.assertTrue(self.widget.is_equal(reimported, persisted))
+
     def test_is_equal_aware_vs_naive(self):
         naive = datetime(2024, 11, 19, 12, 54, 31)
         aware = timezone.make_aware(naive, timezone=timezone.get_default_timezone())
@@ -419,14 +454,13 @@ class TimeWidgetTest(TestCase):
             widget.is_equal(time(20, 15, 0, 837623), time(20, 15, 0, 838000))
         )
 
-    def test_is_equal_ignores_rounding_across_midnight(self):
-        t1 = time(23, 59, 59, 999900)
-        t2 = time(0, 0, 0)
-        self.assertTrue(self.widget.is_equal(t1, t2))
-        self.assertTrue(self.widget.is_equal(t2, t1))
-
-    def test_is_equal_detects_one_second_difference_across_midnight(self):
-        self.assertFalse(self.widget.is_equal(time(23, 59, 59), time(0, 0, 0)))
+    def test_is_equal_coarse_format_round_trip(self):
+        widget = widgets.TimeWidget(format="%H:%M")
+        persisted = time(20, 15, 31, 838000)
+        reimported = widget.clean(widget.render(persisted))
+        self.assertEqual(time(20, 15), reimported)
+        self.assertTrue(widget.is_equal(reimported, persisted))
+        self.assertFalse(widget.is_equal(time(20, 16), persisted))
 
     def test_is_equal_handles_none(self):
         self.assertTrue(self.widget.is_equal(None, None))

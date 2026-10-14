@@ -76,11 +76,13 @@ Breaking changes
   :class:`~import_export.widgets.Widget` inherit a plain equality check; a custom widget which does not subclass
   ``Widget`` must now implement ``is_equal()``.
 
-  :class:`~import_export.widgets.DateTimeWidget` and :class:`~import_export.widgets.TimeWidget` now treat values which
-  fall within the same whole second as unchanged, so that re-importing previously exported data is correctly skipped
+  :class:`~import_export.widgets.DateTimeWidget`, :class:`~import_export.widgets.TimeWidget` and
+  :class:`~import_export.widgets.DateWidget` now treat an imported value as unchanged if it matches either the
+  persisted value or what that value becomes after an export / import round-trip through the widget's format, so that
+  re-importing previously exported data is correctly skipped
   (see `issue 2018 <https://github.com/django-import-export/django-import-export/issues/2018>`_).
-  If the widget is configured with a format which includes sub-second precision (``%f``), sub-second differences
-  continue to be detected as changes.
+  A ``rounding_tolerance`` of one millisecond absorbs spreadsheet rounding; differences of one millisecond or more
+  which the widget's format or a native export preserves continue to be detected as changes.
 
   :class:`~import_export.widgets.ManyToManyWidget` now implements the related-object comparison which was previously
   inline in ``skip_row()``.  Behaviour is unchanged, but if you have overridden ``skip_row()`` you may be able to

@@ -6,6 +6,7 @@ from core.models import Book
 from django.test import TestCase, override_settings
 
 from import_export import resources
+from import_export.formats import base_formats
 
 
 @mock.patch("import_export.resources.Diff", spec=True)
@@ -145,12 +146,31 @@ class SkipRowDateTimePrecisionTest(TestCase):
 
     def test_microsecond_only_difference_is_skipped(self):
         dataset = self.resource.export()
-        # Simulate the precision loss inherent to any export round-trip:
-        # microseconds are dropped, matching the default text format.
-        row = dataset.dict[0]
-        row["added"] = "2024-11-19 12:54:31"
-        dataset = tablib.Dataset(headers=dataset.headers)
-        dataset.append([row[h] for h in dataset.headers])
+        # the default text format drops the microseconds on export
+        self.assertEqual("2024-11-19 12:54:31", dataset.dict[0]["added"])
+
+        result = self.resource.import_data(dataset, dry_run=True)
+        self.assertEqual(1, result.totals["skip"])
+        self.assertEqual(0, result.totals["update"])
+
+    def test_xlsx_round_trip_rounding_across_second_boundary_is_skipped(self):
+        """
+        A native xlsx export preserves microseconds, but the spreadsheet's
+        numeric storage rounds to the nearest millisecond, which can carry a
+        value across a second boundary.
+        """
+        book = Book.objects.create(
+            name="Boundary Book",
+            added=datetime.datetime(2024, 11, 19, 12, 54, 31, 999900),
+        )
+        xlsx = base_formats.XLSX()
+        dataset = self.resource.export(
+            queryset=Book.objects.filter(pk=book.pk), force_native_type=True
+        )
+        dataset = xlsx.create_dataset(xlsx.export_data(dataset))
+        self.assertEqual(
+            datetime.datetime(2024, 11, 19, 12, 54, 32), dataset.dict[0]["added"]
+        )
 
         result = self.resource.import_data(dataset, dry_run=True)
         self.assertEqual(1, result.totals["skip"])

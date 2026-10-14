@@ -575,7 +575,7 @@ class Resource(metaclass=DeclarativeMetaclass):
             else:
                 instance_value = field.get_value(instance)
                 original_value = field.get_value(original)
-            if not field.widget.is_equal(instance_value, original_value):
+            if not field.widget.is_equal(instance_value, original_value, row=row):
                 return False
         return True
 
