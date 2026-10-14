@@ -121,9 +121,9 @@ class SkipHtmlDiffTest(TestCase):
 
 class SkipRowDateTimePrecisionTest(TestCase):
     """
-    Regression test for #2018
+    Regression test for #2018.
 
-    Re-importing unmodified, previously-persisted data whoseg
+    Re-importing unmodified, previously-persisted data whose
     DateTimeField/TimeField differs only by sub-second precision (as
     is expected after any export/import round-trip, since the default
     text formats have no sub-second precision) must be detected as
