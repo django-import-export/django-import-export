@@ -89,19 +89,20 @@ id,name,author,author_email,imported,published,price,categories
         tmp_storage.remove()
         self.assertIsNone(cache.get(tmp_storage.CACHE_PREFIX + tmp_storage.name))
 
-    def test_cache_storage_read_with_encoding(self):
+    def test_cache_storage_read_by_name(self):
         tmp_storage = CacheStorage()
         tmp_storage.name = "f"
-        cache.set("django-import-export-f", 101)
+        cache.set("django-import-export-f", b"101")
         res = tmp_storage.read()
-        self.assertEqual(101, res)
+        self.assertEqual(b"101", res)
 
-    def test_cache_storage_read_with_encoding_unicode_chars(self):
+    def test_cache_storage_round_trips_unicode_bytes(self):
         tmp_storage = CacheStorage()
         tmp_storage.name = "f"
-        tmp_storage.save("àèìòùçñ")
+        data = "àèìòùçñ".encode()
+        tmp_storage.save(data)
         res = tmp_storage.read()
-        self.assertEqual("àèìòùçñ", res)
+        self.assertEqual(data, res)
 
     def test_media_storage(self):
         tmp_storage = MediaStorage()

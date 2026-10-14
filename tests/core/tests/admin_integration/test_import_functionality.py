@@ -13,6 +13,7 @@ from django.utils.translation import gettext_lazy as _
 from import_export.admin import ExportMixin
 from import_export.formats import base_formats
 from import_export.resources import ModelResource
+from import_export.tmp_storages import MediaStorage, TempFolderStorage
 
 
 class BookResourceWithFileNameTracking(ModelResource):
@@ -781,6 +782,10 @@ class TextFormatSubclassImportTest(AdminTestMixin, TestCase):
             self.assertNotIn("import_file", response.context["form"].errors)
         self.assertEqual([bytes], CustomDelimiterCSVFormat.received_types)
 
+    def _remove_tmp_file_after_test(self, response, storage_cls):
+        name = response.context["confirm_form"].initial["import_file_name"]
+        self.addCleanup(storage_cls(name=name).remove)
+
     @patch(
         "core.admin.BookAdmin.skip_import_confirm",
         new_callable=PropertyMock,
@@ -799,8 +804,20 @@ class TextFormatSubclassImportTest(AdminTestMixin, TestCase):
         response = self._do_import_post(self.book_import_url, "books.csv")
         self._assert_received_bytes(response)
         self.assertIn("confirm_form", response.context)
+        self._remove_tmp_file_after_test(response, MediaStorage)
 
     def test_import_with_temp_folder_storage(self):
         response = self._do_import_post(self.book_import_url, "books.csv")
         self._assert_received_bytes(response)
         self.assertIn("confirm_form", response.context)
+        self._remove_tmp_file_after_test(response, TempFolderStorage)
+
+    def test_process_import_receives_bytes(self):
+        response = self._do_import_post(self.book_import_url, "books.csv")
+        data = response.context["confirm_form"].initial
+        self._prepend_form_prefix(data)
+        response = self._post_url_response(
+            self.book_process_import_url, data, follow=True
+        )
+        self.assertContains(response, self.success_msg)
+        self.assertEqual([bytes, bytes], CustomDelimiterCSVFormat.received_types)
