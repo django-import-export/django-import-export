@@ -931,3 +931,18 @@ class ManyToManyWidget(Widget):
             ids = [smart_str(getattr(obj, self.field)) for obj in value.all()]
             return self.separator.join(ids)
         return ""
+
+    def is_equal(self, instance_value, original_value):
+        """
+        Compare two collections of related objects, ignoring order.
+
+        :param instance_value: An iterable of related model instances parsed
+            from the imported row (see :meth:`clean`).
+        :param original_value: An iterable of the related model instances
+            currently persisted for the original instance.
+        :returns: ``True`` if both collections contain the same objects, as
+            determined by primary key.
+        """
+        return sorted(v.pk for v in instance_value) == sorted(
+            v.pk for v in original_value
+        )

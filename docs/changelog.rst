@@ -9,6 +9,7 @@ Changelog
 ------------------
 
 - Fixed ``skip_row()`` incorrectly treating unmodified, previously-exported ``DateTimeField``/``TimeField`` values as changed due to sub-second precision loss inherent to export round-trips (`2018 <https://github.com/django-import-export/django-import-export/issues/2018>`_)
+- Added :meth:`~import_export.widgets.Widget.is_equal` hook so that widgets control how :meth:`~import_export.resources.Resource.skip_row` compares imported values against persisted values. ``DateTimeWidget``, ``TimeWidget`` and ``ManyToManyWidget`` override it (`2174 <https://github.com/django-import-export/django-import-export/pull/2174>`_)
 - Added :meth:`~import_export.widgets.ManyToManyWidget.get_queryset` to customize the related objects available during import (`2172 <https://github.com/django-import-export/django-import-export/pull/2172>`_)
 - Honor ``IMPORT_EXPORT_SKIP_ADMIN_EXPORT_UI`` / ``skip_export_form`` when exporting from the Admin action menu or change-form Export button (`2180 <https://github.com/django-import-export/django-import-export/issues/2180>`_)
 - Fixed pk sequence reset in :meth:`~import_export.resources.ModelResource.after_import` (`2166 <https://github.com/django-import-export/django-import-export/issues/2166>`_)

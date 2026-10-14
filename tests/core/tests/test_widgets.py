@@ -1008,6 +1008,30 @@ class ManyToManyWidget(TestCase):
             f"{self.cat1.name},{self.cat2.name}",
         )
 
+    def test_is_equal(self):
+        self.assertTrue(
+            self.widget.is_equal([self.cat1, self.cat2], [self.cat1, self.cat2])
+        )
+        self.assertTrue(self.widget.is_equal([], []))
+
+    def test_is_equal_ignores_order(self):
+        self.assertTrue(
+            self.widget.is_equal([self.cat1, self.cat2], [self.cat2, self.cat1])
+        )
+
+    def test_is_equal_detects_difference(self):
+        self.assertFalse(self.widget.is_equal([self.cat1], [self.cat1, self.cat2]))
+        self.assertFalse(self.widget.is_equal([self.cat1], [self.cat2]))
+        self.assertFalse(self.widget.is_equal([self.cat1], []))
+
+    def test_is_equal_accepts_querysets(self):
+        self.assertTrue(
+            self.widget.is_equal(
+                Category.objects.filter(pk=self.cat1.pk),
+                Category.objects.filter(pk=self.cat1.pk),
+            )
+        )
+
     def test_render_value_none_as_blank(self):
         self.assertEqual("", self.widget.render(None))
 
