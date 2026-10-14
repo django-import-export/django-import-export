@@ -62,32 +62,48 @@ class _ParseDateTimeMixin:
 
     def is_equal(self, instance_value, original_value):
         """
-        Compare two values at whole-second precision.
+        Compare two values, treating them as equal if they differ by less
+        than one second.
 
         The default text formats (``"%Y-%m-%d %H:%M:%S"`` and ``"%H:%M:%S"``)
         have no sub-second precision, and even native (xlsx) export/import
         round-trips can lose microsecond precision depending on the
-        spreadsheet format's own numeric storage. Comparing at
-        whole-second precision ensures that re-importing unmodified
-        data (which necessarily lost sub-second precision on export)
-        is correctly detected as unchanged. See #2018.
+        spreadsheet format's own numeric storage. Comparing with a one-second
+        tolerance ensures that re-importing unmodified data (which necessarily
+        lost sub-second precision on export) is correctly detected as
+        unchanged. See #2018.
 
-        Values which are not ``datetime`` or ``time`` instances (for example
-        ``date`` values, which have no sub-second component) are compared as-is.
+        A tolerance is used rather than truncating microseconds because a
+        numeric round-trip can round *up* across a second boundary (for
+        example ``12:54:31.999900`` becoming ``12:54:32.000000``), which
+        truncation would wrongly report as a change.
+
+        Values which cannot be subtracted from each other (for example ``None``,
+        or a timezone-aware value compared with a naive one) fall back to plain
+        equality. ``date`` values are compared as-is, since dates differing at
+        all differ by at least one day.
 
         :param instance_value: The value parsed from the imported row.
         :param original_value: The value from the previously persisted
             instance.
-        :returns: ``True`` if the values are equal, ignoring microseconds.
+        :returns: ``True`` if the values differ by less than one second.
         """
-        return self._truncate_microseconds(
-            instance_value
-        ) == self._truncate_microseconds(original_value)
+        try:
+            delta = self._as_datetime(instance_value) - self._as_datetime(
+                original_value
+            )
+        except TypeError:
+            return instance_value == original_value
+        return abs(delta) < timedelta(seconds=1)
 
     @staticmethod
-    def _truncate_microseconds(value):
-        if isinstance(value, (datetime, time)):
-            return value.replace(microsecond=0)
+    def _as_datetime(value):
+        """
+        Convert a ``time`` to a ``datetime`` on an arbitrary fixed date so that
+        two values can be subtracted. Other values are returned unchanged.
+        """
+        if isinstance(value, time):
+            return datetime.combine(date(2000, 1, 1), value)
         return value
 
 

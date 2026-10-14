@@ -267,6 +267,27 @@ class DateTimeWidgetTest(TestCase):
         dt2 = datetime(2024, 11, 19, 12, 54, 36)
         self.assertFalse(self.widget.is_equal(dt1, dt2))
 
+    def test_is_equal_ignores_rounding_across_second_boundary(self):
+        """
+        A numeric (e.g. xlsx) round-trip can round a value *up* into the next
+        second. Truncating microseconds would wrongly report this as a change.
+        """
+        dt1 = datetime(2024, 11, 19, 12, 54, 31, 999900)
+        dt2 = datetime(2024, 11, 19, 12, 54, 32, 0)
+        self.assertTrue(self.widget.is_equal(dt1, dt2))
+        self.assertTrue(self.widget.is_equal(dt2, dt1))
+
+    def test_is_equal_detects_exactly_one_second_difference(self):
+        dt1 = datetime(2024, 11, 19, 12, 54, 31)
+        dt2 = datetime(2024, 11, 19, 12, 54, 32)
+        self.assertFalse(self.widget.is_equal(dt1, dt2))
+
+    def test_is_equal_aware_vs_naive(self):
+        naive = datetime(2024, 11, 19, 12, 54, 31)
+        aware = timezone.make_aware(naive, timezone=timezone.get_default_timezone())
+        self.assertFalse(self.widget.is_equal(naive, aware))
+        self.assertTrue(self.widget.is_equal(aware, aware))
+
     def test_is_equal_handles_none(self):
         self.assertTrue(self.widget.is_equal(None, None))
         self.assertFalse(self.widget.is_equal(self.datetime, None))
@@ -342,6 +363,19 @@ class TimeWidgetTest(TestCase):
 
     def test_is_equal_detects_second_level_difference(self):
         self.assertFalse(self.widget.is_equal(time(20, 15, 0), time(20, 15, 5)))
+
+    def test_is_equal_ignores_rounding_across_second_boundary(self):
+        t1 = time(20, 15, 0, 999900)
+        t2 = time(20, 15, 1, 0)
+        self.assertTrue(self.widget.is_equal(t1, t2))
+        self.assertTrue(self.widget.is_equal(t2, t1))
+
+    def test_is_equal_detects_exactly_one_second_difference(self):
+        self.assertFalse(self.widget.is_equal(time(20, 15, 0), time(20, 15, 1)))
+
+    def test_is_equal_handles_none(self):
+        self.assertTrue(self.widget.is_equal(None, None))
+        self.assertFalse(self.widget.is_equal(self.time, None))
 
     @override_settings(TIME_INPUT_FORMATS=None)
     def test_default_format(self):
