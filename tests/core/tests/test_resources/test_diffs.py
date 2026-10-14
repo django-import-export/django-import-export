@@ -3,7 +3,7 @@ from unittest import mock
 
 import tablib
 from core.models import Book
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
 from import_export import resources
 
@@ -166,3 +166,26 @@ class SkipRowDateTimePrecisionTest(TestCase):
         result = self.resource.import_data(dataset, dry_run=True)
         self.assertEqual(0, result.totals["skip"])
         self.assertEqual(1, result.totals["update"])
+
+    @override_settings(USE_TZ=True, TIME_ZONE="Europe/Ljubljana")
+    def test_cross_timezone_round_trip_is_skipped(self):
+        """
+        The reporter of #2018 saw values in different timezones
+        (``12:54:31.838000+01:00`` vs ``11:54:31.837623+00:00``) and suspected
+        a timezone mismatch. Aware datetimes compare by instant, so a value
+        persisted in UTC and exported / re-imported in a different local
+        timezone must still be detected as unchanged.
+        """
+        book = Book.objects.create(
+            name="Aware Book",
+            added=datetime.datetime(
+                2024, 11, 19, 11, 54, 31, 837623, tzinfo=datetime.timezone.utc
+            ),
+        )
+        dataset = self.resource.export(queryset=Book.objects.filter(pk=book.pk))
+        # exported in local time (UTC+1) with no sub-second precision
+        self.assertEqual("2024-11-19 12:54:31", dataset.dict[0]["added"])
+
+        result = self.resource.import_data(dataset, dry_run=True)
+        self.assertEqual(1, result.totals["skip"])
+        self.assertEqual(0, result.totals["update"])
