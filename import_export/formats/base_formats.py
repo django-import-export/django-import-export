@@ -128,13 +128,14 @@ class TextFormat(TablibFormat):
         """
         Create dataset from the given input.
 
-        ``in_stream`` is decoded using ``self.encoding`` if it is ``bytes``.
+        If ``in_stream`` is ``bytes`` it is decoded using ``self.encoding``,
+        or ``utf-8`` if no encoding is configured.
         Subclasses which override this method should call ``super()`` so that
         the decoding is applied, passing any tablib keyword arguments through,
         e.g. ``super().create_dataset(in_stream, delimiter=";", **kwargs)``.
         """
-        if isinstance(in_stream, bytes) and self.encoding:
-            in_stream = in_stream.decode(self.encoding)
+        if isinstance(in_stream, bytes):
+            in_stream = in_stream.decode(self.encoding or "utf-8")
         return super().create_dataset(in_stream, **kwargs)
 
     def get_read_mode(self):
