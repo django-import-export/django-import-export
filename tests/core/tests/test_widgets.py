@@ -336,6 +336,19 @@ class DateTimeWidgetTest(TestCase):
         self.assertTrue(widget.is_equal(reimported, persisted))
         self.assertFalse(widget.is_equal(datetime(2024, 11, 19, 12, 55), persisted))
 
+    def test_is_equal_when_round_trip_fails(self):
+        """
+        A ``%Z`` directive renders a naive datetime with an empty zone name,
+        which cannot be parsed back.  No text round-trip can then match the
+        persisted value, so only the tolerance check applies.
+        """
+        widget = widgets.DateTimeWidget(format="%Y-%m-%d %H:%M:%S %Z")
+        persisted = datetime(2024, 11, 19, 12, 54, 31, 838000)
+        with self.assertRaises(ValueError):
+            widget.clean(widget.render(persisted))
+        self.assertFalse(widget.is_equal(datetime(2024, 11, 19, 12, 54, 31), persisted))
+        self.assertTrue(widget.is_equal(persisted, persisted))
+
     @override_settings(USE_TZ=True, TIME_ZONE="Europe/London")
     def test_is_equal_during_dst_fold(self):
         """
