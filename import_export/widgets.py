@@ -375,13 +375,22 @@ class DateTimeWidget(_ParseDateTimeMixin, Widget):
         return format_datetime(value, self.formats[0])
 
     def is_equal(self, instance_value, original_value):
-        # The default text format ("%Y-%m-%d %H:%M:%S") has no
-        # sub-second precision, and even native (xlsx) export/import
-        # round-trips can lose microsecond precision depending on the
-        # spreadsheet format's own numeric storage. Compare at
-        # whole-second precision so re-importing unmodified data
-        # (which necessarily lost sub-second precision on export) is
-        # correctly detected as unchanged. See GH #2018.
+        """
+        Compare two datetime values at whole-second precision.
+
+        The default text format (``"%Y-%m-%d %H:%M:%S"``) has no
+        sub-second precision, and even native (xlsx) export/import
+        round-trips can lose microsecond precision depending on the
+        spreadsheet format's own numeric storage. Comparing at
+        whole-second precision ensures that re-importing unmodified
+        data (which necessarily lost sub-second precision on export)
+        is correctly detected as unchanged. See #2018.
+
+        :param instance_value: The value parsed from the imported row.
+        :param original_value: The value from the previously persisted
+            instance.
+        :returns: ``True`` if the values are equal, ignoring microseconds.
+        """
         if isinstance(instance_value, datetime):
             instance_value = instance_value.replace(microsecond=0)
         if isinstance(original_value, datetime):
