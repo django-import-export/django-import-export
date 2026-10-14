@@ -24,6 +24,9 @@ Breaking changes
         def create_dataset(self, in_stream, **kwargs):
             return super().create_dataset(in_stream, delimiter=";", **kwargs)
 
+  Additionally, if you have custom code which overrides storage handling in ``admin.py``, then review the PR to
+  check whether your implementation might be affected.
+
   See `issue 2006 <https://github.com/django-import-export/django-import-export/issues/2006>`_. and
   `PR 2197 <https://github.com/django-import-export/django-import-export/issues/2197>`_.
 
