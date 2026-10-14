@@ -5,7 +5,9 @@ from core.admin import BookAdmin, EBookResource, ImportMixin
 from core.models import Author, Book, Parent
 from core.tests.admin_integration.mixins import AdminTestMixin
 from django.contrib.admin.models import DELETION, LogEntry
+from django.contrib.admin.sites import AdminSite
 from django.core.exceptions import ValidationError
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test.testcases import TestCase, TransactionTestCase
 from django.test.utils import override_settings
 from django.utils.translation import gettext_lazy as _
@@ -207,6 +209,15 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
     def test_export_empty_import_formats(self):
         with self.assertRaisesRegex(ValueError, "invalid formats list"):
             self._get_url_response(self.book_import_url)
+
+
+class WriteToTmpStorageTest(TestCase):
+    def test_write_to_tmp_storage_saves_bytes(self):
+        admin = BookAdmin(Book, AdminSite())
+        upload = SimpleUploadedFile("books.csv", b"id,name\n1,Foo\n")
+        tmp_storage = admin.write_to_tmp_storage(upload)
+        self.addCleanup(tmp_storage.remove)
+        self.assertEqual(b"id,name\n1,Foo\n", tmp_storage.read())
 
 
 class ImportFileHandlingTests(AdminTestMixin, TestCase):

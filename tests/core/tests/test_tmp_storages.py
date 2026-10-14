@@ -31,6 +31,14 @@ class TestBaseStorage(TestCase):
         with self.assertRaises(NotImplementedError):
             self.storage.remove()
 
+    def test_removed_kwargs_raise(self):
+        # read_mode and encoding were removed in v5 (issue 2006):
+        # fail loudly rather than silently ignoring them
+        for kwarg in ("read_mode", "encoding"):
+            with self.subTest(kwarg=kwarg):
+                with self.assertRaisesRegex(TypeError, kwarg):
+                    BaseStorage(**{kwarg: "x"})
+
 
 class TestTempFolderStorage(TempFolderStorage):
     def get_full_path(self):

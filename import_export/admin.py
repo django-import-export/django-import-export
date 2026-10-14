@@ -378,14 +378,16 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
             return kwargs
         return kwargs
 
-    def write_to_tmp_storage(self, import_file, input_format):
+    def read_import_file(self, import_file):
+        """
+        Return the raw ``bytes`` of an uploaded file.
+        """
+        return b"".join(import_file.chunks())
+
+    def write_to_tmp_storage(self, import_file):
         tmp_storage_cls = self.get_tmp_storage_class()
         tmp_storage = tmp_storage_cls(**self.get_tmp_storage_class_kwargs())
-        data = b""
-        for chunk in import_file.chunks():
-            data += chunk
-
-        tmp_storage.save(data)
+        tmp_storage.save(self.read_import_file(import_file))
         return tmp_storage
 
     def add_data_read_fail_error_to_form(self, form, e):
@@ -412,9 +414,9 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         import_form = self.create_import_form(request)
         resources = []
         if request.POST and import_form.is_valid():
-            input_format = import_formats[int(import_form.cleaned_data["format"])]()
-            if not input_format.is_binary():
-                input_format.encoding = self.from_encoding
+            input_format = import_formats[int(import_form.cleaned_data["format"])](
+                encoding=self.from_encoding
+            )
             import_file = import_form.cleaned_data["import_file"]
 
             if self.is_skip_import_confirm_enabled():
@@ -424,9 +426,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
                 # rollback_on_validation_errors is set to True so that we rollback on
                 # validation errors. If this is not done validation errors would be
                 # silently skipped.
-                data = b""
-                for chunk in import_file.chunks():
-                    data += chunk
+                data = self.read_import_file(import_file)
                 try:
                     dataset = input_format.create_dataset(data)
                 except Exception as e:
@@ -448,7 +448,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
             else:
                 # first always write the uploaded file to disk as it may be a
                 # memory file or else based on settings upload handlers
-                tmp_storage = self.write_to_tmp_storage(import_file, input_format)
+                tmp_storage = self.write_to_tmp_storage(import_file)
                 # allows get_confirm_form_initial() to include both the
                 # original and saved file names from form.cleaned_data
                 import_file.tmp_storage_name = tmp_storage.name

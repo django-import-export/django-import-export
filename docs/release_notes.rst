@@ -25,6 +25,15 @@ Breaking changes
         def create_dataset(self, in_stream, **kwargs):
             return super().create_dataset(in_stream, delimiter=";", **kwargs)
 
+  Passing ``read_mode`` or ``encoding`` to a storage class (for example via
+  :meth:`~import_export.admin.ImportMixin.get_tmp_storage_class_kwargs`) now raises ``TypeError``.
+
+  The ``input_format`` parameter has been removed from
+  :meth:`~import_export.admin.ImportMixin.write_to_tmp_storage`, as the storage no longer depends on the
+  format.  Update any override to the new signature ``write_to_tmp_storage(self, import_file)``.
+  A new :meth:`~import_export.admin.ImportMixin.read_import_file` method returns the raw ``bytes`` of an
+  uploaded file and is used by both the confirm and skip-confirm import flows.
+
   Additionally, if you have custom code which overrides storage handling in ``admin.py``, then review the PR to
   check whether your implementation might be affected.
 

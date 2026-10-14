@@ -15,7 +15,15 @@ class BaseStorage:
     responsibility of the :class:`~import_export.formats.base_formats.Format`.
     """
 
+    _REMOVED_KWARGS = ("read_mode", "encoding")
+
     def __init__(self, **kwargs):
+        for kwarg in self._REMOVED_KWARGS:
+            if kwarg in kwargs:
+                raise TypeError(
+                    f"'{kwarg}' is no longer supported by {type(self).__name__}: "
+                    "storages read and write bytes only (see the v5 release notes)."
+                )
         self.name = kwargs.get("name", None)
 
     def save(self, data):
