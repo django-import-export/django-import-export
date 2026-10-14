@@ -60,41 +60,66 @@ class _ParseDateTimeMixin:
                 logger.debug(str(e))
         raise ValueError("Value could not be parsed using defined formats.")
 
+    #: The largest difference absorbed when a numeric (e.g. xlsx) round-trip
+    #: rounds a value across a whole-second boundary.  Spreadsheet storage is
+    #: accurate to well under a millisecond, so any larger difference is a
+    #: genuine change.
+    rounding_tolerance = timedelta(milliseconds=1)
+
     def is_equal(self, instance_value, original_value):
         """
-        Compare two values, treating them as equal if they differ by less
-        than one second.
+        Compare two ``datetime`` or ``time`` values at the precision which
+        survives an export / import round-trip.
 
-        The default text formats (``"%Y-%m-%d %H:%M:%S"`` and ``"%H:%M:%S"``)
-        have no sub-second precision, and even native (xlsx) export/import
-        round-trips can lose microsecond precision depending on the
-        spreadsheet format's own numeric storage. Comparing with a one-second
-        tolerance ensures that re-importing unmodified data (which necessarily
-        lost sub-second precision on export) is correctly detected as
-        unchanged. See #2018.
+        Two values are considered equal if either:
 
-        A tolerance is used rather than truncating microseconds because a
-        numeric round-trip can round *up* across a second boundary (for
-        example ``12:54:31.999900`` becoming ``12:54:32.000000``), which
-        truncation would wrongly report as a change.
+        1. they fall within the same whole second.  The default text formats
+           (``"%Y-%m-%d %H:%M:%S"`` and ``"%H:%M:%S"``) have no sub-second
+           precision, so re-importing unmodified, previously-exported data
+           yields a value which differs from the persisted one only by its
+           microseconds.  See #2018.
+        2. they differ by less than :attr:`rounding_tolerance`.  A numeric
+           (xlsx) round-trip can round a value *up* across a second boundary
+           (for example ``12:54:31.999900`` becoming ``12:54:32.000000``),
+           which the first rule alone would report as a change.
 
-        Values which cannot be subtracted from each other (for example ``None``,
-        or a timezone-aware value compared with a naive one) fall back to plain
-        equality. ``date`` values are compared as-is, since dates differing at
-        all differ by at least one day.
+        A genuine edit which changes the seconds digit (for example
+        ``12:54:31.500000`` persisted and ``12:54:32`` imported) satisfies
+        neither rule and is correctly detected as a change.  ``time`` values
+        wrap at midnight, so ``23:59:59.999900`` and ``00:00:00`` are treated
+        as adjacent.
+
+        Values which are not both ``datetime`` or both ``time`` instances (for
+        example ``None`` or ``date`` values) are compared with plain equality.
+        A timezone-aware value is never equal to a naive one.
 
         :param instance_value: The value parsed from the imported row.
         :param original_value: The value from the previously persisted
             instance.
-        :returns: ``True`` if the values differ by less than one second.
+        :returns: ``True`` if the values are equal under the rules above.
         """
+        for value_type in (datetime, time):
+            if isinstance(instance_value, value_type) and isinstance(
+                original_value, value_type
+            ):
+                break
+        else:
+            return instance_value == original_value
+
+        if instance_value.replace(microsecond=0) == original_value.replace(
+            microsecond=0
+        ):
+            return True
         try:
-            delta = self._as_datetime(instance_value) - self._as_datetime(
-                original_value
+            delta = abs(
+                self._as_datetime(instance_value) - self._as_datetime(original_value)
             )
         except TypeError:
-            return instance_value == original_value
-        return abs(delta) < timedelta(seconds=1)
+            # one value is timezone-aware and the other is naive
+            return False
+        if value_type is time:
+            delta = min(delta, timedelta(days=1) - delta)
+        return delta < self.rounding_tolerance
 
     @staticmethod
     def _as_datetime(value):

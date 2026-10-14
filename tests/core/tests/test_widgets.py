@@ -282,6 +282,17 @@ class DateTimeWidgetTest(TestCase):
         dt2 = datetime(2024, 11, 19, 12, 54, 32)
         self.assertFalse(self.widget.is_equal(dt1, dt2))
 
+    def test_is_equal_detects_edit_across_second_boundary(self):
+        """
+        A persisted value of 31.5s is exported as "31".  If the user edits the
+        exported cell to "32", that is a genuine change and must not be
+        absorbed by the rounding tolerance.
+        """
+        persisted = datetime(2024, 11, 19, 12, 54, 31, 500000)
+        edited = datetime(2024, 11, 19, 12, 54, 32)
+        self.assertFalse(self.widget.is_equal(edited, persisted))
+        self.assertFalse(self.widget.is_equal(persisted, edited))
+
     def test_is_equal_aware_vs_naive(self):
         naive = datetime(2024, 11, 19, 12, 54, 31)
         aware = timezone.make_aware(naive, timezone=timezone.get_default_timezone())
@@ -372,6 +383,20 @@ class TimeWidgetTest(TestCase):
 
     def test_is_equal_detects_exactly_one_second_difference(self):
         self.assertFalse(self.widget.is_equal(time(20, 15, 0), time(20, 15, 1)))
+
+    def test_is_equal_detects_edit_across_second_boundary(self):
+        persisted = time(20, 15, 0, 500000)
+        edited = time(20, 15, 1)
+        self.assertFalse(self.widget.is_equal(edited, persisted))
+
+    def test_is_equal_ignores_rounding_across_midnight(self):
+        t1 = time(23, 59, 59, 999900)
+        t2 = time(0, 0, 0)
+        self.assertTrue(self.widget.is_equal(t1, t2))
+        self.assertTrue(self.widget.is_equal(t2, t1))
+
+    def test_is_equal_detects_one_second_difference_across_midnight(self):
+        self.assertFalse(self.widget.is_equal(time(23, 59, 59), time(0, 0, 0)))
 
     def test_is_equal_handles_none(self):
         self.assertTrue(self.widget.is_equal(None, None))

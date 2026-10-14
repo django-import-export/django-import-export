@@ -72,8 +72,12 @@ Breaking changes
   via a new :meth:`~import_export.widgets.Widget.is_equal` hook (`PR 2174
   <https://github.com/django-import-export/django-import-export/pull/2174>`_).
 
+  ``skip_row()`` calls ``is_equal()`` on every import field's widget.  Custom widgets which subclass
+  :class:`~import_export.widgets.Widget` inherit a plain equality check; a custom widget which does not subclass
+  ``Widget`` must now implement ``is_equal()``.
+
   :class:`~import_export.widgets.DateTimeWidget` and :class:`~import_export.widgets.TimeWidget` now treat values which
-  differ by less than one second as unchanged, so that re-importing previously exported data is correctly skipped
+  fall within the same whole second as unchanged, so that re-importing previously exported data is correctly skipped
   (see `issue 2018 <https://github.com/django-import-export/django-import-export/issues/2018>`_).
   If you use a custom datetime or time format which includes sub-second precision (``%f``) and rely on sub-second
   differences being detected as changes, override ``is_equal()`` on your widget to restore exact comparison.
