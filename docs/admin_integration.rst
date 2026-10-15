@@ -267,9 +267,7 @@ Customize admin import forms
 
 It is possible to modify default import forms used in the model admin. For
 example, to add an additional field in the import form, subclass and extend the
-:class:`~import_export.forms.ImportForm` (note that you may want to also
-consider :class:`~import_export.forms.ConfirmImportForm` as importing is a
-two-step process).
+:class:`~import_export.forms.ImportForm`.
 
 To use your customized form(s), change the respective attributes on your
 ``ModelAdmin`` class:
@@ -339,6 +337,15 @@ Then add the following to ``EBookResource`` class (in ``tests/core/admin.py``)::
 
 The selected author is now set as an attribute on the instance object.  When the instance is saved,
 then the author is set as a foreign key relation to the instance.
+
+.. warning::
+
+    Importing is a two-step process when the confirmation step is enabled (the default).
+    The import form and the confirm form are submitted in separate requests, so any
+    additional field must be declared on **both** :class:`~import_export.forms.ImportForm`
+    and :class:`~import_export.forms.ConfirmImportForm`, and its value passed across using
+    :meth:`~import_export.admin.ImportMixin.get_confirm_form_initial`.  If the field is
+    missing from the confirm form, its value is not available when the import is processed.
 
 Further customization
 ---------------------
