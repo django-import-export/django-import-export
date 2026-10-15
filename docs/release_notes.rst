@@ -41,6 +41,10 @@ v4.4.2
   If you have overridden :meth:`~import_export.resources.Resource.do_instance_save`, review it to ensure that
   ``is_create`` is honoured.
 
+  If any of your models override ``save()``, the override must accept ``*args`` and ``**kwargs`` and pass them to
+  ``super().save()``, as required by Django.  An override declared as ``def save(self)`` will now fail with a
+  ``TypeError`` when a new instance is imported, because ``force_insert`` is passed as a keyword argument.
+
   If you have understood the implications and need to restore the previous behaviour, override
   :meth:`~import_export.resources.Resource.do_instance_save` to call ``instance.save()`` without ``force_insert``.
   Note that this reinstates the overwrite described above for your resource.
