@@ -35,6 +35,8 @@ Fixes
 - Fixed JSON object key order causing false changes in the import preview (`2173 <https://github.com/django-import-export/django-import-export/pull/2173>`_)
 - Fix Admin UI form field name collision for exports (`2108 <https://github.com/django-import-export/django-import-export/pull/2108>`_)
 - Fixed ``.ods`` import failing with ``UnicodeDecodeError`` because ODS was classified as a text format and read in text mode instead of binary (`2176 <https://github.com/django-import-export/django-import-export/pull/2176>`_)
+- Fixed inconsistent input type passed to ``Format.create_dataset()`` (`2006 <https://github.com/django-import-export/django-import-export/issues/2006>`_, `2197 <https://github.com/django-import-export/django-import-export/pull/2197>`_)
+- Fixed ``import`` management command ignoring ``--encoding`` for file input: the file is now read as ``bytes`` and decoded by the format (`2197 <https://github.com/django-import-export/django-import-export/pull/2197>`_)
 
 Development
 ###########
@@ -46,6 +48,7 @@ Documentation
 #############
 
 - Fixed ``Resource`` docstrings emitting ``unknown document`` warnings in downstream projects that pull the docs in via ``autodoc`` + ``intersphinx``, by referencing the target pages with ``:ref:`` and an explicit label instead of ``:doc:`` (`2188 <https://github.com/django-import-export/django-import-export/issues/2188>`_)
+- Clarified in the docs that additional import form fields must also be declared on the confirm form (`2198 <https://github.com/django-import-export/django-import-export/pull/2198>`_)
 
 Performance
 ###########
