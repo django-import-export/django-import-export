@@ -49,6 +49,7 @@ Documentation
 
 - Fixed ``Resource`` docstrings emitting ``unknown document`` warnings in downstream projects that pull the docs in via ``autodoc`` + ``intersphinx``, by referencing the target pages with ``:ref:`` and an explicit label instead of ``:doc:`` (`2188 <https://github.com/django-import-export/django-import-export/issues/2188>`_)
 - Clarified in the docs that additional import form fields must also be declared on the confirm form (`2198 <https://github.com/django-import-export/django-import-export/pull/2198>`_)
+- Added FAQ entry describing how to avoid files being written to storage twice when importing file fields via the Admin UI (`1447 <https://github.com/django-import-export/django-import-export/issues/1447>`_)
 
 Performance
 ###########
