@@ -1,4 +1,5 @@
 import datetime
+from decimal import Decimal
 from unittest import mock
 
 import tablib
@@ -209,3 +210,71 @@ class SkipRowDateTimePrecisionTest(TestCase):
         result = self.resource.import_data(dataset, dry_run=True)
         self.assertEqual(1, result.totals["skip"])
         self.assertEqual(0, result.totals["update"])
+
+
+class DiffEquivalentValuesTest(TestCase):
+    """
+    Regression test for #1425.
+
+    The import preview diff compares the rendered (string) representation of
+    the persisted value against that of the imported value.  Values which the
+    widget considers equal but which render differently (for example
+    ``Decimal("1803.60")`` persisted vs ``Decimal("1803.6")`` read from an xlsx
+    cell) must not be shown as a change.
+    """
+
+    def setUp(self):
+        class BookResource(resources.ModelResource):
+            class Meta:
+                model = Book
+                fields = ("id", "name", "price", "added")
+
+        self.resource = BookResource()
+        self.book = Book.objects.create(
+            name="Test Book",
+            price=Decimal("1803.60"),
+            added=datetime.datetime(2024, 11, 19, 12, 54, 31, 838000),
+        )
+        self.price_idx = self.resource.get_diff_headers().index("price")
+        self.added_idx = self.resource.get_diff_headers().index("added")
+
+    def _import(self, price, added="2024-11-19 12:54:31"):
+        dataset = tablib.Dataset(headers=["id", "name", "price", "added"])
+        dataset.append([self.book.id, "Test Book", price, added])
+        result = self.resource.import_data(dataset, dry_run=True)
+        self.assertEqual(1, result.totals["update"])
+        return result.rows[0].diff
+
+    def test_decimal_with_fewer_trailing_zeros_is_not_shown_as_change(self):
+        # openpyxl reads a numeric cell holding 1803.60 as the float 1803.6
+        diff = self._import(1803.6)
+        self.assertEqual("<span>1803.60</span>", diff[self.price_idx])
+
+    def test_decimal_string_with_fewer_trailing_zeros_is_not_shown_as_change(self):
+        diff = self._import("1803.6")
+        self.assertEqual("<span>1803.60</span>", diff[self.price_idx])
+
+    def test_decimal_genuine_change_is_shown(self):
+        diff = self._import("1803.70")
+        self.assertIn("<del", diff[self.price_idx])
+        self.assertIn("<ins", diff[self.price_idx])
+
+    def test_decimal_change_to_empty_is_shown(self):
+        diff = self._import("")
+        self.assertIn("<del", diff[self.price_idx])
+
+    def test_datetime_sub_second_difference_is_not_shown_as_change(self):
+        # the default text format drops microseconds, so a re-imported export
+        # differs from the persisted value only by its microseconds
+        diff = self._import("1803.60")
+        self.assertEqual("<span>2024-11-19 12:54:31</span>", diff[self.added_idx])
+
+    def test_new_row_is_not_affected(self):
+        dataset = tablib.Dataset(headers=["id", "name", "price", "added"])
+        dataset.append(["", "New Book", 1803.6, "2024-11-19 12:54:31"])
+        result = self.resource.import_data(dataset, dry_run=True)
+        self.assertEqual(1, result.totals["new"])
+        self.assertEqual(
+            '<ins style="background:#e6ffe6;">1803.6</ins>',
+            result.rows[0].diff[self.price_idx],
+        )

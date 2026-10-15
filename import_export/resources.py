@@ -13,7 +13,7 @@ from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.core.management.color import no_style
 from django.core.paginator import Paginator
 from django.db import connections, router
-from django.db.models import fields
+from django.db.models import Manager, fields
 from django.db.models.fields.related import ForeignKey
 from django.db.models.query import QuerySet
 from django.db.transaction import TransactionManagementError, set_rollback
@@ -43,17 +43,29 @@ def has_natural_foreign_key(model):
 
 class Diff:
     def __init__(self, resource, instance, new):
+        self.fields = resource.get_import_fields()
         self.left = Diff._read_field_values(resource, instance)
+        self.left_values = Diff._read_raw_field_values(resource, instance)
         self.right = []
+        self.right_values = []
         self.new = new
 
     def compare_with(self, resource, instance):
         self.right = Diff._read_field_values(resource, instance)
+        self.right_values = Diff._read_raw_field_values(resource, instance)
 
     def as_html(self):
         data = []
         dmp = diff_match_patch()
-        for v1, v2 in zip(self.left, self.right):
+        for field, v1, v2, raw1, raw2 in zip(
+            self.fields, self.left, self.right, self.left_values, self.right_values
+        ):
+            if v1 != v2 and self._is_equal(field, raw1, raw2):
+                # The values render differently but the widget considers them
+                # equal (e.g. Decimal("1803.60") persisted vs Decimal("1803.6")
+                # imported), so show the persisted value rather than a spurious
+                # change (#1425).
+                v2 = v1
             if v1 != v2 and self.new:
                 v1 = ""
             diff = dmp.diff_main(force_str(v1), force_str(v2))
@@ -63,12 +75,32 @@ class Diff:
             data.append(html)
         return data
 
+    @staticmethod
+    def _is_equal(field, original_value, instance_value):
+        """
+        Return ``True`` if the widget considers the persisted (original) value
+        and the imported (instance) value to be equal.
+        ``None`` is only ever equal to ``None``.
+        """
+        if original_value is None or instance_value is None:
+            return original_value is instance_value
+        if isinstance(original_value, Manager) or isinstance(instance_value, Manager):
+            # Related managers are lazy, so by the time the diff is rendered
+            # the original's manager already reflects the saved state.  Fall
+            # back to comparing the rendered values, which were read eagerly.
+            return False
+        return field.widget.is_equal(instance_value, original_value)
+
     @classmethod
     def _read_field_values(cls, resource, instance):
         return [
             f.export(instance, sort_json_keys=True)
             for f in resource.get_import_fields()
         ]
+
+    @classmethod
+    def _read_raw_field_values(cls, resource, instance):
+        return [f.get_value(instance) for f in resource.get_import_fields()]
 
 
 class Resource(metaclass=DeclarativeMetaclass):
