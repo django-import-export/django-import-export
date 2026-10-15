@@ -2,7 +2,6 @@ import logging
 import warnings
 from collections import OrderedDict
 
-from django.apps import apps
 from django.core.exceptions import FieldDoesNotExist
 from django.db.models.fields.related import ForeignObjectRel
 
@@ -10,7 +9,7 @@ from import_export.options import ResourceOptions
 
 from .fields import Field
 from .instance_loaders import ModelInstanceLoader
-from .utils import get_related_model
+from .utils import get_related_model, resolve_model
 
 logger = logging.getLogger(__name__)
 
@@ -26,8 +25,8 @@ class DeclarativeMetaclass(type):
                 if not option.startswith("_") and hasattr(options, option)
             ]:
                 option_value = getattr(options, option)
-                if option == "model" and isinstance(option_value, str):
-                    option_value = apps.get_model(option_value)
+                if option == "model":
+                    option_value = resolve_model(option_value)
 
                 setattr(meta_, option, option_value)
 

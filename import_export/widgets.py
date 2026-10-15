@@ -6,6 +6,7 @@ from datetime import date, datetime, time, timedelta
 from decimal import Decimal
 
 import django
+from django.apps import apps
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import F
@@ -16,6 +17,7 @@ from django.utils.formats import number_format, sanitize_separators
 from django.utils.translation import gettext_lazy as _
 
 from import_export.exceptions import WidgetError
+from import_export.utils import resolve_model
 
 logger = logging.getLogger(__name__)
 
@@ -608,7 +610,32 @@ class JSONWidget(Widget):
         return json.dumps(value, sort_keys=kwargs.get("sort_json_keys", False))
 
 
-class ForeignKeyWidget(Widget):
+class RelatedModelWidgetMixin:
+    """
+    Mixin for widgets which reference a related model.
+
+    The ``model`` attribute may be set either to a model class or to an
+    ``"app_label.ModelName"`` string, so that a resource does not need to
+    import models from other apps directly.  A string is resolved to the model
+    class via the app registry immediately if the registry is ready, so that a
+    misspelled name fails at startup.  If the registry is not yet ready, the
+    string is resolved the first time ``model`` is accessed.
+    """
+
+    @property
+    def model(self):
+        if isinstance(self._model, str):
+            self._model = resolve_model(self._model)
+        return self._model
+
+    @model.setter
+    def model(self, value):
+        if isinstance(value, str) and apps.models_ready:
+            value = resolve_model(value)
+        self._model = value
+
+
+class ForeignKeyWidget(RelatedModelWidgetMixin, Widget):
     """
     Widget for a ``ForeignKey`` field which looks up a related model using
     either the PK or a user specified field that uniquely identifies the
@@ -644,7 +671,9 @@ class ForeignKeyWidget(Widget):
             class Meta:
                 fields = ('author',)
 
-    :param model: The Model the ForeignKey refers to (required).
+    :param model: The Model the ForeignKey refers to (required).  Either a
+        model class or an ``"app_label.ModelName"`` string, which is resolved
+        lazily via the app registry.
     :param field: A field on the related model used for looking up a particular
         object.
     :param use_natural_foreign_keys: Use natural key functions to identify
@@ -876,7 +905,9 @@ class CachedForeignKeyWidget(ForeignKeyWidget):
                 def get_lookup_kwargs(self, value, row, **kwargs):
                     return {f'{self.field}__gt': value}
 
-    :param model: The Model the ForeignKey refers to (required).
+    :param model: The Model the ForeignKey refers to (required).  Either a
+        model class or an ``"app_label.ModelName"`` string, which is resolved
+        lazily via the app registry.
     :param field: A field on the related model used for looking up a particular
         object.
     :param use_natural_foreign_keys: Use natural key functions to identify
@@ -908,12 +939,14 @@ class CachedForeignKeyWidget(ForeignKeyWidget):
         return self._cached_qs.get(**lookup_kwargs)
 
 
-class ManyToManyWidget(Widget):
+class ManyToManyWidget(RelatedModelWidgetMixin, Widget):
     """
     Widget that converts between representations of a ManyToMany relationships
     as a list and an actual ManyToMany field.
 
-    :param model: The model the ManyToMany field refers to (required).
+    :param model: The model the ManyToMany field refers to (required).  Either
+        a model class or an ``"app_label.ModelName"`` string, which is
+        resolved lazily via the app registry.
     :param separator: Defaults to ``','``.
     :param field: A field on the related model. Default is ``pk``.
     """

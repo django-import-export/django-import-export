@@ -8,6 +8,7 @@ from zoneinfo import ZoneInfo
 
 import tablib
 from core.models import Author, Book, Category
+from django.apps import apps
 from django.db import connection
 from django.test import TestCase
 from django.test.utils import CaptureQueriesContext, override_settings
@@ -1136,6 +1137,125 @@ class ManyToManyWidget(TestCase):
 
     def test_render_value_none_as_blank(self):
         self.assertEqual("", self.widget.render(None))
+
+
+class RelatedModelWidgetStringModelTest(TestCase):
+    """
+    ForeignKeyWidget, CachedForeignKeyWidget and ManyToManyWidget accept the
+    related model as an ``"app_label.ModelName"`` string, resolved lazily
+    (issue 2125).
+    """
+
+    def setUp(self):
+        self.author = Author.objects.create(name="Foo")
+        self.cat1 = Category.objects.create(name="Cat 1")
+        self.cat2 = Category.objects.create(name="Cat 2")
+
+    def test_foreign_key_widget_string_model(self):
+        widget = widgets.ForeignKeyWidget("core.Author", field="name")
+        self.assertIs(widget.model, Author)
+        self.assertEqual(widget.clean("Foo"), self.author)
+        self.assertEqual(widget.render(self.author), "Foo")
+
+    def test_cached_foreign_key_widget_string_model(self):
+        widget = widgets.CachedForeignKeyWidget("core.Author", field="name")
+        self.assertIs(widget.model, Author)
+        self.assertEqual(widget.clean("Foo"), self.author)
+
+    def test_many_to_many_widget_string_model(self):
+        widget = widgets.ManyToManyWidget("core.Category", field="name")
+        self.assertIs(widget.model, Category)
+        cleaned = widget.clean("Cat 1,Cat 2")
+        self.assertCountEqual(cleaned, [self.cat1, self.cat2])
+        self.assertEqual(widget.render(Category.objects.all()), "Cat 1,Cat 2")
+
+    def test_many_to_many_widget_string_model_empty_value(self):
+        widget = widgets.ManyToManyWidget("core.Category")
+        self.assertEqual(list(widget.clean("")), [])
+
+    def test_model_class_still_accepted(self):
+        widget = widgets.ForeignKeyWidget(Author)
+        self.assertIs(widget.model, Author)
+
+    def test_string_model_is_resolved_eagerly_when_registry_ready(self):
+        with mock.patch.object(apps, "get_model", wraps=apps.get_model) as get_model:
+            widget = widgets.ForeignKeyWidget("core.Author")
+            get_model.assert_called_once_with("core.Author")
+            self.assertIs(widget.model, Author)
+            # not resolved again on access
+            get_model.assert_called_once_with("core.Author")
+
+    def test_string_model_is_resolved_lazily_when_registry_not_ready(self):
+        with mock.patch.object(apps, "models_ready", False):
+            with mock.patch.object(
+                apps, "get_model", wraps=apps.get_model
+            ) as get_model:
+                widget = widgets.ForeignKeyWidget("core.Author")
+                get_model.assert_not_called()
+        # registry is ready again: resolved on first access and cached
+        with mock.patch.object(apps, "get_model", wraps=apps.get_model) as get_model:
+            self.assertIs(widget.model, Author)
+            self.assertIs(widget.model, Author)
+            get_model.assert_called_once_with("core.Author")
+
+    def test_bare_model_name_string_not_supported(self):
+        with self.assertRaises(ValueError):
+            widgets.ForeignKeyWidget("Author")
+
+    def test_meta_model_string(self):
+        class BookResource(resources.ModelResource):
+            class Meta:
+                model = "core.Book"
+                fields = ("id", "name")
+
+        self.assertIs(BookResource._meta.model, Book)
+        self.assertIn("name", BookResource.fields)
+
+    def test_invalid_string_model_raises_at_declaration(self):
+        with self.assertRaises(LookupError):
+            widgets.ForeignKeyWidget("core.DoesNotExist")
+
+    def test_invalid_string_model_raises_on_access_when_registry_not_ready(self):
+        with mock.patch.object(apps, "models_ready", False):
+            widget = widgets.ForeignKeyWidget("core.DoesNotExist")
+        with self.assertRaises(LookupError):
+            widget.model
+
+    def test_model_can_be_reassigned(self):
+        widget = widgets.ForeignKeyWidget("core.Author")
+        widget.model = Category
+        self.assertIs(widget.model, Category)
+        widget.model = "core.Author"
+        self.assertIs(widget.model, Author)
+
+    def test_resource_with_string_model_widgets(self):
+        class BookResource(resources.ModelResource):
+            author = fields.Field(
+                attribute="author",
+                column_name="author",
+                widget=widgets.ForeignKeyWidget("core.Author", field="name"),
+            )
+            categories = fields.Field(
+                attribute="categories",
+                column_name="categories",
+                widget=widgets.ManyToManyWidget("core.Category", field="name"),
+            )
+
+            class Meta:
+                model = Book
+                fields = ("id", "name", "author", "categories")
+
+        dataset = tablib.Dataset(headers=["id", "name", "author", "categories"])
+        dataset.append(["", "Book 1", "Foo", "Cat 1,Cat 2"])
+        result = BookResource().import_data(dataset, raise_errors=True)
+        self.assertFalse(result.has_errors())
+        book = Book.objects.get(name="Book 1")
+        self.assertEqual(book.author, self.author)
+        self.assertCountEqual(book.categories.all(), [self.cat1, self.cat2])
+
+        exported = BookResource().export(queryset=Book.objects.filter(pk=book.pk))
+        self.assertEqual(exported.dict[0]["author"], "Foo")
+        self.assertEqual(exported.dict[0]["categories"], "Cat 1,Cat 2")
 
 
 class JSONWidgetTest(TestCase):
