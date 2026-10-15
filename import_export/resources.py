@@ -316,8 +316,16 @@ class Resource(metaclass=DeclarativeMetaclass):
         :param instance: The model instance to be saved.
         :param is_create: A boolean flag to indicate whether this is a new object
                           to be created, or an existing object to be updated.
+
+        When ``is_create`` is ``True`` the instance is saved with
+        ``force_insert=True`` so that a row classified as new can never update an
+        existing database row.  This can happen when the import supplies a primary
+        key which exists in the database but which was not found by the
+        :ref:`instance loader <instance-loaders>`, for example because
+        :meth:`~import_export.resources.Resource.get_queryset` is filtered.  In this
+        case an ``IntegrityError`` is raised and the row is reported as an error.
         """
-        instance.save()
+        instance.save(force_insert=is_create)
 
     def before_save_instance(self, instance, row, **kwargs):
         r"""

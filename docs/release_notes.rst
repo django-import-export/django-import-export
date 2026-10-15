@@ -2,6 +2,50 @@
 Release Notes
 =============
 
+v4.4.2
+------
+
+.. _release_notes_force_insert_on_create:
+
+* Instances classified as new during import are now saved with ``force_insert=True``.
+
+  Previously, in certain configurations, if an import file supplied a primary key which already existed in the database
+  but which was not found by the instance loader, the new instance was saved with that primary key and Django updated
+  the existing row.
+  Fields omitted from the import were reset to their defaults, the preview reported the row as new, and the admin log
+  recorded an addition, so the overwrite left no visible trace.  This occurred when:
+
+  - :meth:`~import_export.resources.Resource.get_queryset` was overridden to restrict the rows a user may update (for
+    example per-tenant or per-user filtering).  A user with import permission could overwrite records outside their
+    scope by supplying the record's primary key.
+  - the model's default manager filters rows (for example a soft-delete manager), since the default
+    ``get_queryset()`` returns ``model.objects.all()``.  Importing the primary key of a soft-deleted record overwrote
+    it and reset the deleted flag.
+  - ``import_id_fields`` identified rows by a field other than the primary key, but the file also contained the
+    primary key column.  A row whose identifier matched no existing instance was classified as new, and if its primary
+    key value belonged to an existing row, that row was overwritten.  This typically occurred when importing a file
+    exported from a different environment.
+
+  Such rows are now reported as errors (``IntegrityError``) and the existing row is left unchanged.  All users are
+  advised to upgrade.
+
+  If you relied on this behaviour to update rows by primary key, include the primary key in ``import_id_fields`` so
+  that the existing instance is loaded and updated explicitly.
+  If you have overridden :meth:`~import_export.resources.Resource.do_instance_save`, review it to ensure that
+  ``is_create`` is honoured.
+  If you have understood the implications and need to restore the previous behaviour, override
+  :meth:`~import_export.resources.Resource.do_instance_save` to call ``instance.save()`` without ``force_insert``.
+  Note that this reinstates the overwrite described above for your resource.
+
+  If you cannot upgrade, either of the following prevents the overwrite:
+
+  - Stop the primary key being written from the import file.  Either omit it from the resource using the
+    :attr:`~import_export.options.ResourceOptions.fields` or :attr:`~import_export.options.ResourceOptions.exclude`
+    options (see :ref:`declare_fields`), or :ref:`declare it explicitly<field_declaration>` with ``readonly=True``.
+    This is not possible if the primary key is one of your ``import_id_fields``.
+  - Set :attr:`~import_export.options.ResourceOptions.clean_model_instances` to ``True`` so the collision is reported
+    as a validation error before the row is saved.
+
 v4.2
 ----
 
