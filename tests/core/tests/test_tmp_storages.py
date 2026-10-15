@@ -31,6 +31,14 @@ class TestBaseStorage(TestCase):
         with self.assertRaises(NotImplementedError):
             self.storage.remove()
 
+    def test_removed_kwargs_raise(self):
+        # read_mode and encoding were removed in v5 (issue 2006):
+        # fail loudly rather than silently ignoring them
+        for kwarg in ("read_mode", "encoding"):
+            with self.subTest(kwarg=kwarg):
+                with self.assertRaisesRegex(TypeError, kwarg):
+                    BaseStorage(**{kwarg: "x"})
+
 
 class TestTempFolderStorage(TempFolderStorage):
     def get_full_path(self):
@@ -56,18 +64,26 @@ id,name,author,author_email,imported,published,price,categories
         name = tmp_storage.name
 
         tmp_storage = TempFolderStorage(name=name)
-        self.assertEqual(self.test_string.decode(), tmp_storage.read())
+        self.assertEqual(self.test_string, tmp_storage.read())
 
         self.assertTrue(os.path.isfile(tmp_storage.get_full_path()))
         tmp_storage.remove()
         self.assertFalse(os.path.isfile(tmp_storage.get_full_path()))
 
-    def test_temp_folder_storage_read_with_encoding(self):
-        tmp_storage = TestTempFolderStorage(encoding="utf-8")
+    def test_temp_folder_storage_reads_binary(self):
+        tmp_storage = TestTempFolderStorage()
         tmp_storage.name = "f"
-        with patch("builtins.open", mock_open(read_data="data")) as mock_file:
-            tmp_storage.read()
-            mock_file.assert_called_with("/tmp/f", "r", encoding="utf-8")
+        with patch("builtins.open", mock_open(read_data=b"data")) as mock_file:
+            self.assertEqual(b"data", tmp_storage.read())
+            mock_file.assert_called_with("/tmp/f", "rb")
+
+    def test_temp_folder_storage_writes_binary(self):
+        tmp_storage = TestTempFolderStorage()
+        tmp_storage.name = "f"
+        with patch("builtins.open", mock_open()) as mock_file:
+            tmp_storage.save(b"data")
+            mock_file.assert_called_with("/tmp/f", "wb")
+            mock_file().write.assert_called_with(b"data")
 
     def test_cache_storage(self):
         tmp_storage = CacheStorage()
@@ -81,19 +97,20 @@ id,name,author,author_email,imported,published,price,categories
         tmp_storage.remove()
         self.assertIsNone(cache.get(tmp_storage.CACHE_PREFIX + tmp_storage.name))
 
-    def test_cache_storage_read_with_encoding(self):
+    def test_cache_storage_read_by_name(self):
         tmp_storage = CacheStorage()
         tmp_storage.name = "f"
-        cache.set("django-import-export-f", 101)
+        cache.set("django-import-export-f", b"101")
         res = tmp_storage.read()
-        self.assertEqual(101, res)
+        self.assertEqual(b"101", res)
 
-    def test_cache_storage_read_with_encoding_unicode_chars(self):
+    def test_cache_storage_round_trips_unicode_bytes(self):
         tmp_storage = CacheStorage()
         tmp_storage.name = "f"
-        tmp_storage.save("àèìòùçñ")
+        data = "àèìòùçñ".encode()
+        tmp_storage.save(data)
         res = tmp_storage.read()
-        self.assertEqual("àèìòùçñ", res)
+        self.assertEqual(data, res)
 
     def test_media_storage(self):
         tmp_storage = MediaStorage()
@@ -107,7 +124,7 @@ id,name,author,author_email,imported,published,price,categories
         tmp_storage.remove()
         self.assertFalse(default_storage.exists(tmp_storage.get_full_path()))
 
-    def test_media_storage_read_with_encoding(self):
+    def test_media_storage_reads_binary(self):
         tmp_storage = TestMediaStorage()
         tmp_storage.name = "f"
         with patch.object(FileSystemStorage, "open") as mock_open:

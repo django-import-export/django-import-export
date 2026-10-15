@@ -281,6 +281,13 @@ class TextFormatTest(TestCase):
     def setUp(self):
         self.format = base_formats.TextFormat()
 
+    def test_create_dataset_decodes_bytes_when_encoding_is_none(self):
+        # issue 2006: bytes must still be decoded when no encoding is configured
+        csv_format = base_formats.CSV(encoding=None)
+        dataset = csv_format.create_dataset(b"id,name\n1,Caf\xc3\xa9\n")
+        self.assertEqual(["id", "name"], dataset.headers)
+        self.assertEqual(("1", "Caf\u00e9"), dataset[0])
+
     def test_get_read_mode(self):
         self.assertEqual("r", self.format.get_read_mode())
 
