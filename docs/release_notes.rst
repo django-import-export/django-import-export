@@ -8,6 +8,40 @@ v5.0
 Breaking changes
 ^^^^^^^^^^^^^^^^
 
+* Temporary storages (:class:`~import_export.tmp_storages.BaseStorage` and its subclasses) now deal in ``bytes``
+  only: ``save()`` receives the raw uploaded data and ``read()`` returns it unchanged.  The ``read_mode`` and
+  ``encoding`` constructor arguments have been removed.  If you have a custom storage class which relied on
+  these arguments, remove them and return ``bytes`` from ``read()``.
+
+  As a result, ``create_dataset()`` on a :class:`~import_export.formats.base_formats.Format` now always receives
+  ``bytes`` from the Admin import.  Previously it received ``str`` or ``bytes`` depending on the storage class
+  and on whether the import confirmation step was skipped.
+  :class:`~import_export.formats.base_formats.TextFormat` decodes the data using its ``encoding``, falling back
+  to ``utf-8`` when ``from_encoding`` is ``None`` (previously the system locale encoding was used in this case).
+  If you rely on ``from_encoding = None`` and import files which are not UTF-8 encoded, set ``from_encoding``
+  explicitly to the encoding of your files (for example ``"cp1252"``).
+  If you subclass ``TextFormat`` and override ``create_dataset()``, call ``super()`` so the data is decoded, and pass
+  any tablib options through as keyword arguments, for example::
+
+    class SemicolonCSV(CSV):
+        def create_dataset(self, in_stream, **kwargs):
+            return super().create_dataset(in_stream, delimiter=";", **kwargs)
+
+  Passing ``read_mode`` or ``encoding`` to a storage class (for example via
+  :meth:`~import_export.admin.ImportMixin.get_tmp_storage_class_kwargs`) now raises ``TypeError``.
+
+  The ``input_format`` parameter has been removed from
+  :meth:`~import_export.admin.ImportMixin.write_to_tmp_storage`, as the storage no longer depends on the
+  format.  Update any override to the new signature ``write_to_tmp_storage(self, import_file)``.
+  A new :meth:`~import_export.admin.ImportMixin.read_import_file` method returns the raw ``bytes`` of an
+  uploaded file and is used by both the confirm and skip-confirm import flows.
+
+  Additionally, if you have custom code which overrides storage handling in ``admin.py``, then review the PR to
+  check whether your implementation might be affected.
+
+  See `issue 2006 <https://github.com/django-import-export/django-import-export/issues/2006>`_ and
+  `PR 2197 <https://github.com/django-import-export/django-import-export/pull/2197>`_.
+
 * This release fixes an issue with form field name clashes (see `2108
   <https://github.com/django-import-export/django-import-export/pull/2108>`_).
 
