@@ -41,6 +41,9 @@ Widgets
 .. autoclass:: import_export.widgets.JSONWidget
    :members:
 
+.. autoclass:: import_export.widgets.RelatedModelWidgetMixin
+   :members:
+
 .. autoclass:: import_export.widgets.ForeignKeyWidget
    :members:
 
