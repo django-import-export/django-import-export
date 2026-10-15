@@ -139,6 +139,42 @@ decreasing it, or speed up exports by increasing it.
 Can be overridden on a ``Resource`` class by setting the ``chunk_size`` class
 attribute.
 
+.. _import_export_preview_page_size:
+
+``IMPORT_EXPORT_PREVIEW_PAGE_SIZE``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A positive integer that sets the page size of the admin import preview tables
+(the dry-run preview, the validation-error preview, and the critical-error
+preview). Defaults to ``100``.
+
+Set it to ``None`` to disable pagination entirely and render every preview row
+on a single page, which is the behaviour of v4 and earlier. Any other value
+(zero, negative, or non-integer) raises
+``django.core.exceptions.ImproperlyConfigured``.
+
+Can be overridden per ``ModelAdmin`` by setting the
+``import_preview_page_size`` class attribute, or for full control by
+overriding :meth:`~import_export.admin.ImportMixin.get_import_preview_page_size`.
+
+The setting only affects what is rendered on the confirmation screen; the
+dry-run still processes the entire file, and the confirm step still imports
+every row from the original upload. When the upload contains more rows than
+the configured page size, a Django paginator nav (``Previous`` / ``Page X of
+Y`` / ``Next``) is rendered above the table so admins can page through every
+row before confirming the import.
+
+Each page navigation re-runs the dry-run against the temporary file written
+during upload. For very large imports this may noticeably slow page changes.
+Override
+:meth:`~import_export.admin.ImportMixin.get_preview_result_for_pagination`
+on your ``ModelAdmin`` to plug in a project-specific cache (Django's cache
+framework, Redis, etc.) keyed by the temporary-storage filename.
+
+If :ref:`import_export_skip_admin_confirm` is enabled there is no temporary
+file to navigate back to, so error previews are rendered in full on a single
+page and this setting has no effect.
+
 .. _import_export_skip_admin_confirm:
 
 ``IMPORT_EXPORT_SKIP_ADMIN_CONFIRM``
