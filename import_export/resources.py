@@ -43,6 +43,38 @@ def has_natural_foreign_key(model):
 
 
 class Diff:
+    """
+    Records how an instance changes during the import of a single row, for
+    display in the import preview.
+
+    An instance is created in :meth:`~import_export.resources.Resource.import_row`
+    before the row is applied, capturing the persisted ("before") values of every
+    import field, and :meth:`compare_with` is called after the row has been
+    applied to capture the "after" values.  :meth:`as_html` then renders one
+    HTML fragment per field, with insertions and deletions marked up, which
+    :class:`~import_export.results.RowResult` stores as ``diff``.
+
+    Values are compared by their rendered (export) form, since that is what the
+    preview displays.  Where the rendered forms differ but the field's widget
+    reports the underlying values as equal via
+    :meth:`~import_export.widgets.Widget.is_equal` (for example a ``Decimal``
+    which only differs in trailing zeros), the persisted value is shown unchanged.
+
+    The class used can be replaced by overriding
+    :meth:`~import_export.resources.Resource.get_diff_class`.  Diff generation
+    can be disabled with :attr:`~import_export.options.ResourceOptions.skip_diff`,
+    or the HTML rendering alone with
+    :attr:`~import_export.options.ResourceOptions.skip_html_diff`.
+
+    :param resource: The :class:`~import_export.resources.Resource` performing
+        the import, used to obtain the import fields.
+    :param instance: The instance before the row is applied.
+    :param new: ``True`` if the instance was created for this row, in which case
+        the "before" values are shown as empty.
+    :param row: The import row as a ``dict``, passed to each widget's
+        :meth:`~import_export.widgets.Widget.is_equal`.
+    """
+
     def __init__(self, resource, instance, new, row=None):
         self.fields = resource.get_import_fields()
         self.new = new
