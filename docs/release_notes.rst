@@ -17,9 +17,8 @@ v4.4.2
 
   The fix is that instances classified as new during import are now saved with ``force_insert=True``.
 
-  Previously, in certain configurations, if an import file supplied a primary key which already existed in the database
-  but which was not found by the instance loader, the new instance was saved with that primary key and Django updated
-  the existing row.
+  Previously,  if an import file supplied a primary key which already existed in the database but which was not found
+  by the instance loader, the new instance was saved with that primary key and Django updated the existing row.
   Fields omitted from the import were reset to their defaults, the preview reported the row as new, and the admin log
   recorded an addition, so the overwrite left no visible trace.  This occurred when:
 
