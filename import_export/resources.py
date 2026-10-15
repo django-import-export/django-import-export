@@ -13,8 +13,9 @@ from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.core.management.color import no_style
 from django.core.paginator import Paginator
 from django.db import connections, router
-from django.db.models import Manager, fields
+from django.db.models import fields
 from django.db.models.fields.related import ForeignKey
+from django.db.models.manager import BaseManager
 from django.db.models.query import QuerySet
 from django.db.transaction import TransactionManagementError, set_rollback
 from django.utils.encoding import force_str
@@ -42,17 +43,18 @@ def has_natural_foreign_key(model):
 
 
 class Diff:
-    def __init__(self, resource, instance, new):
+    def __init__(self, resource, instance, new, row=None):
         self.fields = resource.get_import_fields()
-        self.left = Diff._read_field_values(resource, instance)
-        self.left_values = Diff._read_raw_field_values(resource, instance)
-        self.right = []
-        self.right_values = []
         self.new = new
+        self.row = row
+        self.left_values = self._read_raw_field_values(instance)
+        self.left = self._read_field_values(instance)
+        self.right_values = []
+        self.right = []
 
     def compare_with(self, resource, instance):
-        self.right = Diff._read_field_values(resource, instance)
-        self.right_values = Diff._read_raw_field_values(resource, instance)
+        self.right_values = self._read_raw_field_values(instance)
+        self.right = self._read_field_values(instance)
 
     def as_html(self):
         data = []
@@ -60,11 +62,11 @@ class Diff:
         for field, v1, v2, raw1, raw2 in zip(
             self.fields, self.left, self.right, self.left_values, self.right_values
         ):
-            if v1 != v2 and self._is_equal(field, raw1, raw2):
+            if not self.new and v1 != v2 and self._is_equal(field, raw1, raw2):
                 # The values render differently but the widget considers them
                 # equal (e.g. Decimal("1803.60") persisted vs Decimal("1803.6")
                 # imported), so show the persisted value rather than a spurious
-                # change (#1425).
+                # change (#1425).  A new row has no persisted value to show.
                 v2 = v1
             if v1 != v2 and self.new:
                 v1 = ""
@@ -75,8 +77,7 @@ class Diff:
             data.append(html)
         return data
 
-    @staticmethod
-    def _is_equal(field, original_value, instance_value):
+    def _is_equal(self, field, original_value, instance_value):
         """
         Return ``True`` if the widget considers the persisted (original) value
         and the imported (instance) value to be equal.
@@ -84,23 +85,27 @@ class Diff:
         """
         if original_value is None or instance_value is None:
             return original_value is instance_value
-        if isinstance(original_value, Manager) or isinstance(instance_value, Manager):
-            # Related managers are lazy, so by the time the diff is rendered
-            # the original's manager already reflects the saved state.  Fall
+        lazy_types = (BaseManager, QuerySet)
+        if isinstance(original_value, lazy_types) or isinstance(
+            instance_value, lazy_types
+        ):
+            # Related managers and querysets are lazy, so by the time the diff
+            # is rendered the original already reflects the saved state.  Fall
             # back to comparing the rendered values, which were read eagerly.
             return False
-        return field.widget.is_equal(instance_value, original_value)
+        try:
+            return field.widget.is_equal(instance_value, original_value, row=self.row)
+        except Exception as e:
+            # The diff is presentational: a failing comparison must not turn a
+            # successfully imported row into an error.
+            logger.debug(e, exc_info=True)
+            return False
 
-    @classmethod
-    def _read_field_values(cls, resource, instance):
-        return [
-            f.export(instance, sort_json_keys=True)
-            for f in resource.get_import_fields()
-        ]
+    def _read_field_values(self, instance):
+        return [f.export(instance, sort_json_keys=True) for f in self.fields]
 
-    @classmethod
-    def _read_raw_field_values(cls, resource, instance):
-        return [f.get_value(instance) for f in resource.get_import_fields()]
+    def _read_raw_field_values(self, instance):
+        return [f.get_value(instance) for f in self.fields]
 
 
 class Resource(metaclass=DeclarativeMetaclass):
@@ -734,7 +739,7 @@ class Resource(metaclass=DeclarativeMetaclass):
                 row_result.import_type = RowResult.IMPORT_TYPE_UPDATE
             if not skip_diff:
                 original = deepcopy(instance)
-                diff = self.get_diff_class()(self, original, new)
+                diff = self.get_diff_class()(self, original, new, row=row)
             if self.for_delete(row, instance):
                 if new:
                     row_result.import_type = RowResult.IMPORT_TYPE_SKIP

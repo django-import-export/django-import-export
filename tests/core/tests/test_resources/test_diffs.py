@@ -3,10 +3,10 @@ from decimal import Decimal
 from unittest import mock
 
 import tablib
-from core.models import Book
+from core.models import Book, Category
 from django.test import TestCase, override_settings
 
-from import_export import resources
+from import_export import fields, resources, widgets
 from import_export.formats import base_formats
 
 
@@ -278,3 +278,124 @@ class DiffEquivalentValuesTest(TestCase):
             '<ins style="background:#e6ffe6;">1803.6</ins>',
             result.rows[0].diff[self.price_idx],
         )
+
+
+class DiffEquivalentValuesEdgeCaseTest(TestCase):
+    """
+    The widget equality check added for #1425 must not change the diff for
+    new rows, for many-to-many fields, or when a widget's ``is_equal`` fails.
+    """
+
+    def setUp(self):
+        self.category1 = Category.objects.create(name="Fiction")
+        self.category2 = Category.objects.create(name="History")
+        self.book = Book.objects.create(name="Test Book", price=Decimal("1803.60"))
+        self.book.categories.set([self.category1])
+
+    def _import(self, resource, row, dry_run=True):
+        dataset = tablib.Dataset(headers=list(row.keys()))
+        dataset.append(list(row.values()))
+        return resource.import_data(dataset, dry_run=dry_run)
+
+    def test_new_row_shows_imported_value_even_if_widget_says_equal(self):
+        class AlwaysEqualWidget(widgets.CharWidget):
+            def is_equal(self, instance_value, original_value, **kwargs):
+                return True
+
+        class BookResource(resources.ModelResource):
+            name = fields.Field(attribute="name", widget=AlwaysEqualWidget())
+
+            class Meta:
+                model = Book
+                fields = ("id", "name")
+
+        resource = BookResource()
+        # an unsaved Book has name "" (CharField default), which the widget
+        # would deem equal to the imported name
+        result = self._import(resource, {"id": "", "name": "New Book"})
+        self.assertEqual(1, result.totals["new"])
+        name_idx = resource.get_diff_headers().index("name")
+        self.assertEqual(
+            '<ins style="background:#e6ffe6;">New Book</ins>',
+            result.rows[0].diff[name_idx],
+        )
+
+    def test_many_to_many_change_is_still_shown(self):
+        class BookResource(resources.ModelResource):
+            class Meta:
+                model = Book
+                fields = ("id", "name", "categories")
+
+        resource = BookResource()
+        result = self._import(
+            resource,
+            {"id": self.book.id, "name": "Test Book", "categories": self.category2.id},
+            dry_run=False,
+        )
+        self.assertEqual(1, result.totals["update"])
+        idx = resource.get_diff_headers().index("categories")
+        self.assertEqual(
+            f'<del style="background:#ffe6e6;">{self.category1.id}</del>'
+            f'<ins style="background:#e6ffe6;">{self.category2.id}</ins>',
+            result.rows[0].diff[idx],
+        )
+
+    def test_many_to_many_unchanged_is_not_shown_as_change(self):
+        class BookResource(resources.ModelResource):
+            class Meta:
+                model = Book
+                fields = ("id", "name", "categories")
+
+        resource = BookResource()
+        result = self._import(
+            resource,
+            {"id": self.book.id, "name": "Test Book", "categories": self.category1.id},
+            dry_run=False,
+        )
+        self.assertEqual(1, result.totals["update"])
+        idx = resource.get_diff_headers().index("categories")
+        self.assertEqual(f"<span>{self.category1.id}</span>", result.rows[0].diff[idx])
+
+    def test_widget_is_equal_error_falls_back_to_rendered_comparison(self):
+        class BrokenWidget(widgets.DecimalWidget):
+            def is_equal(self, instance_value, original_value, **kwargs):
+                raise ValueError("boom")
+
+        class BookResource(resources.ModelResource):
+            price = fields.Field(attribute="price", widget=BrokenWidget())
+
+            class Meta:
+                model = Book
+                fields = ("id", "name", "price")
+
+        resource = BookResource()
+        result = self._import(
+            resource, {"id": self.book.id, "name": "Test Book", "price": "1803.6"}
+        )
+        self.assertFalse(result.has_errors())
+        self.assertEqual(1, result.totals["update"])
+        idx = resource.get_diff_headers().index("price")
+        self.assertEqual(
+            '<span>1803.6</span><del style="background:#ffe6e6;">0</del>',
+            result.rows[0].diff[idx],
+        )
+
+    def test_widget_is_equal_receives_row(self):
+        calls = []
+
+        class RecordingWidget(widgets.DecimalWidget):
+            def is_equal(self, instance_value, original_value, **kwargs):
+                calls.append(kwargs.get("row"))
+                return super().is_equal(instance_value, original_value, **kwargs)
+
+        class BookResource(resources.ModelResource):
+            price = fields.Field(attribute="price", widget=RecordingWidget())
+
+            class Meta:
+                model = Book
+                fields = ("id", "name", "price")
+
+        row = {"id": self.book.id, "name": "Test Book", "price": "1803.6"}
+        self._import(BookResource(), row)
+        self.assertEqual(1, len(calls))
+        self.assertEqual("1803.6", calls[0]["price"])
