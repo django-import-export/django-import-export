@@ -672,8 +672,8 @@ class ForeignKeyWidget(RelatedModelWidgetMixin, Widget):
                 fields = ('author',)
 
     :param model: The Model the ForeignKey refers to (required).  Either a
-        model class or an ``"app_label.ModelName"`` string, which is resolved
-        lazily via the app registry.
+        model class or an ``"app_label.ModelName"`` string.  See
+        :class:`~import_export.widgets.RelatedModelWidgetMixin`.
     :param field: A field on the related model used for looking up a particular
         object.
     :param use_natural_foreign_keys: Use natural key functions to identify
@@ -906,8 +906,8 @@ class CachedForeignKeyWidget(ForeignKeyWidget):
                     return {f'{self.field}__gt': value}
 
     :param model: The Model the ForeignKey refers to (required).  Either a
-        model class or an ``"app_label.ModelName"`` string, which is resolved
-        lazily via the app registry.
+        model class or an ``"app_label.ModelName"`` string.  See
+        :class:`~import_export.widgets.RelatedModelWidgetMixin`.
     :param field: A field on the related model used for looking up a particular
         object.
     :param use_natural_foreign_keys: Use natural key functions to identify
@@ -945,8 +945,8 @@ class ManyToManyWidget(RelatedModelWidgetMixin, Widget):
     as a list and an actual ManyToMany field.
 
     :param model: The model the ManyToMany field refers to (required).  Either
-        a model class or an ``"app_label.ModelName"`` string, which is
-        resolved lazily via the app registry.
+        a model class or an ``"app_label.ModelName"`` string.  See
+        :class:`~import_export.widgets.RelatedModelWidgetMixin`.
     :param separator: Defaults to ``','``.
     :param field: A field on the related model. Default is ``pk``.
     """
