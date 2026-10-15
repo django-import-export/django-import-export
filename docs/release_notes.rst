@@ -11,8 +11,9 @@ v4.4.2
 
   Installations are potentially affected if the following are true:
 
-  1. The set of rows for update has been filtered in some way.
-  2. The import file supplies a value which is the true pk of the row.
+  1. The instance loader does not find the existing row, either because the queryset has been filtered or because
+     ``import_id_fields`` identifies rows by a field other than the primary key.
+  2. The import file supplies the primary key of an existing row.
 
   The fix is that instances classified as new during import are now saved with ``force_insert=True``.
 

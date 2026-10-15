@@ -10,7 +10,6 @@ Changelog
 
 - Fixed a security and data integrity issue where an import row classified as "new" could silently overwrite an existing database row.
   See :ref:`release notes <release_notes_force_insert_on_create>` for details and mitigations.
-  (`2146 <https://github.com/django-import-export/django-import-export/pull/2146>`_)
 
 4.4.1 (2026-05-05)
 -------------------
