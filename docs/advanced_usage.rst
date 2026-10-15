@@ -823,6 +823,9 @@ unchanged even though the persisted value has microseconds, while a genuine edit
 detected.  :class:`~import_export.widgets.DateWidget` compares dates directly, since they have no sub-second component.
 :class:`~import_export.widgets.ManyToManyWidget` compares related objects regardless of order.
 
+The import preview diff uses the same comparison, so values which are equal but render differently (for example a
+``DecimalField`` value of ``1803.60`` imported from a spreadsheet cell as ``1803.6``) are not shown as a change.
+
 If you need to change how a single field is compared, override :meth:`~import_export.widgets.Widget.is_equal` on a
 custom widget rather than reimplementing :meth:`~.skip_row`.  For example, to treat a text field as unchanged if it
 differs only in surrounding whitespace::

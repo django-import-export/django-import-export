@@ -183,8 +183,11 @@ class Widget:
     def is_equal(self, instance_value, original_value, **kwargs):
         r"""
         Compare the value on an instance being imported against the previously
-        persisted value, for the purposes of
-        :meth:`~import_export.resources.Resource.skip_row`.
+        persisted value.  This is used by
+        :meth:`~import_export.resources.Resource.skip_row` and by the import
+        preview diff, which does not show a change for values that are equal
+        but render differently (for example ``Decimal("1.60")`` and
+        ``Decimal("1.6")``).
 
         By default this is a plain equality check. Widgets whose
         :meth:`render` loses precision on round-trip (for example,

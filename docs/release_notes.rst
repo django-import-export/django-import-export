@@ -106,9 +106,17 @@ Breaking changes
   via a new :meth:`~import_export.widgets.Widget.is_equal` hook (`PR 2174
   <https://github.com/django-import-export/django-import-export/pull/2174>`_).
 
-  ``skip_row()`` calls ``is_equal()`` on every import field's widget.  Custom widgets which subclass
-  :class:`~import_export.widgets.Widget` inherit a plain equality check; a custom widget which does not subclass
-  ``Widget`` must now implement ``is_equal()``.
+  ``skip_row()`` calls ``is_equal()`` on every import field's widget.  The import preview diff also calls it
+  (for every import, regardless of ``skip_unchanged``) so that values which are equal but render differently, such as
+  ``Decimal("1803.60")`` persisted and ``Decimal("1803.6")`` imported from a spreadsheet, are not shown as a change
+  (`issue 1425 <https://github.com/django-import-export/django-import-export/issues/1425>`_).  Custom widgets which
+  subclass :class:`~import_export.widgets.Widget` inherit a plain equality check; a custom widget which does not
+  subclass ``Widget`` must now implement ``is_equal()``.  An ``is_equal()`` which raises during the preview diff is
+  logged and the rendered values are compared instead, so the row is not reported as an error.
+
+  ``Diff.__init__()`` now accepts an optional ``row`` keyword argument, which is passed to ``is_equal()``.  If you
+  return a custom ``Diff`` subclass from :meth:`~import_export.resources.Resource.get_diff_class`, update its
+  ``__init__()`` signature to accept ``row=None``.
 
   :class:`~import_export.widgets.DateTimeWidget`, :class:`~import_export.widgets.TimeWidget` and
   :class:`~import_export.widgets.DateWidget` now treat an imported value as unchanged if it matches either the
