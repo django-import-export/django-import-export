@@ -5,17 +5,12 @@ Changelog
 
     If upgrading from v3, v4 introduces breaking changes.  Please refer to :doc:`release notes<release_notes>`.
 
-4.4.2 (unreleased)
+4.4.2 (2026-10-15)
 -------------------
 
-Security
-########
-
-- Fixed an issue where an import row classified as "new" could silently overwrite an existing database row, for
-  example when :meth:`~import_export.resources.Resource.get_queryset` is filtered to restrict the rows a user may
-  update.  Instances classified as new are now saved with ``force_insert=True`` so a primary key collision is
-  reported as an error.  This is a behaviour change and all users are advised to upgrade.  See
-  :ref:`release notes <release_notes_force_insert_on_create>` for details and mitigations.
+- Fixed a security and data integrity issue where an import row classified as "new" could silently overwrite an existing database row.
+  See :ref:`release notes <release_notes_force_insert_on_create>` for details and mitigations.
+  (`2146 <https://github.com/django-import-export/django-import-export/pull/2146>`_)
 
 4.4.1 (2026-05-05)
 -------------------

@@ -7,7 +7,14 @@ v4.4.2
 
 .. _release_notes_force_insert_on_create:
 
-* Instances classified as new during import are now saved with ``force_insert=True``.
+* This release patches a potential data corruption issue that can occur in certain configurations.
+
+  Installations are potentially affected if the following are true:
+
+  1. The set of rows for update has been filtered in some way.
+  2. The import file supplies a value which is the true pk of the row.
+
+  The fix is that instances classified as new during import are now saved with ``force_insert=True``.
 
   Previously, in certain configurations, if an import file supplied a primary key which already existed in the database
   but which was not found by the instance loader, the new instance was saved with that primary key and Django updated
@@ -23,16 +30,17 @@ v4.4.2
     it and reset the deleted flag.
   - ``import_id_fields`` identified rows by a field other than the primary key, but the file also contained the
     primary key column.  A row whose identifier matched no existing instance was classified as new, and if its primary
-    key value belonged to an existing row, that row was overwritten.  This typically occurred when importing a file
-    exported from a different environment.
+    key value belonged to an existing row, that row was overwritten.
 
   Such rows are now reported as errors (``IntegrityError``) and the existing row is left unchanged.  All users are
   advised to upgrade.
 
   If you relied on this behaviour to update rows by primary key, include the primary key in ``import_id_fields`` so
   that the existing instance is loaded and updated explicitly.
+
   If you have overridden :meth:`~import_export.resources.Resource.do_instance_save`, review it to ensure that
   ``is_create`` is honoured.
+
   If you have understood the implications and need to restore the previous behaviour, override
   :meth:`~import_export.resources.Resource.do_instance_save` to call ``instance.save()`` without ``force_insert``.
   Note that this reinstates the overwrite described above for your resource.
