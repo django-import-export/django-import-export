@@ -287,8 +287,11 @@ class DiffEquivalentValuesEdgeCaseTest(TestCase):
     """
 
     def setUp(self):
-        self.category1 = Category.objects.create(name="Fiction")
-        self.category2 = Category.objects.create(name="History")
+        # explicit ids with a shared leading digit, as seen on MySQL / Postgres
+        # where sequences are not reset between tests, so that the diff
+        # markup is the same on every database
+        self.category1 = Category.objects.create(id=41, name="Fiction")
+        self.category2 = Category.objects.create(id=42, name="History")
         self.book = Book.objects.create(name="Test Book", price=Decimal("1803.60"))
         self.book.categories.set([self.category1])
 
@@ -335,8 +338,9 @@ class DiffEquivalentValuesEdgeCaseTest(TestCase):
         self.assertEqual(1, result.totals["update"])
         idx = resource.get_diff_headers().index("categories")
         self.assertEqual(
-            f'<del style="background:#ffe6e6;">{self.category1.id}</del>'
-            f'<ins style="background:#e6ffe6;">{self.category2.id}</ins>',
+            "<span>4</span>"
+            '<del style="background:#ffe6e6;">1</del>'
+            '<ins style="background:#e6ffe6;">2</ins>',
             result.rows[0].diff[idx],
         )
 
