@@ -45,6 +45,10 @@ function onSelectToggleChange(e) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  document.querySelectorAll(".select-toggle").forEach((toggle) => {
+    toggle.addEventListener("change", onSelectToggleChange);
+  });
+
   const resourceSelector = document.querySelector("#id_resource");
 
   if (!resourceSelector) {

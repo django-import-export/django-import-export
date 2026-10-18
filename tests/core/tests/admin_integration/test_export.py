@@ -61,6 +61,28 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
             response.content,
         )
 
+    def test_export_select_all_uses_external_javascript(self):
+        for url, toggle_count in (
+            (self.category_export_url, 1),
+            (self.book_export_url, 2),
+        ):
+            with self.subTest(url=url):
+                response = self._get_url_response(url)
+                self.assertContains(
+                    response,
+                    '<input type="checkbox" class="select-toggle" '
+                    'name="select-all-toggle" checked>',
+                    count=toggle_count,
+                    html=True,
+                )
+                self.assertContains(
+                    response,
+                    '<script src="/static/import_export/'
+                    'export_selectable_fields.js"></script>',
+                    count=1,
+                    html=True,
+                )
+
     def test_export_with_skip_export_form_from_action(self):
         # setting should have no effect
         with patch(
