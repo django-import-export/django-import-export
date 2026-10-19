@@ -2,6 +2,49 @@
 Release Notes
 =============
 
+v4.4.3
+------
+
+.. _release_notes_integer_widget_dos:
+
+* This release patches a denial-of-service vulnerability in :class:`~import_export.widgets.IntegerWidget`.
+
+  ``IntegerWidget.clean()`` converted imported values using ``int(Decimal(value))`` with no bound on the
+  value's magnitude.  A value written in exponent notation, such as ``1e1000000``, is cheap to parse as a
+  ``Decimal`` but forces Python to expand every digit when converted to ``int``, a cost that grows
+  superlinearly with the digit count.  A single such value could stall the importing process for several
+  seconds while pinning a CPU core, and a file containing many such rows multiplied the cost.
+
+  ``IntegerWidget`` is the default widget for all integer model fields, including the ``id`` column used by
+  every resource that does not override ``import_id_fields``, so almost every import was affected.  The stall
+  occurred during the initial dry run, before the confirmation step.  Python's
+  ``sys.set_int_max_str_digits()`` limit did not protect this path, as it only guards conversions between
+  ``int`` and ``str``, not ``Decimal.__int__``.
+
+  This was an availability issue only.  The resulting integers exceed the range of any standard database
+  integer column, so no data could be written or corrupted through this path.
+
+  The fix rejects values whose magnitude exceeds ``sys.get_int_max_str_digits()`` digits (4300 by default)
+  before the conversion is attempted.  Such values are now reported as row errors.  Values within the limit,
+  including those in exponent notation such as ``1e5``, are unaffected, and no value a standard integer column
+  could store is rejected.  All users are advised to upgrade.
+
+  If you import integers larger than the default limit into a field that can store them, raise the limit with
+  ``sys.set_int_max_str_digits()``; the widget honours the configured value.
+
+  If you subclass :class:`~import_export.widgets.IntegerWidget` and override ``clean()``, you receive this fix
+  automatically only if your override delegates to ``super().clean()``.  An override that reimplements the
+  ``int(Decimal(...))`` conversion itself is not protected, and should apply the same magnitude check before
+  converting.
+
+  If you cannot upgrade, either of the following prevents the stall:
+
+  - Set :ref:`IMPORT_EXPORT_IMPORT_PERMISSION_CODE` to restrict import access to trusted users.
+  - Subclass :class:`~import_export.widgets.IntegerWidget`, override ``clean()`` to reject values whose
+    magnitude exceeds a sensible bound before calling ``super().clean()``, and assign the subclass to the
+    integer fields on your resources.  This suits deployments where all staff legitimately need import
+    permission.
+
 v4.4.2
 ------
 
