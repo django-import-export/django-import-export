@@ -27,21 +27,14 @@ function onResourceSelected(e) {
 }
 
 function onSelectToggleChange(e) {
-  /*
-  * Handles a checkbox click event to select / deselect all field checkboxes.
-  */ 
-  const select = e.target;
-  const isChecked = select.checked;
-  
-  if (isChecked) {
-    document.querySelectorAll('.selectable-field-export-row input[type="checkbox"]').forEach((checkbox) => {
-        checkbox.checked = true;
+  const toggle = e.target;
+  const resourceIndex = toggle.closest("[resource-index]").getAttribute("resource-index");
+
+  document
+    .querySelectorAll(`[resource-index="${resourceIndex}"] input[type="checkbox"]:not(.select-toggle)`)
+    .forEach((checkbox) => {
+      checkbox.checked = toggle.checked;
     });
-  } else {
-    document.querySelectorAll('.selectable-field-export-row input[type="checkbox"]').forEach((checkbox) => {
-        checkbox.checked = false;
-    });
-  }
 }
 
 document.addEventListener("DOMContentLoaded", () => {

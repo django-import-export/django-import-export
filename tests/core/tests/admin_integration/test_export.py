@@ -70,11 +70,14 @@ class ExportAdminIntegrationTest(AdminTestMixin, TestCase):
                 response = self._get_url_response(url)
                 self.assertContains(
                     response,
-                    '<input type="checkbox" class="select-toggle" '
-                    'name="select-all-toggle" checked>',
+                    'class="select-toggle"',
                     count=toggle_count,
-                    html=True,
                 )
+                self.assertNotRegex(response.content.decode(), r"\bon\w+\s*=")
+                for resource_index in range(toggle_count):
+                    toggle_id = f"select-all-toggle-{resource_index}"
+                    self.assertContains(response, f'id="{toggle_id}"', count=1)
+                    self.assertContains(response, f'for="{toggle_id}"', count=1)
                 self.assertContains(
                     response,
                     '<script src="/static/import_export/'
