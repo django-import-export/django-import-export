@@ -8,6 +8,31 @@ v5.0
 Breaking changes
 ^^^^^^^^^^^^^^^^
 
+* **Admin change list template handling.**  This only affects you if you combine the admin mixins with another
+  library's admin mixin which also sets ``change_list_template`` (such as django-admin-sortable2), or if you have
+  applied a workaround for that situation, or if your project provides a per-app or per-model change list template
+  (``admin/<app>/change_list.html`` or ``admin/<app>/<model>/change_list.html``).  Otherwise, nothing changes.
+
+  The admin mixins no longer assign ``change_list_template`` when the ``ModelAdmin`` is instantiated.  Instead,
+  ``changelist_view()`` renders the import / export change list template
+  on each request, extending whichever template Django would otherwise have used.  This fixes interoperability with
+  third party mixins which declare ``change_list_template`` as a property (e.g. django-admin-sortable2).
+
+  As a result:
+
+  * ``init_change_list_template()`` and the ``ie_base_change_list_template`` instance attribute have been removed.
+    Remove any workaround which overrides or sets these.
+  * ``change_list_template`` on an admin instance now retains the value you (or another mixin) declared, rather
+    than being replaced by the import / export template.
+  * The ``'failed to assign change_list_template attribute'`` warning is no longer logged.
+  * When ``change_list_template`` is not set, the import / export template now extends Django's usual
+    per-model and per-app fallbacks (``admin/<app>/<model>/change_list.html``, ``admin/<app>/change_list.html``)
+    where they exist, instead of always ``admin/change_list.html``.
+  * If ``change_list_template`` points at one of this library's own templates (the pre-v5 workaround for
+    django-admin-sortable2), the change list now fails with ``TemplateDoesNotExist``.  Remove the declaration.
+
+  See `#2205 <https://github.com/django-import-export/django-import-export/issues/2205>`_.
+
 * Temporary storages (:class:`~import_export.tmp_storages.BaseStorage` and its subclasses) now deal in ``bytes``
   only: ``save()`` receives the raw uploaded data and ``read()`` returns it unchanged.  The ``read_mode`` and
   ``encoding`` constructor arguments have been removed.  If you have a custom storage class which relied on
