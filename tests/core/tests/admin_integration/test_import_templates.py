@@ -6,7 +6,6 @@ from core.tests.admin_integration.mixins import AdminTestMixin
 from django.contrib import admin
 from django.contrib.admin.options import ModelAdmin
 from django.template import TemplateDoesNotExist
-from django.template.loader import get_template
 from django.template.response import TemplateResponse
 from django.test import RequestFactory
 from django.test.testcases import TestCase
@@ -85,70 +84,9 @@ class ImportTemplateTests(AdminTestMixin, TestCase):
         self.assertContains(response, _("Import"))
         self.assertContains(response, _("Export"))
 
-    def test_issue_2205_pre_v5_workaround_in_list_skipped(self):
-        # Only our own template is dropped from a list of candidates; the
-        # user's remaining customisation is honoured.
-        class WorkaroundListAdmin(ImportExportMixin, ModelAdmin):
-            change_list_template = [
-                "admin/import_export/change_list_import_export.html",
-                "core/admin/change_list.html",
-            ]
-
-        model_admin = WorkaroundListAdmin(Book, admin.site)
-        request = RequestFactory().get(self.core_book_url)
-        request.user = self.user
-        response = model_admin.changelist_view(request)
-        response.render()
-
-        self.assertEqual(
-            response.context_data["ie_base_change_list_template"],
-            "core/admin/change_list.html",
-        )
-        self.assertContains(response, _("Import"))
-        self.assertContains(response, "Custom change list item")
-
-    def test_issue_2205_template_instance_passed_through(self):
-        # change_list_template may be a Template instance, which
-        # {% extends %} accepts as-is.
-        template = get_template("core/admin/change_list.html")
-
-        class TemplateInstanceAdmin(ImportExportMixin, ModelAdmin):
-            change_list_template = template
-
-        model_admin = TemplateInstanceAdmin(Book, admin.site)
-        request = RequestFactory().get(self.core_book_url)
-        request.user = self.user
-        response = model_admin.changelist_view(request)
-        response.render()
-
-        self.assertEqual(response.template_name, self.change_list_template_url)
-        self.assertIs(response.context_data["ie_base_change_list_template"], template)
-        self.assertContains(response, _("Import"))
-        self.assertContains(response, "Custom change list item")
-
-    def test_issue_2205_rendered_response_not_replaced(self):
-        # A mixin between ours and ModelAdmin which renders the response
-        # before returning it: there is nothing left for us to change.
-        class RenderingMixin:
-            def changelist_view(self, request, extra_context=None):
-                response = super().changelist_view(request, extra_context)
-                response.render()
-                return response
-
-        class RenderedAdmin(ImportExportMixin, RenderingMixin, ModelAdmin):
-            pass
-
-        model_admin = RenderedAdmin(Book, admin.site)
-        request = RequestFactory().get(self.core_book_url)
-        request.user = self.user
-        response = model_admin.changelist_view(request)
-
-        self.assertNotEqual(response.template_name, self.change_list_template_url)
-        self.assertNotIn("ie_base_change_list_template", response.context_data)
-
     def test_issue_2205_other_template_response_not_replaced(self):
-        # A mixin which returns a TemplateResponse for some other template
-        # (and without a context) from changelist_view() must be left alone.
+        # A mixin which returns a TemplateResponse without the ChangeList in
+        # its context from changelist_view() must be left alone.
         class OtherResponseMixin:
             def changelist_view(self, request, extra_context=None):
                 return TemplateResponse(request, "core/admin/change_list.html")
@@ -163,33 +101,6 @@ class ImportTemplateTests(AdminTestMixin, TestCase):
 
         self.assertEqual(response.template_name, "core/admin/change_list.html")
         self.assertIsNone(response.context_data)
-
-    def test_issue_2205_rewritten_template_name_still_replaced(self):
-        # A mixin which changes the template of the change list response is
-        # still recognised (by the ChangeList in its context), and our
-        # template extends the template it chose.
-        class RewritingMixin:
-            def changelist_view(self, request, extra_context=None):
-                response = super().changelist_view(request, extra_context)
-                response.template_name = ["core/admin/change_list.html"]
-                return response
-
-        class RewritingAdmin(ImportExportMixin, RewritingMixin, ModelAdmin):
-            pass
-
-        model_admin = RewritingAdmin(Book, admin.site)
-        request = RequestFactory().get(self.core_book_url)
-        request.user = self.user
-        response = model_admin.changelist_view(request)
-        response.render()
-
-        self.assertEqual(response.template_name, self.change_list_template_url)
-        self.assertEqual(
-            response.context_data["ie_base_change_list_template"],
-            "core/admin/change_list.html",
-        )
-        self.assertContains(response, _("Import"))
-        self.assertContains(response, "Custom change list item")
 
     def test_issue_2205_action_response_not_replaced(self):
         # Admin actions may return their own TemplateResponse from

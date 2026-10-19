@@ -8,7 +8,8 @@ from django.core.exceptions import FieldError, PermissionDenied
 from django.forms import MultipleChoiceField, MultipleHiddenInput
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
-from django.template.loader import select_template
+from django.template import TemplateDoesNotExist
+from django.template.loader import get_template
 from django.template.response import TemplateResponse
 from django.urls import path, reverse
 from django.utils.decorators import method_decorator
@@ -59,34 +60,25 @@ class ImportExportMixinBase:
             "admin/change_list.html",
         ]
 
-    def _is_changelist_response(self, response):
-        # Only replace the response which renders the change list itself.
-        # Actions may return their own responses (e.g. a redirect, or the
-        # delete confirmation page) and a mixin may have rendered the response
-        # already; these are left alone.  The change list response is
-        # recognised by its context (``cl``, the ChangeList) or by its
-        # template being the one ``ModelAdmin.changelist_view()`` uses.
-        if (
-            not isinstance(response, TemplateResponse)
-            or response.is_rendered
-            or response.context_data is None
-        ):
-            return False
-        expected = (
-            self.change_list_template or self._get_default_change_list_templates()
+    @staticmethod
+    def _is_changelist_response(response):
+        # Only replace the response which renders the change list itself
+        # (recognised by the ChangeList, ``cl``, in its context).  Actions may
+        # return their own responses (e.g. a redirect, or the delete
+        # confirmation page); these are left untouched.
+        return (
+            isinstance(response, TemplateResponse)
+            and response.context_data is not None
+            and "cl" in response.context_data
         )
-        return "cl" in response.context_data or response.template_name == expected
 
     def _resolve_base_change_list_template(self, template_name):
         """
-        Return the template which the import / export change list template
-        should ``{% extends %}``, from ``template_name`` (a single name, a list
-        of candidate names, or a ``Template`` instance, as accepted by
-        ``TemplateResponse``).  A list is resolved to the first name which exists.
+        Return the name of the template which the import / export change list
+        template should ``{% extends %}``, from ``template_name`` (a single name
+        or a list of candidate names, as accepted by ``TemplateResponse``).  A
+        list is resolved to the first name which exists.
         """
-        if not isinstance(template_name, (str, list, tuple)):
-            # A Template instance - {% extends %} accepts it as-is.
-            return template_name
         names = [template_name] if isinstance(template_name, str) else template_name
         # Our own templates must not be extended by themselves: these come
         # from the pre-v5 workaround for django-admin-sortable2 and are
@@ -94,10 +86,13 @@ class ImportExportMixinBase:
         names = [name for name in names if not name.startswith(IE_TEMPLATE_PREFIX)]
         if not names:
             names = self._get_default_change_list_templates()
-        if len(names) == 1:
-            # {% extends %} raises TemplateDoesNotExist itself if it is missing
-            return names[0]
-        return select_template(names).origin.template_name
+        for name in names:
+            try:
+                get_template(name)
+            except TemplateDoesNotExist:
+                continue
+            return name
+        raise TemplateDoesNotExist(", ".join(names))
 
 
 class ImportMixin(BaseImportMixin, ImportExportMixinBase):
