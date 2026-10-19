@@ -530,8 +530,8 @@ itself subclass ``ModelAdmin``; placed after it, ``ModelAdmin`` shadows its ``ch
 ``SortableAdminMixin`` does not matter.
 
 If you have applied a workaround for this issue (such as overriding ``init_change_list_template()`` or setting
-``change_list_template`` to one of this library's templates), remove it when upgrading.  A stale
-``change_list_template`` declaration is ignored and reported by the ``import_export.W001`` system check.
+``change_list_template`` to one of this library's templates), remove it when upgrading.  A ``change_list_template``
+which points at one of this library's templates is ignored.
 Refer to `this issue <https://github.com/django-import-export/django-import-export/issues/2205>`_.
 
 django-polymorphic

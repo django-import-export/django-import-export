@@ -1,6 +1,6 @@
 import os
 
-from core.admin import BookAdmin, CustomBookAdmin
+from core.admin import CustomBookAdmin
 from core.models import Author, Book, EBook
 from core.tests.admin_integration.mixins import AdminTestMixin
 from django.contrib import admin
@@ -67,16 +67,11 @@ class ImportTemplateTests(AdminTestMixin, TestCase):
     def test_issue_2205_pre_v5_workaround_template_ignored(self):
         # The pre-v5 workaround for django-admin-sortable2 pointed
         # change_list_template at our own template.  This must not make our
-        # template extend itself: fall back to Django's defaults, and report
-        # the stale declaration via the system check framework.
+        # template extend itself: fall back to Django's defaults.
         class WorkaroundAdmin(ImportExportMixin, ModelAdmin):
             change_list_template = "admin/import_export/change_list_import_export.html"
 
         model_admin = WorkaroundAdmin(Book, admin.site)
-        warnings_ = [e for e in model_admin.check() if e.id == "import_export.W001"]
-        self.assertEqual(len(warnings_), 1)
-        self.assertIs(warnings_[0].obj, WorkaroundAdmin)
-
         request = RequestFactory().get(self.core_book_url)
         request.user = self.user
         response = model_admin.changelist_view(request)
@@ -100,7 +95,6 @@ class ImportTemplateTests(AdminTestMixin, TestCase):
             ]
 
         model_admin = WorkaroundListAdmin(Book, admin.site)
-        self.assertEqual([e.id for e in model_admin.check()], ["import_export.W001"])
         request = RequestFactory().get(self.core_book_url)
         request.user = self.user
         response = model_admin.changelist_view(request)
@@ -112,12 +106,6 @@ class ImportTemplateTests(AdminTestMixin, TestCase):
         )
         self.assertContains(response, _("Import"))
         self.assertContains(response, "Custom change list item")
-
-    def test_issue_2205_no_check_warning_by_default(self):
-        model_admin = BookAdmin(Book, admin.site)
-        self.assertEqual(
-            [e for e in model_admin.check() if e.id == "import_export.W001"], []
-        )
 
     def test_issue_2205_template_instance_passed_through(self):
         # change_list_template may be a Template instance, which

@@ -4,7 +4,6 @@ from django.conf import settings
 from django.contrib import admin, messages
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION, LogEntry
 from django.contrib.auth import get_permission_codename
-from django.core import checks
 from django.core.exceptions import FieldError, PermissionDenied
 from django.forms import MultipleChoiceField, MultipleHiddenInput
 from django.http import HttpResponse, HttpResponseRedirect
@@ -33,26 +32,6 @@ class ImportExportMixinBase:
         app_label = self.model._meta.app_label
         return (app_label, self.model._meta.model_name)
 
-    def check(self, **kwargs):
-        errors = super().check(**kwargs)
-        for name in self._get_declared_change_list_templates():
-            if name.startswith(IE_TEMPLATE_PREFIX):
-                errors.append(
-                    checks.Warning(
-                        f"change_list_template is set to {name!r}, which is one "
-                        "of django-import-export's own templates.",
-                        hint=(
-                            "Since v5 the import / export change list template is "
-                            "applied automatically and this declaration is ignored. "
-                            "Remove it from this admin class or the base class "
-                            "which declares it."
-                        ),
-                        obj=self.__class__,
-                        id="import_export.W001",
-                    )
-                )
-        return errors
-
     def changelist_view(self, request, extra_context=None):
         response = super().changelist_view(request, extra_context)
         ie_template = getattr(self, "import_export_change_list_template", None)
@@ -69,16 +48,6 @@ class ImportExportMixinBase:
         )
         response.template_name = ie_template
         return response
-
-    def _get_declared_change_list_templates(self):
-        # ``change_list_template`` as a list of names (it may also be a
-        # Template instance, which is left alone).
-        declared = self.change_list_template
-        if isinstance(declared, str):
-            return [declared]
-        if isinstance(declared, (list, tuple)):
-            return [name for name in declared if isinstance(name, str)]
-        return []
 
     def _get_default_change_list_templates(self):
         # The candidates ``ModelAdmin.changelist_view()`` uses when
@@ -121,7 +90,7 @@ class ImportExportMixinBase:
         names = [template_name] if isinstance(template_name, str) else template_name
         # Our own templates must not be extended by themselves: these come
         # from the pre-v5 workaround for django-admin-sortable2 and are
-        # reported by check().
+        # no longer required.
         names = [name for name in names if not name.startswith(IE_TEMPLATE_PREFIX)]
         if not names:
             names = self._get_default_change_list_templates()
