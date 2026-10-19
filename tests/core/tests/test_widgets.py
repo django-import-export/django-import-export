@@ -1,6 +1,8 @@
 import json
+import sys
 from datetime import date, datetime, time, timedelta
 from decimal import Decimal
+from time import process_time
 from unittest import mock
 from unittest.mock import patch
 
@@ -551,6 +553,28 @@ class IntegerWidgetTest(TestCase, RowDeprecationTestMixin):
     @override_settings(LANGUAGE_CODE="fr-fr")
     def test_locale_render_gte_django4(self):
         self.assertEqual(self.widget_coerce_to_string.render(self.value), "0")
+
+    def test_clean_exponent_notation(self):
+        # legitimate exponent notation within bounds is still accepted
+        self.assertEqual(self.widget.clean("1e5"), 100000)
+
+    def test_clean_oversized_magnitude_raises(self):
+        # a crafted large-exponent value must be rejected rather than stalling
+        # the process on an expensive Decimal-to-int conversion (DoS guard).
+        start = process_time()
+        with self.assertRaises(ValueError):
+            self.widget.clean("1e1000000")
+        # the guard must trip before any costly conversion is attempted
+        self.assertLess(process_time() - start, 1.0)
+
+    def test_clean_oversized_digit_string_raises(self):
+        with self.assertRaises(ValueError):
+            self.widget.clean("9" * (sys.get_int_max_str_digits() + 1))
+
+    def test_clean_at_digit_limit_boundary(self):
+        # a value just under the limit is still accepted
+        digits = sys.get_int_max_str_digits() - 1
+        self.assertEqual(self.widget.clean("9" * digits), int("9" * digits))
 
 
 class ForeignKeyWidgetTest(TestCase, RowDeprecationTestMixin):

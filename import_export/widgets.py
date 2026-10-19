@@ -1,6 +1,7 @@
 import json
 import logging
 import numbers
+import sys
 from collections import defaultdict, namedtuple
 from datetime import date, datetime, time, timedelta
 from decimal import Decimal
@@ -168,12 +169,24 @@ class IntegerWidget(NumberWidget):
         :param row: The current row being processed.
         :param **kwargs: Optional keyword arguments.
         :returns: A Python int instance, or None if value is empty.
-        :raises ValueError: If the value cannot be converted to integer.
+        :raises ValueError: If the value cannot be converted to integer, or if
+            its magnitude exceeds ``sys.get_int_max_str_digits()`` digits.
         :raises InvalidOperation: If Decimal conversion fails.
         """
         if self.is_empty(value):
             return None
-        return int(Decimal(sanitize_separators(value)))
+        d = Decimal(sanitize_separators(value))
+        # Reject values whose magnitude would make the Decimal-to-int conversion
+        # disproportionately expensive. ``sys.set_int_max_str_digits`` does not
+        # guard ``Decimal.__int__``, so the same limit is applied explicitly.
+        # See GHSA-fcgw-hjjv-4rh6.
+        max_digits = sys.get_int_max_str_digits()
+        if d.is_finite() and d.adjusted() >= max_digits:
+            raise ValueError(
+                f"the value's magnitude exceeds the maximum of {max_digits} "
+                "digits allowed for integer conversion"
+            )
+        return int(d)
 
 
 class DecimalWidget(NumberWidget):
