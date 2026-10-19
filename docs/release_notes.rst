@@ -10,8 +10,8 @@ Breaking changes
 
 * **Admin change list template handling.**  This only affects you if you combine the admin mixins with another
   library's admin mixin which also sets ``change_list_template`` (such as django-admin-sortable2), or if you have
-  applied a workaround for that situation.  If you use the admin mixins on their own, or set
-  ``change_list_template`` to your own template, nothing changes.
+  applied a workaround for that situation, or if your project provides a per-app or per-model change list template
+  (``admin/<app>/change_list.html`` or ``admin/<app>/<model>/change_list.html``).  Otherwise, nothing changes.
 
   The admin mixins no longer assign ``change_list_template`` when the ``ModelAdmin`` is instantiated.  Instead,
   ``changelist_view()`` renders the import / export change list template

@@ -25,7 +25,17 @@ from .results import RowResult
 from .signals import post_export, post_import
 from .tmp_storages import TempFolderStorage
 
-IE_TEMPLATE_PREFIX = "admin/import_export/"
+# This library's own change list templates: a ``change_list_template`` which
+# names one of these (the pre-v5 workaround for django-admin-sortable2) is
+# ignored, since our template would otherwise extend itself.
+IE_CHANGE_LIST_TEMPLATES = frozenset(
+    {
+        "admin/import_export/change_list.html",
+        "admin/import_export/change_list_import.html",
+        "admin/import_export/change_list_export.html",
+        "admin/import_export/change_list_import_export.html",
+    }
+)
 
 
 class ImportExportMixinBase:
@@ -83,7 +93,7 @@ class ImportExportMixinBase:
         # Our own templates must not be extended by themselves: these come
         # from the pre-v5 workaround for django-admin-sortable2 and are
         # no longer required.
-        names = [name for name in names if not name.startswith(IE_TEMPLATE_PREFIX)]
+        names = [name for name in names if name not in IE_CHANGE_LIST_TEMPLATES]
         if not names:
             names = self._get_default_change_list_templates()
         for name in names:

@@ -61,7 +61,26 @@ class ImportTemplateTests(AdminTestMixin, TestCase):
         request = RequestFactory().get(self.core_book_url)
         request.user = self.user
         with self.assertRaises(TemplateDoesNotExist):
-            model_admin.changelist_view(request).render()
+            model_admin.changelist_view(request)
+
+    def test_issue_2205_project_template_in_import_export_dir_honoured(self):
+        # Only this library's own template names are ignored, not any name
+        # under admin/import_export/.
+        class ProjectTemplateAdmin(ImportExportMixin, ModelAdmin):
+            change_list_template = "admin/import_export/project_change_list.html"
+
+        model_admin = ProjectTemplateAdmin(Book, admin.site)
+        request = RequestFactory().get(self.core_book_url)
+        request.user = self.user
+        response = model_admin.changelist_view(request)
+        response.render()
+
+        self.assertEqual(
+            response.context_data["ie_base_change_list_template"],
+            "admin/import_export/project_change_list.html",
+        )
+        self.assertContains(response, _("Import"))
+        self.assertContains(response, "Project change list item")
 
     def test_issue_2205_pre_v5_workaround_template_ignored(self):
         # The pre-v5 workaround for django-admin-sortable2 pointed
