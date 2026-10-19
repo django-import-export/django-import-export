@@ -519,13 +519,19 @@ Prior to v5, the import / export links were hidden when ``ImportExportMixin`` wa
 `change_list_template <https://docs.djangoproject.com/en/stable/ref/contrib/admin/#django.contrib.admin.ModelAdmin.change_list_template>`_.
 
 From v5, the import / export change list template extends whichever template would otherwise have been used, resolved
-on each request, so the two libraries can be combined in either order without a workaround::
+on each request, so the two libraries can be combined without a workaround::
 
   class BookAdmin(SortableAdminMixin, ImportExportModelAdmin):
       ...
 
-If you have applied a workaround for this issue (such as overriding ``init_change_list_template()`` or
-``change_list_template``), remove it when upgrading.
+``SortableAdminMixin`` must come before ``ImportExportModelAdmin`` (or ``ModelAdmin``) in the bases, since it does not
+itself subclass ``ModelAdmin``; placed after it, ``ModelAdmin`` shadows its ``change_list_template`` and
+``changelist_view()`` and the sorting UI is not shown.  The order of ``ImportExportMixin`` relative to
+``SortableAdminMixin`` does not matter.
+
+If you have applied a workaround for this issue (such as overriding ``init_change_list_template()`` or setting
+``change_list_template`` to one of this library's templates), remove it when upgrading.  A stale
+``change_list_template`` declaration is ignored and reported by the ``import_export.W001`` system check.
 Refer to `this issue <https://github.com/django-import-export/django-import-export/issues/2205>`_.
 
 django-polymorphic
