@@ -60,16 +60,6 @@ class ImportExportMixinBase:
         response.template_name = ie_template
         return response
 
-    def _get_default_change_list_templates(self):
-        # The candidates ``ModelAdmin.changelist_view()`` uses when
-        # ``change_list_template`` is not set.
-        app_label = self.opts.app_label
-        return [
-            f"admin/{app_label}/{self.opts.model_name}/change_list.html",
-            f"admin/{app_label}/change_list.html",
-            "admin/change_list.html",
-        ]
-
     @staticmethod
     def _is_changelist_response(response):
         # Only replace the response which renders the change list itself
@@ -82,7 +72,8 @@ class ImportExportMixinBase:
             and "cl" in response.context_data
         )
 
-    def _resolve_base_change_list_template(self, template_name):
+    @staticmethod
+    def _resolve_base_change_list_template(template_name):
         """
         Return the name of the template which the import / export change list
         template should ``{% extends %}``, from ``template_name`` (a single name
@@ -95,7 +86,7 @@ class ImportExportMixinBase:
         # no longer required.
         names = [name for name in names if name not in IE_CHANGE_LIST_TEMPLATES]
         if not names:
-            names = self._get_default_change_list_templates()
+            names = ["admin/change_list.html"]
         for name in names:
             try:
                 get_template(name)
