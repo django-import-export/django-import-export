@@ -29,7 +29,7 @@ Breaking changes
     per-model and per-app fallbacks (``admin/<app>/<model>/change_list.html``, ``admin/<app>/change_list.html``)
     where they exist, instead of always ``admin/change_list.html``.
   * If ``change_list_template`` points at one of this library's own templates (the pre-v5 workaround for
-    django-admin-sortable2), that entry is ignored.  Remove the declaration.
+    django-admin-sortable2), the change list now fails with ``TemplateDoesNotExist``.  Remove the declaration.
 
   See `#2205 <https://github.com/django-import-export/django-import-export/issues/2205>`_.
 

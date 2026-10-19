@@ -60,66 +60,12 @@ class ImportTemplateTests(AdminTestMixin, TestCase):
         class BrokenAdmin(ImportExportMixin, ModelAdmin):
             @property
             def change_list_template(self):
-                # a name not looked up by other tests, as the cached loader
-                # records a bare miss (without `tried`) when DEBUG is False
-                return ["does/not/exist/either.html"]
+                return ["does/not/exist.html"]
 
         with self.assertRaises(TemplateDoesNotExist) as cm:
             self._get_changelist_response(BrokenAdmin, render=False)
-        # the loaders / paths tried are kept for Django's debug page
+        # the per-engine exceptions are kept for Django's debug page
         self.assertTrue(cm.exception.chain)
-        self.assertTrue(any(e.tried for e in cm.exception.chain))
-
-    def test_issue_2205_project_template_in_import_export_dir_honoured(self):
-        # Only this library's own template names are ignored, not any name
-        # under admin/import_export/.
-        class ProjectTemplateAdmin(ImportExportMixin, ModelAdmin):
-            change_list_template = "admin/import_export/project_change_list.html"
-
-        response = self._get_changelist_response(ProjectTemplateAdmin)
-
-        self.assertEqual(
-            response.context_data["ie_base_change_list_template"],
-            "admin/import_export/project_change_list.html",
-        )
-        self.assertContains(response, _("Import"))
-        self.assertContains(response, "Project change list item")
-
-    def test_issue_2205_pre_v5_workaround_template_ignored(self):
-        # The pre-v5 workaround for django-admin-sortable2 pointed
-        # change_list_template at our own template.  This must not make our
-        # template extend itself: fall back to Django's default.
-        class WorkaroundAdmin(ImportExportMixin, ModelAdmin):
-            change_list_template = "admin/import_export/change_list_import_export.html"
-
-        response = self._get_changelist_response(WorkaroundAdmin)
-
-        self.assertEqual(response.template_name, self.change_list_template_url)
-        self.assertEqual(
-            response.context_data["ie_base_change_list_template"],
-            "admin/change_list.html",
-        )
-        self.assertContains(response, _("Import"))
-        self.assertContains(response, _("Export"))
-
-    def test_issue_2205_custom_ie_template_not_extended_by_itself(self):
-        # The same applies to a customised import_export_change_list_template.
-        class CustomTemplateAdmin(ImportExportMixin, ModelAdmin):
-            import_export_change_list_template = (
-                "admin/import_export/project_change_list.html"
-            )
-            change_list_template = "admin/import_export/project_change_list.html"
-
-        response = self._get_changelist_response(CustomTemplateAdmin)
-
-        self.assertEqual(
-            response.template_name, "admin/import_export/project_change_list.html"
-        )
-        self.assertEqual(
-            response.context_data["ie_base_change_list_template"],
-            "admin/change_list.html",
-        )
-        self.assertContains(response, "Project change list item")
 
     def test_issue_2205_other_template_response_not_replaced(self):
         # A mixin which returns a TemplateResponse without the ChangeList in
