@@ -1,3 +1,4 @@
+import warnings
 from urllib.parse import urlencode
 
 from django.conf import settings
@@ -9,7 +10,7 @@ from django.forms import MultipleChoiceField, MultipleHiddenInput
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.template import TemplateDoesNotExist
-from django.template.loader import get_template
+from django.template.loader import get_template, select_template
 from django.template.response import TemplateResponse
 from django.urls import path, reverse
 from django.utils.decorators import method_decorator
@@ -24,6 +25,8 @@ from .mixins import BaseExportMixin, BaseImportMixin
 from .results import RowResult
 from .signals import post_export, post_import
 from .tmp_storages import TempFolderStorage
+
+IE_TEMPLATE_PREFIX = "admin/import_export/"
 
 
 class ImportExportMixinBase:
@@ -48,32 +51,62 @@ class ImportExportMixinBase:
         response.template_name = ie_template
         return response
 
-    @staticmethod
-    def _is_changelist_response(response):
-        # Actions can return their own responses (e.g. a redirect, or the
-        # delete confirmation page) which must be left untouched.
-        return (
-            isinstance(response, TemplateResponse)
-            and response.context_data is not None
-            and "cl" in response.context_data
-        )
+    def _get_default_change_list_templates(self):
+        # The candidates ``ModelAdmin.changelist_view()`` uses when
+        # ``change_list_template`` is not set.
+        app_label = self.opts.app_label
+        return [
+            f"admin/{app_label}/{self.opts.model_name}/change_list.html",
+            f"admin/{app_label}/change_list.html",
+            "admin/change_list.html",
+        ]
 
-    @staticmethod
-    def _resolve_base_change_list_template(template_name):
+    def _is_changelist_response(self, response):
+        # Only replace the response which ``ModelAdmin.changelist_view()``
+        # builds for the change list itself.  Actions may return their own
+        # responses (e.g. a redirect, or the delete confirmation page) and a
+        # mixin may have rendered the response already; these are left alone.
+        if not isinstance(response, TemplateResponse) or response.is_rendered:
+            return False
+        expected = (
+            self.change_list_template or self._get_default_change_list_templates()
+        )
+        return response.template_name == expected
+
+    def _resolve_base_change_list_template(self, template_name):
         """
-        Return the name of the first template which exists from ``template_name``
-        (which may be a single name or a list of candidate names, as accepted by
-        ``TemplateResponse``), so that it can be used with ``{% extends %}``.
+        Return the template which the import / export change list template
+        should ``{% extends %}``, from ``template_name`` (a single name, a list
+        of candidate names, or a ``Template`` instance, as accepted by
+        ``TemplateResponse``).  A list is resolved to the first name which exists.
         """
-        if isinstance(template_name, str):
+        if not isinstance(template_name, (str, list, tuple)):
+            # A Template instance - {% extends %} accepts it as-is.
             return template_name
-        for name in template_name:
+        names = [template_name] if isinstance(template_name, str) else template_name
+        for name in names:
             try:
                 get_template(name)
             except TemplateDoesNotExist:
                 continue
+            if name.startswith(IE_TEMPLATE_PREFIX):
+                # ``change_list_template`` points at one of our own templates
+                # (e.g. the pre-v5 workaround for django-admin-sortable2),
+                # which would make our template extend itself.
+                warnings.warn(
+                    f"change_list_template is set to {name!r}: this is no longer "
+                    "required and has been ignored.  Remove it from "
+                    f"{type(self).__name__}.",
+                    stacklevel=2,
+                )
+                return self._resolve_base_change_list_template(
+                    self._get_default_change_list_templates()
+                )
             return name
-        raise TemplateDoesNotExist(", ".join(template_name))
+        # No candidate exists: let select_template() raise TemplateDoesNotExist
+        # listing every candidate tried.
+        select_template(names)
+        raise TemplateDoesNotExist(", ".join(names))
 
 
 class ImportMixin(BaseImportMixin, ImportExportMixinBase):

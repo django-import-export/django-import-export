@@ -20,6 +20,11 @@ Breaking changes
   * ``change_list_template`` on an admin instance now retains the value you (or another mixin) declared, rather
     than being replaced by the import / export template.
   * The ``'failed to assign change_list_template attribute'`` warning is no longer logged.
+  * When ``change_list_template`` is not set, the import / export template now extends Django's usual
+    per-model and per-app fallbacks (``admin/<app>/<model>/change_list.html``, ``admin/<app>/change_list.html``)
+    where they exist, instead of always ``admin/change_list.html``.
+  * If ``change_list_template`` points at one of this library's own templates (the pre-v5 workaround for
+    django-admin-sortable2), it is ignored with a warning.  Remove the declaration.
 
   See `#2205 <https://github.com/django-import-export/django-import-export/issues/2205>`_.
 
