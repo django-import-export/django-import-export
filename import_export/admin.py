@@ -25,17 +25,7 @@ from .results import RowResult
 from .signals import post_export, post_import
 from .tmp_storages import TempFolderStorage
 
-# This library's own change list templates: a ``change_list_template`` which
-# names one of these (the pre-v5 workaround for django-admin-sortable2) is
-# ignored, since our template would otherwise extend itself.
-IE_CHANGE_LIST_TEMPLATES = frozenset(
-    {
-        "admin/import_export/change_list.html",
-        "admin/import_export/change_list_import.html",
-        "admin/import_export/change_list_export.html",
-        "admin/import_export/change_list_import_export.html",
-    }
-)
+IE_BASE_CHANGE_LIST_TEMPLATE = "admin/import_export/change_list.html"
 
 
 class ImportExportMixinBase:
@@ -55,7 +45,7 @@ class ImportExportMixinBase:
         # init time, so it also works when a third party mixin declares
         # ``change_list_template`` as a read-only property (#2205).
         response.context_data["ie_base_change_list_template"] = (
-            self._resolve_base_change_list_template(response.template_name)
+            self._resolve_base_change_list_template(response.template_name, ie_template)
         )
         response.template_name = ie_template
         return response
@@ -73,27 +63,35 @@ class ImportExportMixinBase:
         )
 
     @staticmethod
-    def _resolve_base_change_list_template(template_name):
+    def _resolve_base_change_list_template(template_name, ie_template):
         """
         Return the name of the template which the import / export change list
-        template should ``{% extends %}``, from ``template_name`` (a single name
-        or a list of candidate names, as accepted by ``TemplateResponse``).  A
-        list is resolved to the first name which exists.
+        template (``ie_template``) should ``{% extends %}``, from
+        ``template_name`` (a single name or a list of candidate names, as
+        accepted by ``TemplateResponse``).  A list is resolved to the first name
+        which exists.
         """
         names = [template_name] if isinstance(template_name, str) else template_name
         # Our own templates must not be extended by themselves: these come
         # from the pre-v5 workaround for django-admin-sortable2 and are
         # no longer required.
-        names = [name for name in names if name not in IE_CHANGE_LIST_TEMPLATES]
+        names = [
+            name
+            for name in names
+            if name not in (ie_template, IE_BASE_CHANGE_LIST_TEMPLATE)
+        ]
         if not names:
             names = ["admin/change_list.html"]
+        chain = []
         for name in names:
             try:
                 get_template(name)
-            except TemplateDoesNotExist:
+            except TemplateDoesNotExist as e:
+                chain.extend(e.chain)
                 continue
             return name
-        raise TemplateDoesNotExist(", ".join(names))
+        # ``chain`` keeps the loaders / paths tried, for Django's debug page
+        raise TemplateDoesNotExist(", ".join(names), chain=chain)
 
 
 class ImportMixin(BaseImportMixin, ImportExportMixinBase):
