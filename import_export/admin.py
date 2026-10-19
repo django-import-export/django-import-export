@@ -1,4 +1,3 @@
-import logging
 from urllib.parse import urlencode
 
 from django.conf import settings
@@ -9,6 +8,8 @@ from django.core.exceptions import FieldError, PermissionDenied
 from django.forms import MultipleChoiceField, MultipleHiddenInput
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
+from django.template import TemplateDoesNotExist
+from django.template.loader import get_template
 from django.template.response import TemplateResponse
 from django.urls import path, reverse
 from django.utils.decorators import method_decorator
@@ -24,45 +25,55 @@ from .results import RowResult
 from .signals import post_export, post_import
 from .tmp_storages import TempFolderStorage
 
-logger = logging.getLogger(__name__)
-
 
 class ImportExportMixinBase:
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.init_change_list_template()
-
-    def init_change_list_template(self):
-        # Store already set change_list_template to allow users to independently
-        # customize the change list object tools. This treats the cases where
-        # `self.change_list_template` is `None` (the default in `ModelAdmin`) or
-        # where `self.import_export_change_list_template` is `None` as falling
-        # back on the default templates.
-        if getattr(self, "change_list_template", None):
-            self.ie_base_change_list_template = self.change_list_template
-        else:
-            self.ie_base_change_list_template = "admin/change_list.html"
-
-        try:
-            self.change_list_template = getattr(
-                self, "import_export_change_list_template", None
-            )
-        except AttributeError:
-            logger.warning("failed to assign change_list_template attribute")
-
-        if self.change_list_template is None:
-            self.change_list_template = self.ie_base_change_list_template
-
     def get_model_info(self):
         app_label = self.model._meta.app_label
         return (app_label, self.model._meta.model_name)
 
     def changelist_view(self, request, extra_context=None):
-        extra_context = extra_context or {}
-        extra_context["ie_base_change_list_template"] = (
-            self.ie_base_change_list_template
+        response = super().changelist_view(request, extra_context)
+        ie_template = getattr(self, "import_export_change_list_template", None)
+        if ie_template is None or not self._is_changelist_response(response):
+            return response
+        # Render our own template, which extends whichever template Django
+        # would otherwise have used (``change_list_template`` set by the user
+        # or by another admin mixin, or Django's defaults).  This is resolved
+        # per request rather than by assigning ``change_list_template`` at
+        # init time, so it also works when a third party mixin declares
+        # ``change_list_template`` as a read-only property (#2205).
+        response.context_data["ie_base_change_list_template"] = (
+            self._resolve_base_change_list_template(response.template_name)
         )
-        return super().changelist_view(request, extra_context)
+        response.template_name = ie_template
+        return response
+
+    @staticmethod
+    def _is_changelist_response(response):
+        # Actions can return their own responses (e.g. a redirect, or the
+        # delete confirmation page) which must be left untouched.
+        return (
+            isinstance(response, TemplateResponse)
+            and response.context_data is not None
+            and "cl" in response.context_data
+        )
+
+    @staticmethod
+    def _resolve_base_change_list_template(template_name):
+        """
+        Return the name of the first template which exists from ``template_name``
+        (which may be a single name or a list of candidate names, as accepted by
+        ``TemplateResponse``), so that it can be used with ``{% extends %}``.
+        """
+        if isinstance(template_name, str):
+            return template_name
+        for name in template_name:
+            try:
+                get_template(name)
+            except TemplateDoesNotExist:
+                continue
+            return name
+        raise TemplateDoesNotExist(", ".join(template_name))
 
 
 class ImportMixin(BaseImportMixin, ImportExportMixinBase):

@@ -8,6 +8,21 @@ v5.0
 Breaking changes
 ^^^^^^^^^^^^^^^^
 
+* The admin mixins no longer assign ``change_list_template`` when the ``ModelAdmin`` is instantiated.  Instead,
+  ``changelist_view()`` renders the import / export change list template
+  on each request, extending whichever template Django would otherwise have used.  This fixes interoperability with
+  third party mixins which declare ``change_list_template`` as a property (e.g. django-admin-sortable2).
+
+  As a result:
+
+  * ``init_change_list_template()`` and the ``ie_base_change_list_template`` instance attribute have been removed.
+    Remove any workaround which overrides or sets these.
+  * ``change_list_template`` on an admin instance now retains the value you (or another mixin) declared, rather
+    than being replaced by the import / export template.
+  * The ``'failed to assign change_list_template attribute'`` warning is no longer logged.
+
+  See `#2205 <https://github.com/django-import-export/django-import-export/issues/2205>`_.
+
 * Temporary storages (:class:`~import_export.tmp_storages.BaseStorage` and its subclasses) now deal in ``bytes``
   only: ``save()`` receives the raw uploaded data and ``read()`` returns it unchanged.  The ``read_mode`` and
   ``encoding`` constructor arguments have been removed.  If you have a custom storage class which relied on

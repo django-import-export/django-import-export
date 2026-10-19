@@ -1,12 +1,17 @@
 import os
-from unittest.mock import patch
 
-from core.admin import CustomBookAdmin, ImportMixin
-from core.models import Author, EBook
+from core.admin import CustomBookAdmin
+from core.models import Author, Book, EBook
 from core.tests.admin_integration.mixins import AdminTestMixin
+from django.contrib import admin
+from django.contrib.admin.options import ModelAdmin
+from django.template import TemplateDoesNotExist
+from django.test import RequestFactory
 from django.test.testcases import TestCase
 from django.test.utils import override_settings
 from django.utils.translation import gettext_lazy as _
+
+from import_export.admin import ImportExportMixin
 
 
 class ImportTemplateTests(AdminTestMixin, TestCase):
@@ -20,18 +25,55 @@ class ImportTemplateTests(AdminTestMixin, TestCase):
         self.assertContains(response, _("Export"))
         self.assertContains(response, "Custom change list item")
 
-    @patch("import_export.admin.logger")
-    def test_issue_1521_change_list_template_as_property(self, mock_logger):
-        # Test that a warning is logged when change_list_template is a property
-        class TestImportCls(ImportMixin):
+    def test_issue_2205_change_list_template_as_property(self):
+        # Third party mixins (e.g. django-admin-sortable2) may declare
+        # change_list_template as a read-only property returning a list of
+        # candidate templates.  The import / export links must still render,
+        # and our template must extend the first template which exists.
+        class SortableLikeAdmin(ImportExportMixin, ModelAdmin):
             @property
             def change_list_template(self):
-                return ["x"]
+                return ["does/not/exist.html", "core/admin/change_list.html"]
 
-        TestImportCls()
-        mock_logger.warning.assert_called_once_with(
-            "failed to assign change_list_template attribute"
+        model_admin = SortableLikeAdmin(Book, admin.site)
+        request = RequestFactory().get(self.core_book_url)
+        request.user = self.user
+        response = model_admin.changelist_view(request)
+        response.render()
+
+        self.assertEqual(response.template_name, self.change_list_template_url)
+        self.assertEqual(
+            response.context_data["ie_base_change_list_template"],
+            "core/admin/change_list.html",
         )
+        self.assertContains(response, _("Import"))
+        self.assertContains(response, _("Export"))
+        self.assertContains(response, "Custom change list item")
+
+    def test_issue_2205_change_list_template_as_property_no_match(self):
+        class BrokenAdmin(ImportExportMixin, ModelAdmin):
+            @property
+            def change_list_template(self):
+                return ["does/not/exist.html"]
+
+        model_admin = BrokenAdmin(Book, admin.site)
+        request = RequestFactory().get(self.core_book_url)
+        request.user = self.user
+        with self.assertRaises(TemplateDoesNotExist):
+            model_admin.changelist_view(request)
+
+    def test_issue_2205_action_response_not_replaced(self):
+        # Admin actions may return their own TemplateResponse from
+        # changelist_view (e.g. the delete confirmation page).  These must not
+        # be swapped for the import / export change list template.
+        book = Book.objects.create(name="Some book")
+        data = {
+            "action": "delete_selected",
+            "_selected_action": [str(book.id)],
+        }
+        response = self._post_url_response(self.core_book_url, data)
+        self.assertTemplateUsed(response, "admin/delete_selected_confirmation.html")
+        self.assertTemplateNotUsed(response, self.change_list_template_url)
 
     @override_settings(DEBUG=True)
     def test_correct_scripts_declared_when_debug_is_true(self):

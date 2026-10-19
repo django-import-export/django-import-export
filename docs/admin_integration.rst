@@ -514,9 +514,19 @@ libraries which also use the admin interface.
 django-admin-sortable2
 ^^^^^^^^^^^^^^^^^^^^^^
 
-Issues have been raised due to conflicts with setting `change_list_template <https://docs.djangoproject.com/en/stable/ref/contrib/admin/#django.contrib.admin.ModelAdmin.change_list_template>`_.  There is a workaround listed `here <https://github.com/jrief/django-admin-sortable2/issues/345#issuecomment-1680271337>`_.
-Also, refer to `this issue <https://github.com/django-import-export/django-import-export/issues/1531>`_.
-If you want to patch your own installation to fix this, a patch is available `here <https://github.com/django-import-export/django-import-export/pull/1607>`_.
+Prior to v5, the import / export links were hidden when ``ImportExportMixin`` was combined with
+``SortableAdminMixin``, because both libraries attempted to control
+`change_list_template <https://docs.djangoproject.com/en/stable/ref/contrib/admin/#django.contrib.admin.ModelAdmin.change_list_template>`_.
+
+From v5, the import / export change list template extends whichever template would otherwise have been used, resolved
+on each request, so the two libraries can be combined in either order without a workaround::
+
+  class BookAdmin(SortableAdminMixin, ImportExportModelAdmin):
+      ...
+
+If you have applied a workaround for this issue (such as overriding ``init_change_list_template()`` or
+``change_list_template``), remove it when upgrading.
+Refer to `this issue <https://github.com/django-import-export/django-import-export/issues/2205>`_.
 
 django-polymorphic
 ^^^^^^^^^^^^^^^^^^
