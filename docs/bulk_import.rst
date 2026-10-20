@@ -14,6 +14,40 @@ processed.
 Bulk deletes are also supported, by applying a ``filter()`` to the temporary object list, and calling ``delete()`` on
 the resulting query set.
 
+Handling conflicts on create
+============================
+
+By default, a bulk create fails if a row conflicts with an existing row, for example because
+the id is already present in the table.  This is most likely to happen when ``force_init_instance``
+is enabled, because the existence check which would otherwise route the row to ``bulk_update()``
+is skipped.
+
+Set ``update_conflicts = True`` to update the conflicting row instead, making the import an upsert::
+
+    class BookResource(ModelResource):
+        class Meta:
+            model = Book
+            use_bulk = True
+            update_conflicts = True
+
+The fields to update default to every writable field except the ``import_id_fields``, and the
+conflict target defaults to the ``import_id_fields`` themselves, since those are the fields which
+identify a row on import.  Declare ``update_fields`` and ``unique_fields`` to override either::
+
+    class BookResource(ModelResource):
+        class Meta:
+            model = Book
+            use_bulk = True
+            update_conflicts = True
+            update_fields = ["name", "price"]
+            unique_fields = ["isbn"]
+
+These values are passed straight through to Django's ``bulk_create()``, so its restrictions apply:
+the fields in ``unique_fields`` must carry a unique constraint, ``update_fields`` cannot contain the
+primary key, and MySQL and MariaDB do not accept a conflict target at all (they update every unique
+constraint), so ``unique_fields`` is not sent on those backends.  Not every backend supports
+updating conflicts; refer to the Django documentation for your database.
+
 Caveats
 =======
 
