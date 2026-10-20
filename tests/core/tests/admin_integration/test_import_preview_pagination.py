@@ -1,5 +1,6 @@
 import os
 from io import StringIO
+from unittest import mock
 
 from core.models import Book
 from core.tests.admin_integration.mixins import AdminTestMixin
@@ -7,7 +8,10 @@ from django.core.exceptions import ImproperlyConfigured
 from django.test.testcases import TestCase
 from django.test.utils import override_settings
 
+from import_export.admin import ImportMixin
 from import_export.constants import FORM_FIELD_PREFIX
+from import_export.forms import ImportForm
+from import_export.resources import Resource
 
 
 def _build_csv(num_rows):
@@ -27,6 +31,13 @@ class ImportPreviewPaginationTests(AdminTestMixin, TestCase):
         if resource is not None:
             data[f"{FORM_FIELD_PREFIX}resource"] = resource
         return self.client.post(self.book_import_url, data)
+
+    def _preview_session_keys(self):
+        return [
+            key
+            for key in self.client.session.keys()
+            if key.startswith(ImportMixin.PAGINATION_SESSION_PREFIX)
+        ]
 
     def _pagination_get_params(self, response, **page_kwargs):
         # Build the GET query params that the in-page pagination links carry.
@@ -245,6 +256,8 @@ class ImportPreviewPaginationTests(AdminTestMixin, TestCase):
             "The import preview has expired. Please upload the file again.",
             [str(m) for m in response.context["messages"]],
         )
+        # the stale session entry is dropped along with the warning
+        self.assertEqual(self._preview_session_keys(), [])
 
     @override_settings(IMPORT_EXPORT_PREVIEW_PAGE_SIZE=None)
     def test_pagination_can_be_disabled(self):
@@ -448,3 +461,70 @@ class ImportPreviewPaginationTests(AdminTestMixin, TestCase):
         # admin selected on upload, exactly as it does on page 1.
         get_initial = get_response.context["confirm_form"].initial
         self.assertEqual(get_initial.get("author"), author.id)
+
+    def test_new_upload_replaces_previous_session_entry(self):
+        # Re-uploading to fix validation errors, or abandoning a preview,
+        # must not accumulate session entries: with cookie-backed sessions
+        # that grows the cookie past the browser limit.
+        for _ in range(3):
+            self._post_csv(_build_csv(2))
+        self.assertEqual(len(self._preview_session_keys()), 1)
+
+    def test_unreadable_upload_leaves_no_session_entry(self):
+        # A header-only file is rejected before the dry-run, so there is no
+        # preview to paginate and nothing should be stored.
+        self._post_csv("id,name,author_email\r\n")
+        self.assertEqual(self._preview_session_keys(), [])
+
+    @override_settings(IMPORT_EXPORT_PREVIEW_PAGE_SIZE=2)
+    def test_import_form_kwargs_hook_used_on_pagination_get(self):
+        # A form needing an extra kwarg from get_import_form_kwargs() (e.g.
+        # ``user`` to scope a queryset) must be built the same way on page
+        # navigation, not only on the upload POST.
+        from core.admin import BookAdmin
+
+        class UserImportForm(ImportForm):
+            def __init__(self, *args, user, **kwargs):
+                super().__init__(*args, **kwargs)
+                self.user = user
+
+        def form_kwargs(admin, request):
+            kwargs = ImportMixin.get_import_form_kwargs(admin, request)
+            kwargs["user"] = request.user
+            return kwargs
+
+        with (
+            mock.patch.object(BookAdmin, "import_form_class", UserImportForm),
+            mock.patch.object(BookAdmin, "get_import_form_kwargs", form_kwargs),
+        ):
+            post_response = self._post_csv(_build_csv(4))
+            params = self._pagination_get_params(post_response, page=2)
+            get_response = self.client.get(self.book_import_url, params)
+
+        self.assertEqual(get_response.status_code, 200)
+        self.assertEqual(get_response.context["preview_page"].number, 2)
+
+    @override_settings(IMPORT_EXPORT_PREVIEW_PAGE_SIZE=2)
+    def test_pagination_dry_run_receives_user_without_request_kwarg(self):
+        # get_import_data_kwargs() may strip ``request``; the paginated
+        # dry-run must still get the user, as the upload POST's does.
+        from core.admin import BookAdmin
+
+        def strip_request(admin, **kwargs):
+            kwargs.pop("request", None)
+            kwargs.pop("form", None)
+            return kwargs
+
+        with (
+            mock.patch.object(BookAdmin, "get_import_data_kwargs", strip_request),
+            mock.patch.object(
+                Resource, "import_data", autospec=True, side_effect=Resource.import_data
+            ) as import_data,
+        ):
+            post_response = self._post_csv(_build_csv(4))
+            params = self._pagination_get_params(post_response, page=2)
+            self.client.get(self.book_import_url, params)
+
+        post_call, get_call = import_data.call_args_list
+        self.assertIsNotNone(get_call.kwargs["user"])
+        self.assertEqual(get_call.kwargs["user"], post_call.kwargs["user"])

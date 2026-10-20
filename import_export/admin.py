@@ -499,16 +499,6 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
                 # allows get_confirm_form_initial() to include both the
                 # original and saved file names from form.cleaned_data
                 import_file.tmp_storage_name = tmp_storage.name
-                # Stash original-upload metadata in the session so the GET
-                # pagination handler can re-derive the dry-run without
-                # round-tripping the original filename (PII) through the URL.
-                self._save_pagination_metadata(
-                    request,
-                    tmp_storage.name,
-                    original_file_name=import_file.name,
-                    format_idx=import_form.cleaned_data["format"],
-                    resource_idx=import_form.cleaned_data.get("resource", ""),
-                )
 
                 try:
                     # then read the raw bytes back; the format handles decoding
@@ -528,6 +518,19 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
                         )
 
                 if not import_form.errors:
+                    # Stash original-upload metadata in the session so the GET
+                    # pagination handler can re-derive the dry-run without
+                    # round-tripping the original filename (PII) through the
+                    # URL. Kept even if the dry-run reports errors, since the
+                    # error rows are paginated too.
+                    self._save_pagination_metadata(
+                        request,
+                        tmp_storage.name,
+                        original_file_name=import_file.name,
+                        format_idx=import_form.cleaned_data["format"],
+                        resource_idx=import_form.cleaned_data.get("resource", ""),
+                    )
+
                     # prepare kwargs for import data, if needed
                     res_kwargs = self.get_import_resource_kwargs(
                         request, form=import_form, **kwargs
@@ -646,6 +649,14 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         session = getattr(request, "session", None)
         if not tmp_storage_name or session is None:
             return
+        # Drop entries left by earlier uploads (abandoned previews, retries
+        # after validation errors) so they cannot pile up in the session,
+        # which matters for cookie-backed sessions.
+        # ponytail: one preview per session; an older tab's page links then
+        # show the "expired" warning. Key by tab if that ever matters.
+        for key in list(session.keys()):
+            if key.startswith(self.PAGINATION_SESSION_PREFIX):
+                del session[key]
         session[self._pagination_session_key(tmp_storage_name)] = {
             # TempFolderStorage names are absolute paths, so keep the full
             # name here: only the basename travels in the URL.
@@ -679,22 +690,22 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         dataset,
         *,
         original_file_name="",
+        user=None,
         **imp_kwargs,
     ):
         """
         .. versionadded:: 5.0
 
         Re-derive the dry-run :class:`~import_export.results.Result` for
-        GET-side preview pagination. ``imp_kwargs`` is the dict returned
-        by :meth:`~import_export.admin.ImportMixin.get_import_data_kwargs`
-        for the request and so includes ``request`` if upstream hooks
-        did not strip it. Override this to cache the Result keyed by the
+        GET-side preview pagination. ``user`` is the requesting user, passed
+        to ``import_data()`` exactly as on the upload POST. ``imp_kwargs`` is
+        the dict returned by
+        :meth:`~import_export.admin.ImportMixin.get_import_data_kwargs` for
+        the request. Override this to cache the Result keyed by the
         temporary-file name and avoid re-running the dry-run on every
         page click. The default implementation runs a full dry-run on
         each call.
         """
-        request = imp_kwargs.get("request")
-        user = request.user if request is not None else None
         return resource.import_data(
             dataset,
             dry_run=True,
@@ -744,9 +755,13 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
     def _preview_unavailable(self, request, reason, exc_info=False):
         # The preview cannot be re-derived (expired session, missing or
         # unreadable temporary file, stale metadata). import_action falls
-        # back to rendering the plain upload form, so tell the user why.
+        # back to rendering the plain upload form, so tell the user why, and
+        # drop the now-useless session entry.
         logger.debug(
             "import preview pagination unavailable: %s", reason, exc_info=exc_info
+        )
+        self._drop_pagination_metadata(
+            request, os.path.basename(request.GET.get("import_file_name", ""))
         )
         messages.warning(
             request,
@@ -770,16 +785,10 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         if format_idx < 0 or format_idx >= len(import_formats):
             return self._preview_unavailable(request, "unknown import format")
 
-        input_format = import_formats[format_idx]()
-        if not input_format.is_binary():
-            input_format.encoding = self.from_encoding
-        encoding = None if input_format.is_binary() else self.from_encoding
-
+        input_format = import_formats[format_idx](encoding=self.from_encoding)
         tmp_storage_cls = self.get_tmp_storage_class()
         tmp_storage = tmp_storage_cls(
             name=metadata.get("tmp_storage_name", tmp_storage_name),
-            encoding=encoding,
-            read_mode=input_format.get_read_mode(),
             **self.get_tmp_storage_class_kwargs(),
         )
         try:
@@ -801,12 +810,14 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         # POSTed, so subclasses' extension hooks (choose_import_resource_class,
         # get_import_resource_kwargs, get_import_data_kwargs,
         # get_confirm_form_initial) see the same form they do on the POST
-        # path, including any extra fields the subclass declared.
-        form_class = self.get_import_form_class(request)
-        pagination_form = form_class(
-            self.get_import_formats(),
-            resource_classes,
-            data=QueryDict(metadata.get("form_data", "")),
+        # path, including any extra fields the subclass declared. Built via
+        # get_import_form_kwargs() so extra kwargs a subclass passes to its
+        # form (e.g. ``user``) are supplied on every page too.
+        form_kwargs = self.get_import_form_kwargs(request)
+        form_kwargs["data"] = QueryDict(metadata.get("form_data", ""))
+        form_kwargs.pop("files", None)
+        pagination_form = self.get_import_form_class(request)(
+            self.get_import_formats(), resource_classes, **form_kwargs
         )
         # There is no uploaded file on a GET, so the form is never valid.
         # Clean it anyway: Django still populates cleaned_data for every
@@ -828,6 +839,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
             resource,
             dataset,
             original_file_name=original_file_name,
+            user=request.user,
             **imp_kwargs,
         )
         context["result"] = result
