@@ -9,7 +9,11 @@ from warnings import warn
 import tablib
 from diff_match_patch import diff_match_patch
 from django.conf import settings
-from django.core.exceptions import ImproperlyConfigured, ValidationError
+from django.core.exceptions import (
+    FieldDoesNotExist,
+    ImproperlyConfigured,
+    ValidationError,
+)
 from django.core.management.color import no_style
 from django.core.paginator import Paginator
 from django.db import connections, router
@@ -216,10 +220,33 @@ class Resource(metaclass=DeclarativeMetaclass):
         :meth:`~import_export.resources.ModelResource.get_bulk_update_fields`
         because the ``import_id_fields`` identify the conflicting row and cannot
         themselves be updated.
+
+        ``bulk_create()`` rejects non-concrete fields (such as many-to-many
+        fields) and primary keys in ``update_fields``, so the default drops
+        them.  The primary key is not necessarily among the
+        ``import_id_fields``: a resource can identify rows by a natural key
+        while the pk remains in the resource fields.
         """
         if self._meta.update_fields is not None:
             return list(self._meta.update_fields)
-        return self.get_bulk_update_fields()
+        return [
+            attribute
+            for attribute in self.get_bulk_update_fields()
+            if self._is_bulk_create_updatable(attribute)
+        ]
+
+    def _is_bulk_create_updatable(self, attribute):
+        try:
+            model_field = self._meta.model._meta.get_field(attribute)
+        except FieldDoesNotExist:
+            # a declared field which does not map to a model field; keep it,
+            # as before
+            return True
+        return (
+            model_field.concrete
+            and not model_field.many_to_many
+            and not model_field.primary_key
+        )
 
     def get_bulk_create_unique_fields(self):
         """

@@ -341,9 +341,20 @@ class BulkCreateUpdateConflictsTest(BulkTest):
             mock.ANY,
             batch_size=None,
             update_conflicts=True,
-            # defaults: every writable field except the import_id_fields, which
-            # identify the conflicting row and so are the conflict target
-            update_fields=resource.get_bulk_update_fields(),
+            # defaults: every writable concrete non-pk field except the
+            # import_id_fields, which identify the conflicting row and so are
+            # the conflict target; the many-to-many "categories" is dropped
+            # because bulk_create() rejects non-concrete update_fields
+            update_fields=[
+                "name",
+                "author_id",
+                "author_email",
+                "imported",
+                "published",
+                "published_time",
+                "price",
+                "added",
+            ],
             unique_fields=["id"],
         )
 
@@ -392,8 +403,47 @@ class BulkCreateUpdateConflictsTest(BulkTest):
             mock.ANY,
             batch_size=None,
             update_conflicts=True,
-            update_fields=resource.get_bulk_update_fields(),
+            update_fields=[
+                "name",
+                "author_id",
+                "author_email",
+                "imported",
+                "published",
+                "published_time",
+                "price",
+                "added",
+            ],
         )
+
+    def test_default_update_fields_exclude_m2m_and_primary_key(self):
+        # unmocked: the defaults passed to bulk_create() must not include a
+        # many-to-many field (Django rejects non-concrete update_fields) or
+        # the pk (rejected outright) when rows are identified by a natural
+        # key and the pk remains in the resource fields.
+        class _BookResource(resources.ModelResource):
+            class Meta:
+                model = Book
+                use_bulk = True
+                update_conflicts = True
+                import_id_fields = ("name",)
+
+        resource = _BookResource()
+        self.assertEqual(
+            [
+                "author_id",
+                "author_email",
+                "imported",
+                "published",
+                "published_time",
+                "price",
+                "added",
+            ],
+            resource.get_bulk_create_update_fields(),
+        )
+        with self._conflict_target_support(resource, True):
+            self.assertEqual(
+                ["name"], resource.get_bulk_create_kwargs()["unique_fields"]
+            )
 
     def test_update_conflicts_requires_use_bulk(self):
         class _BookResource(resources.ModelResource):
