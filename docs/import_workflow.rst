@@ -1,3 +1,5 @@
+.. _import-workflow:
+
 ====================
 Import workflow
 ====================
@@ -120,4 +122,4 @@ transaction and rolled back or committed respectively.
 All methods called from inside of :meth:`~import_export.resources.Resource.import_data`
 (create / delete / update) receive ``False`` for ``dry_run`` argument.
 
-.. _Dataset: https://tablib.readthedocs.io/en/stable/api/#dataset-object
+.. _Dataset: https://tablib.readthedocs.io/en/stable/api.html#dataset-object

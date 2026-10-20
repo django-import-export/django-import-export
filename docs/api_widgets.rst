@@ -22,12 +22,15 @@ Widgets
 
 .. autoclass:: import_export.widgets.DateWidget
    :members:
+   :inherited-members:
 
 .. autoclass:: import_export.widgets.TimeWidget
-  :members:
+   :members:
+   :inherited-members:
 
 .. autoclass:: import_export.widgets.DateTimeWidget
    :members:
+   :inherited-members:
 
 .. autoclass:: import_export.widgets.DurationWidget
    :members:
@@ -36,6 +39,9 @@ Widgets
    :members:
 
 .. autoclass:: import_export.widgets.JSONWidget
+   :members:
+
+.. autoclass:: import_export.widgets.RelatedModelWidgetMixin
    :members:
 
 .. autoclass:: import_export.widgets.ForeignKeyWidget

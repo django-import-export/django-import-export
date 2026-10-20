@@ -70,13 +70,11 @@ class Command(BaseCommand):
 
         resource = get_resource_class(model_or_resource_class)()
         format_class = get_format_class(format_name, file_name, encoding)
+        # read raw bytes; the format decodes text using the configured encoding
         if file_name == "-":
-            if format_class.is_binary():
-                data = sys.stdin.buffer.read()
-            else:
-                data = sys.stdin.read()
+            data = sys.stdin.buffer.read()
         else:
-            with open(file_name, format_class.get_read_mode()) as file:
+            with open(file_name, "rb") as file:
                 data = file.read()
 
         dataset = format_class.create_dataset(data)
