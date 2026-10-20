@@ -1,3 +1,6 @@
+from unittest.mock import patch
+
+from core.admin import BookAdmin
 from core.tests.admin_integration.mixins import AdminTestMixin
 from django.test.testcases import TestCase
 from django.test.utils import override_settings
@@ -28,6 +31,14 @@ class ConfirmImportEncodingTest(AdminTestMixin, TestCase):
     )
     def test_import_action_handles_TempFolderStorage_read_mac(self):
         self._is_str_in_response("books-mac.csv", "0")
+
+    @override_settings(
+        IMPORT_EXPORT_TMP_STORAGE_CLASS="import_export.tmp_storages.TempFolderStorage"
+    )
+    def test_import_action_handles_from_encoding_none(self):
+        # issue 2006: a text format must still decode when from_encoding is None
+        with patch.object(BookAdmin, "from_encoding", None):
+            self._is_str_in_response("books.csv", "0")
 
     @override_settings(
         IMPORT_EXPORT_TMP_STORAGE_CLASS="import_export.tmp_storages.TempFolderStorage"

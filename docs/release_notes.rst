@@ -8,6 +8,65 @@ v5.0
 Breaking changes
 ^^^^^^^^^^^^^^^^
 
+* **Admin change list template handling.**  This only affects you if you combine the admin mixins with another
+  library's admin mixin which also sets ``change_list_template`` (such as django-admin-sortable2), or if you have
+  applied a workaround for that situation, or if your project provides a per-app or per-model change list template
+  (``admin/<app>/change_list.html`` or ``admin/<app>/<model>/change_list.html``).  Otherwise, nothing changes.
+
+  The admin mixins no longer assign ``change_list_template`` when the ``ModelAdmin`` is instantiated.  Instead,
+  ``changelist_view()`` renders the import / export change list template
+  on each request, extending whichever template Django would otherwise have used.  This fixes interoperability with
+  third party mixins which declare ``change_list_template`` as a property (e.g. django-admin-sortable2).
+
+  As a result:
+
+  * ``init_change_list_template()`` and the ``ie_base_change_list_template`` instance attribute have been removed.
+    Remove any workaround which overrides or sets these.
+  * ``change_list_template`` on an admin instance now retains the value you (or another mixin) declared, rather
+    than being replaced by the import / export template.
+  * The ``'failed to assign change_list_template attribute'`` warning is no longer logged.
+  * When ``change_list_template`` is not set, the import / export template now extends Django's usual
+    per-model and per-app fallbacks (``admin/<app>/<model>/change_list.html``, ``admin/<app>/change_list.html``)
+    where they exist, instead of always ``admin/change_list.html``.
+  * If ``change_list_template`` points at one of this library's own templates (the pre-v5 workaround for
+    django-admin-sortable2), the change list now fails with ``TemplateDoesNotExist``.  Remove the declaration.
+
+  See `#2205 <https://github.com/django-import-export/django-import-export/issues/2205>`_.
+
+* Temporary storages (:class:`~import_export.tmp_storages.BaseStorage` and its subclasses) now deal in ``bytes``
+  only: ``save()`` receives the raw uploaded data and ``read()`` returns it unchanged.  The ``read_mode`` and
+  ``encoding`` constructor arguments have been removed.  If you have a custom storage class which relied on
+  these arguments, remove them and return ``bytes`` from ``read()``.
+
+  As a result, ``create_dataset()`` on a :class:`~import_export.formats.base_formats.Format` now always receives
+  ``bytes`` from the Admin import.  Previously it received ``str`` or ``bytes`` depending on the storage class
+  and on whether the import confirmation step was skipped.
+  :class:`~import_export.formats.base_formats.TextFormat` decodes the data using its ``encoding``, falling back
+  to ``utf-8`` when ``from_encoding`` is ``None`` (previously the system locale encoding was used in this case).
+  If you rely on ``from_encoding = None`` and import files which are not UTF-8 encoded, set ``from_encoding``
+  explicitly to the encoding of your files (for example ``"cp1252"``).
+  If you subclass ``TextFormat`` and override ``create_dataset()``, call ``super()`` so the data is decoded, and pass
+  any tablib options through as keyword arguments, for example::
+
+    class SemicolonCSV(CSV):
+        def create_dataset(self, in_stream, **kwargs):
+            return super().create_dataset(in_stream, delimiter=";", **kwargs)
+
+  Passing ``read_mode`` or ``encoding`` to a storage class (for example via
+  :meth:`~import_export.admin.ImportMixin.get_tmp_storage_class_kwargs`) now raises ``TypeError``.
+
+  The ``input_format`` parameter has been removed from
+  :meth:`~import_export.admin.ImportMixin.write_to_tmp_storage`, as the storage no longer depends on the
+  format.  Update any override to the new signature ``write_to_tmp_storage(self, import_file)``.
+  A new :meth:`~import_export.admin.ImportMixin.read_import_file` method returns the raw ``bytes`` of an
+  uploaded file and is used by both the confirm and skip-confirm import flows.
+
+  Additionally, if you have custom code which overrides storage handling in ``admin.py``, then review the PR to
+  check whether your implementation might be affected.
+
+  See `issue 2006 <https://github.com/django-import-export/django-import-export/issues/2006>`_ and
+  `PR 2197 <https://github.com/django-import-export/django-import-export/pull/2197>`_.
+
 * This release fixes an issue with form field name clashes (see `2108
   <https://github.com/django-import-export/django-import-export/pull/2108>`_).
 
@@ -66,6 +125,35 @@ Breaking changes
   custom overrides which do not call ``super()`` will always skip the reset.
 
 * ``ODS`` is now correctly classified as a binary format, extending ``TablibFormat`` instead of ``TextFormat``.  ``is_binary()`` now returns ``True`` and files are read in binary mode, fixing a ``UnicodeDecodeError`` on import of ``.ods`` files.  If you have a custom workaround for this (e.g. an ``ODS`` subclass forcing binary reads), it can be removed.  Any code which relied on ``ODS`` being a text format should be updated.  See `PR 2176 <https://github.com/django-import-export/django-import-export/pull/2176>`_.
+
+* The comparison used by :meth:`~import_export.resources.Resource.skip_row` when
+  :attr:`~import_export.options.ResourceOptions.skip_unchanged` is enabled is now delegated to each field's widget
+  via a new :meth:`~import_export.widgets.Widget.is_equal` hook (`PR 2174
+  <https://github.com/django-import-export/django-import-export/pull/2174>`_).
+
+  ``skip_row()`` calls ``is_equal()`` on every import field's widget.  The import preview diff also calls it
+  (for every import, regardless of ``skip_unchanged``) so that values which are equal but render differently, such as
+  ``Decimal("1803.60")`` persisted and ``Decimal("1803.6")`` imported from a spreadsheet, are not shown as a change
+  (`issue 1425 <https://github.com/django-import-export/django-import-export/issues/1425>`_).  Custom widgets which
+  subclass :class:`~import_export.widgets.Widget` inherit a plain equality check; a custom widget which does not
+  subclass ``Widget`` must now implement ``is_equal()``.  An ``is_equal()`` which raises during the preview diff is
+  logged and the rendered values are compared instead, so the row is not reported as an error.
+
+  ``Diff.__init__()`` now accepts an optional ``row`` keyword argument, which is passed to ``is_equal()``.  If you
+  return a custom ``Diff`` subclass from :meth:`~import_export.resources.Resource.get_diff_class`, update its
+  ``__init__()`` signature to accept ``row=None``.
+
+  :class:`~import_export.widgets.DateTimeWidget`, :class:`~import_export.widgets.TimeWidget` and
+  :class:`~import_export.widgets.DateWidget` now treat an imported value as unchanged if it matches either the
+  persisted value or what that value becomes after an export / import round-trip through the widget's format, so that
+  re-importing previously exported data is correctly skipped
+  (see `issue 2018 <https://github.com/django-import-export/django-import-export/issues/2018>`_).
+  A ``rounding_tolerance`` of one millisecond absorbs spreadsheet rounding; differences of one millisecond or more
+  which the widget's format or a native export preserves continue to be detected as changes.
+
+  :class:`~import_export.widgets.ManyToManyWidget` now implements the related-object comparison which was previously
+  inline in ``skip_row()``.  Behaviour is unchanged, but if you have overridden ``skip_row()`` you may be able to
+  simplify it by calling ``field.widget.is_equal()`` instead.
 
 Removed deprecations
 """"""""""""""""""""
@@ -132,6 +220,105 @@ Deprecations
   Use :meth:`~import_export.resources.Resource.get_user_visible_import_fields` for import contexts and
   :meth:`~import_export.resources.Resource.get_user_visible_export_fields` for export contexts instead.
   This change ensures that import and export operations show their respective field sets correctly in admin forms.
+
+v4.4.3
+------
+
+.. _release_notes_integer_widget_dos:
+
+* This release patches a denial-of-service vulnerability in :class:`~import_export.widgets.IntegerWidget`.
+
+  ``IntegerWidget.clean()`` converted imported values using ``int(Decimal(value))`` with no bound on the
+  value's magnitude.  A value written in exponent notation, such as ``1e1000000``, is cheap to parse as a
+  ``Decimal`` but forces Python to expand every digit when converted to ``int``, a cost that grows
+  superlinearly with the digit count.  A single such value could stall the importing process for several
+  seconds while pinning a CPU core, and a file containing many such rows multiplied the cost.
+
+  ``IntegerWidget`` is the default widget for all integer model fields, including the ``id`` column used by
+  every resource that does not override ``import_id_fields``, so almost every import was affected.  The stall
+  occurred during the initial dry run, before the confirmation step.  Python's
+  ``sys.set_int_max_str_digits()`` limit did not protect this path, as it only guards conversions between
+  ``int`` and ``str``, not ``Decimal.__int__``.
+
+  This was an availability issue only.  The resulting integers exceed the range of any standard database
+  integer column, so no data could be written or corrupted through this path.
+
+  The fix rejects values whose magnitude exceeds ``sys.get_int_max_str_digits()`` digits (4300 by default)
+  before the conversion is attempted.  Such values are now reported as row errors.  Values within the limit,
+  including those in exponent notation such as ``1e5``, are unaffected, and no value a standard integer column
+  could store is rejected.  All users are advised to upgrade.
+
+  If you import integers larger than the default limit into a field that can store them, raise the limit with
+  ``sys.set_int_max_str_digits()``; the widget honours the configured value.
+
+  If you subclass :class:`~import_export.widgets.IntegerWidget` and override ``clean()``, you receive this fix
+  automatically only if your override delegates to ``super().clean()``.  An override that reimplements the
+  ``int(Decimal(...))`` conversion itself is not protected, and should apply the same magnitude check before
+  converting.
+
+  If you cannot upgrade, either of the following prevents the stall:
+
+  - Set :ref:`IMPORT_EXPORT_IMPORT_PERMISSION_CODE` to restrict import access to trusted users.
+  - Subclass :class:`~import_export.widgets.IntegerWidget`, override ``clean()`` to reject values whose
+    magnitude exceeds a sensible bound before calling ``super().clean()``, and assign the subclass to the
+    integer fields on your resources.  This suits deployments where all staff legitimately need import
+    permission.
+
+v4.4.2
+------
+
+.. _release_notes_force_insert_on_create:
+
+* This release patches a potential data corruption issue that can occur in certain configurations.
+
+  Installations are potentially affected if the following are true:
+
+  1. The instance loader does not find the existing row, either because the queryset has been filtered or because
+     ``import_id_fields`` identifies rows by a field other than the primary key.
+  2. The import file supplies the primary key of an existing row.
+
+  The fix is that instances classified as new during import are now saved with ``force_insert=True``.
+
+  Previously,  if an import file supplied a primary key which already existed in the database but which was not found
+  by the instance loader, the new instance was saved with that primary key and Django updated the existing row.
+  Fields omitted from the import were reset to their defaults, the preview reported the row as new, and the admin log
+  recorded an addition, so the overwrite left no visible trace.  This occurred when:
+
+  - :meth:`~import_export.resources.Resource.get_queryset` was overridden to restrict the rows a user may update (for
+    example per-tenant or per-user filtering).  A user with import permission could overwrite records outside their
+    scope by supplying the record's primary key.
+  - the model's default manager filters rows (for example a soft-delete manager), since the default
+    ``get_queryset()`` returns ``model.objects.all()``.  Importing the primary key of a soft-deleted record overwrote
+    it and reset the deleted flag.
+  - ``import_id_fields`` identified rows by a field other than the primary key, but the file also contained the
+    primary key column.  A row whose identifier matched no existing instance was classified as new, and if its primary
+    key value belonged to an existing row, that row was overwritten.
+
+  Such rows are now reported as errors (``IntegrityError``) and the existing row is left unchanged.  All users are
+  advised to upgrade.
+
+  If you relied on this behaviour to update rows by primary key, include the primary key in ``import_id_fields`` so
+  that the existing instance is loaded and updated explicitly.
+
+  If you have overridden :meth:`~import_export.resources.Resource.do_instance_save`, review it to ensure that
+  ``is_create`` is honoured.
+
+  If any of your models override ``save()``, the override must accept ``*args`` and ``**kwargs`` and pass them to
+  ``super().save()``, as required by Django.  An override declared as ``def save(self)`` will now fail with a
+  ``TypeError`` when a new instance is imported, because ``force_insert`` is passed as a keyword argument.
+
+  If you have understood the implications and need to restore the previous behaviour, override
+  :meth:`~import_export.resources.Resource.do_instance_save` to call ``instance.save()`` without ``force_insert``.
+  Note that this reinstates the overwrite described above for your resource.
+
+  If you cannot upgrade, either of the following prevents the overwrite:
+
+  - Stop the primary key being written from the import file.  Either omit it from the resource using the
+    :attr:`~import_export.options.ResourceOptions.fields` or :attr:`~import_export.options.ResourceOptions.exclude`
+    options (see :ref:`declare_fields`), or :ref:`declare it explicitly<field_declaration>` with ``readonly=True``.
+    This is not possible if the primary key is one of your ``import_id_fields``.
+  - Set :attr:`~import_export.options.ResourceOptions.clean_model_instances` to ``True`` so the collision is reported
+    as a validation error before the row is saved.
 
 v4.2
 ----

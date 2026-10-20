@@ -15,6 +15,8 @@ from django.core.paginator import Paginator
 from django.forms import MultipleChoiceField, MultipleHiddenInput
 from django.http import HttpResponse, HttpResponseRedirect, QueryDict
 from django.shortcuts import render
+from django.template import TemplateDoesNotExist
+from django.template.loader import get_template
 from django.template.response import TemplateResponse
 from django.urls import path, reverse
 from django.utils.decorators import method_decorator
@@ -34,41 +36,58 @@ logger = logging.getLogger(__name__)
 
 
 class ImportExportMixinBase:
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.init_change_list_template()
-
-    def init_change_list_template(self):
-        # Store already set change_list_template to allow users to independently
-        # customize the change list object tools. This treats the cases where
-        # `self.change_list_template` is `None` (the default in `ModelAdmin`) or
-        # where `self.import_export_change_list_template` is `None` as falling
-        # back on the default templates.
-        if getattr(self, "change_list_template", None):
-            self.ie_base_change_list_template = self.change_list_template
-        else:
-            self.ie_base_change_list_template = "admin/change_list.html"
-
-        try:
-            self.change_list_template = getattr(
-                self, "import_export_change_list_template", None
-            )
-        except AttributeError:
-            logger.warning("failed to assign change_list_template attribute")
-
-        if self.change_list_template is None:
-            self.change_list_template = self.ie_base_change_list_template
-
     def get_model_info(self):
         app_label = self.model._meta.app_label
         return (app_label, self.model._meta.model_name)
 
     def changelist_view(self, request, extra_context=None):
-        extra_context = extra_context or {}
-        extra_context["ie_base_change_list_template"] = (
-            self.ie_base_change_list_template
+        response = super().changelist_view(request, extra_context)
+        ie_template = getattr(self, "import_export_change_list_template", None)
+        if ie_template is None or not self._is_changelist_response(response):
+            return response
+        # Render our own template, which extends whichever template Django
+        # would otherwise have used (``change_list_template`` set by the user
+        # or by another admin mixin, or Django's defaults).  This is resolved
+        # per request rather than by assigning ``change_list_template`` at
+        # init time, so it also works when a third party mixin declares
+        # ``change_list_template`` as a read-only property (#2205).
+        response.context_data["ie_base_change_list_template"] = (
+            self._resolve_base_change_list_template(response.template_name)
         )
-        return super().changelist_view(request, extra_context)
+        response.template_name = ie_template
+        return response
+
+    @staticmethod
+    def _is_changelist_response(response):
+        # Only replace the response which renders the change list itself
+        # (recognised by the ChangeList, ``cl``, in its context).  Actions may
+        # return their own responses (e.g. a redirect, or the delete
+        # confirmation page); these are left untouched.
+        return (
+            isinstance(response, TemplateResponse)
+            and response.context_data is not None
+            and "cl" in response.context_data
+        )
+
+    @staticmethod
+    def _resolve_base_change_list_template(template_name):
+        """
+        Return the name of the template which the import / export change list
+        template should ``{% extends %}``, from ``template_name`` (a single name
+        or a list of candidate names, as accepted by ``TemplateResponse``).  A
+        list is resolved to the first name which exists.
+        """
+        names = [template_name] if isinstance(template_name, str) else template_name
+        chain = []
+        for name in names:
+            try:
+                get_template(name)
+            except TemplateDoesNotExist as e:
+                chain.extend(e.chain)
+                continue
+            return name
+        # ``chain`` keeps the loaders / paths tried, for Django's debug page
+        raise TemplateDoesNotExist(", ".join(names), chain=chain)
 
 
 class ImportMixin(BaseImportMixin, ImportExportMixinBase):
@@ -171,12 +190,9 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
             input_format = import_formats[int(confirm_form.cleaned_data["format"])](
                 encoding=self.from_encoding
             )
-            encoding = None if input_format.is_binary() else self.from_encoding
             tmp_storage_cls = self.get_tmp_storage_class()
             tmp_storage = tmp_storage_cls(
                 name=confirm_form.cleaned_data["import_file_name"],
-                encoding=encoding,
-                read_mode=input_format.get_read_mode(),
                 **self.get_tmp_storage_class_kwargs(),
             )
 
@@ -409,22 +425,16 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
             return kwargs
         return kwargs
 
-    def write_to_tmp_storage(self, import_file, input_format):
-        encoding = None
-        if not input_format.is_binary():
-            encoding = self.from_encoding
+    def read_import_file(self, import_file):
+        """
+        Return the raw ``bytes`` of an uploaded file.
+        """
+        return b"".join(import_file.chunks())
 
+    def write_to_tmp_storage(self, import_file):
         tmp_storage_cls = self.get_tmp_storage_class()
-        tmp_storage = tmp_storage_cls(
-            encoding=encoding,
-            read_mode=input_format.get_read_mode(),
-            **self.get_tmp_storage_class_kwargs(),
-        )
-        data = b""
-        for chunk in import_file.chunks():
-            data += chunk
-
-        tmp_storage.save(data)
+        tmp_storage = tmp_storage_cls(**self.get_tmp_storage_class_kwargs())
+        tmp_storage.save(self.read_import_file(import_file))
         return tmp_storage
 
     def add_data_read_fail_error_to_form(self, form, e):
@@ -451,9 +461,9 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         import_form = self.create_import_form(request)
         resources = []
         if request.POST and import_form.is_valid():
-            input_format = import_formats[int(import_form.cleaned_data["format"])]()
-            if not input_format.is_binary():
-                input_format.encoding = self.from_encoding
+            input_format = import_formats[int(import_form.cleaned_data["format"])](
+                encoding=self.from_encoding
+            )
             import_file = import_form.cleaned_data["import_file"]
 
             if self.is_skip_import_confirm_enabled():
@@ -463,9 +473,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
                 # rollback_on_validation_errors is set to True so that we rollback on
                 # validation errors. If this is not done validation errors would be
                 # silently skipped.
-                data = b""
-                for chunk in import_file.chunks():
-                    data += chunk
+                data = self.read_import_file(import_file)
                 try:
                     dataset = input_format.create_dataset(data)
                 except Exception as e:
@@ -487,7 +495,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
             else:
                 # first always write the uploaded file to disk as it may be a
                 # memory file or else based on settings upload handlers
-                tmp_storage = self.write_to_tmp_storage(import_file, input_format)
+                tmp_storage = self.write_to_tmp_storage(import_file)
                 # allows get_confirm_form_initial() to include both the
                 # original and saved file names from form.cleaned_data
                 import_file.tmp_storage_name = tmp_storage.name
@@ -503,7 +511,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
                 )
 
                 try:
-                    # then read the file, using the proper format-specific mode
+                    # then read the raw bytes back; the format handles decoding
                     # warning, big files may exceed memory
                     data = tmp_storage.read()
                     dataset = input_format.create_dataset(data)

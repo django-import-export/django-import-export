@@ -251,6 +251,33 @@ class SequenceResetTests(TestCase):
         self.assertEqual(1, Book.objects.count())
         mock_reset.assert_called_once()
 
+    def test_reset_executes_each_sequence_statement(self):
+        # SQLite has no sequences to reset, so emulate a backend which does
+        statements = ["SELECT setval(1);", "SELECT setval(2);"]
+        dataset = tablib.Dataset(headers=["id", "name"])
+        dataset.append([101, "Some book"])
+        mock_cursor = mock.Mock()
+        mock_connection = mock.Mock()
+        mock_connection.features.supports_transactions = (
+            self.connection.features.supports_transactions
+        )
+        mock_connection.ops.sequence_reset_sql.return_value = statements
+        mock_connection.cursor.return_value = mock_cursor
+
+        # the ORM needs the real connection to save the row, so only the
+        # lookups performed by the resource itself see the mocked connection
+        connection_name = self.resource.get_db_connection_name()
+        with mock.patch.object(
+            resources, "connections", {connection_name: mock_connection}
+        ):
+            result = self.resource.import_data(dataset, raise_errors=True)
+
+        self.assertEqual(results.RowResult.IMPORT_TYPE_NEW, result.rows[0].import_type)
+        self.assertEqual(
+            [mock.call(line) for line in statements], mock_cursor.execute.mock_calls
+        )
+        mock_cursor.close.assert_called_once()
+
     def test_reused_resource_does_not_reset_on_later_import_without_pk(self):
         # the flag tracking supplied pks must be re-initialized per import run
         dataset_with_pk = tablib.Dataset(headers=["id", "name"])

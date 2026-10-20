@@ -1,3 +1,4 @@
+import os
 import tempfile
 from io import BytesIO, StringIO, TextIOWrapper
 from unittest import mock
@@ -49,6 +50,24 @@ class ImportCommandTest(TestCase):
             )
 
         self.assertEqual(Book.objects.count(), 1)
+
+    def test_import_command_with_encoding(self):
+        # issue 2006: --encoding must be used to decode the input file
+        filename = os.path.join(
+            os.path.dirname(__file__), os.path.pardir, "exports", "books-ISO-8859-1.csv"
+        )
+        call_command(
+            "import",
+            "core.Book",
+            filename,
+            stdout=self.out,
+            stderr=self.err,
+            format="CSV",
+            encoding="ISO-8859-1",
+            interactive=False,
+        )
+
+        self.assertEqual("Merci \u00e0 toi", Book.objects.get().name)
 
     @patch("sys.stdin", new_callable=lambda: TextIOWrapper(BytesIO()))
     def test_import_command_with_stdin(self, mock_stdin):

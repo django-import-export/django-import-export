@@ -1,12 +1,16 @@
 import json
+import sys
+import zoneinfo
 from datetime import date, datetime, time, timedelta
 from decimal import Decimal
+from time import process_time
 from unittest import mock
 from unittest.mock import patch
 from zoneinfo import ZoneInfo
 
 import tablib
 from core.models import Author, Book, Category
+from django.apps import apps
 from django.db import connection
 from django.test import TestCase
 from django.test.utils import CaptureQueriesContext, override_settings
@@ -133,6 +137,16 @@ class DateWidgetTest(TestCase):
         self.date = date(10, 8, 2)
         self.assertEqual(self.widget.render(self.date), "02.08.0010")
 
+    def test_is_equal(self):
+        """
+        DateWidget inherits is_equal() from _ParseDateTimeMixin.
+        date values have no sub-second component, so they are compared as-is.
+        """
+        self.assertTrue(self.widget.is_equal(self.date, date(2012, 8, 13)))
+        self.assertFalse(self.widget.is_equal(self.date, date(2012, 8, 14)))
+        self.assertTrue(self.widget.is_equal(None, None))
+        self.assertFalse(self.widget.is_equal(self.date, None))
+
     def test_clean(self):
         self.assertEqual(self.widget.clean("13.08.2012"), self.date)
 
@@ -236,6 +250,132 @@ class DateTimeWidgetTest(TestCase):
     def test_clean_returns_datetime_when_datetime_passed(self):
         self.assertEqual(self.datetime, self.widget.clean(self.datetime))
 
+    def test_is_equal_ignores_microsecond_difference(self):
+        """
+        Regression test for
+        https://github.com/django-import-export/django-import-export/issues/2018
+
+        The default text format has no sub-second precision, and even
+        native (e.g. xlsx) export/import round-trips can lose
+        microsecond precision. is_equal() should treat two datetimes
+        differing only in microseconds as equal, so re-importing
+        unmodified, previously-exported data is correctly detected as
+        unchanged.
+        """
+        dt1 = datetime(2024, 11, 19, 12, 54, 31, 838000)
+        dt2 = datetime(2024, 11, 19, 12, 54, 31, 837623)
+        self.assertTrue(self.widget.is_equal(dt1, dt2))
+
+    def test_is_equal_detects_second_level_difference(self):
+        dt1 = datetime(2024, 11, 19, 12, 54, 31)
+        dt2 = datetime(2024, 11, 19, 12, 54, 36)
+        self.assertFalse(self.widget.is_equal(dt1, dt2))
+
+    def test_is_equal_ignores_rounding_across_second_boundary(self):
+        """
+        A numeric (e.g. xlsx) round-trip can round a value *up* into the next
+        second. Truncating microseconds would wrongly report this as a change.
+        """
+        dt1 = datetime(2024, 11, 19, 12, 54, 31, 999900)
+        dt2 = datetime(2024, 11, 19, 12, 54, 32, 0)
+        self.assertTrue(self.widget.is_equal(dt1, dt2))
+        self.assertTrue(self.widget.is_equal(dt2, dt1))
+
+    def test_is_equal_detects_exactly_one_second_difference(self):
+        dt1 = datetime(2024, 11, 19, 12, 54, 31)
+        dt2 = datetime(2024, 11, 19, 12, 54, 32)
+        self.assertFalse(self.widget.is_equal(dt1, dt2))
+
+    def test_is_equal_detects_edit_across_second_boundary(self):
+        """
+        A persisted value of 31.5s is exported as "31".  If the user edits the
+        exported cell to "32", that is a genuine change and must not be
+        absorbed by the rounding tolerance.
+        """
+        persisted = datetime(2024, 11, 19, 12, 54, 31, 500000)
+        edited = datetime(2024, 11, 19, 12, 54, 32)
+        self.assertFalse(self.widget.is_equal(edited, persisted))
+        self.assertFalse(self.widget.is_equal(persisted, edited))
+
+    def test_is_equal_subsecond_format_detects_microsecond_difference(self):
+        """
+        If the format preserves microseconds then a sub-second difference
+        survives the export round-trip and is a genuine change.
+        """
+        widget = widgets.DateTimeWidget(format="%Y-%m-%d %H:%M:%S.%f")
+        dt1 = datetime(2024, 11, 19, 12, 54, 31, 100000)
+        dt2 = datetime(2024, 11, 19, 12, 54, 31, 900000)
+        self.assertFalse(widget.is_equal(dt1, dt2))
+        self.assertTrue(widget.is_equal(dt1, dt1))
+
+    def test_is_equal_subsecond_format_ignores_rounding(self):
+        """
+        Even with a sub-second format, a numeric (xlsx) round-trip can round
+        the value by a fraction of a millisecond.
+        """
+        widget = widgets.DateTimeWidget(format="%Y-%m-%d %H:%M:%S.%f")
+        dt1 = datetime(2024, 11, 19, 12, 54, 31, 837623)
+        dt2 = datetime(2024, 11, 19, 12, 54, 31, 838000)
+        self.assertTrue(widget.is_equal(dt1, dt2))
+
+    def test_is_equal_detects_native_subsecond_edit(self):
+        """
+        A native (xlsx) export preserves microseconds, so a sub-second edit
+        to such a file is a genuine change even with the default format.
+        """
+        persisted = datetime(2024, 11, 19, 12, 54, 31, 100000)
+        edited = datetime(2024, 11, 19, 12, 54, 31, 900000)
+        self.assertFalse(self.widget.is_equal(edited, persisted))
+
+    def test_is_equal_coarse_format_round_trip(self):
+        """
+        The comparison is at the precision of the widget's own format, so a
+        format which drops seconds treats the re-imported value as unchanged.
+        """
+        widget = widgets.DateTimeWidget(format="%Y-%m-%d %H:%M")
+        persisted = datetime(2024, 11, 19, 12, 54, 31, 838000)
+        reimported = widget.clean(widget.render(persisted))
+        self.assertEqual(datetime(2024, 11, 19, 12, 54), reimported)
+        self.assertTrue(widget.is_equal(reimported, persisted))
+        self.assertFalse(widget.is_equal(datetime(2024, 11, 19, 12, 55), persisted))
+
+    def test_is_equal_when_round_trip_fails(self):
+        """
+        A ``%Z`` directive renders a naive datetime with an empty zone name,
+        which cannot be parsed back.  No text round-trip can then match the
+        persisted value, so only the tolerance check applies.
+        """
+        widget = widgets.DateTimeWidget(format="%Y-%m-%d %H:%M:%S %Z")
+        persisted = datetime(2024, 11, 19, 12, 54, 31, 838000)
+        with self.assertRaises(ValueError):
+            widget.clean(widget.render(persisted))
+        self.assertFalse(widget.is_equal(datetime(2024, 11, 19, 12, 54, 31), persisted))
+        self.assertTrue(widget.is_equal(persisted, persisted))
+
+    @override_settings(USE_TZ=True, TIME_ZONE="Europe/London")
+    def test_is_equal_during_dst_fold(self):
+        """
+        01:30 on 27 Oct 2024 occurs twice in Europe/London.  Comparing aware
+        datetimes in different zones with ``==`` returns False during such a
+        fold (PEP 495), so the comparison must be by instant.
+        """
+        persisted = datetime(
+            2024, 10, 27, 0, 30, 0, 838000, tzinfo=zoneinfo.ZoneInfo("UTC")
+        )
+        reimported = self.widget.clean(self.widget.render(persisted))
+        self.assertTrue(self.widget.is_equal(reimported, persisted))
+
+    def test_is_equal_aware_vs_naive(self):
+        naive = datetime(2024, 11, 19, 12, 54, 31)
+        aware = timezone.make_aware(naive, timezone=timezone.get_default_timezone())
+        self.assertFalse(self.widget.is_equal(naive, aware))
+        self.assertTrue(self.widget.is_equal(aware, aware))
+
+    def test_is_equal_handles_none(self):
+        self.assertTrue(self.widget.is_equal(None, None))
+        self.assertFalse(self.widget.is_equal(self.datetime, None))
+        self.assertFalse(self.widget.is_equal(None, self.datetime))
+
     def test_render_datetime_safe(self):
         """datetime_safe is supposed to be used to support dates older than 1000"""
         self.datetime = datetime(10, 8, 2)
@@ -298,6 +438,49 @@ class TimeWidgetTest(TestCase):
 
     def test_clean(self):
         self.assertEqual(self.widget.clean("20:15:00"), self.time)
+
+    def test_is_equal_ignores_microsecond_difference(self):
+        t1 = time(20, 15, 0, 838000)
+        t2 = time(20, 15, 0, 837623)
+        self.assertTrue(self.widget.is_equal(t1, t2))
+
+    def test_is_equal_detects_second_level_difference(self):
+        self.assertFalse(self.widget.is_equal(time(20, 15, 0), time(20, 15, 5)))
+
+    def test_is_equal_ignores_rounding_across_second_boundary(self):
+        t1 = time(20, 15, 0, 999900)
+        t2 = time(20, 15, 1, 0)
+        self.assertTrue(self.widget.is_equal(t1, t2))
+        self.assertTrue(self.widget.is_equal(t2, t1))
+
+    def test_is_equal_detects_exactly_one_second_difference(self):
+        self.assertFalse(self.widget.is_equal(time(20, 15, 0), time(20, 15, 1)))
+
+    def test_is_equal_detects_edit_across_second_boundary(self):
+        persisted = time(20, 15, 0, 500000)
+        edited = time(20, 15, 1)
+        self.assertFalse(self.widget.is_equal(edited, persisted))
+
+    def test_is_equal_subsecond_format_detects_microsecond_difference(self):
+        widget = widgets.TimeWidget(format="%H:%M:%S.%f")
+        self.assertFalse(
+            widget.is_equal(time(20, 15, 0, 100000), time(20, 15, 0, 900000))
+        )
+        self.assertTrue(
+            widget.is_equal(time(20, 15, 0, 837623), time(20, 15, 0, 838000))
+        )
+
+    def test_is_equal_coarse_format_round_trip(self):
+        widget = widgets.TimeWidget(format="%H:%M")
+        persisted = time(20, 15, 31, 838000)
+        reimported = widget.clean(widget.render(persisted))
+        self.assertEqual(time(20, 15), reimported)
+        self.assertTrue(widget.is_equal(reimported, persisted))
+        self.assertFalse(widget.is_equal(time(20, 16), persisted))
+
+    def test_is_equal_handles_none(self):
+        self.assertTrue(self.widget.is_equal(None, None))
+        self.assertFalse(self.widget.is_equal(self.time, None))
 
     @override_settings(TIME_INPUT_FORMATS=None)
     def test_default_format(self):
@@ -530,6 +713,28 @@ class IntegerWidgetTest(TestCase):
     @override_settings(LANGUAGE_CODE="fr-fr")
     def test_locale_render_gte_django4(self):
         self.assertEqual(self.widget_coerce_to_string.render(self.value), "0")
+
+    def test_clean_exponent_notation(self):
+        # legitimate exponent notation within bounds is still accepted
+        self.assertEqual(self.widget.clean("1e5"), 100000)
+
+    def test_clean_oversized_magnitude_raises(self):
+        # a crafted large-exponent value must be rejected rather than stalling
+        # the process on an expensive Decimal-to-int conversion (DoS guard).
+        start = process_time()
+        with self.assertRaises(ValueError):
+            self.widget.clean("1e1000000")
+        # the guard must trip before any costly conversion is attempted
+        self.assertLess(process_time() - start, 1.0)
+
+    def test_clean_oversized_digit_string_raises(self):
+        with self.assertRaises(ValueError):
+            self.widget.clean("9" * (sys.get_int_max_str_digits() + 1))
+
+    def test_clean_at_digit_limit_boundary(self):
+        # a value just under the limit is still accepted
+        digits = sys.get_int_max_str_digits() - 1
+        self.assertEqual(self.widget.clean("9" * digits), int("9" * digits))
 
 
 class ForeignKeyWidgetTest(TestCase):
@@ -930,8 +1135,151 @@ class ManyToManyWidget(TestCase):
             f"{self.cat1.name},{self.cat2.name}",
         )
 
+    def test_is_equal(self):
+        self.assertTrue(
+            self.widget.is_equal([self.cat1, self.cat2], [self.cat1, self.cat2])
+        )
+        self.assertTrue(self.widget.is_equal([], []))
+
+    def test_is_equal_ignores_order(self):
+        self.assertTrue(
+            self.widget.is_equal([self.cat1, self.cat2], [self.cat2, self.cat1])
+        )
+
+    def test_is_equal_detects_difference(self):
+        self.assertFalse(self.widget.is_equal([self.cat1], [self.cat1, self.cat2]))
+        self.assertFalse(self.widget.is_equal([self.cat1], [self.cat2]))
+        self.assertFalse(self.widget.is_equal([self.cat1], []))
+
+    def test_is_equal_accepts_querysets(self):
+        self.assertTrue(
+            self.widget.is_equal(
+                Category.objects.filter(pk=self.cat1.pk),
+                Category.objects.filter(pk=self.cat1.pk),
+            )
+        )
+
     def test_render_value_none_as_blank(self):
         self.assertEqual("", self.widget.render(None))
+
+
+class RelatedModelWidgetStringModelTest(TestCase):
+    """
+    ForeignKeyWidget, CachedForeignKeyWidget and ManyToManyWidget accept the
+    related model as an ``"app_label.ModelName"`` string, resolved lazily
+    (issue 2125).
+    """
+
+    def setUp(self):
+        self.author = Author.objects.create(name="Foo")
+        self.cat1 = Category.objects.create(name="Cat 1")
+        self.cat2 = Category.objects.create(name="Cat 2")
+
+    def test_foreign_key_widget_string_model(self):
+        widget = widgets.ForeignKeyWidget("core.Author", field="name")
+        self.assertIs(widget.model, Author)
+        self.assertEqual(widget.clean("Foo"), self.author)
+        self.assertEqual(widget.render(self.author), "Foo")
+
+    def test_cached_foreign_key_widget_string_model(self):
+        widget = widgets.CachedForeignKeyWidget("core.Author", field="name")
+        self.assertIs(widget.model, Author)
+        self.assertEqual(widget.clean("Foo"), self.author)
+
+    def test_many_to_many_widget_string_model(self):
+        widget = widgets.ManyToManyWidget("core.Category", field="name")
+        self.assertIs(widget.model, Category)
+        cleaned = widget.clean("Cat 1,Cat 2")
+        self.assertCountEqual(cleaned, [self.cat1, self.cat2])
+        self.assertEqual(widget.render(Category.objects.all()), "Cat 1,Cat 2")
+
+    def test_many_to_many_widget_string_model_empty_value(self):
+        widget = widgets.ManyToManyWidget("core.Category")
+        self.assertEqual(list(widget.clean("")), [])
+
+    def test_model_class_still_accepted(self):
+        widget = widgets.ForeignKeyWidget(Author)
+        self.assertIs(widget.model, Author)
+
+    def test_string_model_is_resolved_eagerly_when_registry_ready(self):
+        with mock.patch.object(apps, "get_model", wraps=apps.get_model) as get_model:
+            widget = widgets.ForeignKeyWidget("core.Author")
+            get_model.assert_called_once_with("core.Author")
+            self.assertIs(widget.model, Author)
+            # not resolved again on access
+            get_model.assert_called_once_with("core.Author")
+
+    def test_string_model_is_resolved_lazily_when_registry_not_ready(self):
+        with mock.patch.object(apps, "models_ready", False):
+            with mock.patch.object(
+                apps, "get_model", wraps=apps.get_model
+            ) as get_model:
+                widget = widgets.ForeignKeyWidget("core.Author")
+                get_model.assert_not_called()
+        # registry is ready again: resolved on first access and cached
+        with mock.patch.object(apps, "get_model", wraps=apps.get_model) as get_model:
+            self.assertIs(widget.model, Author)
+            self.assertIs(widget.model, Author)
+            get_model.assert_called_once_with("core.Author")
+
+    def test_bare_model_name_string_not_supported(self):
+        with self.assertRaises(ValueError):
+            widgets.ForeignKeyWidget("Author")
+
+    def test_meta_model_string(self):
+        class BookResource(resources.ModelResource):
+            class Meta:
+                model = "core.Book"
+                fields = ("id", "name")
+
+        self.assertIs(BookResource._meta.model, Book)
+        self.assertIn("name", BookResource.fields)
+
+    def test_invalid_string_model_raises_at_declaration(self):
+        with self.assertRaises(LookupError):
+            widgets.ForeignKeyWidget("core.DoesNotExist")
+
+    def test_invalid_string_model_raises_on_access_when_registry_not_ready(self):
+        with mock.patch.object(apps, "models_ready", False):
+            widget = widgets.ForeignKeyWidget("core.DoesNotExist")
+        with self.assertRaises(LookupError):
+            widget.model
+
+    def test_model_can_be_reassigned(self):
+        widget = widgets.ForeignKeyWidget("core.Author")
+        widget.model = Category
+        self.assertIs(widget.model, Category)
+        widget.model = "core.Author"
+        self.assertIs(widget.model, Author)
+
+    def test_resource_with_string_model_widgets(self):
+        class BookResource(resources.ModelResource):
+            author = fields.Field(
+                attribute="author",
+                column_name="author",
+                widget=widgets.ForeignKeyWidget("core.Author", field="name"),
+            )
+            categories = fields.Field(
+                attribute="categories",
+                column_name="categories",
+                widget=widgets.ManyToManyWidget("core.Category", field="name"),
+            )
+
+            class Meta:
+                model = Book
+                fields = ("id", "name", "author", "categories")
+
+        dataset = tablib.Dataset(headers=["id", "name", "author", "categories"])
+        dataset.append(["", "Book 1", "Foo", "Cat 1,Cat 2"])
+        result = BookResource().import_data(dataset, raise_errors=True)
+        self.assertFalse(result.has_errors())
+        book = Book.objects.get(name="Book 1")
+        self.assertEqual(book.author, self.author)
+        self.assertCountEqual(book.categories.all(), [self.cat1, self.cat2])
+
+        exported = BookResource().export(queryset=Book.objects.filter(pk=book.pk))
+        self.assertEqual(exported.dict[0]["author"], "Foo")
+        self.assertEqual(exported.dict[0]["categories"], "Cat 1,Cat 2")
 
 
 class JSONWidgetTest(TestCase):

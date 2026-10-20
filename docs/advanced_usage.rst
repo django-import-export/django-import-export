@@ -548,6 +548,34 @@ declaration.
         class Meta:
             model = Book
 
+.. _related_model_as_string:
+
+Referencing the related model by name
+-------------------------------------
+
+``ForeignKeyWidget``, ``CachedForeignKeyWidget`` and ``ManyToManyWidget`` accept the related model either as a model
+class or as an ``"app_label.ModelName"`` string, which can be used to avoid circular imports between apps.  A
+string is resolved via the app registry when the widget is created, or, if the registry is not yet ready at that
+point, the first time the widget needs the model.  Only the dotted
+``"app_label.ModelName"`` form is supported, not the bare ``"ModelName"`` form accepted by Django's ``ForeignKey``::
+
+    class BookResource(resources.ModelResource):
+        author = fields.Field(
+            column_name='author',
+            attribute='author',
+            widget=widgets.ForeignKeyWidget('core.Author', field='name'))
+
+        categories = fields.Field(
+            column_name='categories',
+            attribute='categories',
+            widget=widgets.ManyToManyWidget('core.Category', field='name', separator='|'))
+
+        class Meta:
+            model = 'core.Book'
+
+As shown above, the ``Meta.model`` attribute of a resource may also be given as an ``"app_label.ModelName"`` string.
+Note that ``Meta.model`` is resolved when the resource class is created, not lazily.
+
 .. _creating-non-existent-relations:
 
 Creating non-existent relations
@@ -809,8 +837,39 @@ the data in the import row is the same as the persisted data or not.  You can co
 row if it is duplicate by using setting :attr:`~import_export.options.ResourceOptions.skip_unchanged`.
 
 If :attr:`~import_export.options.ResourceOptions.skip_unchanged` is enabled, then the import process will check each
-defined import field and perform a simple comparison with the existing instance, and if all comparisons are equal, then
-the row is skipped.  Skipped rows are recorded in the row :class:`~import_export.results.RowResult` object.
+defined import field and compare the imported value with the value on the existing instance, and if all comparisons are
+equal, then the row is skipped.  Skipped rows are recorded in the row :class:`~import_export.results.RowResult` object.
+
+The comparison for each field is delegated to the field's widget via
+:meth:`~import_export.widgets.Widget.is_equal`.  By default this is a plain equality check, but some widgets override it
+where an export / import round-trip cannot preserve the persisted value exactly.
+:class:`~import_export.widgets.TimeWidget` and :class:`~import_export.widgets.DateTimeWidget` treat an imported value as
+unchanged if it matches either the persisted value or what that value becomes after an export / import round-trip
+through the widget's own format, allowing for a small ``rounding_tolerance`` to absorb spreadsheet rounding.  For
+example, the default datetime format has no sub-second precision, so re-importing an unmodified export is detected as
+unchanged even though the persisted value has microseconds, while a genuine edit of one second or more is still
+detected.  :class:`~import_export.widgets.DateWidget` compares dates directly, since they have no sub-second component.
+:class:`~import_export.widgets.ManyToManyWidget` compares related objects regardless of order.
+
+The import preview diff uses the same comparison, so values which are equal but render differently (for example a
+``DecimalField`` value of ``1803.60`` imported from a spreadsheet cell as ``1803.6``) are not shown as a change.
+
+If you need to change how a single field is compared, override :meth:`~import_export.widgets.Widget.is_equal` on a
+custom widget rather than reimplementing :meth:`~.skip_row`.  For example, to treat a text field as unchanged if it
+differs only in surrounding whitespace::
+
+    class StrippedCharWidget(widgets.CharWidget):
+
+        def is_equal(self, instance_value, original_value, **kwargs):
+            return (instance_value or "").strip() == (original_value or "").strip()
+
+
+    class BookResource(resources.ModelResource):
+        name = fields.Field(attribute="name", column_name="name", widget=StrippedCharWidget())
+
+        class Meta:
+            model = Book
+            skip_unchanged = True
 
 You can override the :meth:`~.skip_row` method to have full control over the skip row implementation.
 

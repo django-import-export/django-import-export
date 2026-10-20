@@ -276,9 +276,7 @@ Customize admin import forms
 
 It is possible to modify default import forms used in the model admin. For
 example, to add an additional field in the import form, subclass and extend the
-:class:`~import_export.forms.ImportForm` (note that you may want to also
-consider :class:`~import_export.forms.ConfirmImportForm` as importing is a
-two-step process).
+:class:`~import_export.forms.ImportForm`.
 
 To use your customized form(s), change the respective attributes on your
 ``ModelAdmin`` class:
@@ -348,6 +346,15 @@ Then add the following to ``EBookResource`` class (in ``tests/core/admin.py``)::
 
 The selected author is now set as an attribute on the instance object.  When the instance is saved,
 then the author is set as a foreign key relation to the instance.
+
+.. warning::
+
+    Importing is a two-step process when the confirmation step is enabled (the default).
+    The import form and the confirm form are submitted in separate requests, so any
+    additional field must be declared on **both** :class:`~import_export.forms.ImportForm`
+    and :class:`~import_export.forms.ConfirmImportForm`, and its value passed across using
+    :meth:`~import_export.admin.ImportMixin.get_confirm_form_initial`.  If the field is
+    missing from the confirm form, its value is not available when the import is processed.
 
 Further customization
 ---------------------
@@ -516,9 +523,25 @@ libraries which also use the admin interface.
 django-admin-sortable2
 ^^^^^^^^^^^^^^^^^^^^^^
 
-Issues have been raised due to conflicts with setting `change_list_template <https://docs.djangoproject.com/en/stable/ref/contrib/admin/#django.contrib.admin.ModelAdmin.change_list_template>`_.  There is a workaround listed `here <https://github.com/jrief/django-admin-sortable2/issues/345#issuecomment-1680271337>`_.
-Also, refer to `this issue <https://github.com/django-import-export/django-import-export/issues/1531>`_.
-If you want to patch your own installation to fix this, a patch is available `here <https://github.com/django-import-export/django-import-export/pull/1607>`_.
+Prior to v5, the import / export links were hidden when ``ImportExportMixin`` was combined with
+``SortableAdminMixin``, because both libraries attempted to control
+`change_list_template <https://docs.djangoproject.com/en/stable/ref/contrib/admin/#django.contrib.admin.ModelAdmin.change_list_template>`_.
+
+From v5, the import / export change list template extends whichever template would otherwise have been used, resolved
+on each request, so the two libraries can be combined without a workaround::
+
+  class BookAdmin(SortableAdminMixin, ImportExportModelAdmin):
+      ...
+
+``SortableAdminMixin`` must come before ``ImportExportModelAdmin`` (or ``ModelAdmin``) in the bases, since it does not
+itself subclass ``ModelAdmin``; placed after it, ``ModelAdmin`` shadows its ``change_list_template`` and
+``changelist_view()`` and the sorting UI is not shown.  The order of ``ImportExportMixin`` relative to
+``SortableAdminMixin`` does not matter.
+
+If you have applied a workaround for this issue (such as overriding ``init_change_list_template()`` or setting
+``change_list_template`` to one of this library's templates), remove it when upgrading: it is no longer needed, and
+a ``change_list_template`` which points at one of this library's templates now fails with ``TemplateDoesNotExist``.
+Refer to `this issue <https://github.com/django-import-export/django-import-export/issues/2205>`_.
 
 django-polymorphic
 ^^^^^^^^^^^^^^^^^^

@@ -15,6 +15,7 @@ from django.core.paginator import Paginator
 from django.db import connections, router
 from django.db.models import fields
 from django.db.models.fields.related import ForeignKey
+from django.db.models.manager import BaseManager
 from django.db.models.query import QuerySet
 from django.db.transaction import TransactionManagementError, set_rollback
 from django.utils.encoding import force_str
@@ -42,18 +43,63 @@ def has_natural_foreign_key(model):
 
 
 class Diff:
-    def __init__(self, resource, instance, new):
-        self.left = Diff._read_field_values(resource, instance)
-        self.right = []
+    """
+    Records how an instance changes during the import of a single row, for
+    display in the import preview.
+
+    An instance is created in :meth:`~import_export.resources.Resource.import_row`
+    before the row is applied, capturing the persisted ("before") values of every
+    import field, and :meth:`compare_with` is called after the row has been
+    applied to capture the "after" values.  :meth:`as_html` then renders one
+    HTML fragment per field, with insertions and deletions marked up, which
+    :class:`~import_export.results.RowResult` stores as ``diff``.
+
+    Values are compared by their rendered (export) form, since that is what the
+    preview displays.  Where the rendered forms differ but the field's widget
+    reports the underlying values as equal via
+    :meth:`~import_export.widgets.Widget.is_equal` (for example a ``Decimal``
+    which only differs in trailing zeros), the persisted value is shown unchanged.
+
+    The class used can be replaced by overriding
+    :meth:`~import_export.resources.Resource.get_diff_class`.  Diff generation
+    can be disabled with :attr:`~import_export.options.ResourceOptions.skip_diff`,
+    or the HTML rendering alone with
+    :attr:`~import_export.options.ResourceOptions.skip_html_diff`.
+
+    :param resource: The :class:`~import_export.resources.Resource` performing
+        the import, used to obtain the import fields.
+    :param instance: The instance before the row is applied.
+    :param new: ``True`` if the instance was created for this row, in which case
+        the "before" values are shown as empty.
+    :param row: The import row as a ``dict``, passed to each widget's
+        :meth:`~import_export.widgets.Widget.is_equal`.
+    """
+
+    def __init__(self, resource, instance, new, row=None):
+        self.fields = resource.get_import_fields()
         self.new = new
+        self.row = row
+        self.left_values = self._read_raw_field_values(instance)
+        self.left = self._read_field_values(instance)
+        self.right_values = []
+        self.right = []
 
     def compare_with(self, resource, instance):
-        self.right = Diff._read_field_values(resource, instance)
+        self.right_values = self._read_raw_field_values(instance)
+        self.right = self._read_field_values(instance)
 
     def as_html(self):
         data = []
         dmp = diff_match_patch()
-        for v1, v2 in zip(self.left, self.right):
+        for field, v1, v2, raw1, raw2 in zip(
+            self.fields, self.left, self.right, self.left_values, self.right_values
+        ):
+            if not self.new and v1 != v2 and self._is_equal(field, raw1, raw2):
+                # The values render differently but the widget considers them
+                # equal (e.g. Decimal("1803.60") persisted vs Decimal("1803.6")
+                # imported), so show the persisted value rather than a spurious
+                # change (#1425).  A new row has no persisted value to show.
+                v2 = v1
             if v1 != v2 and self.new:
                 v1 = ""
             diff = dmp.diff_main(force_str(v1), force_str(v2))
@@ -63,12 +109,35 @@ class Diff:
             data.append(html)
         return data
 
-    @classmethod
-    def _read_field_values(cls, resource, instance):
-        return [
-            f.export(instance, sort_json_keys=True)
-            for f in resource.get_import_fields()
-        ]
+    def _is_equal(self, field, original_value, instance_value):
+        """
+        Return ``True`` if the widget considers the persisted (original) value
+        and the imported (instance) value to be equal.
+        ``None`` is only ever equal to ``None``.
+        """
+        if original_value is None or instance_value is None:
+            return original_value is instance_value
+        lazy_types = (BaseManager, QuerySet)
+        if isinstance(original_value, lazy_types) or isinstance(
+            instance_value, lazy_types
+        ):
+            # Related managers and querysets are lazy, so by the time the diff
+            # is rendered the original already reflects the saved state.  Fall
+            # back to comparing the rendered values, which were read eagerly.
+            return False
+        try:
+            return field.widget.is_equal(instance_value, original_value, row=self.row)
+        except Exception as e:
+            # The diff is presentational: a failing comparison must not turn a
+            # successfully imported row into an error.
+            logger.debug(e, exc_info=True)
+            return False
+
+    def _read_field_values(self, instance):
+        return [f.export(instance, sort_json_keys=True) for f in self.fields]
+
+    def _read_raw_field_values(self, instance):
+        return [f.get_value(instance) for f in self.fields]
 
 
 class Resource(metaclass=DeclarativeMetaclass):
@@ -329,8 +398,16 @@ class Resource(metaclass=DeclarativeMetaclass):
         :param instance: The model instance to be saved.
         :param is_create: A boolean flag to indicate whether this is a new object
                           to be created, or an existing object to be updated.
+
+        When ``is_create`` is ``True`` the instance is saved with
+        ``force_insert=True`` so that a row classified as new can never update an
+        existing database row.  This can happen when the import supplies a primary
+        key which exists in the database but which was not found by the
+        :ref:`instance loader <instance-loaders>`, for example because
+        :meth:`~import_export.resources.Resource.get_queryset` is filtered.  In this
+        case an ``IntegrityError`` is raised and the row is reported as an error.
         """
-        instance.save()
+        instance.save(force_insert=is_create)
 
     def before_save_instance(self, instance, row, **kwargs):
         r"""
@@ -561,26 +638,21 @@ class Resource(metaclass=DeclarativeMetaclass):
         ):
             return False
         for field in self.get_import_fields():
-            # For fields that are models.fields.related.ManyRelatedManager
-            # we need to compare the results
             if isinstance(field.widget, widgets.ManyToManyWidget):
                 # #1437 - handle m2m field not present in import file
                 if field.column_name not in row.keys():
                     continue
                 # m2m instance values are taken from the 'row' because they
-                # have not been written to the 'instance' at this point
-                instance_values = list(field.clean(row))
-                original_values = (
-                    [] if original.pk is None else list(field.get_value(original).all())
+                # have not been written to the 'instance' at this point, and
+                # an unsaved original cannot have any related objects.
+                instance_value = field.clean(row)
+                original_value = (
+                    [] if original.pk is None else field.get_value(original).all()
                 )
-                if len(instance_values) != len(original_values):
-                    return False
-
-                if sorted(v.pk for v in instance_values) != sorted(
-                    v.pk for v in original_values
-                ):
-                    return False
-            elif field.get_value(instance) != field.get_value(original):
+            else:
+                instance_value = field.get_value(instance)
+                original_value = field.get_value(original)
+            if not field.widget.is_equal(instance_value, original_value, row=row):
                 return False
         return True
 
@@ -707,7 +779,7 @@ class Resource(metaclass=DeclarativeMetaclass):
                 row_result.import_type = RowResult.IMPORT_TYPE_UPDATE
             if not skip_diff:
                 original = deepcopy(instance)
-                diff = self.get_diff_class()(self, original, new)
+                diff = self.get_diff_class()(self, original, new, row=row)
             if self.for_delete(row, instance):
                 if new:
                     row_result.import_type = RowResult.IMPORT_TYPE_SKIP

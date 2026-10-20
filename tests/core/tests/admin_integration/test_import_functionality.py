@@ -5,7 +5,9 @@ from core.admin import BookAdmin, EBookResource, ImportMixin
 from core.models import Author, Book, Parent
 from core.tests.admin_integration.mixins import AdminTestMixin
 from django.contrib.admin.models import DELETION, LogEntry
+from django.contrib.admin.sites import AdminSite
 from django.core.exceptions import ValidationError
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test.testcases import TestCase, TransactionTestCase
 from django.test.utils import override_settings
 from django.utils.translation import gettext_lazy as _
@@ -13,6 +15,7 @@ from django.utils.translation import gettext_lazy as _
 from import_export.admin import ExportMixin
 from import_export.formats import base_formats
 from import_export.resources import ModelResource
+from import_export.tmp_storages import MediaStorage, TempFolderStorage
 
 
 class BookResourceWithFileNameTracking(ModelResource):
@@ -208,6 +211,15 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
             self._get_url_response(self.book_import_url)
 
 
+class WriteToTmpStorageTest(TestCase):
+    def test_write_to_tmp_storage_saves_bytes(self):
+        admin = BookAdmin(Book, AdminSite())
+        upload = SimpleUploadedFile("books.csv", b"id,name\n1,Foo\n")
+        tmp_storage = admin.write_to_tmp_storage(upload)
+        self.addCleanup(tmp_storage.remove)
+        self.assertEqual(b"id,name\n1,Foo\n", tmp_storage.read())
+
+
 class ImportFileHandlingTests(AdminTestMixin, TestCase):
 
     @override_settings(TEMPLATE_STRING_IF_INVALID="INVALID_VARIABLE")
@@ -330,6 +342,7 @@ class ImportLogEntryTest(AdminTestMixin, TestCase):
         self.assertEqual(response.status_code, 200)
         confirm_form = response.context["confirm_form"]
         data = confirm_form.initial
+        self._prepend_form_prefix(data)
         self._post_url_response(self.book_process_import_url, data, follow=True)
         self.assertEqual(0, LogEntry.objects.count())
 
@@ -340,6 +353,7 @@ class ImportLogEntryTest(AdminTestMixin, TestCase):
         self.assertEqual(response.status_code, 200)
         confirm_form = response.context["confirm_form"]
         data = confirm_form.initial
+        self._prepend_form_prefix(data)
         with mock.patch("core.admin.BookResource.skip_row") as mock_skip:
             mock_skip.side_effect = ValueError("some unknown error")
             self._post_url_response(self.book_process_import_url, data, follow=True)
@@ -352,6 +366,7 @@ class ImportLogEntryTest(AdminTestMixin, TestCase):
         self.assertEqual(response.status_code, 200)
         confirm_form = response.context["confirm_form"]
         data = confirm_form.initial
+        self._prepend_form_prefix(data)
         with mock.patch("core.admin.BookResource.skip_row") as mock_skip:
             mock_skip.side_effect = ValidationError("some unknown error")
             self._post_url_response(self.book_process_import_url, data, follow=True)
@@ -364,6 +379,7 @@ class ImportLogEntryTest(AdminTestMixin, TestCase):
         self.assertEqual(response.status_code, 200)
         confirm_form = response.context["confirm_form"]
         data = confirm_form.initial
+        self._prepend_form_prefix(data)
         self._post_url_response(self.book_process_import_url, data, follow=True)
         self.assertEqual(0, LogEntry.objects.count())
 
@@ -373,6 +389,7 @@ class ImportLogEntryTest(AdminTestMixin, TestCase):
         self.assertEqual(response.status_code, 200)
         confirm_form = response.context["confirm_form"]
         data = confirm_form.initial
+        self._prepend_form_prefix(data)
         with mock.patch(
             "import_export.admin.ImportMixin.skip_admin_log",
             new_callable=PropertyMock,
@@ -729,3 +746,89 @@ class GetImportFieldsTest(AdminTestMixin, TestCase):
                     f"Export field '{unexpected_field}' should NOT be in "
                     f"import fields_list",
                 )
+
+
+class CustomDelimiterCSVFormat(base_formats.TextFormat):
+    """
+    A ``TextFormat`` subclass which customises how tablib parses the input,
+    as a user would do to import a csv with a non-default delimiter (#2006).
+    Records the type of ``in_stream`` it was given.
+    """
+
+    TABLIB_MODULE = "tablib.formats._csv"
+    CONTENT_TYPE = "text/csv"
+    received_types = []
+
+    def create_dataset(self, in_stream, **kwargs):
+        type(self).received_types.append(type(in_stream))
+        return super().create_dataset(in_stream, delimiter=",", **kwargs)
+
+
+class TextFormatSubclassImportTest(AdminTestMixin, TestCase):
+    """
+    Regression tests for #2006.
+
+    ``create_dataset()`` must receive the uploaded data as ``bytes`` regardless
+    of whether the confirmation step is skipped or which temporary storage is
+    in use, so that ``TextFormat`` subclasses see one consistent input type.
+    """
+
+    fixtures = ["author"]
+    success_msg = _(
+        "Import finished: {} new, {} updated, {} deleted and {} skipped {}."
+    ).format(1, 0, 0, 0, Book._meta.verbose_name_plural)
+
+    def setUp(self):
+        super().setUp()
+        CustomDelimiterCSVFormat.received_types.clear()
+        p = patch.object(
+            BookAdmin, "get_import_formats", return_value=[CustomDelimiterCSVFormat]
+        )
+        p.start()
+        self.addCleanup(p.stop)
+
+    def _assert_received_bytes(self, response):
+        self.assertEqual(response.status_code, 200)
+        if "form" in response.context:
+            self.assertNotIn("import_file", response.context["form"].errors)
+        self.assertEqual([bytes], CustomDelimiterCSVFormat.received_types)
+
+    def _remove_tmp_file_after_test(self, response, storage_cls):
+        name = response.context["confirm_form"].initial["import_file_name"]
+        self.addCleanup(storage_cls(name=name).remove)
+
+    @patch(
+        "core.admin.BookAdmin.skip_import_confirm",
+        new_callable=PropertyMock,
+        return_value=True,
+    )
+    def test_import_with_skip_confirm(self, mock_skip_import_confirm):
+        response = self._do_import_post(self.book_import_url, "books.csv", follow=True)
+        self._assert_received_bytes(response)
+        self.assertContains(response, self.success_msg)
+        self.assertEqual(1, Book.objects.count())
+
+    @override_settings(
+        IMPORT_EXPORT_TMP_STORAGE_CLASS="import_export.tmp_storages.MediaStorage"
+    )
+    def test_import_with_media_storage(self):
+        response = self._do_import_post(self.book_import_url, "books.csv")
+        self._assert_received_bytes(response)
+        self.assertIn("confirm_form", response.context)
+        self._remove_tmp_file_after_test(response, MediaStorage)
+
+    def test_import_with_temp_folder_storage(self):
+        response = self._do_import_post(self.book_import_url, "books.csv")
+        self._assert_received_bytes(response)
+        self.assertIn("confirm_form", response.context)
+        self._remove_tmp_file_after_test(response, TempFolderStorage)
+
+    def test_process_import_receives_bytes(self):
+        response = self._do_import_post(self.book_import_url, "books.csv")
+        data = response.context["confirm_form"].initial
+        self._prepend_form_prefix(data)
+        response = self._post_url_response(
+            self.book_process_import_url, data, follow=True
+        )
+        self.assertContains(response, self.success_msg)
+        self.assertEqual([bytes, bytes], CustomDelimiterCSVFormat.received_types)
