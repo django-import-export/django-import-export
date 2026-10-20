@@ -2,7 +2,8 @@ from contextlib import contextmanager
 from unittest import mock, skipUnless
 
 import tablib
-from core.models import Book, UUIDBook
+from core.models import Book, Profile, UUIDBook
+from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.db import DEFAULT_DB_ALIAS, connections
 from django.test import TestCase
@@ -501,6 +502,48 @@ class BulkCreateUpdateConflictsIntegrationTest(TestCase):
 
         self.book.refresh_from_db()
         self.assertEqual("original", self.book.name)
+
+    def test_default_update_fields_skip_many_to_many(self):
+        # all of Book's fields, so the default update_fields would include the
+        # "categories" many-to-many field if it were not filtered out, and
+        # Django rejects that
+        class _AllFieldsBookResource(resources.ModelResource):
+            class Meta:
+                model = Book
+                use_bulk = True
+                force_init_instance = True
+                update_conflicts = True
+
+        result = _AllFieldsBookResource().import_data(self.dataset, raise_errors=True)
+
+        self.assertFalse(result.has_errors())
+        self.assertEqual(1, Book.objects.count())
+        self.book.refresh_from_db()
+        self.assertEqual("updated", self.book.name)
+
+    def test_default_update_fields_skip_pk_with_natural_key(self):
+        # rows are identified by the unique "user" field, and the pk stays in
+        # the resource fields, so the default update_fields would include it
+        # if it were not filtered out, and Django rejects that
+        class _ProfileResource(resources.ModelResource):
+            class Meta:
+                model = Profile
+                fields = ("id", "user", "is_private")
+                import_id_fields = ("user",)
+                use_bulk = True
+                force_init_instance = True
+                update_conflicts = True
+
+        user = User.objects.create_user("profile-user")
+        profile = Profile.objects.create(user=user, is_private=True)
+        dataset = tablib.Dataset((user.pk, 0), headers=["user", "is_private"])
+
+        result = _ProfileResource().import_data(dataset, raise_errors=True)
+
+        self.assertFalse(result.has_errors())
+        self.assertEqual(1, Profile.objects.count())
+        profile.refresh_from_db()
+        self.assertFalse(profile.is_private)
 
 
 class BulkUpdateTest(BulkTest):
