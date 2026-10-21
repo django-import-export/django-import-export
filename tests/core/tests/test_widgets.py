@@ -157,11 +157,16 @@ class DateWidgetTest(TestCase):
         self.assertEqual(self.date, self.widget.clean(self.date))
 
     def test_clean_returns_date_when_datetime_passed(self):
-        dt = datetime(2012, 8, 13, 0, 0)
+        dt = datetime(2012, 8, 13, 14, 30)
         cleaned = self.widget.clean(dt)
         self.assertIs(type(cleaned), date)
         self.assertEqual(cleaned, self.date)
         self.assertTrue(self.widget.is_equal(cleaned, self.date))
+
+    @override_settings(USE_TZ=True, TIME_ZONE="Asia/Tokyo")
+    def test_clean_aware_datetime_uses_default_timezone(self):
+        dt = datetime(2024, 11, 19, 23, 30, tzinfo=ZoneInfo("UTC"))
+        self.assertEqual(date(2024, 11, 20), self.widget.clean(dt))
 
     @patch("import_export.widgets.logger")
     def test_clean_raises_ValueError(self, mock_logger):
@@ -215,6 +220,10 @@ class DateTimeWidgetTest(TestCase):
 
     def test_clean(self):
         self.assertEqual(self.widget.clean("13.08.2012 18:00:00"), self.datetime)
+
+    def test_clean_returns_datetime_when_date_passed(self):
+        d = date(2012, 8, 13)
+        self.assertEqual(datetime(2012, 8, 13, 0, 0), self.widget.clean(d))
 
     @patch("import_export.widgets.logger")
     def test_clean_raises_ValueError(self, mock_logger):
@@ -445,6 +454,10 @@ class TimeWidgetTest(TestCase):
 
     def test_clean(self):
         self.assertEqual(self.widget.clean("20:15:00"), self.time)
+
+    def test_clean_returns_time_when_datetime_passed(self):
+        dt = datetime(1900, 1, 1, 20, 15, 0)
+        self.assertEqual(self.time, self.widget.clean(dt))
 
     def test_is_equal_ignores_microsecond_difference(self):
         t1 = time(20, 15, 0, 838000)

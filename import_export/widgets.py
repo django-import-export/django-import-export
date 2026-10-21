@@ -48,9 +48,24 @@ class _ParseDateTimeMixin:
         Raise ValueError if parsing fails."""
         if not value:
             return None
-        if isinstance(value, value_type):
-            if value_type is date and isinstance(value, datetime):
+        if value_type is date:
+            if isinstance(value, datetime):
+                if settings.USE_TZ and timezone.is_aware(value):
+                    value = timezone.make_naive(value, timezone.get_default_timezone())
                 return value.date()
+            if isinstance(value, date):
+                return value
+        elif value_type is datetime:
+            if isinstance(value, datetime):
+                return value
+            if isinstance(value, date):
+                return datetime(value.year, value.month, value.day)
+        elif value_type is time:
+            if isinstance(value, time):
+                return value
+            if isinstance(value, datetime):
+                return value.time()
+        elif isinstance(value, value_type):
             return value
 
         for format_ in self.formats:
@@ -426,7 +441,8 @@ class DateWidget(_ParseDateTimeMixin, Widget):
         initialization.
         If no format was provided, uses ``settings.DATE_INPUT_FORMATS`` or "%Y-%m-%d".
 
-        :param value: A date string to be parsed, or an existing date instance.
+        :param value: A date string to be parsed, or an existing date or datetime
+            instance (datetimes are converted to dates).
         :param row: The current row being processed.
         :param **kwargs: Optional keyword arguments.
         :returns: A Python date instance, or None if value is empty.

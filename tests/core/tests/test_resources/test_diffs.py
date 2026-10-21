@@ -177,27 +177,6 @@ class SkipRowDateTimePrecisionTest(TestCase):
         self.assertEqual(1, result.totals["skip"])
         self.assertEqual(0, result.totals["update"])
 
-    def test_xlsx_round_trip_date_field_is_skipped(self):
-        """
-        An xlsx round-trip of a DateField returns a datetime instance from
-        openpyxl, which DateWidget must clean to a date so that skip_row
-        detects the row as unchanged.
-        """
-        book = Book.objects.create(
-            name="Date Book",
-            published=datetime.date(2024, 11, 19),
-        )
-        xlsx = base_formats.XLSX()
-        dataset = self.resource.export(
-            queryset=Book.objects.filter(pk=book.pk), force_native_type=True
-        )
-        dataset = xlsx.create_dataset(xlsx.export_data(dataset))
-        self.assertIsInstance(dataset.dict[0]["published"], datetime.datetime)
-
-        result = self.resource.import_data(dataset, dry_run=True)
-        self.assertEqual(1, result.totals["skip"])
-        self.assertEqual(0, result.totals["update"])
-
     def test_genuine_second_level_difference_is_not_skipped(self):
         dataset = self.resource.export()
         row = dataset.dict[0]
@@ -424,3 +403,40 @@ class DiffEquivalentValuesEdgeCaseTest(TestCase):
         self._import(BookResource(), row)
         self.assertEqual(1, len(calls))
         self.assertEqual("1803.6", calls[0]["price"])
+
+
+class SkipRowDateFieldTest(TestCase):
+    """
+    Regression test for #2195.
+    """
+
+    def setUp(self):
+        class BookResource(resources.ModelResource):
+            class Meta:
+                model = Book
+                skip_unchanged = True
+                report_skipped = True
+
+        self.resource = BookResource()
+
+    def test_xlsx_round_trip_date_field_is_skipped(self):
+        """
+        An xlsx round-trip of a DateField returns a datetime instance from
+        openpyxl, which DateWidget must clean to a date so that skip_row
+        detects the row as unchanged.
+        """
+        book = Book.objects.create(
+            name="Date Book",
+            published=datetime.date(2024, 11, 19),
+        )
+        xlsx = base_formats.XLSX()
+        dataset = self.resource.export(
+            queryset=Book.objects.filter(pk=book.pk), force_native_type=True
+        )
+        dataset = xlsx.create_dataset(xlsx.export_data(dataset))
+        # openpyxl produces a datetime or date instance depending on the cell type
+        self.assertIsInstance(dataset.dict[0]["published"], datetime.date)
+
+        result = self.resource.import_data(dataset, dry_run=True)
+        self.assertEqual(1, result.totals["skip"])
+        self.assertEqual(0, result.totals["update"])
