@@ -156,6 +156,13 @@ class DateWidgetTest(TestCase):
     def test_clean_returns_date_when_date_passed(self):
         self.assertEqual(self.date, self.widget.clean(self.date))
 
+    def test_clean_returns_date_when_datetime_passed(self):
+        dt = datetime(2012, 8, 13, 0, 0)
+        cleaned = self.widget.clean(dt)
+        self.assertIs(type(cleaned), date)
+        self.assertEqual(cleaned, self.date)
+        self.assertTrue(self.widget.is_equal(cleaned, self.date))
+
     @patch("import_export.widgets.logger")
     def test_clean_raises_ValueError(self, mock_logger):
         self.widget = widgets.DateWidget("x")

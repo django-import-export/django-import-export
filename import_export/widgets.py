@@ -49,6 +49,8 @@ class _ParseDateTimeMixin:
         if not value:
             return None
         if isinstance(value, value_type):
+            if value_type is date and isinstance(value, datetime):
+                return value.date()
             return value
 
         for format_ in self.formats:
