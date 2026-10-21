@@ -150,6 +150,11 @@ Breaking changes
   (see `issue 2018 <https://github.com/django-import-export/django-import-export/issues/2018>`_).
   A ``rounding_tolerance`` of one millisecond absorbs spreadsheet rounding; differences of one millisecond or more
   which the widget's format or a native export preserves continue to be detected as changes.
+  Additionally, :class:`~import_export.widgets.DateWidget` now converts ``datetime`` instances (such as those
+  returned by openpyxl for date cells) to ``date`` instances in the project's default timezone.
+  :class:`~import_export.widgets.DateTimeWidget` and :class:`~import_export.widgets.TimeWidget` similarly coerce
+  ``date`` and ``datetime`` inputs respectively
+  (see `issue 2195 <https://github.com/django-import-export/django-import-export/issues/2195>`_).
 
   :class:`~import_export.widgets.ManyToManyWidget` now implements the related-object comparison which was previously
   inline in ``skip_row()``.  Behaviour is unchanged, but if you have overridden ``skip_row()`` you may be able to
