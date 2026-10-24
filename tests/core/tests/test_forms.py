@@ -1,9 +1,10 @@
 import django.forms
 from core.models import Author
 from core.tests.admin_integration.mixins import AdminTestMixin
+from django.core.exceptions import ImproperlyConfigured
 from django.test import TestCase
 
-from import_export import forms, resources
+from import_export import constants, forms, resources
 from import_export.formats.base_formats import CSV
 
 from .resources import BookResource, BookResourceWithStoreInstance
@@ -42,6 +43,29 @@ class FormTest(TestCase):
             form.fields["resource"].widget,
             django.forms.Select,
         )
+
+    def test_export_form_export_items_without_queryset(self):
+        # issue 2189
+        form = forms.ExportForm(
+            [CSV],
+            [resources.ModelResource],
+            data={
+                f"{constants.FORM_FIELD_PREFIX}format": "0",
+                f"{constants.FORM_FIELD_PREFIX}export_items": ["1"],
+            },
+        )
+        with self.assertRaisesRegex(ImproperlyConfigured, "queryset"):
+            form.is_valid()
+
+    def test_export_form_export_items_without_queryset_and_selection(self):
+        # issue 2189
+        form = forms.ExportForm(
+            [CSV],
+            [resources.ModelResource],
+            data={f"{constants.FORM_FIELD_PREFIX}format": "0"},
+        )
+        self.assertTrue(form.is_valid())
+        self.assertEqual([], form.cleaned_data["export_items"])
 
 
 class ImportFormMediaTest(TestCase):
