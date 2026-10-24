@@ -1,12 +1,18 @@
+import logging
+import os
 from urllib.parse import urlencode
 
 from django.conf import settings
 from django.contrib import admin, messages
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION, LogEntry
 from django.contrib.auth import get_permission_codename
-from django.core.exceptions import FieldError, PermissionDenied
+from django.core.exceptions import (
+    FieldError,
+    ImproperlyConfigured,
+    PermissionDenied,
+)
 from django.forms import MultipleChoiceField, MultipleHiddenInput
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, QueryDict
 from django.shortcuts import render
 from django.template import TemplateDoesNotExist
 from django.template.loader import get_template
@@ -24,6 +30,12 @@ from .mixins import BaseExportMixin, BaseImportMixin
 from .results import RowResult
 from .signals import post_export, post_import
 from .tmp_storages import TempFolderStorage
+
+logger = logging.getLogger(__name__)
+
+# Marker for "not configured on this ModelAdmin, use the setting", so that
+# ``None`` can keep its documented meaning of "disable pagination".
+UNSET = object()
 
 
 class ImportExportMixinBase:
@@ -106,6 +118,12 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
     skip_admin_log = None
     # storage class for saving temporary files
     tmp_storage_class = None
+    #: number of rows rendered per page of the import preview.
+    #: Defaults to ``IMPORT_EXPORT_PREVIEW_PAGE_SIZE``; ``None`` disables
+    #: pagination for this ModelAdmin.
+    import_preview_page_size = UNSET
+    # session-key prefix for the GET-pagination metadata stash
+    PAGINATION_SESSION_PREFIX = "django-import-export-preview-"
 
     def get_skip_admin_log(self):
         if self.skip_admin_log is None:
@@ -187,6 +205,9 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
             result = self.process_dataset(dataset, confirm_form, request, **kwargs)
 
             tmp_storage.remove()
+            self._drop_pagination_metadata(
+                request, confirm_form.cleaned_data["import_file_name"]
+            )
 
             return self.process_result(result, request)
         else:
@@ -372,7 +393,26 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
 
         Return a dictionary of initial field values to be provided to the
         'confirm' form.
+
+        On the GET-side preview-pagination flow there is no uploaded file, so
+        the storage-related values are read from the session entry written by
+        the original POST. ``import_form`` is still a bound copy of the
+        original upload form, so subclasses adding extra hidden fields to
+        ``ConfirmImportForm`` can call ``super()`` and merge their own values
+        from ``import_form.cleaned_data`` on both paths.
+
+        Returns ``{}`` when ``import_form`` is ``None`` (e.g. the bound
+        confirm form in ``process_import()``).
         """
+        if self._is_preview_pagination_request(request):
+            tmp_storage_name = os.path.basename(request.GET.get("import_file_name", ""))
+            meta = self._get_pagination_metadata(request, tmp_storage_name)
+            return {
+                "import_file_name": meta.get("tmp_storage_name", tmp_storage_name),
+                "original_file_name": meta.get("original_file_name", ""),
+                "format": meta.get("format", ""),
+                "resource": meta.get("resource", ""),
+            }
         if import_form is None:
             return {}
         return {
@@ -426,9 +466,13 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
 
         context = self.get_import_context_data()
 
+        # Fail on a misconfigured page size before any tmp file or session
+        # entry is written, rather than after the dry-run has run.
+        self.get_import_preview_page_size()
+
         import_formats = self.get_import_formats()
         import_form = self.create_import_form(request)
-        resources = []
+        resources = None
         if request.POST and import_form.is_valid():
             input_format = import_formats[int(import_form.cleaned_data["format"])](
                 encoding=self.from_encoding
@@ -487,6 +531,20 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
                         )
 
                 if not import_form.errors:
+                    # Stash original-upload metadata in the session so the GET
+                    # pagination handler can re-derive the dry-run without
+                    # round-tripping the original filename (PII) through the
+                    # URL. Kept even if the dry-run reports errors, since the
+                    # error rows are paginated too.
+                    self._save_pagination_metadata(
+                        request,
+                        tmp_storage.name,
+                        import_form=import_form,
+                        original_file_name=import_file.name,
+                        format_idx=import_form.cleaned_data["format"],
+                        resource_idx=import_form.cleaned_data.get("resource", ""),
+                    )
+
                     # prepare kwargs for import data, if needed
                     res_kwargs = self.get_import_resource_kwargs(
                         request, form=import_form, **kwargs
@@ -500,21 +558,28 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
                     imp_kwargs = self.get_import_data_kwargs(
                         request=request, form=import_form, **kwargs
                     )
-                    result = resource.import_data(
+                    result = self.get_preview_result_for_pagination(
+                        resource,
                         dataset,
-                        dry_run=True,
-                        raise_errors=False,
-                        file_name=import_file.name,
+                        original_file_name=import_file.name,
                         user=request.user,
                         **imp_kwargs,
                     )
                     context["result"] = result
+                    context["preview_query_base"] = urlencode(
+                        {"import_file_name": os.path.basename(tmp_storage.name)}
+                    )
 
                     if not result.has_errors() and not result.has_validation_errors():
                         context["confirm_form"] = self.create_confirm_form(
                             request, import_form=import_form
                         )
-        else:
+        elif self._is_preview_pagination_request(request):
+            resources = self._handle_preview_pagination_get(
+                request, context, import_formats, kwargs
+            )
+
+        if resources is None:
             res_kwargs = self.get_import_resource_kwargs(
                 request=request, form=import_form, **kwargs
             )
@@ -522,6 +587,9 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
             resources = [
                 resource_class(**res_kwargs) for resource_class in resource_classes
             ]
+
+        if "result" in context:
+            self._add_preview_pagination_context(request, context)
 
         context.update(self.admin_site.each_context(request))
 
@@ -540,6 +608,292 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
 
         request.current_app = self.admin_site.name
         return TemplateResponse(request, [self.import_template_name], context)
+
+    def get_import_preview_page_size(self):
+        """
+        .. versionadded:: 5.0
+
+        Return the number of rows rendered per page of the import preview.
+
+        Defaults to the ``import_preview_page_size`` attribute, falling back
+        to the ``IMPORT_EXPORT_PREVIEW_PAGE_SIZE`` setting (``100``). Return
+        ``None`` to disable pagination and render every preview row on a
+        single page.
+        """
+        page_size = self.import_preview_page_size
+        if page_size is UNSET:
+            page_size = getattr(settings, "IMPORT_EXPORT_PREVIEW_PAGE_SIZE", 100)
+        if page_size is None:
+            return None
+        # bool is an int subclass, so reject it explicitly.
+        if (
+            isinstance(page_size, bool)
+            or not isinstance(page_size, int)
+            or page_size < 1
+        ):
+            raise ImproperlyConfigured(
+                "IMPORT_EXPORT_PREVIEW_PAGE_SIZE must be a positive integer "
+                f"or None, got {page_size!r}."
+            )
+        return page_size
+
+    @staticmethod
+    def _parse_non_negative_int(value, default=0):
+        try:
+            result = int(value)
+        except (TypeError, ValueError):
+            return default
+        return result if result >= 0 else default
+
+    def _pagination_session_prefix(self):
+        # Scoped per ModelAdmin so that uploads on different models' import
+        # pages neither evict each other nor can be paged through each
+        # other's import URL.
+        return "{}{}_{}-".format(self.PAGINATION_SESSION_PREFIX, *self.get_model_info())
+
+    def _pagination_session_key(self, tmp_storage_name):
+        return (
+            f"{self._pagination_session_prefix()}"
+            f"{os.path.basename(tmp_storage_name or '')}"
+        )
+
+    def _save_pagination_metadata(
+        self,
+        request,
+        tmp_storage_name,
+        *,
+        import_form,
+        original_file_name,
+        format_idx,
+        resource_idx,
+    ):
+        session = getattr(request, "session", None)
+        if not tmp_storage_name or session is None:
+            return
+        # Drop entries left by earlier uploads (abandoned previews, retries
+        # after validation errors) so they cannot pile up in the session,
+        # which matters for cookie-backed sessions.
+        # Trade-off: one preview per ModelAdmin per session; an older tab's
+        # page links then show the "expired" warning, though confirming from
+        # it still works.
+        prefix = self._pagination_session_prefix()
+        for key in list(session.keys()):
+            if key.startswith(prefix):
+                del session[key]
+        session[self._pagination_session_key(tmp_storage_name)] = {
+            # TempFolderStorage names are absolute paths, so keep the full
+            # name here: only the basename travels in the URL.
+            "tmp_storage_name": tmp_storage_name,
+            "original_file_name": original_file_name,
+            "format": format_idx,
+            "resource": resource_idx,
+            # Only the ImportForm's own submitted values (no CSRF token, no
+            # uploaded file), so that page navigation can rebuild a bound
+            # ImportForm carrying any extra fields the subclass declared.
+            "form_data": {
+                name: request.POST.getlist(name)
+                for name in (import_form.add_prefix(f) for f in import_form.fields)
+                if name in request.POST
+            },
+        }
+        session.modified = True
+
+    def _get_pagination_metadata(self, request, tmp_storage_name):
+        session = getattr(request, "session", None)
+        if not tmp_storage_name or session is None:
+            return {}
+        return session.get(self._pagination_session_key(tmp_storage_name), {})
+
+    def _drop_pagination_metadata(self, request, tmp_storage_name):
+        session = getattr(request, "session", None)
+        if not tmp_storage_name or session is None:
+            return
+        session.pop(self._pagination_session_key(tmp_storage_name), None)
+        session.modified = True
+
+    def get_preview_result_for_pagination(
+        self,
+        resource,
+        dataset,
+        *,
+        original_file_name="",
+        user=None,
+        **imp_kwargs,
+    ):
+        """
+        .. versionadded:: 5.0
+
+        Produce the dry-run :class:`~import_export.results.Result` rendered
+        on the import preview. Called once on the upload POST and again on
+        every page-navigation GET. ``user`` is the requesting user, passed
+        to ``import_data()``. ``imp_kwargs`` is the dict returned by
+        :meth:`~import_export.admin.ImportMixin.get_import_data_kwargs` for
+        the request. Override this to cache the Result keyed by the
+        temporary-file name and avoid re-running the dry-run on every
+        page click. The default implementation runs a full dry-run on
+        each call.
+        """
+        return resource.import_data(
+            dataset,
+            dry_run=True,
+            raise_errors=False,
+            file_name=original_file_name,
+            user=user,
+            **imp_kwargs,
+        )
+
+    def _add_preview_pagination_context(self, request, context):
+        # Paginate the dry-run preview so large imports do not render every
+        # row at once, while still letting admins navigate every page. The
+        # full Result is left untouched: confirm/process still imports every
+        # row from the original tmp_storage file.
+        page_size = self.get_import_preview_page_size()
+        result = context["result"]
+        # The errors / validation-errors / preview blocks in import.html are
+        # mutually exclusive, so a single paginator over the active row set
+        # is enough.
+        if result.has_errors():
+            rows = result.row_errors()
+        elif result.has_validation_errors():
+            rows = result.invalid_rows
+        else:
+            rows = result.valid_rows()
+        if page_size is None or "preview_query_base" not in context:
+            # Either pagination is switched off, or there is no tmp_storage
+            # file to navigate back to (e.g. the skip-confirm flow rendering
+            # errors) so there is nowhere for a "Next" link to point. Render
+            # every row on a single page rather than hiding rows behind
+            # unreachable navigation.
+            page_size = max(len(rows), 1)
+        paginator = self.get_paginator(request, rows, page_size)
+        # Only honour ``page`` on page-navigation GETs: the upload form posts
+        # to ``action=""``, so a re-upload from page N carries ``page=N`` in
+        # the URL but must open the new preview on page 1.
+        page_number = 1
+        if self._is_preview_pagination_request(request):
+            page_number = (
+                self._parse_non_negative_int(request.GET.get("page"), default=1) or 1
+            )
+        context["preview_page_size"] = page_size
+        context["preview_page"] = paginator.get_page(page_number)
+
+    def _is_preview_pagination_request(self, request):
+        if request.method != "GET":
+            return False
+        if "page" not in request.GET:
+            return False
+        return "import_file_name" in request.GET
+
+    def _preview_unavailable(self, request, reason, exc_info=False):
+        # The preview cannot be re-derived (expired session, missing or
+        # unreadable temporary file, stale metadata). import_action falls
+        # back to rendering the plain upload form (None = default resources),
+        # so tell the user why, and drop the now-useless session entry.
+        logger.debug(
+            "import preview pagination unavailable: %s", reason, exc_info=exc_info
+        )
+        self._drop_pagination_metadata(
+            request, os.path.basename(request.GET.get("import_file_name", ""))
+        )
+        messages.warning(
+            request,
+            _("The import preview has expired. Please upload the file again."),
+        )
+        return None
+
+    def _handle_preview_pagination_get(self, request, context, import_formats, kwargs):
+        # Re-derive the dry-run Result from the tmp_storage file written
+        # during the original upload, so that GET-based page navigation
+        # can render any preview page without re-uploading the file.
+        tmp_storage_name = os.path.basename(request.GET.get("import_file_name", ""))
+        if not tmp_storage_name:
+            return self._preview_unavailable(request, "no import_file_name in query")
+
+        metadata = self._get_pagination_metadata(request, tmp_storage_name)
+        if not metadata:
+            return self._preview_unavailable(request, "no session metadata")
+
+        format_idx = self._parse_non_negative_int(metadata.get("format"), default=-1)
+        if format_idx < 0 or format_idx >= len(import_formats):
+            return self._preview_unavailable(request, "unknown import format")
+
+        input_format = import_formats[format_idx](encoding=self.from_encoding)
+        tmp_storage_cls = self.get_tmp_storage_class()
+        tmp_storage = tmp_storage_cls(
+            name=metadata.get("tmp_storage_name", tmp_storage_name),
+            **self.get_tmp_storage_class_kwargs(),
+        )
+        try:
+            data = tmp_storage.read()
+            dataset = input_format.create_dataset(data)
+        except Exception:
+            return self._preview_unavailable(
+                request, "temporary file could not be read", exc_info=True
+            )
+        if not dataset:
+            # Truncated, swept or overwritten tmp file: never offer a confirm
+            # button over an empty preview.
+            return self._preview_unavailable(request, "temporary file is empty")
+
+        # Rebuild an ImportForm bound to the same data the original upload
+        # POSTed, so subclasses' extension hooks (choose_import_resource_class,
+        # get_import_resource_kwargs, get_import_data_kwargs,
+        # get_confirm_form_initial) see the same form they do on the POST
+        # path, including any extra fields the subclass declared. Built via
+        # get_import_form_kwargs() so extra kwargs a subclass passes to its
+        # form (e.g. ``user``) are supplied on every page too.
+        form_data = QueryDict(mutable=True)
+        for name, values in metadata.get("form_data", {}).items():
+            form_data.setlist(name, values)
+        form_kwargs = self.get_import_form_kwargs(request)
+        form_kwargs["data"] = form_data
+        form_kwargs.pop("files", None)
+        pagination_form = self.get_import_form_class(request)(
+            import_formats, self.get_import_resource_classes(request), **form_kwargs
+        )
+        # There is no uploaded file on a GET, so the form is never valid.
+        # Clean it anyway: Django still populates cleaned_data for every
+        # field which did validate, which is what the hooks above read. A
+        # custom clean() indexing cleaned_data["import_file"] raises here
+        # rather than adding an error, so swallow that too.
+        try:
+            pagination_form.is_valid()
+        except Exception:
+            logger.debug(
+                "import form clean() failed on preview pagination", exc_info=True
+            )
+
+        res_kwargs = self.get_import_resource_kwargs(
+            request, form=pagination_form, **kwargs
+        )
+        try:
+            resource_class = self.choose_import_resource_class(pagination_form, request)
+        except IndexError:
+            return self._preview_unavailable(request, "unknown resource index")
+        resource = resource_class(**res_kwargs)
+
+        imp_kwargs = self.get_import_data_kwargs(
+            request=request, form=pagination_form, **kwargs
+        )
+        original_file_name = metadata.get("original_file_name", "")
+        result = self.get_preview_result_for_pagination(
+            resource,
+            dataset,
+            original_file_name=original_file_name,
+            user=request.user,
+            **imp_kwargs,
+        )
+        context["result"] = result
+        context["preview_query_base"] = urlencode(
+            {"import_file_name": os.path.basename(tmp_storage.name)}
+        )
+
+        if not result.has_errors() and not result.has_validation_errors():
+            context["confirm_form"] = self.create_confirm_form(
+                request, import_form=pagination_form
+            )
+
+        return [resource]
 
     def changelist_view(self, request, extra_context=None):
         if extra_context is None:
