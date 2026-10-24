@@ -1,14 +1,17 @@
 import os
 from io import StringIO
 from unittest import mock
+from urllib.parse import urlencode
 
 from core.models import Book
 from core.tests.admin_integration.mixins import AdminTestMixin
 from django.core.exceptions import ImproperlyConfigured
+from django.core.paginator import Paginator
+from django.template.loader import render_to_string
 from django.test.testcases import TestCase
 from django.test.utils import override_settings
 
-from import_export.admin import ImportMixin
+from import_export.admin import UNSET, ImportMixin
 from import_export.constants import FORM_FIELD_PREFIX
 from import_export.forms import ImportForm
 from import_export.resources import Resource
@@ -38,6 +41,9 @@ class ImportPreviewPaginationTests(AdminTestMixin, TestCase):
             for key in self.client.session.keys()
             if key.startswith(ImportMixin.PAGINATION_SESSION_PREFIX)
         ]
+
+    def _tmp_name(self, response):
+        return response.context["confirm_form"].initial["import_file_name"]
 
     def _pagination_get_params(self, response, **page_kwargs):
         # Build the GET query params that the in-page pagination links carry.
@@ -278,7 +284,7 @@ class ImportPreviewPaginationTests(AdminTestMixin, TestCase):
         try:
             response = self._post_csv(_build_csv(5))
         finally:
-            BookAdmin.import_preview_page_size = None
+            BookAdmin.import_preview_page_size = UNSET
 
         page = response.context["preview_page"]
         self.assertEqual(response.context["preview_page_size"], 2)
@@ -528,3 +534,166 @@ class ImportPreviewPaginationTests(AdminTestMixin, TestCase):
         post_call, get_call = import_data.call_args_list
         self.assertIsNotNone(get_call.kwargs["user"])
         self.assertEqual(get_call.kwargs["user"], post_call.kwargs["user"])
+
+    @override_settings(IMPORT_EXPORT_PREVIEW_PAGE_SIZE=50)
+    def test_model_admin_attribute_none_disables_pagination(self):
+        from core.admin import BookAdmin
+
+        with mock.patch.object(BookAdmin, "import_preview_page_size", None):
+            response = self._post_csv(_build_csv(5))
+        self.assertEqual(response.context["preview_page"].paginator.num_pages, 1)
+        self.assertNotContains(response, 'class="paginator"')
+
+    @override_settings(IMPORT_EXPORT_PREVIEW_PAGE_SIZE="100")
+    def test_invalid_page_size_fails_before_tmp_file_is_written(self):
+        from core.admin import BookAdmin
+
+        with mock.patch.object(BookAdmin, "write_to_tmp_storage") as write:
+            with self.assertRaises(ImproperlyConfigured):
+                self._post_csv(_build_csv(2))
+        write.assert_not_called()
+        self.assertEqual(self._preview_session_keys(), [])
+
+    def test_template_falls_back_to_result_rows_without_preview_page(self):
+        # Subclasses overriding import_action (e.g. celery-backed importers)
+        # set context["result"] themselves and render the stock template, so
+        # the row loops must not depend on preview_page being present.
+        from core.admin import BookAdmin
+
+        admin = BookAdmin(Book, mock.Mock())
+        request = mock.Mock(method="POST", user=mock.Mock())
+        result = admin.get_import_resource_classes(request)[0]().import_data(
+            admin.get_import_formats()[0]().create_dataset(_build_csv(3)),
+            dry_run=True,
+        )
+        body = render_to_string(
+            admin.import_template_name,
+            {"result": result, "opts": Book._meta, "import_error_display": ()},
+        )
+        self.assertEqual(body.count('<td class="import-type">'), 3)
+
+    @override_settings(IMPORT_EXPORT_PREVIEW_PAGE_SIZE=2)
+    def test_custom_clean_indexing_import_file_does_not_break_pagination(self):
+        from core.admin import BookAdmin
+
+        class StrictImportForm(ImportForm):
+            def clean(self):
+                cleaned = super().clean()
+                cleaned["import_file"].name  # KeyError on the pagination GET
+                return cleaned
+
+        with mock.patch.object(BookAdmin, "import_form_class", StrictImportForm):
+            post_response = self._post_csv(_build_csv(4))
+            params = self._pagination_get_params(post_response, page=2)
+            get_response = self.client.get(self.book_import_url, params)
+        self.assertEqual(get_response.status_code, 200)
+        self.assertEqual(get_response.context["preview_page"].number, 2)
+
+    @override_settings(IMPORT_EXPORT_PREVIEW_PAGE_SIZE=2)
+    def test_reupload_from_paginated_url_opens_on_first_page(self):
+        # The upload form posts to action="", so a re-upload from page 2
+        # carries ?import_file_name=...&page=2 in the URL.
+        post_response = self._post_csv(_build_csv(5))
+        params = self._pagination_get_params(post_response, page=2)
+        response = self.client.post(
+            self.book_import_url + "?" + urlencode(params),
+            {f"{FORM_FIELD_PREFIX}format": "0", "import_file": StringIO(_build_csv(5))},
+        )
+        self.assertEqual(response.context["preview_page"].number, 1)
+
+    def test_expired_preview_still_lists_importable_fields(self):
+        response = self.client.get(
+            self.book_import_url, {"import_file_name": "stale.csv", "page": "2"}
+        )
+        plain = self.client.get(self.book_import_url)
+        self.assertEqual(response.context["fields_list"], plain.context["fields_list"])
+
+    @override_settings(IMPORT_EXPORT_PREVIEW_PAGE_SIZE=2)
+    def test_empty_tmp_file_on_pagination_get_is_treated_as_expired(self):
+        post_response = self._post_csv(_build_csv(4))
+        params = self._pagination_get_params(post_response, page=1)
+        with open(self._tmp_name(post_response), "wb") as f:
+            f.write(b"id,name,author_email\r\n")
+
+        response = self.client.get(self.book_import_url, params)
+        self.assertNotIn("confirm_form", response.context)
+        self.assertIn(
+            "The import preview has expired. Please upload the file again.",
+            [str(m) for m in response.context["messages"]],
+        )
+
+    @override_settings(IMPORT_EXPORT_PREVIEW_PAGE_SIZE=2)
+    def test_upload_on_another_admin_does_not_evict_preview(self):
+        book_response = self._post_csv(_build_csv(4))
+        self.client.post(
+            self.child_import_url,
+            {
+                f"{FORM_FIELD_PREFIX}format": "0",
+                "import_file": StringIO("id,name,parent\r\n1,Child,1\r\n"),
+            },
+        )
+        params = self._pagination_get_params(book_response, page=2)
+        response = self.client.get(self.book_import_url, params)
+        self.assertIn("result", response.context)
+        self.assertEqual(response.context["preview_page"].number, 2)
+
+    @override_settings(IMPORT_EXPORT_PREVIEW_PAGE_SIZE=2)
+    def test_tmp_file_cannot_be_paged_through_another_admin(self):
+        book_response = self._post_csv(_build_csv(4))
+        params = self._pagination_get_params(book_response, page=1)
+        response = self.client.get(self.child_import_url, params)
+        self.assertNotIn("result", response.context)
+        self.assertIn(
+            "The import preview has expired. Please upload the file again.",
+            [str(m) for m in response.context["messages"]],
+        )
+
+    def test_confirm_form_initial_is_empty_without_import_form(self):
+        from core.admin import BookAdmin
+
+        admin = BookAdmin(Book, mock.Mock())
+        request = mock.Mock(method="POST", GET={})
+        self.assertEqual(admin.get_confirm_form_initial(request, None), {})
+
+    @override_settings(IMPORT_EXPORT_PREVIEW_PAGE_SIZE=2)
+    def test_preview_result_hook_used_on_upload_and_navigation(self):
+        from core.admin import BookAdmin
+
+        hook = ImportMixin.get_preview_result_for_pagination
+        with mock.patch.object(
+            BookAdmin,
+            "get_preview_result_for_pagination",
+            autospec=True,
+            side_effect=hook,
+        ) as preview:
+            post_response = self._post_csv(_build_csv(4))
+            params = self._pagination_get_params(post_response, page=2)
+            self.client.get(self.book_import_url, params)
+        self.assertEqual(preview.call_count, 2)
+
+    @override_settings(IMPORT_EXPORT_PREVIEW_PAGE_SIZE=2)
+    def test_preview_uses_model_admin_paginator(self):
+        from core.admin import BookAdmin
+
+        class CustomPaginator(Paginator):
+            pass
+
+        with mock.patch.object(BookAdmin, "paginator", CustomPaginator):
+            response = self._post_csv(_build_csv(4))
+        self.assertIsInstance(
+            response.context["preview_page"].paginator, CustomPaginator
+        )
+
+    def test_session_entry_holds_only_import_form_fields(self):
+        self.client.post(
+            self.book_import_url,
+            {
+                f"{FORM_FIELD_PREFIX}format": "0",
+                "import_file": StringIO(_build_csv(2)),
+                "csrfmiddlewaretoken": "secret",
+                "unrelated": "x",
+            },
+        )
+        (key,) = self._preview_session_keys()
+        form_data = self.client.session[key]["form_data"]
+        self.assertEqual(form_data, {f"{FORM_FIELD_PREFIX}format": ["0"]})

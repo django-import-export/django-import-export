@@ -154,7 +154,8 @@ on a single page, which is the behaviour of v4 and earlier. Any other value
 ``django.core.exceptions.ImproperlyConfigured``.
 
 Can be overridden per ``ModelAdmin`` by setting the
-``import_preview_page_size`` class attribute, or for full control by
+``import_preview_page_size`` class attribute (``None`` disables pagination
+for that ``ModelAdmin``), or for full control by
 overriding :meth:`~import_export.admin.ImportMixin.get_import_preview_page_size`.
 
 The setting only affects what is rendered on the confirmation screen; the
@@ -166,10 +167,11 @@ row before confirming the import.
 
 Each page navigation re-runs the dry-run against the temporary file written
 during upload. For very large imports this may noticeably slow page changes.
-Override
-:meth:`~import_export.admin.ImportMixin.get_preview_result_for_pagination`
-on your ``ModelAdmin`` to plug in a project-specific cache (Django's cache
-framework, Redis, etc.) keyed by the temporary-storage filename.
+The dry-run on upload and on every page navigation is produced by
+:meth:`~import_export.admin.ImportMixin.get_preview_result_for_pagination`;
+override it on your ``ModelAdmin`` to plug in a project-specific cache
+(Django's cache framework, Redis, etc.) keyed by the temporary-storage
+filename.
 
 If :ref:`import_export_skip_admin_confirm` is enabled there is no temporary
 file to navigate back to, so error previews are rendered in full on a single

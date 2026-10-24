@@ -164,15 +164,27 @@ Breaking changes
   every row.
 
   Page navigation is a ``GET`` request which re-runs the dry-run against the temporary file, so for very
-  large uploads page changes may be noticeably slower than a single render.  Override
-  :meth:`~import_export.admin.ImportMixin.get_preview_result_for_pagination` to cache the result.
+  large uploads page changes may be noticeably slower than a single render.  The dry-run on upload and on
+  every page navigation goes through
+  :meth:`~import_export.admin.ImportMixin.get_preview_result_for_pagination`; override it to cache the
+  result.  The preview uses the ``ModelAdmin``'s ``paginator`` class.
+
+  The ``import.html`` template now iterates ``preview_page`` and falls back to ``result.valid_rows`` /
+  ``result.invalid_rows`` / ``result.row_errors`` when it is absent, so a subclass which overrides
+  ``import_action()`` and builds its own ``result`` still renders every row.  The pagination navigation lives
+  in a new ``admin/import_export/preview_pagination.html`` template.
+
+  The upload form's values are held in the user's session (keyed per ``ModelAdmin``) while the preview is
+  open, so that a custom ``ImportForm`` sees the same ``cleaned_data`` on every page.  On page navigation
+  there is no uploaded file: a custom ``clean()`` should use ``self.cleaned_data.get("import_file")``.
 
   **Migration**: to restore the v4 behaviour of rendering every row on one page, set::
 
     IMPORT_EXPORT_PREVIEW_PAGE_SIZE = None
 
-  The page size can also be set per ``ModelAdmin`` with the ``import_preview_page_size`` attribute, or
-  computed by overriding :meth:`~import_export.admin.ImportMixin.get_import_preview_page_size`.
+  The page size can also be set per ``ModelAdmin`` with the ``import_preview_page_size`` attribute
+  (``None`` disables pagination for that ``ModelAdmin`` only), or computed by overriding
+  :meth:`~import_export.admin.ImportMixin.get_import_preview_page_size`.
   See :ref:`import_export_preview_page_size`.
 
 Removed deprecations

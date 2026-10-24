@@ -110,8 +110,11 @@ the temporary storage name; the original filename, the selected format and the s
 held in the user's session for the duration of the confirmation step, and are cleared along with the
 temporary file once the import is confirmed.  Set ``import_preview_page_size`` on your ``ModelAdmin``
 (or override :meth:`~import_export.admin.ImportMixin.get_import_preview_page_size`) to change the page
-size for a single model.  If the session entry or the temporary file has gone, page navigation returns
-to the upload form with a warning rather than failing silently.
+size for a single model (``None`` disables pagination for that model).  If the session entry or the
+temporary file has gone, page navigation returns to the upload form with a warning rather than failing
+silently.  Page navigation rebuilds the import form from the submitted values without the uploaded file,
+so a custom ``ImportForm.clean()`` should read ``self.cleaned_data.get("import_file")`` rather than
+indexing it.
 
 **For sensitive data you will need to understand exactly how temporary files are being stored and to ensure
 that data is properly secured and managed.**
