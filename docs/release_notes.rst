@@ -155,6 +155,36 @@ Breaking changes
   inline in ``skip_row()``.  Behaviour is unchanged, but if you have overridden ``skip_row()`` you may be able to
   simplify it by calling ``field.widget.is_equal()`` instead.
 
+* **Export form selected items.**  This affects custom export forms, custom ``export_items`` fields, code that
+  processes ``form.cleaned_data["export_items"]``, and overrides of
+  :meth:`~import_export.admin.ExportMixin.get_export_queryset`.
+
+  Selected items are now validated by ``ExportItemsField``, a subclass of Django's ``ModelMultipleChoiceField``.
+  Validation is restricted to the submitted primary keys within the export queryset, instead of loading every
+  primary key in that queryset.
+
+  As a result:
+
+  * ``ExportForm`` and :class:`~import_export.forms.SelectableFieldsExportForm` accept a new ``queryset``
+    argument: ``ExportForm(formats, resources, queryset=None, **kwargs)``.  The admin supplies the result of
+    ``get_export_queryset(request)``.  If your custom form overrides ``__init__()``, accept ``queryset``
+    (or ``**kwargs``) and pass it to ``super().__init__()``.  If you instantiate the form directly, supply a
+    queryset when validating selected items.  Validating a non-empty selection without a queryset raises
+    ``ImproperlyConfigured``.
+  * When a queryset is supplied, ``form.cleaned_data["export_items"]`` now contains a ``QuerySet`` of selected
+    model instances instead of a list of primary key strings.  Submitted primary keys are deduplicated, and
+    their submission order is not preserved.  The result follows the queryset's ordering, where defined.
+    Without a queryset, an empty selection is accepted and returns an empty list.  Custom
+    ``clean_export_items()`` methods must preserve this return contract.
+  * ``get_export_queryset()`` must return a queryset of model instances when exporting selected items.
+    Querysets produced by ``values()`` or ``values_list()`` are not supported.
+  * If your custom form redeclares ``export_items``, use
+    ``import_export.forms.ExportItemsField`` or a subclass, or inherit the
+    field from ``ExportForm``.
+
+  See `issue 2189 <https://github.com/django-import-export/django-import-export/issues/2189>`_ and
+  `PR 2190 <https://github.com/django-import-export/django-import-export/pull/2190>`_.
+
 Removed deprecations
 """"""""""""""""""""
 
