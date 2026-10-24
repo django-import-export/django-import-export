@@ -5,7 +5,6 @@ from django.contrib import admin, messages
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION, LogEntry
 from django.contrib.auth import get_permission_codename
 from django.core.exceptions import FieldError, PermissionDenied
-from django.forms import MultipleChoiceField, MultipleHiddenInput
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.template import TemplateDoesNotExist
@@ -17,7 +16,6 @@ from django.utils.module_loading import import_string
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_POST
 
-from .constants import FORM_FIELD_PREFIX
 from .formats.base_formats import get_binary_formats
 from .forms import ConfirmImportForm, ImportForm, SelectableFieldsExportForm
 from .mixins import BaseExportMixin, BaseImportMixin
@@ -760,23 +758,16 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
             formats,
             self.get_export_resource_classes(request),
             data=request.POST or None,
+            queryset=queryset,
         )
-        if request.POST and f"{FORM_FIELD_PREFIX}export_items" in request.POST:
-            # this field is instantiated if the export is POSTed from the
-            # 'action' drop down
-            form.fields["export_items"] = MultipleChoiceField(
-                widget=MultipleHiddenInput,
-                required=False,
-                choices=[(pk, pk) for pk in queryset.values_list("pk", flat=True)],
-            )
         if form.is_valid():
             file_format = formats[int(form.cleaned_data["format"])]()
 
             if "export_items" in form.changed_data:
-                # this request has arisen from an Admin UI action
-                # export item pks are stored in form data
-                # so generate the queryset from the stored pks
-                queryset = queryset.filter(pk__in=form.cleaned_data["export_items"])
+                # this request has arisen from an Admin UI action: validation
+                # has already fetched the selected rows, and the export may
+                # read them again (bounded by DATA_UPLOAD_MAX_NUMBER_FIELDS)
+                queryset = form.cleaned_data["export_items"]
 
             response = self._do_file_export(
                 file_format, request, queryset, export_form=form
@@ -922,11 +913,8 @@ class ExportActionMixin(ExportMixin):
         form = form_type(
             formats=formats,
             resources=self.get_export_resource_classes(request),
+            queryset=self.get_export_queryset(request),
             initial={"export_items": export_items},
-        )
-        # selected items are to be stored as a hidden input on the form
-        form.fields["export_items"] = MultipleChoiceField(
-            widget=MultipleHiddenInput, required=False, choices=export_items
         )
         context = self.init_request_context_data(request, form)
 
