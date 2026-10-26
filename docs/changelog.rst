@@ -65,7 +65,8 @@ i18n
 
 - Fixed a denial-of-service issue where importing a crafted large-magnitude integer value could stall the process during conversion to a Python integer.
   See :ref:`release notes <release_notes_integer_widget_dos>` for details and mitigations.
-  (`GHSA-fcgw-hjjv-4rh6 <https://github.com/django-import-export/django-import-export/security/advisories/GHSA-fcgw-hjjv-4rh6>`_)
+  (`GHSA-fcgw-hjjv-4rh6 <https://github.com/django-import-export/django-import-export/security/advisories/GHSA-fcgw-hjjv-4rh6>`_,
+  `CVE-2026-111437 <https://www.cve.org/CVERecord?id=CVE-2026-111437>`_)
 
 4.4.2 (2026-10-15)
 -------------------
