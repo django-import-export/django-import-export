@@ -18,8 +18,11 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        toxenv: [py313-django52, py313-django60, py313-django61, py313-djangomain, py315-django61]
+        toxenv: [py313-django52, py313-django60, py313-django61, py313-djangomain, py314-django61, py315-django61]
         include:
+          - toxenv: py314-django61
+            mysql_image: mysql:8.4
+            python-version: "3.14"
           - toxenv: py315-django61
             mysql_image: mysql:8.4
             python-version: "3.15"
