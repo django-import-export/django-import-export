@@ -104,18 +104,6 @@ Your choice of temporary storage will be influenced by the following factors:
 
 Temporary resources are removed when data is successfully imported after the confirmation step.
 
-The confirmation screen paginates the preview so that large uploads do not render every row at once
-(see :ref:`import_export_preview_page_size`).  Page navigation is a ``GET`` request which carries only
-the temporary storage name; the original filename, the selected format and the selected resource are
-held in the user's session for the duration of the confirmation step, and are cleared along with the
-temporary file once the import is confirmed.  Set ``import_preview_page_size`` on your ``ModelAdmin``
-(or override :meth:`~import_export.admin.ImportMixin.get_import_preview_page_size`) to change the page
-size for a single model (``None`` disables pagination for that model).  If the session entry or the
-temporary file has gone, page navigation returns to the upload form with a warning rather than failing
-silently.  Page navigation rebuilds the import form from the submitted values without the uploaded file,
-so a custom ``ImportForm.clean()`` should read ``self.cleaned_data.get("import_file")`` rather than
-indexing it.
-
 **For sensitive data you will need to understand exactly how temporary files are being stored and to ensure
 that data is properly secured and managed.**
 
@@ -125,6 +113,31 @@ that data is properly secured and managed.**
     or if there are errors during import, then temporary resources may not be deleted.
     This will need to be understood and managed in production settings.
     For example, using a cache expiration policy or cron job to clear stale resources.
+
+.. _pagination:
+
+Pagination
+^^^^^^^^^^
+
+The confirmation screen paginates the preview so that large uploads do not render every row at once
+(see :ref:`import_export_preview_page_size`).
+
+Page navigation is a ``GET`` request which carries only the temporary file name and the page number.
+The original filename, the selected format, the selected resource and the submitted import form values
+are held in the user's session for the duration of the confirmation step, and are cleared along with the
+temporary file once the import is confirmed.  Only one preview per ``ModelAdmin`` is held per session:
+uploading another file replaces the previous entry, so page links in an older browser tab will show the
+"expired" warning (confirming from that tab still works).
+
+Each page navigation re-runs the dry-run against the temporary file.  See
+:ref:`import_export_preview_page_size` for the performance implications and the
+:meth:`~import_export.admin.ImportMixin.get_preview_result_for_pagination` hook for caching the result.
+
+If the session entry or the temporary file has gone, page navigation returns to the upload form with a warning
+rather than failing silently.
+
+Page navigation rebuilds the import form from the submitted values without the uploaded file, so a
+custom ``ImportForm.clean()`` should read ``self.cleaned_data.get("import_file")`` rather than indexing it.
 
 .. _customizable_storage:
 
