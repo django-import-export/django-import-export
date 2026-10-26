@@ -5,7 +5,12 @@
 import logging
 from functools import lru_cache
 
-import tablib
+# `import tablib.core` (rather than `import tablib`) is deliberate: tablib 3.10+
+# declares `tablib.core` as a lazy module on Python 3.15+, and the format
+# registry is only populated when `tablib.core` is actually imported.  Importing
+# it eagerly guarantees that `registry.get_format()` works for the first format
+# checked by `is_available()` (see issue 2210).
+import tablib.core
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 from tablib.formats import registry
