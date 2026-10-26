@@ -5,17 +5,25 @@
 import logging
 from functools import lru_cache
 
-# `import tablib.core` (rather than `import tablib`) is deliberate: tablib 3.10+
-# declares `tablib.core` as a lazy module on Python 3.15+, and the format
-# registry is only populated when `tablib.core` is actually imported.  Importing
-# it eagerly guarantees that `registry.get_format()` works for the first format
-# checked by `is_available()` (see issue 2210).
-import tablib.core
+import tablib
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 from tablib.formats import registry
 
 logger = logging.getLogger(__name__)
+
+
+def _ensure_tablib_registry():
+    """
+    Make sure tablib's builtin formats are registered.
+
+    tablib registers its builtin formats as a side effect of importing
+    ``tablib.core``.  With tablib 3.10+ on Python 3.15+, ``tablib.core`` is a
+    lazy module, so the registry can still be empty when a format is first
+    looked up (see issue 2210).
+    """
+    if not registry._formats:
+        registry.register_builtins()
 
 
 class Format:
@@ -85,6 +93,7 @@ class TablibFormat(Format):
         if not self.TABLIB_MODULE:
             raise AttributeError("TABLIB_MODULE must be defined")
         key = self.TABLIB_MODULE.split(".")[-1].replace("_", "")
+        _ensure_tablib_registry()
         return registry.get_format(key)
 
     @classmethod

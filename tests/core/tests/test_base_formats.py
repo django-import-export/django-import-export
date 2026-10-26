@@ -1,8 +1,5 @@
 import os
-import subprocess
-import sys
 import tempfile
-import textwrap
 import unittest
 from io import BytesIO
 from unittest import mock
@@ -37,31 +34,13 @@ class FormatTest(TestCase):
     def test_format_available(self):
         self.assertTrue(base_formats.CSV.is_available())
 
-    def test_csv_available_in_fresh_interpreter(self):
-        # Regression test for issue 2210.  On Python 3.15+, tablib 3.10+ lazily
-        # imports `tablib.core`, which is where the builtin formats are
-        # registered, so the registry is empty until something touches it.
-        # base_formats must import it eagerly so that the first
-        # `is_available()` check (CSV) does not fail.  This has to run in a
-        # fresh interpreter because the test process has already imported
-        # `tablib.core`.
-        code = textwrap.dedent("""
-            import django
-            from django.conf import settings
-
-            settings.configure(INSTALLED_APPS=["import_export"])
-            django.setup()
-            from import_export.formats.base_formats import get_default_formats
-
-            print(",".join(f.__name__ for f in get_default_formats()))
-            """)
-        result = subprocess.run(
-            [sys.executable, "-c", code],
-            capture_output=True,
-            text=True,
-            check=True,
-        )
-        self.assertIn("CSV", result.stdout.strip().split(","))
+    def test_format_available_when_tablib_registry_empty(self):
+        # Regression test for issue 2210.  With tablib 3.10+ on Python 3.15+,
+        # `tablib.core` is a lazy module, so the builtin formats may not have
+        # been registered when the first `is_available()` check runs.
+        with mock.patch.dict(tablib.formats.registry._formats, clear=True):
+            self.assertTrue(base_formats.CSV.is_available())
+            self.assertIn("csv", tablib.formats.registry._formats)
 
     def test_get_title(self):
         self.assertEqual(
