@@ -156,33 +156,42 @@ Breaking changes
   simplify it by calling ``field.widget.is_equal()`` instead.
 
 * **Export form selected items.**  This affects custom export forms, custom ``export_items`` fields, code that
-  processes ``form.cleaned_data["export_items"]``, and overrides of
-  :meth:`~import_export.admin.ExportMixin.get_export_queryset`.
+  processes ``form.cleaned_data["export_items"]``, and overrides of ``get_export_queryset()``.
 
-  Selected items are now validated by :class:`~import_export.forms.ExportItemsField`, a subclass of Django's ``ModelMultipleChoiceField``.
-  Validation is restricted to the submitted primary keys within the export queryset, instead of loading every
-  primary key in that queryset.
+  Selected items are now validated by :class:`~import_export.forms.ExportItemsField`, a subclass of Django's
+  ``ModelMultipleChoiceField``.  Validation is restricted to the submitted primary keys within the export queryset,
+  instead of loading every primary key in that queryset.  Malformed submitted values, values containing null
+  characters and invalid UUIDs now report Django's own messages, such as ``“abc” is not a valid value.`` and
+  ``Null characters are not allowed.``, instead of ``Select a valid choice``.
 
   As a result:
 
-  * ``ExportForm`` and :class:`~import_export.forms.SelectableFieldsExportForm` accept a new ``queryset``
-    argument: ``ExportForm(formats, resources, queryset=None, **kwargs)``.  The admin supplies the result of
-    ``get_export_queryset(request)``.  If your custom form overrides ``__init__()``, accept ``queryset``
-    (or ``**kwargs``) and pass it to ``super().__init__()``.  If you instantiate the form directly, supply a
-    queryset when validating selected items.  Validating a non-empty selection without a queryset raises
-    ``ImproperlyConfigured``.
+  * :class:`~import_export.forms.ExportForm` and :class:`~import_export.forms.SelectableFieldsExportForm` accept a
+    new keyword-only ``queryset`` argument: ``ExportForm(formats, resources, *, queryset=None, **kwargs)``.
+    The admin passes it only to these forms and to their subclasses whose ``__init__()`` accepts ``queryset``
+    (or ``**kwargs``): the export view validates the submitted selection against
+    ``get_export_queryset(request)``, and the export admin action renders the form with the action's queryset.
+    A custom ``__init__()`` that accepts ``queryset`` should pass it on to ``super().__init__()``.  For any
+    export form class, the admin then sets the ``export_items`` queryset after the form's ``__init__()``, and
+    adds an :class:`~import_export.forms.ExportItemsField` when exporting selected items with a form that
+    declares none.  A queryset declared on the field or set in ``__init__()`` is therefore replaced: narrow the
+    selection in ``get_export_queryset()`` or ``clean_export_items()`` instead.  If you instantiate the form
+    directly, supply a queryset when validating selected items.  Validating a non-empty selection raises
+    ``ImproperlyConfigured`` when the ``export_items`` field has no queryset, which is the default when none is
+    supplied.
   * When a queryset is supplied, ``form.cleaned_data["export_items"]`` now contains a ``QuerySet`` of selected
     model instances instead of a list of primary key strings.  Submitted primary keys are deduplicated, and
     their submission order is not preserved.  The result follows the queryset's ordering, where defined.
     Without a queryset, an empty selection is accepted and returns an empty list.  Custom
     ``clean_export_items()`` methods must preserve this return contract.
-  * ``get_export_queryset()`` must return a ``QuerySet`` of model instances when exporting selected items.
-    Other iterables, such as a list, are still accepted when exporting without a selection.  Querysets
-    produced by ``values()`` or ``values_list()`` are not supported.
-  * If your custom form redeclares ``export_items``, use
-    :class:`~import_export.forms.ExportItemsField` or a subclass, or inherit the
-    field from ``ExportForm``.  Redeclaring it with another field type raises ``ImproperlyConfigured``
-    when the form is instantiated with a queryset.
+  * :meth:`~import_export.admin.ExportMixin.get_export_queryset` must return a ``QuerySet`` when exporting
+    selected items, otherwise ``ImproperlyConfigured`` is raised.  Other iterables, such as a list, still work
+    when exporting without a selection.  Querysets produced by ``values()`` work; querysets produced by
+    ``values_list()`` are not supported (they export blank rows, as before).
+  * If your custom form declares ``export_items``, use :class:`~import_export.forms.ExportItemsField` or a
+    subclass, or inherit the field from :class:`~import_export.forms.ExportForm`.  Its ``to_field_name``, if set,
+    must name a unique field.  Declaring ``export_items`` with another field type raises ``ImproperlyConfigured``
+    when the form is given a ``queryset`` argument, and in the admin for any export form class.
 
   See `issue 2189 <https://github.com/django-import-export/django-import-export/issues/2189>`_ and
   `PR 2190 <https://github.com/django-import-export/django-import-export/pull/2190>`_.

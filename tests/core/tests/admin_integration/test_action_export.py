@@ -1,15 +1,21 @@
 import warnings
 from datetime import date, datetime
+from functools import partial
 from unittest import mock, skipUnless
 from unittest.mock import MagicMock, PropertyMock, patch
 
 from core.admin import CategoryAdmin
 from core.models import Author, Book, Category, UUIDCategory
 from core.tests.admin_integration.mixins import AdminTestMixin
+from django import forms
 from django.contrib import admin
 from django.contrib.admin import AdminSite
 from django.contrib.auth.models import User
-from django.core.exceptions import FieldError, PermissionDenied
+from django.core.exceptions import (
+    FieldError,
+    ImproperlyConfigured,
+    PermissionDenied,
+)
 from django.db import connection
 from django.http import HttpRequest
 from django.test import RequestFactory
@@ -18,12 +24,20 @@ from django.test.utils import CaptureQueriesContext, override_settings
 from django.urls import reverse
 
 from import_export.admin import ExportMixin
-from import_export.forms import SelectableFieldsExportForm
+from import_export.forms import (
+    ExportItemsField,
+    ImportExportFormBase,
+    SelectableFieldsExportForm,
+)
 
 try:
     from django.contrib.admin.options import ActionLocation
 except ImportError:  # Django < 6.1
     ActionLocation = None
+
+
+class NoItemsExportForm(SelectableFieldsExportForm):
+    export_items = None
 
 
 class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
@@ -62,6 +76,14 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
         for sql in category_queries:
             self.assertIn(" IN (", sql)
 
+    def _assert_export_items_rendered(self, response, pks):
+        for pk in pks:
+            self.assertContains(
+                response,
+                f'name="django-import-export-export_items" value="{pk}"',
+                count=1,
+            )
+
     def _post_export_items(self, export_items, url=None, fields=None):
         data = {
             "format": "0",
@@ -70,6 +92,12 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
         }
         self._prepend_form_prefix(data)
         return self._post_url_response(url or self.category_export_url, data)
+
+    def _export_action_data(self, *objs):
+        return {
+            "action": ["export_admin_action"],
+            "_selected_action": [str(obj.pk) for obj in objs],
+        }
 
     @override_settings(IMPORT_EXPORT_SKIP_ADMIN_ACTION_EXPORT_UI=True)
     def test_export_skips_export_ui_page(self):
@@ -106,6 +134,7 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
         data = export_form.initial
         self.assertEqual([self.cat1.id], data["export_items"])
         self.assertIn("Export 1 selected item.", response.content.decode())
+        self._assert_export_items_rendered(response, [self.cat1.id])
 
     def test_export_displays_ui_select_page_multiple_items(self):
         data = {
@@ -120,6 +149,7 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
             sorted([self.cat1.id, self.cat2.id]), sorted(data["export_items"])
         )
         self.assertIn("Export 2 selected items.", response.content.decode())
+        self._assert_export_items_rendered(response, [self.cat1.id, self.cat2.id])
 
     def test_action_export_model_with_custom_PK(self):
         # issue 1800
@@ -134,6 +164,7 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
         data = export_form.initial
         self.assertEqual([cat.pk], data["export_items"])
         self.assertIn("Export 1 selected item.", response.content.decode())
+        self._assert_export_items_rendered(response, [cat.pk])
 
     def test_export_post(self):
         # create a POST request with data selected from the 'action' export
@@ -174,7 +205,7 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
             self.assertTrue(200 <= response.status_code <= 399)
             mock_export_admin_action.assert_called()
 
-    def test_export_admin_action_render_uses_bounded_export_queryset(self):
+    def test_export_admin_action_render_runs_no_changelist_filter_queries(self):
         # BookAdmin.list_filter has related filters, which query their related
         # tables when a ChangeList is built
         book = Book.objects.create(name="Book 1")
@@ -224,13 +255,19 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
         self._assert_category_queries_are_bounded(queries)
 
     def test_export_items_rejects_malformed_pk(self):
-        out_of_range = "Select a valid choice. {} is not one of the available choices."
+        pk = str(self.cat1.id)
+        arabic_indic_pk = pk.translate(str.maketrans("0123456789", "٠١٢٣٤٥٦٧٨٩"))
+        not_a_choice = "Select a valid choice. {} is not one of the available choices."
         for export_items, message in [
             (["abc"], "“abc” is not a valid value."),
             (["²"], "“²” is not a valid value."),
-            ([str(self.cat1.id), "abc"], "“abc” is not a valid value."),
-            (["99999999999999999999"], out_of_range.format("99999999999999999999")),
-            (["-99999999999999999999"], out_of_range.format("-99999999999999999999")),
+            ([pk, "abc"], "“abc” is not a valid value."),
+            (["99999999999999999999"], not_a_choice.format("99999999999999999999")),
+            (["-99999999999999999999"], not_a_choice.format("-99999999999999999999")),
+            *[
+                ([value], not_a_choice.format(value))
+                for value in [f" {pk}", f"+{pk}", f"0{pk}", arabic_indic_pk, f"{pk}\n"]
+            ],
         ]:
             with self.subTest(export_items=export_items):
                 response = self._post_export_items(export_items)
@@ -251,9 +288,6 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
         self._check_export_response(response)
 
     def test_export_post_with_prefixed_form(self):
-        class PrefixedExportForm(SelectableFieldsExportForm):
-            prefix = "p"
-
         data = {
             "format": "0",
             "export_items": [str(self.cat1.id)],
@@ -261,11 +295,165 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
         }
         self._prepend_form_prefix(data)
         data = {f"p-{key}": value for key, value in data.items()}
+        for base_form in [SelectableFieldsExportForm, NoItemsExportForm]:
+
+            class PrefixedExportForm(base_form):
+                prefix = "p"
+
+            with self.subTest(base_form=base_form.__name__):
+                with patch.object(
+                    CategoryAdmin,
+                    "get_export_form_class",
+                    return_value=PrefixedExportForm,
+                ):
+                    response = self._post_url_response(self.category_export_url, data)
+                self._check_export_response(response)
+
+    def test_export_action_with_form_without_export_items(self):
+        change_url = reverse("admin:core_category_change", args=[self.cat1.id])
         with patch.object(
-            CategoryAdmin, "get_export_form_class", return_value=PrefixedExportForm
+            CategoryAdmin, "get_export_form_class", return_value=NoItemsExportForm
         ):
-            response = self._post_url_response(self.category_export_url, data)
+            for url, data in [
+                (self.category_change_url, self._export_action_data(self.cat1)),
+                (change_url, {"_export-item": "Export", "name": self.cat1.name}),
+            ]:
+                with self.subTest(url=url):
+                    response = self._post_url_response(url, data)
+                    self._assert_export_items_rendered(response, [self.cat1.id])
+            response = self._post_export_items([str(self.cat1.id)])
         self._check_export_response(response)
+
+    def test_export_post_without_export_items_field_fails_closed_without_queryset(
+        self,
+    ):
+        with (
+            patch.object(
+                CategoryAdmin, "get_export_form_class", return_value=NoItemsExportForm
+            ),
+            patch.object(CategoryAdmin, "get_export_queryset", return_value=[]),
+        ):
+            with self.assertRaises(ImproperlyConfigured):
+                self._post_export_items([str(self.cat1.id)])
+
+    def test_export_with_form_not_subclassing_export_form(self):
+        class BaseExportForm(ImportExportFormBase):
+            pass
+
+        with patch.object(
+            CategoryAdmin, "get_export_form_class", return_value=BaseExportForm
+        ):
+            self._get_url_response(self.category_export_url)
+            response = self._post_url_response(
+                self.category_export_url, {"django-import-export-format": "0"}
+            )
+            self.assertContains(response, self.cat1.name)
+            self.assertContains(response, self.cat2.name)
+            response = self._post_url_response(
+                self.category_change_url, self._export_action_data(self.cat1)
+            )
+            self._assert_export_items_rendered(response, [self.cat1.id])
+            response = self._post_export_items([str(self.cat1.id)])
+        self._check_export_response(response)
+
+    def test_export_with_form_class_that_is_not_a_class(self):
+        with patch.object(
+            CategoryAdmin,
+            "get_export_form_class",
+            return_value=partial(SelectableFieldsExportForm),
+        ):
+            response = self._post_url_response(
+                self.category_change_url, self._export_action_data(self.cat1)
+            )
+            self._assert_export_items_rendered(response, [self.cat1.id])
+            response = self._post_export_items([str(self.cat1.id)])
+        self._check_export_response(response)
+
+    def test_export_with_export_form_init_without_kwargs(self):
+        # queryset= is passed only when __init__() accepts it
+        class WithoutQuerysetExportForm(SelectableFieldsExportForm):
+            def __init__(self, formats, resources, data=None):
+                super().__init__(formats, resources, data=data)
+
+        class RequiredQuerysetExportForm(SelectableFieldsExportForm):
+            def __init__(self, formats, resources, queryset, data=None):
+                super().__init__(formats, resources, queryset=queryset, data=data)
+
+        for form_class in [WithoutQuerysetExportForm, RequiredQuerysetExportForm]:
+            with (
+                self.subTest(form_class=form_class.__name__),
+                patch.object(
+                    CategoryAdmin, "get_export_form_class", return_value=form_class
+                ),
+            ):
+                self._get_url_response(self.category_export_url)
+                response = self._post_export_items([])
+                self.assertContains(response, self.cat1.name)
+                self.assertContains(response, self.cat2.name)
+                response = self._post_export_items([str(self.cat1.id)])
+                self._check_export_response(response)
+
+    def test_export_with_base_form_declaring_another_export_items_field(self):
+        # the v4 idiom for a form not built on ExportForm
+        class MultipleChoiceExportForm(ImportExportFormBase):
+            export_items = forms.MultipleChoiceField(
+                widget=forms.MultipleHiddenInput, required=False
+            )
+
+        with patch.object(
+            CategoryAdmin,
+            "get_export_form_class",
+            return_value=MultipleChoiceExportForm,
+        ):
+            with self.assertRaisesRegex(ImproperlyConfigured, "ExportItemsField"):
+                self._post_url_response(
+                    self.category_change_url, self._export_action_data(self.cat1)
+                )
+            with self.assertRaisesRegex(ImproperlyConfigured, "ExportItemsField"):
+                self._post_export_items([str(self.cat1.id)])
+
+    def test_export_with_export_form_subclass_declaring_another_export_items_field(
+        self,
+    ):
+        class MultipleChoiceExportForm(SelectableFieldsExportForm):
+            export_items = forms.MultipleChoiceField(
+                widget=forms.MultipleHiddenInput, required=False
+            )
+
+        with (
+            patch.object(
+                CategoryAdmin,
+                "get_export_form_class",
+                return_value=MultipleChoiceExportForm,
+            ),
+            patch.object(CategoryAdmin, "get_export_queryset", return_value=[]),
+        ):
+            with self.assertRaisesRegex(ImproperlyConfigured, "ExportItemsField"):
+                self._post_export_items([str(self.cat1.id)])
+
+    def test_export_action_with_export_items_to_field_name(self):
+        class NameKeyedExportForm(SelectableFieldsExportForm):
+            export_items = ExportItemsField(
+                queryset=None,
+                to_field_name="name",
+                widget=forms.MultipleHiddenInput,
+                required=False,
+            )
+
+        change_url = reverse("admin:core_category_change", args=[self.cat1.id])
+        with patch.object(
+            CategoryAdmin, "get_export_form_class", return_value=NameKeyedExportForm
+        ):
+            for url, data in [
+                (self.category_change_url, self._export_action_data(self.cat1)),
+                (change_url, {"_export-item": "Export", "name": self.cat1.name}),
+            ]:
+                with self.subTest(url=url):
+                    response = self._post_url_response(url, data)
+                    self._assert_export_items_rendered(response, [self.cat1.name])
+                    rendered = response.context["form"]["export_items"].value()
+                    response = self._post_export_items(rendered)
+                    self._check_export_response(response)
 
     def test_export_post_model_with_custom_PK(self):
         cat = UUIDCategory.objects.create(name="UUIDCategory 1")
@@ -304,7 +492,7 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
         with (
             mock.patch(
                 "core.admin.CategoryAdmin.get_queryset",
-                return_value=Category.objects.all(),
+                return_value=Category.objects.filter(pk=self.cat1.pk),
             ) as mock_modeladmin_get_queryset,
             mock.patch(
                 "import_export.admin.ExportMixin.get_data_for_export"
@@ -345,7 +533,32 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
         }
         self._prepend_form_prefix(data)
         self._perform_export_action_calls_modeladmin_get_queryset_test(
-            data, [self.cat1.pk, self.cat2.pk]
+            data, [self.cat1.pk]
+        )
+
+    def test_export_action_calls_modeladmin_get_queryset_rejects_other_items(self):
+        # Issue #1864
+        data = {
+            "format": "0",
+            "export_items": [str(self.cat1.id), str(self.cat2.id)],
+            **self.resource_fields_payload,
+        }
+        self._prepend_form_prefix(data)
+        with (
+            mock.patch(
+                "core.admin.CategoryAdmin.get_queryset",
+                return_value=Category.objects.filter(pk=self.cat1.pk),
+            ),
+            mock.patch(
+                "import_export.admin.ExportMixin.get_data_for_export"
+            ) as mock_get_data_for_export,
+        ):
+            response = self._post_url_response(self.category_export_url, data)
+        mock_get_data_for_export.assert_not_called()
+        self.assertIn(
+            "Select a valid choice. "
+            f"{self.cat2.id} is not one of the available choices.",
+            response.content.decode(),
         )
 
     @override_settings(IMPORT_EXPORT_SKIP_ADMIN_EXPORT_UI=True)
@@ -379,6 +592,15 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
         m = TestMixin()
         with self.assertRaises(PermissionDenied):
             m.get_export_data("0", request, Book.objects.none())
+
+    def test_export_with_get_export_queryset_returning_a_list(self):
+        with patch.object(
+            CategoryAdmin, "get_export_queryset", return_value=[self.cat1]
+        ):
+            self._get_url_response(self.category_export_url)
+            self._check_export_response(self._post_export_items([]))
+            with self.assertRaisesRegex(ImproperlyConfigured, "get_export_queryset"):
+                self._post_export_items([str(self.cat1.id)])
 
 
 class TestExportFilterPreservation(AdminTestMixin, TestCase):

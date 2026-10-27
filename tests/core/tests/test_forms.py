@@ -1,7 +1,7 @@
 from unittest import mock
 
 import django.forms
-from core.models import Author, Category
+from core.models import Author, Book, Category
 from core.tests.admin_integration.mixins import AdminTestMixin
 from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.db import connection, models
@@ -149,6 +149,25 @@ class FormTest(TestCase):
             field.clean([str(category.pk)])
         self.assertEqual(1, len(queries))
         self.assertNotIn(connection.ops.quote_name("name"), queries[0]["sql"])
+
+    def test_export_items_field_skips_related_lookups(self):
+        book = Book.objects.create(name="Book 1")
+        field = forms.ExportItemsField(
+            queryset=Book.objects.select_related("author").prefetch_related(
+                "categories"
+            )
+        )
+        with CaptureQueriesContext(connection) as queries:
+            selected = field.clean([str(book.pk)])
+        self.assertEqual(1, len(queries))
+        self.assertNotIn("JOIN", queries[0]["sql"])
+        self.assertEqual([book], list(selected))
+
+    def test_export_items_field_rejects_unhashable_values(self):
+        field = forms.ExportItemsField(queryset=Category.objects.all())
+        with self.assertRaises(ValidationError) as cm:
+            field.clean([["1"]])
+        self.assertEqual("invalid_list", cm.exception.code)
 
     def test_export_items_field_char_to_field_name_skips_range_check(self):
         category = Category.objects.create(name="99999999999999999999")
