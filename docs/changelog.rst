@@ -26,8 +26,6 @@ Enhancements
 Fixes
 #####
 
-- Fixed ``CSV`` being omitted from the default formats on Python 3.15 because tablib 3.10+ lazily imports ``tablib.core``, leaving the format registry empty when the first ``is_available()`` check runs (`2210 <https://github.com/django-import-export/django-import-export/issues/2210>`_)
-- Fixed ``ExportActionMixin.get_actions()`` for Django 6.1, which deprecates overriding it without the new ``action_location`` parameter and, with the old signature, disables all change form actions on the admin.  The export action is now registered through Django's own action API and is offered on the change list only (`2214 <https://github.com/django-import-export/django-import-export/pull/2214>`_)
 - Fixed import / export links being hidden when an admin mixin from another library declares ``change_list_template`` as a read-only property (e.g. django-admin-sortable2).  The import / export change list template now extends the template Django would otherwise have used, resolved on each request (`2205 <https://github.com/django-import-export/django-import-export/issues/2205>`_)
 - Fixed the import preview diff showing a spurious change for values which the widget considers equal but which render differently, for example a ``DecimalField`` value of ``1803.60`` imported from an xlsx cell as ``1803.6`` (`2199 <https://github.com/django-import-export/django-import-export/issues/2199>`_)
 - Fixed ``skip_row()`` incorrectly treating unmodified, previously-exported ``DateTimeField``/``TimeField`` values as changed due to sub-second precision loss inherent to export round-trips (`2018 <https://github.com/django-import-export/django-import-export/issues/2018>`_)
@@ -61,6 +59,13 @@ Performance
 
 i18n
 ####
+
+4.4.4 (2026-10-27)
+-------------------
+
+- Fixed ``CSV`` being omitted from the default formats on Python 3.15 because tablib 3.10+ lazily imports ``tablib.core``, leaving the format registry empty when the first ``is_available()`` check runs (`2210 <https://github.com/django-import-export/django-import-export/issues/2210>`_)
+- Fixed ``django.utils.functional.cached_property is deprecated`` warning on Django 6.2 by using ``functools.cached_property``
+- Fixed ``ExportActionMixin.get_actions()`` for Django 6.1, which deprecates overriding it without the new ``action_location`` parameter and, with the old signature, disables all change form actions on the admin. (`2214 <https://github.com/django-import-export/django-import-export/pull/2214>`_)
 
 4.4.3 (2026-10-19)
 -------------------
