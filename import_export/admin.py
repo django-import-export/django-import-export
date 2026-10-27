@@ -912,7 +912,7 @@ class ExportActionMixin(ExportMixin):
         form = form_type(
             formats=formats,
             resources=self.get_export_resource_classes(request),
-            queryset=self.get_export_queryset(request),
+            queryset=queryset,
             initial={"export_items": export_items},
         )
         context = self.init_request_context_data(request, form)

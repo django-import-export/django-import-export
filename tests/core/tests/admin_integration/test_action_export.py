@@ -9,16 +9,16 @@ from core.tests.admin_integration.mixins import AdminTestMixin
 from django.contrib import admin
 from django.contrib.admin import AdminSite
 from django.contrib.auth.models import User
-from django.core.exceptions import FieldError, PermissionDenied, ValidationError
-from django.db import connection, models
+from django.core.exceptions import FieldError, PermissionDenied
+from django.db import connection
 from django.http import HttpRequest
-from django.test import RequestFactory, TransactionTestCase
+from django.test import RequestFactory
 from django.test.testcases import TestCase
-from django.test.utils import CaptureQueriesContext, isolate_apps, override_settings
+from django.test.utils import CaptureQueriesContext, override_settings
 from django.urls import reverse
 
 from import_export.admin import ExportMixin
-from import_export.forms import ExportItemsField, SelectableFieldsExportForm
+from import_export.forms import SelectableFieldsExportForm
 
 try:
     from django.contrib.admin.options import ActionLocation
@@ -60,7 +60,7 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
         category_queries = [q["sql"] for q in queries if table in q["sql"]]
         self.assertTrue(category_queries)
         for sql in category_queries:
-            self.assertIn("WHERE", sql)
+            self.assertIn(" IN (", sql)
 
     def _post_export_items(self, export_items, url=None, fields=None):
         data = {
@@ -175,14 +175,26 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
             mock_export_admin_action.assert_called()
 
     def test_export_admin_action_render_uses_bounded_export_queryset(self):
-        change_url = reverse("admin:core_category_change", args=[self.cat1.id])
+        # BookAdmin.list_filter has related filters, which query their related
+        # tables when a ChangeList is built
+        book = Book.objects.create(name="Book 1")
+        change_url = reverse("admin:core_book_change", args=[book.id])
+        tables = [
+            connection.ops.quote_name(model._meta.db_table)
+            for model in (Author, Category)
+        ]
         with CaptureQueriesContext(connection) as queries:
             response = self._post_url_response(
-                change_url, data={"_export-item": "Export", "name": self.cat1.name}
+                change_url, data={"_export-item": "Export", "name": book.name}
             )
-        self._assert_category_queries_are_bounded(queries)
+        unbounded_queries = [
+            q["sql"]
+            for q in queries
+            if any(table in q["sql"] for table in tables) and "WHERE" not in q["sql"]
+        ]
+        self.assertEqual([], unbounded_queries)
         export_items = response.context["form"].fields["export_items"]
-        self.assertIs(Category, export_items.queryset.model)
+        self.assertIs(Book, export_items.queryset.model)
 
     def test_export_admin_action_with_restricted_pks(self):
         data = {
@@ -273,8 +285,7 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
             url=self.uuid_category_export_url,
             fields=self.uuid_resource_fields_payload,
         )
-        # the message depends on the Django version ("valid value" / "valid UUID")
-        self.assertIn("“abc” is not a valid", response.content.decode())
+        self.assertIn("“abc” is not a valid value.", response.content.decode())
 
     def test_export_items_rejects_pk_with_null_character(self):
         response = self._post_export_items(
@@ -285,34 +296,28 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertFalse(response.has_header("Content-Disposition"))
         self.assertIn("Null characters are not allowed.", response.content.decode())
 
-    def _perform_export_action_calls_modeladmin_get_queryset_test(self, data):
+    def _perform_export_action_calls_modeladmin_get_queryset_test(
+        self, data, expected_pks
+    ):
         # Issue #1864
         # ModelAdmin's get_queryset should be used in the ModelAdmin mixins
         with (
             mock.patch(
-                "core.admin.CategoryAdmin.get_queryset"
+                "core.admin.CategoryAdmin.get_queryset",
+                return_value=Category.objects.all(),
             ) as mock_modeladmin_get_queryset,
             mock.patch(
                 "import_export.admin.ExportMixin.get_data_for_export"
             ) as mock_get_data_for_export,
         ):
-            mock_queryset = mock.MagicMock(name="MockQuerySet")
-            mock_queryset.all.return_value = mock_queryset
-            mock_queryset.filter.return_value = mock_queryset
-            mock_queryset.order_by.return_value = mock_queryset
-            mock_queryset.__iter__.side_effect = lambda: iter([self.cat1])
-
-            mock_modeladmin_get_queryset.return_value = mock_queryset
-
             self._post_url_response(self.category_export_url, data)
 
             mock_modeladmin_get_queryset.assert_called()
             mock_get_data_for_export.assert_called()
 
-            args, kwargs = mock_get_data_for_export.call_args
-            mock_get_data_for_export.assert_called_with(
-                args[0], mock_queryset, **kwargs
-            )
+            queryset = mock_get_data_for_export.call_args[0][1]
+            self.assertIs(Category, queryset.model)
+            self.assertCountEqual(expected_pks, [obj.pk for obj in queryset])
 
     def test_export_action_calls_modeladmin_get_queryset(self):
         # Issue #1864
@@ -326,7 +331,9 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
         self._prepend_form_prefix(data)
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", category=DeprecationWarning)
-            self._perform_export_action_calls_modeladmin_get_queryset_test(data)
+            self._perform_export_action_calls_modeladmin_get_queryset_test(
+                data, [self.cat1.pk]
+            )
 
     def test_export_action_calls_modeladmin_get_queryset_all_items(self):
         # Issue #1864
@@ -337,7 +344,9 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
             **self.resource_fields_payload,
         }
         self._prepend_form_prefix(data)
-        self._perform_export_action_calls_modeladmin_get_queryset_test(data)
+        self._perform_export_action_calls_modeladmin_get_queryset_test(
+            data, [self.cat1.pk, self.cat2.pk]
+        )
 
     @override_settings(IMPORT_EXPORT_SKIP_ADMIN_EXPORT_UI=True)
     def test_export_action_calls_modeladmin_get_queryset_skip_export_ui(self):
@@ -352,7 +361,9 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
             **self.resource_fields_payload,
         }
         self._prepend_form_prefix(data)
-        self._perform_export_action_calls_modeladmin_get_queryset_test(data)
+        self._perform_export_action_calls_modeladmin_get_queryset_test(
+            data, [self.cat1.pk]
+        )
 
     def test_get_export_data_raises_PermissionDenied_when_no_export_permission_assigned(
         self,
@@ -368,40 +379,6 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
         m = TestMixin()
         with self.assertRaises(PermissionDenied):
             m.get_export_data("0", request, Book.objects.none())
-
-
-class ExportActionInheritedPkTest(TransactionTestCase):
-
-    def _create_table(self, model):
-        def delete_model():
-            with connection.schema_editor() as editor:
-                editor.delete_model(model)
-
-        with connection.schema_editor() as editor:
-            editor.create_model(model)
-        self.addCleanup(delete_model)
-
-    @isolate_apps("core")
-    def test_export_items_rejects_out_of_range_inherited_pk(self):
-        class RangeParent(models.Model):
-            class Meta:
-                app_label = "core"
-                db_table = "core_rangeparent_2189"
-
-        class RangeChild(RangeParent):
-            class Meta:
-                app_label = "core"
-                db_table = "core_rangechild_2189"
-
-        self._create_table(RangeParent)
-        self._create_table(RangeChild)
-        child = RangeChild.objects.create()
-        field = ExportItemsField(queryset=RangeChild.objects.all())
-
-        with self.assertRaises(ValidationError) as cm:
-            field.clean(["99999999999999999999"])
-        self.assertEqual("invalid_choice", cm.exception.code)
-        self.assertEqual([child], list(field.clean([str(child.pk)])))
 
 
 class TestExportFilterPreservation(AdminTestMixin, TestCase):

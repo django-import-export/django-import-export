@@ -483,7 +483,7 @@ class TestExportEncoding(TestCase):
             return dataset
 
         def get_export_queryset(self, request):
-            return Book.objects.none()
+            return []
 
         def get_export_filename(self, request, queryset, file_format):
             return "f"

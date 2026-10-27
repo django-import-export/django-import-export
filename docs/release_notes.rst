@@ -159,7 +159,7 @@ Breaking changes
   processes ``form.cleaned_data["export_items"]``, and overrides of
   :meth:`~import_export.admin.ExportMixin.get_export_queryset`.
 
-  Selected items are now validated by ``ExportItemsField``, a subclass of Django's ``ModelMultipleChoiceField``.
+  Selected items are now validated by :class:`~import_export.forms.ExportItemsField`, a subclass of Django's ``ModelMultipleChoiceField``.
   Validation is restricted to the submitted primary keys within the export queryset, instead of loading every
   primary key in that queryset.
 
@@ -176,11 +176,13 @@ Breaking changes
     their submission order is not preserved.  The result follows the queryset's ordering, where defined.
     Without a queryset, an empty selection is accepted and returns an empty list.  Custom
     ``clean_export_items()`` methods must preserve this return contract.
-  * ``get_export_queryset()`` must return a queryset of model instances when exporting selected items.
-    Querysets produced by ``values()`` or ``values_list()`` are not supported.
+  * ``get_export_queryset()`` must return a ``QuerySet`` of model instances when exporting selected items.
+    Other iterables, such as a list, are still accepted when exporting without a selection.  Querysets
+    produced by ``values()`` or ``values_list()`` are not supported.
   * If your custom form redeclares ``export_items``, use
-    ``import_export.forms.ExportItemsField`` or a subclass, or inherit the
-    field from ``ExportForm``.
+    :class:`~import_export.forms.ExportItemsField` or a subclass, or inherit the
+    field from ``ExportForm``.  Redeclaring it with another field type raises ``ImproperlyConfigured``
+    when the form is instantiated with a queryset.
 
   See `issue 2189 <https://github.com/django-import-export/django-import-export/issues/2189>`_ and
   `PR 2190 <https://github.com/django-import-export/django-import-export/pull/2190>`_.
