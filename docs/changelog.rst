@@ -47,6 +47,7 @@ Development
 
 - Add support for Django 6.0, remove support for Python 3.9 (`2112 <https://github.com/django-import-export/django-import-export/pull/2112>`_)
 - Add support for Python 3.15, remove support for Python 3.10 (`2194 <https://github.com/django-import-export/django-import-export/pull/2194>`_)
+- Fixed the test suite silently disabling its warnings-as-errors flags: a module level ``warnings.simplefilter()`` in the field declaration tests applied to the whole run, so deprecation warnings from Django never failed the build. (`2213 <https://github.com/django-import-export/django-import-export/pull/2213>`_)
 
 Documentation
 #############
