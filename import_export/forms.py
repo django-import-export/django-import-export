@@ -5,6 +5,9 @@ from itertools import chain
 
 from django import forms
 from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured, ValidationError
+from django.db import connections
+from django.db.models import ForeignObject, IntegerField
 from django.utils.translation import gettext_lazy as _
 
 from . import constants
@@ -114,10 +117,61 @@ class ConfirmImportForm(FieldNamePrefixMixin, forms.Form):
         return data
 
 
+class ExportItemsField(forms.ModelMultipleChoiceField):
+    """
+    ``export_items`` field, validated against the posted pks only (issue #2189).
+    """
+
+    def clean(self, value):
+        if self.queryset is None:
+            if value:
+                raise ImproperlyConfigured(
+                    "export_items requires a queryset: "
+                    "pass queryset= when instantiating the export form."
+                )
+            if self.required:
+                raise ValidationError(self.error_messages["required"], code="required")
+            return []
+        if value and isinstance(value, (list, tuple)):
+            self._validate_integer_range(value)
+        return super().clean(value)
+
+    def _validate_integer_range(self, value):
+        # Django's ``In`` lookup has no integer overflow guard (unlike exact,
+        # gt, lt...), so out of range values would raise OverflowError on SQLite.
+        range_field = self.queryset.model._meta.pk
+        while isinstance(range_field, ForeignObject):
+            range_field = range_field.target_field
+        if not isinstance(range_field, IntegerField):
+            return
+        min_value, max_value = connections[self.queryset.db].ops.integer_field_range(
+            range_field.get_internal_type()
+        )
+        for pk in value:
+            try:
+                pk_int = int(pk)
+            except (ValueError, TypeError):
+                # reported by ModelMultipleChoiceField
+                continue
+            if (min_value is not None and pk_int < min_value) or (
+                max_value is not None and pk_int > max_value
+            ):
+                raise ValidationError(
+                    self.error_messages["invalid_choice"],
+                    code="invalid_choice",
+                    params={"value": pk},
+                )
+
+
 class ExportForm(ImportExportFormBase):
-    export_items = forms.MultipleChoiceField(
-        widget=forms.MultipleHiddenInput(), required=False
+    export_items = ExportItemsField(
+        queryset=None, widget=forms.MultipleHiddenInput(), required=False
     )
+
+    def __init__(self, formats, resources, *, queryset=None, **kwargs):
+        super().__init__(formats, resources, **kwargs)
+        if queryset is not None:
+            self.fields["export_items"].queryset = queryset
 
 
 class SelectableFieldsExportForm(ExportForm):
