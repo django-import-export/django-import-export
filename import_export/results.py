@@ -2,10 +2,10 @@ import logging
 import sys
 import traceback
 from collections import OrderedDict
+from functools import cached_property
 
 from django.core.exceptions import NON_FIELD_ERRORS
 from django.utils.encoding import force_str
-from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from tablib import Dataset
 

@@ -5,10 +5,11 @@ Changelog
 
     If upgrading from v3, v4 introduces breaking changes.  Please refer to :doc:`release notes<release_notes>`.
 
-4.4.4 (unreleased)
+4.4.4 (2026-10-27)
 -------------------
 
 - Fixed ``CSV`` being omitted from the default formats on Python 3.15 because tablib 3.10+ lazily imports ``tablib.core``, leaving the format registry empty when the first ``is_available()`` check runs (`2210 <https://github.com/django-import-export/django-import-export/issues/2210>`_)
+- Fixed ``django.utils.functional.cached_property is deprecated`` warning on Django 6.2 by using ``functools.cached_property``
 
 4.4.3 (2026-10-19)
 -------------------
