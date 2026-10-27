@@ -960,12 +960,11 @@ class ExportActionMixin(ExportMixin):
         is also what Django itself defaults to.  The export action is only offered
         on the change list.
         """
-        if action_location is None:
-            actions = super().get_actions(request)
-            export_action = self.get_action("export_admin_action")
-        else:
-            actions = super().get_actions(request, action_location=action_location)
-            export_action = self.get_action("export_admin_action", action_location)
+        # only forward the parameter when given, so that Django < 6.1 (which
+        # does not accept it) keeps working unchanged
+        kwargs = {} if action_location is None else {"action_location": action_location}
+        actions = super().get_actions(request, **kwargs)
+        export_action = self.get_action("export_admin_action", **kwargs)
         if export_action is not None and self.has_export_permission(request):
             actions["export_admin_action"] = export_action
         return actions
