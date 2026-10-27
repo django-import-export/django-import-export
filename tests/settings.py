@@ -1,19 +1,5 @@
 import os
 import sys
-import warnings
-
-# The test suite runs with warnings turned into errors (see the Makefile and
-# tox.ini), so new deprecations fail the build.  Deprecations which are known
-# but not yet addressed are listed here, each with the issue tracking the fix,
-# so that they are ignored narrowly rather than by disabling warnings globally.
-#
-# Django 6.1: ExportActionMixin.get_actions() does not yet accept the
-# 'action_location' parameter.
-warnings.filterwarnings(
-    "ignore",
-    message=r"Overriding get_actions\(\) without the 'action_location' parameter",
-    category=Warning,
-)
 
 INSTALLED_APPS = [
     "django.contrib.admin",
