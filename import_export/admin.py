@@ -916,6 +916,7 @@ class ExportActionMixin(ExportMixin):
             )
         return super().response_change(request, obj)
 
+    @admin.action(description=_("Export selected %(verbose_name_plural)s"))
     def export_admin_action(self, request, queryset):
         """
         Action runs on POST from instance action menu (if enabled).
@@ -959,19 +960,22 @@ class ExportActionMixin(ExportMixin):
 
         return render(request, "admin/import_export/export.html", context=context)
 
-    def get_actions(self, request):
+    def get_actions(self, request, action_location=None):
         """
         Adds the export action to the list of available actions.
+
+        ``action_location`` was added in Django 6.1 (``ActionLocation.CHANGE_LIST``
+        or ``ActionLocation.CHANGE_FORM``).  ``None`` means the change list, which
+        is also what Django itself defaults to.  The export action is only offered
+        on the change list.
         """
-        actions = super().get_actions(request)
-        if self.has_export_permission(request):
-            actions.update(
-                export_admin_action=(
-                    type(self).export_admin_action,
-                    "export_admin_action",
-                    _("Export selected %(verbose_name_plural)s"),
-                )
-            )
+        # only forward the parameter when given, so that Django < 6.1 (which
+        # does not accept it) keeps working unchanged
+        kwargs = {} if action_location is None else {"action_location": action_location}
+        actions = super().get_actions(request, **kwargs)
+        export_action = self.get_action("export_admin_action", **kwargs)
+        if export_action is not None and self.has_export_permission(request):
+            actions["export_admin_action"] = export_action
         return actions
 
 

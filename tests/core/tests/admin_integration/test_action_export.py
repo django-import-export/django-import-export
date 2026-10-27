@@ -1,6 +1,6 @@
 import warnings
 from datetime import date, datetime
-from unittest import mock
+from unittest import mock, skipUnless
 from unittest.mock import MagicMock, PropertyMock, patch
 
 from core.admin import CategoryAdmin
@@ -17,6 +17,11 @@ from django.test.utils import override_settings
 from django.urls import reverse
 
 from import_export.admin import ExportMixin
+
+try:
+    from django.contrib.admin.options import ActionLocation
+except ImportError:  # Django < 6.1
+    ActionLocation = None
 
 
 class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
@@ -111,8 +116,10 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertEqual(target_str.encode(), response.content)
 
     def test_export_admin_action(self):
+        # autospec so that Django's get_action() sees a function, not a MagicMock
+        # which would answer any attribute lookup (e.g. 'locations')
         with mock.patch(
-            "core.admin.CategoryAdmin.export_admin_action"
+            "core.admin.CategoryAdmin.export_admin_action", autospec=True
         ) as mock_export_admin_action:
             response = self.client.post(
                 self.category_change_url,
@@ -541,3 +548,54 @@ class TestSkipExportFormFromChangeForm(AdminTestMixin, TestCase):
             )
             target_re = r"This exporter will export the following fields:"
             self.assertRegex(response.content.decode(), target_re)
+
+
+class ExportActionGetActionsTest(AdminTestMixin, TestCase):
+    """
+    ``get_actions()`` must integrate with Django's action API, which gained an
+    ``action_location`` parameter in Django 6.1.
+    """
+
+    def setUp(self):
+        super().setUp()
+        # the admin only renders the action form when there are results
+        Category.objects.create(name="Cat 1")
+        self.model_admin = CategoryAdmin(Category, AdminSite())
+        self.request = RequestFactory().get(self.category_change_url)
+        self.request.user = User.objects.create_superuser(
+            "superuser", "superuser@example.com", "password"
+        )
+
+    def test_export_action_in_change_list_actions(self):
+        actions = self.model_admin.get_actions(self.request)
+        self.assertIn("export_admin_action", actions)
+
+    def test_export_action_choice_description(self):
+        choices = self.model_admin.get_action_choices(self.request)
+        self.assertIn(("export_admin_action", "Export selected categories"), choices)
+
+    @skipUnless(ActionLocation, "requires Django 6.1+")
+    def test_export_action_in_change_list_location(self):
+        actions = self.model_admin.get_actions(
+            self.request, action_location=ActionLocation.CHANGE_LIST
+        )
+        self.assertIn("export_admin_action", actions)
+
+    @skipUnless(ActionLocation, "requires Django 6.1+")
+    def test_export_action_not_in_change_form_location(self):
+        actions = self.model_admin.get_actions(
+            self.request, action_location=ActionLocation.CHANGE_FORM
+        )
+        self.assertNotIn("export_admin_action", actions)
+
+    @skipUnless(ActionLocation, "requires Django 6.1+")
+    def test_change_list_does_not_emit_get_actions_deprecation_warning(self):
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", DeprecationWarning)
+            warnings.simplefilter("error", PendingDeprecationWarning)
+            response = self.client.get(self.category_change_url)
+        self.assertEqual(200, response.status_code)
+        self.assertIn(
+            '<option value="export_admin_action">Export selected categories</option>',
+            response.content.decode(),
+        )
