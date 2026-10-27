@@ -13,6 +13,19 @@ from tablib.formats import registry
 logger = logging.getLogger(__name__)
 
 
+def _ensure_tablib_registry():
+    """
+    Make sure tablib's builtin formats are registered.
+
+    tablib registers its builtin formats as a side effect of importing
+    ``tablib.core``.  With tablib 3.10+ on Python 3.15+, ``tablib.core`` is a
+    lazy module, so the registry can still be empty when a format is first
+    looked up (see issue 2210).
+    """
+    if not registry._formats:
+        registry.register_builtins()
+
+
 class Format:
     def get_title(self):
         return type(self)
@@ -77,6 +90,7 @@ class TablibFormat(Format):
         if not self.TABLIB_MODULE:
             raise AttributeError("TABLIB_MODULE must be defined")
         key = self.TABLIB_MODULE.split(".")[-1].replace("_", "")
+        _ensure_tablib_registry()
         return registry.get_format(key)
 
     @classmethod
