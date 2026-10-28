@@ -10,7 +10,9 @@ Changelog
 
 - Fixed ``CSV`` being omitted from the default formats on Python 3.15 because tablib 3.10+ lazily imports ``tablib.core``, leaving the format registry empty when the first ``is_available()`` check runs (`2210 <https://github.com/django-import-export/django-import-export/issues/2210>`_)
 - Fixed ``django.utils.functional.cached_property is deprecated`` warning on Django 6.2 by using ``functools.cached_property``
-- Fixed ``ExportActionMixin.get_actions()`` for Django 6.1, which deprecates overriding it without the new ``action_location`` parameter and, with the old signature, disables all change form actions on the admin. (`2214 <https://github.com/django-import-export/django-import-export/pull/2214>`_)
+- Fixed ``ExportActionMixin.get_actions()`` for Django 6.1, which deprecates overriding it without the new ``action_location`` parameter and, with the old signature, disables all change form actions on the admin.
+  See :ref:`release notes <release_notes_export_admin_action>` if you override ``export_admin_action()``.
+  (`2214 <https://github.com/django-import-export/django-import-export/pull/2214>`_)
 
 4.4.3 (2026-10-19)
 -------------------
