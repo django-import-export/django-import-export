@@ -168,22 +168,25 @@ Breaking changes
 
   * :class:`~import_export.forms.ExportForm` and :class:`~import_export.forms.SelectableFieldsExportForm` accept a
     new keyword-only ``queryset`` argument: ``ExportForm(formats, resources, *, queryset=None, **kwargs)``.
-    The admin passes it only to these forms and to their subclasses whose ``__init__()`` accepts ``queryset``
-    (or ``**kwargs``): the export view validates the submitted selection against
-    ``get_export_queryset(request)``, and the export admin action renders the form with the action's queryset.
-    A custom ``__init__()`` that accepts ``queryset`` should pass it on to ``super().__init__()``.  For any
-    export form class, the admin then sets the ``export_items`` queryset after the form's ``__init__()``, and
-    adds an :class:`~import_export.forms.ExportItemsField` when exporting selected items with a form that
-    declares none.  A queryset declared on the field or set in ``__init__()`` is therefore replaced: narrow the
-    selection in ``get_export_queryset()`` or ``clean_export_items()`` instead.  If you instantiate the form
-    directly, supply a queryset when validating selected items.  Validating a non-empty selection raises
-    ``ImproperlyConfigured`` when the ``export_items`` field has no queryset, which is the default when none is
-    supplied.
+    It is for instantiating the form directly; the admin does not pass it.  A custom ``__init__()`` that
+    accepts ``queryset`` should pass it on to ``super().__init__()``.  For any export form class, the admin
+    sets the ``export_items`` queryset after the form's ``__init__()``: the export view validates the submitted
+    selection against ``get_export_queryset(request)``, and the export admin action renders the form with the
+    action's queryset.  The admin also adds an :class:`~import_export.forms.ExportItemsField` when exporting
+    selected items with a form that declares none.  A queryset declared on the field or set in ``__init__()``
+    is therefore replaced: narrow the selection in ``get_export_queryset()`` or ``clean_export_items()``
+    instead.  If you instantiate the form directly, supply a queryset when validating selected items.
+    Validating a non-empty selection raises ``ImproperlyConfigured`` when the ``export_items`` field has no
+    queryset, which is the default when none is supplied.
   * When a queryset is supplied, ``form.cleaned_data["export_items"]`` now contains a ``QuerySet`` of selected
     model instances instead of a list of primary key strings.  Submitted primary keys are deduplicated, and
     their submission order is not preserved.  The result follows the queryset's ordering, where defined.
     Without a queryset, an empty selection is accepted and returns an empty list.  Custom
-    ``clean_export_items()`` methods must preserve this return contract.
+    ``clean_export_items()`` methods should preserve this return contract.  In the admin, a returned list of
+    primary keys, ``to_field_name`` values or model instances is accepted and filtered against the export
+    queryset.  A returned ``QuerySet`` is exported without being filtered against the export queryset again, so
+    ``clean_export_items()`` can include rows outside that queryset.  To stay within it, start from the already
+    validated ``self.cleaned_data["export_items"]`` and narrow it with ``filter()`` or ``exclude()``.
   * :meth:`~import_export.admin.ExportMixin.get_export_queryset` must return a ``QuerySet`` when exporting
     selected items, otherwise ``ImproperlyConfigured`` is raised.  Other iterables, such as a list, still work
     when exporting without a selection.  Querysets produced by ``values()`` work; querysets produced by
