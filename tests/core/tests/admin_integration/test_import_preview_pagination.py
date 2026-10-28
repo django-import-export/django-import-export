@@ -697,3 +697,55 @@ class ImportPreviewPaginationTests(AdminTestMixin, TestCase):
         (key,) = self._preview_session_keys()
         form_data = self.client.session[key]["form_data"]
         self.assertEqual(form_data, {f"{FORM_FIELD_PREFIX}format": ["0"]})
+
+    def _assert_preview_expired(self, response):
+        self.assertNotIn("result", response.context)
+        self.assertIn(
+            "The import preview has expired. Please upload the file again.",
+            [str(m) for m in response.context["messages"]],
+        )
+
+    def _tamper_session_entry(self, update):
+        session = self.client.session
+        (key,) = self._preview_session_keys()
+        entry = session[key]
+        update(entry)
+        session[key] = entry
+        session.save()
+
+    def test_pagination_get_with_empty_import_file_name_warns(self):
+        response = self.client.get(
+            self.book_import_url, {"import_file_name": "", "page": "2"}
+        )
+        self._assert_preview_expired(response)
+
+    @override_settings(IMPORT_EXPORT_PREVIEW_PAGE_SIZE=2)
+    def test_pagination_get_with_unknown_format_index_warns(self):
+        post_response = self._post_csv(_build_csv(4))
+        params = self._pagination_get_params(post_response, page=2)
+        self._tamper_session_entry(lambda entry: entry.update(format=99))
+
+        response = self.client.get(self.book_import_url, params)
+        self._assert_preview_expired(response)
+        self.assertEqual(self._preview_session_keys(), [])
+
+    @override_settings(IMPORT_EXPORT_PREVIEW_PAGE_SIZE=2)
+    def test_pagination_get_with_unknown_resource_index_warns(self):
+        post_response = self._post_csv(_build_csv(4))
+        params = self._pagination_get_params(post_response, page=2)
+        self._tamper_session_entry(
+            lambda entry: entry["form_data"].update(
+                {f"{FORM_FIELD_PREFIX}resource": ["99"]}
+            )
+        )
+
+        response = self.client.get(self.book_import_url, params)
+        self._assert_preview_expired(response)
+        self.assertEqual(self._preview_session_keys(), [])
+
+    def test_pagination_metadata_is_empty_without_session(self):
+        from core.admin import BookAdmin
+
+        admin = BookAdmin(Book, mock.Mock())
+        request = mock.Mock(spec=[])
+        self.assertEqual(admin._get_pagination_metadata(request, "x"), {})
