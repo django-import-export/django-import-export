@@ -288,6 +288,49 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
             response = self._post_export_items([str(self.cat1.id), str(cat2_pk)])
         self._check_export_response(response)
 
+    def test_export_post_with_custom_form_cleaning_export_items_to_a_list(self):
+        cat1, excluded = self.cat1, Category.objects.create(name="Excluded")
+
+        class PkListExportForm(SelectableFieldsExportForm):
+            def clean_export_items(self):
+                return [str(cat1.pk), str(excluded.pk)]
+
+        class NameListExportForm(SelectableFieldsExportForm):
+            export_items = ExportItemsField(
+                queryset=None,
+                to_field_name="name",
+                widget=forms.MultipleHiddenInput,
+                required=False,
+            )
+
+            def clean_export_items(self):
+                return [cat1.name, excluded.name]
+
+        class InstanceListExportForm(SelectableFieldsExportForm):
+            def clean_export_items(self):
+                return [cat1, excluded]
+
+        for form_class, export_items in [
+            (PkListExportForm, [str(self.cat1.pk), str(self.cat2.pk)]),
+            (NameListExportForm, [self.cat1.name, self.cat2.name]),
+            (InstanceListExportForm, [str(self.cat1.pk), str(self.cat2.pk)]),
+        ]:
+            with (
+                self.subTest(form_class=form_class.__name__),
+                patch.object(
+                    CategoryAdmin, "get_export_form_class", return_value=form_class
+                ),
+                patch.object(
+                    CategoryAdmin,
+                    "get_queryset",
+                    return_value=Category.objects.exclude(pk=excluded.pk),
+                ),
+            ):
+                response = self._post_export_items(export_items)
+                self.assertEqual(
+                    f"id,name\r\n{cat1.pk},Cat 1\r\n".encode(), response.content
+                )
+
     def test_export_action_passes_selection_to_form_init(self):
         initial_export_items = []
 

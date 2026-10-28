@@ -5,6 +5,7 @@ from django.contrib import admin, messages
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION, LogEntry
 from django.contrib.auth import get_permission_codename
 from django.core.exceptions import FieldError, PermissionDenied
+from django.db.models import QuerySet
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.template import TemplateDoesNotExist
@@ -773,7 +774,15 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
 
             if "export_items" in form.changed_data:
                 # this request has arisen from an Admin UI action
-                queryset = form.cleaned_data["export_items"]
+                selected = form.cleaned_data["export_items"]
+                if not isinstance(selected, QuerySet):
+                    # clean_export_items() returned a list of instances or keys
+                    field = form.fields["export_items"]
+                    key = field.to_field_name or "pk"
+                    selected = queryset.filter(
+                        **{f"{key}__in": field.prepare_value(selected)}
+                    )
+                queryset = selected
 
             response = self._do_file_export(
                 file_format, request, queryset, export_form=form
