@@ -1,3 +1,4 @@
+from django.apps import apps
 from django.db import transaction
 
 
@@ -29,3 +30,16 @@ class atomic_if_using_transaction:
 def get_related_model(field):
     if hasattr(field, "related_model"):
         return field.related_model
+
+
+def resolve_model(model):
+    """
+    Returns the model class for ``model``.
+
+    ``model`` may be a model class, which is returned unchanged, or an
+    ``"app_label.ModelName"`` string, which is resolved via the app registry.
+    Only the dotted ``"app_label.ModelName"`` form is supported.
+    """
+    if isinstance(model, str):
+        return apps.get_model(model)
+    return model

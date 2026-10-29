@@ -10,6 +10,7 @@ from django.test import TestCase
 from import_export import exceptions, fields, resources, widgets
 from import_export.fields import Field
 from import_export.resources import ModelResource
+from import_export.results import RowResult
 
 
 class AfterImportComparisonTest(TestCase):
@@ -420,11 +421,106 @@ class ImportIdFieldsTestCase(TestCase):
 
         self.resource = BookResource()
         dataset = tablib.Dataset(
-            *[(self.book.pk, "Goldeneye", "ian.fleming@example.com")],
-            headers=["id", "name", "author_email"],
+            *[("Goldeneye", "ian.fleming@example.com")],
+            headers=["name", "author_email"],
         )
-        self.resource.import_data(dataset, raise_errors=True)
+        result = self.resource.import_data(dataset, raise_errors=True)
+        self.assertEqual(1, result.totals["new"])
         self.assertEqual("Goldeneye", Book.objects.latest("id").name)
+
+
+class ForceInsertOnCreateTestCase(TestCase):
+    """
+    A row classified as "new" must never update an existing database row, even
+    if the import supplies a pk which already exists but which is not visible
+    to the instance loader.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.allowed = Book.objects.create(
+            name="allowed", author_email="allowed@example.com"
+        )
+        self.forbidden = Book.objects.create(
+            name="forbidden", author_email="forbidden@example.com"
+        )
+
+        allowed_pk = self.allowed.pk
+
+        class ScopedBookResource(resources.ModelResource):
+            def get_queryset(self):
+                return Book.objects.filter(pk=allowed_pk)
+
+            class Meta:
+                model = Book
+
+        self.resource = ScopedBookResource()
+        self.dataset = tablib.Dataset(headers=["id", "name"])
+        self.dataset.append([self.forbidden.pk, "overwritten"])
+
+    def _assert_forbidden_unchanged(self):
+        self.forbidden.refresh_from_db()
+        self.assertEqual("forbidden", self.forbidden.name)
+        self.assertEqual("forbidden@example.com", self.forbidden.author_email)
+        self.assertEqual(2, Book.objects.count())
+
+    def test_scoped_queryset_does_not_overwrite_existing_pk(self):
+        result = self.resource.import_data(self.dataset)
+
+        self.assertTrue(result.has_errors())
+        self.assertEqual(RowResult.IMPORT_TYPE_ERROR, result.rows[0].import_type)
+        self.assertEqual(0, result.totals["new"])
+        self.assertEqual(0, result.totals["update"])
+        self._assert_forbidden_unchanged()
+
+    def test_scoped_queryset_does_not_overwrite_existing_pk_raise_errors(self):
+        with self.assertRaises(exceptions.ImportError):
+            self.resource.import_data(self.dataset, raise_errors=True)
+        self._assert_forbidden_unchanged()
+
+    def test_scoped_queryset_dry_run_reports_error_not_new(self):
+        # the preview must not report the row as "new"
+        result = self.resource.import_data(self.dataset, dry_run=True)
+
+        self.assertTrue(result.has_errors())
+        self.assertEqual(RowResult.IMPORT_TYPE_ERROR, result.rows[0].import_type)
+        self.assertEqual(0, result.totals["new"])
+        self._assert_forbidden_unchanged()
+
+    def test_import_id_fields_miss_does_not_overwrite_existing_pk(self):
+        # the lookup is on 'name' which does not match, so the row is "new",
+        # but the row also carries the pk of an existing instance
+        class BookResource(resources.ModelResource):
+            class Meta:
+                model = Book
+                import_id_fields = ("name",)
+
+        dataset = tablib.Dataset(headers=["id", "name"])
+        dataset.append([self.forbidden.pk, "no such book"])
+        result = BookResource().import_data(dataset)
+
+        self.assertTrue(result.has_errors())
+        self.assertEqual(RowResult.IMPORT_TYPE_ERROR, result.rows[0].import_type)
+        self._assert_forbidden_unchanged()
+
+    def test_create_with_unused_pk_succeeds(self):
+        # a new pk which does not exist is still inserted
+        new_pk = Book.objects.latest("id").pk + 100
+        dataset = tablib.Dataset(headers=["id", "name"])
+        dataset.append([new_pk, "brand new"])
+        result = self.resource.import_data(dataset, raise_errors=True)
+
+        self.assertEqual(1, result.totals["new"])
+        self.assertEqual("brand new", Book.objects.get(pk=new_pk).name)
+
+    def test_update_of_visible_instance_succeeds(self):
+        dataset = tablib.Dataset(headers=["id", "name"])
+        dataset.append([self.allowed.pk, "updated"])
+        result = self.resource.import_data(dataset, raise_errors=True)
+
+        self.assertEqual(1, result.totals["update"])
+        self.allowed.refresh_from_db()
+        self.assertEqual("updated", self.allowed.name)
 
 
 class ImportWithMissingFields(TestCase):

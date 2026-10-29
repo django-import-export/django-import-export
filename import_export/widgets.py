@@ -1,11 +1,13 @@
 import json
 import logging
 import numbers
+import sys
 from collections import defaultdict, namedtuple
 from datetime import date, datetime, time, timedelta
 from decimal import Decimal
 
 import django
+from django.apps import apps
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import F
@@ -16,6 +18,7 @@ from django.utils.formats import number_format, sanitize_separators
 from django.utils.translation import gettext_lazy as _
 
 from import_export.exceptions import WidgetError
+from import_export.utils import resolve_model
 
 logger = logging.getLogger(__name__)
 
@@ -268,12 +271,24 @@ class IntegerWidget(NumberWidget):
         :param row: The current row being processed.
         :param **kwargs: Optional keyword arguments.
         :returns: A Python int instance, or None if value is empty.
-        :raises ValueError: If the value cannot be converted to integer.
+        :raises ValueError: If the value cannot be converted to integer, or if
+            its magnitude exceeds ``sys.get_int_max_str_digits()`` digits.
         :raises InvalidOperation: If Decimal conversion fails.
         """
         if self.is_empty(value):
             return None
-        return int(Decimal(sanitize_separators(value)))
+        d = Decimal(sanitize_separators(value))
+        # Reject values whose magnitude would make the Decimal-to-int conversion
+        # disproportionately expensive. ``sys.set_int_max_str_digits`` does not
+        # guard ``Decimal.__int__``, so the same limit is applied explicitly.
+        # See GHSA-fcgw-hjjv-4rh6.
+        max_digits = sys.get_int_max_str_digits()
+        if d.is_finite() and d.adjusted() >= max_digits:
+            raise ValueError(
+                f"the value's magnitude exceeds the maximum of {max_digits} "
+                "digits allowed for integer conversion"
+            )
+        return int(d)
 
 
 class DecimalWidget(NumberWidget):
@@ -608,7 +623,32 @@ class JSONWidget(Widget):
         return json.dumps(value, sort_keys=kwargs.get("sort_json_keys", False))
 
 
-class ForeignKeyWidget(Widget):
+class RelatedModelWidgetMixin:
+    """
+    Mixin for widgets which reference a related model.
+
+    The ``model`` attribute may be set either to a model class or to an
+    ``"app_label.ModelName"`` string, so that a resource does not need to
+    import models from other apps directly.  A string is resolved to the model
+    class via the app registry immediately if the registry is ready, so that a
+    misspelled name fails at startup.  If the registry is not yet ready, the
+    string is resolved the first time ``model`` is accessed.
+    """
+
+    @property
+    def model(self):
+        if isinstance(self._model, str):
+            self._model = resolve_model(self._model)
+        return self._model
+
+    @model.setter
+    def model(self, value):
+        if isinstance(value, str) and apps.models_ready:
+            value = resolve_model(value)
+        self._model = value
+
+
+class ForeignKeyWidget(RelatedModelWidgetMixin, Widget):
     """
     Widget for a ``ForeignKey`` field which looks up a related model using
     either the PK or a user specified field that uniquely identifies the
@@ -644,7 +684,9 @@ class ForeignKeyWidget(Widget):
             class Meta:
                 fields = ('author',)
 
-    :param model: The Model the ForeignKey refers to (required).
+    :param model: The Model the ForeignKey refers to (required).  Either a
+        model class or an ``"app_label.ModelName"`` string.  See
+        :class:`~import_export.widgets.RelatedModelWidgetMixin`.
     :param field: A field on the related model used for looking up a particular
         object.
     :param use_natural_foreign_keys: Use natural key functions to identify
@@ -876,7 +918,9 @@ class CachedForeignKeyWidget(ForeignKeyWidget):
                 def get_lookup_kwargs(self, value, row, **kwargs):
                     return {f'{self.field}__gt': value}
 
-    :param model: The Model the ForeignKey refers to (required).
+    :param model: The Model the ForeignKey refers to (required).  Either a
+        model class or an ``"app_label.ModelName"`` string.  See
+        :class:`~import_export.widgets.RelatedModelWidgetMixin`.
     :param field: A field on the related model used for looking up a particular
         object.
     :param use_natural_foreign_keys: Use natural key functions to identify
@@ -908,12 +952,14 @@ class CachedForeignKeyWidget(ForeignKeyWidget):
         return self._cached_qs.get(**lookup_kwargs)
 
 
-class ManyToManyWidget(Widget):
+class ManyToManyWidget(RelatedModelWidgetMixin, Widget):
     """
     Widget that converts between representations of a ManyToMany relationships
     as a list and an actual ManyToMany field.
 
-    :param model: The model the ManyToMany field refers to (required).
+    :param model: The model the ManyToMany field refers to (required).  Either
+        a model class or an ``"app_label.ModelName"`` string.  See
+        :class:`~import_export.widgets.RelatedModelWidgetMixin`.
     :param separator: Defaults to ``','``.
     :param field: A field on the related model. Default is ``pk``.
     """

@@ -548,6 +548,34 @@ declaration.
         class Meta:
             model = Book
 
+.. _related_model_as_string:
+
+Referencing the related model by name
+-------------------------------------
+
+``ForeignKeyWidget``, ``CachedForeignKeyWidget`` and ``ManyToManyWidget`` accept the related model either as a model
+class or as an ``"app_label.ModelName"`` string, which can be used to avoid circular imports between apps.  A
+string is resolved via the app registry when the widget is created, or, if the registry is not yet ready at that
+point, the first time the widget needs the model.  Only the dotted
+``"app_label.ModelName"`` form is supported, not the bare ``"ModelName"`` form accepted by Django's ``ForeignKey``::
+
+    class BookResource(resources.ModelResource):
+        author = fields.Field(
+            column_name='author',
+            attribute='author',
+            widget=widgets.ForeignKeyWidget('core.Author', field='name'))
+
+        categories = fields.Field(
+            column_name='categories',
+            attribute='categories',
+            widget=widgets.ManyToManyWidget('core.Category', field='name', separator='|'))
+
+        class Meta:
+            model = 'core.Book'
+
+As shown above, the ``Meta.model`` attribute of a resource may also be given as an ``"app_label.ModelName"`` string.
+Note that ``Meta.model`` is resolved when the resource class is created, not lazily.
+
 .. _creating-non-existent-relations:
 
 Creating non-existent relations

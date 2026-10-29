@@ -1,4 +1,3 @@
-import logging
 from urllib.parse import urlencode
 
 from django.conf import settings
@@ -9,6 +8,8 @@ from django.core.exceptions import FieldError, PermissionDenied
 from django.forms import MultipleChoiceField, MultipleHiddenInput
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
+from django.template import TemplateDoesNotExist
+from django.template.loader import get_template
 from django.template.response import TemplateResponse
 from django.urls import path, reverse
 from django.utils.decorators import method_decorator
@@ -24,45 +25,60 @@ from .results import RowResult
 from .signals import post_export, post_import
 from .tmp_storages import TempFolderStorage
 
-logger = logging.getLogger(__name__)
-
 
 class ImportExportMixinBase:
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.init_change_list_template()
-
-    def init_change_list_template(self):
-        # Store already set change_list_template to allow users to independently
-        # customize the change list object tools. This treats the cases where
-        # `self.change_list_template` is `None` (the default in `ModelAdmin`) or
-        # where `self.import_export_change_list_template` is `None` as falling
-        # back on the default templates.
-        if getattr(self, "change_list_template", None):
-            self.ie_base_change_list_template = self.change_list_template
-        else:
-            self.ie_base_change_list_template = "admin/change_list.html"
-
-        try:
-            self.change_list_template = getattr(
-                self, "import_export_change_list_template", None
-            )
-        except AttributeError:
-            logger.warning("failed to assign change_list_template attribute")
-
-        if self.change_list_template is None:
-            self.change_list_template = self.ie_base_change_list_template
-
     def get_model_info(self):
         app_label = self.model._meta.app_label
         return (app_label, self.model._meta.model_name)
 
     def changelist_view(self, request, extra_context=None):
-        extra_context = extra_context or {}
-        extra_context["ie_base_change_list_template"] = (
-            self.ie_base_change_list_template
+        response = super().changelist_view(request, extra_context)
+        ie_template = getattr(self, "import_export_change_list_template", None)
+        if ie_template is None or not self._is_changelist_response(response):
+            return response
+        # Render our own template, which extends whichever template Django
+        # would otherwise have used (``change_list_template`` set by the user
+        # or by another admin mixin, or Django's defaults).  This is resolved
+        # per request rather than by assigning ``change_list_template`` at
+        # init time, so it also works when a third party mixin declares
+        # ``change_list_template`` as a read-only property (#2205).
+        response.context_data["ie_base_change_list_template"] = (
+            self._resolve_base_change_list_template(response.template_name)
         )
-        return super().changelist_view(request, extra_context)
+        response.template_name = ie_template
+        return response
+
+    @staticmethod
+    def _is_changelist_response(response):
+        # Only replace the response which renders the change list itself
+        # (recognised by the ChangeList, ``cl``, in its context).  Actions may
+        # return their own responses (e.g. a redirect, or the delete
+        # confirmation page); these are left untouched.
+        return (
+            isinstance(response, TemplateResponse)
+            and response.context_data is not None
+            and "cl" in response.context_data
+        )
+
+    @staticmethod
+    def _resolve_base_change_list_template(template_name):
+        """
+        Return the name of the template which the import / export change list
+        template should ``{% extends %}``, from ``template_name`` (a single name
+        or a list of candidate names, as accepted by ``TemplateResponse``).  A
+        list is resolved to the first name which exists.
+        """
+        names = [template_name] if isinstance(template_name, str) else template_name
+        chain = []
+        for name in names:
+            try:
+                get_template(name)
+            except TemplateDoesNotExist as e:
+                chain.extend(e.chain)
+                continue
+            return name
+        # ``chain`` keeps the loaders / paths tried, for Django's debug page
+        raise TemplateDoesNotExist(", ".join(names), chain=chain)
 
 
 class ImportMixin(BaseImportMixin, ImportExportMixinBase):
@@ -880,6 +896,7 @@ class ExportActionMixin(ExportMixin):
             )
         return super().response_change(request, obj)
 
+    @admin.action(description=_("Export selected %(verbose_name_plural)s"))
     def export_admin_action(self, request, queryset):
         """
         Action runs on POST from instance action menu (if enabled).
@@ -934,19 +951,22 @@ class ExportActionMixin(ExportMixin):
 
         return render(request, "admin/import_export/export.html", context=context)
 
-    def get_actions(self, request):
+    def get_actions(self, request, action_location=None):
         """
         Adds the export action to the list of available actions.
+
+        ``action_location`` was added in Django 6.1 (``ActionLocation.CHANGE_LIST``
+        or ``ActionLocation.CHANGE_FORM``).  ``None`` means the change list, which
+        is also what Django itself defaults to.  The export action is only offered
+        on the change list.
         """
-        actions = super().get_actions(request)
-        if self.has_export_permission(request):
-            actions.update(
-                export_admin_action=(
-                    type(self).export_admin_action,
-                    "export_admin_action",
-                    _("Export selected %(verbose_name_plural)s"),
-                )
-            )
+        # only forward the parameter when given, so that Django < 6.1 (which
+        # does not accept it) keeps working unchanged
+        kwargs = {} if action_location is None else {"action_location": action_location}
+        actions = super().get_actions(request, **kwargs)
+        export_action = self.get_action("export_admin_action", **kwargs)
+        if export_action is not None and self.has_export_permission(request):
+            actions["export_admin_action"] = export_action
         return actions
 
 

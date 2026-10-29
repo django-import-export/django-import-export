@@ -265,12 +265,6 @@ This can occur if a model defines a ``__str__()`` method which references a prim
 foreign key relation, and which is ``None`` during import.  There is a workaround to deal
 with this issue.  Refer to `this comment <https://github.com/django-import-export/django-import-export/issues/1556#issuecomment-1466980421>`_.
 
-'failed to assign change_list_template attribute' warning in logs
------------------------------------------------------------------
-
-This indicates that the change_list_template attribute could not be set, most likely due to a clash with a third party
-library.  Refer to :ref:`interoperability`.
-
 How to skip rows with validation errors during import
 -----------------------------------------------------
 
