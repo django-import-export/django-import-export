@@ -12,7 +12,6 @@ from django.template.loader import get_template
 from django.template.response import TemplateResponse
 from django.urls import path, reverse
 from django.utils.decorators import method_decorator
-from django.utils.inspect import func_accepts_kwargs, func_supports_parameter
 from django.utils.module_loading import import_string
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_POST
@@ -20,7 +19,6 @@ from django.views.decorators.http import require_POST
 from .formats.base_formats import get_binary_formats
 from .forms import (
     ConfirmImportForm,
-    ExportForm,
     ImportForm,
     SelectableFieldsExportForm,
     _bind_export_items,
@@ -765,7 +763,6 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
             formats,
             self.get_export_resource_classes(request),
             data=request.POST or None,
-            **self._export_form_kwargs(form_type, queryset),
         )
         # add the field if the action posts a selection the form lacks
         _bind_export_items(
@@ -787,20 +784,6 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
         context = self.init_request_context_data(request, form)
         request.current_app = self.admin_site.name
         return TemplateResponse(request, [self.export_template_name], context=context)
-
-    @staticmethod
-    def _export_form_kwargs(form_type, queryset):
-        # get_export_form_class() may return a callable such as a partial
-        if (
-            isinstance(form_type, type)
-            and issubclass(form_type, ExportForm)
-            and (
-                func_supports_parameter(form_type, "queryset")
-                or func_accepts_kwargs(form_type)
-            )
-        ):
-            return {"queryset": queryset}
-        return {}
 
     def changelist_view(self, request, extra_context=None):
         if extra_context is None:
@@ -936,11 +919,12 @@ class ExportActionMixin(ExportMixin):
         form = form_type(
             formats=formats,
             resources=self.get_export_resource_classes(request),
-            **self._export_form_kwargs(form_type, queryset),
+            initial={"export_items": list(queryset.values_list("pk", flat=True))},
         )
         _bind_export_items(form, queryset, add=True)
-        key = form.fields["export_items"].to_field_name or "pk"
-        form.initial["export_items"] = list(queryset.values_list(key, flat=True))
+        key = form.fields["export_items"].to_field_name
+        if key:
+            form.initial["export_items"] = list(queryset.values_list(key, flat=True))
         context = self.init_request_context_data(request, form)
 
         # this is necessary to render the FORM action correctly

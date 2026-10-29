@@ -25,6 +25,7 @@ from django.urls import reverse
 
 from import_export.admin import ExportMixin
 from import_export.forms import (
+    ExportForm,
     ExportItemsField,
     ImportExportFormBase,
     SelectableFieldsExportForm,
@@ -287,6 +288,26 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
             response = self._post_export_items([str(self.cat1.id), str(cat2_pk)])
         self._check_export_response(response)
 
+    def test_export_action_passes_selection_to_form_init(self):
+        initial_export_items = []
+
+        class InitialInspectingExportForm(SelectableFieldsExportForm):
+            def __init__(self, formats, resources, **kwargs):
+                initial_export_items.append(
+                    kwargs.get("initial", {}).get("export_items")
+                )
+                super().__init__(formats, resources, **kwargs)
+
+        with patch.object(
+            CategoryAdmin,
+            "get_export_form_class",
+            return_value=InitialInspectingExportForm,
+        ):
+            self._post_url_response(
+                self.category_change_url, self._export_action_data(self.cat1)
+            )
+        self.assertEqual([[self.cat1.pk]], initial_export_items)
+
     def test_export_post_with_prefixed_form(self):
         data = {
             "format": "0",
@@ -369,17 +390,17 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
             response = self._post_export_items([str(self.cat1.id)])
         self._check_export_response(response)
 
-    def test_export_with_export_form_init_without_kwargs(self):
-        # queryset= is passed only when __init__() accepts it
-        class WithoutQuerysetExportForm(SelectableFieldsExportForm):
-            def __init__(self, formats, resources, data=None):
-                super().__init__(formats, resources, data=data)
+    def test_export_with_export_form_init_not_accepting_queryset(self):
+        class WithoutKwargsExportForm(SelectableFieldsExportForm):
+            def __init__(self, formats, resources, data=None, initial=None):
+                super().__init__(formats, resources, data=data, initial=initial)
 
-        class RequiredQuerysetExportForm(SelectableFieldsExportForm):
-            def __init__(self, formats, resources, queryset, data=None):
-                super().__init__(formats, resources, queryset=queryset, data=data)
+        # takes **kwargs but does not route them through ExportForm.__init__()
+        class KwargsBypassingExportForm(ExportForm):
+            def __init__(self, formats, resources, **kwargs):
+                ImportExportFormBase.__init__(self, formats, resources, **kwargs)
 
-        for form_class in [WithoutQuerysetExportForm, RequiredQuerysetExportForm]:
+        for form_class in [WithoutKwargsExportForm, KwargsBypassingExportForm]:
             with (
                 self.subTest(form_class=form_class.__name__),
                 patch.object(
@@ -390,6 +411,10 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
                 response = self._post_export_items([])
                 self.assertContains(response, self.cat1.name)
                 self.assertContains(response, self.cat2.name)
+                response = self._post_url_response(
+                    self.category_change_url, self._export_action_data(self.cat1)
+                )
+                self._assert_export_items_rendered(response, [self.cat1.id])
                 response = self._post_export_items([str(self.cat1.id)])
                 self._check_export_response(response)
 

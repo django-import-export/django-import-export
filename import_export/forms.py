@@ -254,6 +254,12 @@ def _bind_export_items(form, queryset, add=False):
 
 
 class ExportForm(ImportExportFormBase):
+    """
+    Pass ``queryset`` to validate selected ``export_items`` when the form is
+    used outside the admin, which binds the field's queryset itself.  Without
+    it, validating a non-empty selection raises ``ImproperlyConfigured``.
+    """
+
     export_items = ExportItemsField(
         queryset=None, widget=forms.MultipleHiddenInput(), required=False
     )
@@ -265,6 +271,11 @@ class ExportForm(ImportExportFormBase):
 
 
 class SelectableFieldsExportForm(ExportForm):
+    """
+    :class:`ExportForm` with a checkbox per resource field.  It accepts the
+    same ``queryset`` argument.
+    """
+
     def __init__(self, formats, resources, **kwargs):
         super().__init__(formats, resources, **kwargs)
         self._init_selectable_fields(resources)
