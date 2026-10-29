@@ -21,6 +21,11 @@ def _ensure_tablib_registry():
     ``tablib.core``.  With tablib 3.10+ on Python 3.15+, ``tablib.core`` is a
     lazy module, so the registry can still be empty when a format is first
     looked up (see issue 2210).
+
+    Fixed upstream in tablib (jazzband/tablib#715) by registering the builtins
+    on first use of the registry.  This guard remains for tablib versions
+    without that fix (3.10.x) and can be removed once the minimum supported
+    tablib version includes it.
     """
     if not registry._formats:
         registry.register_builtins()
