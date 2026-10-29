@@ -183,14 +183,15 @@ Breaking changes
     their submission order is not preserved.  The result follows the queryset's ordering, where defined.
     Without a queryset, an empty selection is accepted and returns an empty list.  Custom
     ``clean_export_items()`` methods should preserve this return contract.  In the admin, a returned list of
-    primary keys, ``to_field_name`` values or model instances is accepted and filtered against the export
-    queryset.  A returned ``QuerySet`` is exported without being filtered against the export queryset again, so
+    primary keys, ``to_field_name`` values or model instances, or a ``values_list(..., flat=True)`` queryset,
+    is accepted and filtered against the export queryset.  A returned ``QuerySet`` of model instances or
+    ``values()`` rows is exported without being filtered against the export queryset again, so
     ``clean_export_items()`` can include rows outside that queryset.  To stay within it, start from the already
     validated ``self.cleaned_data["export_items"]`` and narrow it with ``filter()`` or ``exclude()``.
   * :meth:`~import_export.admin.ExportMixin.get_export_queryset` must return a ``QuerySet`` when exporting
     selected items, otherwise ``ImproperlyConfigured`` is raised.  Other iterables, such as a list, still work
-    when exporting without a selection.  Querysets produced by ``values()`` work; querysets produced by
-    ``values_list()`` are not supported (they export blank rows, as before).
+    when exporting without a selection.  Querysets produced by ``values()`` work; ``values_list()`` querysets
+    used directly for export are not supported (they export blank rows, as before).
   * If your custom form declares ``export_items``, use :class:`~import_export.forms.ExportItemsField` or a
     subclass, or inherit the field from :class:`~import_export.forms.ExportForm`.  Its ``to_field_name``, if set,
     must name a unique field.  Declaring ``export_items`` with another field type raises ``ImproperlyConfigured``
