@@ -310,10 +310,22 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
             def clean_export_items(self):
                 return [cat1, excluded]
 
+        class FlatValuesListExportForm(SelectableFieldsExportForm):
+            def clean_export_items(self):
+                return Category.objects.filter(
+                    pk__in=[cat1.pk, excluded.pk]
+                ).values_list("pk", flat=True)
+
+        class ValuesExportForm(SelectableFieldsExportForm):
+            def clean_export_items(self):
+                return self.cleaned_data["export_items"].filter(pk=cat1.pk).values()
+
         for form_class, export_items in [
             (PkListExportForm, [str(self.cat1.pk), str(self.cat2.pk)]),
             (NameListExportForm, [self.cat1.name, self.cat2.name]),
             (InstanceListExportForm, [str(self.cat1.pk), str(self.cat2.pk)]),
+            (FlatValuesListExportForm, [str(self.cat1.pk), str(self.cat2.pk)]),
+            (ValuesExportForm, [str(self.cat1.pk), str(self.cat2.pk)]),
         ]:
             with (
                 self.subTest(form_class=form_class.__name__),
