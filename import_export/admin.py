@@ -6,7 +6,6 @@ from django.contrib.admin.models import ADDITION, CHANGE, DELETION, LogEntry
 from django.contrib.auth import get_permission_codename
 from django.core.exceptions import FieldError, PermissionDenied
 from django.db.models import QuerySet
-from django.db.models.query import FlatValuesListIterable
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.template import TemplateDoesNotExist
@@ -774,19 +773,18 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
             file_format = formats[int(form.cleaned_data["format"])]()
 
             if "export_items" in form.changed_data:
-                # this request has arisen from an Admin UI action
+                # this request has arisen from an Admin UI action: whatever
+                # clean_export_items() returned, keep the export inside the
+                # export queryset, as on v4
+                field = form.fields["export_items"]
+                key = field.to_field_name or "pk"
                 selected = form.cleaned_data["export_items"]
-                if (
-                    not isinstance(selected, QuerySet)
-                    or selected._iterable_class is FlatValuesListIterable
-                ):
-                    # clean_export_items() returned instances or keys, not rows
-                    field = form.fields["export_items"]
-                    key = field.to_field_name or "pk"
-                    selected = queryset.filter(
-                        **{f"{key}__in": field.prepare_value(selected)}
-                    )
-                queryset = selected
+                if isinstance(selected, QuerySet):
+                    if field.to_field_name:
+                        selected = selected.values_list(key, flat=True)
+                else:
+                    selected = field.prepare_value(selected)
+                queryset = queryset.filter(**{f"{key}__in": selected})
 
             response = self._do_file_export(
                 file_format, request, queryset, export_form=form

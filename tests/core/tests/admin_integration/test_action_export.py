@@ -288,7 +288,7 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
             response = self._post_export_items([str(self.cat1.id), str(cat2_pk)])
         self._check_export_response(response)
 
-    def test_export_post_with_custom_form_cleaning_export_items_to_a_list(self):
+    def test_export_post_custom_clean_export_items_stays_in_export_queryset(self):
         cat1, excluded = self.cat1, Category.objects.create(name="Excluded")
 
         class PkListExportForm(SelectableFieldsExportForm):
@@ -318,7 +318,26 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
 
         class ValuesExportForm(SelectableFieldsExportForm):
             def clean_export_items(self):
-                return self.cleaned_data["export_items"].filter(pk=cat1.pk).values()
+                return Category.objects.filter(pk__in=[cat1.pk, excluded.pk]).values()
+
+        class QuerySetExportForm(SelectableFieldsExportForm):
+            def clean_export_items(self):
+                return Category.objects.filter(pk__in=[cat1.pk, excluded.pk])
+
+        class NameQuerySetExportForm(NameListExportForm):
+            def clean_export_items(self):
+                return Category.objects.filter(pk__in=[cat1.pk, excluded.pk])
+
+        # a pk no Category has, so exporting the book's pk instead of the
+        # categories it lists cannot pass by coincidence
+        book = Book.objects.create(pk=10_000 + excluded.pk, name="Book 1")
+        book.categories.add(cat1, excluded)
+
+        class RelatedFlatValuesListExportForm(SelectableFieldsExportForm):
+            def clean_export_items(self):
+                return Book.objects.filter(pk=book.pk).values_list(
+                    "categories", flat=True
+                )
 
         for form_class, export_items in [
             (PkListExportForm, [str(self.cat1.pk), str(self.cat2.pk)]),
@@ -326,6 +345,9 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
             (InstanceListExportForm, [str(self.cat1.pk), str(self.cat2.pk)]),
             (FlatValuesListExportForm, [str(self.cat1.pk), str(self.cat2.pk)]),
             (ValuesExportForm, [str(self.cat1.pk), str(self.cat2.pk)]),
+            (QuerySetExportForm, [str(self.cat1.pk), str(self.cat2.pk)]),
+            (NameQuerySetExportForm, [self.cat1.name, self.cat2.name]),
+            (RelatedFlatValuesListExportForm, [str(self.cat1.pk), str(self.cat2.pk)]),
         ]:
             with (
                 self.subTest(form_class=form_class.__name__),
