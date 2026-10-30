@@ -155,6 +155,42 @@ class ResourceOptions:
     This parameter is only used if ``use_bulk`` is ``True``.
     """
 
+    update_conflicts = False
+    """
+    If ``True``, rows which conflict with an existing row on insert are updated
+    instead of raising an integrity error, by passing ``update_conflicts`` to
+    `bulk_create()
+    <https://docs.djangoproject.com/en/dev/ref/models/querysets/#bulk-create>`_.
+    This makes a bulk import behave as an upsert.
+    This parameter is only used if ``use_bulk`` is ``True``.
+
+    Not every database backend supports this: refer to the Django documentation
+    for the caveats which apply to your backend.
+    """
+
+    update_fields = None
+    """
+    The fields to update when a conflicting row is found, passed to
+    `bulk_create()
+    <https://docs.djangoproject.com/en/dev/ref/models/querysets/#bulk-create>`_.
+    If not set, it defaults to
+    :meth:`~import_export.resources.ModelResource.get_bulk_update_fields`, which
+    is every writable field except the ``import_id_fields``.
+    This parameter is only used if ``update_conflicts`` is ``True``.
+    """
+
+    unique_fields = None
+    """
+    The fields which trigger the upsert (the conflict target), passed to
+    `bulk_create()
+    <https://docs.djangoproject.com/en/dev/ref/models/querysets/#bulk-create>`_.
+    If not set, it defaults to the ``import_id_fields``, which are the fields
+    which identify a row on import.
+    This parameter is only used if ``update_conflicts`` is ``True``, and it is
+    ignored on backends which do not support a conflict target (MySQL and
+    MariaDB), because they update every unique constraint.
+    """
+
     force_init_instance = False
     """
     If ``True``, this parameter will prevent imports from checking the database for
