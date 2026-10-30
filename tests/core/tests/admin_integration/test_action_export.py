@@ -723,6 +723,17 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
             with self.assertRaisesRegex(ImproperlyConfigured, "get_export_queryset"):
                 self._post_export_items([str(self.cat1.id)])
 
+    def test_export_with_get_export_queryset_returning_values(self):
+        with patch.object(
+            CategoryAdmin,
+            "get_export_queryset",
+            return_value=Category.objects.values("id", "name"),
+        ):
+            response = self._post_export_items([str(self.cat1.id)])
+        self.assertEqual(
+            f"id,name\r\n{self.cat1.id},Cat 1\r\n".encode(), response.content
+        )
+
 
 class TestExportFilterPreservation(AdminTestMixin, TestCase):
     """

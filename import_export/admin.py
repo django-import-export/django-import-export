@@ -801,7 +801,9 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
                 key = field.to_field_name or "pk"
                 selected = form.cleaned_data["export_items"]
                 if isinstance(selected, QuerySet):
-                    if field.to_field_name:
+                    # a QuerySet of another model, e.g. values_list() of a
+                    # relation, already holds the keys
+                    if field.to_field_name or selected.model is queryset.model:
                         selected = selected.values_list(key, flat=True)
                 else:
                     selected = field.prepare_value(selected)
