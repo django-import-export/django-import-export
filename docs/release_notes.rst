@@ -155,6 +155,52 @@ Breaking changes
   inline in ``skip_row()``.  Behaviour is unchanged, but if you have overridden ``skip_row()`` you may be able to
   simplify it by calling ``field.widget.is_equal()`` instead.
 
+* **Export form selected items.**  This affects custom export forms, custom ``export_items`` fields, code that
+  processes ``form.cleaned_data["export_items"]``, and overrides of ``get_export_queryset()``.
+
+  Selected items are now validated by :class:`~import_export.forms.ExportItemsField`, a subclass of Django's
+  ``ModelMultipleChoiceField``.  Validation is restricted to the submitted primary keys within the export queryset,
+  instead of loading every primary key in that queryset.  Malformed submitted values, values containing null
+  characters and invalid UUIDs now report Django's own messages, such as ``“abc” is not a valid value.`` and
+  ``Null characters are not allowed.``, instead of ``Select a valid choice``.
+
+  As a result:
+
+  * :class:`~import_export.forms.ExportForm` and :class:`~import_export.forms.SelectableFieldsExportForm` accept a
+    new keyword-only ``queryset`` argument: ``ExportForm(formats, resources, *, queryset=None, **kwargs)``.
+    It is for instantiating the form directly; the admin does not pass it.  It must be a ``QuerySet``; anything
+    else raises ``ImproperlyConfigured``.  A custom ``__init__()`` that
+    accepts ``queryset`` should pass it on to ``super().__init__()``.  For any export form class, the admin
+    sets the ``export_items`` queryset after the form's ``__init__()``: the export view validates the submitted
+    selection against ``get_export_queryset(request)``, and the export admin action renders the form with the
+    action's queryset.  The admin also adds an :class:`~import_export.forms.ExportItemsField` when exporting
+    selected items with a form that declares none.  A queryset declared on the field or set in ``__init__()``
+    is therefore replaced: narrow the selection in ``get_export_queryset()`` or ``clean_export_items()``
+    instead.  If you instantiate the form directly, supply a queryset when validating selected items.
+    Validating a non-empty selection raises ``ImproperlyConfigured`` when the ``export_items`` field has no
+    queryset, which is the default when none is supplied.
+  * When a queryset is supplied, ``form.cleaned_data["export_items"]`` now contains a ``QuerySet`` of selected
+    model instances instead of a list of primary key strings.  Submitted primary keys are deduplicated, and
+    their submission order is not preserved.  The result follows the queryset's ordering, where defined.
+    Without a queryset, an empty selection is accepted and returns an empty list.  Custom
+    ``clean_export_items()`` methods should preserve this return contract.  In the admin, whatever
+    ``clean_export_items()`` returns is filtered against the export queryset, as in v4, so the export never
+    includes rows outside that queryset.  A list of primary keys, ``to_field_name`` values or model instances,
+    or a ``values_list(..., flat=True)`` queryset of primary keys, is also accepted.  The exported rows are read
+    from the export queryset, so the ordering, annotations and ``values()`` shape of a returned ``QuerySet`` are
+    not kept.
+  * :meth:`~import_export.admin.ExportMixin.get_export_queryset` must return a ``QuerySet`` when exporting
+    selected items, otherwise ``ImproperlyConfigured`` is raised.  Other iterables, such as a list, still work
+    when exporting without a selection.  Querysets produced by ``values()`` work; ``values_list()`` querysets
+    used directly for export are not supported (they export blank rows, as before).
+  * If your custom form declares ``export_items``, use :class:`~import_export.forms.ExportItemsField` or a
+    subclass, or inherit the field from :class:`~import_export.forms.ExportForm`.  Its ``to_field_name``, if set,
+    must name a unique field.  Declaring ``export_items`` with another field type raises ``ImproperlyConfigured``
+    when the form is given a ``queryset`` argument, and in the admin for any export form class.
+
+  See `issue 2189 <https://github.com/django-import-export/django-import-export/issues/2189>`_ and
+  `PR 2190 <https://github.com/django-import-export/django-import-export/pull/2190>`_.
+
 Removed deprecations
 """"""""""""""""""""
 

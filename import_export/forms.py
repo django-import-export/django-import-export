@@ -5,6 +5,13 @@ from itertools import chain
 
 from django import forms
 from django.conf import settings
+from django.core.exceptions import (
+    FieldDoesNotExist,
+    ImproperlyConfigured,
+    ValidationError,
+)
+from django.db import connections
+from django.db.models import ForeignObject, IntegerField, QuerySet
 from django.utils.translation import gettext_lazy as _
 
 from . import constants
@@ -114,13 +121,151 @@ class ConfirmImportForm(FieldNamePrefixMixin, forms.Form):
         return data
 
 
+class ExportItemsField(forms.ModelMultipleChoiceField):
+    """
+    ``export_items`` field, validated against the posted pks only.
+
+    Without a queryset, a non-empty selection raises ``ImproperlyConfigured``
+    and an empty one returns ``[]``, or fails ``required`` when the field is
+    required.  With a queryset, ``clean()`` returns an
+    unevaluated ``QuerySet`` of the selected rows.  Values outside the range of
+    an integer key field are rejected with the ``invalid_choice`` error.
+
+    ``to_field_name`` must name a unique field: every row sharing a selected
+    value is exported.
+
+    The admin sets this field's queryset after the form's ``__init__()``, and
+    adds the field to a form that has none when exporting selected items, so a
+    queryset declared on the field or set in ``__init__()`` is replaced.
+    Narrow the selection in ``get_export_queryset()`` or
+    ``clean_export_items()`` instead.
+    """
+
+    def clean(self, value):
+        if self.queryset is None:
+            if value:
+                raise ImproperlyConfigured(
+                    "export_items requires a QuerySet: in the admin, "
+                    "get_export_queryset() must return a QuerySet to export "
+                    "selected items; otherwise pass queryset= when "
+                    "instantiating the export form, and from a custom "
+                    "__init__() to super().__init__()."
+                )
+            if self.required:
+                raise ValidationError(self.error_messages["required"], code="required")
+            return []
+        return super().clean(value)
+
+    def _check_values(self, value):
+        # Django's ModelMultipleChoiceField._check_values (>= 6.0), except
+        # that it reads only the key column, returns the queryset unevaluated
+        # and leaves _out_of_range() values out of the IN list.
+        key = self.to_field_name or "pk"
+        try:
+            value = frozenset(value)
+        except TypeError:
+            raise ValidationError(
+                self.error_messages["invalid_list"],
+                code="invalid_list",
+            )
+        for pk in value:
+            self.validate_no_null_characters(pk)
+            try:
+                self.queryset.filter(**{key: pk})
+            except (ValueError, TypeError, ValidationError):
+                raise ValidationError(
+                    self.error_messages["invalid_pk_value"],
+                    code="invalid_pk_value",
+                    params={"pk": pk},
+                )
+        in_range = value - self._out_of_range(value)
+        qs = self.queryset.filter(**{"%s__in" % key: in_range})
+        pks = {str(pk) for pk in qs.values_list(key, flat=True)}
+        for val in value:
+            if str(val) not in pks:
+                raise ValidationError(
+                    self.error_messages["invalid_choice"],
+                    code="invalid_choice",
+                    params={"value": val},
+                )
+        return qs
+
+    def _out_of_range(self, value):
+        # Django's ``In`` lookup has no integer overflow guard (unlike exact,
+        # gt, lt...), so out of range values would raise OverflowError on
+        # SQLite.
+        opts = self.queryset.model._meta
+        if (self.to_field_name or "pk") == "pk":
+            range_field = opts.pk
+        else:
+            try:
+                range_field = opts.get_field(self.to_field_name)
+            except FieldDoesNotExist:
+                # e.g. an annotation
+                return set()
+        while isinstance(range_field, ForeignObject):
+            range_field = range_field.target_field
+        if not isinstance(range_field, IntegerField):
+            return set()
+        ops = connections[self.queryset.db].ops
+        try:
+            min_value, max_value = ops.integer_field_range(
+                range_field.get_internal_type()
+            )
+        except KeyError:
+            # custom get_internal_type(): the backend knows no range for it
+            return set()
+        out_of_range = set()
+        for pk in value:
+            try:
+                pk_int = int(pk)
+            except (ValueError, TypeError):
+                continue
+            if (min_value is not None and pk_int < min_value) or (
+                max_value is not None and pk_int > max_value
+            ):
+                out_of_range.add(pk)
+        return out_of_range
+
+    @classmethod
+    def check_field(cls, field):
+        if not isinstance(field, cls):
+            raise ImproperlyConfigured(
+                "export_items must be an ExportItemsField: redeclare it as "
+                "import_export.forms.ExportItemsField or a subclass."
+            )
+
+
 class ExportForm(ImportExportFormBase):
-    export_items = forms.MultipleChoiceField(
-        widget=forms.MultipleHiddenInput(), required=False
+    """
+    Pass ``queryset`` to validate selected ``export_items`` when the form is
+    used outside the admin, which binds the field's queryset itself.  Without
+    it, validating a non-empty selection raises ``ImproperlyConfigured``.
+    """
+
+    export_items = ExportItemsField(
+        queryset=None, widget=forms.MultipleHiddenInput(), required=False
     )
+
+    def __init__(self, formats, resources, *, queryset=None, **kwargs):
+        super().__init__(formats, resources, **kwargs)
+        field = self.fields.get("export_items")
+        if queryset is not None and field is not None:
+            ExportItemsField.check_field(field)
+            if not isinstance(queryset, QuerySet):
+                raise ImproperlyConfigured(
+                    "ExportForm queryset= must be a QuerySet to validate "
+                    f"export_items, not {type(queryset).__name__}."
+                )
+            field.queryset = queryset
 
 
 class SelectableFieldsExportForm(ExportForm):
+    """
+    :class:`ExportForm` with a checkbox per resource field.  It accepts the
+    same ``queryset`` argument.
+    """
+
     def __init__(self, formats, resources, **kwargs):
         super().__init__(formats, resources, **kwargs)
         self._init_selectable_fields(resources)
