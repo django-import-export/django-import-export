@@ -6,6 +6,7 @@ from django.contrib.admin.models import ADDITION, CHANGE, DELETION, LogEntry
 from django.contrib.auth import get_permission_codename
 from django.core.exceptions import FieldError, PermissionDenied
 from django.db.models import QuerySet
+from django.forms import MultipleHiddenInput
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.template import TemplateDoesNotExist
@@ -20,9 +21,9 @@ from django.views.decorators.http import require_POST
 from .formats.base_formats import get_binary_formats
 from .forms import (
     ConfirmImportForm,
+    ExportItemsField,
     ImportForm,
     SelectableFieldsExportForm,
-    _bind_export_items,
 )
 from .mixins import BaseExportMixin, BaseImportMixin
 from .results import RowResult
@@ -730,6 +731,26 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
         """
         return self.export_form_class
 
+    def _bind_export_items_field(self, form, queryset, add=False):
+        """
+        Bind the form's ``export_items`` field to ``queryset``.
+
+        With ``add``, a form without the field gets a hidden ``ExportItemsField``.
+        A field of another type raises ``ImproperlyConfigured``.  Anything that is
+        not a ``QuerySet``, such as a list from ``get_export_queryset()``, binds
+        ``None``, so a selection fails closed rather than validate against a
+        queryset declared on the field.
+        """
+        field = form.fields.get("export_items")
+        if field is None:
+            if not add:
+                return
+            field = form.fields["export_items"] = ExportItemsField(
+                queryset=None, widget=MultipleHiddenInput, required=False
+            )
+        ExportItemsField.check_field(field)
+        field.queryset = queryset if isinstance(queryset, QuerySet) else None
+
     def export_action(self, request):
         """
         Handles the default workflow for both the export form and the
@@ -766,7 +787,7 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
             data=request.POST or None,
         )
         # add the field if the action posts a selection the form lacks
-        _bind_export_items(
+        self._bind_export_items_field(
             form, queryset, add=form.add_prefix("export_items") in request.POST
         )
         if form.is_valid():
@@ -932,7 +953,7 @@ class ExportActionMixin(ExportMixin):
             resources=self.get_export_resource_classes(request),
             initial={"export_items": list(queryset.values_list("pk", flat=True))},
         )
-        _bind_export_items(form, queryset, add=True)
+        self._bind_export_items_field(form, queryset, add=True)
         key = form.fields["export_items"].to_field_name
         if key:
             form.initial["export_items"] = list(queryset.values_list(key, flat=True))

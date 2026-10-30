@@ -69,6 +69,35 @@ class FormTest(TestCase):
         with self.assertRaisesRegex(ImproperlyConfigured, "queryset"):
             form.is_valid()
 
+    def test_export_form_export_items_with_queryset(self):
+        category = Category.objects.create(name="Cat 1")
+        excluded = Category.objects.create(name="Excluded")
+
+        def export_form(export_items):
+            return forms.ExportForm(
+                [CSV],
+                [resources.ModelResource],
+                queryset=Category.objects.exclude(pk=excluded.pk),
+                data={
+                    f"{constants.FORM_FIELD_PREFIX}format": "0",
+                    f"{constants.FORM_FIELD_PREFIX}export_items": export_items,
+                },
+            )
+
+        form = export_form([category.pk])
+        self.assertTrue(form.is_valid())
+        self.assertEqual([category], list(form.cleaned_data["export_items"]))
+
+        form = export_form([excluded.pk])
+        self.assertFalse(form.is_valid())
+        self.assertEqual({"export_items"}, set(form.errors))
+
+    def test_export_form_rejects_queryset_which_is_not_a_queryset(self):
+        with self.assertRaisesRegex(
+            ImproperlyConfigured, "queryset= must be a QuerySet"
+        ):
+            forms.ExportForm([CSV], [resources.ModelResource], queryset=[])
+
     def test_required_export_items_field_without_queryset_rejects_empty(self):
         field = forms.ExportItemsField(queryset=None, required=True)
         with self.assertRaises(django.forms.ValidationError) as cm:
@@ -101,29 +130,6 @@ class FormTest(TestCase):
             MultipleChoiceExportForm(
                 [CSV], [resources.ModelResource], queryset=Author.objects.all()
             )
-
-    def test_export_form_ignores_queryset_which_is_not_a_queryset(self):
-        form = forms.ExportForm([CSV], [resources.ModelResource], queryset=[])
-        self.assertIsNone(form.fields["export_items"].queryset)
-
-    def test_export_form_ignores_class_queryset_when_queryset_is_not_a_queryset(self):
-        class ClassQuerysetExportForm(forms.ExportForm):
-            export_items = forms.ExportItemsField(
-                queryset=Category.objects.all(), required=False
-            )
-
-        category = Category.objects.create(name="Cat 1")
-        form = ClassQuerysetExportForm(
-            [CSV],
-            [resources.ModelResource],
-            queryset=[],
-            data={
-                f"{constants.FORM_FIELD_PREFIX}format": "0",
-                f"{constants.FORM_FIELD_PREFIX}export_items": [str(category.pk)],
-            },
-        )
-        with self.assertRaisesRegex(ImproperlyConfigured, "get_export_queryset"):
-            form.is_valid()
 
     def test_export_form_init_not_passing_queryset_names_the_cause(self):
         class DroppingExportForm(forms.ExportForm):

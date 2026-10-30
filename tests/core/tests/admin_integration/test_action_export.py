@@ -434,6 +434,25 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
             with self.assertRaises(ImproperlyConfigured):
                 self._post_export_items([str(self.cat1.id)])
 
+    def test_export_post_ignores_field_queryset_without_export_queryset(self):
+        class FieldQuerysetExportForm(SelectableFieldsExportForm):
+            export_items = ExportItemsField(
+                queryset=Category.objects.all(),
+                widget=forms.MultipleHiddenInput,
+                required=False,
+            )
+
+        with (
+            patch.object(
+                CategoryAdmin,
+                "get_export_form_class",
+                return_value=FieldQuerysetExportForm,
+            ),
+            patch.object(CategoryAdmin, "get_export_queryset", return_value=[]),
+        ):
+            with self.assertRaisesRegex(ImproperlyConfigured, "get_export_queryset"):
+                self._post_export_items([str(self.cat1.id)])
+
     def test_export_with_form_not_subclassing_export_form(self):
         class BaseExportForm(ImportExportFormBase):
             pass

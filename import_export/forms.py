@@ -227,30 +227,13 @@ class ExportItemsField(forms.ModelMultipleChoiceField):
                 out_of_range.add(pk)
         return out_of_range
 
-
-def _bind_export_items(form, queryset, add=False):
-    """
-    Bind the form's ``export_items`` field to ``queryset``: the single rule
-    that ``ExportForm.__init__()`` and the admin share.
-
-    With ``add``, a form without the field gets a hidden ``ExportItemsField``.
-    A field of another type raises ``ImproperlyConfigured``.  Anything that is
-    not a ``QuerySet`` binds ``None``, so a selection fails closed rather than
-    validate against a queryset declared on the field.
-    """
-    field = form.fields.get("export_items")
-    if field is None:
-        if not add:
-            return
-        field = form.fields["export_items"] = ExportItemsField(
-            queryset=None, widget=forms.MultipleHiddenInput, required=False
-        )
-    elif not isinstance(field, ExportItemsField):
-        raise ImproperlyConfigured(
-            "export_items must be an ExportItemsField: redeclare it as "
-            "import_export.forms.ExportItemsField or a subclass."
-        )
-    field.queryset = queryset if isinstance(queryset, QuerySet) else None
+    @classmethod
+    def check_field(cls, field):
+        if not isinstance(field, cls):
+            raise ImproperlyConfigured(
+                "export_items must be an ExportItemsField: redeclare it as "
+                "import_export.forms.ExportItemsField or a subclass."
+            )
 
 
 class ExportForm(ImportExportFormBase):
@@ -266,8 +249,15 @@ class ExportForm(ImportExportFormBase):
 
     def __init__(self, formats, resources, *, queryset=None, **kwargs):
         super().__init__(formats, resources, **kwargs)
-        if queryset is not None:
-            _bind_export_items(self, queryset)
+        field = self.fields.get("export_items")
+        if queryset is not None and field is not None:
+            ExportItemsField.check_field(field)
+            if not isinstance(queryset, QuerySet):
+                raise ImproperlyConfigured(
+                    "ExportForm queryset= must be a QuerySet to validate "
+                    f"export_items, not {type(queryset).__name__}."
+                )
+            field.queryset = queryset
 
 
 class SelectableFieldsExportForm(ExportForm):
