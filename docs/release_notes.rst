@@ -168,7 +168,8 @@ Breaking changes
 
   * :class:`~import_export.forms.ExportForm` and :class:`~import_export.forms.SelectableFieldsExportForm` accept a
     new keyword-only ``queryset`` argument: ``ExportForm(formats, resources, *, queryset=None, **kwargs)``.
-    It is for instantiating the form directly; the admin does not pass it.  A custom ``__init__()`` that
+    It is for instantiating the form directly; the admin does not pass it.  It must be a ``QuerySet``; anything
+    else raises ``ImproperlyConfigured``.  A custom ``__init__()`` that
     accepts ``queryset`` should pass it on to ``super().__init__()``.  For any export form class, the admin
     sets the ``export_items`` queryset after the form's ``__init__()``: the export view validates the submitted
     selection against ``get_export_queryset(request)``, and the export admin action renders the form with the
@@ -182,12 +183,12 @@ Breaking changes
     model instances instead of a list of primary key strings.  Submitted primary keys are deduplicated, and
     their submission order is not preserved.  The result follows the queryset's ordering, where defined.
     Without a queryset, an empty selection is accepted and returns an empty list.  Custom
-    ``clean_export_items()`` methods should preserve this return contract.  In the admin, a returned list of
-    primary keys, ``to_field_name`` values or model instances, or a ``values_list(..., flat=True)`` queryset,
-    is accepted and filtered against the export queryset.  A returned ``QuerySet`` of model instances or
-    ``values()`` rows is exported without being filtered against the export queryset again, so
-    ``clean_export_items()`` can include rows outside that queryset.  To stay within it, start from the already
-    validated ``self.cleaned_data["export_items"]`` and narrow it with ``filter()`` or ``exclude()``.
+    ``clean_export_items()`` methods should preserve this return contract.  In the admin, whatever
+    ``clean_export_items()`` returns is filtered against the export queryset, as in v4, so the export never
+    includes rows outside that queryset.  A list of primary keys, ``to_field_name`` values or model instances,
+    or a ``values_list(..., flat=True)`` queryset of primary keys, is also accepted.  The exported rows are read
+    from the export queryset, so the ordering, annotations and ``values()`` shape of a returned ``QuerySet`` are
+    not kept.
   * :meth:`~import_export.admin.ExportMixin.get_export_queryset` must return a ``QuerySet`` when exporting
     selected items, otherwise ``ImproperlyConfigured`` is raised.  Other iterables, such as a list, still work
     when exporting without a selection.  Querysets produced by ``values()`` work; ``values_list()`` querysets
