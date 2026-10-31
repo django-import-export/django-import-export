@@ -174,8 +174,9 @@ class ResourceOptions:
     `bulk_create()
     <https://docs.djangoproject.com/en/dev/ref/models/querysets/#bulk-create>`_.
     If not set, it defaults to
-    :meth:`~import_export.resources.ModelResource.get_bulk_update_fields`, which
-    is every writable field except the ``import_id_fields``.
+    :meth:`~import_export.resources.Resource.get_bulk_create_update_fields`:
+    the model fields imported from a column present in the dataset, except
+    the ``import_id_fields``, the primary key and many-to-many fields.
     This parameter is only used if ``update_conflicts`` is ``True``.
     """
 
@@ -185,7 +186,8 @@ class ResourceOptions:
     `bulk_create()
     <https://docs.djangoproject.com/en/dev/ref/models/querysets/#bulk-create>`_.
     If not set, it defaults to the ``import_id_fields``, which are the fields
-    which identify a row on import.
+    which identify a row on import.  The fields must carry a unique constraint,
+    which is checked before the import starts.
     This parameter is only used if ``update_conflicts`` is ``True``, and it is
     ignored on backends which do not support a conflict target (MySQL and
     MariaDB), because they update every unique constraint.
