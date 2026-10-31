@@ -122,10 +122,12 @@ class ResultTest(SimpleTestCase):
 
         row_result = RowResult()
         row_result.add_instance_info(UnserializableBook())
-        mock_logger.debug.assert_called_with(
-            "call to force_str() on instance failed: "
-            "__str__ returned non-string (type NoneType)"
-        )
+        # the wording of the TypeError is interpreter specific
+        # (it changed in Python 3.15), so only assert on the stable parts
+        mock_logger.debug.assert_called_once()
+        message = mock_logger.debug.call_args.args[0]
+        self.assertTrue(message.startswith("call to force_str() on instance failed: "))
+        self.assertIn("NoneType", message)
         self.assertEqual(None, row_result.object_repr)
 
     def test_is_new(self):

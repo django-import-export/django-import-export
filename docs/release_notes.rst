@@ -201,6 +201,34 @@ Deprecations
   :meth:`~import_export.resources.Resource.get_user_visible_export_fields` for export contexts instead.
   This change ensures that import and export operations show their respective field sets correctly in admin forms.
 
+v4.4.4
+------
+
+.. _release_notes_export_admin_action:
+
+* The label of the "export selected" admin action is now read from
+  :meth:`~import_export.admin.ExportActionMixin.export_admin_action` itself, via Django's ``admin.action``
+  decorator, instead of being set in :meth:`~import_export.admin.ExportActionMixin.get_actions`.  This was
+  required to support Django 6.1, which deprecates overriding ``get_actions()`` without the new
+  ``action_location`` parameter and, with the old signature, disables all change form actions on the admin.
+
+  If you override ``export_admin_action()`` in your ``ModelAdmin``, the override must now carry its own
+  description, otherwise the action appears in the admin as "Export admin action" instead of
+  "Export selected <objects>".  Decorate the override::
+
+    from django.contrib import admin
+    from django.utils.translation import gettext_lazy as _
+
+    class BookAdmin(ExportActionModelAdmin):
+        @admin.action(description=_("Export selected %(verbose_name_plural)s"))
+        def export_admin_action(self, request, queryset):
+            ...
+
+  A custom description set this way is now honoured, whereas previously it was ignored.
+
+  Overriding ``get_actions()`` is unaffected.  An override which declares the Django 6.1 ``action_location``
+  parameter can now pass it through to ``super()``.
+
 v4.4.3
 ------
 

@@ -47,6 +47,7 @@ Development
 
 - Add support for Django 6.0, remove support for Python 3.9 (`2112 <https://github.com/django-import-export/django-import-export/pull/2112>`_)
 - Add support for Python 3.15, remove support for Python 3.10 (`2194 <https://github.com/django-import-export/django-import-export/pull/2194>`_)
+- Fixed the test suite silently disabling its warnings-as-errors flags: a module level ``warnings.simplefilter()`` in the field declaration tests applied to the whole run, so deprecation warnings from Django never failed the build. (`2213 <https://github.com/django-import-export/django-import-export/pull/2213>`_)
 
 Documentation
 #############
@@ -60,12 +61,22 @@ Performance
 i18n
 ####
 
+4.4.4 (2026-10-27)
+-------------------
+
+- Fixed ``CSV`` being omitted from the default formats on Python 3.15 because tablib 3.10+ lazily imports ``tablib.core``, leaving the format registry empty when the first ``is_available()`` check runs (`2210 <https://github.com/django-import-export/django-import-export/issues/2210>`_)
+- Fixed ``django.utils.functional.cached_property is deprecated`` warning on Django 6.2 by using ``functools.cached_property``
+- Fixed ``ExportActionMixin.get_actions()`` for Django 6.1, which deprecates overriding it without the new ``action_location`` parameter and, with the old signature, disables all change form actions on the admin.
+  See :ref:`release notes <release_notes_export_admin_action>` if you override ``export_admin_action()``.
+  (`2214 <https://github.com/django-import-export/django-import-export/pull/2214>`_)
+
 4.4.3 (2026-10-19)
 -------------------
 
 - Fixed a denial-of-service issue where importing a crafted large-magnitude integer value could stall the process during conversion to a Python integer.
   See :ref:`release notes <release_notes_integer_widget_dos>` for details and mitigations.
-  (`GHSA-fcgw-hjjv-4rh6 <https://github.com/django-import-export/django-import-export/security/advisories/GHSA-fcgw-hjjv-4rh6>`_)
+  (`GHSA-fcgw-hjjv-4rh6 <https://github.com/django-import-export/django-import-export/security/advisories/GHSA-fcgw-hjjv-4rh6>`_,
+  `CVE-2026-111437 <https://www.cve.org/CVERecord?id=CVE-2026-111437>`_)
 
 4.4.2 (2026-10-15)
 -------------------

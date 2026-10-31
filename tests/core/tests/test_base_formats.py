@@ -34,6 +34,14 @@ class FormatTest(TestCase):
     def test_format_available(self):
         self.assertTrue(base_formats.CSV.is_available())
 
+    def test_format_available_when_tablib_registry_empty(self):
+        # Regression test for issue 2210.  With tablib 3.10+ on Python 3.15+,
+        # `tablib.core` is a lazy module, so the builtin formats may not have
+        # been registered when the first `is_available()` check runs.
+        with mock.patch.dict(tablib.formats.registry._formats, clear=True):
+            self.assertTrue(base_formats.CSV.is_available())
+            self.assertIn("csv", tablib.formats.registry._formats)
+
     def test_get_title(self):
         self.assertEqual(
             "<class 'import_export.formats.base_formats.Format'>",
