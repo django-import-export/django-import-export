@@ -749,3 +749,82 @@ class ImportPreviewPaginationTests(AdminTestMixin, TestCase):
         admin = BookAdmin(Book, mock.Mock())
         request = mock.Mock(spec=[])
         self.assertEqual(admin._get_pagination_metadata(request, "x"), {})
+
+    @override_settings(IMPORT_EXPORT_PREVIEW_PAGE_SIZE=2)
+    def test_create_import_form_hook_used_on_pagination_get(self):
+        # A ModelAdmin adding fields in create_import_form() must get the
+        # same bound form on page 2+ as on the upload POST, otherwise hooks
+        # reading those fields from cleaned_data silently lose the value.
+        from core.admin import BookAdmin
+        from django import forms
+
+        seen = []
+
+        def create_form(admin, request):
+            form = ImportMixin.create_import_form(admin, request)
+            form.fields["note"] = forms.CharField(required=False)
+            seen.append((request.method, form.is_bound, form.data.get("note")))
+            return form
+
+        with mock.patch.object(BookAdmin, "create_import_form", create_form):
+            post_response = self.client.post(
+                self.book_import_url,
+                {
+                    f"{FORM_FIELD_PREFIX}format": "0",
+                    "import_file": StringIO(_build_csv(4)),
+                    "note": "hello",
+                },
+            )
+            params = self._pagination_get_params(post_response, page=2)
+            get_response = self.client.get(self.book_import_url, params)
+
+        self.assertEqual(get_response.status_code, 200)
+        self.assertEqual(get_response.context["preview_page"].number, 2)
+        # POST build, then the page's own (unbound) upload form on the GET,
+        # then the bound pagination form carrying the stored value.
+        self.assertEqual(
+            seen,
+            [("POST", True, "hello"), ("GET", False, None), ("GET", True, "hello")],
+        )
+        self.assertFalse(get_response.context["form"].is_bound)
+
+    def test_session_prefix_does_not_collide_on_underscores(self):
+        # Underscores are legal in both app_label and model_name, so a
+        # "_" separator lets shop/order_line and shop_order/line share a
+        # prefix and evict each other's preview.
+        from core.admin import BookAdmin
+
+        admin = BookAdmin(Book, mock.Mock())
+        with mock.patch.object(
+            BookAdmin, "get_model_info", return_value=("shop", "order_line")
+        ):
+            p1 = admin._pagination_session_prefix()
+        with mock.patch.object(
+            BookAdmin, "get_model_info", return_value=("shop_order", "line")
+        ):
+            p2 = admin._pagination_session_prefix()
+        self.assertNotEqual(p1, p2)
+        self.assertFalse(p1.startswith(p2))
+        self.assertFalse(p2.startswith(p1))
+
+    def test_failed_reupload_from_paginated_url_drops_old_preview(self):
+        # The upload form posts to action="", so a failed re-upload from
+        # page N leaves ?import_file_name=old&page=N in the URL. The old
+        # preview (confirm button included) must no longer open from it.
+        post_response = self._post_csv(_build_csv(5))
+        params = self._pagination_get_params(post_response, page=2)
+        failed = self.client.post(
+            self.book_import_url + "?" + urlencode(params),
+            {
+                f"{FORM_FIELD_PREFIX}format": "0",
+                "import_file": StringIO("id,name,author_email\r\n"),
+            },
+        )
+        self.assertTrue(failed.context["form"].errors)
+        self.assertNotIn("result", failed.context)
+
+        response = self.client.get(self.book_import_url, params)
+        self.assertNotIn("result", response.context)
+        self.assertNotIn("confirm_form", response.context)
+        self._assert_preview_expired(response)
+        self.assertEqual(self._preview_session_keys(), [])

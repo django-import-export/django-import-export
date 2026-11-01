@@ -290,7 +290,10 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
 
         Return a form instance to use for the 'initial' import step.
         This method can be extended to make dynamic form updates to the
-        form after it has been instantiated. You might also look to
+        form after it has been instantiated. It is also called on preview
+        page-navigation GETs, with ``request.POST`` set to the values
+        submitted on the original upload (see
+        :ref:`import_export_preview_page_size`). You might also look to
         override the following:
 
         * :meth:`~import_export.admin.ImportMixin.get_import_form_class`
@@ -473,6 +476,13 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         import_formats = self.get_import_formats()
         import_form = self.create_import_form(request)
         resources = None
+        if request.POST:
+            # A new upload supersedes the previous preview whether or not it
+            # can be read: the upload form posts to action="", so a failed
+            # re-upload from page N would otherwise leave the old preview
+            # reachable (confirm button included) through the
+            # import_file_name/page params still in the URL.
+            self._evict_pagination_metadata(request)
         if request.POST and import_form.is_valid():
             input_format = import_formats[int(import_form.cleaned_data["format"])](
                 encoding=self.from_encoding
@@ -649,7 +659,8 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         # Scoped per ModelAdmin so that uploads on different models' import
         # pages neither evict each other nor can be paged through each
         # other's import URL.
-        return "{}{}_{}-".format(self.PAGINATION_SESSION_PREFIX, *self.get_model_info())
+        # Dotted: app_label and model_name may both contain underscores.
+        return "{}{}.{}-".format(self.PAGINATION_SESSION_PREFIX, *self.get_model_info())
 
     def _pagination_session_key(self, tmp_storage_name):
         return (
@@ -670,16 +681,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         session = getattr(request, "session", None)
         if not tmp_storage_name or session is None:
             return
-        # Drop entries left by earlier uploads (abandoned previews, retries
-        # after validation errors) so they cannot pile up in the session,
-        # which matters for cookie-backed sessions.
-        # Trade-off: one preview per ModelAdmin per session; an older tab's
-        # page links then show the "expired" warning, though confirming from
-        # it still works.
-        prefix = self._pagination_session_prefix()
-        for key in list(session.keys()):
-            if key.startswith(prefix):
-                del session[key]
+        self._evict_pagination_metadata(request)
         session[self._pagination_session_key(tmp_storage_name)] = {
             # TempFolderStorage names are absolute paths, so keep the full
             # name here: only the basename travels in the URL.
@@ -697,6 +699,22 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
             },
         }
         session.modified = True
+
+    def _evict_pagination_metadata(self, request):
+        # Drop entries left by earlier uploads (abandoned previews, retries
+        # after validation errors) so they cannot pile up in the session,
+        # which matters for cookie-backed sessions.
+        # Trade-off: one preview per ModelAdmin per session; an older tab's
+        # page links then show the "expired" warning, though confirming from
+        # it still works.
+        session = getattr(request, "session", None)
+        if session is None:
+            return
+        prefix = self._pagination_session_prefix()
+        for key in list(session.keys()):
+            if key.startswith(prefix):
+                del session[key]
+                session.modified = True
 
     def _get_pagination_metadata(self, request, tmp_storage_name):
         session = getattr(request, "session", None)
@@ -839,18 +857,21 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         # POSTed, so subclasses' extension hooks (choose_import_resource_class,
         # get_import_resource_kwargs, get_import_data_kwargs,
         # get_confirm_form_initial) see the same form they do on the POST
-        # path, including any extra fields the subclass declared. Built via
-        # get_import_form_kwargs() so extra kwargs a subclass passes to its
-        # form (e.g. ``user``) are supplied on every page too.
+        # path, including any extra fields the subclass declared.
         form_data = QueryDict(mutable=True)
         for name, values in metadata.get("form_data", {}).items():
             form_data.setlist(name, values)
-        form_kwargs = self.get_import_form_kwargs(request)
-        form_kwargs["data"] = form_data
-        form_kwargs.pop("files", None)
-        pagination_form = self.get_import_form_class(request)(
-            import_formats, self.get_import_resource_classes(request), **form_kwargs
-        )
+        form_data._mutable = False
+        # Built through create_import_form() so a subclass adding fields
+        # there sees the same form on page 2+ as on the upload POST. That
+        # hook reads request.POST, so hand it the stored values for the
+        # duration of the call; FILES is empty on a GET anyway.
+        original_post = request.POST
+        request.POST = form_data
+        try:
+            pagination_form = self.create_import_form(request)
+        finally:
+            request.POST = original_post
         # There is no uploaded file on a GET, so the form is never valid.
         # Clean it anyway: Django still populates cleaned_data for every
         # field which did validate, which is what the hooks above read. A
