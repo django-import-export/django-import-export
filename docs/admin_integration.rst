@@ -114,6 +114,33 @@ that data is properly secured and managed.**
     This will need to be understood and managed in production settings.
     For example, using a cache expiration policy or cron job to clear stale resources.
 
+.. _pagination:
+
+Pagination
+^^^^^^^^^^
+
+The confirmation screen paginates the preview so that large uploads do not render every row at once
+(see :ref:`import_export_preview_page_size`).
+
+Page navigation is a ``GET`` request which carries only the temporary file name and the page number.
+The original filename, the selected format, the selected resource and the submitted import form values
+are held in the user's session for the duration of the confirmation step, and are cleared along with the
+temporary file once the import is confirmed.  Only one preview per ``ModelAdmin`` is held per session:
+uploading another file replaces the previous entry, so page links in an older browser tab will show the
+"expired" warning (confirming from that tab still works).
+
+Each page navigation re-runs the dry-run against the temporary file written during upload.  For very large
+imports this may noticeably slow page changes.  The dry-run on upload and on every page navigation is produced
+by :meth:`~import_export.admin.ImportMixin.get_preview_result_for_pagination`; override it on your
+``ModelAdmin`` to plug in a project-specific cache (Django's cache framework, Redis, etc.) keyed by the
+temporary-storage filename.
+
+If the session entry or the temporary file has gone, page navigation returns to the upload form with a warning
+rather than failing silently.
+
+Page navigation rebuilds the import form from the submitted values without the uploaded file, so a
+custom ``ImportForm.clean()`` should read ``self.cleaned_data.get("import_file")`` rather than indexing it.
+
 .. _customizable_storage:
 
 Customizable storage
