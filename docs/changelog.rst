@@ -26,6 +26,7 @@ Enhancements
 Fixes
 #####
 
+- Fixed DateWidget.clean() returning datetime instances so that xlsx round-trips of DateField values are correctly detected as unchanged by skip_row() (`2195 <https://github.com/django-import-export/django-import-export/issues/2195>`_, `2208 <https://github.com/django-import-export/django-import-export/pull/2208>`_)
 - Fixed import / export links being hidden when an admin mixin from another library declares ``change_list_template`` as a read-only property (e.g. django-admin-sortable2).  The import / export change list template now extends the template Django would otherwise have used, resolved on each request (`2205 <https://github.com/django-import-export/django-import-export/issues/2205>`_)
 - Fixed the import preview diff showing a spurious change for values which the widget considers equal but which render differently, for example a ``DecimalField`` value of ``1803.60`` imported from an xlsx cell as ``1803.6`` (`2199 <https://github.com/django-import-export/django-import-export/issues/2199>`_)
 - Fixed ``skip_row()`` incorrectly treating unmodified, previously-exported ``DateTimeField``/``TimeField`` values as changed due to sub-second precision loss inherent to export round-trips (`2018 <https://github.com/django-import-export/django-import-export/issues/2018>`_)
