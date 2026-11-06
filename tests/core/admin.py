@@ -9,7 +9,16 @@ from import_export.fields import Field
 from import_export.resources import ModelResource
 
 from .forms import CustomConfirmImportForm, CustomExportForm, CustomImportForm
-from .models import Author, Book, Category, Child, EBook, UUIDBook, UUIDCategory
+from .models import (
+    Author,
+    Book,
+    Category,
+    Child,
+    EBook,
+    NamedAuthor,
+    UUIDBook,
+    UUIDCategory,
+)
 
 
 @admin.register(Child)
@@ -83,6 +92,11 @@ class UUIDBookAdmin(ImportExportModelAdmin):
 
 @admin.register(UUIDCategory)
 class UUIDCategoryAdmin(ExportActionModelAdmin):
+    pass
+
+
+@admin.register(NamedAuthor)
+class NamedAuthorAdmin(ExportActionModelAdmin):
     pass
 
 

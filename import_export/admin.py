@@ -5,7 +5,8 @@ from django.contrib import admin, messages
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION, LogEntry
 from django.contrib.auth import get_permission_codename
 from django.core.exceptions import FieldError, PermissionDenied
-from django.forms import MultipleChoiceField, MultipleHiddenInput
+from django.db.models import QuerySet
+from django.forms import MultipleHiddenInput
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.template import TemplateDoesNotExist
@@ -17,9 +18,13 @@ from django.utils.module_loading import import_string
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_POST
 
-from .constants import FORM_FIELD_PREFIX
 from .formats.base_formats import get_binary_formats
-from .forms import ConfirmImportForm, ImportForm, SelectableFieldsExportForm
+from .forms import (
+    ConfirmImportForm,
+    ExportItemsField,
+    ImportForm,
+    SelectableFieldsExportForm,
+)
 from .mixins import BaseExportMixin, BaseImportMixin
 from .results import RowResult
 from .signals import post_export, post_import
@@ -726,6 +731,26 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
         """
         return self.export_form_class
 
+    def _bind_export_items_field(self, form, queryset, add=False):
+        """
+        Bind the form's ``export_items`` field to ``queryset``.
+
+        With ``add``, a form without the field gets a hidden ``ExportItemsField``.
+        A field of another type raises ``ImproperlyConfigured``.  Anything that is
+        not a ``QuerySet``, such as a list from ``get_export_queryset()``, binds
+        ``None``, so a selection fails closed rather than validate against a
+        queryset declared on the field.
+        """
+        field = form.fields.get("export_items")
+        if field is None:
+            if not add:
+                return
+            field = form.fields["export_items"] = ExportItemsField(
+                queryset=None, widget=MultipleHiddenInput, required=False
+            )
+        ExportItemsField.check_field(field)
+        field.queryset = queryset if isinstance(queryset, QuerySet) else None
+
     def export_action(self, request):
         """
         Handles the default workflow for both the export form and the
@@ -761,22 +786,28 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
             self.get_export_resource_classes(request),
             data=request.POST or None,
         )
-        if request.POST and f"{FORM_FIELD_PREFIX}export_items" in request.POST:
-            # this field is instantiated if the export is POSTed from the
-            # 'action' drop down
-            form.fields["export_items"] = MultipleChoiceField(
-                widget=MultipleHiddenInput,
-                required=False,
-                choices=[(pk, pk) for pk in queryset.values_list("pk", flat=True)],
-            )
+        # add the field if the action posts a selection the form lacks
+        self._bind_export_items_field(
+            form, queryset, add=form.add_prefix("export_items") in request.POST
+        )
         if form.is_valid():
             file_format = formats[int(form.cleaned_data["format"])]()
 
             if "export_items" in form.changed_data:
-                # this request has arisen from an Admin UI action
-                # export item pks are stored in form data
-                # so generate the queryset from the stored pks
-                queryset = queryset.filter(pk__in=form.cleaned_data["export_items"])
+                # this request has arisen from an Admin UI action: whatever
+                # clean_export_items() returned, keep the export inside the
+                # export queryset, as on v4
+                field = form.fields["export_items"]
+                key = field.to_field_name or "pk"
+                selected = form.cleaned_data["export_items"]
+                if isinstance(selected, QuerySet):
+                    # a QuerySet of another model, e.g. values_list() of a
+                    # relation, already holds the keys
+                    if field.to_field_name or selected.model is queryset.model:
+                        selected = selected.values_list(key, flat=True)
+                else:
+                    selected = field.prepare_value(selected)
+                queryset = queryset.filter(**{f"{key}__in": selected})
 
             response = self._do_file_export(
                 file_format, request, queryset, export_form=form
@@ -919,16 +950,15 @@ class ExportActionMixin(ExportMixin):
 
         form_type = self.get_export_form_class()
         formats = self.get_export_formats()
-        export_items = list(queryset.values_list("pk", flat=True))
         form = form_type(
             formats=formats,
             resources=self.get_export_resource_classes(request),
-            initial={"export_items": export_items},
+            initial={"export_items": list(queryset.values_list("pk", flat=True))},
         )
-        # selected items are to be stored as a hidden input on the form
-        form.fields["export_items"] = MultipleChoiceField(
-            widget=MultipleHiddenInput, required=False, choices=export_items
-        )
+        self._bind_export_items_field(form, queryset, add=True)
+        key = form.fields["export_items"].to_field_name
+        if key:
+            form.initial["export_items"] = list(queryset.values_list(key, flat=True))
         context = self.init_request_context_data(request, form)
 
         # this is necessary to render the FORM action correctly

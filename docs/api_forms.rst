@@ -10,6 +10,8 @@ Forms
 
 .. autoclass:: ConfirmImportForm
 
+.. autoclass:: ExportItemsField
+
 .. autoclass:: ExportForm
 
 .. autoclass:: SelectableFieldsExportForm
