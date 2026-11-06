@@ -65,8 +65,6 @@ class _ParseDateTimeMixin:
                 return value
             if isinstance(value, datetime):
                 return value.time()
-        elif isinstance(value, value_type):
-            return value
 
         for format_ in self.formats:
             try:
