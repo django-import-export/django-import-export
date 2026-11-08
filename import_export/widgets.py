@@ -475,6 +475,8 @@ class DateTimeWidget(_ParseDateTimeMixin, Widget):
 
     def clean(self, value, row=None, **kwargs):
         """
+        :param value: A datetime string to be parsed, or an existing datetime or
+            date instance (dates are converted to midnight datetimes).
         :returns: A python datetime instance.
         :raises: ValueError if the value cannot be parsed using defined formats.
         """
@@ -514,6 +516,8 @@ class TimeWidget(_ParseDateTimeMixin, Widget):
 
     def clean(self, value, row=None, **kwargs):
         """
+        :param value: A time string to be parsed, or an existing time or datetime
+            instance (datetimes are converted to times).
         :returns: A python time instance.
         :raises: ValueError if the value cannot be parsed using defined formats.
         """
