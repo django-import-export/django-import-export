@@ -92,6 +92,8 @@ msgid ""
 "The following fields are declared in 'import_id_fields' but are not present "
 "in the resource fields: %s"
 msgstr ""
+"Los siguientes campos están declarados en 'import_id_fields' pero no están "
+"presentes en los campos del recurso: %s"
 
 #: resources.py
 #, python-format
@@ -99,6 +101,8 @@ msgid ""
 "The following fields are declared in 'import_id_fields' but are not present "
 "in the file headers: %s"
 msgstr ""
+"Los siguientes campos están declarados en 'import_id_fields' pero no están "
+"presentes en los encabezados del archivo: %s"
 
 #: results.py
 #, python-format
