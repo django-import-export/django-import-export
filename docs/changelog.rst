@@ -41,6 +41,7 @@ Fixes
 - Fixed inconsistent input type passed to ``Format.create_dataset()`` (`2006 <https://github.com/django-import-export/django-import-export/issues/2006>`_, `2197 <https://github.com/django-import-export/django-import-export/pull/2197>`_)
 - Fixed ``import`` management command ignoring ``--encoding`` for file input: the file is now read as ``bytes`` and decoded by the format (`2197 <https://github.com/django-import-export/django-import-export/pull/2197>`_)
 - Fixed the "Select all" toggle on the export form being blocked by a strict Content Security Policy (`2204 <https://github.com/django-import-export/django-import-export/issues/2204>`_)
+- Fixed the ``import_id_fields`` error messages not being translated, because the column names were interpolated before the message was passed to ``gettext``. Added the Spanish translation of both messages (`2219 <https://github.com/django-import-export/django-import-export/issues/2219>`_)
 
 Development
 ###########
