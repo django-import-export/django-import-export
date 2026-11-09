@@ -5,7 +5,7 @@ Changelog
 
     If upgrading from v3, v4 introduces breaking changes.  Please refer to :doc:`release notes<release_notes>`.
 
-4.4.5 (unreleased)
+4.4.5 (2026-11-09)
 -------------------
 
 - Fixed the ``import_id_fields`` error messages not being translated, because the column names were interpolated before the message was passed to ``gettext``. Added the Spanish translation of both messages (`2219 <https://github.com/django-import-export/django-import-export/issues/2219>`_)
