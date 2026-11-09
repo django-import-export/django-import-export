@@ -6,6 +6,7 @@ from core.admin import UUIDBookResource
 from core.models import Author, Book, Category, EBook, NamedAuthor, UUIDBook
 from core.tests.resources import AuthorResource, BookResource
 from django.test import TestCase
+from django.utils import translation
 
 from import_export import exceptions, fields, resources, widgets
 from import_export.fields import Field
@@ -381,6 +382,18 @@ class ImportIdFieldsTestCase(TestCase):
         gettext.assert_any_call(msgid)
         self.assertEqual(
             ("[translated] " + msgid) % "book_name", str(res.base_errors[0].error)
+        )
+
+    def test_missing_headers_message_is_translated_to_spanish(self):
+        dataset = tablib.Dataset(
+            *[(self.book.pk, "Some book")], headers=["id", "wrong_name"]
+        )
+        with translation.override("es"):
+            res = self.resource.import_data(dataset, raise_errors=False)
+        self.assertEqual(
+            "Los siguientes campos están declarados en 'import_id_fields' pero "
+            "no están presentes en los encabezados del archivo: book_name",
+            str(res.base_errors[0].error),
         )
 
     def test_missing_import_id_field_raises_exception(self):
