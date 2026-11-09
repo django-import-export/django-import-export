@@ -177,6 +177,42 @@ class SkipRowDateTimePrecisionTest(TestCase):
         self.assertEqual(1, result.totals["skip"])
         self.assertEqual(0, result.totals["update"])
 
+        added_idx = self.resource.get_diff_headers().index("added")
+
+        self.assertEqual(
+            "<span>2024-11-19 12:54:31</span>",
+            result.rows[0].diff[added_idx],
+        )
+
+    def test_xlsx_time_round_trip_diff_is_not_highlighted(self):
+        book = Book.objects.create(
+            name="Boundary Time Book",
+            published_time=datetime.time(20, 15, 0, 999900),
+        )
+
+        xlsx = base_formats.XLSX()
+        dataset = self.resource.export(
+            queryset=Book.objects.filter(pk=book.pk),
+            force_native_type=True,
+        )
+        dataset = xlsx.create_dataset(xlsx.export_data(dataset))
+
+        self.assertEqual(
+            datetime.time(20, 15, 1),
+            dataset.dict[0]["published_time"],
+        )
+
+        result = self.resource.import_data(dataset, dry_run=True)
+
+        self.assertEqual(1, result.totals["skip"])
+        self.assertEqual(0, result.totals["update"])
+
+        time_idx = self.resource.get_diff_headers().index("published_time")
+        self.assertEqual(
+            "<span>20:15:00</span>",
+            result.rows[0].diff[time_idx],
+        )
+
     def test_genuine_second_level_difference_is_not_skipped(self):
         dataset = self.resource.export()
         row = dataset.dict[0]
