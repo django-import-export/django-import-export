@@ -27,6 +27,18 @@ jobs:
           - '3.11'
           - '3.12'
           - '3.13'
+        # Django main requires MySQL 8.4+, and is only tested on Python 3.12+.
+        include:
+          - python-version: '3.9'
+            mysql_image: mysql:8.0
+          - python-version: '3.10'
+            mysql_image: mysql:8.0
+          - python-version: '3.11'
+            mysql_image: mysql:8.0
+          - python-version: '3.12'
+            mysql_image: mysql:8.4
+          - python-version: '3.13'
+            mysql_image: mysql:8.4
     services:
       postgres:
         image: postgres
@@ -41,14 +53,17 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+      mysql:
+        image: ${{ matrix.mysql_image }}
+        env:
+          MYSQL_ROOT_PASSWORD: ${{ env.IMPORT_EXPORT_MYSQL_PASSWORD }}
+          MYSQL_DATABASE: ${{ env.DB_NAME }}
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -p${MYSQL_ROOT_PASSWORD} --silent"
+          --health-interval=5s --health-timeout=2s --health-retries=20
     steps:
-    - name: Set up MySQL
-      run: >
-        sudo /etc/init.d/mysql start
-
-        mysql -e 'CREATE DATABASE ${{ env.DB_NAME }};'
-        -u${{ env.IMPORT_EXPORT_MYSQL_USER }}
-        -p${{ env.IMPORT_EXPORT_MYSQL_PASSWORD }}
     - name: Check out repository code
       uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python-version }}
