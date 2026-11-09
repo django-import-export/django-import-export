@@ -367,23 +367,6 @@ class ImportIdFieldsTestCase(TestCase):
         )
         self.assertEqual(target, str(res.base_errors[0].error))
 
-    def test_missing_headers_message_is_looked_up_untranslated(self):
-        msgid = (
-            "The following fields are declared in 'import_id_fields' but "
-            "are not present in the file headers: %s"
-        )
-        dataset = tablib.Dataset(
-            *[(self.book.pk, "Some book")], headers=["id", "wrong_name"]
-        )
-        with patch(
-            "import_export.resources._", side_effect=lambda text: "[translated] " + text
-        ) as gettext:
-            res = self.resource.import_data(dataset, raise_errors=False)
-        gettext.assert_any_call(msgid)
-        self.assertEqual(
-            ("[translated] " + msgid) % "book_name", str(res.base_errors[0].error)
-        )
-
     def test_missing_headers_message_is_translated_to_spanish(self):
         dataset = tablib.Dataset(
             *[(self.book.pk, "Some book")], headers=["id", "wrong_name"]
@@ -417,24 +400,19 @@ class ImportIdFieldsTestCase(TestCase):
             str(e.exception),
         )
 
-    def test_missing_resource_fields_message_is_looked_up_untranslated(self):
+    def test_missing_resource_fields_message_is_translated_to_spanish(self):
         class TestBookResource(resources.ModelResource):
             class Meta:
                 model = Book
                 import_id_fields = ("id", "a", "b")
 
-        msgid = (
-            "The following fields are declared in 'import_id_fields' but "
-            "are not present in the resource fields: %s"
-        )
         dataset = tablib.Dataset(*[(self.book.pk, "Some book")], headers=["id", "name"])
-        with patch(
-            "import_export.resources._", side_effect=lambda text: "[translated] " + text
-        ) as gettext:
+        with translation.override("es"):
             res = TestBookResource().import_data(dataset, raise_errors=False)
-        gettext.assert_any_call(msgid)
         self.assertEqual(
-            ("[translated] " + msgid) % "a, b", str(res.base_errors[0].error)
+            "Los siguientes campos están declarados en 'import_id_fields' pero "
+            "no están presentes en los campos del recurso: a, b",
+            str(res.base_errors[0].error),
         )
 
     def test_multiple_import_id_fields(self):
