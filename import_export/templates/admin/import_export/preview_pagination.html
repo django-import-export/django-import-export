@@ -1,0 +1,12 @@
+{% load i18n %}
+{% if preview_page and preview_page.paginator.num_pages > 1 %}
+  <p class="paginator">
+    {% if preview_page.has_previous %}
+      <a href="?{% if preview_query_base %}{{ preview_query_base }}&{% endif %}page={{ preview_page.previous_page_number }}">{% translate "Previous" %}</a>
+    {% endif %}
+    {% blocktranslate with current=preview_page.number total=preview_page.paginator.num_pages total_rows=preview_page.paginator.count %}Page {{ current }} of {{ total }} ({{ total_rows }} rows){% endblocktranslate %}
+    {% if preview_page.has_next %}
+      <a href="?{% if preview_query_base %}{{ preview_query_base }}&{% endif %}page={{ preview_page.next_page_number }}">{% translate "Next" %}</a>
+    {% endif %}
+  </p>
+{% endif %}
