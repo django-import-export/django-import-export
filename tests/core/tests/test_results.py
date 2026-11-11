@@ -3,6 +3,7 @@ from unittest.mock import patch
 from core.models import Book
 from django.core.exceptions import ValidationError
 from django.test import SimpleTestCase
+from django.utils import translation
 from tablib import Dataset
 
 from import_export.results import Error, InvalidRow, Result, RowResult
@@ -129,6 +130,25 @@ class ResultTest(SimpleTestCase):
         self.assertTrue(message.startswith("call to force_str() on instance failed: "))
         self.assertIn("NoneType", message)
         self.assertEqual(None, row_result.object_repr)
+
+    @patch("import_export.results.logger")
+    def test_add_instance_info_unserializable_message_is_translated_to_spanish(
+        self, mock_logger
+    ):
+        # issue 2220 - the message must be looked up in gettext before the
+        # exception text is interpolated, so the translation is used.
+        class UnserializableBook:
+            def __str__(self):
+                return None
+
+        row_result = RowResult()
+        with translation.override("es"):
+            row_result.add_instance_info(UnserializableBook())
+        mock_logger.debug.assert_called_once()
+        message = mock_logger.debug.call_args.args[0]
+        self.assertTrue(
+            message.startswith("la llamada a force_str() en la instancia falló: ")
+        )
 
     def test_is_new(self):
         row_result = RowResult()

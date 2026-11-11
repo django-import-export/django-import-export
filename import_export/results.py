@@ -141,7 +141,7 @@ class RowResult:
             try:
                 self.object_repr = force_str(instance)
             except Exception as e:
-                logger.debug(_("call to force_str() on instance failed: %s" % str(e)))
+                logger.debug(_("call to force_str() on instance failed: %s") % str(e))
 
 
 class InvalidRow:
