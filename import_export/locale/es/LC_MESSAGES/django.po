@@ -27,7 +27,7 @@ msgstr "Importar"
 #: admin.py
 #, python-format
 msgid "%s through import_export"
-msgstr ""
+msgstr "%s mediante import_export"
 
 #: admin.py
 #, fuzzy
@@ -107,7 +107,7 @@ msgstr ""
 #: results.py
 #, python-format
 msgid "call to force_str() on instance failed: %s"
-msgstr ""
+msgstr "la llamada a force_str() en la instancia falló: %s"
 
 #: templates/admin/import_export/base.html
 msgid "Home"
