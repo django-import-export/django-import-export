@@ -250,9 +250,8 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
                                 object_id=row.object_id,
                                 object_repr=row.object_repr,
                                 action_flag=logentry_map[row.import_type],
-                                change_message=_(
-                                    "%s through import_export" % row.import_type
-                                ),
+                                change_message=_("%s through import_export")
+                                % row.import_type,
                             )
 
     def add_success_message(self, result, request):
@@ -599,7 +598,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
                 user_pk,
                 rows,
                 action_flag,
-                change_message=_("%s through import_export" % import_type),
+                change_message=_("%s through import_export") % import_type,
                 single_object=len(rows) == 1,
             )
 
