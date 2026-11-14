@@ -4,6 +4,7 @@ from functools import partial
 from unittest import mock, skipUnless
 from unittest.mock import MagicMock, PropertyMock, patch
 
+import django
 from core.admin import CategoryAdmin
 from core.models import Author, Book, Category, UUIDCategory
 from core.tests.admin_integration.mixins import AdminTestMixin
@@ -595,7 +596,10 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
             url=self.uuid_category_export_url,
             fields=self.uuid_resource_fields_payload,
         )
-        self.assertIn("“abc” is not a valid value.", response.content.decode())
+        # Django 6.0 catches the UUIDField error as invalid_pk_value
+        message = "UUID" if django.VERSION < (6, 0) else "value"
+        self.assertFalse(response.has_header("Content-Disposition"))
+        self.assertIn(f"“abc” is not a valid {message}.", response.content.decode())
 
     def test_export_items_rejects_pk_with_null_character(self):
         response = self._post_export_items(

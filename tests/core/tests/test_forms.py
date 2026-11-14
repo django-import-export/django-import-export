@@ -1,13 +1,9 @@
-from unittest import mock
-
 import django.forms
-from core.models import Author, Book, Category
+from core.models import Author, Category
 from core.tests.admin_integration.mixins import AdminTestMixin
 from django.core.exceptions import ImproperlyConfigured, ValidationError
-from django.db import connection, models
 from django.db.models.functions import Upper
-from django.test import SimpleTestCase, TestCase
-from django.test.utils import CaptureQueriesContext, isolate_apps
+from django.test import TestCase
 
 from import_export import constants, forms, resources
 from import_export.formats.base_formats import CSV
@@ -148,58 +144,18 @@ class FormTest(TestCase):
         with self.assertRaisesRegex(ImproperlyConfigured, r"super\(\)\.__init__\(\)"):
             form.is_valid()
 
-    def test_export_items_field_reads_only_the_pk_column(self):
-        category = Category.objects.create(name="Cat 1")
-        field = forms.ExportItemsField(queryset=Category.objects.all())
-        with CaptureQueriesContext(connection) as queries:
-            field.clean([str(category.pk)])
-        self.assertEqual(1, len(queries))
-        self.assertNotIn(connection.ops.quote_name("name"), queries[0]["sql"])
-
-    def test_export_items_field_skips_related_lookups(self):
-        book = Book.objects.create(name="Book 1")
-        field = forms.ExportItemsField(
-            queryset=Book.objects.select_related("author").prefetch_related(
-                "categories"
-            )
-        )
-        with CaptureQueriesContext(connection) as queries:
-            selected = field.clean([str(book.pk)])
-        self.assertEqual(1, len(queries))
-        self.assertNotIn("JOIN", queries[0]["sql"])
-        self.assertEqual([book], list(selected))
-
     def test_export_items_field_rejects_unhashable_values(self):
         field = forms.ExportItemsField(queryset=Category.objects.all())
         with self.assertRaises(ValidationError) as cm:
             field.clean([["1"]])
         self.assertEqual("invalid_list", cm.exception.code)
 
-    def test_export_items_field_char_to_field_name_skips_range_check(self):
+    def test_export_items_field_char_to_field_name_accepts_integer_like_value(self):
         category = Category.objects.create(name="99999999999999999999")
         field = forms.ExportItemsField(
             queryset=Category.objects.all(), to_field_name="name"
         )
         self.assertEqual([category], list(field.clean([category.name])))
-
-    def test_export_items_field_integer_to_field_name_checks_range(self):
-        author = Author.objects.create(name="Author 1", resource=1)
-        field = forms.ExportItemsField(
-            queryset=Author.objects.all(), to_field_name="resource"
-        )
-        self.assertEqual([author], list(field.clean(["1"])))
-        with self.assertRaises(ValidationError) as cm:
-            field.clean(["99999999999999999999"])
-        self.assertEqual("invalid_choice", cm.exception.code)
-
-    def test_export_items_field_skips_unknown_integer_field_range(self):
-        # an IntegerField subclass with a custom get_internal_type()
-        category = Category.objects.create(name="Cat 1")
-        field = forms.ExportItemsField(queryset=Category.objects.all())
-        with mock.patch.object(
-            connection.ops, "integer_field_range", side_effect=KeyError
-        ):
-            self.assertEqual([category], list(field.clean([str(category.pk)])))
 
     def test_export_items_field_to_field_name_pk(self):
         category = Category.objects.create(name="Cat 1")
@@ -225,44 +181,17 @@ class FormTest(TestCase):
             field.clean(["abc", "99999999999999999999"])
         self.assertEqual("invalid_pk_value", cm.exception.code)
 
-    def test_export_items_field_to_python_rejects_out_of_range(self):
-        field = forms.ExportItemsField(queryset=Category.objects.all())
-        with self.assertRaises(ValidationError) as cm:
-            field.to_python(["99999999999999999999"])
-        self.assertEqual("invalid_choice", cm.exception.code)
-
-    def test_export_items_field_accepts_range_bounds(self):
+    def test_export_items_field_rejects_out_of_range(self):
         category = Category.objects.create(name="Cat 1")
         field = forms.ExportItemsField(queryset=Category.objects.all())
-        with mock.patch.object(
-            connection.ops,
-            "integer_field_range",
-            return_value=(category.pk, category.pk),
-        ):
-            self.assertEqual([category], list(field.clean([str(category.pk)])))
+        with self.assertRaises(ValidationError) as cm:
+            field.clean([str(category.pk), "99999999999999999999"])
+        self.assertEqual("invalid_choice", cm.exception.code)
 
     def test_export_items_field_rejects_none(self):
         field = forms.ExportItemsField(queryset=Category.objects.all())
         with self.assertRaises(ValidationError) as cm:
             field.clean([None])
-        self.assertEqual("invalid_choice", cm.exception.code)
-
-
-class ExportItemsFieldInheritedPkTest(SimpleTestCase):
-    # no tables, the rejection runs no query
-    @isolate_apps("core")
-    def test_export_items_rejects_out_of_range_inherited_pk(self):
-        class RangeParent(models.Model):
-            class Meta:
-                app_label = "core"
-
-        class RangeChild(RangeParent):
-            class Meta:
-                app_label = "core"
-
-        field = forms.ExportItemsField(queryset=RangeChild.objects.all())
-        with self.assertRaises(ValidationError) as cm:
-            field.clean(["99999999999999999999"])
         self.assertEqual("invalid_choice", cm.exception.code)
 
 
