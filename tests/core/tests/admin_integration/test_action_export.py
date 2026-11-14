@@ -17,6 +17,7 @@ from django.core.exceptions import (
     PermissionDenied,
 )
 from django.db import connection
+from django.db.models import QuerySet
 from django.http import HttpRequest
 from django.test import RequestFactory
 from django.test.testcases import TestCase
@@ -732,6 +733,70 @@ class ExportActionAdminIntegrationTest(AdminTestMixin, TestCase):
             response = self._post_export_items([str(self.cat1.id)])
         self.assertEqual(
             f"id,name\r\n{self.cat1.id},Cat 1\r\n".encode(), response.content
+        )
+
+    def test_export_items_rejects_pk_outside_get_export_queryset_returning_values(
+        self,
+    ):
+        with patch.object(
+            CategoryAdmin,
+            "get_export_queryset",
+            return_value=Category.objects.exclude(pk=self.cat2.pk).values("id", "name"),
+        ):
+            response = self._post_export_items([str(self.cat2.id)])
+        self.assertFalse(response.has_header("Content-Disposition"))
+        self.assertIn(
+            "Select a valid choice. "
+            f"{self.cat2.id} is not one of the available choices.",
+            response.content.decode(),
+        )
+
+    def test_export_with_get_export_queryset_returning_unfilterable_values(self):
+        cat3 = Category.objects.create(name="Cat 3")
+        values = Category.objects.values("id", "name")
+        selected = values.filter(pk__in=[self.cat1.pk, self.cat2.pk])
+        querysets = {
+            "slice": values.order_by("id")[:2],
+            "union": values.filter(pk=self.cat1.pk)
+            .union(values.filter(pk=self.cat2.pk))
+            .order_by("id"),
+            "intersection": values.intersection(selected).order_by("id"),
+            "difference": values.difference(values.filter(pk=cat3.pk)).order_by("id"),
+        }
+        for name, queryset in querysets.items():
+            with (
+                self.subTest(name),
+                patch.object(
+                    CategoryAdmin,
+                    "get_export_queryset",
+                    side_effect=lambda request, queryset=queryset: queryset.all(),
+                ),
+            ):
+                self._get_url_response(self.category_export_url)
+                response = self._post_export_items([])
+                self.assertEqual(
+                    f"id,name\r\n{self.cat1.id},Cat 1\r\n"
+                    f"{self.cat2.id},Cat 2\r\n".encode(),
+                    response.content,
+                )
+
+    def test_export_items_with_get_export_queryset_from_another_manager(self):
+        hidden_by_default_manager = QuerySet(Category).exclude(pk=self.cat2.pk)
+        with (
+            patch.object(
+                CategoryAdmin,
+                "get_export_queryset",
+                return_value=Category._base_manager.values("id", "name"),
+            ),
+            patch.object(
+                Category._default_manager,
+                "get_queryset",
+                return_value=hidden_by_default_manager,
+            ),
+        ):
+            response = self._post_export_items([str(self.cat2.id)])
+        self.assertEqual(
+            f"id,name\r\n{self.cat2.id},Cat 2\r\n".encode(), response.content
         )
 
 

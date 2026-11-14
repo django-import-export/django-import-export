@@ -5,7 +5,9 @@ from django.contrib import admin, messages
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION, LogEntry
 from django.contrib.auth import get_permission_codename
 from django.core.exceptions import FieldError, PermissionDenied
-from django.db.models import QuerySet
+from django.db import NotSupportedError
+from django.db.models import Exists, OuterRef, QuerySet
+from django.db.models.query import ModelIterable
 from django.forms import MultipleHiddenInput
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
@@ -740,6 +742,10 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
         not a ``QuerySet``, such as a list from ``get_export_queryset()``, binds
         ``None``, so a selection fails closed rather than validate against a
         queryset declared on the field.
+
+        A ``values()`` queryset is bound as a model queryset of the same rows.  One
+        that cannot be filtered, such as a sliced or ``union()`` queryset, is bound
+        as is, and a selection fails closed.
         """
         field = form.fields.get("export_items")
         if field is None:
@@ -749,7 +755,18 @@ class ExportMixin(BaseExportMixin, ImportExportMixinBase):
                 queryset=None, widget=MultipleHiddenInput, required=False
             )
         ExportItemsField.check_field(field)
-        field.queryset = queryset if isinstance(queryset, QuerySet) else None
+        if not isinstance(queryset, QuerySet):
+            queryset = None
+        elif not issubclass(queryset._iterable_class, ModelIterable):
+            try:
+                rows = queryset.filter(pk=OuterRef("pk"))
+            except (TypeError, NotSupportedError):
+                pass
+            else:
+                queryset = queryset.model._base_manager.using(queryset.db).filter(
+                    Exists(rows)
+                )
+        field.queryset = queryset
 
     def export_action(self, request):
         """
