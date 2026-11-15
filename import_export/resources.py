@@ -1252,8 +1252,8 @@ class Resource(metaclass=DeclarativeMetaclass):
                 _(
                     "The following fields are declared in 'import_id_fields' but "
                     "are not present in the resource fields: %s"
-                    % ", ".join(missing_fields)
                 )
+                % ", ".join(missing_fields)
             )
 
         for field in import_id_fields:
@@ -1267,8 +1267,8 @@ class Resource(metaclass=DeclarativeMetaclass):
                 _(
                     "The following fields are declared in 'import_id_fields' but "
                     "are not present in the file headers: %s"
-                    % ", ".join(missing_headers)
                 )
+                % ", ".join(missing_headers)
             )
 
 

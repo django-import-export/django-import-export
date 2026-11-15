@@ -102,8 +102,6 @@ msgid ""
 "The following fields are declared in 'import_id_fields' but are not present "
 "in the file headers: %s"
 msgstr ""
-"فیلد‌های زیر در 'import_id_fields' اعلام شده اند، اما در فیلد‌های منبع وجود "
-"ندارند: %s"
 
 #: results.py
 #, python-format

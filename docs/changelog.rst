@@ -27,6 +27,7 @@ Fixes
 #####
 
 - Fixed slow Admin action exports and high memory usage on large querysets by validating only the submitted primary keys instead of loading every primary key in the export queryset. Selected primary keys containing null characters are now rejected (`2189 <https://github.com/django-import-export/django-import-export/issues/2189>`_, `2190 <https://github.com/django-import-export/django-import-export/pull/2190>`_)
+- Fixed ``DateWidget.clean()`` returning datetime instances so that xlsx round-trips of ``DateField`` values are correctly detected as unchanged by ``skip_row()`` (`2195 <https://github.com/django-import-export/django-import-export/issues/2195>`_, `2208 <https://github.com/django-import-export/django-import-export/pull/2208>`_)
 - Fixed import / export links being hidden when an admin mixin from another library declares ``change_list_template`` as a read-only property (e.g. django-admin-sortable2).  The import / export change list template now extends the template Django would otherwise have used, resolved on each request (`2205 <https://github.com/django-import-export/django-import-export/issues/2205>`_)
 - Fixed the import preview diff showing a spurious change for values which the widget considers equal but which render differently, for example a ``DecimalField`` value of ``1803.60`` imported from an xlsx cell as ``1803.6`` (`2199 <https://github.com/django-import-export/django-import-export/issues/2199>`_)
 - Fixed ``skip_row()`` incorrectly treating unmodified, previously-exported ``DateTimeField``/``TimeField`` values as changed due to sub-second precision loss inherent to export round-trips (`2018 <https://github.com/django-import-export/django-import-export/issues/2018>`_)
@@ -41,6 +42,7 @@ Fixes
 - Fixed inconsistent input type passed to ``Format.create_dataset()`` (`2006 <https://github.com/django-import-export/django-import-export/issues/2006>`_, `2197 <https://github.com/django-import-export/django-import-export/pull/2197>`_)
 - Fixed ``import`` management command ignoring ``--encoding`` for file input: the file is now read as ``bytes`` and decoded by the format (`2197 <https://github.com/django-import-export/django-import-export/pull/2197>`_)
 - Fixed the "Select all" toggle on the export form being blocked by a strict Content Security Policy (`2204 <https://github.com/django-import-export/django-import-export/issues/2204>`_)
+- Fixed the ``import_id_fields`` error messages not being translated, because the column names were interpolated before the message was passed to ``gettext``. Added the Spanish translation of both messages (`2219 <https://github.com/django-import-export/django-import-export/issues/2219>`_)
 
 Development
 ###########
