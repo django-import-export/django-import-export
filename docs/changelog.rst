@@ -16,6 +16,7 @@ Deprecations
 Enhancements
 ############
 
+- Added ``update_conflicts``, ``update_fields`` and ``unique_fields`` ``Meta`` options so that bulk imports can upsert instead of failing on conflicting rows (`2049 <https://github.com/django-import-export/django-import-export/issues/2049>`_)
 - Added :meth:`~import_export.widgets.Widget.is_equal` hook so that widgets control how :meth:`~import_export.resources.Resource.skip_row` compares imported values against persisted values. The date / time widgets and ``ManyToManyWidget`` override it (`2174 <https://github.com/django-import-export/django-import-export/pull/2174>`_)
 - Added :meth:`~import_export.widgets.ManyToManyWidget.get_queryset` to customize the related objects available during import (`2172 <https://github.com/django-import-export/django-import-export/pull/2172>`_)
 - Replace ``DEFAULT_FORMATS`` and ``BINARY_FORMATS`` constants with ``get_default_formats()`` and ``get_binary_formats()`` functions to avoid expensive library imports at Django startup (`2149 <https://github.com/django-import-export/django-import-export/issues/2149>`_)

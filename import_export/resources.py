@@ -9,11 +9,15 @@ from warnings import warn
 import tablib
 from diff_match_patch import diff_match_patch
 from django.conf import settings
-from django.core.exceptions import ImproperlyConfigured, ValidationError
+from django.core.exceptions import (
+    FieldDoesNotExist,
+    ImproperlyConfigured,
+    ValidationError,
+)
 from django.core.management.color import no_style
 from django.core.paginator import Paginator
 from django.db import connections, router
-from django.db.models import fields
+from django.db.models import Q, fields
 from django.db.models.fields.related import ForeignKey
 from django.db.models.manager import BaseManager
 from django.db.models.query import QuerySet
@@ -172,6 +176,13 @@ class Resource(metaclass=DeclarativeMetaclass):
         # (see ModelResource.after_import())
         self._pk_supplied_on_create = False
 
+        # the headers of the dataset being imported, which limit the default
+        # update_fields of an upsert (see get_bulk_create_update_fields())
+        self._import_headers = None
+        # rows created while update_conflicts is enabled, which may turn out
+        # to be updates (see _reclassify_upserted_rows())
+        self._upsert_candidates = []
+
     @classmethod
     def get_result_class(self):
         """
@@ -278,6 +289,193 @@ class Resource(metaclass=DeclarativeMetaclass):
             and "__" not in field.attribute  # exclude related fields
         ]
 
+    def get_bulk_create_update_fields(self):
+        """
+        Returns the fields to be updated when ``update_conflicts`` is enabled.
+
+        Defaults to the model fields imported from a column which is present in
+        the dataset, leaving out the ``import_id_fields`` (they identify the
+        conflicting row), readonly fields, related lookups, and anything
+        ``bulk_create()`` cannot update: the primary key, many-to-many fields
+        and attributes which are not model fields.
+
+        A column missing from the dataset is not imported, so a row initialized
+        with ``force_init_instance`` still carries the model defaults for it.
+        Leaving those fields out stops them overwriting the stored values.
+        Declare ``update_fields`` to update a field set by a hook instead of by
+        a column.
+        """
+        if self._meta.update_fields is not None:
+            return list(self._meta.update_fields)
+        headers = self._import_headers
+        return [
+            field.attribute
+            for field_name, field in self.fields.items()
+            if field_name not in self.get_import_id_fields()
+            and not field.readonly
+            and "__" not in field.attribute  # exclude related fields
+            and (headers is None or field.column_name in headers)
+            and self._is_bulk_create_updatable(field.attribute)
+        ]
+
+    def _is_bulk_create_updatable(self, attribute):
+        try:
+            model_field = self._meta.model._meta.get_field(attribute)
+        except FieldDoesNotExist:
+            # bulk_create() resolves every update_fields name to a model
+            # field, so an attribute which is not one can never be updated
+            return False
+        return (
+            model_field.concrete
+            and not model_field.many_to_many
+            and not model_field.primary_key
+        )
+
+    def get_bulk_create_unique_fields(self):
+        """
+        Returns the fields which trigger the upsert when ``update_conflicts`` is
+        enabled.  Defaults to the ``import_id_fields``, which are the fields which
+        identify a row on import.
+
+        The fields must carry a unique constraint (the primary key, a field
+        declared ``unique``, or a ``UniqueConstraint`` / ``unique_together`` on
+        exactly these fields).  This is checked before the import starts.
+        """
+        if self._meta.unique_fields is not None:
+            return list(self._meta.unique_fields)
+        return [
+            self.fields[field_name].attribute
+            for field_name in self.get_import_id_fields()
+            if field_name in self.fields
+        ]
+
+    def get_bulk_create_kwargs(self, batch_size=None):
+        """
+        Returns the keyword arguments passed to ``bulk_create()``.
+        """
+        kwargs = {"batch_size": batch_size}
+        if not self._meta.update_conflicts:
+            return kwargs
+        kwargs["update_conflicts"] = True
+        kwargs["update_fields"] = self.get_bulk_create_update_fields()
+        features = self._bulk_create_connection().features
+        if features.supports_update_conflicts_with_target:
+            # MySQL and MariaDB update every unique constraint and reject a
+            # conflict target, so only send one when the backend accepts it.
+            kwargs["unique_fields"] = self.get_bulk_create_unique_fields()
+        return kwargs
+
+    def _bulk_create_connection(self):
+        # bulk_create() is called on the default manager without using(), so
+        # it writes to the router's write database, which is not necessarily
+        # Meta.using_db; feature detection has to look at the same database
+        return connections[router.db_for_write(self._meta.model)]
+
+    def _check_update_conflicts(self):
+        """
+        Rejects an ``update_conflicts`` configuration which would otherwise
+        fail on every batch, before any row is written.
+        """
+        for option in ("update_fields", "unique_fields"):
+            if isinstance(getattr(self._meta, option), str):
+                raise ImproperlyConfigured(
+                    f"{type(self).__name__}.Meta.{option} must be a list or "
+                    f"tuple of field names, not a string"
+                )
+        features = self._bulk_create_connection().features
+        if not features.supports_update_conflicts:
+            raise ValueError(
+                "update_conflicts is not supported by this database backend"
+            )
+        if not self.get_bulk_create_update_fields():
+            raise ImproperlyConfigured(
+                "update_conflicts needs at least one field to update; declare "
+                "update_fields, or import a column which is not one of the "
+                "import_id_fields"
+            )
+        unique_fields = self.get_bulk_create_unique_fields()
+        if not unique_fields:
+            raise ImproperlyConfigured(
+                "update_conflicts needs a conflict target; declare unique_fields"
+            )
+        if features.supports_update_conflicts_with_target and not (
+            self._is_unique_together(unique_fields)
+        ):
+            raise ImproperlyConfigured(
+                f"unique_fields {unique_fields} do not match a unique "
+                f"constraint on {self._meta.model.__name__}; declare "
+                f"unique_fields for the constraint the upsert should "
+                f"conflict on"
+            )
+
+    def _is_unique_together(self, field_names):
+        opts = self._meta.model._meta
+        try:
+            names = frozenset(opts.get_field(name).name for name in field_names)
+        except FieldDoesNotExist:
+            return False
+        candidates = [
+            frozenset([field.name])
+            for field in opts.concrete_fields
+            if field.unique or field.primary_key
+        ]
+        candidates += [frozenset(together) for together in opts.unique_together]
+        candidates += [
+            frozenset(constraint.fields) for constraint in opts.total_unique_constraints
+        ]
+        return names in candidates
+
+    def _reclassify_upserted_rows(self, result, uncounted=None):
+        """
+        Reports the rows which ``update_conflicts`` updated as updates.
+
+        ``force_init_instance`` initializes every row as new without looking in
+        the database, so a row which conflicts with a stored row, and is
+        updated rather than inserted, would otherwise be reported (and logged
+        by the admin) as an addition.  One query per batch finds the stored
+        rows on the conflict target.
+
+        ``uncounted`` is a row result which is not yet in ``result.totals``.
+        """
+        pending, self._upsert_candidates = self._upsert_candidates, []
+        if not pending:
+            return
+        opts = self._meta.model._meta
+        target = [opts.get_field(name) for name in self.get_bulk_create_unique_fields()]
+        keyed = []
+        for instance, row_result in pending:
+            key = tuple(getattr(instance, field.attname) for field in target)
+            if None not in key:  # a null never conflicts
+                keyed.append((key, row_result))
+        if not keyed:
+            return
+        manager = self._meta.model._default_manager.using(
+            router.db_for_write(self._meta.model)
+        )
+        names = [field.name for field in target]
+        keys = list({key for key, _ in keyed})
+        stored = set()
+        for start in range(0, len(keys), 500):
+            chunk = keys[start : start + 500]
+            if len(names) == 1:
+                query = Q(**{f"{names[0]}__in": [key[0] for key in chunk]})
+            else:
+                query = Q()
+                for key in chunk:
+                    query |= Q(**dict(zip(names, key)))
+            stored.update(
+                tuple(values) if len(names) > 1 else (values,)
+                for values in manager.filter(query).values_list(
+                    *names, flat=len(names) == 1
+                )
+            )
+        for key, row_result in keyed:
+            if key in stored and row_result.import_type == RowResult.IMPORT_TYPE_NEW:
+                row_result.import_type = RowResult.IMPORT_TYPE_UPDATE
+                if row_result is not uncounted:
+                    result.totals[RowResult.IMPORT_TYPE_NEW] -= 1
+                    result.totals[RowResult.IMPORT_TYPE_UPDATE] += 1
+
     def bulk_create(
         self, using_transactions, dry_run, raise_errors, batch_size=None, result=None
     ):
@@ -287,7 +485,8 @@ class Resource(metaclass=DeclarativeMetaclass):
         if len(self.create_instances) > 0 and (using_transactions or not dry_run):
             try:
                 self._meta.model.objects.bulk_create(
-                    self.create_instances, batch_size=batch_size
+                    self.create_instances,
+                    **self.get_bulk_create_kwargs(batch_size=batch_size),
                 )
             except Exception as e:
                 self.handle_import_error(result, e, raise_errors)
@@ -811,6 +1010,8 @@ class Resource(metaclass=DeclarativeMetaclass):
                 else:
                     self.validate_instance(instance, import_validation_errors)
                     self.save_instance(instance, new, row, **kwargs)
+                    if new and self._meta.use_bulk and self._meta.update_conflicts:
+                        self._upsert_candidates.append((instance, row_result))
                     self.save_m2m(instance, row, **kwargs)
                 row_result.add_instance_info(instance)
                 if self._meta.store_instance:
@@ -899,6 +1100,9 @@ class Resource(metaclass=DeclarativeMetaclass):
         ):
             raise ValueError("Batch size must be a positive integer")
 
+        if self._meta.update_conflicts and not self._meta.use_bulk:
+            raise ValueError("update_conflicts requires use_bulk to be enabled")
+
         with atomic_if_using_transaction(using_transactions, using=db_connection):
             result = self.import_data_inner(
                 dataset,
@@ -931,6 +1135,8 @@ class Resource(metaclass=DeclarativeMetaclass):
         db_connection = self.get_db_connection_name()
         # a resource can be reused for multiple imports
         self._pk_supplied_on_create = False
+        self._upsert_candidates = []
+        self._import_headers = None
 
         try:
             with atomic_if_using_transaction(using_transactions, using=db_connection):
@@ -938,6 +1144,11 @@ class Resource(metaclass=DeclarativeMetaclass):
             self._check_import_id_fields(dataset.headers)
         except Exception as e:
             self.handle_import_error(result, e, raise_errors)
+
+        if self._meta.update_conflicts:
+            # after before_import(), which can alter the dataset
+            self._import_headers = list(dataset.headers or [])
+            self._check_update_conflicts()
 
         instance_loader = self._meta.instance_loader_class(self, dataset)
 
@@ -969,6 +1180,9 @@ class Resource(metaclass=DeclarativeMetaclass):
                 # because this is a batch, any exceptions are logged and not associated
                 # with a specific row
                 if len(self.create_instances) == self._meta.batch_size:
+                    if self._meta.update_conflicts:
+                        # before the insert, which would make every key stored
+                        self._reclassify_upserted_rows(result, uncounted=row_result)
                     with atomic_if_using_transaction(
                         using_transactions, using=db_connection
                     ):
@@ -1024,6 +1238,8 @@ class Resource(metaclass=DeclarativeMetaclass):
 
         if self._meta.use_bulk:
             # bulk persist any instances which are still pending
+            if self._meta.update_conflicts:
+                self._reclassify_upserted_rows(result)
             with atomic_if_using_transaction(using_transactions, using=db_connection):
                 self.bulk_create(
                     using_transactions, dry_run, raise_errors, result=result

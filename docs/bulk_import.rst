@@ -14,6 +14,58 @@ processed.
 Bulk deletes are also supported, by applying a ``filter()`` to the temporary object list, and calling ``delete()`` on
 the resulting query set.
 
+Handling conflicts on create
+============================
+
+By default, a bulk create fails if a row conflicts with an existing row, for example because
+the id is already present in the table.  This is most likely to happen when ``force_init_instance``
+is enabled, because the existence check which would otherwise route the row to ``bulk_update()``
+is skipped.
+
+Set ``update_conflicts = True`` to update the conflicting row instead, making the import an upsert::
+
+    class BookResource(ModelResource):
+        class Meta:
+            model = Book
+            use_bulk = True
+            update_conflicts = True
+
+The fields to update default to the columns present in the dataset, except the
+``import_id_fields``, the primary key and many-to-many fields.  A field whose column is
+not in the dataset is left alone: with ``force_init_instance`` the row is built without
+reading the stored one, so writing that field would replace the stored value with the
+model default.  To update a field which a hook sets, rather than a column, declare
+``update_fields``.
+
+The conflict target defaults to the ``import_id_fields``, since those are the fields which
+identify a row on import, and it must match a unique constraint on the model (the primary
+key, a field declared ``unique``, or a ``UniqueConstraint`` or ``unique_together`` on exactly
+those fields).  Without ``force_init_instance``, rows which match the ``import_id_fields`` are
+already sent to ``bulk_update()``, so the conflicts left to handle are on another unique
+field: declare it as ``unique_fields``.  Declare ``update_fields`` and ``unique_fields`` to
+override either default::
+
+    class BookResource(ModelResource):
+        class Meta:
+            model = Book
+            use_bulk = True
+            update_conflicts = True
+            update_fields = ["name", "price"]
+            unique_fields = ["isbn"]
+
+These values are passed to Django's ``bulk_create()``, so its restrictions apply.  MySQL and
+MariaDB do not accept a conflict target at all (they update on every unique constraint), so
+``unique_fields`` is not sent on those backends.  The configuration is checked before any row
+is imported: string values for ``update_fields`` or ``unique_fields``, a conflict target
+without a unique constraint, an empty list of fields to update, and a backend which cannot
+update conflicts are all rejected up front.
+
+Rows which update a stored row are reported as updates, not as new rows.  Finding them takes
+one query per batch, on the conflict target, before the batch is inserted.  MySQL and
+MariaDB update on any unique constraint, so a row which conflicts there on a constraint other
+than the conflict target is still reported as new.  The diff shown for such a row in the admin is
+computed against an empty row, because the stored row is not loaded.
+
 Caveats
 =======
 
