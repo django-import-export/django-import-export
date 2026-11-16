@@ -541,7 +541,7 @@ class DurationWidget(Widget):
         :returns: A python duration instance.
         :raises: ValueError if the value cannot be parsed.
         """
-        if not value:
+        if not value and not isinstance(value, timedelta):
             return None
 
         try:

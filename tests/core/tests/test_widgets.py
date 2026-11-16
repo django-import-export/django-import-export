@@ -552,6 +552,9 @@ class DurationWidgetTest(TestCase):
     def test_clean_zero(self):
         self.assertEqual(self.widget.clean("0:00:00"), timedelta(0))
 
+    def test_clean_zero_timedelta(self):
+        self.assertEqual(self.widget.clean(timedelta(0)), timedelta(0))
+
     @patch("import_export.widgets.parse_duration", side_effect=ValueError("err"))
     @patch("import_export.widgets.logger")
     def test_clean_raises_ValueError(self, mock_logger, _):
