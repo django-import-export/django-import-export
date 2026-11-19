@@ -8,6 +8,7 @@ from django.contrib.admin.models import DELETION, LogEntry
 from django.core.exceptions import ValidationError
 from django.test.testcases import TestCase, TransactionTestCase
 from django.test.utils import override_settings
+from django.utils import translation
 from django.utils.translation import gettext_lazy as _
 
 from import_export.admin import ExportMixin
@@ -374,6 +375,18 @@ class ImportLogEntryTest(AdminTestMixin, TestCase):
         ):
             self._post_url_response(self.book_process_import_url, data, follow=True)
         self.assertEqual(0, LogEntry.objects.count())
+
+    def test_import_log_entry_change_message_is_translated_to_spanish(self):
+        # issue 2220 - the change_message must be looked up in gettext before
+        # the import_type is interpolated, so the translation is used.
+        response = self._do_import_post(self.book_import_url, "books.csv")
+        self.assertEqual(response.status_code, 200)
+        confirm_form = response.context["confirm_form"]
+        data = confirm_form.initial
+        with translation.override("es"):
+            self._post_url_response(self.book_process_import_url, data, follow=True)
+        entry = LogEntry.objects.latest("id")
+        self.assertEqual("new mediante import_export", entry.change_message)
 
 
 @override_settings(IMPORT_EXPORT_SKIP_ADMIN_CONFIRM=True)

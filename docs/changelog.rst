@@ -14,6 +14,7 @@ Changelog
   (`GHSA-jxgg-j4fr-4v6r <https://github.com/django-import-export/django-import-export/security/advisories/GHSA-jxgg-j4fr-4v6r>`_)
 - Fixed ``AttributeError: module 'sys' has no attribute 'get_int_max_str_digits'`` when importing integer values on Python releases prior to 3.9.14 and 3.10.7.  This was introduced in 4.4.3.  The Python default limit of 4300 digits is used where the function is not available.
 - Fixed ``IntegerWidget`` rejecting every integer if the Python integer string conversion limit had been disabled with ``sys.set_int_max_str_digits(0)``.  This was introduced in 4.4.3.  The default limit of 4300 digits is now applied in this case.
+- Fixed the ``%s through import_export`` log entry message and the ``force_str()`` failure debug message not being translated, because the value was interpolated before the message was passed to ``gettext``. Added the Spanish translation of both messages (`2220 <https://github.com/django-import-export/django-import-export/issues/2220>`_)
 
 4.4.5 (2026-11-09)
 -------------------
