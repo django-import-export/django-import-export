@@ -62,6 +62,15 @@ Performance
 i18n
 ####
 
+4.4.6 (2026-11-19)
+-------------------
+
+- Fixed a security and data integrity issue where an import row classified as an "update" could overwrite a different database row if the import changed the primary key of the loaded instance.
+  This fix, and the fix released in 4.4.2, now also cover the parent rows of models which use multi-table inheritance.
+  See :ref:`release notes <release_notes_pk_unchanged_on_update>` for details and mitigations.
+  (`GHSA-jxgg-j4fr-4v6r <https://github.com/django-import-export/django-import-export/security/advisories/GHSA-jxgg-j4fr-4v6r>`_)
+- Fixed ``IntegerWidget`` rejecting every integer if the Python integer string conversion limit had been disabled with ``sys.set_int_max_str_digits(0)``.  This was introduced in 4.4.3.  The default limit of 4300 digits is now applied in this case.
+
 4.4.4 (2026-10-27)
 -------------------
 

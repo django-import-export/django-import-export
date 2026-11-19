@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-06-23 19:11+0100\n"
+"POT-Creation-Date: 2026-11-19 17:42+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -24,12 +24,7 @@ msgid "Import"
 msgstr "Importeren"
 
 #: admin.py
-#, python-format
-msgid "%s through import_export"
-msgstr "%s door import_export"
-
-#: admin.py
-#, fuzzy
+#, fuzzy, python-brace-format
 #| msgid "Import finished, with {} new and {} updated {}."
 msgid "Import finished: {} new, {} updated, {} deleted and {} skipped {}."
 msgstr "Import is klaar met {} nieuwe en {} geupdate {}."
@@ -46,6 +41,11 @@ msgid ""
 "No valid data to import. Ensure your file has the correct headers or data "
 "for import."
 msgstr ""
+
+#: admin.py
+#, python-format
+msgid "%s through import_export"
+msgstr "%s door import_export"
 
 #: admin.py templates/admin/import_export/change_form.html
 #: templates/admin/import_export/change_list_export_item.html
@@ -81,6 +81,13 @@ msgstr ""
 #: forms.py
 #, python-format
 msgid "Select at least 1 field for \"%(resource_name)s\" to export"
+msgstr ""
+
+#: resources.py
+#, python-format
+msgid ""
+"The primary key of an existing instance cannot be changed by an import "
+"(existing: '%(existing)s', imported: '%(imported)s')"
 msgstr ""
 
 #: resources.py
