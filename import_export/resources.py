@@ -5,14 +5,15 @@ from copy import deepcopy
 from html import escape
 from warnings import warn
 
+import django
 import tablib
 from diff_match_patch import diff_match_patch
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.core.management.color import no_style
 from django.core.paginator import Paginator
-from django.db import connections, router
-from django.db.models import fields
+from django.db import IntegrityError, connections, router
+from django.db.models import Model, fields
 from django.db.models.fields.related import ForeignKey
 from django.db.models.query import QuerySet
 from django.db.transaction import TransactionManagementError, set_rollback
@@ -324,8 +325,53 @@ class Resource(metaclass=DeclarativeMetaclass):
         :ref:`instance loader <instance-loaders>`, for example because
         :meth:`~import_export.resources.Resource.get_queryset` is filtered.  In this
         case an ``IntegrityError`` is raised and the row is reported as an error.
+
+        If the model uses multi-table inheritance, the insert is also forced for
+        each parent model, so that an existing row of a parent model cannot be
+        updated either.
         """
-        instance.save(force_insert=is_create)
+        force_insert = self._get_force_insert(instance) if is_create else False
+        instance.save(force_insert=force_insert)
+
+    def _get_force_insert(self, instance):
+        """
+        Returns the ``force_insert`` argument to be passed to ``save()`` for an
+        instance which is to be created.
+
+        ``force_insert=True`` only forces the insert of the model's own table.
+        With multi-table inheritance, the rows of parent models would be updated
+        if they already exist, so the insert has to be forced for each parent.
+        """
+        if not isinstance(instance, Model):
+            return True
+        parents = tuple(instance._meta.get_parent_list())
+        if not parents:
+            return True
+        if django.VERSION >= (5, 0):
+            return parents + (type(instance),)
+        # Django < 5.0 cannot force the insert of parent models, so the
+        # existence of each parent row has to be checked explicitly.  This is
+        # not atomic with the save, but it is read from the database which the
+        # instance will be written to.
+        models = (type(instance)._meta.concrete_model,) + parents
+        for parent in parents:
+            # the pk of the parent row can be supplied directly, or via the
+            # link to the parent, which is copied to the parent pk on save
+            pk_values = {getattr(instance, parent._meta.pk.attname)}
+            for model in models:
+                link = model._meta.parents.get(parent)
+                if link is not None:
+                    pk_values.add(getattr(instance, link.attname))
+            pk_values.discard(None)
+            if not pk_values:
+                continue
+            using = router.db_for_write(parent, instance=instance)
+            if parent._base_manager.using(using).filter(pk__in=pk_values).exists():
+                raise IntegrityError(
+                    f"{parent._meta.object_name} with this primary key "
+                    "already exists"
+                )
+        return True
 
     def before_save_instance(self, instance, row, **kwargs):
         r"""
@@ -427,6 +473,91 @@ class Resource(metaclass=DeclarativeMetaclass):
             )
             return
         field.save(instance, row, is_m2m, **kwargs)
+
+    def _get_pk_fields(self, instance):
+        """
+        Returns the primary key field of the instance's model, followed by the
+        primary key field of each parent model if the model uses multi-table
+        inheritance.
+        """
+        opts = instance._meta
+        all_opts = [opts] + [parent._meta for parent in opts.get_parent_list()]
+        return [o.pk for o in all_opts]
+
+    def _get_pk_values(self, instance):
+        """
+        Returns the primary key values of the instance as a tuple.
+
+        If the model uses multi-table inheritance, the primary key of each parent
+        model is included, because these are separate attributes of the instance
+        which each identify a database row to be written when the instance is
+        saved.
+        """
+        if not isinstance(instance, Model):
+            return (getattr(instance, "pk", None),)
+        return tuple(
+            getattr(instance, field.attname) for field in self._get_pk_fields(instance)
+        )
+
+    def _is_pk_equal(self, field, existing, imported):
+        """
+        Returns ``True`` if the imported primary key value identifies the same
+        row as the existing value.
+
+        The imported value may not be of the same type as the existing value,
+        for example if the widget returns a ``str`` for a ``UUIDField`` or an
+        ``AutoField``, so the values are converted by the model field.
+        """
+        if existing == imported:
+            return True
+        try:
+            return field.to_python(existing) == field.to_python(imported)
+        except (ValidationError, ValueError, TypeError):
+            return False
+
+    def _check_pk_unchanged(self, instance, original_pk):
+        """
+        Raise an error if the import has changed the primary key of an existing
+        instance.
+
+        This can happen when ``import_id_fields`` identifies the instance by a
+        field other than the primary key, and the row also supplies a primary key
+        value.  Saving the instance would then update (or create) a different
+        database row to the one which was returned by the
+        :ref:`instance loader <instance-loaders>`, which may be a row excluded by
+        :meth:`~import_export.resources.Resource.get_queryset`.
+
+        An empty primary key value is treated as not having been supplied.
+
+        The primary key of the instance is always reset to the original value.
+        This means that a rejected value does not remain on the instance if the
+        instance loader returns the same instance for another row.
+
+        :param original_pk: The value of :meth:`_get_pk_values` when the instance
+          was loaded.
+        """
+        changed = None
+        if not isinstance(instance, Model):
+            imported = getattr(instance, "pk", None)
+            if imported != original_pk[0]:
+                changed = (original_pk[0], imported)
+        else:
+            for field, existing in zip(self._get_pk_fields(instance), original_pk):
+                imported = getattr(instance, field.attname)
+                if imported is not None and not self._is_pk_equal(
+                    field, existing, imported
+                ):
+                    changed = changed or (existing, imported)
+                setattr(instance, field.attname, existing)
+        if changed:
+            raise exceptions.ImportExportError(
+                _(
+                    "The primary key of an existing instance cannot be changed "
+                    "by an import (existing: '%(existing)s', imported: "
+                    "'%(imported)s')"
+                )
+                % {"existing": changed[0], "imported": changed[1]}
+            )
 
     def get_import_fields(self):
         import_fields = []
@@ -718,6 +849,9 @@ class Resource(metaclass=DeclarativeMetaclass):
         try:
             self.before_import_row(row, **kwargs)
             instance, new = self.get_or_init_instance(instance_loader, row)
+            # the pk of an existing instance is recorded so that the import
+            # cannot change it (see _check_pk_unchanged())
+            original_pk = None if new else self._get_pk_values(instance)
             self.after_init_instance(instance, new, row, **kwargs)
             if new:
                 row_result.import_type = RowResult.IMPORT_TYPE_NEW
@@ -751,6 +885,9 @@ class Resource(metaclass=DeclarativeMetaclass):
                     import_validation_errors = e.update_error_dict(
                         import_validation_errors
                     )
+
+                if not new:
+                    self._check_pk_unchanged(instance, original_pk)
 
                 if self.skip_row(instance, original, row, import_validation_errors):
                     row_result.import_type = RowResult.IMPORT_TYPE_SKIP

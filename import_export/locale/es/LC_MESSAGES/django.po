@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-06-23 19:11+0100\n"
+"POT-Creation-Date: 2026-11-19 17:04+0000\n"
 "PO-Revision-Date: 2023-09-22 11:53-0300\n"
 "Last-Translator: Santiago Muñoz <smunoz@mythologylabs.com.uy>\n"
 "Language-Team: Spanish\n"
@@ -30,7 +30,7 @@ msgid "%s through import_export"
 msgstr "%s mediante import_export"
 
 #: admin.py
-#, fuzzy
+#, fuzzy, python-brace-format
 #| msgid "Import finished, with {} new and {} updated {}."
 msgid "Import finished: {} new, {} updated, {} deleted and {} skipped {}."
 msgstr "Proceso de importación finalizado, con {} nuevos y {} actualizados"
@@ -84,6 +84,13 @@ msgstr ""
 #: forms.py
 #, python-format
 msgid "Select at least 1 field for \"%(resource_name)s\" to export"
+msgstr ""
+
+#: resources.py
+#, python-format
+msgid ""
+"The primary key of an existing instance cannot be changed by an import "
+"(existing: '%(existing)s', imported: '%(imported)s')"
 msgstr ""
 
 #: resources.py

@@ -1,14 +1,24 @@
 from datetime import date
-from unittest.mock import patch
+from unittest import skipUnless
+from unittest.mock import ANY, patch
 
+import django
 import tablib
 from core.admin import UUIDBookResource
-from core.models import Author, Book, Category, EBook, NamedAuthor, UUIDBook
+from core.models import (
+    AudioBook,
+    Author,
+    Book,
+    Category,
+    EBook,
+    NamedAuthor,
+    UUIDBook,
+)
 from core.tests.resources import AuthorResource, BookResource
 from django.test import TestCase
 from django.utils import translation
 
-from import_export import exceptions, fields, resources, widgets
+from import_export import exceptions, fields, instance_loaders, resources, widgets
 from import_export.fields import Field
 from import_export.resources import ModelResource
 from import_export.results import RowResult
@@ -549,6 +559,386 @@ class ForceInsertOnCreateTestCase(TestCase):
         self.assertEqual(1, result.totals["update"])
         self.allowed.refresh_from_db()
         self.assertEqual("updated", self.allowed.name)
+
+
+class ForceInsertOnCreateInheritedModelTestCase(TestCase):
+    """
+    With multi-table inheritance, a row classified as "new" must not update an
+    existing row of the parent model, even if the import supplies the pk of a
+    parent row which has no corresponding child row.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.allowed = AudioBook.objects.create(
+            name="allowed", author_email="allowed@example.com", narrator="me"
+        )
+        self.forbidden = AudioBook.objects.create(
+            name="forbidden", author_email="forbidden@example.com", narrator="them"
+        )
+        # a parent row which has no child row
+        self.book = Book.objects.create(name="book", author_email="book@example.com")
+        allowed_pk = self.allowed.pk
+
+        class ScopedAudioBookResource(resources.ModelResource):
+            def get_queryset(self):
+                return AudioBook.objects.filter(pk=allowed_pk)
+
+            class Meta:
+                model = AudioBook
+                fields = ("id", "book_ptr", "name", "narrator")
+
+        self.resource = ScopedAudioBookResource()
+
+    def _assert_rejected(self, dataset, **kwargs):
+        result = self.resource.import_data(dataset, **kwargs)
+
+        self.assertTrue(result.has_errors())
+        self.assertEqual(RowResult.IMPORT_TYPE_ERROR, result.rows[0].import_type)
+        self.assertEqual(0, result.totals["new"])
+        self.assertEqual(0, result.totals["update"])
+        self.book.refresh_from_db()
+        self.assertEqual("book", self.book.name)
+        self.assertEqual("book@example.com", self.book.author_email)
+        self.forbidden.refresh_from_db()
+        self.assertEqual("forbidden", self.forbidden.name)
+        self.assertEqual("forbidden@example.com", self.forbidden.author_email)
+        self.assertEqual("them", self.forbidden.narrator)
+        self.assertEqual(3, Book.objects.count())
+        self.assertEqual(2, AudioBook.objects.count())
+
+    def test_create_does_not_overwrite_parent_only_row(self):
+        dataset = tablib.Dataset(headers=["id", "name", "narrator"])
+        dataset.append([self.book.pk, "overwritten", "x"])
+        self._assert_rejected(dataset)
+
+    def test_create_does_not_overwrite_parent_only_row_dry_run(self):
+        # the preview must not report the row as "new"
+        dataset = tablib.Dataset(headers=["id", "name", "narrator"])
+        dataset.append([self.book.pk, "overwritten", "x"])
+        self._assert_rejected(dataset, dry_run=True)
+
+    def test_create_does_not_overwrite_parent_only_row_using_parent_link(self):
+        # the parent pk is not supplied directly, but via the link to the parent
+        dataset = tablib.Dataset(headers=["book_ptr", "name", "narrator"])
+        dataset.append([self.book.pk, "overwritten", "x"])
+        self._assert_rejected(dataset)
+
+    def test_create_does_not_overwrite_existing_child_row(self):
+        dataset = tablib.Dataset(headers=["id", "name", "narrator"])
+        dataset.append([self.forbidden.pk, "overwritten", "x"])
+        self._assert_rejected(dataset)
+
+    def test_create_does_not_overwrite_existing_child_row_using_parent_link(self):
+        dataset = tablib.Dataset(headers=["book_ptr", "name", "narrator"])
+        dataset.append([self.forbidden.pk, "overwritten", "x"])
+        self._assert_rejected(dataset)
+
+    @skipUnless(django.VERSION < (5, 0), "parent rows are only checked on Django < 5")
+    def test_create_checks_parent_row_using_write_database(self):
+        dataset = tablib.Dataset(headers=["id", "name", "narrator"])
+        dataset.append([self.book.pk, "overwritten", "x"])
+        with patch.object(
+            resources.router, "db_for_write", return_value="default"
+        ) as mock_db_for_write:
+            self._assert_rejected(dataset)
+        mock_db_for_write.assert_any_call(Book, instance=ANY)
+
+    def test_create_without_pk_succeeds(self):
+        dataset = tablib.Dataset(headers=["name", "narrator"])
+        dataset.append(["brand new", "x"])
+        result = self.resource.import_data(dataset, raise_errors=True)
+
+        self.assertEqual(1, result.totals["new"])
+        self.assertEqual("x", AudioBook.objects.get(name="brand new").narrator)
+        self.assertEqual(4, Book.objects.count())
+        self.assertEqual(3, AudioBook.objects.count())
+
+    def test_create_with_unused_pk_succeeds(self):
+        new_pk = Book.objects.latest("id").pk + 100
+        dataset = tablib.Dataset(headers=["id", "name", "narrator"])
+        dataset.append([new_pk, "brand new", "x"])
+        result = self.resource.import_data(dataset, raise_errors=True)
+
+        self.assertEqual(1, result.totals["new"])
+        self.assertEqual("brand new", AudioBook.objects.get(pk=new_pk).name)
+        self.assertEqual("brand new", Book.objects.get(pk=new_pk).name)
+
+
+class PrimaryKeyUnchangedOnUpdateTestCase(TestCase):
+    """
+    A row classified as an "update" must only ever update the instance returned
+    by the instance loader.  If ``import_id_fields`` identifies the row by a field
+    other than the pk, the import must not be able to change the pk of the loaded
+    instance, because the save would then be applied to a different database row.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.allowed = Book.objects.create(
+            name="allowed", author_email="allowed@example.com", price=1
+        )
+        self.forbidden = Book.objects.create(
+            name="forbidden", author_email="forbidden@example.com", price=2
+        )
+        self.resource = self._get_resource()
+        self.dataset = tablib.Dataset(headers=["id", "name", "author_email"])
+        self.dataset.append([self.forbidden.pk, "allowed", "changed@example.com"])
+
+    def _get_resource(self, **meta_options):
+        allowed_pk = self.allowed.pk
+
+        class ScopedBookResource(resources.ModelResource):
+            def get_queryset(self):
+                return Book.objects.filter(pk=allowed_pk)
+
+            class Meta:
+                model = Book
+                fields = ("id", "name", "author_email")
+                import_id_fields = ("name",)
+
+        for name, value in meta_options.items():
+            setattr(ScopedBookResource._meta, name, value)
+        return ScopedBookResource()
+
+    def _assert_unchanged(self):
+        self.allowed.refresh_from_db()
+        self.assertEqual("allowed", self.allowed.name)
+        self.assertEqual("allowed@example.com", self.allowed.author_email)
+        self.forbidden.refresh_from_db()
+        self.assertEqual("forbidden", self.forbidden.name)
+        self.assertEqual("forbidden@example.com", self.forbidden.author_email)
+        self.assertEqual(2, self.forbidden.price)
+        self.assertEqual(2, Book.objects.count())
+
+    def _assert_row_error(self, result):
+        self.assertTrue(result.has_errors())
+        self.assertEqual(RowResult.IMPORT_TYPE_ERROR, result.rows[0].import_type)
+        self.assertEqual(0, result.totals["new"])
+        self.assertEqual(0, result.totals["update"])
+        self.assertIn(
+            "primary key of an existing instance cannot be changed",
+            str(result.rows[0].errors[0].error),
+        )
+
+    def test_update_does_not_overwrite_other_pk(self):
+        result = self.resource.import_data(self.dataset)
+
+        self._assert_row_error(result)
+        self._assert_unchanged()
+
+    def test_update_does_not_overwrite_other_pk_raise_errors(self):
+        with self.assertRaises(exceptions.ImportError):
+            self.resource.import_data(self.dataset, raise_errors=True)
+        self._assert_unchanged()
+
+    def test_update_does_not_overwrite_other_pk_dry_run(self):
+        # the preview must not report the row as an "update"
+        result = self.resource.import_data(self.dataset, dry_run=True)
+
+        self._assert_row_error(result)
+        self._assert_unchanged()
+
+    def test_update_does_not_overwrite_other_pk_clean_model_instances(self):
+        resource = self._get_resource(clean_model_instances=True)
+        result = resource.import_data(self.dataset)
+
+        self._assert_row_error(result)
+        self._assert_unchanged()
+
+    def test_update_does_not_overwrite_other_pk_skip_diff(self):
+        resource = self._get_resource(skip_diff=True)
+        result = resource.import_data(self.dataset)
+
+        self._assert_row_error(result)
+        self._assert_unchanged()
+
+    def test_update_does_not_overwrite_other_pk_skip_unchanged(self):
+        resource = self._get_resource(skip_unchanged=True)
+        result = resource.import_data(self.dataset)
+
+        self._assert_row_error(result)
+        self._assert_unchanged()
+
+    def test_update_does_not_overwrite_other_pk_use_bulk(self):
+        resource = self._get_resource(use_bulk=True)
+        result = resource.import_data(self.dataset)
+
+        self._assert_row_error(result)
+        self._assert_unchanged()
+
+    def test_update_does_not_insert_copy_with_unused_pk(self):
+        # a pk which does not exist must not result in the loaded instance
+        # being inserted as a copy and reported as an "update"
+        unused_pk = Book.objects.latest("id").pk + 100
+        dataset = tablib.Dataset(headers=["id", "name", "author_email"])
+        dataset.append([unused_pk, "allowed", "changed@example.com"])
+        result = self.resource.import_data(dataset)
+
+        self._assert_row_error(result)
+        self._assert_unchanged()
+
+    def test_update_with_matching_pk_succeeds(self):
+        dataset = tablib.Dataset(headers=["id", "name", "author_email"])
+        dataset.append([self.allowed.pk, "allowed", "changed@example.com"])
+        result = self.resource.import_data(dataset, raise_errors=True)
+
+        self.assertEqual(1, result.totals["update"])
+        self.allowed.refresh_from_db()
+        self.assertEqual("changed@example.com", self.allowed.author_email)
+        self.forbidden.refresh_from_db()
+        self.assertEqual("forbidden@example.com", self.forbidden.author_email)
+
+    def test_update_with_blank_pk_succeeds(self):
+        # a pk column which is present but empty is treated as not supplied
+        dataset = tablib.Dataset(headers=["id", "name", "author_email"])
+        dataset.append(["", "allowed", "changed@example.com"])
+        result = self.resource.import_data(dataset, raise_errors=True)
+
+        self.assertEqual(1, result.totals["update"])
+        self.allowed.refresh_from_db()
+        self.assertEqual("changed@example.com", self.allowed.author_email)
+        self.assertEqual(2, Book.objects.count())
+
+    def test_update_with_pk_of_different_type_succeeds(self):
+        # the pk is declared without a widget, so the imported value is a str
+        # which has to be compared with the int pk of the loaded instance
+        allowed_pk = self.allowed.pk
+
+        class NoWidgetBookResource(resources.ModelResource):
+            id = fields.Field(attribute="id", column_name="id")
+
+            def get_queryset(self):
+                return Book.objects.filter(pk=allowed_pk)
+
+            class Meta:
+                model = Book
+                fields = ("id", "name", "author_email")
+                import_id_fields = ("name",)
+
+        dataset = tablib.Dataset(headers=["id", "name", "author_email"])
+        dataset.append([str(self.allowed.pk), "allowed", "changed@example.com"])
+        result = NoWidgetBookResource().import_data(dataset, raise_errors=True)
+
+        self.assertEqual(1, result.totals["update"])
+        self.allowed.refresh_from_db()
+        self.assertEqual("changed@example.com", self.allowed.author_email)
+
+        # a different pk is still rejected
+        dataset = tablib.Dataset(headers=["id", "name", "author_email"])
+        dataset.append([str(self.forbidden.pk), "allowed", "again@example.com"])
+        result = NoWidgetBookResource().import_data(dataset)
+        self._assert_row_error(result)
+        self.forbidden.refresh_from_db()
+        self.assertEqual("forbidden@example.com", self.forbidden.author_email)
+
+    def test_update_with_uuid_pk_succeeds(self):
+        # the default widget for a UUIDField returns a str
+        book = UUIDBook.objects.create(name="uuid book")
+        dataset = tablib.Dataset(headers=["id", "name"])
+        dataset.append([str(book.pk), "updated"])
+        result = UUIDBookResource().import_data(dataset, raise_errors=True)
+
+        self.assertEqual(1, result.totals["update"])
+        book.refresh_from_db()
+        self.assertEqual("updated", book.name)
+        self.assertEqual(1, UUIDBook.objects.count())
+
+    def test_update_does_not_overwrite_other_pk_cached_instance_loader(self):
+        # CachedInstanceLoader returns the same instance for each row with the
+        # same identifier, so a rejected pk must not remain on that instance
+        resource = self._get_resource(
+            instance_loader_class=instance_loaders.CachedInstanceLoader
+        )
+        row = [self.forbidden.pk, "allowed", "changed@example.com"]
+        dataset = tablib.Dataset(headers=["id", "name", "author_email"])
+        dataset.append(row)
+        dataset.append(row)
+        result = resource.import_data(dataset, use_transactions=False)
+
+        self.assertTrue(result.has_errors())
+        self.assertEqual(2, result.totals["error"])
+        self.assertEqual(0, result.totals["update"])
+        self._assert_unchanged()
+
+    def test_update_without_pk_column_succeeds(self):
+        dataset = tablib.Dataset(headers=["name", "author_email"])
+        dataset.append(["allowed", "changed@example.com"])
+        result = self.resource.import_data(dataset, raise_errors=True)
+
+        self.assertEqual(1, result.totals["update"])
+        self.allowed.refresh_from_db()
+        self.assertEqual("changed@example.com", self.allowed.author_email)
+
+
+class PrimaryKeyUnchangedOnUpdateInheritedModelTestCase(TestCase):
+    """
+    With multi-table inheritance, the pk of the parent model (``id``) is a
+    separate attribute to the pk of the child model (``book_ptr``).  Changing
+    either during an update would cause a different row to be written.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.allowed = AudioBook.objects.create(
+            name="allowed", author_email="allowed@example.com", narrator="me"
+        )
+        self.forbidden = AudioBook.objects.create(
+            name="forbidden", author_email="forbidden@example.com", narrator="them"
+        )
+        allowed_pk = self.allowed.pk
+
+        class ScopedAudioBookResource(resources.ModelResource):
+            def get_queryset(self):
+                return AudioBook.objects.filter(pk=allowed_pk)
+
+            class Meta:
+                model = AudioBook
+                fields = ("id", "book_ptr", "name", "narrator")
+                import_id_fields = ("name",)
+
+        self.resource = ScopedAudioBookResource()
+
+    def _assert_rejected(self, dataset):
+        result = self.resource.import_data(dataset)
+
+        self.assertTrue(result.has_errors())
+        self.assertEqual(RowResult.IMPORT_TYPE_ERROR, result.rows[0].import_type)
+        self.assertIn(
+            "primary key of an existing instance cannot be changed",
+            str(result.rows[0].errors[0].error),
+        )
+        for instance, values in (
+            (self.allowed, ("allowed", "allowed@example.com", "me")),
+            (self.forbidden, ("forbidden", "forbidden@example.com", "them")),
+        ):
+            instance.refresh_from_db()
+            self.assertEqual(
+                values, (instance.name, instance.author_email, instance.narrator)
+            )
+        self.assertEqual(2, Book.objects.count())
+        self.assertEqual(2, AudioBook.objects.count())
+
+    def test_update_does_not_overwrite_other_parent_pk(self):
+        dataset = tablib.Dataset(headers=["id", "name", "narrator"])
+        dataset.append([self.forbidden.pk, "allowed", "changed"])
+        self._assert_rejected(dataset)
+
+    def test_update_does_not_overwrite_other_child_pk(self):
+        dataset = tablib.Dataset(headers=["book_ptr", "name", "narrator"])
+        dataset.append([self.forbidden.pk, "allowed", "changed"])
+        self._assert_rejected(dataset)
+
+    def test_update_with_matching_pks_succeeds(self):
+        dataset = tablib.Dataset(headers=["id", "book_ptr", "name", "narrator"])
+        dataset.append([self.allowed.pk, self.allowed.pk, "allowed", "changed"])
+        result = self.resource.import_data(dataset, raise_errors=True)
+
+        self.assertEqual(1, result.totals["update"])
+        self.allowed.refresh_from_db()
+        self.assertEqual("changed", self.allowed.narrator)
+        self.forbidden.refresh_from_db()
+        self.assertEqual("them", self.forbidden.narrator)
 
 
 class ImportWithMissingFields(TestCase):

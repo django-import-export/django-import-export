@@ -157,6 +157,20 @@ class EBook(Book):
         proxy = True
 
 
+class AudioBook(Book):
+    """Book child model using multi-table inheritance"""
+
+    # the reverse relation is hidden so that the fields of Book are unchanged
+    book_ptr = models.OneToOneField(
+        Book,
+        on_delete=models.CASCADE,
+        parent_link=True,
+        primary_key=True,
+        related_name="+",
+    )
+    narrator = models.CharField(max_length=100, blank=True)
+
+
 class NamedAuthor(models.Model):
     """Class with a named primary key"""
 
