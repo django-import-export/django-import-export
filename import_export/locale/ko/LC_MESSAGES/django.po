@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-06-23 19:11+0100\n"
+"POT-Creation-Date: 2026-11-19 17:04+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Yeongkwang Yang <immutable000@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -29,7 +29,7 @@ msgid "%s through import_export"
 msgstr "%s은(는) django-import-export를 통해 가져왔습니다."
 
 #: admin.py
-#, fuzzy
+#, fuzzy, python-brace-format
 #| msgid "Import finished, with {} new and {} updated {}."
 msgid "Import finished: {} new, {} updated, {} deleted and {} skipped {}."
 msgstr "가져오기 성공, {} 행 추가, {} 행 업데이트"
@@ -81,6 +81,13 @@ msgstr ""
 #: forms.py
 #, python-format
 msgid "Select at least 1 field for \"%(resource_name)s\" to export"
+msgstr ""
+
+#: resources.py
+#, python-format
+msgid ""
+"The primary key of an existing instance cannot be changed by an import "
+"(existing: '%(existing)s', imported: '%(imported)s')"
 msgstr ""
 
 #: resources.py

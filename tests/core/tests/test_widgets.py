@@ -1,5 +1,4 @@
 import json
-import sys
 from datetime import date, datetime, time, timedelta
 from decimal import Decimal
 from time import process_time
@@ -569,12 +568,38 @@ class IntegerWidgetTest(TestCase, RowDeprecationTestMixin):
 
     def test_clean_oversized_digit_string_raises(self):
         with self.assertRaises(ValueError):
-            self.widget.clean("9" * (sys.get_int_max_str_digits() + 1))
+            self.widget.clean("9" * (widgets.get_int_max_str_digits() + 1))
 
     def test_clean_at_digit_limit_boundary(self):
         # a value just under the limit is still accepted
-        digits = sys.get_int_max_str_digits() - 1
+        digits = widgets.get_int_max_str_digits() - 1
         self.assertEqual(self.widget.clean("9" * digits), int("9" * digits))
+
+    @mock.patch("import_export.widgets.sys")
+    def test_clean_when_int_max_str_digits_limit_is_disabled(self, mock_sys):
+        # sys.set_int_max_str_digits(0) disables the limit in Python, but the
+        # widget must still be protected, so the Python default limit is used
+        mock_sys.get_int_max_str_digits.return_value = 0
+        self.assertEqual(4300, widgets.get_int_max_str_digits())
+        self.assertEqual(self.widget.clean("0"), 0)
+        self.assertEqual(self.widget.clean("1"), 1)
+        self.assertEqual(self.widget.clean("9" * 4299), int("9" * 4299))
+        with self.assertRaises(ValueError):
+            self.widget.clean("9" * 4301)
+        with self.assertRaises(ValueError):
+            self.widget.clean("1e1000000")
+
+    @mock.patch("import_export.widgets.sys", spec=[])
+    def test_clean_when_sys_get_int_max_str_digits_is_unavailable(self, mock_sys):
+        # sys.get_int_max_str_digits() is not present in Python releases prior
+        # to 3.9.14 and 3.10.7, so the Python default limit is used instead
+        self.assertEqual(4300, widgets.get_int_max_str_digits())
+        self.assertEqual(self.widget.clean("1"), 1)
+        self.assertEqual(self.widget.clean("9" * 4299), int("9" * 4299))
+        with self.assertRaises(ValueError):
+            self.widget.clean("9" * 4301)
+        with self.assertRaises(ValueError):
+            self.widget.clean("1e1000000")
 
 
 class ForeignKeyWidgetTest(TestCase, RowDeprecationTestMixin):

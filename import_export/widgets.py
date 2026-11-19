@@ -21,6 +21,27 @@ from import_export.exceptions import WidgetError
 
 logger = logging.getLogger(__name__)
 
+# The default value of ``sys.get_int_max_str_digits()``.
+DEFAULT_INT_MAX_STR_DIGITS = 4300
+
+
+def get_int_max_str_digits():
+    """
+    Returns the maximum number of digits allowed for integer conversion.
+
+    This is the value of ``sys.get_int_max_str_digits()``, with the following
+    exceptions where the Python default (4300) is returned instead:
+
+    * the limit has been disabled with ``sys.set_int_max_str_digits(0)``,
+      because the conversion would otherwise be unprotected.
+    * ``sys.get_int_max_str_digits()`` is not available, which is the case for
+      Python releases prior to 3.9.14 and 3.10.7.
+    """
+    getter = getattr(sys, "get_int_max_str_digits", None)
+    if getter is None:
+        return DEFAULT_INT_MAX_STR_DIGITS
+    return getter() or DEFAULT_INT_MAX_STR_DIGITS
+
 
 def format_datetime(value, datetime_format):
     # handle correct formatting of dates
@@ -180,7 +201,7 @@ class IntegerWidget(NumberWidget):
         # disproportionately expensive. ``sys.set_int_max_str_digits`` does not
         # guard ``Decimal.__int__``, so the same limit is applied explicitly.
         # See GHSA-fcgw-hjjv-4rh6.
-        max_digits = sys.get_int_max_str_digits()
+        max_digits = get_int_max_str_digits()
         if d.is_finite() and d.adjusted() >= max_digits:
             raise ValueError(
                 f"the value's magnitude exceeds the maximum of {max_digits} "
