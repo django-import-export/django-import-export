@@ -27,6 +27,8 @@ Enhancements
 Fixes
 #####
 
+- Fixed slow Admin action exports and high memory usage on large querysets by validating only the submitted primary keys instead of loading every primary key in the export queryset. Selected primary keys containing null characters are now rejected (`2189 <https://github.com/django-import-export/django-import-export/issues/2189>`_, `2190 <https://github.com/django-import-export/django-import-export/pull/2190>`_)
+- Fixed ``DateWidget.clean()`` returning datetime instances so that xlsx round-trips of ``DateField`` values are correctly detected as unchanged by ``skip_row()`` (`2195 <https://github.com/django-import-export/django-import-export/issues/2195>`_, `2208 <https://github.com/django-import-export/django-import-export/pull/2208>`_)
 - Fixed import / export links being hidden when an admin mixin from another library declares ``change_list_template`` as a read-only property (e.g. django-admin-sortable2).  The import / export change list template now extends the template Django would otherwise have used, resolved on each request (`2205 <https://github.com/django-import-export/django-import-export/issues/2205>`_)
 - Fixed the import preview diff showing a spurious change for values which the widget considers equal but which render differently, for example a ``DecimalField`` value of ``1803.60`` imported from an xlsx cell as ``1803.6`` (`2199 <https://github.com/django-import-export/django-import-export/issues/2199>`_)
 - Fixed ``skip_row()`` incorrectly treating unmodified, previously-exported ``DateTimeField``/``TimeField`` values as changed due to sub-second precision loss inherent to export round-trips (`2018 <https://github.com/django-import-export/django-import-export/issues/2018>`_)
@@ -41,24 +43,45 @@ Fixes
 - Fixed inconsistent input type passed to ``Format.create_dataset()`` (`2006 <https://github.com/django-import-export/django-import-export/issues/2006>`_, `2197 <https://github.com/django-import-export/django-import-export/pull/2197>`_)
 - Fixed ``import`` management command ignoring ``--encoding`` for file input: the file is now read as ``bytes`` and decoded by the format (`2197 <https://github.com/django-import-export/django-import-export/pull/2197>`_)
 - Fixed the "Select all" toggle on the export form being blocked by a strict Content Security Policy (`2204 <https://github.com/django-import-export/django-import-export/issues/2204>`_)
+- Fixed the ``import_id_fields`` error messages not being translated, because the column names were interpolated before the message was passed to ``gettext``. Added the Spanish translation of both messages (`2219 <https://github.com/django-import-export/django-import-export/issues/2219>`_)
 
 Development
 ###########
 
 - Add support for Django 6.0, remove support for Python 3.9 (`2112 <https://github.com/django-import-export/django-import-export/pull/2112>`_)
 - Add support for Python 3.15, remove support for Python 3.10 (`2194 <https://github.com/django-import-export/django-import-export/pull/2194>`_)
+- Fixed the test suite silently disabling its warnings-as-errors flags: a module level ``warnings.simplefilter()`` in the field declaration tests applied to the whole run, so deprecation warnings from Django never failed the build. (`2213 <https://github.com/django-import-export/django-import-export/pull/2213>`_)
 
 Documentation
 #############
 
 - Fixed ``Resource`` docstrings emitting ``unknown document`` warnings in downstream projects that pull the docs in via ``autodoc`` + ``intersphinx``, by referencing the target pages with ``:ref:`` and an explicit label instead of ``:doc:`` (`2188 <https://github.com/django-import-export/django-import-export/issues/2188>`_)
 - Clarified in the docs that additional import form fields must also be declared on the confirm form (`2198 <https://github.com/django-import-export/django-import-export/pull/2198>`_)
+- Added FAQ entry describing how to avoid files being written to storage twice when importing file fields via the Admin UI (`2201 <https://github.com/django-import-export/django-import-export/issues/2201>`_)
 
 Performance
 ###########
 
 i18n
 ####
+
+4.4.6 (2026-11-19)
+-------------------
+
+- Fixed a security and data integrity issue where an import row classified as an "update" could overwrite a different database row if the import changed the primary key of the loaded instance.
+  This fix, and the fix released in 4.4.2, now also cover the parent rows of models which use multi-table inheritance.
+  See :ref:`release notes <release_notes_pk_unchanged_on_update>` for details and mitigations.
+  (`GHSA-jxgg-j4fr-4v6r <https://github.com/django-import-export/django-import-export/security/advisories/GHSA-jxgg-j4fr-4v6r>`_)
+- Fixed ``IntegerWidget`` rejecting every integer if the Python integer string conversion limit had been disabled with ``sys.set_int_max_str_digits(0)``.  This was introduced in 4.4.3.  The default limit of 4300 digits is now applied in this case.
+
+4.4.4 (2026-10-27)
+-------------------
+
+- Fixed ``CSV`` being omitted from the default formats on Python 3.15 because tablib 3.10+ lazily imports ``tablib.core``, leaving the format registry empty when the first ``is_available()`` check runs (`2210 <https://github.com/django-import-export/django-import-export/issues/2210>`_)
+- Fixed ``django.utils.functional.cached_property is deprecated`` warning on Django 6.2 by using ``functools.cached_property``
+- Fixed ``ExportActionMixin.get_actions()`` for Django 6.1, which deprecates overriding it without the new ``action_location`` parameter and, with the old signature, disables all change form actions on the admin.
+  See :ref:`release notes <release_notes_export_admin_action>` if you override ``export_admin_action()``.
+  (`2214 <https://github.com/django-import-export/django-import-export/pull/2214>`_)
 
 4.4.3 (2026-10-19)
 -------------------

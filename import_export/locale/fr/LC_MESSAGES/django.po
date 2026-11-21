@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-06-23 19:11+0100\n"
+"POT-Creation-Date: 2026-11-19 17:42+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -24,11 +24,7 @@ msgid "Import"
 msgstr "Importer"
 
 #: admin.py
-#, python-format
-msgid "%s through import_export"
-msgstr "%s via import_export"
-
-#: admin.py
+#, python-brace-format
 msgid "Import finished: {} new, {} updated, {} deleted and {} skipped {}."
 msgstr ""
 "Importation terminée: {} nouveaux, {} modifiés, {} supprimés et {} sautés "
@@ -50,6 +46,11 @@ msgid ""
 msgstr ""
 "Pas de données valides importables. Assurez-vous que le fichier contient des "
 "en-têtes ou données correctes pour l’importation."
+
+#: admin.py
+#, python-format
+msgid "%s through import_export"
+msgstr "%s via import_export"
 
 #: admin.py templates/admin/import_export/change_form.html
 #: templates/admin/import_export/change_list_export_item.html
@@ -86,6 +87,13 @@ msgstr "Le formulaire n’est pas validé, appeler d’abord `is_valid`"
 #, python-format
 msgid "Select at least 1 field for \"%(resource_name)s\" to export"
 msgstr "Sélectionner au moins 1 champ pour \"%(resource_name)s\" pour exporter"
+
+#: resources.py
+#, python-format
+msgid ""
+"The primary key of an existing instance cannot be changed by an import "
+"(existing: '%(existing)s', imported: '%(imported)s')"
+msgstr ""
 
 #: resources.py
 #, python-format

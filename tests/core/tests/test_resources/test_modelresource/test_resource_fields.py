@@ -9,19 +9,20 @@ import import_export
 import import_export.exceptions
 from import_export import fields, resources
 
-# ignore warnings which result from invalid field declaration (#1930)
-warnings.simplefilter("ignore")
-
 
 class ModelResourceFieldDeclarations(TestCase):
-    class MyBookResource(resources.ModelResource):
-        author_email = fields.Field(
-            attribute="author_email", column_name="author_email"
-        )
+    # declaring a field which is not in the 'fields' whitelist warns (#1930)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", UserWarning)
 
-        class Meta:
-            model = Book
-            fields = ("id", "price")
+        class MyBookResource(resources.ModelResource):
+            author_email = fields.Field(
+                attribute="author_email", column_name="author_email"
+            )
+
+            class Meta:
+                model = Book
+                fields = ("id", "price")
 
     def setUp(self):
         self.book = Book.objects.create(name="Moonraker", price=".99")
@@ -76,15 +77,19 @@ class ModelResourceNoFieldDeclarations(TestCase):
 
 
 class ModelResourceExcludeDeclarations(TestCase):
-    class MyBookResource(resources.ModelResource):
-        author_email = fields.Field(
-            attribute="author_email", column_name="author_email"
-        )
+    # declaring a field which is not in the 'fields' whitelist warns (#1930)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", UserWarning)
 
-        class Meta:
-            model = Book
-            fields = ("id", "price")
-            exclude = ("author_email",)
+        class MyBookResource(resources.ModelResource):
+            author_email = fields.Field(
+                attribute="author_email", column_name="author_email"
+            )
+
+            class Meta:
+                model = Book
+                fields = ("id", "price")
+                exclude = ("author_email",)
 
     def setUp(self):
         self.book = Book.objects.create(name="Moonraker", price=".99")
@@ -145,17 +150,21 @@ class ModelResourceDeclarationsNotInImportTest(TestCase):
     # issue 1697
     # Add a declared field to the Resource, which is not present in the import file.
     # The import should succeed without issue.
-    class MyBookResource(resources.ModelResource):
-        author_email = fields.Field(
-            attribute="author_email", column_name="author_email"
-        )
+    # declaring a field which is not in the 'fields' whitelist warns (#1930)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", UserWarning)
 
-        class Meta:
-            model = Book
-            fields = (
-                "id",
-                "price",
+        class MyBookResource(resources.ModelResource):
+            author_email = fields.Field(
+                attribute="author_email", column_name="author_email"
             )
+
+            class Meta:
+                model = Book
+                fields = (
+                    "id",
+                    "price",
+                )
 
     def setUp(self):
         self.resource = ModelResourceDeclarationsNotInImportTest.MyBookResource()
@@ -204,16 +213,13 @@ class ModelResourceUnusedFieldWarnings(TestCase):
                 "price",
             )
 
-    def setUp(self):
-        # Enable warnings for this test
-        warnings.simplefilter("default")
-
     def test_no_warnings_defined_fields(self):
         """
         A subclass that lists a subset of the parents defined fields
         should receive no warnings.
         """
         with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
 
             class _Export1BookResource(self._BaseBookResource):
                 class Meta:
@@ -232,6 +238,7 @@ class ModelResourceUnusedFieldWarnings(TestCase):
         class name
         """
         with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
 
             class _Export2BookResource(self._BaseBookResource):
                 published = fields.Field(attribute="published")

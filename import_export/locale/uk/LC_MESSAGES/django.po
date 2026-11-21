@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-11-12 15:36+0200\n"
+"POT-Creation-Date: 2026-11-19 17:42+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Yevhen Hostishchev\n"
 "Language-Team: \n"
@@ -21,14 +21,11 @@ msgid "Import"
 msgstr "Імпорт"
 
 #: admin.py
-#, python-format
-msgid "%s through import_export"
-msgstr "%s через import_export"
-
-#: admin.py
 #, python-brace-format
 msgid "Import finished: {} new, {} updated, {} deleted and {} skipped {}."
-msgstr "Імпорт завершено: {} додано, {} оновлено, {} видалено and {} проігноровано {}."
+msgstr ""
+"Імпорт завершено: {} додано, {} оновлено, {} видалено and {} проігноровано "
+"{}."
 
 #: admin.py
 #, python-format
@@ -36,8 +33,8 @@ msgid ""
 "%(exc_name)s encountered while trying to read file. Ensure you have chosen "
 "the correct format for the file."
 msgstr ""
-"Під час читання фалу виникла проблема %(exc_name)s. Переконайтесь, що ви обрали "
-"правильний формат для файлу."
+"Під час читання фалу виникла проблема %(exc_name)s. Переконайтесь, що ви "
+"обрали правильний формат для файлу."
 
 #: admin.py
 msgid ""
@@ -46,6 +43,11 @@ msgid ""
 msgstr ""
 "Бракує даних для імпорту. Переконайтесь, що ваш файл містить правильні "
 "заголовки та значення для імпорту."
+
+#: admin.py
+#, python-format
+msgid "%s through import_export"
+msgstr "%s через import_export"
 
 #: admin.py templates/admin/import_export/change_form.html
 #: templates/admin/import_export/change_list_export_item.html
@@ -86,11 +88,18 @@ msgstr "Виберіть щонайменше 1 поле \"%(resource_name)s\" �
 #: resources.py
 #, python-format
 msgid ""
+"The primary key of an existing instance cannot be changed by an import "
+"(existing: '%(existing)s', imported: '%(imported)s')"
+msgstr ""
+
+#: resources.py
+#, python-format
+msgid ""
 "The following fields are declared in 'import_id_fields' but are not present "
 "in the resource fields: %s"
 msgstr ""
-"Наступні поля були вказані в 'import_id_fields', але не присутні в "
-"полях ресурсу: %s"
+"Наступні поля були вказані в 'import_id_fields', але не присутні в полях "
+"ресурсу: %s"
 
 #: resources.py
 #, python-format

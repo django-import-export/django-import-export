@@ -34,7 +34,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Update documentation for releases**:
   - `docs/changelog.rst`: Add entries for new releases with format "X.Y.Z (unreleased)" or "X.Y.Z (YYYY-MM-DD)"
   - `docs/release_notes.rst`: Document breaking changes, deprecations, and migration guides
-  - Follow existing format with bullet points, PR references like `(#XXXX <https://github.com/django-import-export/django-import-export/pull/XXXX>`_)
+  - Follow existing format with bullet points, PR references like ``(`XXXX <https://github.com/django-import-export/django-import-export/pull/XXXX>`_)`` (no `#` before the number; link the issue instead of the PR where that is more useful)
   - Include deprecation warnings with version numbers for when features will be removed
 
 ### Installation

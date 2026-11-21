@@ -22,6 +22,21 @@ from import_export.utils import resolve_model
 
 logger = logging.getLogger(__name__)
 
+# The default value of ``sys.get_int_max_str_digits()``.
+DEFAULT_INT_MAX_STR_DIGITS = 4300
+
+
+def get_int_max_str_digits():
+    """
+    Returns the maximum number of digits allowed for integer conversion.
+
+    This is the value of ``sys.get_int_max_str_digits()``, unless the limit has
+    been disabled with ``sys.set_int_max_str_digits(0)``.  In that case the
+    Python default (4300) is returned, because the conversion would otherwise be
+    unprotected.
+    """
+    return sys.get_int_max_str_digits() or DEFAULT_INT_MAX_STR_DIGITS
+
 
 def format_datetime(value, datetime_format):
     # handle correct formatting of dates
@@ -48,8 +63,23 @@ class _ParseDateTimeMixin:
         Raise ValueError if parsing fails."""
         if not value:
             return None
-        if isinstance(value, value_type):
-            return value
+        if value_type is date:
+            if isinstance(value, datetime):
+                if settings.USE_TZ and timezone.is_aware(value):
+                    value = timezone.make_naive(value, timezone.get_default_timezone())
+                return value.date()
+            if isinstance(value, date):
+                return value
+        elif value_type is datetime:
+            if isinstance(value, datetime):
+                return value
+            if isinstance(value, date):
+                return datetime(value.year, value.month, value.day)
+        elif value_type is time:
+            if isinstance(value, time):
+                return value
+            if isinstance(value, datetime):
+                return value.time()
 
         for format_ in self.formats:
             try:
@@ -282,7 +312,7 @@ class IntegerWidget(NumberWidget):
         # disproportionately expensive. ``sys.set_int_max_str_digits`` does not
         # guard ``Decimal.__int__``, so the same limit is applied explicitly.
         # See GHSA-fcgw-hjjv-4rh6.
-        max_digits = sys.get_int_max_str_digits()
+        max_digits = get_int_max_str_digits()
         if d.is_finite() and d.adjusted() >= max_digits:
             raise ValueError(
                 f"the value's magnitude exceeds the maximum of {max_digits} "
@@ -424,7 +454,8 @@ class DateWidget(_ParseDateTimeMixin, Widget):
         initialization.
         If no format was provided, uses ``settings.DATE_INPUT_FORMATS`` or "%Y-%m-%d".
 
-        :param value: A date string to be parsed, or an existing date instance.
+        :param value: A date string to be parsed, or an existing date or datetime
+            instance (datetimes are converted to dates).
         :param row: The current row being processed.
         :param **kwargs: Optional keyword arguments.
         :returns: A Python date instance, or None if value is empty.
@@ -459,6 +490,8 @@ class DateTimeWidget(_ParseDateTimeMixin, Widget):
 
     def clean(self, value, row=None, **kwargs):
         """
+        :param value: A datetime string to be parsed, or an existing datetime or
+            date instance (dates are converted to midnight datetimes).
         :returns: A python datetime instance.
         :raises: ValueError if the value cannot be parsed using defined formats.
         """
@@ -498,6 +531,8 @@ class TimeWidget(_ParseDateTimeMixin, Widget):
 
     def clean(self, value, row=None, **kwargs):
         """
+        :param value: A time string to be parsed, or an existing time or datetime
+            instance (datetimes are converted to times).
         :returns: A python time instance.
         :raises: ValueError if the value cannot be parsed using defined formats.
         """
