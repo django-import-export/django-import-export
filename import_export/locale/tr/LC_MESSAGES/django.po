@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-08-30 17:56+0300\n"
+"POT-Creation-Date: 2026-11-19 17:42+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Cihad GÜNDOĞDU <cihadgundogdu@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -24,11 +24,8 @@ msgid "Import"
 msgstr "İçe aktar"
 
 #: admin.py
-#, python-format
-msgid "%s through import_export"
-msgstr "%s vasıtasıyla import_export"
-
-#: admin.py
+#, fuzzy, python-brace-format
+#| msgid "Import finished: {} new, {} updated, {} deleted and {} skipped {}."
 msgid "Import finished: {} new, {} updated, {} deleted and {} skipped {}."
 msgstr "{} yeni ve {} güncellenen {} ile içe aktarma bitti"
 
@@ -48,6 +45,11 @@ msgid ""
 msgstr ""
 "Geçerli içe aktarılacak veri yok. Dosyanızın doğru başlıkları veya içe "
 "aktarım için verileri olduğundan emin olun."
+
+#: admin.py
+#, python-format
+msgid "%s through import_export"
+msgstr "%s vasıtasıyla import_export"
 
 #: admin.py templates/admin/import_export/change_form.html
 #: templates/admin/import_export/change_list_export_item.html
@@ -84,6 +86,13 @@ msgstr "Form doğrulanmadı, önce `is_valid` çağırın"
 #, python-format
 msgid "Select at least 1 field for \"%(resource_name)s\" to export"
 msgstr "\"%(resource_name)s\" için en az 1 alan seçin"
+
+#: resources.py
+#, python-format
+msgid ""
+"The primary key of an existing instance cannot be changed by an import "
+"(existing: '%(existing)s', imported: '%(imported)s')"
+msgstr ""
 
 #: resources.py
 #, python-format

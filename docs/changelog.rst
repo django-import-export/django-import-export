@@ -56,12 +56,22 @@ Documentation
 
 - Fixed ``Resource`` docstrings emitting ``unknown document`` warnings in downstream projects that pull the docs in via ``autodoc`` + ``intersphinx``, by referencing the target pages with ``:ref:`` and an explicit label instead of ``:doc:`` (`2188 <https://github.com/django-import-export/django-import-export/issues/2188>`_)
 - Clarified in the docs that additional import form fields must also be declared on the confirm form (`2198 <https://github.com/django-import-export/django-import-export/pull/2198>`_)
+- Added FAQ entry describing how to avoid files being written to storage twice when importing file fields via the Admin UI (`2201 <https://github.com/django-import-export/django-import-export/issues/2201>`_)
 
 Performance
 ###########
 
 i18n
 ####
+
+4.4.6 (2026-11-19)
+-------------------
+
+- Fixed a security and data integrity issue where an import row classified as an "update" could overwrite a different database row if the import changed the primary key of the loaded instance.
+  This fix, and the fix released in 4.4.2, now also cover the parent rows of models which use multi-table inheritance.
+  See :ref:`release notes <release_notes_pk_unchanged_on_update>` for details and mitigations.
+  (`GHSA-jxgg-j4fr-4v6r <https://github.com/django-import-export/django-import-export/security/advisories/GHSA-jxgg-j4fr-4v6r>`_)
+- Fixed ``IntegerWidget`` rejecting every integer if the Python integer string conversion limit had been disabled with ``sys.set_int_max_str_digits(0)``.  This was introduced in 4.4.3.  The default limit of 4300 digits is now applied in this case.
 
 4.4.4 (2026-10-27)
 -------------------

@@ -273,6 +273,75 @@ Deprecations
   :meth:`~import_export.resources.Resource.get_user_visible_export_fields` for export contexts instead.
   This change ensures that import and export operations show their respective field sets correctly in admin forms.
 
+v4.4.6
+------
+
+.. _release_notes_pk_unchanged_on_update:
+
+* This release patches a potential data corruption issue that can occur in certain configurations.  It is related
+  to the issue :ref:`fixed in v4.4.2 <release_notes_force_insert_on_create>`, which did not cover rows classified
+  as updates.
+
+  Installations are potentially affected if all of the following are true:
+
+  1. ``import_id_fields`` identifies rows by a field other than the primary key.
+  2. The primary key is a writable field on the resource (this is the default for a ``ModelResource`` unless it
+     is removed using :attr:`~import_export.options.ResourceOptions.fields` or
+     :attr:`~import_export.options.ResourceOptions.exclude`, or declared ``readonly``).
+  3. The import file supplies a primary key column.
+
+  Previously, if a row matched an existing instance using ``import_id_fields`` but supplied a different primary key,
+  the primary key of the loaded instance was replaced with the value from the file before the instance was saved.
+  Django then updated the row which had that primary key, rather than the row which was loaded.  The values of the
+  loaded instance, including fields omitted from the import, were written over the other row, the loaded row was
+  left unchanged, and the import reported a successful update.  If no row had the supplied primary key, a copy of the
+  loaded instance was inserted instead.
+
+  This is a security issue where :meth:`~import_export.resources.Resource.get_queryset` is overridden to restrict
+  the rows a user may update (for example per-tenant or per-user filtering), or where the model's default manager
+  filters rows.  A user with import permission could overwrite a record outside their scope by supplying the
+  identifier of a record they can access, together with the primary key of a record they cannot.
+
+  The fix is that the primary key of an existing instance can no longer be changed by an import.  Such rows are now
+  reported as errors and are not saved.  Rows where the supplied primary key matches the loaded instance, and
+  rows which do not supply a primary key, are unaffected.  All users are advised to upgrade.
+
+  A primary key column which is present but empty is treated as not having been supplied, so the loaded instance is
+  updated.  Previously such a row was inserted as a copy of the loaded instance.
+
+  The imported primary key is compared with the existing value in Python, after both have been converted by the
+  model field.  If your database treats two different values as equal (for example a text primary key with a
+  case-insensitive collation), a row which supplies the primary key in a different form is rejected.
+
+  Imports using :attr:`~import_export.options.ResourceOptions.use_bulk` did not overwrite the other row, because
+  Django rejected the batch, but these rows are now reported with the same error.
+
+  This release also extends both this fix and the :ref:`v4.4.2 fix <release_notes_force_insert_on_create>` to models
+  which use multi-table inheritance, where the primary key of each parent model is a separate attribute of the
+  instance:
+
+  - The primary key of a parent model can no longer be changed when an existing instance is updated.
+  - An instance classified as new can no longer update an existing row of a parent model.  Previously, if the import
+    supplied the primary key of a parent row which had no corresponding child row, the parent row was overwritten and
+    the import reported the row as new.  The insert is now forced for each parent model, so these rows are reported as
+    errors (``IntegrityError``).  This means that an import can no longer be used to create a child row for a parent
+    row which already exists.
+
+    With Django 5.0 and later, ``force_insert`` is passed to ``save()`` as a tuple of model classes for these models.
+    With earlier versions of Django, the existence of each parent row is checked with an additional query before the
+    instance is saved.
+
+  If you cannot upgrade, stop the primary key being written from the import file.  Either omit it from the resource
+  using the :attr:`~import_export.options.ResourceOptions.fields` or
+  :attr:`~import_export.options.ResourceOptions.exclude` options, or declare it as ``readonly``::
+
+    class BookResource(resources.ModelResource):
+        id = fields.Field(attribute="id", column_name="id", readonly=True)
+
+        class Meta:
+            model = Book
+            import_id_fields = ("name",)
+
 v4.4.4
 ------
 
@@ -330,6 +399,11 @@ v4.4.3
 
   If you import integers larger than the default limit into a field that can store them, raise the limit with
   ``sys.set_int_max_str_digits()``; the widget honours the configured value.
+
+  From v4.4.6, if the limit has been disabled with ``sys.set_int_max_str_digits(0)``, the widget applies the default
+  limit of 4300 digits.  In earlier releases every integer value was rejected in this case.
+  If you disabled the limit in order to import integers of more than 4300 digits, set an explicit limit which is
+  large enough for your data instead, for example ``sys.set_int_max_str_digits(10000)``.
 
   If you subclass :class:`~import_export.widgets.IntegerWidget` and override ``clean()``, you receive this fix
   automatically only if your override delegates to ``super().clean()``.  An override that reimplements the

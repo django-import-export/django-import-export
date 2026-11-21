@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-06-23 19:11+0100\n"
+"POT-Creation-Date: 2026-11-19 17:42+0000\n"
 "PO-Revision-Date: 2024-04-26 20:55+0700\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -25,11 +25,7 @@ msgid "Import"
 msgstr "Импорт"
 
 #: admin.py
-#, python-format
-msgid "%s through import_export"
-msgstr "%s через import_export"
-
-#: admin.py
+#, python-brace-format
 msgid "Import finished: {} new, {} updated, {} deleted and {} skipped {}."
 msgstr "Импорт завершен: {} новых, {} обновлено, {} удалено и {} пропущено {}."
 
@@ -49,6 +45,11 @@ msgid ""
 msgstr ""
 "Некорректные данные для импорта. Убедитесь, что файл содержит корректные "
 "заголовок и данные."
+
+#: admin.py
+#, python-format
+msgid "%s through import_export"
+msgstr "%s через import_export"
 
 #: admin.py templates/admin/import_export/change_form.html
 #: templates/admin/import_export/change_list_export_item.html
@@ -85,6 +86,13 @@ msgstr "Необходимо сначала вызвать `is_valid` для в�
 #, python-format
 msgid "Select at least 1 field for \"%(resource_name)s\" to export"
 msgstr "Выберите хотя бы одно поле для экспорта \"%(resource_name)s\""
+
+#: resources.py
+#, python-format
+msgid ""
+"The primary key of an existing instance cannot be changed by an import "
+"(existing: '%(existing)s', imported: '%(imported)s')"
+msgstr ""
 
 #: resources.py
 #, python-format

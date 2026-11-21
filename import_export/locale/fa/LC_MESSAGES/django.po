@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 0.0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-06-23 19:11+0100\n"
+"POT-Creation-Date: 2026-11-19 17:42+0000\n"
 "PO-Revision-Date: 2021-03-09 00:29+0030\n"
 "Last-Translator: MohammadReza Sadegh Zadeh <org.m.sdz@gmail.com>\n"
 "Language-Team: Persain/Farsi <kde-i18n-it@kde.org>\n"
@@ -24,12 +24,7 @@ msgid "Import"
 msgstr "بارگذاری"
 
 #: admin.py
-#, python-format
-msgid "%s through import_export"
-msgstr "%s با استفاده از ورودی-خروجی"
-
-#: admin.py
-#, fuzzy
+#, fuzzy, python-brace-format
 #| msgid "Import finished, with {} new and {} updated {}."
 msgid "Import finished: {} new, {} updated, {} deleted and {} skipped {}."
 msgstr ""
@@ -50,6 +45,11 @@ msgid ""
 "No valid data to import. Ensure your file has the correct headers or data "
 "for import."
 msgstr ""
+
+#: admin.py
+#, python-format
+msgid "%s through import_export"
+msgstr "%s با استفاده از ورودی-خروجی"
 
 #: admin.py templates/admin/import_export/change_form.html
 #: templates/admin/import_export/change_list_export_item.html
@@ -86,6 +86,13 @@ msgstr "فرم معتبر نیست، ابتدا `is_valid` را فراخوانی
 #, python-format
 msgid "Select at least 1 field for \"%(resource_name)s\" to export"
 msgstr "حداقل یک فیلد را برای \"%(resource_name)s\" برای خروجی انتخاب کنید"
+
+#: resources.py
+#, python-format
+msgid ""
+"The primary key of an existing instance cannot be changed by an import "
+"(existing: '%(existing)s', imported: '%(imported)s')"
+msgstr ""
 
 #: resources.py
 #, python-format
