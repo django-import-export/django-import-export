@@ -142,7 +142,9 @@ class ResultTest(SimpleTestCase):
 
         message = mock_logger.debug.call_args.args[0]
         self.assertTrue(
-            str(message).startswith("Aufruf von force_str() in der Instanz schlug fehl: ")
+            str(message).startswith(
+                "Aufruf von force_str() in der Instanz schlug fehl: "
+            )
         )
         self.assertIn("NoneType", str(message))
 

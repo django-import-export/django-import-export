@@ -131,7 +131,9 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
     def test_import_log_message_is_translated(self):
         Book.objects.create(id=1)
         with translation.override("de"):
-            response = self._do_import_post(self.book_import_url, "books-for-delete.csv")
+            response = self._do_import_post(
+                self.book_import_url, "books-for-delete.csv"
+            )
             self.assertEqual(response.status_code, 200)
             confirm_form = response.context["confirm_form"]
             data = confirm_form.initial
