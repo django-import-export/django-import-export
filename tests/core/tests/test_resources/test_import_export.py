@@ -832,6 +832,31 @@ class PrimaryKeyUnchangedOnUpdateTestCase(TestCase):
         self.assertEqual("updated", book.name)
         self.assertEqual(1, UUIDBook.objects.count())
 
+    def test_update_with_unconvertible_pk_is_rejected(self):
+        # the pk is declared without a widget, so the imported value is a str
+        # which the model field cannot convert in order to compare it with the
+        # pk of the loaded instance: this must be treated as a changed pk
+        allowed_pk = self.allowed.pk
+
+        class NoWidgetBookResource(resources.ModelResource):
+            id = fields.Field(attribute="id", column_name="id")
+
+            def get_queryset(self):
+                return Book.objects.filter(pk=allowed_pk)
+
+            class Meta:
+                model = Book
+                fields = ("id", "name", "author_email")
+                import_id_fields = ("name",)
+
+        dataset = tablib.Dataset(headers=["id", "name", "author_email"])
+        dataset.append(["abc", "allowed", "changed@example.com"])
+        result = NoWidgetBookResource().import_data(dataset)
+
+        self._assert_row_error(result)
+        self.assertIn("imported: 'abc'", str(result.rows[0].errors[0].error))
+        self._assert_unchanged()
+
     def test_update_does_not_overwrite_other_pk_cached_instance_loader(self):
         # CachedInstanceLoader returns the same instance for each row with the
         # same identifier, so a rejected pk must not remain on that instance
@@ -927,6 +952,98 @@ class PrimaryKeyUnchangedOnUpdateInheritedModelTestCase(TestCase):
         self.assertEqual("changed", self.allowed.narrator)
         self.forbidden.refresh_from_db()
         self.assertEqual("them", self.forbidden.narrator)
+
+
+class PrimaryKeyNonModelInstanceTestCase(TestCase):
+    """
+    A resource which is not a ``ModelResource`` can import instances which are
+    not Django models.  The pk of such an instance is read from its ``pk``
+    attribute (if any), and there are no parent models to take into account.
+    """
+
+    class Instance:
+        def __init__(self, pk=None, name=None):
+            self.pk = pk
+            self.name = name
+            self.save_kwargs = None
+
+        def save(self, **kwargs):
+            self.save_kwargs = kwargs
+
+    def setUp(self):
+        super().setUp()
+        self.instance = self.Instance(pk=1, name="existing")
+        self.saved = []
+
+    def _get_resource(self, new):
+        test = self
+
+        class NonModelResource(resources.Resource):
+            pk = fields.Field(attribute="pk", column_name="pk")
+            name = fields.Field(attribute="name", column_name="name")
+
+            class Meta:
+                import_id_fields = ("name",)
+                instance_loader_class = instance_loaders.BaseInstanceLoader
+
+            def get_or_init_instance(self, instance_loader, row):
+                if new:
+                    return test.Instance(), True
+                return test.instance, False
+
+            def do_instance_save(self, instance, is_create):
+                super().do_instance_save(instance, is_create)
+                test.saved.append(instance)
+
+        return NonModelResource()
+
+    def _import(self, new, row, **kwargs):
+        dataset = tablib.Dataset(headers=["pk", "name"])
+        dataset.append(row)
+        return self._get_resource(new).import_data(dataset, **kwargs)
+
+    def test_create_forces_insert(self):
+        result = self._import(True, [2, "created"], raise_errors=True)
+
+        self.assertEqual(1, result.totals["new"])
+        self.assertEqual(1, len(self.saved))
+        self.assertEqual(2, self.saved[0].pk)
+        self.assertEqual({"force_insert": True}, self.saved[0].save_kwargs)
+
+    def test_update_with_matching_pk_succeeds(self):
+        result = self._import(False, [1, "updated"], raise_errors=True)
+
+        self.assertEqual(1, result.totals["update"])
+        self.assertEqual([self.instance], self.saved)
+        self.assertEqual("updated", self.instance.name)
+        self.assertEqual({"force_insert": False}, self.instance.save_kwargs)
+
+    def test_update_with_changed_pk_is_rejected(self):
+        result = self._import(False, [2, "updated"])
+
+        self.assertTrue(result.has_errors())
+        self.assertEqual(RowResult.IMPORT_TYPE_ERROR, result.rows[0].import_type)
+        self.assertEqual(0, result.totals["update"])
+        self.assertIn(
+            "primary key of an existing instance cannot be changed by an import "
+            "(existing: '1', imported: '2')",
+            str(result.rows[0].errors[0].error),
+        )
+        self.assertEqual([], self.saved)
+        self.assertEqual(1, self.instance.pk)
+
+    def test_update_with_changed_pk_is_rejected_for_reused_instance(self):
+        # the same instance is returned for each row, so a rejected pk must not
+        # remain on the instance, or it would be accepted for the next row
+        dataset = tablib.Dataset(headers=["pk", "name"])
+        dataset.append([2, "updated"])
+        dataset.append([2, "updated"])
+        result = self._get_resource(False).import_data(dataset)
+
+        self.assertEqual(2, result.totals["error"])
+        self.assertEqual(0, result.totals["update"])
+        self.assertEqual([], self.saved)
+        self.assertEqual(1, self.instance.pk)
 
 
 class ImportWithMissingFields(TestCase):
