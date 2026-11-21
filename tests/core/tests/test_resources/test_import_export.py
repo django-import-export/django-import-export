@@ -1030,6 +1030,20 @@ class PrimaryKeyNonModelInstanceTestCase(TestCase):
             str(result.rows[0].errors[0].error),
         )
         self.assertEqual([], self.saved)
+        self.assertEqual(1, self.instance.pk)
+
+    def test_update_with_changed_pk_is_rejected_for_reused_instance(self):
+        # the same instance is returned for each row, so a rejected pk must not
+        # remain on the instance, or it would be accepted for the next row
+        dataset = tablib.Dataset(headers=["pk", "name"])
+        dataset.append([2, "updated"])
+        dataset.append([2, "updated"])
+        result = self._get_resource(False).import_data(dataset)
+
+        self.assertEqual(2, result.totals["error"])
+        self.assertEqual(0, result.totals["update"])
+        self.assertEqual([], self.saved)
+        self.assertEqual(1, self.instance.pk)
 
 
 class ImportWithMissingFields(TestCase):

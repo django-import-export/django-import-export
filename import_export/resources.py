@@ -598,6 +598,7 @@ class Resource(metaclass=DeclarativeMetaclass):
             imported = getattr(instance, "pk", None)
             if imported != original_pk[0]:
                 changed = (original_pk[0], imported)
+                instance.pk = original_pk[0]
         else:
             for field, existing in zip(self._get_pk_fields(instance), original_pk):
                 imported = getattr(instance, field.attname)
