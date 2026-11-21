@@ -160,6 +160,73 @@ Breaking changes
   inline in ``skip_row()``.  Behaviour is unchanged, but if you have overridden ``skip_row()`` you may be able to
   simplify it by calling ``field.widget.is_equal()`` instead.
 
+* **Export form selected items.**  This affects custom export forms, custom ``export_items`` fields, code that
+  processes ``form.cleaned_data["export_items"]``, and overrides of ``get_export_queryset()``.
+
+  Selected items are now validated by :class:`~import_export.forms.ExportItemsField`, a subclass of Django's
+  ``ModelMultipleChoiceField``.  Validation is restricted to the submitted primary keys within the export queryset,
+  instead of loading every primary key in that queryset.  Malformed submitted values, values containing null
+  characters and invalid UUIDs now report Django's own messages instead of ``Select a valid choice``.  The exact
+  wording depends on the Django version.  A malformed value for an integer primary key reports
+  ``“abc” is not a valid value.``  An invalid UUID reports the same on Django 6.0 and later, and
+  ``“abc” is not a valid UUID.`` on Django 5.2.  Values containing null characters report
+  ``Null characters are not allowed.``
+
+  As a result:
+
+  * :class:`~import_export.forms.ExportForm` and :class:`~import_export.forms.SelectableFieldsExportForm` accept a
+    new keyword-only ``queryset`` argument: ``ExportForm(formats, resources, *, queryset=None, **kwargs)``.
+    It is for instantiating the form directly; the admin does not pass it.  It must be a ``QuerySet`` of model
+    instances; anything that is not a ``QuerySet`` raises ``ImproperlyConfigured``.  A ``values()`` or
+    ``values_list()`` queryset passes that check but is not supported.  The admin converts ``values()`` querysets
+    itself (see ``get_export_queryset()`` below).  A custom ``__init__()`` that accepts ``queryset`` should pass
+    it on to ``super().__init__()``.  For any export form class, the admin sets the ``export_items`` queryset
+    after the form's ``__init__()``: the export view validates the submitted selection against
+    ``get_export_queryset(request)``, and the export admin action renders the form with the action's queryset.
+    The admin also adds an :class:`~import_export.forms.ExportItemsField` when exporting selected items with a
+    form that declares none.  A queryset declared on the field or set in ``__init__()`` is therefore replaced:
+    narrow the selection in ``get_export_queryset()`` or ``clean_export_items()`` instead.  If you instantiate the
+    form directly, supply a queryset when validating selected items.  Validating a non-empty selection raises
+    ``ImproperlyConfigured`` when the ``export_items`` field has no queryset, which is the default when none is
+    supplied.
+  * When a queryset is supplied, ``form.cleaned_data["export_items"]`` now contains a ``QuerySet`` of selected
+    model instances instead of a list of primary key strings.  Submitted primary keys are deduplicated, and
+    their submission order is not preserved.  The result follows the queryset's ordering, where defined.
+    Without a queryset, an empty selection is accepted and returns an empty list.  Custom
+    ``clean_export_items()`` methods should preserve this return contract.  In the admin, whatever
+    ``clean_export_items()`` returns is filtered against the export queryset, as in v4, so the export never
+    includes rows outside that queryset, except for the window function and ``DISTINCT ON`` querysets described
+    below.  A list of primary keys, ``to_field_name`` values or model instances is also accepted.  A returned
+    ``QuerySet`` is reduced to its ``to_field_name`` column when one is set; otherwise it is used as is in a
+    ``pk__in`` subquery, as in v4, so it must select a single column of primary keys (a ``values()`` queryset with
+    no fields counts, as Django reduces it to the primary key).  The exported rows are read from the export
+    queryset, so the ordering, annotations and ``values()`` shape of a returned ``QuerySet`` are not kept.
+  * :meth:`~import_export.admin.ExportMixin.get_export_queryset` must return a ``QuerySet`` when exporting
+    selected items, otherwise ``ImproperlyConfigured`` is raised.  Other iterables, such as a list, still work
+    when exporting without a selection.  Querysets produced by ``values()`` work; ``values_list()`` querysets
+    used directly for export are not supported (they export blank rows, as before).  Exporting a selection is
+    not supported for:
+
+    * Sliced querysets and querysets combined with ``union()``, ``intersection()`` or ``difference()``.  The
+      export page and an export without a selection work; exporting a selection fails, as it did before, without
+      exporting rows outside the queryset.
+    * Querysets that use window functions or ``DISTINCT ON``.  Validation adds a filter on the submitted keys,
+      which changes which rows satisfy the window or the ``DISTINCT ON``, so a crafted key from outside the
+      queryset can be accepted.
+
+  * If your custom form declares ``export_items``, use :class:`~import_export.forms.ExportItemsField` or a
+    subclass, or inherit the field from :class:`~import_export.forms.ExportForm`.  Its ``to_field_name``, if set,
+    must name a unique field of the model or an annotation with unique values defined in the ModelAdmin's
+    ``get_queryset()``: every row sharing a selected value is exported.  An annotation added only in
+    ``get_export_queryset()``, or one on a ``values()`` export queryset, is not supported.  For a one-to-one
+    field, use its ``attname`` (``user_id``): naming the relation itself (``user``) rejects valid selections, and
+    relation lookups such as ``user__id`` are not supported.  Declaring ``export_items`` with another field type
+    raises ``ImproperlyConfigured`` when the form is given a ``queryset`` argument, and in the admin for any
+    export form class.
+
+  See `issue 2189 <https://github.com/django-import-export/django-import-export/issues/2189>`_ and
+  `PR 2190 <https://github.com/django-import-export/django-import-export/pull/2190>`_.
+
 Removed deprecations
 """"""""""""""""""""
 
@@ -205,6 +272,75 @@ Deprecations
   Use :meth:`~import_export.resources.Resource.get_user_visible_import_fields` for import contexts and
   :meth:`~import_export.resources.Resource.get_user_visible_export_fields` for export contexts instead.
   This change ensures that import and export operations show their respective field sets correctly in admin forms.
+
+v4.4.6
+------
+
+.. _release_notes_pk_unchanged_on_update:
+
+* This release patches a potential data corruption issue that can occur in certain configurations.  It is related
+  to the issue :ref:`fixed in v4.4.2 <release_notes_force_insert_on_create>`, which did not cover rows classified
+  as updates.
+
+  Installations are potentially affected if all of the following are true:
+
+  1. ``import_id_fields`` identifies rows by a field other than the primary key.
+  2. The primary key is a writable field on the resource (this is the default for a ``ModelResource`` unless it
+     is removed using :attr:`~import_export.options.ResourceOptions.fields` or
+     :attr:`~import_export.options.ResourceOptions.exclude`, or declared ``readonly``).
+  3. The import file supplies a primary key column.
+
+  Previously, if a row matched an existing instance using ``import_id_fields`` but supplied a different primary key,
+  the primary key of the loaded instance was replaced with the value from the file before the instance was saved.
+  Django then updated the row which had that primary key, rather than the row which was loaded.  The values of the
+  loaded instance, including fields omitted from the import, were written over the other row, the loaded row was
+  left unchanged, and the import reported a successful update.  If no row had the supplied primary key, a copy of the
+  loaded instance was inserted instead.
+
+  This is a security issue where :meth:`~import_export.resources.Resource.get_queryset` is overridden to restrict
+  the rows a user may update (for example per-tenant or per-user filtering), or where the model's default manager
+  filters rows.  A user with import permission could overwrite a record outside their scope by supplying the
+  identifier of a record they can access, together with the primary key of a record they cannot.
+
+  The fix is that the primary key of an existing instance can no longer be changed by an import.  Such rows are now
+  reported as errors and are not saved.  Rows where the supplied primary key matches the loaded instance, and
+  rows which do not supply a primary key, are unaffected.  All users are advised to upgrade.
+
+  A primary key column which is present but empty is treated as not having been supplied, so the loaded instance is
+  updated.  Previously such a row was inserted as a copy of the loaded instance.
+
+  The imported primary key is compared with the existing value in Python, after both have been converted by the
+  model field.  If your database treats two different values as equal (for example a text primary key with a
+  case-insensitive collation), a row which supplies the primary key in a different form is rejected.
+
+  Imports using :attr:`~import_export.options.ResourceOptions.use_bulk` did not overwrite the other row, because
+  Django rejected the batch, but these rows are now reported with the same error.
+
+  This release also extends both this fix and the :ref:`v4.4.2 fix <release_notes_force_insert_on_create>` to models
+  which use multi-table inheritance, where the primary key of each parent model is a separate attribute of the
+  instance:
+
+  - The primary key of a parent model can no longer be changed when an existing instance is updated.
+  - An instance classified as new can no longer update an existing row of a parent model.  Previously, if the import
+    supplied the primary key of a parent row which had no corresponding child row, the parent row was overwritten and
+    the import reported the row as new.  The insert is now forced for each parent model, so these rows are reported as
+    errors (``IntegrityError``).  This means that an import can no longer be used to create a child row for a parent
+    row which already exists.
+
+    With Django 5.0 and later, ``force_insert`` is passed to ``save()`` as a tuple of model classes for these models.
+    With earlier versions of Django, the existence of each parent row is checked with an additional query before the
+    instance is saved.
+
+  If you cannot upgrade, stop the primary key being written from the import file.  Either omit it from the resource
+  using the :attr:`~import_export.options.ResourceOptions.fields` or
+  :attr:`~import_export.options.ResourceOptions.exclude` options, or declare it as ``readonly``::
+
+    class BookResource(resources.ModelResource):
+        id = fields.Field(attribute="id", column_name="id", readonly=True)
+
+        class Meta:
+            model = Book
+            import_id_fields = ("name",)
 
 v4.4.4
 ------
@@ -263,6 +399,11 @@ v4.4.3
 
   If you import integers larger than the default limit into a field that can store them, raise the limit with
   ``sys.set_int_max_str_digits()``; the widget honours the configured value.
+
+  From v4.4.6, if the limit has been disabled with ``sys.set_int_max_str_digits(0)``, the widget applies the default
+  limit of 4300 digits.  In earlier releases every integer value was rejected in this case.
+  If you disabled the limit in order to import integers of more than 4300 digits, set an explicit limit which is
+  large enough for your data instead, for example ``sys.set_int_max_str_digits(10000)``.
 
   If you subclass :class:`~import_export.widgets.IntegerWidget` and override ``clean()``, you receive this fix
   automatically only if your override delegates to ``super().clean()``.  An override that reimplements the

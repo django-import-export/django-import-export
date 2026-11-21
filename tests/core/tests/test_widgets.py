@@ -763,6 +763,20 @@ class IntegerWidgetTest(TestCase):
         digits = sys.get_int_max_str_digits() - 1
         self.assertEqual(self.widget.clean("9" * digits), int("9" * digits))
 
+    @mock.patch("import_export.widgets.sys")
+    def test_clean_when_int_max_str_digits_limit_is_disabled(self, mock_sys):
+        # sys.set_int_max_str_digits(0) disables the limit in Python, but the
+        # widget must still be protected, so the Python default limit is used
+        mock_sys.get_int_max_str_digits.return_value = 0
+        self.assertEqual(4300, widgets.get_int_max_str_digits())
+        self.assertEqual(self.widget.clean("0"), 0)
+        self.assertEqual(self.widget.clean("1"), 1)
+        self.assertEqual(self.widget.clean("9" * 4299), int("9" * 4299))
+        with self.assertRaises(ValueError):
+            self.widget.clean("9" * 4301)
+        with self.assertRaises(ValueError):
+            self.widget.clean("1e1000000")
+
 
 class ForeignKeyWidgetTest(TestCase):
     def setUp(self):

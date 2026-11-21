@@ -87,6 +87,38 @@ Your signal receiver can then include conditional logic to handle this flag::
 Further discussion `here <https://github.com/django-import-export/django-import-export/issues/1078/>`_
 and `here <https://stackoverflow.com/a/71625152/39296/>`_.
 
+How to handle double-save with file fields
+------------------------------------------
+
+The double-save described above also affects ``FileField`` and ``ImageField``.  Django writes the uploaded file to
+storage when the model ``save()`` method is called.  Storage is not transactional, so although the database
+transaction is rolled back after the 'confirm' step, the file written during that step remains in storage.  When
+``save()`` is called again on the 'import' step, Django finds the existing file and writes a second copy under a
+new name (for example ``photo_AbC123.jpg``).
+
+If you have written a custom widget which imports file data, you can avoid this by checking ``dry_run`` in
+:meth:`~import_export.widgets.Widget.clean`.  ``dry_run`` is ``True`` during the 'confirm' step and ``False``
+during the 'import' step::
+
+    class FileWidget(widgets.Widget):
+
+        def clean(self, value, row=None, **kwargs):
+            if kwargs.get("dry_run"):
+                # return the file name only: Django treats a plain string
+                # as an already-stored file, so nothing is written to storage
+                return value
+            # return a File object which will be written to storage on save()
+            return self.load_file(value)
+
+When a plain string is assigned to a ``FileField``, Django treats it as a reference to a file which already exists
+in storage, so ``save()`` succeeds without writing anything.  The file is written only on the 'import' step, when
+``clean()`` returns a ``File`` object.
+
+Alternatively, set the ``dry_run`` flag on the instance in ``before_save_instance()`` as shown above, and skip the
+file assignment in a ``pre_save`` signal receiver when the flag is set.
+
+Further discussion `here <https://github.com/django-import-export/django-import-export/issues/1447/>`_.
+
 How to dynamically set resource values
 --------------------------------------
 

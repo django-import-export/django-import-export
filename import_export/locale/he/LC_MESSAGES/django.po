@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: django-import-export\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-06-23 19:11+0100\n"
+"POT-Creation-Date: 2026-11-19 17:42+0000\n"
 "PO-Revision-Date: 2025-06-23 17:44+0300\n"
 "Last-Translator: \n"
 "Language-Team: Hebrew <he@li.org>\n"
@@ -23,11 +23,8 @@ msgid "Import"
 msgstr "ייבוא"
 
 #: admin.py
-#, python-format
-msgid "%s through import_export"
-msgstr "%s באמצעות ייבוא/ייצוא"
-
-#: admin.py
+#, fuzzy, python-brace-format
+#| msgid "Import finished: {} new, {} updated, {} deleted and {} skipped {}."
 msgid "Import finished: {} new, {} updated, {} deleted and {} skipped {}."
 msgstr "הייבוא הסתיים: נוספו {}, עודכנו {}, נמחקו {}, דולגו {}."
 
@@ -46,6 +43,11 @@ msgid ""
 msgstr ""
 "לא נמצא מידע תקין לייבוא. יש לוודא שהכותרות והנתונים בקובץ תקינים ומתאימים "
 "לייבוא."
+
+#: admin.py
+#, python-format
+msgid "%s through import_export"
+msgstr "%s באמצעות ייבוא/ייצוא"
 
 #: admin.py templates/admin/import_export/change_form.html
 #: templates/admin/import_export/change_list_export_item.html
@@ -82,6 +84,13 @@ msgstr "הטופס לא אומת, יש לקרוא לפונקציה `is_valid` ת
 #, python-format
 msgid "Select at least 1 field for \"%(resource_name)s\" to export"
 msgstr "יש לבחור לפחות שדה אחד לייצוא עבור \"%(resource_name)s\""
+
+#: resources.py
+#, python-format
+msgid ""
+"The primary key of an existing instance cannot be changed by an import "
+"(existing: '%(existing)s', imported: '%(imported)s')"
+msgstr ""
 
 #: resources.py
 #, python-format
