@@ -1,9 +1,11 @@
 import django.forms
-from core.models import Author
+from core.models import Author, Category
 from core.tests.admin_integration.mixins import AdminTestMixin
+from django.core.exceptions import ImproperlyConfigured, ValidationError
+from django.db.models.functions import Upper
 from django.test import TestCase
 
-from import_export import forms, resources
+from import_export import constants, forms, resources
 from import_export.formats.base_formats import CSV
 
 from .resources import BookResource, BookResourceWithStoreInstance
@@ -42,6 +44,155 @@ class FormTest(TestCase):
             form.fields["resource"].widget,
             django.forms.Select,
         )
+
+    def test_export_form_queryset_is_keyword_only(self):
+        with self.assertRaises(TypeError):
+            forms.ExportForm(
+                [CSV],
+                [resources.ModelResource],
+                {f"{constants.FORM_FIELD_PREFIX}format": "0"},
+            )
+
+    def test_export_form_export_items_without_queryset(self):
+        form = forms.ExportForm(
+            [CSV],
+            [resources.ModelResource],
+            data={
+                f"{constants.FORM_FIELD_PREFIX}format": "0",
+                f"{constants.FORM_FIELD_PREFIX}export_items": ["1"],
+            },
+        )
+        with self.assertRaisesRegex(ImproperlyConfigured, "queryset"):
+            form.is_valid()
+
+    def test_export_form_export_items_with_queryset(self):
+        category = Category.objects.create(name="Cat 1")
+        excluded = Category.objects.create(name="Excluded")
+
+        def export_form(export_items):
+            return forms.ExportForm(
+                [CSV],
+                [resources.ModelResource],
+                queryset=Category.objects.exclude(pk=excluded.pk),
+                data={
+                    f"{constants.FORM_FIELD_PREFIX}format": "0",
+                    f"{constants.FORM_FIELD_PREFIX}export_items": export_items,
+                },
+            )
+
+        form = export_form([category.pk])
+        self.assertTrue(form.is_valid())
+        self.assertEqual([category], list(form.cleaned_data["export_items"]))
+
+        form = export_form([excluded.pk])
+        self.assertFalse(form.is_valid())
+        self.assertEqual({"export_items"}, set(form.errors))
+
+    def test_export_form_rejects_queryset_which_is_not_a_queryset(self):
+        with self.assertRaisesRegex(
+            ImproperlyConfigured, "queryset= must be a QuerySet"
+        ):
+            forms.ExportForm([CSV], [resources.ModelResource], queryset=[])
+
+    def test_required_export_items_field_without_queryset_rejects_empty(self):
+        field = forms.ExportItemsField(queryset=None, required=True)
+        with self.assertRaises(django.forms.ValidationError) as cm:
+            field.clean([])
+        self.assertEqual("required", cm.exception.code)
+
+    def test_export_form_export_items_without_queryset_or_selection(self):
+        form = forms.ExportForm(
+            [CSV],
+            [resources.ModelResource],
+            data={f"{constants.FORM_FIELD_PREFIX}format": "0"},
+        )
+        self.assertTrue(form.is_valid())
+        self.assertEqual([], form.cleaned_data["export_items"])
+
+    def test_export_form_without_export_items_field(self):
+        class NoExportItemsForm(forms.ExportForm):
+            export_items = None
+
+        form = NoExportItemsForm(
+            [CSV], [resources.ModelResource], queryset=Author.objects.all()
+        )
+        self.assertNotIn("export_items", form.fields)
+
+    def test_export_form_export_items_requires_export_items_field(self):
+        class MultipleChoiceExportForm(forms.ExportForm):
+            export_items = django.forms.MultipleChoiceField(required=False)
+
+        with self.assertRaisesRegex(ImproperlyConfigured, "ExportItemsField"):
+            MultipleChoiceExportForm(
+                [CSV], [resources.ModelResource], queryset=Author.objects.all()
+            )
+
+    def test_export_form_init_not_passing_queryset_names_the_cause(self):
+        class DroppingExportForm(forms.ExportForm):
+            def __init__(self, formats, resources, queryset=None, **kwargs):
+                super().__init__(formats, resources, **kwargs)
+
+        form = DroppingExportForm(
+            [CSV],
+            [resources.ModelResource],
+            queryset=Category.objects.all(),
+            data={
+                f"{constants.FORM_FIELD_PREFIX}format": "0",
+                f"{constants.FORM_FIELD_PREFIX}export_items": ["1"],
+            },
+        )
+        with self.assertRaisesRegex(ImproperlyConfigured, r"super\(\)\.__init__\(\)"):
+            form.is_valid()
+
+    def test_export_items_field_rejects_unhashable_values(self):
+        field = forms.ExportItemsField(queryset=Category.objects.all())
+        with self.assertRaises(ValidationError) as cm:
+            field.clean([["1"]])
+        self.assertEqual("invalid_list", cm.exception.code)
+
+    def test_export_items_field_char_to_field_name_accepts_integer_like_value(self):
+        category = Category.objects.create(name="99999999999999999999")
+        field = forms.ExportItemsField(
+            queryset=Category.objects.all(), to_field_name="name"
+        )
+        self.assertEqual([category], list(field.clean([category.name])))
+
+    def test_export_items_field_to_field_name_pk(self):
+        category = Category.objects.create(name="Cat 1")
+        field = forms.ExportItemsField(
+            queryset=Category.objects.all(), to_field_name="pk"
+        )
+        self.assertEqual([category], list(field.clean([str(category.pk)])))
+        with self.assertRaises(ValidationError) as cm:
+            field.clean(["99999999999999999999"])
+        self.assertEqual("invalid_choice", cm.exception.code)
+
+    def test_export_items_field_to_field_name_annotation(self):
+        category = Category.objects.create(name="Cat 1")
+        field = forms.ExportItemsField(
+            queryset=Category.objects.annotate(upper_name=Upper("name")),
+            to_field_name="upper_name",
+        )
+        self.assertEqual([category], list(field.clean(["CAT 1"])))
+
+    def test_export_items_field_reports_invalid_pk_before_out_of_range(self):
+        field = forms.ExportItemsField(queryset=Category.objects.all())
+        with self.assertRaises(ValidationError) as cm:
+            field.clean(["abc", "99999999999999999999"])
+        self.assertEqual("invalid_pk_value", cm.exception.code)
+
+    def test_export_items_field_rejects_out_of_range(self):
+        category = Category.objects.create(name="Cat 1")
+        field = forms.ExportItemsField(queryset=Category.objects.all())
+        with self.assertRaises(ValidationError) as cm:
+            field.clean([str(category.pk), "99999999999999999999"])
+        self.assertEqual("invalid_choice", cm.exception.code)
+
+    def test_export_items_field_rejects_none(self):
+        field = forms.ExportItemsField(queryset=Category.objects.all())
+        with self.assertRaises(ValidationError) as cm:
+            field.clean([None])
+        self.assertEqual("invalid_choice", cm.exception.code)
 
 
 class ImportFormMediaTest(TestCase):
