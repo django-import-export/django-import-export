@@ -3,6 +3,7 @@ from unittest.mock import patch
 from core.models import Book
 from django.core.exceptions import ValidationError
 from django.test import SimpleTestCase
+from django.utils import translation
 from tablib import Dataset
 
 from import_export.results import Error, InvalidRow, Result, RowResult
@@ -129,6 +130,21 @@ class ResultTest(SimpleTestCase):
         self.assertTrue(message.startswith("call to force_str() on instance failed: "))
         self.assertIn("NoneType", message)
         self.assertEqual(None, row_result.object_repr)
+
+    @patch("import_export.results.logger")
+    def test_add_instance_info_failure_is_translated(self, mock_logger):
+        class UnserializableBook:
+            def __str__(self):
+                return None
+
+        with translation.override("de"):
+            RowResult().add_instance_info(UnserializableBook())
+
+        message = mock_logger.debug.call_args.args[0]
+        self.assertTrue(
+            str(message).startswith("Aufruf von force_str() in der Instanz schlug fehl: ")
+        )
+        self.assertIn("NoneType", str(message))
 
     def test_is_new(self):
         row_result = RowResult()

@@ -10,6 +10,7 @@ from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test.testcases import TestCase, TransactionTestCase
 from django.test.utils import override_settings
+from django.utils import translation
 from django.utils.translation import gettext_lazy as _
 
 from import_export.admin import ExportMixin
@@ -126,6 +127,19 @@ class ImportAdminIntegrationTest(AdminTestMixin, TestCase):
         self.assertEqual(DELETION, deleted_entry.action_flag)
         self.assertEqual(b.id, int(deleted_entry.object_id))
         self.assertEqual("", deleted_entry.object_repr)
+
+    def test_import_log_message_is_translated(self):
+        Book.objects.create(id=1)
+        with translation.override("de"):
+            response = self._do_import_post(self.book_import_url, "books-for-delete.csv")
+            self.assertEqual(response.status_code, 200)
+            confirm_form = response.context["confirm_form"]
+            data = confirm_form.initial
+            self._prepend_form_prefix(data)
+            self._post_url_response(self.book_process_import_url, data, follow=True)
+
+        deleted_entry = LogEntry.objects.latest("id")
+        self.assertEqual("delete durch import_export", deleted_entry.change_message)
 
     @override_settings(TEMPLATE_STRING_IF_INVALID="INVALID_VARIABLE")
     @patch("import_export.admin.ImportMixin.choose_import_resource_class")
