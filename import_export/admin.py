@@ -581,9 +581,10 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
                     imp_kwargs = self.get_import_data_kwargs(
                         request=request, form=import_form, **kwargs
                     )
-                    result = self.get_preview_result_for_pagination(
+                    result = self.get_preview_result(
                         resource,
                         dataset,
+                        tmp_storage_name=tmp_storage.name,
                         original_file_name=import_file.name,
                         user=request.user,
                         **imp_kwargs,
@@ -778,11 +779,12 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
             return
         session.pop(self._pagination_session_key(tmp_storage_name), None)
 
-    def get_preview_result_for_pagination(
+    def get_preview_result(
         self,
         resource,
         dataset,
         *,
+        tmp_storage_name="",
         original_file_name="",
         user=None,
         **imp_kwargs,
@@ -795,8 +797,8 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         every page-navigation GET. ``user`` is the requesting user, passed
         to ``import_data()``. ``imp_kwargs`` is the dict returned by
         :meth:`~import_export.admin.ImportMixin.get_import_data_kwargs` for
-        the request. Override this to cache the Result keyed by the
-        temporary-file name and avoid re-running the dry-run on every
+        the request. Override this to cache the Result keyed by
+        ``tmp_storage_name`` and avoid re-running the dry-run on every
         page click. The default implementation runs a full dry-run on
         each call.
         """
@@ -950,9 +952,10 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
             request=request, form=pagination_form, **kwargs
         )
         original_file_name = metadata.get("original_file_name", "")
-        result = self.get_preview_result_for_pagination(
+        result = self.get_preview_result(
             resource,
             dataset,
+            tmp_storage_name=tmp_storage.name,
             original_file_name=original_file_name,
             user=request.user,
             **imp_kwargs,
