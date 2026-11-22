@@ -23,6 +23,7 @@ Enhancements
 - ``ForeignKeyWidget``, ``CachedForeignKeyWidget`` and ``ManyToManyWidget`` now accept the related model as an ``"app_label.ModelName"`` string, resolved via the app registry (`2202 <https://github.com/django-import-export/django-import-export/issues/2202>`_)
 - Refactor bulk updates to use attribute not field (`2145 <https://github.com/django-import-export/django-import-export/issues/2145>`_)
 - Paginate the admin import preview (`2148 <https://github.com/django-import-export/django-import-export/issues/2148>`_)
+- Added :meth:`~import_export.admin.ImportMixin.get_import_preview_form_data` to control which import form values are held in the session during the import preview (`2230 <https://github.com/django-import-export/django-import-export/issues/2230>`_)
 
 Fixes
 #####

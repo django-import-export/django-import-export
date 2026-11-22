@@ -84,7 +84,7 @@
     {% if result.has_errors %}
     {% block errors %}
       <h2>{% translate "Errors" %}</h2>
-      {% include "admin/import_export/preview_pagination.html" %}
+      {% include "admin/import_export/preview_pagination.html" with error_rows=True %}
       <ul>
         {% for error in result.base_errors  %}
         <li>
@@ -121,7 +121,7 @@
 
       <p>{% translate "Please correct these errors in your data where possible, then reupload it using the form above." %}</p>
 
-      {% include "admin/import_export/preview_pagination.html" %}
+      {% include "admin/import_export/preview_pagination.html" with error_rows=True %}
 
       <table class="import-preview">
         <thead>

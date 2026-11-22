@@ -129,6 +129,28 @@ temporary file once the import is confirmed.  Only one preview per ``ModelAdmin`
 uploading another file replaces the previous entry, so page links in an older browser tab will show the
 "expired" warning (confirming from that tab still works).
 
+The submitted value of every field on the import form is stored, including any fields which you have added
+to a custom form.  If you use the ``signed_cookies`` session backend, these values are sent with every
+request and count towards the 4 KB cookie limit.  To keep a sensitive or large value out of the session,
+override :meth:`~import_export.admin.ImportMixin.get_import_preview_form_data`::
+
+    class BookAdmin(ImportExportModelAdmin):
+        def get_import_preview_form_data(self, request, import_form):
+            form_data = super().get_import_preview_form_data(request, import_form)
+            form_data.pop("api_token", None)
+            return form_data
+
+A value which is left out is missing from the form's ``cleaned_data`` on page navigation, so any code which
+reads it must allow for that.  The ``format`` and ``resource`` values are always stored.
+
+On page navigation the import form is rebuilt from the stored values by calling
+:meth:`~import_export.admin.ImportMixin.create_import_form`.  For that call ``request.POST`` holds the
+stored values, but ``request.method`` is still ``"GET"`` and ``request.FILES`` is empty.  There is no
+uploaded file, so the form is never valid: a custom ``clean()`` should read the file with
+``self.cleaned_data.get("import_file")`` and allow for ``None``.  If ``clean()`` raises an exception on
+page navigation, the exception is logged as a warning and the page is rendered with the fields which did
+validate.
+
 Each page navigation re-runs the dry-run against the temporary file written during upload.  For very large
 imports this may noticeably slow page changes.  The dry-run on upload and on every page navigation is produced
 by :meth:`~import_export.admin.ImportMixin.get_preview_result_for_pagination`; override it on your

@@ -182,6 +182,8 @@ Breaking changes
   The upload form's values are held in the user's session (keyed per ``ModelAdmin``) while the preview is
   open, so that a custom ``ImportForm`` sees the same ``cleaned_data`` on every page.  On page navigation
   there is no uploaded file: a custom ``clean()`` should use ``self.cleaned_data.get("import_file")``.
+  Override :meth:`~import_export.admin.ImportMixin.get_import_preview_form_data` to keep a value out of
+  the session.  See :ref:`pagination`.
 
   **Migration**: to restore the v4 behaviour of rendering every row on one page, set::
 

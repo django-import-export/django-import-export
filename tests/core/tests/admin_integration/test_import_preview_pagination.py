@@ -15,6 +15,7 @@ from import_export.admin import UNSET, ImportMixin
 from import_export.constants import FORM_FIELD_PREFIX
 from import_export.forms import ImportForm
 from import_export.resources import Resource
+from import_export.results import Error, Result, RowResult
 
 
 def _build_csv(num_rows):
@@ -62,7 +63,7 @@ class ImportPreviewPaginationTests(AdminTestMixin, TestCase):
     def test_default_page_size_context_is_set(self):
         response = self._post_csv(_build_csv(2))
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.context["preview_page_size"], 100)
+        self.assertNotIn("preview_page_size", response.context)
         page = response.context["preview_page"]
         self.assertEqual(page.paginator.count, 2)
         self.assertEqual(page.paginator.per_page, 100)
@@ -97,7 +98,7 @@ class ImportPreviewPaginationTests(AdminTestMixin, TestCase):
 
         body = response.content.decode()
         # Page-of-pages indicator and a Next link to page 2 are present.
-        self.assertIn("Page 1 of 2", body)
+        self.assertIn("Page 1 of 2 (5 rows)", body)
         self.assertIn("page=2", body)
         # Only the first 3 rows render on page 1.
         self.assertEqual(body.count('<td class="import-type">'), 3)
@@ -105,7 +106,6 @@ class ImportPreviewPaginationTests(AdminTestMixin, TestCase):
     @override_settings(IMPORT_EXPORT_PREVIEW_PAGE_SIZE=2)
     def test_custom_page_size_is_honoured(self):
         response = self._post_csv(_build_csv(5))
-        self.assertEqual(response.context["preview_page_size"], 2)
         page = response.context["preview_page"]
         self.assertEqual(page.paginator.per_page, 2)
         self.assertEqual(page.paginator.num_pages, 3)
@@ -125,8 +125,30 @@ class ImportPreviewPaginationTests(AdminTestMixin, TestCase):
         self.assertEqual(page.paginator.count, 5)
         self.assertEqual(len(page), 3)
         body = response.content.decode()
-        self.assertIn("Page 1 of 2", body)
+        # The paginator counts the rows which failed, not the rows uploaded.
+        self.assertIn("Page 1 of 2 (5 rows with errors)", body)
         self.assertIn("page=2", body)
+
+    @override_settings(IMPORT_EXPORT_PREVIEW_PAGE_SIZE=3)
+    def test_error_rows_are_labelled_as_rows_with_errors(self):
+        from core.admin import BookAdmin
+
+        def failing_dry_run(self, resource, dataset, **kwargs):
+            # 8 rows uploaded, of which 5 raise.
+            result = Result()
+            for number in range(8):
+                row_result = RowResult()
+                if number < 5:
+                    row_result.errors.append(Error(ValueError("boom")))
+                result.append_row_result(row_result)
+            return result
+
+        with mock.patch.object(
+            BookAdmin, "get_preview_result_for_pagination", failing_dry_run
+        ):
+            response = self._post_csv(_build_csv(8))
+        self.assertTrue(response.context["result"].has_errors())
+        self.assertIn("Page 1 of 2 (5 rows with errors)", response.content.decode())
 
     @override_settings(IMPORT_EXPORT_PREVIEW_PAGE_SIZE=3)
     def test_second_page_navigation_renders_remaining_rows(self):
@@ -287,7 +309,7 @@ class ImportPreviewPaginationTests(AdminTestMixin, TestCase):
             BookAdmin.import_preview_page_size = UNSET
 
         page = response.context["preview_page"]
-        self.assertEqual(response.context["preview_page_size"], 2)
+        self.assertEqual(page.paginator.per_page, 2)
         self.assertEqual(page.paginator.num_pages, 3)
 
     def test_invalid_page_size_raises_improperly_configured(self):
@@ -297,8 +319,22 @@ class ImportPreviewPaginationTests(AdminTestMixin, TestCase):
         for bad_value in (0, -1, "abc", True):
             with self.subTest(page_size=bad_value):
                 with override_settings(IMPORT_EXPORT_PREVIEW_PAGE_SIZE=bad_value):
-                    with self.assertRaises(ImproperlyConfigured):
+                    with self.assertRaisesMessage(
+                        ImproperlyConfigured,
+                        "IMPORT_EXPORT_PREVIEW_PAGE_SIZE must be a positive integer",
+                    ):
                         self._post_csv(_build_csv(2))
+
+    def test_invalid_page_size_error_names_the_model_admin_attribute(self):
+        from core.admin import BookAdmin
+
+        with mock.patch.object(BookAdmin, "import_preview_page_size", 0):
+            with self.assertRaisesMessage(
+                ImproperlyConfigured,
+                "BookAdmin.import_preview_page_size must be a positive integer "
+                "or None, got 0.",
+            ):
+                self._post_csv(_build_csv(2))
 
     @override_settings(
         IMPORT_EXPORT_SKIP_ADMIN_CONFIRM=True, IMPORT_EXPORT_PREVIEW_PAGE_SIZE=2
@@ -585,9 +621,12 @@ class ImportPreviewPaginationTests(AdminTestMixin, TestCase):
         with mock.patch.object(BookAdmin, "import_form_class", StrictImportForm):
             post_response = self._post_csv(_build_csv(4))
             params = self._pagination_get_params(post_response, page=2)
-            get_response = self.client.get(self.book_import_url, params)
+            # Logged at warning so that a genuine bug in clean() is visible.
+            with self.assertLogs("import_export.admin", level="WARNING") as logs:
+                get_response = self.client.get(self.book_import_url, params)
         self.assertEqual(get_response.status_code, 200)
         self.assertEqual(get_response.context["preview_page"].number, 2)
+        self.assertIn("clean() raised on preview page navigation", logs.output[0])
 
     @override_settings(IMPORT_EXPORT_PREVIEW_PAGE_SIZE=2)
     def test_reupload_from_paginated_url_opens_on_first_page(self):
@@ -697,6 +736,79 @@ class ImportPreviewPaginationTests(AdminTestMixin, TestCase):
         (key,) = self._preview_session_keys()
         form_data = self.client.session[key]["form_data"]
         self.assertEqual(form_data, {f"{FORM_FIELD_PREFIX}format": ["0"]})
+
+    def test_form_data_hook_controls_what_is_stored_in_session(self):
+        from core.models import Author
+
+        author = Author.objects.create(name="Pagination Author")
+        data = {
+            f"{FORM_FIELD_PREFIX}format": "0",
+            "import_file": StringIO("id,name\r\n1,EBook 1\r\n"),
+            "author": author.id,
+        }
+        self.client.post(self.ebook_import_url, dict(data))
+        (key,) = self._preview_session_keys()
+        self.assertEqual(
+            self.client.session[key]["form_data"],
+            {f"{FORM_FIELD_PREFIX}format": ["0"], "author": [str(author.id)]},
+        )
+
+        from core.admin import CustomBookAdmin
+
+        def without_author(self, request, import_form):
+            stored = ImportMixin.get_import_preview_form_data(
+                self, request, import_form
+            )
+            del stored["author"]
+            return stored
+
+        data["import_file"] = StringIO("id,name\r\n1,EBook 1\r\n")
+        with mock.patch.object(
+            CustomBookAdmin, "get_import_preview_form_data", without_author
+        ):
+            self.client.post(self.ebook_import_url, data)
+        (key,) = self._preview_session_keys()
+        self.assertEqual(
+            self.client.session[key]["form_data"],
+            {f"{FORM_FIELD_PREFIX}format": ["0"]},
+        )
+
+    @override_settings(IMPORT_EXPORT_PREVIEW_PAGE_SIZE=2)
+    def test_format_and_resource_are_stored_whatever_the_hook_returns(self):
+        # Dropping them would leave page navigation with an unbound form, and
+        # get_resource_index() would silently fall back to the first resource.
+        from core.admin import BookAdmin
+
+        with mock.patch.object(
+            BookAdmin, "get_import_preview_form_data", return_value={}
+        ):
+            post_response = self._post_csv(_build_csv(4), resource="1")
+            (key,) = self._preview_session_keys()
+            self.assertEqual(
+                self.client.session[key]["form_data"],
+                {
+                    f"{FORM_FIELD_PREFIX}format": ["0"],
+                    f"{FORM_FIELD_PREFIX}resource": ["1"],
+                },
+            )
+            params = self._pagination_get_params(post_response, page=2)
+            get_response = self.client.get(self.book_import_url, params)
+        self.assertEqual(get_response.context["preview_page"].number, 2)
+        self.assertEqual(get_response.context["confirm_form"].initial["resource"], "1")
+        self.assertEqual(
+            get_response.context["fields_list"],
+            post_response.context["fields_list"],
+        )
+
+    def test_dropping_a_missing_session_entry_does_not_mark_session_modified(self):
+        from core.admin import BookAdmin
+        from django.contrib.sessions.backends.signed_cookies import SessionStore
+
+        admin = BookAdmin(Book, mock.Mock())
+        request = mock.Mock(session=SessionStore())
+        admin._evict_pagination_metadata(request)
+        admin._drop_pagination_metadata(request, "missing")
+        self.assertFalse(request.session.modified)
 
     def _assert_preview_expired(self, response):
         self.assertNotIn("result", response.context)
