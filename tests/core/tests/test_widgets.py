@@ -547,7 +547,28 @@ class DurationWidgetTest(TestCase):
         self.assertEqual(self.widget.clean("1:57:00"), self.duration)
 
     def test_clean_none(self):
+        self.assertIsNone(self.widget.clean(None))
         self.assertEqual(self.widget.clean(""), None)
+
+    def test_clean_whitespace_only_string(self):
+        self.assertEqual(self.widget.clean("   "), None)
+
+    def test_clean_surrounding_whitespace(self):
+        self.assertEqual(self.widget.clean(" 1:57:00 "), self.duration)
+
+    def test_clean_unparseable_string_raises(self):
+        with self.assertRaises(ValueError):
+            self.widget.clean("abc")
+
+    def test_clean_number_as_seconds(self):
+        self.assertEqual(self.widget.clean(3600), timedelta(seconds=3600))
+
+    def test_clean_zero_number(self):
+        self.assertEqual(self.widget.clean(0), timedelta(0))
+
+    def test_clean_overflow_raises(self):
+        with self.assertRaises(ValueError):
+            self.widget.clean("9999999999 00:00:00")
 
     def test_clean_zero(self):
         self.assertEqual(self.widget.clean("0:00:00"), timedelta(0))
