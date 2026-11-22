@@ -297,11 +297,14 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
 
         Return a form instance to use for the 'initial' import step.
         This method can be extended to make dynamic form updates to the
-        form after it has been instantiated. It is also called on preview
-        page-navigation GETs, with ``request.POST`` set to the values
-        submitted on the original upload (see
-        :ref:`import_export_preview_page_size`). You might also look to
-        override the following:
+        form after it has been instantiated.
+
+        It is also called on preview page-navigation requests (see
+        :ref:`pagination`). On those calls ``request.POST`` holds the values
+        submitted on the original upload, but ``request.method`` is still
+        ``"GET"`` and ``request.FILES`` is empty.
+
+        You might also look to override the following:
 
         * :meth:`~import_export.admin.ImportMixin.get_import_form_class`
         * :meth:`~import_export.admin.ImportMixin.get_import_form_kwargs`
@@ -409,7 +412,10 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         the original POST. ``import_form`` is still a bound copy of the
         original upload form, so subclasses adding extra hidden fields to
         ``ConfirmImportForm`` can call ``super()`` and merge their own values
-        from ``import_form.cleaned_data`` on both paths.
+        from ``import_form.cleaned_data`` on both paths. The exception is a
+        value which
+        :meth:`~import_export.admin.ImportMixin.get_import_preview_form_data`
+        leaves out of the session: it is not available on page navigation.
 
         Returns ``{}`` when ``import_form`` is ``None`` (e.g. the bound
         confirm form in ``process_import()``).
@@ -638,8 +644,10 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         single page.
         """
         page_size = self.import_preview_page_size
+        source = f"{type(self).__name__}.import_preview_page_size"
         if page_size is UNSET:
             page_size = getattr(settings, "IMPORT_EXPORT_PREVIEW_PAGE_SIZE", 100)
+            source = "IMPORT_EXPORT_PREVIEW_PAGE_SIZE"
         if page_size is None:
             return None
         # bool is an int subclass, so reject it explicitly.
@@ -649,8 +657,7 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
             or page_size < 1
         ):
             raise ImproperlyConfigured(
-                "IMPORT_EXPORT_PREVIEW_PAGE_SIZE must be a positive integer "
-                f"or None, got {page_size!r}."
+                f"{source} must be a positive integer or None, got {page_size!r}."
             )
         return page_size
 
@@ -675,6 +682,35 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
             f"{os.path.basename(tmp_storage_name or '')}"
         )
 
+    def get_import_preview_form_data(self, request, import_form):
+        """
+        .. versionadded:: 5.0
+
+        Return the submitted import form values to hold in the session while
+        the import preview is open, as a dict of ``{name: [values]}`` keyed by
+        the HTML field name. Page navigation uses them to rebuild the import
+        form (see :ref:`pagination`).
+
+        The default returns the submitted value of every field declared on
+        the import form. Override this to leave out a value which should not
+        be stored in the session, for example because it is sensitive or
+        large.
+
+        On page navigation a field which is left out is cleaned as if it had
+        not been submitted: a required field is absent from the form's
+        ``cleaned_data``, and an optional field holds its empty value. Do not
+        leave out a value which ``get_confirm_form_initial()`` copies to the
+        confirm form, because it would be lost on every page after the first.
+
+        The ``format`` and ``resource`` values are always stored, whatever
+        this method returns.
+        """
+        return {
+            name: request.POST.getlist(name)
+            for name in (import_form.add_prefix(f) for f in import_form.fields)
+            if name in request.POST
+        }
+
     def _save_pagination_metadata(
         self,
         request,
@@ -689,6 +725,19 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         if not tmp_storage_name or session is None:
             return
         self._evict_pagination_metadata(request)
+        # QueryDict.setlist() would split a bare string into characters.
+        form_data = {
+            name: [values] if isinstance(values, str) else list(values)
+            for name, values in self.get_import_preview_form_data(
+                request, import_form
+            ).items()
+        }
+        # Page navigation needs these two whatever the hook returned: without
+        # them the rebuilt form is unbound, or selects the first resource.
+        for field_name in ("format", "resource"):
+            name = import_form.add_prefix(field_name)
+            if name in request.POST:
+                form_data[name] = request.POST.getlist(name)
         session[self._pagination_session_key(tmp_storage_name)] = {
             # TempFolderStorage names are absolute paths, so keep the full
             # name here: only the basename travels in the URL.
@@ -699,13 +748,8 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
             # Only the ImportForm's own submitted values (no CSRF token, no
             # uploaded file), so that page navigation can rebuild a bound
             # ImportForm carrying any extra fields the subclass declared.
-            "form_data": {
-                name: request.POST.getlist(name)
-                for name in (import_form.add_prefix(f) for f in import_form.fields)
-                if name in request.POST
-            },
+            "form_data": form_data,
         }
-        session.modified = True
 
     def _evict_pagination_metadata(self, request):
         # Drop entries left by earlier uploads (abandoned previews, retries
@@ -721,7 +765,6 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         for key in list(session.keys()):
             if key.startswith(prefix):
                 del session[key]
-                session.modified = True
 
     def _get_pagination_metadata(self, request, tmp_storage_name):
         session = getattr(request, "session", None)
@@ -734,7 +777,6 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         if not tmp_storage_name or session is None:
             return
         session.pop(self._pagination_session_key(tmp_storage_name), None)
-        session.modified = True
 
     def get_preview_result_for_pagination(
         self,
@@ -799,7 +841,6 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
             page_number = (
                 self._parse_non_negative_int(request.GET.get("page"), default=1) or 1
             )
-        context["preview_page_size"] = page_size
         context["preview_page"] = paginator.get_page(page_number)
 
     def _is_preview_pagination_request(self, request):
@@ -872,7 +913,8 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         # Built through create_import_form() so a subclass adding fields
         # there sees the same form on page 2+ as on the upload POST. That
         # hook reads request.POST, so hand it the stored values for the
-        # duration of the call; FILES is empty on a GET anyway.
+        # duration of the call; FILES is empty on a GET anyway. The method
+        # stays "GET", which the create_import_form() docstring spells out.
         original_post = request.POST
         request.POST = form_data
         try:
@@ -883,12 +925,16 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         # Clean it anyway: Django still populates cleaned_data for every
         # field which did validate, which is what the hooks above read. A
         # custom clean() indexing cleaned_data["import_file"] raises here
-        # rather than adding an error, so swallow that too.
+        # rather than adding an error. Carry on with the partial cleaned_data
+        # rather than fail a page which rendered on upload, but log loudly
+        # enough that an unrelated bug in the form's validation is not hidden.
         try:
             pagination_form.is_valid()
         except Exception:
-            logger.debug(
-                "import form clean() failed on preview pagination", exc_info=True
+            logger.warning(
+                "import form validation raised on preview page navigation; "
+                "there is no uploaded file on this request",
+                exc_info=True,
             )
 
         res_kwargs = self.get_import_resource_kwargs(
