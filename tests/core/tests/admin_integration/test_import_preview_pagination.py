@@ -60,7 +60,7 @@ class ImportPreviewPaginationTests(AdminTestMixin, TestCase):
         params.update(page_kwargs)
         return params
 
-    def test_default_page_size_context_is_set(self):
+    def test_default_page_size_is_applied(self):
         response = self._post_csv(_build_csv(2))
         self.assertEqual(response.status_code, 200)
         self.assertNotIn("preview_page_size", response.context)
@@ -626,7 +626,7 @@ class ImportPreviewPaginationTests(AdminTestMixin, TestCase):
                 get_response = self.client.get(self.book_import_url, params)
         self.assertEqual(get_response.status_code, 200)
         self.assertEqual(get_response.context["preview_page"].number, 2)
-        self.assertIn("clean() raised on preview page navigation", logs.output[0])
+        self.assertIn("validation raised on preview page navigation", logs.output[0])
 
     @override_settings(IMPORT_EXPORT_PREVIEW_PAGE_SIZE=2)
     def test_reupload_from_paginated_url_opens_on_first_page(self):
@@ -799,6 +799,16 @@ class ImportPreviewPaginationTests(AdminTestMixin, TestCase):
             get_response.context["fields_list"],
             post_response.context["fields_list"],
         )
+
+    def test_form_data_hook_string_value_is_stored_as_a_list(self):
+        from core.admin import BookAdmin
+
+        with mock.patch.object(
+            BookAdmin, "get_import_preview_form_data", return_value={"extra": "12"}
+        ):
+            self._post_csv(_build_csv(2))
+        (key,) = self._preview_session_keys()
+        self.assertEqual(self.client.session[key]["form_data"]["extra"], ["12"])
 
     def test_dropping_a_missing_session_entry_does_not_mark_session_modified(self):
         from core.admin import BookAdmin

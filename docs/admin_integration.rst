@@ -140,16 +140,19 @@ override :meth:`~import_export.admin.ImportMixin.get_import_preview_form_data`::
             form_data.pop("api_token", None)
             return form_data
 
-A value which is left out is missing from the form's ``cleaned_data`` on page navigation, so any code which
-reads it must allow for that.  The ``format`` and ``resource`` values are always stored.
+On page navigation a field which is left out is cleaned as if it had not been submitted: a required field is
+absent from the form's ``cleaned_data``, and an optional field holds its empty value.  Any code which reads
+the value must allow for that.  Do not leave out a value which
+:meth:`~import_export.admin.ImportMixin.get_confirm_form_initial` copies to the confirm form, because it
+would be lost on every page after the first.  The ``format`` and ``resource`` values are always stored.
 
 On page navigation the import form is rebuilt from the stored values by calling
 :meth:`~import_export.admin.ImportMixin.create_import_form`.  For that call ``request.POST`` holds the
 stored values, but ``request.method`` is still ``"GET"`` and ``request.FILES`` is empty.  There is no
 uploaded file, so the form is never valid: a custom ``clean()`` should read the file with
-``self.cleaned_data.get("import_file")`` and allow for ``None``.  If ``clean()`` raises an exception on
-page navigation, the exception is logged as a warning and the page is rendered with the fields which did
-validate.
+``self.cleaned_data.get("import_file")`` and allow for ``None``.  If the form's validation raises an
+exception on page navigation, the exception is logged as a warning and the page is rendered with the fields
+which did validate.
 
 Each page navigation re-runs the dry-run against the temporary file written during upload.  For very large
 imports this may noticeably slow page changes.  The dry-run on upload and on every page navigation is produced
@@ -159,9 +162,6 @@ temporary-storage filename.
 
 If the session entry or the temporary file has gone, page navigation returns to the upload form with a warning
 rather than failing silently.
-
-Page navigation rebuilds the import form from the submitted values without the uploaded file, so a
-custom ``ImportForm.clean()`` should read ``self.cleaned_data.get("import_file")`` rather than indexing it.
 
 .. _customizable_storage:
 

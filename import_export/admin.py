@@ -412,7 +412,10 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         the original POST. ``import_form`` is still a bound copy of the
         original upload form, so subclasses adding extra hidden fields to
         ``ConfirmImportForm`` can call ``super()`` and merge their own values
-        from ``import_form.cleaned_data`` on both paths.
+        from ``import_form.cleaned_data`` on both paths. The exception is a
+        value which
+        :meth:`~import_export.admin.ImportMixin.get_import_preview_form_data`
+        leaves out of the session: it is not available on page navigation.
 
         Returns ``{}`` when ``import_form`` is ``None`` (e.g. the bound
         confirm form in ``process_import()``).
@@ -691,9 +694,16 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         The default returns the submitted value of every field declared on
         the import form. Override this to leave out a value which should not
         be stored in the session, for example because it is sensitive or
-        large. A field which is left out is missing from the form's
-        ``cleaned_data`` on page navigation. The ``format`` and ``resource``
-        values are always stored, whatever this method returns.
+        large.
+
+        On page navigation a field which is left out is cleaned as if it had
+        not been submitted: a required field is absent from the form's
+        ``cleaned_data``, and an optional field holds its empty value. Do not
+        leave out a value which ``get_confirm_form_initial()`` copies to the
+        confirm form, because it would be lost on every page after the first.
+
+        The ``format`` and ``resource`` values are always stored, whatever
+        this method returns.
         """
         return {
             name: request.POST.getlist(name)
@@ -715,7 +725,13 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         if not tmp_storage_name or session is None:
             return
         self._evict_pagination_metadata(request)
-        form_data = dict(self.get_import_preview_form_data(request, import_form))
+        # QueryDict.setlist() would split a bare string into characters.
+        form_data = {
+            name: [values] if isinstance(values, str) else list(values)
+            for name, values in self.get_import_preview_form_data(
+                request, import_form
+            ).items()
+        }
         # Page navigation needs these two whatever the hook returned: without
         # them the rebuilt form is unbound, or selects the first resource.
         for field_name in ("format", "resource"):
@@ -911,13 +927,13 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         # custom clean() indexing cleaned_data["import_file"] raises here
         # rather than adding an error. Carry on with the partial cleaned_data
         # rather than fail a page which rendered on upload, but log loudly
-        # enough that an unrelated bug in clean() is not hidden.
+        # enough that an unrelated bug in the form's validation is not hidden.
         try:
             pagination_form.is_valid()
         except Exception:
             logger.warning(
-                "import form clean() raised on preview page navigation; it "
-                "must allow for a missing import_file",
+                "import form validation raised on preview page navigation; "
+                "there is no uploaded file on this request",
                 exc_info=True,
             )
 
