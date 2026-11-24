@@ -171,8 +171,13 @@ Breaking changes
   Page navigation is a ``GET`` request which re-runs the dry-run against the temporary file, so for very
   large uploads page changes may be noticeably slower than a single render.  The dry-run on upload and on
   every page navigation goes through
-  :meth:`~import_export.admin.ImportMixin.get_preview_result_for_pagination`; override it to cache the
-  result.  The preview uses the ``ModelAdmin``'s ``paginator`` class.
+  :meth:`~import_export.admin.ImportMixin.get_preview_result`; override it to cache the
+  result, keyed by its ``tmp_storage_name`` argument (see :ref:`pagination` for what the name contains and how
+  to use it as a cache key).  The preview uses the ``ModelAdmin``'s ``paginator`` class.
+
+  A ``tmp_storage_name``, ``original_file_name`` or ``user`` key returned by
+  :meth:`~import_export.admin.ImportMixin.get_import_data_kwargs` is overridden by the admin on the preview, so
+  rename it if you rely on it.
 
   The ``import.html`` template now iterates ``preview_page`` and falls back to ``result.valid_rows`` /
   ``result.invalid_rows`` / ``result.row_errors`` when it is absent, so a subclass which overrides

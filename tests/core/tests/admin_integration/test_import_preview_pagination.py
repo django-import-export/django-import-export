@@ -143,9 +143,7 @@ class ImportPreviewPaginationTests(AdminTestMixin, TestCase):
                 result.append_row_result(row_result)
             return result
 
-        with mock.patch.object(
-            BookAdmin, "get_preview_result_for_pagination", failing_dry_run
-        ):
+        with mock.patch.object(BookAdmin, "get_preview_result", failing_dry_run):
             response = self._post_csv(_build_csv(8))
         self.assertTrue(response.context["result"].has_errors())
         self.assertIn("Page 1 of 2 (5 rows with errors)", response.content.decode())
@@ -698,10 +696,10 @@ class ImportPreviewPaginationTests(AdminTestMixin, TestCase):
     def test_preview_result_hook_used_on_upload_and_navigation(self):
         from core.admin import BookAdmin
 
-        hook = ImportMixin.get_preview_result_for_pagination
+        hook = ImportMixin.get_preview_result
         with mock.patch.object(
             BookAdmin,
-            "get_preview_result_for_pagination",
+            "get_preview_result",
             autospec=True,
             side_effect=hook,
         ) as preview:
@@ -709,6 +707,125 @@ class ImportPreviewPaginationTests(AdminTestMixin, TestCase):
             params = self._pagination_get_params(post_response, page=2)
             self.client.get(self.book_import_url, params)
         self.assertEqual(preview.call_count, 2)
+
+    @override_settings(IMPORT_EXPORT_PREVIEW_PAGE_SIZE=2)
+    def test_preview_result_can_be_cached_by_tmp_storage_name(self):
+        from core.admin import BookAdmin
+
+        default_hook = ImportMixin.get_preview_result
+        cache = {}
+
+        def cached_hook(admin, *args, tmp_storage_name=None, **kwargs):
+            if tmp_storage_name not in cache:
+                cache[tmp_storage_name] = default_hook(
+                    admin, *args, tmp_storage_name=tmp_storage_name, **kwargs
+                )
+            return cache[tmp_storage_name]
+
+        with (
+            mock.patch.object(BookAdmin, "get_preview_result", cached_hook),
+            mock.patch.object(
+                Resource, "import_data", autospec=True, side_effect=Resource.import_data
+            ) as import_data,
+        ):
+            first = self._post_csv(_build_csv(4))
+            params = self._pagination_get_params(first, page=2)
+            page_two = self.client.get(self.book_import_url, params)
+            self.assertEqual(page_two.context["preview_page"].number, 2)
+            self.assertEqual(import_data.call_count, 1)
+            self.assertNotIn("tmp_storage_name", import_data.call_args.kwargs)
+            # The key is the full storage name, not the basename from the URL.
+            self.assertEqual(list(cache), [self._tmp_name(first)])
+
+            # A constant key would also give a single dry-run above, so check
+            # that another upload is not served the first one's result.
+            second = self._post_csv(_build_csv(6))
+            self.assertEqual(second.context["preview_page"].paginator.count, 6)
+            self.assertEqual(import_data.call_count, 2)
+            self.assertEqual(list(cache), [self._tmp_name(r) for r in (first, second)])
+
+    @override_settings(IMPORT_EXPORT_PREVIEW_PAGE_SIZE=2)
+    def test_preview_result_receives_admin_supplied_arguments(self):
+        from core.admin import BookAdmin
+
+        hook = ImportMixin.get_preview_result
+        with mock.patch.object(
+            BookAdmin, "get_preview_result", autospec=True, side_effect=hook
+        ) as preview:
+            post_response = self._post_csv(_build_csv(4))
+            params = self._pagination_get_params(post_response, page=2)
+            self.client.get(self.book_import_url, params)
+
+        for call in preview.call_args_list:
+            self.assertEqual(
+                call.kwargs["tmp_storage_name"], self._tmp_name(post_response)
+            )
+            self.assertEqual(call.kwargs["original_file_name"], "import_file")
+            self.assertIsNotNone(call.kwargs["user"])
+
+    @override_settings(IMPORT_EXPORT_PREVIEW_PAGE_SIZE=2)
+    def test_admin_values_override_clashing_import_data_kwargs(self):
+        # get_import_data_kwargs() returning a key the admin supplies itself
+        # must neither raise nor win, on the upload and on navigation.
+        from core.admin import BookAdmin
+
+        def clashing(admin, **kwargs):
+            kwargs.pop("form", None)
+            kwargs.update(
+                tmp_storage_name="clash",
+                original_file_name="clash.csv",
+                user="clash",
+            )
+            return kwargs
+
+        hook = ImportMixin.get_preview_result
+        with (
+            mock.patch.object(BookAdmin, "get_import_data_kwargs", clashing),
+            mock.patch.object(
+                BookAdmin, "get_preview_result", autospec=True, side_effect=hook
+            ) as preview,
+        ):
+            post_response = self._post_csv(_build_csv(4))
+            params = self._pagination_get_params(post_response, page=2)
+            get_response = self.client.get(self.book_import_url, params)
+
+        self.assertEqual(get_response.status_code, 200)
+        self.assertEqual(preview.call_count, 2)
+        for call in preview.call_args_list:
+            self.assertEqual(
+                call.kwargs["tmp_storage_name"], self._tmp_name(post_response)
+            )
+            self.assertEqual(call.kwargs["original_file_name"], "import_file")
+            self.assertNotEqual(call.kwargs["user"], "clash")
+
+    def test_dry_run_receives_original_file_name_and_user_not_storage_name(self):
+        # tmp_storage_name is for the hook only: before_import() sees the
+        # same kwargs on the preview as when the import is confirmed.
+        with mock.patch.object(
+            Resource, "import_data", autospec=True, side_effect=Resource.import_data
+        ) as import_data:
+            self._post_csv(_build_csv(2))
+        kwargs = import_data.call_args.kwargs
+        self.assertNotIn("tmp_storage_name", kwargs)
+        self.assertEqual(kwargs["file_name"], "import_file")
+        self.assertIsNotNone(kwargs["user"])
+
+    def test_non_clashing_import_data_kwargs_still_reach_import_data(self):
+        from core.admin import BookAdmin
+
+        def extra(admin, **kwargs):
+            kwargs["custom_flag"] = True
+            return kwargs
+
+        with (
+            mock.patch.object(BookAdmin, "get_import_data_kwargs", extra),
+            mock.patch.object(
+                Resource, "import_data", autospec=True, side_effect=Resource.import_data
+            ) as import_data,
+        ):
+            response = self._post_csv(_build_csv(2))
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(import_data.call_args.kwargs["custom_flag"])
 
     @override_settings(IMPORT_EXPORT_PREVIEW_PAGE_SIZE=2)
     def test_preview_uses_model_admin_paginator(self):

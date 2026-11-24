@@ -156,9 +156,20 @@ which did validate.
 
 Each page navigation re-runs the dry-run against the temporary file written during upload.  For very large
 imports this may noticeably slow page changes.  The dry-run on upload and on every page navigation is produced
-by :meth:`~import_export.admin.ImportMixin.get_preview_result_for_pagination`; override it on your
-``ModelAdmin`` to plug in a project-specific cache (Django's cache framework, Redis, etc.) keyed by the
-temporary-storage filename.
+by :meth:`~import_export.admin.ImportMixin.get_preview_result`.  It is not called when the import is
+confirmed, or when :ref:`import_export_skip_admin_confirm` is set, as there is no preview then.
+
+Override it on your ``ModelAdmin`` to plug in a project-specific cache (Django's cache framework, Redis, etc.),
+keyed on the ``tmp_storage_name`` argument.  This is the name of the temporary storage holding the uploaded
+file, the same on the upload and on every page navigation for that upload: the absolute path of the file for
+:class:`~import_export.tmp_storages.TempFolderStorage` (the default), a UUID hex string for
+:class:`~import_export.tmp_storages.CacheStorage` and :class:`~import_export.tmp_storages.MediaStorage`.  Hash
+or prefix it before using it as a key (memcached rejects keys containing spaces, for example), and do not cache
+when it is empty.  On page navigation the temporary file has already been read and parsed before
+``get_preview_result()`` is called, so a cache avoids the dry-run but not the parsing.
+
+The admin supplies ``tmp_storage_name``, ``original_file_name`` and ``user`` itself: a key with one of these
+names returned by :meth:`~import_export.admin.ImportMixin.get_import_data_kwargs` is overridden on the preview.
 
 If the session entry or the temporary file has gone, page navigation returns to the upload form with a warning
 rather than failing silently.

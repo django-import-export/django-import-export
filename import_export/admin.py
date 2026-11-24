@@ -581,13 +581,12 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
                     imp_kwargs = self.get_import_data_kwargs(
                         request=request, form=import_form, **kwargs
                     )
-                    result = self.get_preview_result_for_pagination(
-                        resource,
-                        dataset,
+                    imp_kwargs.update(
+                        tmp_storage_name=tmp_storage.name,
                         original_file_name=import_file.name,
                         user=request.user,
-                        **imp_kwargs,
                     )
+                    result = self.get_preview_result(resource, dataset, **imp_kwargs)
                     context["result"] = result
                     context["preview_query_base"] = urlencode(
                         {"import_file_name": os.path.basename(tmp_storage.name)}
@@ -778,11 +777,12 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
             return
         session.pop(self._pagination_session_key(tmp_storage_name), None)
 
-    def get_preview_result_for_pagination(
+    def get_preview_result(
         self,
         resource,
         dataset,
         *,
+        tmp_storage_name="",
         original_file_name="",
         user=None,
         **imp_kwargs,
@@ -792,12 +792,23 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
 
         Produce the dry-run :class:`~import_export.results.Result` rendered
         on the import preview. Called once on the upload POST and again on
-        every page-navigation GET. ``user`` is the requesting user, passed
-        to ``import_data()``. ``imp_kwargs`` is the dict returned by
+        every page-navigation GET.
+
+        ``tmp_storage_name`` is the name of the temporary storage holding the
+        uploaded file, the same on the upload and on every page navigation.
+        See :ref:`pagination` for what the name contains and how to use it as
+        a cache key. ``original_file_name`` is the name of the uploaded file,
+        passed to ``import_data()`` as ``file_name``. ``user`` is the
+        requesting user, passed to ``import_data()``. ``imp_kwargs`` is the
+        dict returned by
         :meth:`~import_export.admin.ImportMixin.get_import_data_kwargs` for
-        the request. Override this to cache the Result keyed by the
-        temporary-file name and avoid re-running the dry-run on every
-        page click. The default implementation runs a full dry-run on
+        the request.
+
+        Override this to cache the Result keyed by ``tmp_storage_name`` and
+        avoid re-running the dry-run on every page click. On a
+        page-navigation GET the temporary file has already been read and
+        parsed before this method is called, so a cache skips the dry-run but
+        not the parsing. The default implementation runs a full dry-run on
         each call.
         """
         return resource.import_data(
@@ -949,14 +960,12 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         imp_kwargs = self.get_import_data_kwargs(
             request=request, form=pagination_form, **kwargs
         )
-        original_file_name = metadata.get("original_file_name", "")
-        result = self.get_preview_result_for_pagination(
-            resource,
-            dataset,
-            original_file_name=original_file_name,
+        imp_kwargs.update(
+            tmp_storage_name=tmp_storage.name,
+            original_file_name=metadata.get("original_file_name", ""),
             user=request.user,
-            **imp_kwargs,
         )
+        result = self.get_preview_result(resource, dataset, **imp_kwargs)
         context["result"] = result
         context["preview_query_base"] = urlencode(
             {"import_file_name": os.path.basename(tmp_storage.name)}
