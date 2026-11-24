@@ -440,35 +440,15 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
             "resource": import_form.cleaned_data.get("resource", ""),
         }
 
-    # Names the admin supplies itself when calling get_preview_result().
-    _preview_reserved_kwargs = ("tmp_storage_name", "original_file_name", "user")
-
     def get_import_data_kwargs(self, **kwargs):
         """
         Prepare kwargs for import_data.
-
-        On the import preview the admin passes ``tmp_storage_name``,
-        ``original_file_name`` and ``user`` to
-        :meth:`~import_export.admin.ImportMixin.get_preview_result` itself, so
-        the dict returned here must not contain a key with one of these
-        names. If it does, ``ImproperlyConfigured`` is raised on the upload
-        and on every page navigation; rename the key to fix it.
         """
         form = kwargs.get("form")
         if form:
             kwargs.pop("form")
             return kwargs
         return kwargs
-
-    def _check_import_data_kwargs(self, imp_kwargs):
-        clashes = [k for k in self._preview_reserved_kwargs if k in imp_kwargs]
-        if clashes:
-            raise ImproperlyConfigured(
-                "get_import_data_kwargs() returned reserved key(s) "
-                f"{', '.join(repr(k) for k in clashes)}. These names are "
-                "supplied by the admin on the import preview; rename the "
-                "key(s) in your get_import_data_kwargs() override."
-            )
 
     def read_import_file(self, import_file):
         """
@@ -601,15 +581,12 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
                     imp_kwargs = self.get_import_data_kwargs(
                         request=request, form=import_form, **kwargs
                     )
-                    self._check_import_data_kwargs(imp_kwargs)
-                    result = self.get_preview_result(
-                        resource,
-                        dataset,
+                    imp_kwargs.update(
                         tmp_storage_name=tmp_storage.name,
                         original_file_name=import_file.name,
                         user=request.user,
-                        **imp_kwargs,
                     )
+                    result = self.get_preview_result(resource, dataset, **imp_kwargs)
                     context["result"] = result
                     context["preview_query_base"] = urlencode(
                         {"import_file_name": os.path.basename(tmp_storage.name)}
@@ -819,16 +796,11 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
 
         ``tmp_storage_name`` is the name of the temporary storage holding the
         uploaded file, the same on the upload and on every page navigation.
-        It is passed to ``import_data()``, so ``before_import()`` can read it
-        from its ``kwargs`` during the preview, but not when the import is
-        confirmed. ``original_file_name`` is the name of the uploaded file,
-        passed to ``import_data()`` as ``file_name``. ``user`` is the
-        requesting user, passed to ``import_data()``. ``imp_kwargs`` is the
-        dict returned by
+        ``original_file_name`` is the name of the uploaded file, passed to
+        ``import_data()`` as ``file_name``. ``user`` is the requesting user,
+        passed to ``import_data()``. ``imp_kwargs`` is the dict returned by
         :meth:`~import_export.admin.ImportMixin.get_import_data_kwargs` for
-        the request; it never contains ``tmp_storage_name``,
-        ``original_file_name`` or ``user``, because the admin raises
-        ``ImproperlyConfigured`` if it does.
+        the request.
 
         Override this to cache the Result keyed by ``tmp_storage_name`` and
         avoid re-running the dry-run on every page click. On a
@@ -843,7 +815,6 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
             raise_errors=False,
             file_name=original_file_name,
             user=user,
-            tmp_storage_name=tmp_storage_name,
             **imp_kwargs,
         )
 
@@ -987,16 +958,12 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         imp_kwargs = self.get_import_data_kwargs(
             request=request, form=pagination_form, **kwargs
         )
-        original_file_name = metadata.get("original_file_name", "")
-        self._check_import_data_kwargs(imp_kwargs)
-        result = self.get_preview_result(
-            resource,
-            dataset,
+        imp_kwargs.update(
             tmp_storage_name=tmp_storage.name,
-            original_file_name=original_file_name,
+            original_file_name=metadata.get("original_file_name", ""),
             user=request.user,
-            **imp_kwargs,
         )
+        result = self.get_preview_result(resource, dataset, **imp_kwargs)
         context["result"] = result
         context["preview_query_base"] = urlencode(
             {"import_file_name": os.path.basename(tmp_storage.name)}

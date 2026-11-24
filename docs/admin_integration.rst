@@ -168,11 +168,8 @@ or prefix it before using it as a key (memcached rejects keys containing spaces,
 when it is empty.  On page navigation the temporary file has already been read and parsed before
 ``get_preview_result()`` is called, so a cache avoids the dry-run but not the parsing.
 
-The admin supplies ``tmp_storage_name``, ``original_file_name`` and ``user`` itself, so
-:meth:`~import_export.admin.ImportMixin.get_import_data_kwargs` must not return a key with one of these names:
-``ImproperlyConfigured`` is raised if it does.  During the preview ``tmp_storage_name`` is also passed to
-``import_data()``, so ``before_import()`` and the other import hooks can read it from their ``kwargs``;
-``original_file_name`` is passed to them as ``file_name``.
+The admin supplies ``tmp_storage_name``, ``original_file_name`` and ``user`` itself: a key with one of these
+names returned by :meth:`~import_export.admin.ImportMixin.get_import_data_kwargs` is overridden on the preview.
 
 If the session entry or the temporary file has gone, page navigation returns to the upload form with a warning
 rather than failing silently.
