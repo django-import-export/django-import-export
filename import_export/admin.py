@@ -246,14 +246,9 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         resource = self.choose_import_resource_class(form, request)(**res_kwargs)
         imp_kwargs = self.get_import_data_kwargs(request=request, form=form, **kwargs)
         imp_kwargs["retain_instance_in_row_result"] = True
+        imp_kwargs.update(file_name=file_name, user=request.user)
 
-        return resource.import_data(
-            dataset,
-            dry_run=False,
-            file_name=file_name,
-            user=request.user,
-            **imp_kwargs,
-        )
+        return resource.import_data(dataset, dry_run=False, **imp_kwargs)
 
     def process_result(self, result, request):
         self.generate_log_entries(result, request)
@@ -443,6 +438,9 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
     def get_import_data_kwargs(self, **kwargs):
         """
         Prepare kwargs for import_data.
+
+        The admin supplies ``file_name`` and ``user`` itself, so a key with
+        one of these names returned here is overridden.
         """
         form = kwargs.get("form")
         if form:
@@ -811,11 +809,11 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
         not the parsing. The default implementation runs a full dry-run on
         each call.
         """
+        imp_kwargs["file_name"] = original_file_name
         return resource.import_data(
             dataset,
             dry_run=True,
             raise_errors=False,
-            file_name=original_file_name,
             user=user,
             **imp_kwargs,
         )

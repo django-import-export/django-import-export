@@ -14,7 +14,7 @@ from django.utils.translation import gettext_lazy as _
 
 from import_export.admin import ExportMixin
 from import_export.formats import base_formats
-from import_export.resources import ModelResource
+from import_export.resources import ModelResource, Resource
 from import_export.tmp_storages import MediaStorage, TempFolderStorage
 
 
@@ -397,6 +397,80 @@ class ImportLogEntryTest(AdminTestMixin, TestCase):
         ):
             self._post_url_response(self.book_process_import_url, data, follow=True)
         self.assertEqual(0, LogEntry.objects.count())
+
+
+class ClashingImportDataKwargsTest(AdminTestMixin, TestCase):
+    """
+    A get_import_data_kwargs() override returning ``file_name`` or ``user``
+    must not raise "got multiple values for keyword argument": the admin's
+    own values win.
+    """
+
+    @staticmethod
+    def _clashing_import_data_kwargs(admin, **kwargs):
+        kwargs.pop("form", None)
+        kwargs.update(file_name="clash.csv", user="clash")
+        return kwargs
+
+    def _spy_import_data(self):
+        return mock.patch.object(
+            Resource, "import_data", autospec=True, side_effect=Resource.import_data
+        )
+
+    def _assert_admin_values(self, call, expected_dry_run):
+        self.assertEqual(call.kwargs["file_name"], "books.csv")
+        self.assertNotEqual(call.kwargs["user"], "clash")
+        self.assertEqual(call.kwargs["user"].pk, self.user.pk)
+        self.assertEqual(call.kwargs["dry_run"], expected_dry_run)
+
+    def test_preview_dry_run_file_name_wins(self):
+        with (
+            patch.object(
+                BookAdmin,
+                "get_import_data_kwargs",
+                self._clashing_import_data_kwargs,
+            ),
+            self._spy_import_data() as import_data,
+        ):
+            response = self._do_import_post(self.book_import_url, "books.csv")
+        self.assertEqual(response.status_code, 200)
+        self._assert_admin_values(import_data.call_args, expected_dry_run=True)
+
+    def test_confirm_step_file_name_and_user_win(self):
+        response = self._do_import_post(self.book_import_url, "books.csv")
+        data = response.context["confirm_form"].initial
+        self._prepend_form_prefix(data)
+        with (
+            patch.object(
+                BookAdmin,
+                "get_import_data_kwargs",
+                self._clashing_import_data_kwargs,
+            ),
+            self._spy_import_data() as import_data,
+        ):
+            response = self._post_url_response(
+                self.book_process_import_url, data, follow=True
+            )
+        self.assertContains(response, "Import finished: 1 new")
+        import_data.assert_called_once()
+        self._assert_admin_values(import_data.call_args, expected_dry_run=False)
+
+    @override_settings(IMPORT_EXPORT_SKIP_ADMIN_CONFIRM=True)
+    def test_skip_confirm_file_name_and_user_win(self):
+        with (
+            patch.object(
+                BookAdmin,
+                "get_import_data_kwargs",
+                self._clashing_import_data_kwargs,
+            ),
+            self._spy_import_data() as import_data,
+        ):
+            response = self._do_import_post(
+                self.book_import_url, "books.csv", follow=True
+            )
+        self.assertContains(response, "Import finished: 1 new")
+        import_data.assert_called_once()
+        self._assert_admin_values(import_data.call_args, expected_dry_run=False)
 
 
 @override_settings(IMPORT_EXPORT_SKIP_ADMIN_CONFIRM=True)
