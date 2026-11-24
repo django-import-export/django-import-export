@@ -796,9 +796,11 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
 
         ``tmp_storage_name`` is the name of the temporary storage holding the
         uploaded file, the same on the upload and on every page navigation.
-        ``original_file_name`` is the name of the uploaded file, passed to
-        ``import_data()`` as ``file_name``. ``user`` is the requesting user,
-        passed to ``import_data()``. ``imp_kwargs`` is the dict returned by
+        See :ref:`pagination` for what the name contains and how to use it as
+        a cache key. ``original_file_name`` is the name of the uploaded file,
+        passed to ``import_data()`` as ``file_name``. ``user`` is the
+        requesting user, passed to ``import_data()``. ``imp_kwargs`` is the
+        dict returned by
         :meth:`~import_export.admin.ImportMixin.get_import_data_kwargs` for
         the request.
 
