@@ -438,6 +438,9 @@ class ImportMixin(BaseImportMixin, ImportExportMixinBase):
     def get_import_data_kwargs(self, **kwargs):
         """
         Prepare kwargs for import_data.
+
+        The admin supplies ``file_name`` and ``user`` itself, so a key with
+        one of these names returned here is overridden.
         """
         form = kwargs.get("form")
         if form:

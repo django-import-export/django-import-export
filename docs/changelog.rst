@@ -29,6 +29,7 @@ Enhancements
 Fixes
 #####
 
+- Fixed a ``TypeError`` on import when an override of :meth:`~import_export.admin.ImportMixin.get_import_data_kwargs` returned ``file_name`` or ``user``, and on the import preview when it returned ``file_name``. The admin's values now take precedence (`2229 <https://github.com/django-import-export/django-import-export/issues/2229>`_)
 - Fixed ``DurationWidget.clean()`` rejecting native ``timedelta`` values, and returning ``None`` for ``timedelta(0)``, for example when re-importing durations read from an xlsx file (`2224 <https://github.com/django-import-export/django-import-export/pull/2224>`_)
 - Fixed slow Admin action exports and high memory usage on large querysets by validating only the submitted primary keys instead of loading every primary key in the export queryset. Selected primary keys containing null characters are now rejected (`2189 <https://github.com/django-import-export/django-import-export/issues/2189>`_, `2190 <https://github.com/django-import-export/django-import-export/pull/2190>`_)
 - Fixed ``DateWidget.clean()`` returning datetime instances so that xlsx round-trips of ``DateField`` values are correctly detected as unchanged by ``skip_row()`` (`2195 <https://github.com/django-import-export/django-import-export/issues/2195>`_, `2208 <https://github.com/django-import-export/django-import-export/pull/2208>`_)
