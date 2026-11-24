@@ -559,14 +559,29 @@ class DurationWidget(Widget):
         if isinstance(value, timedelta):
             return value
 
-        if not value:
+        # Only ``None`` and empty (or whitespace-only) strings mean "no
+        # value". Everything else must parse to a duration.
+        if value is None or (isinstance(value, str) and not value.strip()):
             return None
 
         try:
-            return parse_duration(value)
-        except (ValueError, TypeError) as e:
+            if isinstance(value, numbers.Number):
+                # Numbers are interpreted as seconds, mirroring how a
+                # numeric string (e.g. ``"3600"``) parses.
+                duration = timedelta(seconds=value)
+            else:
+                duration = parse_duration(
+                    value.strip() if isinstance(value, str) else value
+                )
+        except (ValueError, TypeError, OverflowError) as e:
             logger.debug(str(e))
             raise ValueError(_("Value could not be parsed."))
+
+        # ``parse_duration()`` returns ``None`` when no pattern matches
+        # rather than raising.
+        if duration is None:
+            raise ValueError(_("Value could not be parsed."))
+        return duration
 
     def render(self, value, **kwargs):
         if self.coerce_to_string is False or kwargs.get("force_native_type"):

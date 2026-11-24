@@ -67,6 +67,13 @@ Breaking changes
   See `issue 2006 <https://github.com/django-import-export/django-import-export/issues/2006>`_ and
   `PR 2197 <https://github.com/django-import-export/django-import-export/pull/2197>`_.
 
+* :class:`~import_export.widgets.DurationWidget` now raises ``ValueError`` for any imported value which is
+  neither empty nor a parseable duration.  Previously, unparseable strings were silently imported as ``None``,
+  and the number ``0`` was treated as empty while other numbers raised.  Numeric input is now interpreted as
+  seconds, mirroring how a numeric string parses.  If any of your imports relied on the previous (silent)
+  behaviour, review them.
+  See `issue 2227 <https://github.com/django-import-export/django-import-export/issues/2227>`_.
+
 * This release fixes an issue with form field name clashes (see `2108
   <https://github.com/django-import-export/django-import-export/pull/2108>`_).
 
