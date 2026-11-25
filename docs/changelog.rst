@@ -5,6 +5,11 @@ Changelog
 
     If upgrading from v3, v4 introduces breaking changes.  Please refer to :doc:`release notes<release_notes>`.
 
+4.4.7 (unreleased)
+-------------------
+
+- The ``%s through import_export`` log entry message and the ``force_str()`` failure debug message are intentionally not translated, because the first is stored in the database and the second is log output. Removed the ``gettext`` call which was applied to them after interpolation (`2220 <https://github.com/django-import-export/django-import-export/issues/2220>`_)
+
 4.4.6 (2026-11-19)
 -------------------
 
