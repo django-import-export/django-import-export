@@ -5,7 +5,6 @@ from functools import cached_property
 
 from django.core.exceptions import NON_FIELD_ERRORS
 from django.utils.encoding import force_str
-from django.utils.translation import gettext_lazy as _
 from tablib import Dataset
 
 logger = logging.getLogger(__name__)
@@ -141,7 +140,7 @@ class RowResult:
             try:
                 self.object_repr = force_str(instance)
             except Exception as e:
-                logger.debug(_("call to force_str() on instance failed: %s" % str(e)))
+                logger.debug("call to force_str() on instance failed: %s" % str(e))
 
 
 class InvalidRow:
